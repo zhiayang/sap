@@ -3,5 +3,7 @@
 *.h.d
 *.cpp.d
 *.exe
+*.pdf
 
 *.sublime-*
+build/
