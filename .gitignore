@@ -1,0 +1,7 @@
+*.o
+*.c.d
+*.h.d
+*.cpp.d
+*.exe
+
+*.sublime-*
