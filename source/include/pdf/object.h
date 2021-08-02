@@ -199,17 +199,17 @@ namespace pdf
 	// list of names
 	namespace names
 	{
-		static const auto Type       = Name("Type");
-		static const auto Catalog    = Name("Catalog");
-		static const auto Size       = Name("Size");
-		static const auto Count      = Name("Count");
-		static const auto Kids       = Name("Kids");
-		static const auto Root       = Name("Root");
-		static const auto Parent     = Name("Parent");
-		static const auto Page       = Name("Page");
-		static const auto Length      = Name("Length");
-		static const auto Pages      = Name("Pages");
-		static const auto Resources  = Name("Resources");
-		static const auto MediaBox   = Name("MediaBox");
+		static const auto Type      = Name("Type");
+		static const auto Catalog   = Name("Catalog");
+		static const auto Size      = Name("Size");
+		static const auto Count     = Name("Count");
+		static const auto Kids      = Name("Kids");
+		static const auto Root      = Name("Root");
+		static const auto Parent    = Name("Parent");
+		static const auto Page      = Name("Page");
+		static const auto Length    = Name("Length");
+		static const auto Pages     = Name("Pages");
+		static const auto Resources = Name("Resources");
+		static const auto MediaBox  = Name("MediaBox");
 	}
 }

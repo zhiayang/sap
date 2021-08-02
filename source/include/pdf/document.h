@@ -10,6 +10,8 @@
 
 namespace pdf
 {
+	struct Page;
+
 	struct Writer;
 	struct Object;
 
@@ -18,17 +20,19 @@ namespace pdf
 		Document();
 
 		void write(Writer* stream);
-
-		void setRoot(Object* obj);
 		void addObject(Object* obj);
 
 		size_t getNewObjectId();
 
+		void addPage(Page* page);
+
 	private:
-		Object* root_object;
+		size_t current_id = 0;
 		std::map<size_t, Object*> objects;
 
-		size_t current_id = 0;
+		std::vector<Page*> pages;
+
+		Dictionary* createPageTree();
 	};
 
 

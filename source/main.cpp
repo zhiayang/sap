@@ -8,14 +8,24 @@
 
 int main(int argc, char** argv)
 {
-	zpr::println("Hello, world!");
-
 	auto writer = util::make<pdf::Writer>("test.pdf");
-
-
 	auto doc = util::make<pdf::Document>();
-	doc->write(writer);
 
+	auto p1 = util::make<pdf::Page>();
+	auto p2 = util::make<pdf::Page>();
+	auto p3 = util::make<pdf::Page>();
+	auto p4 = util::make<pdf::Page>();
+
+
+
+
+
+
+	doc->addPage(p1);
+	doc->addPage(p2);
+	doc->addPage(p3);
+	doc->addPage(p4);
+	doc->write(writer);
 
 	writer->close();
 }

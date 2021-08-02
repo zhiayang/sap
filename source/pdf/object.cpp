@@ -110,6 +110,12 @@ namespace pdf
 	{
 		IndirHelper helper(w, this);
 
+		if(this->values.empty())
+		{
+			w->write("<< >>");
+			return;
+		}
+
 		w->writeln("<<");
 		for(auto& [ name, value ] : this->values)
 		{

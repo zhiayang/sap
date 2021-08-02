@@ -7,6 +7,7 @@
 #include <cstdint>
 #include <cstddef>
 
+#include "pdf/page.h"
 #include "pdf/misc.h"
 #include "pdf/object.h"
 #include "pdf/writer.h"

@@ -2,6 +2,7 @@
 // Copyright (c) 2021, zhiayang
 // Licensed under the Apache License Version 2.0.
 
+#include "pdf/page.h"
 #include "pdf/misc.h"
 #include "pdf/writer.h"
 #include "pdf/object.h"
@@ -11,32 +12,17 @@ namespace pdf
 {
 	void Document::write(Writer* w)
 	{
-		const auto a4paper = Array::create(Integer::create(0), Integer::create(0), Decimal::create(595.276), Decimal::create(841.89));
-
 		w->writeln("%PDF-1.7");
 
 		// add 4 non-ascii bytes to signify a binary file
 		// (since we'll probably be embedding fonts and other stuff)
 		w->writeln("%\xf0\xf1\xf2\xf3");
-		w->writeln("");
+		w->writeln();
 
-		auto page = Dictionary::createIndirect(this, names::Page, {
-			{ names::Resources, Dictionary::create({ }) },
-			{ names::MediaBox, a4paper }
-		});
-
-		auto pagetree = Dictionary::createIndirect(this, names::Pages, {
-			{ names::Count, Integer::create(1) },
-			{ names::Kids, Array::create(IndirectRef::create(page)) }
-		});
-
-		page->addOrReplace(names::Parent, pagetree);
-
+		auto pagetree = this->createPageTree();
 		auto root = Dictionary::createIndirect(this, names::Catalog, {
 			{ names::Pages, IndirectRef::create(pagetree) }
 		});
-
-		this->setRoot(root);
 
 		// write all the objects.
 		for(auto [ _, obj ] : this->objects)
@@ -67,13 +53,35 @@ namespace pdf
 
 		w->writeln("startxref");
 		w->writeln("{}", xref_position);
-
 		w->writeln("%%EOF");
 	}
 
 
+	void Document::addPage(Page* page)
+	{
+		this->pages.push_back(page);
+	}
 
+	Dictionary* Document::createPageTree()
+	{
+		// TODO: make this more efficient -- make some kind of balanced tree.
 
+		auto pagetree = Dictionary::createIndirect(this, names::Pages, {
+			{ names::Count, Integer::create(this->pages.size()) }
+		});
+
+		auto array = Array::create({ });
+		for(auto page : this->pages)
+		{
+			auto obj = page->serialise(this);
+			obj->addOrReplace(names::Parent, pagetree);
+			array->values.push_back(IndirectRef::create(obj));
+		}
+
+		pagetree->addOrReplace(names::Kids, array);
+
+		return pagetree;
+	}
 
 
 
@@ -95,12 +103,6 @@ namespace pdf
 			pdf::error("object id '{}' already exists (generations not supported)", obj->id);
 
 		this->objects.emplace(obj->id, obj);
-	}
-
-	void Document::setRoot(Object* obj)
-	{
-		// TODO: verify that the root object is valid
-		this->root_object = obj;
 	}
 
 	size_t Document::getNewObjectId()
