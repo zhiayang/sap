@@ -20,6 +20,7 @@ namespace pdf
 	{
 		this->path = std::move(path);
 		this->bytes_written = 0;
+		this->nesting = 0;
 
 		if(this->fd = open(path.str().c_str(), O_WRONLY | O_CREAT | O_TRUNC, 0664); this->fd < 0)
 			pdf::error("failed to open file for writing; open(): {}", strerror(errno));

@@ -18,6 +18,7 @@ namespace pdf
 		~Writer();
 
 		int fd;
+		int nesting;
 		zst::str_view path;
 		size_t bytes_written;
 

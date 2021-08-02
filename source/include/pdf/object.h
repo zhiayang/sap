@@ -42,6 +42,8 @@ namespace pdf
 		// write with the default behaviour
 		void write(Writer* w) const;
 
+		void makeIndirect(Document* doc);
+
 		// write the full definition (without the indirect definition), even for
 		// dictionaries and streams.
 		virtual void writeFull(Writer* w) const = 0;
@@ -102,6 +104,9 @@ namespace pdf
 
 		static Name* create(zst::str_view name);
 
+		// special because our builtin names are values and not pointers
+		Name* ptr() const { return const_cast<Name*>(this); }
+
 		std::string name { };
 	};
 
@@ -160,7 +165,7 @@ namespace pdf
 		virtual void writeFull(Writer* w) const override;
 
 		void append(const std::vector<uint8_t>& xs);
-		void append(uint8_t* arr, size_t num);
+		void append(const uint8_t* arr, size_t num);
 
 		static Stream* create(Document* doc, std::vector<uint8_t> bytes);
 		static Stream* create(Document* doc, Dictionary* dict, std::vector<uint8_t> bytes);
@@ -182,6 +187,13 @@ namespace pdf
 		int64_t generation = 0;
 	};
 
+	struct Null : Object
+	{
+		Null() { }
+
+		virtual void writeFull(Writer* w) const override;
+		static Null* get();
+	};
 
 
 
@@ -189,8 +201,7 @@ namespace pdf
 
 
 
-
-	static constexpr bool operator < (const Name& a, const Name& b)
+	static inline bool operator < (const Name& a, const Name& b)
 	{
 		return a.name < b.name;
 	}
@@ -199,17 +210,24 @@ namespace pdf
 	// list of names
 	namespace names
 	{
-		static const auto Type      = Name("Type");
-		static const auto Catalog   = Name("Catalog");
-		static const auto Size      = Name("Size");
-		static const auto Count     = Name("Count");
-		static const auto Kids      = Name("Kids");
-		static const auto Root      = Name("Root");
-		static const auto Parent    = Name("Parent");
-		static const auto Page      = Name("Page");
-		static const auto Length    = Name("Length");
-		static const auto Pages     = Name("Pages");
-		static const auto Resources = Name("Resources");
-		static const auto MediaBox  = Name("MediaBox");
+		static const auto Type      = pdf::Name("Type");
+		static const auto Catalog   = pdf::Name("Catalog");
+		static const auto Size      = pdf::Name("Size");
+		static const auto Count     = pdf::Name("Count");
+		static const auto Kids      = pdf::Name("Kids");
+		static const auto Root      = pdf::Name("Root");
+		static const auto Parent    = pdf::Name("Parent");
+		static const auto Page      = pdf::Name("Page");
+		static const auto Length    = pdf::Name("Length");
+		static const auto Pages     = pdf::Name("Pages");
+		static const auto Font      = pdf::Name("Font");
+		static const auto Contents      = pdf::Name("Contents");
+		static const auto Type1     = pdf::Name("Type1");
+		static const auto Subtype   = pdf::Name("Subtype");
+		static const auto Name      = pdf::Name("Name");
+		static const auto BaseFont  = pdf::Name("BaseFont");
+		static const auto Encoding  = pdf::Name("Encoding");
+		static const auto Resources = pdf::Name("Resources");
+		static const auto MediaBox  = pdf::Name("MediaBox");
 	}
 }

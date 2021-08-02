@@ -42,6 +42,18 @@ namespace pdf
 			this->writeFull(w);
 	}
 
+	void Object::makeIndirect(Document* doc)
+	{
+		// TODO: should this be an error?
+		if(this->is_indirect)
+			return;
+
+		this->is_indirect = true;
+		this->id = doc->getNewObjectId();
+		this->gen = 0;
+		doc->addObject(this);
+	}
+
 	void Boolean::writeFull(Writer* w) const
 	{
 		IndirHelper helper(w, this);
@@ -117,15 +129,20 @@ namespace pdf
 		}
 
 		w->writeln("<<");
+		w->nesting++;
+		bool first = true;
 		for(auto& [ name, value ] : this->values)
 		{
-			w->write("  ");
+			w->write("{}", zpr::w(w->nesting * 2)(""));
 			name.write(w);
 			w->write(" ");
 			value->write(w);
-			w->writeln("");
+			w->writeln();
+
+			first = false;
 		}
-		w->writeln(">>");
+		w->nesting--;
+		w->writeln("{}>>", zpr::w(w->nesting * 2)(""));
 	}
 
 	void Stream::writeFull(Writer* w) const
@@ -150,11 +167,13 @@ namespace pdf
 	void Stream::append(const std::vector<uint8_t>& xs)
 	{
 		this->bytes.insert(this->bytes.end(), xs.begin(), xs.end());
+		this->dict->addOrReplace(names::Length, Integer::create(this->bytes.size()));
 	}
 
-	void Stream::append(uint8_t* arr, size_t num)
+	void Stream::append(const uint8_t* arr, size_t num)
 	{
 		this->bytes.insert(this->bytes.end(), arr, arr + num);
+		this->dict->addOrReplace(names::Length, Integer::create(this->bytes.size()));
 	}
 
 	void Dictionary::add(const Name& n, Object* obj)
@@ -196,6 +215,20 @@ namespace pdf
 
 
 
+
+	void Null::writeFull(Writer* w) const
+	{
+		w->write("null");
+	}
+
+	Null* Null::get()
+	{
+		static Null* singleton = 0;
+		if(!singleton)
+			singleton = util::make<Null>();
+
+		return singleton;
+	}
 
 
 	Boolean* Boolean::create(bool value)

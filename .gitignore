@@ -4,6 +4,10 @@
 *.cpp.d
 *.exe
 *.pdf
+*.pch
+*.gch
+*.pch.d
+*.gch.d
 
 *.sublime-*
 build/

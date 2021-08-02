@@ -40,6 +40,7 @@ build: $(OUTPUT_BIN)
 
 $(OUTPUT_BIN): $(CXXOBJ) $(UTF8PROC_OBJS)
 	@echo "  $(notdir $@)"
+	@mkdir -p build
 	@$(CXX) $(CXXFLAGS) $(WARNINGS) $(DEFINES) -Iexternal -o $@ $^
 
 %.cpp.o: %.cpp Makefile $(PRECOMP_GCH)

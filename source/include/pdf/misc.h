@@ -18,4 +18,6 @@ namespace pdf
 		zpr::fprintln(stderr, "internal error (pdf): {}", zpr::fwd(fmt, static_cast<Args&&>(args)...));
 		exit(1);
 	}
+
+	std::string encodeStringLiteral(zst::str_view sv);
 }

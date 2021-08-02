@@ -8,6 +8,8 @@
 #include <cstdlib>
 #include <cstddef>
 
+#include "error.h"
+
 namespace util
 {
 	template <typename T>
@@ -26,14 +28,22 @@ namespace util
 				this->consumed = 0;
 				this->capacity = capacity;
 
+				auto alignment = alignof(T);
+				if(alignment < alignof(void*))
+					alignment = alignof(void*);
+
 				// TODO: report a proper error
-				this->memory = reinterpret_cast<uint8_t*>(std::aligned_alloc(alignof(T), capacity));
+				void* ptr = 0;
+				if(posix_memalign(&ptr, alignment, capacity) != 0)
+					sap::error("out of memory (trying to allocate {} bytes with {}-byte alignment)", capacity, alignment);
+
+				this->memory = reinterpret_cast<uint8_t*>(ptr);
 				assert(this->memory != nullptr);
 			}
 
 			~Region()
 			{
-				std::free(this->memory);
+				free(this->memory);
 				if(this->next)
 					delete this->next;
 
