@@ -12,7 +12,7 @@
 namespace sap
 {
 	template <typename... Args>
-	[[noreturn]] inline void error(const char* fmt, Args&&... args)
+	[[noreturn]] inline void internal_error(const char* fmt, Args&&... args)
 	{
 		zpr::fprintln(stderr, "error: {}", zpr::fwd(fmt, static_cast<Args&&>(args)...));
 		exit(1);

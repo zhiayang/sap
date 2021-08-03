@@ -2,6 +2,8 @@
 // Copyright (c) 2021, zhiayang
 // Licensed under the Apache License Version 2.0.
 
+#include <algorithm>
+
 #include "pdf/page.h"
 #include "pdf/font.h"
 #include "pdf/misc.h"

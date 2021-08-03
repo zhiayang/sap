@@ -16,7 +16,7 @@
 */
 
 /*
-	Version 1.2.0
+	Version 1.3.0
 	=============
 
 
@@ -39,11 +39,40 @@
 		available. if not, then memset(), memmove(), memcmp(), strlen(), and strncmp() are forward declared
 		according to the C library specifications, but not defined.
 
+	- ZST_HAVE_BUFFER
+		this is *TRUE* by default. controls whether the zst::buffer<T> type is available. If you do not have
+		operator new[] and want to avoid link errors, then set this to false.
+
+
 	Note that ZST_FREESTANDING implies ZST_USE_STD = 0.
+
+	Also note that buffer<T>, while it is itself a RAII type, it does *NOT* correctly RAII its contents.
+	notably, no copy or move constructors will be called on any elements, only destructors. Thus, the
+	element type should be limited to POD types.
+
+	This may change in the future.
+
+
+
 
 
 	Version History
 	===============
+
+	1.3.0 - 03/08/2021
+	------------------
+	Add buffer<T>, which is essentially a lightweight std::vector. requires operator new[];
+
+	Add chars() for str_view where T = uint8_t, which returns a normal str_view
+	Add span<T> (== str_view<T>) and byte_span (== str_view<uint8_t>)
+
+
+
+	1.2.1 - 03/08/2021
+	------------------
+	Make str_view::operator[] const
+
+
 
 	1.2.0 - 05/06/2021
 	------------------
@@ -80,6 +109,14 @@
 	#undef ZST_FREESTANDING
 	#define ZST_FREESTANDING 1
 #endif
+
+#if !defined(ZST_HAVE_BUFFER)
+	#define ZST_HAVE_BUFFER 1
+#elif (ZST_EXPAND(ZST_HAVE_BUFFER) == 1)
+	#undef ZST_HAVE_BUFFER
+	#define ZST_HAVE_BUFFER 1
+#endif
+
 
 #if !ZST_FREESTANDING
 	#include <cstring>
@@ -209,7 +246,7 @@ namespace zst
 
 			inline void clear() { this->ptr = 0; this->len = 0; }
 
-			inline value_type operator[] (size_t n) { return this->ptr[n]; }
+			inline value_type operator[] (size_t n) const { return this->ptr[n]; }
 
 			inline size_t find(value_type c) const { return this->find(str_view(&c, 1)); }
 			inline size_t find(str_view sv) const
@@ -348,6 +385,18 @@ namespace zst
 
 		#endif
 
+			// a little hacky, but a useful feature.
+			template <typename A = value_type, typename = typename detail::enable_if<detail::is_same<A, uint8_t>::value>::type>
+			str_view<char> chars() const
+			{
+				return str_view<char>(reinterpret_cast<const char*>(this->ptr), this->len);
+			}
+
+			template <typename U>
+			str_view<U> cast() const
+			{
+				return str_view<U>(reinterpret_cast<const U*>(this->ptr), (sizeof(value_type) * this->len) / sizeof(U));
+			}
 
 		private:
 			const value_type* ptr;
@@ -368,7 +417,188 @@ namespace zst
 
 	using str_view = impl::str_view<char>;
 	using wstr_view = impl::str_view<char32_t>;
+
+	template <typename T>
+	using span = impl::str_view<T>;
+
+	using byte_span = span<uint8_t>;
 }
+
+
+#if ZST_HAVE_BUFFER
+namespace zst
+{
+	namespace impl
+	{
+		template <typename value_type>
+		struct buffer
+		{
+			buffer(const buffer& b) = delete;
+			buffer& operator= (const buffer& b) = delete;
+
+
+			buffer() : buffer(64) { }
+			buffer(size_t capacity) : mem(new value_type[capacity]), cap(capacity), len(0) { }
+
+			~buffer()
+			{
+				if(this->mem != nullptr)
+					delete[] this->mem;
+
+				this->mem = 0;
+				this->len = 0;
+				this->cap = 0;
+			}
+
+			buffer(buffer&& b) : mem(b.mem), cap(b.cap), len(b.len)
+			{
+				b.mem = nullptr;
+				b.cap = 0;
+				b.len = 0;
+			}
+
+			buffer& operator= (buffer&& b)
+			{
+				if(this != &b)
+				{
+					if(this->mem)
+						delete[] this->mem;
+
+					this->mem = b.mem;  b.mem = nullptr;
+					this->len = b.len;  b.len = 0;
+					this->cap = b.cap;  b.cap = 0;
+				}
+				return *this;
+			}
+
+
+			inline buffer clone() const
+			{
+				auto ret = buffer(this->cap);
+				ret.append(*this);
+				return ret;
+			}
+
+			inline bool operator== (const buffer& b) const
+			{
+				return this->len == b.len
+					&& memcmp(this->mem, b.mem, sizeof(value_type) * this->len) == 0;
+			}
+
+			inline bool operator!= (const buffer& b) const
+			{
+				return !(*this == b);
+			}
+
+			inline bool empty() const { return this->len == 0; }
+			inline size_t size() const { return this->len; }
+			inline size_t length() const { return this->len; }
+
+			inline size_t capacity() const { return this->cap; }
+
+			inline value_type* data() { return this->mem; }
+			inline const value_type* data() const { return this->mem; }
+
+			inline const value_type* begin() const { return this->ptr; }
+			inline const value_type* end() const { return this->ptr + this->len; }
+
+			inline byte_span bytes() const
+			{
+				return byte_span(reinterpret_cast<const uint8_t*>(this->mem),
+					this->len * sizeof(value_type));
+			}
+
+			inline zst::span<value_type> span() const
+			{
+				return zst::span<value_type>(this->mem, this->len);
+			}
+
+			inline void clear()
+			{
+				memset(this->mem, 0, sizeof(value_type) * this->len);
+				this->len = 0;
+			}
+
+			inline buffer& append(value_type x)
+			{
+				this->expand(1);
+				this->mem[this->len++] = static_cast<value_type&&>(x);
+				return *this;
+			}
+
+			inline buffer& append(zst::span<value_type> span)
+			{
+				this->expand(span.size());
+				for(auto& x : span)
+					this->mem[this->len++] = x;
+
+				return *this;
+			}
+
+			inline buffer& append(const buffer<value_type>& buf)
+			{
+				this->expand(buf.size());
+				for(auto& x : buf)
+					this->mem[this->len++] = x;
+
+				return *this;
+			}
+
+			inline buffer& append(const value_type* arr, size_t num)
+			{
+				this->expand(num);
+				memmove(&this->mem[this->len], arr, sizeof(value_type) * num);
+				this->len += num;
+
+				return *this;
+			}
+
+			template <typename T, typename A = value_type, typename = typename detail::enable_if<detail::is_same<T, uint8_t>::value>::type>
+			inline buffer& append_bytes(const T& value)
+			{
+				this->expand(sizeof(T));
+				memmove(&this->mem[this->len], &value, sizeof(T));
+				this->len += sizeof(T);
+				return *this;
+			}
+
+
+		private:
+			inline void expand(size_t extra)
+			{
+				if(this->len + extra <= this->cap)
+					return;
+
+				auto newcap = (this->len * 3) / 2;
+				if(this->len + extra > newcap)
+					newcap = this->len + extra;
+
+				auto newmem = new value_type[newcap];
+				memmove(newmem, this->mem, sizeof(value_type) * this->len);
+
+				delete[] this->mem;
+				this->mem = newmem;
+				this->cap = newcap;
+			}
+
+
+			value_type* mem = 0;
+			size_t cap = 0;
+			size_t len = 0;
+		};
+	}
+
+	template <typename C> inline const C* begin(const impl::buffer<C>& sv) { return sv.begin(); }
+	template <typename C> inline const C* end(const impl::buffer<C>& sv) { return sv.end(); }
+
+	template <typename T>
+	using buffer = impl::buffer<T>;
+
+	using byte_buffer = impl::buffer<uint8_t>;
+}
+#endif
+
+
 
 
 namespace zst

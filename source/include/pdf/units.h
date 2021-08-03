@@ -13,6 +13,8 @@ namespace pdf
 		constexpr Scalar() : x(0) { }
 		constexpr explicit Scalar(double x) : x(x) { }
 
+		constexpr bool zero() const { return this->x == 0; }
+
 		double x;
 	};
 

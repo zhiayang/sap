@@ -6,6 +6,8 @@
 #include "pdf/font.h"
 #include "pdf/text.h"
 
+#include "otf/otf.h"
+
 #include <zpr.h>
 
 int main(int argc, char** argv)
@@ -17,12 +19,11 @@ int main(int argc, char** argv)
 
 	auto p1 = util::make<pdf::Page>();
 	auto p2 = util::make<pdf::Page>();
-	// p1->useFont(font);
 
-	auto txt = util::make<pdf::Text>("hello world");
-	txt->font_height = pdf::mm(24);
-	txt->font = font;
-	txt->position = pdf::mm(20, 120);
+	auto txt = util::make<pdf::Text>();
+	txt->setFont(font, pdf::mm(20));
+	txt->moveAbs(pdf::mm(10, 200));
+	txt->addText("hello, world");
 
 	p1->addObject(txt);
 
@@ -31,4 +32,12 @@ int main(int argc, char** argv)
 	doc->write(writer);
 
 	writer->close();
+
+
+	// otf::OTFont::parseFromFile("SourceSansPro-Regular.ttf");
+	// otf::OTFont::parseFromFile("Meiryo.ttf");
+	// otf::OTFont::parseFromFile("Meiryo-Italic.ttf");
+	// otf::OTFont::parseFromFile("SF-Pro.ttf");
+	// otf::OTFont::parseFromFile("DejaVuSansMono.ttf");
+	// otf::OTFont::parseFromFile("subset.ttf");
 }

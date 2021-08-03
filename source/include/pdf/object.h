@@ -13,6 +13,7 @@
 #include <utility>
 #include <type_traits>
 
+#include <zst.h>
 #include "pool.h"
 
 namespace pdf
@@ -117,7 +118,6 @@ namespace pdf
 		virtual void writeFull(Writer* w) const override;
 
 		static Array* create(std::vector<Object*> objs);
-		static Array* createIndirect(Document* doc, std::vector<Object*> objs);
 
 		template <typename... Objs>
 		static Array* create(Objs&&... objs)
@@ -160,18 +160,22 @@ namespace pdf
 	// owns the memory.
 	struct Stream : Object
 	{
-		explicit Stream(Dictionary* dict, std::vector<uint8_t> bytes) : dict(dict), bytes(std::move(bytes)) { }
+		explicit Stream(Dictionary* dict, zst::byte_buffer bytes) : dict(dict), bytes(std::move(bytes)) { }
 
 		virtual void writeFull(Writer* w) const override;
 
-		void append(const std::vector<uint8_t>& xs);
+		void append(zst::byte_span xs);
 		void append(const uint8_t* arr, size_t num);
 
-		static Stream* create(Document* doc, std::vector<uint8_t> bytes);
-		static Stream* create(Document* doc, Dictionary* dict, std::vector<uint8_t> bytes);
+		void attach(Document* doc);
+
+		static Stream* create(Document* doc, zst::byte_buffer bytes);
+		static Stream* create(Document* doc, Dictionary* dict, zst::byte_buffer bytes);
+
+		static Stream* createDetached(Document* doc, Dictionary* dict, zst::byte_buffer bytes);
 
 		Dictionary* dict = 0;
-		std::vector<uint8_t> bytes;
+		zst::byte_buffer bytes;
 	};
 
 	struct IndirectRef : Object
@@ -226,8 +230,17 @@ namespace pdf
 		static const auto Subtype   = pdf::Name("Subtype");
 		static const auto Name      = pdf::Name("Name");
 		static const auto BaseFont  = pdf::Name("BaseFont");
+		static const auto Identity  = pdf::Name("Identity");
+		static const auto Registry  = pdf::Name("Registry");
+		static const auto Sap  = pdf::Name("Sap");
+		static const auto Ordering  = pdf::Name("Ordering");
+		static const auto Supplement  = pdf::Name("Supplement");
 		static const auto Encoding  = pdf::Name("Encoding");
 		static const auto Resources = pdf::Name("Resources");
 		static const auto MediaBox  = pdf::Name("MediaBox");
+		static const auto TrueType  = pdf::Name("TrueType");
+		static const auto CIDSystemInfo  = pdf::Name("CIDSystemInfo");
+		static const auto CIDFontType0  = pdf::Name("CIDFontType0");
+		static const auto CIDFontType2  = pdf::Name("CIDFontType2");
 	}
 }

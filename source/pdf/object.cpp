@@ -147,6 +147,9 @@ namespace pdf
 
 	void Stream::writeFull(Writer* w) const
 	{
+		if(!this->is_indirect)
+			pdf::error("cannot write non-materialised stream (not bound to a document)");
+
 		IndirHelper helper(w, this);
 
 		this->dict->writeFull(w);
@@ -158,21 +161,25 @@ namespace pdf
 		w->writeln("endstream");
 	}
 
+
+
+
+
 	void IndirectRef::writeFull(Writer* w) const
 	{
 		IndirHelper helper(w, this);
 		w->write("{} {} R", this->id, this->generation);
 	}
 
-	void Stream::append(const std::vector<uint8_t>& xs)
+	void Stream::append(zst::byte_span xs)
 	{
-		this->bytes.insert(this->bytes.end(), xs.begin(), xs.end());
+		this->bytes.append(xs);
 		this->dict->addOrReplace(names::Length, Integer::create(this->bytes.size()));
 	}
 
 	void Stream::append(const uint8_t* arr, size_t num)
 	{
-		this->bytes.insert(this->bytes.end(), arr, arr + num);
+		this->bytes.append(arr, num);
 		this->dict->addOrReplace(names::Length, Integer::create(this->bytes.size()));
 	}
 
@@ -198,6 +205,13 @@ namespace pdf
 			return nullptr;
 	}
 
+	void Stream::attach(Document* document)
+	{
+		if(this->is_indirect)
+			pdf::error("stream has already been attached to a document");
+
+		this->makeIndirect(document);
+	}
 
 
 
@@ -261,11 +275,6 @@ namespace pdf
 		return createObject<Array>(std::move(objs));
 	}
 
-	Array* Array::createIndirect(Document* doc, std::vector<Object*> objs)
-	{
-		return createIndirectObject<Array>(doc, std::move(objs));
-	}
-
 	Dictionary* Dictionary::create(std::map<Name, Object*> values)
 	{
 		return createObject<Dictionary>(std::move(values));
@@ -290,21 +299,6 @@ namespace pdf
 		return ret;
 	}
 
-	Stream* Stream::create(Document* doc, std::vector<uint8_t> bytes)
-	{
-		auto dict = Dictionary::create({
-			{ names::Length, Integer::create(bytes.size()) }
-		});
-
-		return createObject<Stream>(doc, dict, std::move(bytes));
-	}
-
-	Stream* Stream::create(Document* doc, Dictionary* dict, std::vector<uint8_t> bytes)
-	{
-		dict->addOrReplace(names::Length, Integer::create(bytes.size()));
-		return createObject<Stream>(doc, dict, std::move(bytes));
-	}
-
 	IndirectRef* IndirectRef::create(Object* ref)
 	{
 		if(!ref->is_indirect)
@@ -318,6 +312,29 @@ namespace pdf
 		return createObject<IndirectRef>(id, gen);
 	}
 
+
+
+
+	Stream* Stream::create(Document* doc, zst::byte_buffer bytes)
+	{
+		auto dict = Dictionary::create({
+			{ names::Length, Integer::create(bytes.size()) }
+		});
+
+		return createIndirectObject<Stream>(doc, dict, std::move(bytes));
+	}
+
+	Stream* Stream::create(Document* doc, Dictionary* dict, zst::byte_buffer bytes)
+	{
+		dict->addOrReplace(names::Length, Integer::create(bytes.size()));
+		return createIndirectObject<Stream>(doc, dict, std::move(bytes));
+	}
+
+	Stream* Stream::createDetached(Document* doc, Dictionary* dict, zst::byte_buffer bytes)
+	{
+		dict->addOrReplace(names::Length, Integer::create(bytes.size()));
+		return createObject<Stream>(dict, std::move(bytes));
+	}
 
 	Object::~Object()
 	{

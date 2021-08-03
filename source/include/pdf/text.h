@@ -14,15 +14,25 @@ namespace pdf
 
 	struct Text : PageObject
 	{
-		Text() : text("") { }
-		Text(std::string text) : text(std::move(text)) { }
-
 		virtual std::string serialise(const Page* page) const override;
 
-		Coord position { };
-		std::string text { };
+		void setFont(Font* font);
+		void setFont(Font* font, Scalar height);
+		void setFontHeight(Scalar height);
 
-		Font* font { };
-		Scalar font_height { };
+		void moveAbs(Coord pos);
+		void offset(Coord offset);
+		void addText(zst::str_view text);
+
+		void startGroup();
+		void addText(Scalar offset, zst::str_view text);
+		void endGroup();
+
+	private:
+		std::string commands;
+		Scalar font_height;
+		Font* font;
+
+		bool in_group = false;
 	};
 }

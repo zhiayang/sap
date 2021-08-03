@@ -2,6 +2,10 @@
 // Copyright (c) 2021, zhiayang
 // Licensed under the Apache License Version 2.0.
 
+#include <algorithm>
+
+#include "otf/otf.h"
+
 #include "pdf/font.h"
 #include "pdf/misc.h"
 #include "pdf/object.h"
@@ -10,7 +14,58 @@ namespace pdf
 {
 	Font::Font()
 	{
-		this->dict = Dictionary::create(names::Font, { });
+		this->font_dictionary = Dictionary::create(names::Font, { });
+	}
+
+	Dictionary* Font::serialise(Document* doc) const
+	{
+		if(!this->font_dictionary->is_indirect)
+			this->font_dictionary->makeIndirect(doc);
+
+		if(this->font_descriptor != nullptr && !this->font_descriptor->is_indirect)
+			this->font_dictionary->makeIndirect(doc);
+
+		return this->font_dictionary;
+	}
+
+
+
+
+
+
+
+
+
+
+	Font* Font::fromFontFile(Document* doc, otf::OTFont* font)
+	{
+		auto ret = util::make<Font>();
+		auto dict = ret->font_dictionary;
+
+		if(font->font_type != otf::OTFont::TYPE_TRUETYPE && font->font_type != otf::OTFont::TYPE_CFF)
+			pdf::error("unsupported font type");
+
+		dict->add(names::BaseFont, Name::create(font->postscript_name));
+		dict->add(names::CIDSystemInfo, Dictionary::create({
+			{ names::Registry, names::Sap.ptr() },
+			{ names::Ordering, names::Identity.ptr() },
+			{ names::Supplement, Integer::create(0) },
+		}));
+
+		// our strategy for now is always to create a Type0 CID font,
+		// instead of doing some weird special-casing.
+		if(font->font_type == otf::OTFont::TYPE_TRUETYPE)
+		{
+			dict->add(names::Subtype, names::CIDFontType2.ptr());
+			ret->font_type = FONT_TRUETYPE_CID;
+		}
+		else if(font->font_type == otf::OTFont::TYPE_CFF)
+		{
+			dict->add(names::Subtype, names::CIDFontType0.ptr());
+			ret->font_type = FONT_CFF_CID;
+		}
+
+		return ret;
 	}
 
 	Font* Font::fromBuiltin(zst::str_view name)
@@ -32,20 +87,12 @@ namespace pdf
 		auto font = util::make<Font>();
 		font->font_type = FONT_TYPE1;
 
-		auto dict = font->dict;
+		auto dict = font->font_dictionary;
 		dict->add(names::Subtype, names::Type1.ptr());
 		dict->add(names::BaseFont, Name::create(name));
 		dict->add(names::Encoding, Name::create("WinAnsiEncoding"));
 		font->encoding_kind = ENCODING_WIN_ANSI;
 
 		return font;
-	}
-
-	Dictionary* Font::serialise(Document* doc) const
-	{
-		if(!this->dict->is_indirect)
-			this->dict->makeIndirect(doc);
-
-		return this->dict;
 	}
 }

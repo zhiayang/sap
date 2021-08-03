@@ -53,19 +53,17 @@ $(OUTPUT_BIN): $(CXXOBJ) $(UTF8PROC_OBJS)
 
 %.h.gch: %.h Makefile
 	@printf "# precompiling header $<\n"
-	@$(CXX) $(CXXFLAGS) $(WARNINGS) $(INCLUDES) -x c++-header -o $@ $<
+	@$(CXX) $(CXXFLAGS) $(WARNINGS) $(INCLUDES) -MMD -MP -x c++-header -o $@ $<
 
 clean:
 	-@find source -iname "*.cpp.d" | xargs rm
 	-@find source -iname "*.cpp.o" | xargs rm
-	-@find build -iname "*.a" | xargs rm
 	-@rm $(PRECOMP_GCH)
 	-@rm $(OUTPUT_BIN)
 
 -include $(CXXDEPS)
 -include $(CDEPS)
-
-
+-include $(PRECOMP_GCH:.gch=.d)
 
 
 

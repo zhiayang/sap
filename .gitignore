@@ -3,7 +3,6 @@
 *.h.d
 *.cpp.d
 *.exe
-*.pdf
 *.pch
 *.gch
 *.pch.d
@@ -11,3 +10,10 @@
 
 *.sublime-*
 build/
+tmp/
+
+*.pdf
+*.ttf
+*.ttc
+*.otf
+*.otc

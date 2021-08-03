@@ -31,11 +31,13 @@ namespace pdf
 		// write the xref table
 		auto xref_position = w->position();
 
-		w->writeln("xref");
-		w->writeln("0 {}", this->current_id + 1);
-		w->writeln("{010} {05} f ", this->current_id + 1, 0xffff);
+		auto num_objects = this->current_id + 1;
 
-		for(size_t i = 0; i <= this->current_id; i++)
+		w->writeln("xref");
+		w->writeln("0 {}", num_objects);
+		w->writeln("{010} {05} f ", num_objects, 0xffff);
+
+		for(size_t i = 0; i < num_objects; i++)
 		{
 			if(auto it = this->objects.find(i); it != this->objects.end())
 				w->writeln("{010} {05} n ", it->second->byte_offset, it->second->gen);
@@ -44,7 +46,7 @@ namespace pdf
 		w->writeln();
 
 		auto trailer = Dictionary::create({
-			{ names::Size, Integer::create(this->current_id + 1) },
+			{ names::Size, Integer::create(num_objects) },
 			{ names::Root, IndirectRef::create(root) }
 		});
 
