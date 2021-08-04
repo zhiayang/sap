@@ -48,6 +48,25 @@ namespace otf
 		uint32_t checksum;
 	};
 
+
+	struct FontMetrics
+	{
+		int xmin;
+		int ymin;
+		int xmax;
+		int ymax;
+
+		int ascent;
+		int descent;
+		int units_per_em;
+
+		int x_height;
+		int cap_height;
+
+		bool is_monospaced;
+		double italic_angle;
+	};
+
 	struct OTFont
 	{
 		static OTFont* parseFromFile(const std::string& path);
@@ -77,6 +96,8 @@ namespace otf
 		std::map<Tag, Table> tables;
 
 		std::map<uint32_t, uint32_t> cmap;
+
+		FontMetrics metrics { };
 
 		uint8_t* file_bytes;
 		size_t file_size;

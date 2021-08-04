@@ -214,6 +214,7 @@ namespace pdf
 	// list of names
 	namespace names
 	{
+		// TODO: this shit needs to be interned without a shitty usage api like this
 		static const auto Type      = pdf::Name("Type");
 		static const auto Catalog   = pdf::Name("Catalog");
 		static const auto Size      = pdf::Name("Size");
@@ -225,6 +226,7 @@ namespace pdf
 		static const auto Length    = pdf::Name("Length");
 		static const auto Pages     = pdf::Name("Pages");
 		static const auto Font      = pdf::Name("Font");
+		static const auto FontName      = pdf::Name("FontName");
 		static const auto Contents      = pdf::Name("Contents");
 		static const auto Type0     = pdf::Name("Type0");
 		static const auto Type1     = pdf::Name("Type1");
@@ -236,10 +238,21 @@ namespace pdf
 		static const auto Sap  = pdf::Name("Sap");
 		static const auto Ordering  = pdf::Name("Ordering");
 		static const auto Supplement  = pdf::Name("Supplement");
+		static const auto FontDescriptor  = pdf::Name("FontDescriptor");
 		static const auto Encoding  = pdf::Name("Encoding");
+		static const auto Flags = pdf::Name("Flags");
 		static const auto Resources = pdf::Name("Resources");
 		static const auto MediaBox  = pdf::Name("MediaBox");
 		static const auto TrueType  = pdf::Name("TrueType");
+		static const auto FontBBox  = pdf::Name("FontBBox");
+		static const auto CapHeight  = pdf::Name("CapHeight");
+		static const auto StemV  = pdf::Name("StemV");
+		static const auto Ascent  = pdf::Name("Ascent");
+		static const auto Descent  = pdf::Name("Descent");
+		static const auto ItalicAngle  = pdf::Name("ItalicAngle");
+		static const auto FontFile2  = pdf::Name("FontFile2");
+		static const auto DescendantFonts  = pdf::Name("DescendantFonts");
+		static const auto CIDToGIDMap  = pdf::Name("CIDToGIDMap");
 		static const auto CIDSystemInfo  = pdf::Name("CIDSystemInfo");
 		static const auto CIDFontType0  = pdf::Name("CIDFontType0");
 		static const auto CIDFontType2  = pdf::Name("CIDFontType2");

@@ -52,6 +52,13 @@ namespace otf
 		return ret;
 	}
 
+	static int16_t consume_i16(zst::byte_span& s)
+	{
+		auto ret = as_u16(s);
+		s.remove_prefix(2);
+		return static_cast<int16_t>(ret);
+	}
+
 	static uint32_t consume_u24(zst::byte_span& s)
 	{
 		auto ret = as_u24(s);
@@ -77,7 +84,7 @@ namespace otf
 		table.offset = consume_u32(buf);
 		table.length = consume_u32(buf);
 
-		// zpr::println("found '{}' table, ofs={x}, length={x}", table.tag.str(), table.offset, table.length);
+		zpr::println("found '{}' table, ofs={x}, length={x}", table.tag.str(), table.offset, table.length);
 		return table;
 	}
 
@@ -201,7 +208,7 @@ namespace otf
 		auto fmt = consume_u16(subtable);
 		assert(fmt == 4);
 
-		assert(!"TODO");
+		// assert(!"TODO");
 	}
 
 	static void parse_cmap_subtable_6(OTFont* font, zst::byte_span subtable)
@@ -262,36 +269,12 @@ namespace otf
 			auto gid = consume_u32(subtable);
 
 			for(auto i = start; i <= end; i++)
-				font->cmap[i] = gid + i - start;
+			{
+				if(fmt == 12)   font->cmap[i] = gid + i - start;
+				else            font->cmap[i] = gid;
+			}
 		}
 	}
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 	static void parse_cmap_table(OTFont* font, const Table& cmap_table)
 	{
@@ -379,9 +362,76 @@ namespace otf
 
 
 
+	static void parse_head_table(OTFont* font, const Table& head_table)
+	{
+		auto buf = zst::byte_span(font->file_bytes, font->file_size);
+		buf.remove_prefix(head_table.offset);
+
+		// skip the following: major ver (16), minor ver (16), font rev (32), checksum (32), magicnumber (32),
+		// flags (16), unitsperem (16), created (64), modified (64).
+		buf.remove_prefix(18);
+
+		font->metrics.units_per_em = consume_u16(buf);
+
+		buf.remove_prefix(16);
+
+		font->metrics.xmin = consume_i16(buf);
+		font->metrics.ymin = consume_i16(buf);
+		font->metrics.xmax = consume_i16(buf);
+		font->metrics.ymax = consume_i16(buf);
+	}
+
+	static void parse_post_table(OTFont* font, const Table& post_table)
+	{
+		auto buf = zst::byte_span(font->file_bytes, font->file_size);
+		buf.remove_prefix(post_table.offset);
+
+		// for now we only need the italic angle and the "isfixedpitch" flag.
+		auto version = consume_u32(buf); (void) version;
+
+		{
+			auto whole = consume_i16(buf);
+			auto frac = consume_u16(buf);
+
+			font->metrics.italic_angle = static_cast<double>(whole) + (static_cast<double>(frac) / 65536.0);
+		}
 
 
+		consume_u32(buf); // skip the two underline-related metrics
 
+		font->metrics.is_monospaced = consume_u32(buf) != 0;
+	}
+
+	static void parse_hhea_table(OTFont* font, const Table& hhea_table)
+	{
+		auto buf = zst::byte_span(font->file_bytes, font->file_size);
+		buf.remove_prefix(hhea_table.offset);
+
+		// skip the versions
+		buf.remove_prefix(4);
+
+		// note: this is the raw value; pdf wants some scaled value that needs
+		// units_per_em to compute (specifically, (ascent / units_per_em) * 1000), but
+		// that princess is in another castle and it's too much hassle here, so leave it
+		// to the pdf layer to convert.
+		font->metrics.ascent = static_cast<int16_t>(consume_i16(buf));
+		font->metrics.descent = static_cast<int16_t>(consume_i16(buf));
+	}
+
+	static void parse_os2_table(OTFont* font, const Table& os2_table)
+	{
+		auto buf = zst::byte_span(font->file_bytes, font->file_size);
+		buf.remove_prefix(os2_table.offset);
+
+		// we only want this table for sxHeight and sCapHeight, but they only appear
+		// in version >= 2. so if it's less then just gtfo.
+		auto version = consume_u16(buf);
+		if(version < 2) return;
+
+		buf.remove_prefix(84);
+		font->metrics.x_height = consume_i16(buf);
+		font->metrics.cap_height = consume_i16(buf);
+	}
 
 
 
@@ -433,16 +483,15 @@ namespace otf
 		for(size_t i = 0; i < num_tables; i++)
 		{
 			auto tbl = parse_table(buf);
-			if(tbl.tag == Tag("name"))
-				parse_name_table(font, tbl);
-
-			else if(tbl.tag == Tag("cmap"))
-				parse_cmap_table(font, tbl);
+			if(tbl.tag == Tag("name"))      parse_name_table(font, tbl);
+			else if(tbl.tag == Tag("cmap")) parse_cmap_table(font, tbl);
+			else if(tbl.tag == Tag("head")) parse_head_table(font, tbl);
+			else if(tbl.tag == Tag("post")) parse_post_table(font, tbl);
+			else if(tbl.tag == Tag("hhea")) parse_hhea_table(font, tbl);
+			else if(tbl.tag == Tag("OS/2")) parse_os2_table(font, tbl);
 
 			font->tables.emplace(tbl.tag, tbl);
 		}
-
-		zpr::println("gid = {}", font->cmap[0x3042]);
 
 		return font;
 	}
