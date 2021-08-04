@@ -52,6 +52,8 @@ namespace otf
 	{
 		static OTFont* parseFromFile(const std::string& path);
 
+		uint32_t getGlyphIndexForCodepoint(uint32_t codepoint) const;
+
 		// corresponds to name IDs 16 and 17. if not present, they will have the same
 		// value as their *_compat counterparts.
 		std::string family;
@@ -73,6 +75,8 @@ namespace otf
 
 		int font_type = 0;
 		std::map<Tag, Table> tables;
+
+		std::map<uint32_t, uint32_t> cmap;
 
 		uint8_t* file_bytes;
 		size_t file_size;

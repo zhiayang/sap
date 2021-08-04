@@ -8,6 +8,7 @@
 
 #include "pool.h"
 #include "util.h"
+#include "error.h"
 #include "otf/otf.h"
 
 namespace otf
@@ -35,6 +36,13 @@ namespace otf
 			| ((uint32_t) s[1] << 16)
 			| ((uint32_t) s[2] << 8)
 			| ((uint32_t) s[3] << 0);
+	}
+
+	static uint8_t consume_u8(zst::byte_span& s)
+	{
+		auto ret = s[0];
+		s.remove_prefix(1);
+		return ret;
 	}
 
 	static uint16_t consume_u16(zst::byte_span& s)
@@ -173,6 +181,223 @@ namespace otf
 		}
 	}
 
+	static void parse_cmap_subtable_0(OTFont* font, zst::byte_span subtable)
+	{
+		auto fmt = consume_u16(subtable);
+		assert(fmt == 0);
+
+		auto len = consume_u16(subtable);
+		assert(len == 3 * sizeof(uint16_t) + 256 * sizeof(uint8_t));
+
+		auto lang = consume_u16(subtable);
+		(void) lang;
+
+		for(size_t i = 0; i < 255; i++)
+			font->cmap[i] = consume_u8(subtable);
+	}
+
+	static void parse_cmap_subtable_4(OTFont* font, zst::byte_span subtable)
+	{
+		auto fmt = consume_u16(subtable);
+		assert(fmt == 4);
+
+		assert(!"TODO");
+	}
+
+	static void parse_cmap_subtable_6(OTFont* font, zst::byte_span subtable)
+	{
+		auto fmt = consume_u16(subtable);
+		assert(fmt == 6);
+
+		auto len = consume_u16(subtable);
+		auto lang = consume_u16(subtable);
+
+		(void) len;
+		(void) lang;
+
+		auto first = consume_u16(subtable);
+		auto count = consume_u16(subtable);
+
+		for(size_t i = 0; i < count; i++)
+			font->cmap[i + first] = consume_u16(subtable);
+	}
+
+	static void parse_cmap_subtable_10(OTFont* font, zst::byte_span subtable)
+	{
+		auto fmt = consume_u16(subtable);
+		assert(fmt == 10);
+
+		consume_u16(subtable);  // reserved
+		auto len = consume_u32(subtable);
+		auto lang = consume_u32(subtable);
+
+		(void) len;
+		(void) lang;
+
+		auto first = consume_u32(subtable);
+		auto count = consume_u32(subtable);
+
+		for(size_t i = 0; i < count; i++)
+			font->cmap[i + first] = consume_u32(subtable);
+	}
+
+
+	static void parse_cmap_subtable_12_or_13(OTFont* font, zst::byte_span subtable)
+	{
+		auto fmt = consume_u16(subtable);
+		assert(fmt == 12 || fmt == 13);
+
+		consume_u16(subtable);  // reserved
+		auto len = consume_u32(subtable);
+		auto lang = consume_u32(subtable);
+
+		(void) len;
+		(void) lang;
+
+		auto num_groups = consume_u32(subtable);
+		for(size_t i = 0; i < num_groups; i++)
+		{
+			auto start = consume_u32(subtable);
+			auto end = consume_u32(subtable);
+			auto gid = consume_u32(subtable);
+
+			for(auto i = start; i <= end; i++)
+				font->cmap[i] = gid + i - start;
+		}
+	}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+	static void parse_cmap_table(OTFont* font, const Table& cmap_table)
+	{
+		auto buf = zst::byte_span(font->file_bytes, font->file_size);
+		buf.remove_prefix(cmap_table.offset);
+
+		const auto table_start = buf;
+
+		auto version = consume_u16(buf);
+		(void) version;
+
+		auto num_tables = consume_u16(buf);
+		zpr::println("{} encoding records", num_tables);
+
+		struct subtable_t
+		{
+			int platform_id;
+			int encoding_id;
+			uint32_t offset;
+			int format;
+		};
+
+		std::vector<subtable_t> subtables;
+
+
+		for(size_t i = 0; i < num_tables; i++)
+		{
+			auto platform_id = consume_u16(buf);
+			auto encoding_id = consume_u16(buf);
+			auto offset = consume_u32(buf);
+
+			zpr::println("  pid = {}, eid = {}", platform_id, encoding_id);
+
+			auto subtable = table_start.drop(offset);
+			auto format = consume_u16(subtable);
+			zpr::println("  format = {}", format);
+
+			subtables.push_back({ platform_id, encoding_id, offset, format });
+		}
+
+
+		/*
+			preferred table order:
+
+			1. unicode (0): 6, 4, 3
+			2. windows (3): 10, 1
+			3. macos (1): 0
+		*/
+
+		bool found = false;
+		subtable_t chosen_table { };
+		int asdf[][2] = { { 0, 6 }, { 0, 4 }, { 0, 3 }, { 3, 10 }, { 3, 1 }, { 1, 0 } };
+
+		for(auto& [ p, e ] : asdf)
+		{
+			for(auto& tbl : subtables)
+			{
+				if(tbl.platform_id == p && tbl.encoding_id == e)
+				{
+					chosen_table = tbl;
+					found = true;
+					break;
+				}
+			}
+
+			if(found)
+				break;
+		}
+
+		if(!found)
+			sap::internal_error("could not find suitable cmap table");
+
+		zpr::println("found cmap: pid {}, eid {}", chosen_table.platform_id, chosen_table.encoding_id);
+
+		auto subtable_start = table_start.drop(chosen_table.offset);
+		if(chosen_table.format == 0)        parse_cmap_subtable_0(font, subtable_start);
+		else if(chosen_table.format == 4)   parse_cmap_subtable_4(font, subtable_start);
+		else if(chosen_table.format == 6)   parse_cmap_subtable_6(font, subtable_start);
+		else if(chosen_table.format == 10)  parse_cmap_subtable_10(font, subtable_start);
+		else if(chosen_table.format == 12)  parse_cmap_subtable_12_or_13(font, subtable_start);
+		else if(chosen_table.format == 13)  parse_cmap_subtable_12_or_13(font, subtable_start);
+		else sap::internal_error("unsupported subtable format {}", chosen_table.format);
+	}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 	OTFont* OTFont::parseFromFile(const std::string& path)
@@ -211,8 +436,13 @@ namespace otf
 			if(tbl.tag == Tag("name"))
 				parse_name_table(font, tbl);
 
+			else if(tbl.tag == Tag("cmap"))
+				parse_cmap_table(font, tbl);
+
 			font->tables.emplace(tbl.tag, tbl);
 		}
+
+		zpr::println("gid = {}", font->cmap[0x3042]);
 
 		return font;
 	}

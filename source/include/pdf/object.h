@@ -226,6 +226,7 @@ namespace pdf
 		static const auto Pages     = pdf::Name("Pages");
 		static const auto Font      = pdf::Name("Font");
 		static const auto Contents      = pdf::Name("Contents");
+		static const auto Type0     = pdf::Name("Type0");
 		static const auto Type1     = pdf::Name("Type1");
 		static const auto Subtype   = pdf::Name("Subtype");
 		static const auto Name      = pdf::Name("Name");

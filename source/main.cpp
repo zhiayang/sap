@@ -35,7 +35,7 @@ int main(int argc, char** argv)
 
 
 	// otf::OTFont::parseFromFile("SourceSansPro-Regular.ttf");
-	// otf::OTFont::parseFromFile("Meiryo.ttf");
+	otf::OTFont::parseFromFile("Meiryo.ttf");
 	// otf::OTFont::parseFromFile("Meiryo-Italic.ttf");
 	// otf::OTFont::parseFromFile("SF-Pro.ttf");
 	// otf::OTFont::parseFromFile("DejaVuSansMono.ttf");

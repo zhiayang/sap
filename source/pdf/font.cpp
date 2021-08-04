@@ -41,11 +41,14 @@ namespace pdf
 	{
 		auto ret = util::make<Font>();
 		auto dict = ret->font_dictionary;
+		ret->source_file = font;
 
 		if(font->font_type != otf::OTFont::TYPE_TRUETYPE && font->font_type != otf::OTFont::TYPE_CFF)
 			pdf::error("unsupported font type");
 
 		dict->add(names::BaseFont, Name::create(font->postscript_name));
+		dict->add(names::Subtype, names::Type0.ptr());
+
 		dict->add(names::CIDSystemInfo, Dictionary::create({
 			{ names::Registry, names::Sap.ptr() },
 			{ names::Ordering, names::Identity.ptr() },

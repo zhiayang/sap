@@ -42,6 +42,7 @@ namespace pdf
 
 		// only used for embedded fonts
 		Dictionary* font_descriptor = 0;
+		otf::OTFont* source_file = 0;
 
 		// pool needs to be a friend because it needs the constructor
 		template <typename> friend struct util::Pool;
