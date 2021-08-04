@@ -99,6 +99,10 @@ namespace pdf
 				monstrous in size.
 		*/
 
+		// see note in otf/parser.cpp about the scaling with units_per_em
+		auto units_per_em_scale = 1000.0 / font->metrics.units_per_em;
+
+
 		auto font_bbox = Array::create({
 			Integer::create(font->metrics.xmin),
 			Integer::create(font->metrics.ymin),
@@ -121,8 +125,6 @@ namespace pdf
 			zpr::println("your dumb font doesn't tell me cap_height, assuming 700");
 		}
 
-		// see note in otf/parser.cpp about the scaling with units_per_em
-		auto ascent_descent_scale = 1000.0 / font->metrics.units_per_em;
 
 		// truetype fonts don't contain stemv.
 		static constexpr int STEMV_CONSTANT = 69;
@@ -134,8 +136,8 @@ namespace pdf
 			{ names::Flags, Integer::create(4) },
 			{ names::FontBBox, font_bbox },
 			{ names::ItalicAngle, Decimal::create(font->metrics.italic_angle) },
-			{ names::Ascent, Integer::create(font->metrics.ascent * ascent_descent_scale) },
-			{ names::Descent, Integer::create(font->metrics.descent * ascent_descent_scale) },
+			{ names::Ascent, Integer::create(font->metrics.ascent * units_per_em_scale) },
+			{ names::Descent, Integer::create(font->metrics.descent * units_per_em_scale) },
 			{ names::CapHeight, Integer::create(cap_height) },
 			{ names::StemV, Integer::create(STEMV_CONSTANT) }
 		});

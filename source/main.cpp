@@ -17,23 +17,29 @@ int main(int argc, char** argv)
 
 	auto font = pdf::Font::fromBuiltin("Times-Roman");
 	auto f2 = pdf::Font::fromFontFile(doc, otf::OTFont::parseFromFile("Meiryo.ttf"));
+	auto f3 = pdf::Font::fromFontFile(doc, otf::OTFont::parseFromFile("subset.ttf"));
 
 	auto p1 = util::make<pdf::Page>();
 	auto p2 = util::make<pdf::Page>();
 
-	auto txt = util::make<pdf::Text>();
-	txt->setFont(font, pdf::mm(20));
-	txt->moveAbs(pdf::mm(10, 200));
-	txt->addText("hello, world");
-
-	p1->addObject(txt);
+	auto txt1 = util::make<pdf::Text>();
+	txt1->setFont(font, pdf::mm(20));
+	txt1->moveAbs(pdf::mm(10, 200));
+	txt1->addText("hello, world");
 
 	auto txt2 = util::make<pdf::Text>();
 	txt2->setFont(f2, pdf::mm(17));
 	txt2->moveAbs(pdf::mm(10, 150));
 	txt2->addText("\x09\xb9");
 
+	auto txt3 = util::make<pdf::Text>();
+	txt3->setFont(f3, pdf::mm(17));
+	txt3->moveAbs(pdf::mm(10, 100));
+	txt3->addText("\x00\x58\x00\x5a\x00\x58");
+
+	p1->addObject(txt1);
 	p1->addObject(txt2);
+	p1->addObject(txt3);
 
 	doc->addPage(p1);
 	doc->addPage(p2);
