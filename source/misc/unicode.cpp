@@ -72,4 +72,15 @@ namespace unicode
 
 		return ret;
 	}
+
+	uint32_t codepointFromUtf8(zst::byte_span& utf8)
+	{
+		int32_t codepoint = 0;
+		auto read = utf8proc_iterate(utf8.data(), utf8.size(), &codepoint);
+		if(codepoint == -1)
+			sap::internal_error("utf8 conversion error");
+
+		utf8.remove_prefix(read);
+		return static_cast<uint32_t>(codepoint);
+	}
 }

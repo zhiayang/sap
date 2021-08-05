@@ -4,11 +4,12 @@
 
 #include <algorithm>
 
-#include "otf/otf.h"
-
 #include "pdf/font.h"
 #include "pdf/misc.h"
 #include "pdf/object.h"
+#include "pdf/win_ansi_encoding.h"
+
+#include "font/font.h"
 
 namespace pdf
 {
@@ -32,15 +33,33 @@ namespace pdf
 
 
 
+	uint32_t Font::getGlyphIdFromCodepoint(uint32_t codepoint) const
+	{
+		if(this->encoding_kind == ENCODING_WIN_ANSI)
+		{
+			return encoding::WIN_ANSI(codepoint);
+		}
+		else if(this->encoding_kind == ENCODING_CID)
+		{
+			assert(this->source_file != nullptr);
+			if(auto it = this->cmap_cache.find(codepoint); it != this->cmap_cache.end())
+				return it->second;
 
+			auto gid = this->source_file->getGlyphIndexForCodepoint(codepoint);
+			this->cmap_cache[codepoint] = gid;
 
-	Font* Font::fromFontFile(Document* doc, otf::OTFont* font)
+			return gid;
+		}
+		else
+		{
+			pdf::error("unsupported encoding");
+		}
+	}
+
+	Font* Font::fromFontFile(Document* doc, font::FontFile* font)
 	{
 		auto ret = util::make<Font>();
 		ret->source_file = font;
-
-		if(font->font_type != otf::OTFont::TYPE_TRUETYPE && font->font_type != otf::OTFont::TYPE_CFF)
-			pdf::error("unsupported font type");
 
 		/*
 			this is the general structure for composite fonts (which we always create, for now):
@@ -69,23 +88,25 @@ namespace pdf
 
 		cidfont_dict->add(names::BaseFont, basefont_name);
 		cidfont_dict->add(names::CIDSystemInfo, Dictionary::create({
-			{ names::Registry, names::Sap.ptr() },
-			{ names::Ordering, names::Identity.ptr() },
+			{ names::Registry, String::create("Sap") },
+			{ names::Ordering, String::create("Identity") },
 			{ names::Supplement, Integer::create(0) },
 		}));
 
-		if(font->font_type == otf::OTFont::TYPE_TRUETYPE)
+		bool truetype_outlines = (font->outline_type == font::FontFile::OUTLINES_TRUETYPE);
+
+
+
+		if(truetype_outlines)
 		{
 			cidfont_dict->add(names::CIDToGIDMap, names::Identity.ptr());
 			cidfont_dict->add(names::Subtype, names::CIDFontType2.ptr());
-		}
-		else if(font->font_type == otf::OTFont::TYPE_CFF)
-		{
-			cidfont_dict->add(names::Subtype, names::CIDFontType0.ptr());
+
+			// cidfont_dict->add(names::W, Array::create({ }));
 		}
 		else
 		{
-			pdf::error("unsupported font type");
+			cidfont_dict->add(names::Subtype, names::CIDFontType0.ptr());
 		}
 
 		/*
@@ -129,16 +150,17 @@ namespace pdf
 		// truetype fonts don't contain stemv.
 		static constexpr int STEMV_CONSTANT = 69;
 
-		// TODO: use the OTFont to determine what the flags should be. no idea how important this is
+		// TODO: use the FontFile to determine what the flags should be. no idea how important this is
 		// for the pdf to display properly but it's probably entirely inconsequential.
 		auto font_desc = Dictionary::createIndirect(doc, names::FontDescriptor, {
 			{ names::FontName, basefont_name },
 			{ names::Flags, Integer::create(4) },
 			{ names::FontBBox, font_bbox },
-			{ names::ItalicAngle, Decimal::create(font->metrics.italic_angle) },
+			{ names::ItalicAngle, Integer::create(font->metrics.italic_angle) },
 			{ names::Ascent, Integer::create(font->metrics.ascent * units_per_em_scale) },
 			{ names::Descent, Integer::create(font->metrics.descent * units_per_em_scale) },
 			{ names::CapHeight, Integer::create(cap_height) },
+			{ names::XHeight, Integer::create(69) },
 			{ names::StemV, Integer::create(STEMV_CONSTANT) }
 		});
 
@@ -153,7 +175,7 @@ namespace pdf
 			TODO: for now we are dumping the entire file into the pdf; we probably want some kind of subsetting functionality,
 			which requires improving the robustness of the OTF parser (and handling its glyf [or the CFF equiv.) table.
 		*/
-		if(font->font_type == otf::OTFont::TYPE_TRUETYPE)
+		if(truetype_outlines)
 		{
 			// TODO: this makes a copy of the file (since Stream wants to own the memory also),
 			// which is not ideal.
@@ -163,7 +185,7 @@ namespace pdf
 			font_desc->add(names::FontFile2, IndirectRef::create(file_contents));
 			ret->font_type = FONT_TRUETYPE_CID;
 		}
-		else if(font->font_type == otf::OTFont::TYPE_CFF)
+		else
 		{
 			// this is too complicated for me.
 			assert(!"TODO: CFF fonts not implemented");
@@ -182,6 +204,7 @@ namespace pdf
 
 		type0->add(names::DescendantFonts, Array::create(IndirectRef::create(cidfont_dict)));
 
+		ret->encoding_kind = ENCODING_CID;
 		return ret;
 	}
 

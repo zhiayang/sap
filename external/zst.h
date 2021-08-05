@@ -239,7 +239,7 @@ namespace zst
 			inline bool empty() const { return this->len == 0; }
 			inline const value_type* data() const { return this->ptr; }
 
-			inline const uint8_t* bytes() const { return reinterpret_cast<const uint8_t*>(this->ptr); }
+			inline str_view<uint8_t> bytes() const { return str_view<uint8_t>(reinterpret_cast<const uint8_t*>(this->ptr), this->len); }
 
 			value_type front() const { return this->ptr[0]; }
 			value_type back() const { return this->ptr[this->len - 1]; }
@@ -395,6 +395,7 @@ namespace zst
 			template <typename U>
 			str_view<U> cast() const
 			{
+				static_assert(sizeof(value_type) % sizeof(U) == 0 || sizeof(U) % sizeof(value_type) == 0, "types are not castable");
 				return str_view<U>(reinterpret_cast<const U*>(this->ptr), (sizeof(value_type) * this->len) / sizeof(U));
 			}
 

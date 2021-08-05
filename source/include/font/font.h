@@ -1,4 +1,4 @@
-// otf.h
+// font.h
 // Copyright (c) 2021, zhiayang
 // Licensed under the Apache License Version 2.0.
 
@@ -10,8 +10,26 @@
 #include <cstddef>
 #include <cstdint>
 
-namespace otf
+namespace font
 {
+	struct FontMetrics
+	{
+		int xmin;
+		int ymin;
+		int xmax;
+		int ymax;
+
+		int ascent;
+		int descent;
+		int units_per_em;
+
+		int x_height;
+		int cap_height;
+
+		bool is_monospaced;
+		double italic_angle;
+	};
+
 	struct Tag
 	{
 		constexpr Tag() : be_value(0) { }
@@ -25,7 +43,7 @@ namespace otf
 		constexpr bool operator== (const Tag& t) const { return this->be_value == t.be_value; }
 		constexpr bool operator!= (const Tag& t) const { return !(*this == t); };
 
-		std::string str() const
+		inline std::string str() const
 		{
 			return std::string( {
 				(char) ((be_value & 0xff000000) >> 24),
@@ -48,28 +66,17 @@ namespace otf
 		uint32_t checksum;
 	};
 
-
-	struct FontMetrics
+	struct CMapTable
 	{
-		int xmin;
-		int ymin;
-		int xmax;
-		int ymax;
-
-		int ascent;
-		int descent;
-		int units_per_em;
-
-		int x_height;
-		int cap_height;
-
-		bool is_monospaced;
-		double italic_angle;
+		uint16_t platform_id;
+		uint16_t encoding_id;
+		uint32_t file_offset;
+		uint32_t format;
 	};
 
-	struct OTFont
+	struct FontFile
 	{
-		static OTFont* parseFromFile(const std::string& path);
+		static FontFile* parseFromFile(const std::string& path);
 
 		uint32_t getGlyphIndexForCodepoint(uint32_t codepoint) const;
 
@@ -93,7 +100,12 @@ namespace otf
 		std::string license_info;       // name 13
 
 		int font_type = 0;
+		int outline_type = 0;
+
 		std::map<Tag, Table> tables;
+
+		// cache this so we don't look for it.
+		CMapTable preferred_cmap { };
 
 		std::map<uint32_t, uint32_t> cmap;
 
@@ -102,7 +114,9 @@ namespace otf
 		uint8_t* file_bytes;
 		size_t file_size;
 
-		static constexpr int TYPE_TRUETYPE = 1;
-		static constexpr int TYPE_CFF      = 2;
+		static constexpr int TYPE_OPEN_FONT    = 1;
+
+		static constexpr int OUTLINES_TRUETYPE = 1;
+		static constexpr int OUTLINES_CFF      = 2;
 	};
 }

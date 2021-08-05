@@ -16,9 +16,7 @@ namespace pdf
 	{
 		virtual std::string serialise(const Page* page) const override;
 
-		void setFont(Font* font);
 		void setFont(Font* font, Scalar height);
-		void setFontHeight(Scalar height);
 
 		void moveAbs(Coord pos);
 		void offset(Coord offset);

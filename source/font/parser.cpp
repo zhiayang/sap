@@ -9,27 +9,28 @@
 #include "pool.h"
 #include "util.h"
 #include "error.h"
-#include "otf/otf.h"
 
-namespace otf
+#include "font/font.h"
+
+namespace font
 {
 	// these are all BIG ENDIAN, because FUCK YOU.
-	static uint16_t as_u16(const zst::byte_span& s)
+	uint16_t peek_u16(const zst::byte_span& s)
 	{
 		assert(s.size() >= sizeof(2));
 		return ((uint16_t) s[0] << 8)
 			| ((uint16_t) s[1] << 0);
 	}
 
-	static uint32_t as_u24(const zst::byte_span& s)
-	{
-		assert(s.size() >= 3);
-		return ((uint32_t) s[0] << 16)
-			| ((uint32_t) s[1] << 8)
-			| ((uint32_t) s[2] << 0);
-	}
+	// static uint32_t peek_u24(const zst::byte_span& s)
+	// {
+	// 	assert(s.size() >= 3);
+	// 	return ((uint32_t) s[0] << 16)
+	// 		| ((uint32_t) s[1] << 8)
+	// 		| ((uint32_t) s[2] << 0);
+	// }
 
-	static uint32_t as_u32(const zst::byte_span& s)
+	uint32_t peek_u32(const zst::byte_span& s)
 	{
 		assert(s.size() >= 4);
 		return ((uint32_t) s[0] << 24)
@@ -38,37 +39,37 @@ namespace otf
 			| ((uint32_t) s[3] << 0);
 	}
 
-	static uint8_t consume_u8(zst::byte_span& s)
+	uint8_t consume_u8(zst::byte_span& s)
 	{
 		auto ret = s[0];
 		s.remove_prefix(1);
 		return ret;
 	}
 
-	static uint16_t consume_u16(zst::byte_span& s)
+	uint16_t consume_u16(zst::byte_span& s)
 	{
-		auto ret = as_u16(s);
+		auto ret = peek_u16(s);
 		s.remove_prefix(2);
 		return ret;
 	}
 
-	static int16_t consume_i16(zst::byte_span& s)
+	int16_t consume_i16(zst::byte_span& s)
 	{
-		auto ret = as_u16(s);
+		auto ret = peek_u16(s);
 		s.remove_prefix(2);
 		return static_cast<int16_t>(ret);
 	}
 
-	static uint32_t consume_u24(zst::byte_span& s)
-	{
-		auto ret = as_u24(s);
-		s.remove_prefix(3);
-		return ret;
-	}
+	// uint32_t consume_u24(zst::byte_span& s)
+	// {
+	// 	auto ret = peek_u24(s);
+	// 	s.remove_prefix(3);
+	// 	return ret;
+	// }
 
-	static uint32_t consume_u32(zst::byte_span& s)
+	uint32_t consume_u32(zst::byte_span& s)
 	{
-		auto ret = as_u32(s);
+		auto ret = peek_u32(s);
 		s.remove_prefix(4);
 		return ret;
 	}
@@ -88,7 +89,7 @@ namespace otf
 		return table;
 	}
 
-	static void parse_name_table(OTFont* font, const Table& name_table)
+	static void parse_name_table(FontFile* font, const Table& name_table)
 	{
 		auto buf = zst::byte_span(font->file_bytes, font->file_size);
 		buf.remove_prefix(name_table.offset);
@@ -188,95 +189,7 @@ namespace otf
 		}
 	}
 
-	static void parse_cmap_subtable_0(OTFont* font, zst::byte_span subtable)
-	{
-		auto fmt = consume_u16(subtable);
-		assert(fmt == 0);
-
-		auto len = consume_u16(subtable);
-		assert(len == 3 * sizeof(uint16_t) + 256 * sizeof(uint8_t));
-
-		auto lang = consume_u16(subtable);
-		(void) lang;
-
-		for(size_t i = 0; i < 255; i++)
-			font->cmap[i] = consume_u8(subtable);
-	}
-
-	static void parse_cmap_subtable_4(OTFont* font, zst::byte_span subtable)
-	{
-		auto fmt = consume_u16(subtable);
-		assert(fmt == 4);
-
-		// assert(!"TODO");
-	}
-
-	static void parse_cmap_subtable_6(OTFont* font, zst::byte_span subtable)
-	{
-		auto fmt = consume_u16(subtable);
-		assert(fmt == 6);
-
-		auto len = consume_u16(subtable);
-		auto lang = consume_u16(subtable);
-
-		(void) len;
-		(void) lang;
-
-		auto first = consume_u16(subtable);
-		auto count = consume_u16(subtable);
-
-		for(size_t i = 0; i < count; i++)
-			font->cmap[i + first] = consume_u16(subtable);
-	}
-
-	static void parse_cmap_subtable_10(OTFont* font, zst::byte_span subtable)
-	{
-		auto fmt = consume_u16(subtable);
-		assert(fmt == 10);
-
-		consume_u16(subtable);  // reserved
-		auto len = consume_u32(subtable);
-		auto lang = consume_u32(subtable);
-
-		(void) len;
-		(void) lang;
-
-		auto first = consume_u32(subtable);
-		auto count = consume_u32(subtable);
-
-		for(size_t i = 0; i < count; i++)
-			font->cmap[i + first] = consume_u32(subtable);
-	}
-
-
-	static void parse_cmap_subtable_12_or_13(OTFont* font, zst::byte_span subtable)
-	{
-		auto fmt = consume_u16(subtable);
-		assert(fmt == 12 || fmt == 13);
-
-		consume_u16(subtable);  // reserved
-		auto len = consume_u32(subtable);
-		auto lang = consume_u32(subtable);
-
-		(void) len;
-		(void) lang;
-
-		auto num_groups = consume_u32(subtable);
-		for(size_t i = 0; i < num_groups; i++)
-		{
-			auto start = consume_u32(subtable);
-			auto end = consume_u32(subtable);
-			auto gid = consume_u32(subtable);
-
-			for(auto i = start; i <= end; i++)
-			{
-				if(fmt == 12)   font->cmap[i] = gid + i - start;
-				else            font->cmap[i] = gid;
-			}
-		}
-	}
-
-	static void parse_cmap_table(OTFont* font, const Table& cmap_table)
+	static void parse_cmap_table(FontFile* font, const Table& cmap_table)
 	{
 		auto buf = zst::byte_span(font->file_bytes, font->file_size);
 		buf.remove_prefix(cmap_table.offset);
@@ -289,16 +202,7 @@ namespace otf
 		auto num_tables = consume_u16(buf);
 		zpr::println("{} encoding records", num_tables);
 
-		struct subtable_t
-		{
-			int platform_id;
-			int encoding_id;
-			uint32_t offset;
-			int format;
-		};
-
-		std::vector<subtable_t> subtables;
-
+		std::vector<CMapTable> subtables;
 
 		for(size_t i = 0; i < num_tables; i++)
 		{
@@ -307,14 +211,8 @@ namespace otf
 			auto offset = consume_u32(buf);
 
 			zpr::println("  pid = {}, eid = {}", platform_id, encoding_id);
-
-			auto subtable = table_start.drop(offset);
-			auto format = consume_u16(subtable);
-			zpr::println("  format = {}", format);
-
-			subtables.push_back({ platform_id, encoding_id, offset, format });
+			subtables.push_back({ platform_id, encoding_id, offset, 0 });
 		}
-
 
 		/*
 			preferred table order:
@@ -322,10 +220,12 @@ namespace otf
 			1. unicode (0): 6, 4, 3
 			2. windows (3): 10, 1
 			3. macos (1): 0
+
+			TODO: we might also want to discriminate based on the format kind?
 		*/
 
 		bool found = false;
-		subtable_t chosen_table { };
+		CMapTable chosen_table { };
 		int asdf[][2] = { { 0, 6 }, { 0, 4 }, { 0, 3 }, { 3, 10 }, { 3, 1 }, { 1, 0 } };
 
 		for(auto& [ p, e ] : asdf)
@@ -347,22 +247,25 @@ namespace otf
 		if(!found)
 			sap::internal_error("could not find suitable cmap table");
 
-		zpr::println("found cmap: pid {}, eid {}", chosen_table.platform_id, chosen_table.encoding_id);
 
-		auto subtable_start = table_start.drop(chosen_table.offset);
-		if(chosen_table.format == 0)        parse_cmap_subtable_0(font, subtable_start);
-		else if(chosen_table.format == 4)   parse_cmap_subtable_4(font, subtable_start);
-		else if(chosen_table.format == 6)   parse_cmap_subtable_6(font, subtable_start);
-		else if(chosen_table.format == 10)  parse_cmap_subtable_10(font, subtable_start);
-		else if(chosen_table.format == 12)  parse_cmap_subtable_12_or_13(font, subtable_start);
-		else if(chosen_table.format == 13)  parse_cmap_subtable_12_or_13(font, subtable_start);
-		else sap::internal_error("unsupported subtable format {}", chosen_table.format);
+		// read the format, and also adjust the file offset to be from the start of the file.
+		chosen_table.format = peek_u16(table_start.drop(chosen_table.file_offset));
+		chosen_table.file_offset = table_start.drop(chosen_table.file_offset).data() - font->file_bytes;
+
+		// auto a = table_start.drop(chosen_table.file_offset).data() - font->file_bytes;
+		// auto a = 0xf44;
+		// auto b = chosen_table.file_offset;
+		// zpr::println("{x} vs {x}", a, b);
+
+		// only start searching the tables when we want to look for a glyph.
+		font->preferred_cmap = chosen_table;
+		zpr::println("found cmap: pid {}, eid {}, format {}", chosen_table.platform_id, chosen_table.encoding_id, chosen_table.format);
 	}
 
 
 
 
-	static void parse_head_table(OTFont* font, const Table& head_table)
+	static void parse_head_table(FontFile* font, const Table& head_table)
 	{
 		auto buf = zst::byte_span(font->file_bytes, font->file_size);
 		buf.remove_prefix(head_table.offset);
@@ -381,7 +284,7 @@ namespace otf
 		font->metrics.ymax = consume_i16(buf);
 	}
 
-	static void parse_post_table(OTFont* font, const Table& post_table)
+	static void parse_post_table(FontFile* font, const Table& post_table)
 	{
 		auto buf = zst::byte_span(font->file_bytes, font->file_size);
 		buf.remove_prefix(post_table.offset);
@@ -402,7 +305,7 @@ namespace otf
 		font->metrics.is_monospaced = consume_u32(buf) != 0;
 	}
 
-	static void parse_hhea_table(OTFont* font, const Table& hhea_table)
+	static void parse_hhea_table(FontFile* font, const Table& hhea_table)
 	{
 		auto buf = zst::byte_span(font->file_bytes, font->file_size);
 		buf.remove_prefix(hhea_table.offset);
@@ -418,7 +321,7 @@ namespace otf
 		font->metrics.descent = static_cast<int16_t>(consume_i16(buf));
 	}
 
-	static void parse_os2_table(OTFont* font, const Table& os2_table)
+	static void parse_os2_table(FontFile* font, const Table& os2_table)
 	{
 		auto buf = zst::byte_span(font->file_bytes, font->file_size);
 		buf.remove_prefix(os2_table.offset);
@@ -446,30 +349,25 @@ namespace otf
 
 
 
-
-
-
-
-	OTFont* OTFont::parseFromFile(const std::string& path)
+	static FontFile* parseOTF(zst::byte_span buf)
 	{
-		auto font = util::make<OTFont>();
-		std::tie(font->file_bytes, font->file_size) = util::readEntireFile(path);
-
-		auto buf = zst::byte_span(font->file_bytes, font->file_size);
-		if(buf.size() < 32)
-			sap::internal_error("file too short (< 32 bytes)");
+		// this is perfectly fine, because we own the data referred to by 'buf'.
+		auto font = util::make<FontFile>();
+		font->file_bytes = const_cast<uint8_t*>(buf.data());
+		font->file_size = buf.size();
 
 		// first get the version.
 		auto sfnt_version = Tag(consume_u32(buf));
 
 		if(sfnt_version == Tag("OTTO"))
-			font->font_type = TYPE_CFF;
+			font->outline_type = FontFile::OUTLINES_CFF;
 
 		else if(sfnt_version == Tag(0, 1, 0, 0))
-			font->font_type = TYPE_TRUETYPE;
+			font->outline_type = FontFile::OUTLINES_TRUETYPE;
 
 		else
 			sap::internal_error("unsupported ttf/otf file; unknown header bytes '{}'", sfnt_version.str());
+
 
 		auto num_tables = consume_u16(buf);
 		auto search_range = consume_u16(buf);
@@ -494,5 +392,21 @@ namespace otf
 		}
 
 		return font;
+	}
+
+
+
+
+	FontFile* FontFile::parseFromFile(const std::string& path)
+	{
+		auto [ buf, len ] = util::readEntireFile(path);
+		if(len < 4)
+			sap::internal_error("font file too short");
+
+		if(memcmp(buf, "OTTO", 4) == 0 || memcmp(buf, "\x00\x01\x00\x00", 4) == 0)
+			return parseOTF(zst::byte_span(buf, len));
+
+		else
+			sap::internal_error("unsupported font file; unknown header bytes '{}'", zst::str_view((char*) buf, 4));
 	}
 }

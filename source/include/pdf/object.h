@@ -246,7 +246,9 @@ namespace pdf
 		static const auto TrueType  = pdf::Name("TrueType");
 		static const auto FontBBox  = pdf::Name("FontBBox");
 		static const auto CapHeight  = pdf::Name("CapHeight");
+		static const auto XHeight  = pdf::Name("XHeight");
 		static const auto StemV  = pdf::Name("StemV");
+		static const auto W  = pdf::Name("W");
 		static const auto Ascent  = pdf::Name("Ascent");
 		static const auto Descent  = pdf::Name("Descent");
 		static const auto ItalicAngle  = pdf::Name("ItalicAngle");

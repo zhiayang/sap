@@ -6,7 +6,7 @@
 #include "pdf/font.h"
 #include "pdf/text.h"
 
-#include "otf/otf.h"
+#include "font/font.h"
 
 #include <zpr.h>
 
@@ -16,8 +16,8 @@ int main(int argc, char** argv)
 	auto doc = util::make<pdf::Document>();
 
 	auto font = pdf::Font::fromBuiltin("Times-Roman");
-	auto f2 = pdf::Font::fromFontFile(doc, otf::OTFont::parseFromFile("Meiryo.ttf"));
-	auto f3 = pdf::Font::fromFontFile(doc, otf::OTFont::parseFromFile("subset.ttf"));
+	auto f2 = pdf::Font::fromFontFile(doc, font::FontFile::parseFromFile("Meiryo.ttf"));
+	auto f3 = pdf::Font::fromFontFile(doc, font::FontFile::parseFromFile("MyriadPro-Regular.ttf"));
 
 	auto p1 = util::make<pdf::Page>();
 	auto p2 = util::make<pdf::Page>();
@@ -30,12 +30,12 @@ int main(int argc, char** argv)
 	auto txt2 = util::make<pdf::Text>();
 	txt2->setFont(f2, pdf::mm(17));
 	txt2->moveAbs(pdf::mm(10, 150));
-	txt2->addText("\x09\xb9");
+	txt2->addText("お");
 
 	auto txt3 = util::make<pdf::Text>();
 	txt3->setFont(f3, pdf::mm(17));
 	txt3->moveAbs(pdf::mm(10, 100));
-	txt3->addText("\x00\x58\x00\x5a\x00\x58");
+	txt3->addText("uwu");
 
 	p1->addObject(txt1);
 	p1->addObject(txt2);
