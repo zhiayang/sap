@@ -81,7 +81,7 @@ namespace font
 				}
 				else
 				{
-					return (delta + codepoint - start) & 0xffff;
+					return (delta + codepoint) & 0xffff;
 				}
 			}
 		}

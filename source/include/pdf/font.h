@@ -8,14 +8,11 @@
 #include <zst.h>
 
 #include "pool.h"
-
-namespace font
-{
-	struct FontFile;
-}
+#include "font/font.h"
 
 namespace pdf
 {
+	struct Array;
 	struct Stream;
 	struct Document;
 	struct Dictionary;
@@ -47,9 +44,11 @@ namespace pdf
 		Dictionary* font_dictionary = 0;
 
 		mutable std::map<uint32_t, uint32_t> cmap_cache { };
+		mutable std::map<uint32_t, font::GlyphMetrics> glyph_metrics { };
 
 		// only used for embedded fonts
 		font::FontFile* source_file = 0;
+		Array* glyph_widths_array = 0;
 
 		// pool needs to be a friend because it needs the constructor
 		template <typename> friend struct util::Pool;

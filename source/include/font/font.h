@@ -30,6 +30,12 @@ namespace font
 		double italic_angle;
 	};
 
+	struct GlyphMetrics
+	{
+		int horz_advance;
+		int vert_advance;
+	};
+
 	struct Tag
 	{
 		constexpr Tag() : be_value(0) { }
@@ -79,6 +85,7 @@ namespace font
 		static FontFile* parseFromFile(const std::string& path);
 
 		uint32_t getGlyphIndexForCodepoint(uint32_t codepoint) const;
+		GlyphMetrics getGlyphMetrics(uint32_t glyphId) const;
 
 		// corresponds to name IDs 16 and 17. if not present, they will have the same
 		// value as their *_compat counterparts.
@@ -99,6 +106,10 @@ namespace font
 		std::string copyright_info;     // name 0
 		std::string license_info;       // name 13
 
+		// some stuff we need to save, internal use.
+		size_t num_hmetrics = 0;
+		Table hmtx_table { };
+
 		int font_type = 0;
 		int outline_type = 0;
 
@@ -106,8 +117,6 @@ namespace font
 
 		// cache this so we don't look for it.
 		CMapTable preferred_cmap { };
-
-		std::map<uint32_t, uint32_t> cmap;
 
 		FontMetrics metrics { };
 

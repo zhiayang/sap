@@ -118,6 +118,7 @@ namespace pdf
 		virtual void writeFull(Writer* w) const override;
 
 		static Array* create(std::vector<Object*> objs);
+		static Array* createIndirect(Document* doc, std::vector<Object*> objs);
 
 		template <typename... Objs>
 		static Array* create(Objs&&... objs)

@@ -252,11 +252,6 @@ namespace font
 		chosen_table.format = peek_u16(table_start.drop(chosen_table.file_offset));
 		chosen_table.file_offset = table_start.drop(chosen_table.file_offset).data() - font->file_bytes;
 
-		// auto a = table_start.drop(chosen_table.file_offset).data() - font->file_bytes;
-		// auto a = 0xf44;
-		// auto b = chosen_table.file_offset;
-		// zpr::println("{x} vs {x}", a, b);
-
 		// only start searching the tables when we want to look for a glyph.
 		font->preferred_cmap = chosen_table;
 		zpr::println("found cmap: pid {}, eid {}, format {}", chosen_table.platform_id, chosen_table.encoding_id, chosen_table.format);
@@ -313,12 +308,18 @@ namespace font
 		// skip the versions
 		buf.remove_prefix(4);
 
-		// note: this is the raw value; pdf wants some scaled value that needs
-		// units_per_em to compute (specifically, (ascent / units_per_em) * 1000), but
-		// that princess is in another castle and it's too much hassle here, so leave it
-		// to the pdf layer to convert.
-		font->metrics.ascent = static_cast<int16_t>(consume_i16(buf));
-		font->metrics.descent = static_cast<int16_t>(consume_i16(buf));
+		// we should have already parsed the head table, so this value should be present.
+		assert(font->metrics.units_per_em != 0);
+
+		// PDF wants this value to be scaled to typographic units (not font design units),
+		// so apply the units_per_em scale here.
+		font->metrics.ascent = (consume_i16(buf) * 1000) / font->metrics.units_per_em;
+		font->metrics.descent = (consume_i16(buf) * 1000) / font->metrics.units_per_em;
+
+		// skip all the nonsense
+		buf.remove_prefix(26);
+
+		font->num_hmetrics = consume_u16(buf);
 	}
 
 	static void parse_os2_table(FontFile* font, const Table& os2_table)
@@ -336,8 +337,14 @@ namespace font
 		font->metrics.cap_height = consume_i16(buf);
 	}
 
+	static void parse_htmx_table(FontFile* font, const Table& hmtx_table)
+	{
+		// hhea should have been parsed already, so this should be present.
+		assert(font->num_hmetrics > 0);
+		font->hmtx_table = hmtx_table;
 
-
+		// deferred processing -- we only take the glyph data when it is requested.
+	}
 
 
 
@@ -378,14 +385,18 @@ namespace font
 		(void) entry_selector;
 		(void) range_shift;
 
+		// note that the table records (not the tables themselves, but that's not important) are
+		// guaranteed to be sorted in ascending order. in this case, we know that head comes
+		// before hhea, and hhea comes before hmtx --- so we can avoid running the loop twice.
 		for(size_t i = 0; i < num_tables; i++)
 		{
 			auto tbl = parse_table(buf);
-			if(tbl.tag == Tag("name"))      parse_name_table(font, tbl);
-			else if(tbl.tag == Tag("cmap")) parse_cmap_table(font, tbl);
+			if(tbl.tag == Tag("cmap"))      parse_cmap_table(font, tbl);
 			else if(tbl.tag == Tag("head")) parse_head_table(font, tbl);
-			else if(tbl.tag == Tag("post")) parse_post_table(font, tbl);
 			else if(tbl.tag == Tag("hhea")) parse_hhea_table(font, tbl);
+			else if(tbl.tag == Tag("hmtx")) parse_htmx_table(font, tbl);
+			else if(tbl.tag == Tag("name")) parse_name_table(font, tbl);
+			else if(tbl.tag == Tag("post")) parse_post_table(font, tbl);
 			else if(tbl.tag == Tag("OS/2")) parse_os2_table(font, tbl);
 
 			font->tables.emplace(tbl.tag, tbl);

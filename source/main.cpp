@@ -17,7 +17,8 @@ int main(int argc, char** argv)
 
 	auto font = pdf::Font::fromBuiltin("Times-Roman");
 	auto f2 = pdf::Font::fromFontFile(doc, font::FontFile::parseFromFile("Meiryo.ttf"));
-	auto f3 = pdf::Font::fromFontFile(doc, font::FontFile::parseFromFile("XCharter-Roman.otf"));
+	auto f3 = pdf::Font::fromFontFile(doc, font::FontFile::parseFromFile("DejaVuSansMono.ttf"));
+	auto f4 = pdf::Font::fromFontFile(doc, font::FontFile::parseFromFile("XCharter-Roman.otf"));
 
 	auto p1 = util::make<pdf::Page>();
 	// auto p2 = util::make<pdf::Page>();
@@ -25,22 +26,29 @@ int main(int argc, char** argv)
 	auto txt1 = util::make<pdf::Text>();
 	txt1->setFont(font, pdf::mm(20));
 	txt1->moveAbs(pdf::mm(10, 200));
-	// txt1->addText("hello, world");
-	txt1->addText("AVAVAVA ffi");
+	txt1->addText("hello, world");
+	// txt1->addText("AVAV ffi qpqpqpq");
 
 	auto txt2 = util::make<pdf::Text>();
 	txt2->setFont(f2, pdf::mm(17));
-	txt2->moveAbs(pdf::mm(10, 150));
+	txt2->moveAbs(pdf::mm(10, 175));
 	txt2->addText("こんにちは、世界");
 
 	auto txt3 = util::make<pdf::Text>();
 	txt3->setFont(f3, pdf::mm(17));
-	txt3->moveAbs(pdf::mm(10, 100));
+	txt3->moveAbs(pdf::mm(10, 150));
 	txt3->addText("hello, world");
+
+	auto txt4 = util::make<pdf::Text>();
+	txt4->setFont(f4, pdf::mm(17));
+	txt4->moveAbs(pdf::mm(10, 125));
+	txt4->addText("uwu asdf");
+
 
 	p1->addObject(txt1);
 	p1->addObject(txt2);
 	p1->addObject(txt3);
+	p1->addObject(txt4);
 
 	doc->addPage(p1);
 	// doc->addPage(p2);

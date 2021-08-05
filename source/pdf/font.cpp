@@ -23,6 +23,40 @@ namespace pdf
 		if(!this->font_dictionary->is_indirect)
 			this->font_dictionary->makeIndirect(doc);
 
+		// we need to write out the widths.
+		if(this->source_file && this->glyph_widths_array)
+		{
+			std::vector<std::pair<uint32_t, int>> widths;
+			for(auto& [ gid, m ] : this->glyph_metrics)
+				widths.emplace_back(gid, m.horz_advance);
+
+			std::sort(widths.begin(), widths.end(), [](const auto& a, const auto& b) -> bool {
+				return a.first < b.first;
+			});
+
+			std::vector<std::pair<Integer*, std::vector<Object*>>> widths2;
+			for(size_t i = 0; i < widths.size(); i++)
+			{
+				if(!widths2.empty() && widths2.back().first->value == widths[i].first - 1)
+				{
+					widths2.back().second.push_back(Integer::create(widths[i].second));
+				}
+				else
+				{
+					widths2.emplace_back(Integer::create(widths[i].first),
+						std::vector<Object*> { Integer::create(widths[i].second) });
+				}
+			}
+
+			for(auto& [ gid, ws ] : widths2)
+			{
+				this->glyph_widths_array->values.push_back(gid);
+				this->glyph_widths_array->values.push_back(Array::create(std::move(ws)));
+			}
+		}
+
+
+
 		return this->font_dictionary;
 	}
 
@@ -47,6 +81,10 @@ namespace pdf
 
 			auto gid = this->source_file->getGlyphIndexForCodepoint(codepoint);
 			this->cmap_cache[codepoint] = gid;
+
+			// get and cache the glyph widths as well.
+			auto metrics = this->source_file->getGlyphMetrics(gid);
+			this->glyph_metrics[gid] = metrics;
 
 			return gid;
 		}
@@ -95,14 +133,13 @@ namespace pdf
 
 		bool truetype_outlines = (font->outline_type == font::FontFile::OUTLINES_TRUETYPE);
 
-
+		ret->glyph_widths_array = Array::createIndirect(doc, { });
+		cidfont_dict->add(names::W, IndirectRef::create(ret->glyph_widths_array));
 
 		if(truetype_outlines)
 		{
 			cidfont_dict->add(names::CIDToGIDMap, names::Identity.ptr());
 			cidfont_dict->add(names::Subtype, names::CIDFontType2.ptr());
-
-			// cidfont_dict->add(names::W, Array::create({ }));
 		}
 		else
 		{
@@ -119,10 +156,6 @@ namespace pdf
 				otf-cmap format types 6, 10, 12, and 13, we can very easily make a CMap that is not
 				monstrous in size.
 		*/
-
-		// see note in otf/parser.cpp about the scaling with units_per_em
-		auto units_per_em_scale = 1000.0 / font->metrics.units_per_em;
-
 
 		auto font_bbox = Array::create({
 			Integer::create(font->metrics.xmin),
@@ -157,8 +190,8 @@ namespace pdf
 			{ names::Flags, Integer::create(4) },
 			{ names::FontBBox, font_bbox },
 			{ names::ItalicAngle, Integer::create(font->metrics.italic_angle) },
-			{ names::Ascent, Integer::create(font->metrics.ascent * units_per_em_scale) },
-			{ names::Descent, Integer::create(font->metrics.descent * units_per_em_scale) },
+			{ names::Ascent, Integer::create(font->metrics.ascent) },
+			{ names::Descent, Integer::create(font->metrics.descent) },
 			{ names::CapHeight, Integer::create(cap_height) },
 			{ names::XHeight, Integer::create(69) },
 			{ names::StemV, Integer::create(STEMV_CONSTANT) }

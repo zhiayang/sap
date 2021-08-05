@@ -275,6 +275,11 @@ namespace pdf
 		return createObject<Array>(std::move(objs));
 	}
 
+	Array* Array::createIndirect(Document* doc, std::vector<Object*> objs)
+	{
+		return createIndirectObject<Array>(doc, std::move(objs));
+	}
+
 	Dictionary* Dictionary::create(std::map<Name, Object*> values)
 	{
 		return createObject<Dictionary>(std::move(values));
