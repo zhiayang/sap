@@ -17,8 +17,8 @@ int main(int argc, char** argv)
 
 	auto font = pdf::Font::fromBuiltin("Times-Roman");
 	auto f2 = pdf::Font::fromFontFile(doc, font::FontFile::parseFromFile("Meiryo.ttf"));
-	auto f3 = pdf::Font::fromFontFile(doc, font::FontFile::parseFromFile("DejaVuSansMono.ttf"));
-	auto f4 = pdf::Font::fromFontFile(doc, font::FontFile::parseFromFile("XCharter-Roman.otf"));
+	auto f3 = pdf::Font::fromFontFile(doc, font::FontFile::parseFromFile("XCharter-Roman.otf"));
+	auto f4 = pdf::Font::fromFontFile(doc, font::FontFile::parseFromFile("MyriadPro-Regular.ttf"));
 
 	auto p1 = util::make<pdf::Page>();
 	// auto p2 = util::make<pdf::Page>();
@@ -37,12 +37,12 @@ int main(int argc, char** argv)
 	auto txt3 = util::make<pdf::Text>();
 	txt3->setFont(f3, pdf::mm(17));
 	txt3->moveAbs(pdf::mm(10, 150));
-	txt3->addText("hello, world");
+	txt3->addText("hello, world x\u030c");
 
 	auto txt4 = util::make<pdf::Text>();
 	txt4->setFont(f4, pdf::mm(17));
 	txt4->moveAbs(pdf::mm(10, 125));
-	txt4->addText("uwu asdf");
+	txt4->addText("uwu asdf \x79\xcc\x8c");
 
 
 	p1->addObject(txt1);

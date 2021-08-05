@@ -410,6 +410,8 @@ namespace font
 
 	FontFile* FontFile::parseFromFile(const std::string& path)
 	{
+		zpr::println("\n\nread {}", path);
+
 		auto [ buf, len ] = util::readEntireFile(path);
 		if(len < 4)
 			sap::internal_error("font file too short");

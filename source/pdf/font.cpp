@@ -86,6 +86,9 @@ namespace pdf
 			auto metrics = this->source_file->getGlyphMetrics(gid);
 			this->glyph_metrics[gid] = metrics;
 
+			if(gid == 0)
+				zpr::println("warning: glyph for codepoint U+{04x} not found in font", codepoint);
+
 			return gid;
 		}
 		else
