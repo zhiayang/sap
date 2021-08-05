@@ -253,10 +253,12 @@ namespace pdf
 		static const auto Descent  = pdf::Name("Descent");
 		static const auto ItalicAngle  = pdf::Name("ItalicAngle");
 		static const auto FontFile2  = pdf::Name("FontFile2");
+		static const auto FontFile3  = pdf::Name("FontFile3");
 		static const auto DescendantFonts  = pdf::Name("DescendantFonts");
 		static const auto CIDToGIDMap  = pdf::Name("CIDToGIDMap");
 		static const auto CIDSystemInfo  = pdf::Name("CIDSystemInfo");
 		static const auto CIDFontType0  = pdf::Name("CIDFontType0");
+		static const auto CIDFontType0C = pdf::Name("CIDFontType0C");
 		static const auto CIDFontType2  = pdf::Name("CIDFontType2");
 	}
 }

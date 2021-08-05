@@ -175,20 +175,24 @@ namespace pdf
 			TODO: for now we are dumping the entire file into the pdf; we probably want some kind of subsetting functionality,
 			which requires improving the robustness of the OTF parser (and handling its glyf [or the CFF equiv.) table.
 		*/
+		auto file_contents = Stream::create(doc, { });
+		file_contents->append(font->file_bytes, font->file_size);
+
 		if(truetype_outlines)
 		{
 			// TODO: this makes a copy of the file (since Stream wants to own the memory also),
 			// which is not ideal.
-			auto file_contents = Stream::create(doc, { });
-			file_contents->append(font->file_bytes, font->file_size);
-
 			font_desc->add(names::FontFile2, IndirectRef::create(file_contents));
 			ret->font_type = FONT_TRUETYPE_CID;
 		}
 		else
 		{
-			// this is too complicated for me.
-			assert(!"TODO: CFF fonts not implemented");
+			// the spec is very very poorly worded on this, BUT from what I can gather, for CFF fonts we can
+			// just always use FontFile3 and CIDFontType0C.
+
+			file_contents->dict->add(names::Subtype, names::CIDFontType0C.ptr());
+
+			font_desc->add(names::FontFile3, IndirectRef::create(file_contents));
 			ret->font_type = FONT_CFF_CID;
 		}
 
