@@ -36,7 +36,9 @@ The eventual goal of this project is to completely replace LaTeX as my document 
 
 1. Graphics support rivalling at least the basic features of PGF/TikZ
 2. Full document metaprogramming (freely manipulating text)
-3. ...?
+3. Some basic level of typesetting mathematical expressions
+4. Some level of bibliography/referencing support
+5. ...?
 
 ### non-goals
 Non-goals are split into two categories: things I can't do because this is a one-person effort, and things I won't do because they are not in the scope of this project. For the former, pull requests are very appreciated (:
