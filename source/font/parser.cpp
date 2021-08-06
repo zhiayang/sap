@@ -74,21 +74,6 @@ namespace font
 		return ret;
 	}
 
-	static Table parse_table(zst::byte_span& buf)
-	{
-		if(buf.size() < 4 * sizeof(uint32_t))
-			sap::internal_error("unexpected end of file (while parsing table header)");
-
-		Table table { };
-		table.tag = Tag(consume_u32(buf));
-		table.checksum = consume_u32(buf);
-		table.offset = consume_u32(buf);
-		table.length = consume_u32(buf);
-
-		zpr::println("found '{}' table, ofs={x}, length={x}", table.tag.str(), table.offset, table.length);
-		return table;
-	}
-
 	static void parse_name_table(FontFile* font, const Table& name_table)
 	{
 		auto buf = zst::byte_span(font->file_bytes, font->file_size);
@@ -200,7 +185,7 @@ namespace font
 		(void) version;
 
 		auto num_tables = consume_u16(buf);
-		zpr::println("{} encoding records", num_tables);
+		// zpr::println("{} encoding records", num_tables);
 
 		std::vector<CMapTable> subtables;
 
@@ -210,7 +195,7 @@ namespace font
 			auto encoding_id = consume_u16(buf);
 			auto offset = consume_u32(buf);
 
-			zpr::println("  pid = {}, eid = {}", platform_id, encoding_id);
+			// zpr::println("  pid = {}, eid = {}", platform_id, encoding_id);
 			subtables.push_back({ platform_id, encoding_id, offset, 0 });
 		}
 
@@ -254,7 +239,7 @@ namespace font
 
 		// only start searching the tables when we want to look for a glyph.
 		font->preferred_cmap = chosen_table;
-		zpr::println("found cmap: pid {}, eid {}, format {}", chosen_table.platform_id, chosen_table.encoding_id, chosen_table.format);
+		// zpr::println("found cmap: pid {}, eid {}, format {}", chosen_table.platform_id, chosen_table.encoding_id, chosen_table.format);
 	}
 
 
@@ -355,6 +340,24 @@ namespace font
 
 
 
+	/*
+		TODO: we need a better way to parse this. probably some kind of Parser
+		struct that allows marking offset starts and other stuff.
+	*/
+	static Table parse_table(zst::byte_span& buf)
+	{
+		if(buf.size() < 4 * sizeof(uint32_t))
+			sap::internal_error("unexpected end of file (while parsing table header)");
+
+		Table table { };
+		table.tag = Tag(consume_u32(buf));
+		table.checksum = consume_u32(buf);
+		table.offset = consume_u32(buf);
+		table.length = consume_u32(buf);
+
+		// zpr::println("found '{}' table, ofs={x}, length={x}", table.tag.str(), table.offset, table.length);
+		return table;
+	}
 
 	static FontFile* parseOTF(zst::byte_span buf)
 	{
@@ -397,6 +400,7 @@ namespace font
 			else if(tbl.tag == Tag("hmtx")) parse_htmx_table(font, tbl);
 			else if(tbl.tag == Tag("name")) parse_name_table(font, tbl);
 			else if(tbl.tag == Tag("post")) parse_post_table(font, tbl);
+			else if(tbl.tag == Tag("GPOS")) parseGPOS(font, tbl);
 			else if(tbl.tag == Tag("OS/2")) parse_os2_table(font, tbl);
 
 			font->tables.emplace(tbl.tag, tbl);

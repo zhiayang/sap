@@ -7,8 +7,15 @@
 #include <map>
 #include <string>
 #include <vector>
+#include <optional>
+
 #include <cstddef>
 #include <cstdint>
+
+#include <zst.h>
+
+#include "font/tag.h"
+#include "font/features.h"
 
 namespace font
 {
@@ -34,34 +41,9 @@ namespace font
 	{
 		int horz_advance;
 		int vert_advance;
-	};
 
-	struct Tag
-	{
-		constexpr Tag() : be_value(0) { }
-		constexpr explicit Tag(uint32_t sp) : be_value(sp) { }
-		constexpr explicit Tag(const char (&f)[5]) : Tag(f[0], f[1], f[2], f[3]) { }
-
-		constexpr Tag(uint8_t a, uint8_t b, uint8_t c, uint8_t d)
-			: be_value(((uint32_t) a << 24) | ((uint32_t) b << 16) | ((uint32_t) c << 8) | ((uint32_t) d << 0))
-		{ }
-
-		constexpr bool operator== (const Tag& t) const { return this->be_value == t.be_value; }
-		constexpr bool operator!= (const Tag& t) const { return !(*this == t); };
-
-		inline std::string str() const
-		{
-			return std::string( {
-				(char) ((be_value & 0xff000000) >> 24),
-				(char) ((be_value & 0x00ff0000) >> 16),
-				(char) ((be_value & 0x0000ff00) >> 8),
-				(char) ((be_value & 0x000000ff) >> 0),
-			});
-		}
-
-		constexpr bool operator< (const Tag& t) const { return this->be_value < t.be_value; }
-
-		uint32_t be_value;
+		int horz_placement;
+		int vert_placement;
 	};
 
 	struct Table
@@ -87,6 +69,9 @@ namespace font
 		uint32_t getGlyphIndexForCodepoint(uint32_t codepoint) const;
 		GlyphMetrics getGlyphMetrics(uint32_t glyphId) const;
 
+		std::optional<GlyphAdjustment> getGlyphAdjustment(uint32_t glyphId) const;
+		std::optional<std::pair<GlyphAdjustment, GlyphAdjustment>> getGlyphPairAdjustments(uint32_t g1, uint32_t g2) const;
+
 		// corresponds to name IDs 16 and 17. if not present, they will have the same
 		// value as their *_compat counterparts.
 		std::string family;
@@ -110,6 +95,9 @@ namespace font
 		size_t num_hmetrics = 0;
 		Table hmtx_table { };
 
+		GPosTable gpos_tables { };
+
+
 		int font_type = 0;
 		int outline_type = 0;
 
@@ -128,4 +116,13 @@ namespace font
 		static constexpr int OUTLINES_TRUETYPE = 1;
 		static constexpr int OUTLINES_CFF      = 2;
 	};
+
+
+	uint16_t peek_u16(const zst::byte_span& s);
+	uint32_t peek_u32(const zst::byte_span& s);
+	uint8_t consume_u8(zst::byte_span& s);
+	uint16_t consume_u16(zst::byte_span& s);
+	int16_t consume_i16(zst::byte_span& s);
+	uint32_t consume_u24(zst::byte_span& s);
+	uint32_t consume_u32(zst::byte_span& s);
 }

@@ -84,6 +84,16 @@ namespace pdf
 
 			// get and cache the glyph widths as well.
 			auto metrics = this->source_file->getGlyphMetrics(gid);
+
+			// if single adjustments are present, then add them now.
+			if(auto single_adj = this->source_file->getGlyphAdjustment(gid); single_adj.has_value())
+			{
+				metrics.horz_advance += single_adj->x_advance;
+				metrics.vert_advance += single_adj->y_advance;
+				metrics.horz_placement += single_adj->x_placement;
+				metrics.vert_placement += single_adj->y_placement;
+			}
+
 			this->glyph_metrics[gid] = metrics;
 
 			if(gid == 0)

@@ -9,6 +9,7 @@
 #include <string>
 #include <vector>
 #include <utility>
+#include <optional>
 #include <type_traits>
 #include <string_view>
 

@@ -11,14 +11,6 @@
 
 namespace font
 {
-	extern uint16_t peek_u16(const zst::byte_span& s);
-	extern uint32_t peek_u32(const zst::byte_span& s);
-	extern uint8_t consume_u8(zst::byte_span& s);
-	extern uint16_t consume_u16(zst::byte_span& s);
-	extern int16_t consume_i16(zst::byte_span& s);
-	extern uint32_t consume_u24(zst::byte_span& s);
-	extern uint32_t consume_u32(zst::byte_span& s);
-
 	// all of these return 0 if the codepoint is not found, which should (in all sensible fonts)
 	// correspond to the "notdef" character, which is usually a rectangle with an 'X' in it.
 	static uint32_t find_in_subtable_0(zst::byte_span subtable, uint32_t codepoint)

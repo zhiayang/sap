@@ -26,7 +26,7 @@ int main(int argc, char** argv)
 	auto txt1 = util::make<pdf::Text>();
 	txt1->setFont(font, pdf::mm(20));
 	txt1->moveAbs(pdf::mm(10, 200));
-	txt1->addText("hello, world");
+	txt1->addText("AYAYA oWo");
 	// txt1->addText("AVAV ffi qpqpqpq");
 
 	auto txt2 = util::make<pdf::Text>();
@@ -42,7 +42,8 @@ int main(int argc, char** argv)
 	auto txt4 = util::make<pdf::Text>();
 	txt4->setFont(f4, pdf::mm(17));
 	txt4->moveAbs(pdf::mm(10, 125));
-	txt4->addText("uwu asdf \x79\xcc\x8c");
+	// txt4->addText("uwu asdf \x79\xcc\x8c");
+	txt4->addText("AYAYA oWo");
 
 
 	p1->addObject(txt1);
