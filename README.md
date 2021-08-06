@@ -7,7 +7,7 @@
 
 ### introduction
 
-sap (not to be confused with SAP) is a document typesetting/preparation system similar in concept to [LaTeX](https://www.latex-project.org) (and derivatives), with the following major differences:
+sap (not to be confused with [Systeme, Anwendungen und Produkte in der Datenverarbeitung](https://www.sap.com)) is a document typesetting/preparation system similar in concept to [LaTeX](https://www.latex-project.org) (and derivatives), with the following major differences:
 
 1. it is not from 1984 (or 1994 if you count LaTex 2e)
 2. it is not a glorified macro system
@@ -34,7 +34,7 @@ Since this is a work-in-progress, features are very limited.
 
 The eventual goal of this project is to completely replace LaTeX as my document typesetting system. To this end, there are some "big features" that are yet to come:
 
-1. Graphics support rivalling at least the basic feature of PGF/TikZ
+1. Graphics support rivalling at least the basic features of PGF/TikZ
 2. Full document metaprogramming (freely manipulating text)
 3. ...?
 
