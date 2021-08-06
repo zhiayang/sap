@@ -7,6 +7,8 @@
 #include <sys/stat.h>
 #include <sys/mman.h>
 
+#include <cerrno>
+
 #include "util.h"
 #include "error.h"
 
