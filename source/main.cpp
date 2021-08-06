@@ -26,25 +26,26 @@ int main(int argc, char** argv)
 	auto txt1 = util::make<pdf::Text>();
 	txt1->setFont(font, pdf::mm(20));
 	txt1->moveAbs(pdf::mm(10, 200));
-	txt1->addText("AYAYA oWo");
+	// txt1->addText("AYAYA oWo");
 	// txt1->addText("AVAV ffi qpqpqpq");
 
 	auto txt2 = util::make<pdf::Text>();
 	txt2->setFont(f2, pdf::mm(17));
 	txt2->moveAbs(pdf::mm(10, 175));
-	txt2->addText("こんにちは、世界");
+	// txt2->addText("こんにちは、世界");
 
 	auto txt3 = util::make<pdf::Text>();
 	txt3->setFont(f3, pdf::mm(17));
 	txt3->moveAbs(pdf::mm(10, 150));
-	txt3->addText("hello, world x\u030c");
+	// txt3->addText("hello, world x\u030c");
 
 	auto txt4 = util::make<pdf::Text>();
 	txt4->setFont(f4, pdf::mm(17));
 	txt4->moveAbs(pdf::mm(10, 125));
 	// txt4->addText("uwu asdf \x79\xcc\x8c");
-	txt4->addText("AYAYA oWo");
-
+	txt4->addText("AYAYA");
+	txt4->offset(pdf::mm(0, -15));
+	txt4->addText("To Wo F. A'");
 
 	p1->addObject(txt1);
 	p1->addObject(txt2);

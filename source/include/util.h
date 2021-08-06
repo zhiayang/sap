@@ -23,5 +23,5 @@ namespace unicode
 	std::string utf8FromUtf16(zst::span<uint16_t> utf16);
 	std::string utf8FromUtf16BigEndianBytes(zst::byte_span bytes);
 
-	uint32_t codepointFromUtf8(zst::byte_span& utf8);
+	uint32_t consumeCodepointFromUtf8(zst::byte_span& utf8);
 }

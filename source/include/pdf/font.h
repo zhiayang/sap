@@ -19,9 +19,12 @@ namespace pdf
 
 	struct Font
 	{
+		using KerningPair = std::pair<font::GlyphAdjustment, font::GlyphAdjustment>;
+
 		Dictionary* serialise(Document* doc) const;
 
 		uint32_t getGlyphIdFromCodepoint(uint32_t codepoint) const;
+		std::optional<KerningPair> getKerningForGlyphs(uint32_t glyph1, uint32_t glyph2) const;
 
 		int font_type = 0;
 		int encoding_kind = 0;
@@ -45,6 +48,7 @@ namespace pdf
 
 		mutable std::map<uint32_t, uint32_t> cmap_cache { };
 		mutable std::map<uint32_t, font::GlyphMetrics> glyph_metrics { };
+		mutable std::map<std::pair<uint32_t, uint32_t>, KerningPair> kerning_pairs { };
 
 		// only used for embedded fonts
 		font::FontFile* source_file = 0;

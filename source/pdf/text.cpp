@@ -17,22 +17,77 @@ namespace pdf
 	{
 		std::string ret;
 		auto sv = text.bytes();
-		while(sv.size() > 0)
+
+		uint32_t next_gid = 0;
+
+		while(sv.size() > 0 || next_gid != 0)
 		{
-			auto cp = unicode::codepointFromUtf8(sv);
-			auto gid = font->getGlyphIdFromCodepoint(cp);
+			uint32_t gid = next_gid;
+			next_gid = 0;
+
+			if(gid == 0)
+			{
+				auto cp = unicode::consumeCodepointFromUtf8(sv);
+				gid = font->getGlyphIdFromCodepoint(cp);
+			}
+
+			// we consumed one already!
+			if(sv.size() > 0)
+			{
+				auto next_cp = unicode::consumeCodepointFromUtf8(sv);
+				next_gid = font->getGlyphIdFromCodepoint(next_cp);
+			}
+
 
 			// TODO: use CMap or something to handle this situation.
-			if(gid > 0xffff)
+			if(gid > 0xffff || next_gid > 0xffff)
 				pdf::error("TODO: sorry");
 
-			if(font->encoding_kind == Font::ENCODING_CID)
-				ret += zpr::sprint("{02x}{02x}", (gid & 0xff00) >> 8, gid & 0xff);
+			// TODO: this is pretty suboptimal output
+			auto append_glyph = [&ret, &font](uint32_t g) {
+				if(font->encoding_kind == Font::ENCODING_CID)
+					ret += zpr::sprint("<{02x}{02x}>", (g & 0xff00) >> 8, g & 0xff);
+				else
+					ret += zpr::sprint("<{02x}>", g & 0xff);
+			};
+
+			auto kerning_pair = font->getKerningForGlyphs(gid, next_gid);
+			if(kerning_pair.has_value())
+			{
+				/*
+					TODO: honestly, i don't know how this is "supposed" to be handled. Our values
+					are the same as what lualatex puts out for the font, so that's ok. the problem
+					is that, according to the spec, adj1 is supposed to apply to the first glyph and
+					adj2 to the second one (duh).
+
+					except that all the kerning pairs only have adjustments for the first in the pair,
+					ie. their effect would be to move the first glyph closer to the second one, instead
+					of (logically) the second one closer to the first.
+
+					again, how lualatex does this is (apparently) to use adj1 to move the second glyph
+					instead (which produces the same graphical effect).
+
+					so far i haven't found a font that has a non-zero adj2 (and there's a warning here in
+					case such a font appears), so for now we just copy what lualatex (allegedly) does.
+				*/
+				auto adj1 = -1 * kerning_pair->first.horz_advance;
+				auto adj2 = -1 * kerning_pair->second.horz_advance;
+
+				if(adj2 != 0)
+					zpr::println("warning: unsupported case where adj2 is not 0");
+
+				append_glyph(gid);
+
+				if(adj1 != 0)
+					ret += zpr::sprint("{}", adj1);
+			}
 			else
-				ret += zpr::sprint("{02x}", gid & 0xff);
+			{
+				append_glyph(gid);
+			}
 		}
 
-		return "<" + ret + ">";
+		return ret;
 	}
 
 
@@ -81,11 +136,14 @@ namespace pdf
 		if(this->in_group)
 			this->commands += zpr::sprint(" {}", encode_text_with_font(this->font, text));
 		else
-			this->commands += zpr::sprint(" {} Tj", encode_text_with_font(this->font, text));
+			this->commands += zpr::sprint(" [{}] TJ", encode_text_with_font(this->font, text));
 	}
 
 	void Text::addText(Scalar offset, zst::str_view text)
 	{
+		if(!this->in_group)
+			pdf::error("addText() with offset can only be used after beginGroup()");
+
 		this->commands += zpr::sprint(" {} {}", offset, encode_text_with_font(this->font, text));
 	}
 

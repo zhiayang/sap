@@ -73,7 +73,7 @@ namespace unicode
 		return ret;
 	}
 
-	uint32_t codepointFromUtf8(zst::byte_span& utf8)
+	uint32_t consumeCodepointFromUtf8(zst::byte_span& utf8)
 	{
 		int32_t codepoint = 0;
 		auto read = utf8proc_iterate(utf8.data(), utf8.size(), &codepoint);

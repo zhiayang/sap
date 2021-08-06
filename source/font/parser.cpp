@@ -414,7 +414,7 @@ namespace font
 
 	FontFile* FontFile::parseFromFile(const std::string& path)
 	{
-		zpr::println("\n\nread {}", path);
+		zpr::println("\nread {}", path);
 
 		auto [ buf, len ] = util::readEntireFile(path);
 		if(len < 4)

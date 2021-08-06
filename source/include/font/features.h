@@ -22,10 +22,10 @@ namespace font
 
 	struct GlyphAdjustment
 	{
-		int16_t x_placement;
-		int16_t y_placement;
-		int16_t x_advance;
-		int16_t y_advance;
+		int16_t horz_placement;
+		int16_t vert_placement;
+		int16_t horz_advance;
+		int16_t vert_advance;
 	};
 
 	struct LookupTable
@@ -53,6 +53,7 @@ namespace font
 	};
 
 	std::vector<TaggedTable> parseTaggedList(FontFile* font, zst::byte_span list);
+	int getGlyphClass(zst::byte_span classdef_table, uint32_t glyphId);
 
 	void parseGPOS(FontFile* font, const Table& gpos_table);
 }

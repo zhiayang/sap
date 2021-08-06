@@ -88,10 +88,10 @@ namespace pdf
 			// if single adjustments are present, then add them now.
 			if(auto single_adj = this->source_file->getGlyphAdjustment(gid); single_adj.has_value())
 			{
-				metrics.horz_advance += single_adj->x_advance;
-				metrics.vert_advance += single_adj->y_advance;
-				metrics.horz_placement += single_adj->x_placement;
-				metrics.vert_placement += single_adj->y_placement;
+				metrics.horz_advance += single_adj->horz_advance;
+				metrics.vert_advance += single_adj->vert_advance;
+				metrics.horz_placement += single_adj->horz_placement;
+				metrics.vert_placement += single_adj->vert_placement;
 			}
 
 			this->glyph_metrics[gid] = metrics;
@@ -106,6 +106,24 @@ namespace pdf
 			pdf::error("unsupported encoding");
 		}
 	}
+
+	std::optional<Font::KerningPair> Font::getKerningForGlyphs(uint32_t glyph1, uint32_t glyph2) const
+	{
+		auto pair = std::make_pair(glyph1, glyph2);
+		if(auto it = this->kerning_pairs.find(pair); it != this->kerning_pairs.end())
+			return it->second;
+
+		if(this->source_file != nullptr)
+		{
+			auto kp = this->source_file->getGlyphPairAdjustments(glyph1, glyph2);
+			if(kp.has_value())
+				return *kp;
+		}
+
+		return { };
+	}
+
+
 
 	Font* Font::fromFontFile(Document* doc, font::FontFile* font)
 	{
