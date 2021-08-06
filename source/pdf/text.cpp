@@ -18,24 +18,27 @@ namespace pdf
 		std::string ret;
 		auto sv = text.bytes();
 
+		bool have_next = false;
 		uint32_t next_gid = 0;
 
-		while(sv.size() > 0 || next_gid != 0)
+		while(sv.size() > 0 || have_next)
 		{
 			uint32_t gid = next_gid;
-			next_gid = 0;
-
-			if(gid == 0)
+			if(!have_next)
 			{
 				auto cp = unicode::consumeCodepointFromUtf8(sv);
 				gid = font->getGlyphIdFromCodepoint(cp);
 			}
+
+			have_next = false;
+
 
 			// we consumed one already!
 			if(sv.size() > 0)
 			{
 				auto next_cp = unicode::consumeCodepointFromUtf8(sv);
 				next_gid = font->getGlyphIdFromCodepoint(next_cp);
+				have_next = true;
 			}
 
 
