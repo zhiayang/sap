@@ -11,6 +11,8 @@
 
 namespace pdf
 {
+	constexpr int COMPRESSION_LEVEL = 2048;
+
 	void Stream::setCompressed(bool compressed)
 	{
 		if(compressed != this->is_compressed)
@@ -28,7 +30,7 @@ namespace pdf
 					[](const void* buf, int len, void* user) -> int {
 						reinterpret_cast<Stream*>(user)->bytes.append(reinterpret_cast<const uint8_t*>(buf), len);
 						return 1;
-					}, this, TDEFL_WRITE_ZLIB_HEADER);
+					}, this,COMPRESSION_LEVEL | TDEFL_WRITE_ZLIB_HEADER);
 
 				if(res != TDEFL_STATUS_OKAY)
 					pdf::error("failed to initialise deflate state");
