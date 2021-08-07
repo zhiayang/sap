@@ -68,7 +68,7 @@ namespace font
 	};
 
 
-	constexpr size_t MAX_LIGATURE_LENGTH = 4;
+	constexpr size_t MAX_LIGATURE_LENGTH = 8;
 	struct GlyphLigature
 	{
 		uint32_t num_glyphs;

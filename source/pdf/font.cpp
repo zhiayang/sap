@@ -299,7 +299,7 @@ namespace pdf
 			glyphs would end up inside ><
 		*/
 		ret->glyph_ligatures = font_file->getAllGlyphLigatures();
-		ret->kerning_pairs = font_file->getAllKerningPairs();
+		// ret->kerning_pairs = font_file->getAllKerningPairs();
 
 		return ret;
 	}

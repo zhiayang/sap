@@ -23,7 +23,8 @@ Since this is a work-in-progress, features are very limited.
 - [ ] Embedded font subsetting
 - [ ] Compressed PDF streams
 - [x] Glyph kerning (via GPOS table)
-- [ ] Glyph ligatures (via GSUB table)
+- [ ] Glyph kerning (via legacy `kern` table)
+- [x] Glyph ligatures (via GSUB table)
 - [ ] Unicode substitution (eg. codepoint (de)composition)
 - [ ] Vertical writing
 - [ ] Literally any text typesetting
