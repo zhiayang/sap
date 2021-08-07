@@ -400,7 +400,8 @@ namespace font
 			else if(tbl.tag == Tag("hmtx")) parse_htmx_table(font, tbl);
 			else if(tbl.tag == Tag("name")) parse_name_table(font, tbl);
 			else if(tbl.tag == Tag("post")) parse_post_table(font, tbl);
-			else if(tbl.tag == Tag("GPOS")) parseGPOS(font, tbl);
+			else if(tbl.tag == Tag("GPOS")) parseGPos(font, tbl);
+			else if(tbl.tag == Tag("GSUB")) parseGSub(font, tbl);
 			else if(tbl.tag == Tag("OS/2")) parse_os2_table(font, tbl);
 
 			font->tables.emplace(tbl.tag, tbl);

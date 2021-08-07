@@ -72,6 +72,8 @@ namespace font
 		std::optional<GlyphAdjustment> getGlyphAdjustment(uint32_t glyphId) const;
 		std::optional<std::pair<GlyphAdjustment, GlyphAdjustment>> getGlyphPairAdjustments(uint32_t g1, uint32_t g2) const;
 
+		std::map<uint32_t, GlyphLigatureSet> getAllGlyphLigatures() const;
+
 		// corresponds to name IDs 16 and 17. if not present, they will have the same
 		// value as their *_compat counterparts.
 		std::string family;
@@ -96,6 +98,7 @@ namespace font
 		Table hmtx_table { };
 
 		GPosTable gpos_tables { };
+		GSubTable gsub_tables { };
 
 
 		int font_type = 0;

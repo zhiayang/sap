@@ -43,7 +43,7 @@
 
 
 /*
-	Version 2.4.6
+	Version 2.5.0
 	=============
 
 
@@ -2235,6 +2235,42 @@ namespace zpr
 		}
 	};
 
+	template <typename T, size_t N>
+	struct print_formatter<T (&)[N]>
+	{
+		template <typename Cb>
+		void print(const T (&array)[N], Cb&& cb, format_args args)
+		{
+			if(N == 0)
+			{
+				if(!args.alternate())
+					cb("[ ]");
+				return;
+			}
+
+			if(!args.alternate())
+				cb("[");
+
+			for(size_t i = 0; i < N; i++)
+			{
+				detail::print_one(static_cast<Cb&&>(cb), args, array[i]);
+				if(i + 1 != N)
+				{
+					if(!args.alternate())
+						cb(", ");
+				}
+				else
+				{
+					break;
+				}
+			}
+
+			if(!args.alternate())
+				cb("]");
+		}
+	};
+
+
 
 
 	template <>
@@ -2295,6 +2331,12 @@ namespace zpr
 
 	Version History
 	===============
+
+	2.5.0 - 07/08/2021
+	------------------
+	Add a printer for T[N] (ie. arrays of arbitrary type)
+
+
 
 	2.4.6 - 04/07/2021
 	------------------

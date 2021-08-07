@@ -41,70 +41,6 @@ namespace font
 		return ret;
 	}
 
-	// returns -1 if not found.
-	static int32_t get_coverage_index(zst::byte_span cov_table, uint32_t glyphId)
-	{
-		auto format = consume_u16(cov_table);
-
-		if(format == 1)
-		{
-			auto count = consume_u16(cov_table);
-			auto array = cov_table.cast<uint16_t>();
-
-			// binary search
-			size_t low = 0;
-			size_t high = count;
-
-			while(low < high)
-			{
-				auto mid = (low + high) / 2u;
-				auto val = util::convertBEU16(array[mid]);
-
-				if(val == glyphId)
-					return static_cast<int32_t>(mid);
-				else if(val < glyphId)
-					low = mid + 1;
-				else
-					high = mid;
-			}
-
-			return -1;
-		}
-		else if(format == 2)
-		{
-			struct RangeRecord { uint16_t start; uint16_t end; uint16_t cov_idx; } __attribute__((packed));
-			static_assert(sizeof(RangeRecord) == 3 * sizeof(uint16_t));
-
-			auto count = consume_u16(cov_table);
-			auto array = cov_table.take(count * sizeof(RangeRecord)).cast<RangeRecord>();
-
-			// binary search the RangeRecords
-			size_t low = 0;
-			size_t high = count;
-			while(low < high)
-			{
-				auto mid = (low + high) / 2u;
-				auto val = array[mid];
-
-				auto start = util::convertBEU16(val.start);
-				auto end = util::convertBEU16(val.end);
-
-				if(start <= glyphId && glyphId <= end)
-					return static_cast<int32_t>(util::convertBEU16(val.cov_idx) + glyphId - start);
-				else if(end < glyphId)
-					low = mid + 1;
-				else
-					high = mid;
-			}
-
-			return -1;
-		}
-		else
-		{
-			sap::internal_error("invalid OTF coverage table format ({})", format);
-		}
-	}
-
 	static GlyphAdjustment scale_adjustments(GlyphAdjustment adj, int units_per_em)
 	{
 		adj.horz_advance = (adj.horz_advance * 1000) / units_per_em;
@@ -158,12 +94,12 @@ namespace font
 				sap::internal_error("unknown format {}", format);
 
 			// the coverage table only lists the first glyph id.
-			if(auto coverage_idx = get_coverage_index(subtable_start.drop(cov_ofs), gid1); coverage_idx != -1)
+			if(auto coverage_idx = getGlyphCoverageIndex(subtable_start.drop(cov_ofs), gid1); coverage_idx.has_value())
 			{
 				if(format == 1)
 				{
 					auto num_pair_sets = consume_u16(subtable);
-					assert(coverage_idx < num_pair_sets);
+					assert(*coverage_idx < num_pair_sets);
 
 				#if 0
 					// this thing doesn't use offsets, so we can only iterate.
@@ -179,7 +115,7 @@ namespace font
 						+ get_value_record_size(value_fmt1)
 						+ get_value_record_size(value_fmt2);
 
-					auto pairset_offset = peek_u16(subtable.drop(coverage_idx * sizeof(uint16_t)));
+					auto pairset_offset = peek_u16(subtable.drop(*coverage_idx * sizeof(uint16_t)));
 					auto pairset_table = subtable_start.drop(pairset_offset);
 
 					auto num_pairs = consume_u16(pairset_table);
@@ -272,7 +208,7 @@ namespace font
 			if(format != 1 && format != 2)
 				sap::internal_error("unknown format {}", format);
 
-			if(auto coverage_idx = get_coverage_index(subtable_start.drop(cov_ofs), glyphId); coverage_idx != -1)
+			if(auto coverage_idx = getGlyphCoverageIndex(subtable_start.drop(cov_ofs), glyphId); coverage_idx.has_value())
 			{
 				if(format == 1)
 				{
@@ -283,7 +219,7 @@ namespace font
 					auto num_records = consume_u16(subtable);
 					assert(coverage_idx < num_records);
 
-					subtable.remove_prefix(get_value_record_size(value_fmt) * coverage_idx);
+					subtable.remove_prefix(get_value_record_size(value_fmt) * *coverage_idx);
 					return scale_adjustments(parse_value_record(subtable, value_fmt), this->metrics.units_per_em);
 				}
 			}
@@ -292,29 +228,7 @@ namespace font
 		return { };
 	}
 
-	static void parse_lookup_table(FontFile* font, zst::byte_span buf)
-	{
-		auto start = buf;
-
-		auto type = consume_u16(buf);
-		consume_u16(buf);   // ignore the flags
-		consume_u16(buf);   // and the subtable_count
-
-		if(type >= GPOS_LOOKUP_MAX)
-		{
-			zpr::println("warning: invalid GPOS lookup table with type {}", type);
-			return;
-		}
-
-		LookupTable tbl { };
-		tbl.present = true;
-		tbl.type = type;
-		tbl.file_offset = start.data() - font->file_bytes;
-
-		font->gpos_tables.lookup_tables[type] = std::move(tbl);
-	}
-
-	void parseGPOS(FontFile* font, const Table& gpos_table)
+	void parseGPos(FontFile* font, const Table& gpos_table)
 	{
 		auto buf = zst::byte_span(font->file_bytes, font->file_size);
 		buf.remove_prefix(gpos_table.offset);
@@ -324,8 +238,11 @@ namespace font
 		auto major = consume_u16(buf);
 		auto minor = consume_u16(buf);
 
-		(void) major;
-		(void) minor;
+		if(major != 1 || (minor != 0 && minor != 1))
+		{
+			zpr::println("warning: unsupported GPOS table version {}.{}, ignoring", major, minor);
+			return;
+		}
 
 		auto script_list = parseTaggedList(font, table_start.drop(consume_u16(buf)));
 		auto feature_list = parseTaggedList(font, table_start.drop(consume_u16(buf)));
@@ -337,7 +254,12 @@ namespace font
 		for(size_t i = 0; i < num_lookup_tables; i++)
 		{
 			auto offset = consume_u16(lookup_tables);
-			parse_lookup_table(font, table_start.drop(lookup_list_ofs + offset));
+			auto tbl = parseLookupTable(font, table_start.drop(lookup_list_ofs + offset));
+
+			if(tbl.type >= GPOS_LOOKUP_MAX)
+				zpr::println("warning: invalid GPOS lookup table with type {}", tbl.type);
+			else
+				font->gpos_tables.lookup_tables[tbl.type] = std::move(tbl);
 		}
 	}
 }

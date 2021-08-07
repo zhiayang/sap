@@ -13,7 +13,6 @@ namespace font
 {
 	int getGlyphClass(zst::byte_span table, uint32_t glyphId)
 	{
-		auto table_start = table;
 		auto format = consume_u16(table);
 
 		if(format != 1 && format != 2)

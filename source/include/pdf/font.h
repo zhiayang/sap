@@ -4,6 +4,7 @@
 
 #pragma once
 
+#include <set>
 #include <map>
 #include <zst.h>
 
@@ -26,6 +27,13 @@ namespace pdf
 		uint32_t getGlyphIdFromCodepoint(uint32_t codepoint) const;
 		std::optional<KerningPair> getKerningForGlyphs(uint32_t glyph1, uint32_t glyph2) const;
 
+		std::optional<font::GlyphLigatureSet> getLigaturesForGlyph(uint32_t glyph) const;
+
+		// this is necessary because ligature substitutions can result in obtaining glyphs that
+		// didn't come from `getGlyphIdFromCodepoint`, so we need to manually read its width
+		// and put it into the pdf, if not it uses the default width.
+		void loadMetricsForGlyph(uint32_t glyph) const;
+
 		int font_type = 0;
 		int encoding_kind = 0;
 
@@ -40,8 +48,6 @@ namespace pdf
 		static constexpr int ENCODING_WIN_ANSI  = 1;
 		static constexpr int ENCODING_CID       = 2;
 
-
-
 	private:
 		Font();
 		Dictionary* font_dictionary = 0;
@@ -49,6 +55,8 @@ namespace pdf
 		mutable std::map<uint32_t, uint32_t> cmap_cache { };
 		mutable std::map<uint32_t, font::GlyphMetrics> glyph_metrics { };
 		mutable std::map<std::pair<uint32_t, uint32_t>, KerningPair> kerning_pairs { };
+
+		std::map<uint32_t, font::GlyphLigatureSet> glyph_ligatures { };
 
 		// only used for embedded fonts
 		font::FontFile* source_file = 0;

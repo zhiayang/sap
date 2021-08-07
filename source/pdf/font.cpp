@@ -55,8 +55,6 @@ namespace pdf
 			}
 		}
 
-
-
 		return this->font_dictionary;
 	}
 
@@ -64,8 +62,33 @@ namespace pdf
 
 
 
+	std::optional<font::GlyphLigatureSet> Font::getLigaturesForGlyph(uint32_t glyph) const
+	{
+		if(auto it = this->glyph_ligatures.find(glyph); it != this->glyph_ligatures.end())
+			return it->second;
 
+		return { };
+	}
 
+	void Font::loadMetricsForGlyph(uint32_t glyph) const
+	{
+		if(!this->source_file || this->glyph_metrics.find(glyph) != this->glyph_metrics.end())
+			return;
+
+		// get and cache the glyph widths as well.
+		auto metrics = this->source_file->getGlyphMetrics(glyph);
+
+		// if single adjustments are present, then add them now.
+		if(auto single_adj = this->source_file->getGlyphAdjustment(glyph); single_adj.has_value())
+		{
+			metrics.horz_advance += single_adj->horz_advance;
+			metrics.vert_advance += single_adj->vert_advance;
+			metrics.horz_placement += single_adj->horz_placement;
+			metrics.vert_placement += single_adj->vert_placement;
+		}
+
+		this->glyph_metrics[glyph] = metrics;
+	}
 
 	uint32_t Font::getGlyphIdFromCodepoint(uint32_t codepoint) const
 	{
@@ -82,19 +105,7 @@ namespace pdf
 			auto gid = this->source_file->getGlyphIndexForCodepoint(codepoint);
 			this->cmap_cache[codepoint] = gid;
 
-			// get and cache the glyph widths as well.
-			auto metrics = this->source_file->getGlyphMetrics(gid);
-
-			// if single adjustments are present, then add them now.
-			if(auto single_adj = this->source_file->getGlyphAdjustment(gid); single_adj.has_value())
-			{
-				metrics.horz_advance += single_adj->horz_advance;
-				metrics.vert_advance += single_adj->vert_advance;
-				metrics.horz_placement += single_adj->horz_placement;
-				metrics.vert_placement += single_adj->vert_placement;
-			}
-
-			this->glyph_metrics[gid] = metrics;
+			this->loadMetricsForGlyph(gid);
 
 			if(gid == 0)
 				zpr::println("warning: glyph for codepoint U+{04x} not found in font", codepoint);
@@ -125,10 +136,10 @@ namespace pdf
 
 
 
-	Font* Font::fromFontFile(Document* doc, font::FontFile* font)
+	Font* Font::fromFontFile(Document* doc, font::FontFile* font_file)
 	{
 		auto ret = util::make<Font>();
-		ret->source_file = font;
+		ret->source_file = font_file;
 
 		/*
 			this is the general structure for composite fonts (which we always create, for now):
@@ -150,7 +161,7 @@ namespace pdf
 				/FontFile0/1/2/3: the stream containing the actual file
 				/CIDSet: if we're doing a subset (which we aren't for now)
 		*/
-		auto basefont_name = Name::create(font->postscript_name);
+		auto basefont_name = Name::create(font_file->postscript_name);
 
 		// start with making the CIDFontType2/0 entry.
 		auto cidfont_dict = Dictionary::createIndirect(doc, names::Font, { });
@@ -162,7 +173,7 @@ namespace pdf
 			{ names::Supplement, Integer::create(0) },
 		}));
 
-		bool truetype_outlines = (font->outline_type == font::FontFile::OUTLINES_TRUETYPE);
+		bool truetype_outlines = (font_file->outline_type == font::FontFile::OUTLINES_TRUETYPE);
 
 		ret->glyph_widths_array = Array::createIndirect(doc, { });
 		cidfont_dict->add(names::W, IndirectRef::create(ret->glyph_widths_array));
@@ -189,16 +200,16 @@ namespace pdf
 		*/
 
 		auto font_bbox = Array::create({
-			Integer::create(font->metrics.xmin),
-			Integer::create(font->metrics.ymin),
-			Integer::create(font->metrics.xmax),
-			Integer::create(font->metrics.ymax)
+			Integer::create(font_file->metrics.xmin),
+			Integer::create(font_file->metrics.ymin),
+			Integer::create(font_file->metrics.xmax),
+			Integer::create(font_file->metrics.ymax)
 		});
 
 		int cap_height = 0;
-		if(font->metrics.cap_height != 0)
+		if(font_file->metrics.cap_height != 0)
 		{
-			cap_height = font->metrics.cap_height;
+			cap_height = font_file->metrics.cap_height;
 		}
 		else
 		{
@@ -210,7 +221,6 @@ namespace pdf
 			zpr::println("your dumb font doesn't tell me cap_height, assuming 700");
 		}
 
-
 		// truetype fonts don't contain stemv.
 		static constexpr int STEMV_CONSTANT = 69;
 
@@ -220,9 +230,9 @@ namespace pdf
 			{ names::FontName, basefont_name },
 			{ names::Flags, Integer::create(4) },
 			{ names::FontBBox, font_bbox },
-			{ names::ItalicAngle, Integer::create(font->metrics.italic_angle) },
-			{ names::Ascent, Integer::create(font->metrics.ascent) },
-			{ names::Descent, Integer::create(font->metrics.descent) },
+			{ names::ItalicAngle, Integer::create(font_file->metrics.italic_angle) },
+			{ names::Ascent, Integer::create(font_file->metrics.ascent) },
+			{ names::Descent, Integer::create(font_file->metrics.descent) },
 			{ names::CapHeight, Integer::create(cap_height) },
 			{ names::XHeight, Integer::create(69) },
 			{ names::StemV, Integer::create(STEMV_CONSTANT) }
@@ -240,7 +250,7 @@ namespace pdf
 			which requires improving the robustness of the OTF parser (and handling its glyf [or the CFF equiv.) table.
 		*/
 		auto file_contents = Stream::create(doc, { });
-		file_contents->append(font->file_bytes, font->file_size);
+		file_contents->append(font_file->file_bytes, font_file->file_size);
 
 		if(truetype_outlines)
 		{
@@ -273,6 +283,17 @@ namespace pdf
 		type0->add(names::DescendantFonts, Array::create(IndirectRef::create(cidfont_dict)));
 
 		ret->encoding_kind = ENCODING_CID;
+
+		// preload the things
+		ret->glyph_ligatures = font_file->getAllGlyphLigatures();
+		{
+			zpr::println("gid {} has {} ligs", 0x49, ret->glyph_ligatures[0x49].ligatures.size());
+			for(auto& lig : ret->glyph_ligatures[0x49].ligatures)
+			{
+				zpr::println("  {} {}", lig.num_glyphs, lig.glyphs);
+			}
+		}
+
 		return ret;
 	}
 

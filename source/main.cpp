@@ -23,29 +23,34 @@ int main(int argc, char** argv)
 	auto p1 = util::make<pdf::Page>();
 	// auto p2 = util::make<pdf::Page>();
 
-	auto txt1 = util::make<pdf::Text>();
-	txt1->setFont(font, pdf::mm(20));
-	txt1->moveAbs(pdf::mm(10, 200));
-	txt1->addText("hello, world");
+	// auto txt1 = util::make<pdf::Text>();
+	// txt1->setFont(font, pdf::mm(20));
+	// txt1->moveAbs(pdf::mm(10, 220));
+	// txt1->addText("hello, world");
 
-	auto txt2 = util::make<pdf::Text>();
-	txt2->setFont(f2, pdf::mm(17));
-	txt2->moveAbs(pdf::mm(10, 175));
-	txt2->addText("こんにちは、世界");
+	// auto txt2 = util::make<pdf::Text>();
+	// txt2->setFont(f2, pdf::mm(17));
+	// txt2->moveAbs(pdf::mm(10, 195));
+	// txt2->addText("こんにちは、世界");
 
-	auto txt3 = util::make<pdf::Text>();
-	txt3->setFont(f3, pdf::mm(17));
-	txt3->moveAbs(pdf::mm(10, 150));
-	txt3->addText("AYAYA, world x\u030c");
+	// auto txt3 = util::make<pdf::Text>();
+	// txt3->setFont(f3, pdf::mm(17));
+	// txt3->moveAbs(pdf::mm(10, 150));
+	// txt3->addText("AYAYA, world x\u030c");
+	// txt3->offset(pdf::mm(0, -20));
+	// txt3->addText("ffi AE ff ffl etc");
 
 	auto txt4 = util::make<pdf::Text>();
 	txt4->setFont(f4, pdf::mm(17));
-	txt4->moveAbs(pdf::mm(10, 125));
-	txt4->addText("AYAYA \x79\xcc\x8c");
+	txt4->moveAbs(pdf::mm(10, 90));
+	// txt4->addText("AYAYA \x79\xcc\x8c");
+	// txt4->offset(pdf::mm(0, -20));
+	// txt4->addText("ffi AE ff ffl etc");
+	txt4->addText("floating");
 
-	p1->addObject(txt1);
-	p1->addObject(txt2);
-	p1->addObject(txt3);
+	// p1->addObject(txt1);
+	// p1->addObject(txt2);
+	// p1->addObject(txt3);
 	p1->addObject(txt4);
 
 	doc->addPage(p1);
