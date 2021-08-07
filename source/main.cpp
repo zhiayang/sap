@@ -12,7 +12,7 @@
 
 int main(int argc, char** argv)
 {
-#if 0
+#if 1
 	auto writer = util::make<pdf::Writer>("test.pdf");
 	auto doc = util::make<pdf::Document>();
 
@@ -66,6 +66,6 @@ int main(int argc, char** argv)
 	// font::FontFile::parseFromFile("SF-Pro.ttf");
 	// font::FontFile::parseFromFile("DejaVuSansMono.ttf");
 	// font::FontFile::parseFromFile("dejavu-subset.ttf");
-	font::FontFile::parseFromFile("MyriadPro-Regular.ttf");
-	font::FontFile::parseFromFile("myriad-subset.ttf");
+	// font::FontFile::parseFromFile("MyriadPro-Regular.ttf");
+	// font::FontFile::parseFromFile("myriad-subset.ttf");
 }

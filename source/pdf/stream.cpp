@@ -13,6 +13,13 @@ namespace pdf
 {
 	constexpr int COMPRESSION_LEVEL = 2048;
 
+	Stream::~Stream()
+	{
+		// since we made the compressor state, we need to free it.
+		if(this->is_compressed && this->compressor_state != nullptr)
+			tdefl_compressor_free(reinterpret_cast<tdefl_compressor*>(this->compressor_state));
+	}
+
 	void Stream::setCompressed(bool compressed)
 	{
 		if(compressed != this->is_compressed)
@@ -30,7 +37,7 @@ namespace pdf
 					[](const void* buf, int len, void* user) -> int {
 						reinterpret_cast<Stream*>(user)->bytes.append(reinterpret_cast<const uint8_t*>(buf), len);
 						return 1;
-					}, this,COMPRESSION_LEVEL | TDEFL_WRITE_ZLIB_HEADER);
+					}, this, COMPRESSION_LEVEL | TDEFL_WRITE_ZLIB_HEADER);
 
 				if(res != TDEFL_STATUS_OKAY)
 					pdf::error("failed to initialise deflate state");
@@ -39,7 +46,10 @@ namespace pdf
 			{
 				this->dict->remove(names::Filter);
 				if(this->compressor_state != nullptr)
+				{
 					tdefl_compressor_free(reinterpret_cast<tdefl_compressor*>(this->compressor_state));
+					this->compressor_state = nullptr;
+				}
 			}
 		}
 	}
@@ -78,7 +88,7 @@ namespace pdf
 		if(this->is_compressed)
 		{
 			auto res = tdefl_compress_buffer(reinterpret_cast<tdefl_compressor*>(this->compressor_state),
-				arr, num, TDEFL_NO_FLUSH);
+				arr, num, TDEFL_SYNC_FLUSH);
 
 			if(res != TDEFL_STATUS_OKAY)
 				pdf::error("stream compression failed");

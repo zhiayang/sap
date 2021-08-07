@@ -163,6 +163,7 @@ namespace pdf
 	struct Stream : Object
 	{
 		explicit Stream(Dictionary* dict, zst::byte_buffer bytes) : dict(dict), bytes(std::move(bytes)) { }
+		~Stream();
 
 		virtual void writeFull(Writer* w) const override;
 
