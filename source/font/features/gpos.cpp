@@ -216,6 +216,100 @@ namespace font
 		return { };
 	}
 
+
+	std::map<std::pair<uint32_t, uint32_t>, KerningPair> FontFile::getAllKerningPairs() const
+	{
+		std::map<std::pair<uint32_t, uint32_t>, KerningPair> kerning_pairs;
+
+		for(auto& lookup : this->gpos_tables.lookup_tables[GPOS_LOOKUP_PAIR])
+		{
+			auto ofs = lookup.file_offset;
+			auto buf = zst::byte_span(this->file_bytes, this->file_size).drop(ofs);
+
+			auto table_start = buf;
+
+			// we already know the type, so just skip it.
+			consume_u16(buf);
+			auto flags = consume_u16(buf);
+			auto num_subs = consume_u16(buf);
+
+			(void) flags;
+
+			for(size_t i = 0; i < num_subs; i++)
+			{
+				auto ofs = consume_u16(buf);
+				auto subtable = table_start.drop(ofs);
+				auto subtable_start = subtable;
+
+				auto format = consume_u16(subtable);
+				auto cov_ofs = consume_u16(subtable);
+				auto value_fmt1 = consume_u16(subtable);
+				auto value_fmt2 = consume_u16(subtable);
+
+				if(format != 1 && format != 2)
+					sap::internal_error("unknown format {}", format);
+
+				auto cov_table = parseCoverageTable(subtable_start.drop(cov_ofs));
+
+				if(format == 1)
+				{
+					// there should be one PairSet for every glyph in the coverage table
+					auto num_pair_sets = consume_u16(subtable);
+					assert(cov_table.size() == num_pair_sets);
+
+					for(size_t i = 0; i < num_pair_sets; i++)
+					{
+						auto pairset_table = subtable_start.drop(consume_u16(subtable));
+						auto num_pairs = consume_u16(pairset_table);
+
+						auto glyph_1 = cov_table[i];
+
+						for(size_t k = 0; k < num_pairs; k++)
+						{
+							auto glyph_2 = consume_u16(pairset_table);
+							auto a1 = scale_adjustments(parse_value_record(pairset_table, value_fmt1), this->metrics.units_per_em);
+							auto a2 = scale_adjustments(parse_value_record(pairset_table, value_fmt2), this->metrics.units_per_em);
+
+							kerning_pairs[{ glyph_1, glyph_2 }] = { a1, a2 };
+						}
+					}
+				}
+				else if(format == 2)
+				{
+					auto cls_ofs1 = consume_u16(subtable);
+					auto cls_ofs2 = consume_u16(subtable);
+
+					auto num_cls1 = consume_u16(subtable);
+					auto num_cls2 = consume_u16(subtable);
+
+					auto classes_1 = parseClassDefTable(subtable_start.drop(cls_ofs1));
+					auto classes_2 = parseClassDefTable(subtable_start.drop(cls_ofs2));
+
+					for(size_t c1 = 0; c1 < num_cls1; c1++)
+					{
+						for(size_t c2 = 0; c2 < num_cls2; c2++)
+						{
+							auto a1 = scale_adjustments(parse_value_record(subtable, value_fmt1), this->metrics.units_per_em);
+							auto a2 = scale_adjustments(parse_value_record(subtable, value_fmt2), this->metrics.units_per_em);
+
+							// for all the glyphs in each class, apply the adjustment.
+							for(auto g1 : classes_1[c1])
+								for(auto g2 : classes_2[c2])
+									kerning_pairs[{ g1, g2 }] = { a1, a2 };
+						}
+					}
+				}
+				else
+				{
+					assert(false);
+				}
+			}
+		}
+
+		zpr::println("found {} kerning pairs", kerning_pairs.size());
+		return kerning_pairs;
+	}
+
 	void parseGPos(FontFile* font, const Table& gpos_table)
 	{
 		auto buf = zst::byte_span(font->file_bytes, font->file_size);

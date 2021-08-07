@@ -95,8 +95,6 @@ namespace pdf
 
 				for(auto& liga : ligatures->ligatures)
 				{
-					// zpr::println("gid = {}, trying liga n={}, {}", gid, liga.num_glyphs, liga.glyphs);
-					// zpr::println("lookahead = {}", lookahead);
 					if(liga.num_glyphs > lookahead_size)
 						continue;
 
@@ -105,8 +103,6 @@ namespace pdf
 						// perform the substitution:
 						gid = liga.substitute;
 						font->loadMetricsForGlyph(gid);
-
-						// zpr::println("substituted {} glyphs for {}", liga.num_glyphs, gid);
 
 						// and drop the glyphs from the real array, noting that the first one was already consumed
 						for(size_t i = 1; i < liga.num_glyphs; i++)

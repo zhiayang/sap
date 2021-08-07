@@ -76,8 +76,6 @@ namespace font
 		return coverage_map;
 	}
 
-
-
 	std::optional<int> getGlyphCoverageIndex(zst::byte_span cov_table, uint32_t glyphId)
 	{
 		auto format = consume_u16(cov_table);

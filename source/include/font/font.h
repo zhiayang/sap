@@ -62,6 +62,8 @@ namespace font
 		uint32_t format;
 	};
 
+	using KerningPair = std::pair<GlyphAdjustment, GlyphAdjustment>;
+
 	struct FontFile
 	{
 		static FontFile* parseFromFile(const std::string& path);
@@ -73,6 +75,7 @@ namespace font
 		std::optional<std::pair<GlyphAdjustment, GlyphAdjustment>> getGlyphPairAdjustments(uint32_t g1, uint32_t g2) const;
 
 		std::map<uint32_t, GlyphLigatureSet> getAllGlyphLigatures() const;
+		std::map<std::pair<uint32_t, uint32_t>, KerningPair> getAllKerningPairs() const;
 
 		// corresponds to name IDs 16 and 17. if not present, they will have the same
 		// value as their *_compat counterparts.

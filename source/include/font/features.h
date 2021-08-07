@@ -87,6 +87,10 @@ namespace font
 
 	int getGlyphClass(zst::byte_span classdef_table, uint32_t glyphId);
 
+	// returns a map from classId -> [ glyphIds ], for all glyphs that have a class
+	// defined (ie. that are not implicitly class 0)
+	std::map<int, std::vector<uint32_t>> parseClassDefTable(zst::byte_span classdef_table);
+
 	std::optional<int> getGlyphCoverageIndex(zst::byte_span coverage_table, uint32_t glyphId);
 
 	// returns a map from coverageIndex -> glyphId, for every glyph in the coverage table.

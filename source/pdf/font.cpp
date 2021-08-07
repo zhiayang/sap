@@ -118,7 +118,7 @@ namespace pdf
 		}
 	}
 
-	std::optional<Font::KerningPair> Font::getKerningForGlyphs(uint32_t glyph1, uint32_t glyph2) const
+	std::optional<font::KerningPair> Font::getKerningForGlyphs(uint32_t glyph1, uint32_t glyph2) const
 	{
 		auto pair = std::make_pair(glyph1, glyph2);
 		if(auto it = this->kerning_pairs.find(pair); it != this->kerning_pairs.end())
@@ -284,8 +284,23 @@ namespace pdf
 
 		ret->encoding_kind = ENCODING_CID;
 
-		// preload the things
+		/*
+			TODO: come up with a better way of loading these things. ligatures are probably fine (i don't expect
+			thousands of glyphs/combinations), but kerning pairs can explode if they use the ClassDef format of
+			defining pairs.
+
+			eg. a font like Myriad Pro that supports a few dozen languages already has 700k+ kerning pairs when
+			fully expanded. either we come up with a way to not have a fully expanded map (but that would basically
+			be the same as reading straight from the file), or don't preload them at all.
+
+			also, for both kerning and ligatures, ad-hoc caching might lead to the cache table filling up with
+			useless entries -- this is why ligatures aren't ad-hoc cached (if not every combination of 4 glyphs
+			would eventually end up inside). kerning pairs are similar, where eventually every combination of 2
+			glyphs would end up inside ><
+		*/
 		ret->glyph_ligatures = font_file->getAllGlyphLigatures();
+		ret->kerning_pairs = font_file->getAllKerningPairs();
+
 		return ret;
 	}
 

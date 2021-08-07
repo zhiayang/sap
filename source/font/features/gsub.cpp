@@ -29,8 +29,6 @@ namespace font
 
 			(void) flags;
 
-
-			zpr::println("flag = {}, {} subtables", flags, num_subs);
 			for(size_t i = 0; i < num_subs; i++)
 			{
 				auto ofs = consume_u16(buf);
@@ -50,7 +48,6 @@ namespace font
 
 				// there should be 1 LigatureSet for every covered glyph in the coverage table
 				assert(num_liga_sets == cov_table.size());
-				zpr::println("{} liga sets", num_liga_sets);
 
 				for(size_t i = 0; i < num_liga_sets; i++)
 				{
@@ -59,7 +56,6 @@ namespace font
 					auto liga_set_start = liga_set;
 
 					auto num_ligatures = consume_u16(liga_set);
-					zpr::println("liga for {} = {}", first_gid, num_ligatures);
 
 					for(size_t k = 0; k < num_ligatures; k++)
 					{
@@ -81,8 +77,6 @@ namespace font
 
 						for(size_t i = 1; i < num_components; i++)
 							lig.glyphs[i] = consume_u16(liga_table);
-
-						zpr::println("  lig: {}", lig.glyphs);
 
 						// ligature_map[lig] = substitute;
 						ligature_map[first_gid].ligatures.push_back(lig);

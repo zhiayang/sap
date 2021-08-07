@@ -63,4 +63,43 @@ namespace font
 
 		assert(false);
 	}
+
+	std::map<int, std::vector<uint32_t>> parseClassDefTable(zst::byte_span table)
+	{
+		std::map<int, std::vector<uint32_t>> class_ids;
+
+		auto format = consume_u16(table);
+
+		if(format != 1 && format != 2)
+			sap::internal_error("invalid ClassDef format {}", format);
+
+		if(format == 1)
+		{
+			auto start_gid = consume_u16(table);
+			auto num_glyphs = consume_u16(table);
+
+			for(size_t i = 0; i < num_glyphs; i++)
+				class_ids[consume_u16(table)].push_back(start_gid + i);
+		}
+		else if(format == 2)
+		{
+			auto num_ranges = consume_u16(table);
+
+			for(size_t i = 0; i < num_ranges; i++)
+			{
+				auto first_gid = consume_u16(table);
+				auto last_gid = consume_u16(table);
+				auto class_id = consume_u16(table);
+
+				for(auto g = first_gid; g <= last_gid; g++)
+					class_ids[class_id].push_back(g);
+			}
+		}
+		else
+		{
+			assert(false);
+		}
+
+		return class_ids;
+	}
 }
