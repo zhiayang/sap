@@ -9,30 +9,20 @@
 
 namespace pdf
 {
-	struct IndirHelper
+	IndirHelper::IndirHelper(Writer* w, const Object* obj) : w(w), indirect(obj->is_indirect)
 	{
-		IndirHelper(Writer* w, const Object* obj) : w(w), indirect(obj->is_indirect)
+		if(indirect)
 		{
-			if(indirect)
-			{
-				obj->byte_offset = w->position();
-				w->writeln("{} {} obj", obj->id, obj->gen);
-			}
+			obj->byte_offset = w->position();
+			w->writeln("{} {} obj", obj->id, obj->gen);
 		}
+	}
 
-		~IndirHelper()
-		{
-			if(indirect)
-				w->writeln("endobj"), w->writeln();
-		}
-
-		IndirHelper(IndirHelper&&) = delete;
-		IndirHelper(const IndirHelper&) = delete;
-
-		Writer* w = 0;
-		bool indirect = false;
-	};
-
+	IndirHelper::~IndirHelper()
+	{
+		if(indirect)
+			w->writeln("endobj"), w->writeln();
+	}
 
 	void Object::write(Writer* w) const
 	{
@@ -145,42 +135,12 @@ namespace pdf
 		w->writeln("{}>>", zpr::w(w->nesting * 2)(""));
 	}
 
-	void Stream::writeFull(Writer* w) const
-	{
-		if(!this->is_indirect)
-			pdf::error("cannot write non-materialised stream (not bound to a document)");
-
-		IndirHelper helper(w, this);
-
-		this->dict->writeFull(w);
-		w->writeln("stream");
-
-		w->writeBytes(this->bytes.data(), this->bytes.size());
-
-		w->writeln();
-		w->writeln("endstream");
-	}
-
-
-
 
 
 	void IndirectRef::writeFull(Writer* w) const
 	{
 		IndirHelper helper(w, this);
 		w->write("{} {} R", this->id, this->generation);
-	}
-
-	void Stream::append(zst::byte_span xs)
-	{
-		this->bytes.append(xs);
-		this->dict->addOrReplace(names::Length, Integer::create(this->bytes.size()));
-	}
-
-	void Stream::append(const uint8_t* arr, size_t num)
-	{
-		this->bytes.append(arr, num);
-		this->dict->addOrReplace(names::Length, Integer::create(this->bytes.size()));
 	}
 
 	void Dictionary::add(const Name& n, Object* obj)
@@ -196,6 +156,11 @@ namespace pdf
 		this->values.insert_or_assign(n, obj);
 	}
 
+	void Dictionary::remove(const Name& n)
+	{
+		this->values.erase(n);
+	}
+
 	Object* Dictionary::valueForKey(const Name& name) const
 	{
 		if(auto it = this->values.find(name); it != this->values.end())
@@ -203,14 +168,6 @@ namespace pdf
 
 		else
 			return nullptr;
-	}
-
-	void Stream::attach(Document* document)
-	{
-		if(this->is_indirect)
-			pdf::error("stream has already been attached to a document");
-
-		this->makeIndirect(document);
 	}
 
 
@@ -318,28 +275,6 @@ namespace pdf
 	}
 
 
-
-
-	Stream* Stream::create(Document* doc, zst::byte_buffer bytes)
-	{
-		auto dict = Dictionary::create({
-			{ names::Length, Integer::create(bytes.size()) }
-		});
-
-		return createIndirectObject<Stream>(doc, dict, std::move(bytes));
-	}
-
-	Stream* Stream::create(Document* doc, Dictionary* dict, zst::byte_buffer bytes)
-	{
-		dict->addOrReplace(names::Length, Integer::create(bytes.size()));
-		return createIndirectObject<Stream>(doc, dict, std::move(bytes));
-	}
-
-	Stream* Stream::createDetached(Document* doc, Dictionary* dict, zst::byte_buffer bytes)
-	{
-		dict->addOrReplace(names::Length, Integer::create(bytes.size()));
-		return createObject<Stream>(dict, std::move(bytes));
-	}
 
 	Object::~Object()
 	{

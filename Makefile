@@ -19,6 +19,9 @@ CXXDEPS         = $(CXXOBJ:.o=.d)
 UTF8PROC_SRCS   = external/utf8proc/utf8proc.c
 UTF8PROC_OBJS   = $(UTF8PROC_SRCS:.c=.c.o)
 
+MINIZ_SRCS      = external/miniz/miniz.c
+MINIZ_OBJS      = $(MINIZ_SRCS:.c=.c.o)
+
 PRECOMP_HDRS    := source/include/precompile.h
 PRECOMP_GCH     := $(PRECOMP_HDRS:.h=.h.gch)
 
@@ -38,7 +41,7 @@ test: build
 
 build: $(OUTPUT_BIN)
 
-$(OUTPUT_BIN): $(CXXOBJ) $(UTF8PROC_OBJS)
+$(OUTPUT_BIN): $(CXXOBJ) $(UTF8PROC_OBJS) $(MINIZ_OBJS)
 	@echo "  $(notdir $@)"
 	@mkdir -p build
 	@$(CXX) $(CXXFLAGS) $(WARNINGS) $(DEFINES) -Iexternal -o $@ $^

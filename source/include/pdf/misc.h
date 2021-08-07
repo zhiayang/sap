@@ -12,6 +12,9 @@
 
 namespace pdf
 {
+	struct Writer;
+	struct Object;
+
 	template <typename... Args>
 	[[noreturn]] inline void error(zst::str_view fmt, Args&&... args)
 	{
@@ -20,4 +23,17 @@ namespace pdf
 	}
 
 	std::string encodeStringLiteral(zst::str_view sv);
+
+
+	struct IndirHelper
+	{
+		IndirHelper(Writer* w, const Object* obj);
+		~IndirHelper();
+
+		IndirHelper(IndirHelper&&) = delete;
+		IndirHelper(const IndirHelper&) = delete;
+
+		Writer* w = 0;
+		bool indirect = false;
+	};
 }

@@ -9,7 +9,7 @@
 
 sap (not to be confused with [Systeme, Anwendungen und Produkte in der Datenverarbeitung](https://www.sap.com)) is a document typesetting/preparation system similar in concept to [LaTeX](https://www.latex-project.org) (and derivatives), with the following major differences:
 
-1. it is not from 1984 (or 1994 if you count LaTex 2e)
+1. it is not from 1978 (TeX), 1984 (LaTeX), or 1994 (LaTeX2e)
 2. it is not a glorified macro system
 3. the programming 'metalanguage' is familiar (and sane)
 
@@ -21,7 +21,7 @@ Since this is a work-in-progress, features are very limited.
 - [x] Unicode support (for the most part)
 - [x] OpenType font (otf/ttf) loading (and embedding into PDF)
 - [ ] Embedded font subsetting
-- [ ] Compressed PDF streams
+- [x] Compressed PDF streams
 - [x] Glyph kerning (via GPOS table)
 - [ ] Glyph kerning (via legacy `kern` table)
 - [x] Glyph ligatures (via GSUB table)
@@ -59,8 +59,5 @@ Non-goals are split into two categories: things I can't do because this is a one
 
 ### license
 
-sap is licensed under the [Apache License version 2.0](./LICENSE).
-
-
-
-
+sap is licensed under the [Apache License version 2.0](./LICENSE). [utf8proc](./external/utf8proc/LICENSE.md)
+and [miniz](./external/miniz/LICENSE) are licensed under their respective licenses.

@@ -144,6 +144,7 @@ namespace pdf
 
 		void add(const Name& n, Object* obj);
 		void addOrReplace(const Name& n, Object* obj);
+		void remove(const Name& n);
 
 		virtual void writeFull(Writer* w) const override;
 
@@ -165,6 +166,8 @@ namespace pdf
 
 		virtual void writeFull(Writer* w) const override;
 
+		void setCompressed(bool compressed);
+
 		void append(zst::byte_span xs);
 		void append(const uint8_t* arr, size_t num);
 
@@ -175,7 +178,11 @@ namespace pdf
 
 		static Stream* createDetached(Document* doc, Dictionary* dict, zst::byte_buffer bytes);
 
+		bool is_compressed = false;
 		Dictionary* dict = 0;
+
+	private:
+		void* compressor_state = 0;
 		zst::byte_buffer bytes;
 	};
 
@@ -242,6 +249,8 @@ namespace pdf
 		static const auto FontDescriptor  = pdf::Name("FontDescriptor");
 		static const auto Encoding  = pdf::Name("Encoding");
 		static const auto Flags = pdf::Name("Flags");
+		static const auto Filter = pdf::Name("Filter");
+		static const auto FlateDecode = pdf::Name("FlateDecode");
 		static const auto Resources = pdf::Name("Resources");
 		static const auto MediaBox  = pdf::Name("MediaBox");
 		static const auto TrueType  = pdf::Name("TrueType");
