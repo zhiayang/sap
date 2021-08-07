@@ -12,6 +12,7 @@
 
 int main(int argc, char** argv)
 {
+#if 0
 	auto writer = util::make<pdf::Writer>("test.pdf");
 	auto doc = util::make<pdf::Document>();
 
@@ -57,13 +58,14 @@ int main(int argc, char** argv)
 	doc->write(writer);
 
 	writer->close();
+#endif
 
-
-	// otf::OTFont::parseFromFile("SourceSansPro-Regular.ttf");
-	// otf::OTFont::parseFromFile("Meiryo.ttf");
-	// otf::OTFont::parseFromFile("Meiryo-Italic.ttf");
-	// otf::OTFont::parseFromFile("SF-Pro.ttf");
-	// otf::OTFont::parseFromFile("DejaVuSansMono.ttf");
-	// otf::OTFont::parseFromFile("MyriadPro-Regular.ttf");
-	// otf::OTFont::parseFromFile("subset.ttf");
+	// font::FontFile::parseFromFile("SourceSansPro-Regular.ttf");
+	// font::FontFile::parseFromFile("Meiryo.ttf");
+	// font::FontFile::parseFromFile("Meiryo-Italic.ttf");
+	// font::FontFile::parseFromFile("SF-Pro.ttf");
+	// font::FontFile::parseFromFile("DejaVuSansMono.ttf");
+	// font::FontFile::parseFromFile("dejavu-subset.ttf");
+	font::FontFile::parseFromFile("MyriadPro-Regular.ttf");
+	font::FontFile::parseFromFile("myriad-subset.ttf");
 }

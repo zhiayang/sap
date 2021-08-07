@@ -247,7 +247,7 @@ namespace pdf
 
 		/*
 			TODO: for now we are dumping the entire file into the pdf; we probably want some kind of subsetting functionality,
-			which requires improving the robustness of the OTF parser (and handling its glyf [or the CFF equiv.) table.
+			which requires improving the robustness of the OTF parser (and handling its glyf [or the CFF equiv.]) table.
 		*/
 		auto file_contents = Stream::create(doc, { });
 		file_contents->setCompressed(true);

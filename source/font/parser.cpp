@@ -355,7 +355,7 @@ namespace font
 		table.offset = consume_u32(buf);
 		table.length = consume_u32(buf);
 
-		// zpr::println("found '{}' table, ofs={x}, length={x}", table.tag.str(), table.offset, table.length);
+		zpr::println("found '{}' table, ofs={x}, length={x}", table.tag.str(), table.offset, table.length);
 		return table;
 	}
 
