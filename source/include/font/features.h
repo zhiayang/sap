@@ -30,7 +30,6 @@ namespace font
 
 	struct LookupTable
 	{
-		bool present;
 		uint16_t type;
 		size_t file_offset;
 	};
@@ -49,7 +48,7 @@ namespace font
 	struct GPosTable
 	{
 		// indexed by the GPOS_LOOKUP enumeration.
-		LookupTable lookup_tables[GPOS_LOOKUP_MAX];
+		std::vector<LookupTable> lookup_tables[GPOS_LOOKUP_MAX];
 	};
 
 	constexpr uint16_t GSUB_LOOKUP_SINGLE           = 1;
@@ -65,7 +64,7 @@ namespace font
 	struct GSubTable
 	{
 		// indexed by the GPOS_LOOKUP enumeration.
-		LookupTable lookup_tables[GSUB_LOOKUP_MAX];
+		std::vector<LookupTable> lookup_tables[GSUB_LOOKUP_MAX];
 	};
 
 

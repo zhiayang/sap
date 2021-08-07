@@ -63,113 +63,102 @@ namespace font
 
 	std::optional<std::pair<GlyphAdjustment, GlyphAdjustment>> FontFile::getGlyphPairAdjustments(uint32_t gid1, uint32_t gid2) const
 	{
-		// look for the single adjustment lookup
-		if(!this->gpos_tables.lookup_tables[GPOS_LOOKUP_PAIR].present)
-			return { };
-
-		auto ofs = this->gpos_tables.lookup_tables[GPOS_LOOKUP_PAIR].file_offset;
-		auto buf = zst::byte_span(this->file_bytes, this->file_size).drop(ofs);
-
-		auto table_start = buf;
-
-		// we already know the type, so just skip it.
-		consume_u16(buf);
-		auto flags = consume_u16(buf);
-		auto num_subs = consume_u16(buf);
-
-		(void) flags;
-
-		for(size_t i = 0; i < num_subs; i++)
+		for(auto& lookup : this->gpos_tables.lookup_tables[GPOS_LOOKUP_PAIR])
 		{
-			auto ofs = consume_u16(buf);
-			auto subtable = table_start.drop(ofs);
-			auto subtable_start = subtable;
+			auto ofs = lookup.file_offset;
+			auto buf = zst::byte_span(this->file_bytes, this->file_size).drop(ofs);
 
-			auto format = consume_u16(subtable);
-			auto cov_ofs = consume_u16(subtable);
-			auto value_fmt1 = consume_u16(subtable);
-			auto value_fmt2 = consume_u16(subtable);
+			auto table_start = buf;
 
-			if(format != 1 && format != 2)
-				sap::internal_error("unknown format {}", format);
+			// we already know the type, so just skip it.
+			consume_u16(buf);
+			auto flags = consume_u16(buf);
+			auto num_subs = consume_u16(buf);
 
-			// the coverage table only lists the first glyph id.
-			if(auto coverage_idx = getGlyphCoverageIndex(subtable_start.drop(cov_ofs), gid1); coverage_idx.has_value())
+			(void) flags;
+
+			for(size_t i = 0; i < num_subs; i++)
 			{
-				if(format == 1)
+				auto ofs = consume_u16(buf);
+				auto subtable = table_start.drop(ofs);
+				auto subtable_start = subtable;
+
+				auto format = consume_u16(subtable);
+				auto cov_ofs = consume_u16(subtable);
+				auto value_fmt1 = consume_u16(subtable);
+				auto value_fmt2 = consume_u16(subtable);
+
+				if(format != 1 && format != 2)
+					sap::internal_error("unknown format {}", format);
+
+				// the coverage table only lists the first glyph id.
+				if(auto coverage_idx = getGlyphCoverageIndex(subtable_start.drop(cov_ofs), gid1); coverage_idx.has_value())
 				{
-					auto num_pair_sets = consume_u16(subtable);
-					assert(*coverage_idx < num_pair_sets);
-
-				#if 0
-					// this thing doesn't use offsets, so we can only iterate.
-					for(size_t i = 0; i < static_cast<size_t>(coverage_idx); i++)
+					if(format == 1)
 					{
-						auto ofs = consume_u16(subtable);
-						auto num_pairs = consume_u16(subtable);
-						subtable.remove_prefix(num_pairs * PairRecordSize);
-					}
-				#endif
+						auto num_pair_sets = consume_u16(subtable);
+						assert(*coverage_idx < num_pair_sets);
 
-					const auto PairRecordSize = sizeof(uint16_t)
-						+ get_value_record_size(value_fmt1)
-						+ get_value_record_size(value_fmt2);
+						const auto PairRecordSize = sizeof(uint16_t)
+							+ get_value_record_size(value_fmt1)
+							+ get_value_record_size(value_fmt2);
 
-					auto pairset_offset = peek_u16(subtable.drop(*coverage_idx * sizeof(uint16_t)));
-					auto pairset_table = subtable_start.drop(pairset_offset);
+						auto pairset_offset = peek_u16(subtable.drop(*coverage_idx * sizeof(uint16_t)));
+						auto pairset_table = subtable_start.drop(pairset_offset);
 
-					auto num_pairs = consume_u16(pairset_table);
+						auto num_pairs = consume_u16(pairset_table);
 
-					// now, binary search the second set.
-					size_t low = 0;
-					size_t high = num_pairs;
+						// now, binary search the second set.
+						size_t low = 0;
+						size_t high = num_pairs;
 
-					while(low < high)
-					{
-						auto mid = (low + high) / 2u;
-						auto glyph = peek_u16(pairset_table.drop(mid * PairRecordSize));
-
-						if(glyph == gid2)
+						while(low < high)
 						{
-							auto tmp = pairset_table.drop(mid * PairRecordSize);
-							auto a1 = scale_adjustments(parse_value_record(tmp, value_fmt1), this->metrics.units_per_em);
-							auto a2 = scale_adjustments(parse_value_record(tmp, value_fmt2), this->metrics.units_per_em);
+							auto mid = (low + high) / 2u;
+							auto glyph = peek_u16(pairset_table.drop(mid * PairRecordSize));
+
+							if(glyph == gid2)
+							{
+								auto tmp = pairset_table.drop(mid * PairRecordSize);
+								auto a1 = scale_adjustments(parse_value_record(tmp, value_fmt1), this->metrics.units_per_em);
+								auto a2 = scale_adjustments(parse_value_record(tmp, value_fmt2), this->metrics.units_per_em);
+								return std::make_pair(a1, a2);
+							}
+							else if(glyph < gid2)
+							{
+								low = mid + 1;
+							}
+							else
+							{
+								high = mid;
+							}
+						}
+					}
+					else
+					{
+						auto cls_ofs1 = consume_u16(subtable);
+						auto cls_ofs2 = consume_u16(subtable);
+
+						auto num_cls1 = consume_u16(subtable);
+						auto num_cls2 = consume_u16(subtable);
+
+						auto g1_class = getGlyphClass(subtable_start.drop(cls_ofs1), gid1);
+						auto g2_class = getGlyphClass(subtable_start.drop(cls_ofs2), gid2);
+
+						// note that num_cls1/2 include class 0
+						if(g1_class < num_cls1 && g2_class < num_cls2)
+						{
+							const auto RecordSize = get_value_record_size(value_fmt1) + get_value_record_size(value_fmt2);
+
+							// skip all the way to the correct Class2Record
+							auto cls2_start = subtable.drop(g1_class * num_cls2 * RecordSize);
+							auto pair_start = cls2_start.drop(g2_class * RecordSize);
+
+							auto a1 = scale_adjustments(parse_value_record(pair_start, value_fmt1), this->metrics.units_per_em);
+							auto a2 = scale_adjustments(parse_value_record(pair_start, value_fmt2), this->metrics.units_per_em);
+
 							return std::make_pair(a1, a2);
 						}
-						else if(glyph < gid2)
-						{
-							low = mid + 1;
-						}
-						else
-						{
-							high = mid;
-						}
-					}
-				}
-				else
-				{
-					auto cls_ofs1 = consume_u16(subtable);
-					auto cls_ofs2 = consume_u16(subtable);
-
-					auto num_cls1 = consume_u16(subtable);
-					auto num_cls2 = consume_u16(subtable);
-
-					auto g1_class = getGlyphClass(subtable_start.drop(cls_ofs1), gid1);
-					auto g2_class = getGlyphClass(subtable_start.drop(cls_ofs2), gid2);
-
-					// note that num_cls1/2 include class 0
-					if(g1_class < num_cls1 && g2_class < num_cls2)
-					{
-						const auto RecordSize = get_value_record_size(value_fmt1) + get_value_record_size(value_fmt2);
-
-						// skip all the way to the correct Class2Record
-						auto cls2_start = subtable.drop(g1_class * num_cls2 * RecordSize);
-						auto pair_start = cls2_start.drop(g2_class * RecordSize);
-
-						auto a1 = scale_adjustments(parse_value_record(pair_start, value_fmt1), this->metrics.units_per_em);
-						auto a2 = scale_adjustments(parse_value_record(pair_start, value_fmt2), this->metrics.units_per_em);
-
-						return std::make_pair(a1, a2);
 					}
 				}
 			}
@@ -180,47 +169,46 @@ namespace font
 
 	std::optional<GlyphAdjustment> FontFile::getGlyphAdjustment(uint32_t glyphId) const
 	{
-		// look for the single adjustment lookup
-		if(!this->gpos_tables.lookup_tables[GPOS_LOOKUP_SINGLE].present)
-			return { };
-
-		auto ofs = this->gpos_tables.lookup_tables[GPOS_LOOKUP_SINGLE].file_offset;
-		auto buf = zst::byte_span(this->file_bytes, this->file_size).drop(ofs);
-
-		auto table_start = buf;
-
-		// we already know the type, so just skip it.
-		consume_u16(buf);
-		auto flags = consume_u16(buf);
-		auto num_subs = consume_u16(buf);
-		(void) flags;
-
-		for(size_t i = 0; i < num_subs; i++)
+		for(auto& lookup : this->gpos_tables.lookup_tables[GPOS_LOOKUP_SINGLE])
 		{
-			auto ofs = consume_u16(buf);
-			auto subtable = table_start.drop(ofs);
-			auto subtable_start = subtable;
+			auto ofs = lookup.file_offset;
+			auto buf = zst::byte_span(this->file_bytes, this->file_size).drop(ofs);
 
-			auto format = consume_u16(subtable);
-			auto cov_ofs = consume_u16(subtable);
-			auto value_fmt = consume_u16(subtable);
+			auto table_start = buf;
 
-			if(format != 1 && format != 2)
-				sap::internal_error("unknown format {}", format);
+			// we already know the type, so just skip it.
+			consume_u16(buf);
+			auto flags = consume_u16(buf);
+			auto num_subs = consume_u16(buf);
+			(void) flags;
 
-			if(auto coverage_idx = getGlyphCoverageIndex(subtable_start.drop(cov_ofs), glyphId); coverage_idx.has_value())
+			for(size_t i = 0; i < num_subs; i++)
 			{
-				if(format == 1)
-				{
-					return scale_adjustments(parse_value_record(subtable, value_fmt), this->metrics.units_per_em);
-				}
-				else
-				{
-					auto num_records = consume_u16(subtable);
-					assert(coverage_idx < num_records);
+				auto ofs = consume_u16(buf);
+				auto subtable = table_start.drop(ofs);
+				auto subtable_start = subtable;
 
-					subtable.remove_prefix(get_value_record_size(value_fmt) * *coverage_idx);
-					return scale_adjustments(parse_value_record(subtable, value_fmt), this->metrics.units_per_em);
+				auto format = consume_u16(subtable);
+				auto cov_ofs = consume_u16(subtable);
+				auto value_fmt = consume_u16(subtable);
+
+				if(format != 1 && format != 2)
+					sap::internal_error("unknown format {}", format);
+
+				if(auto coverage_idx = getGlyphCoverageIndex(subtable_start.drop(cov_ofs), glyphId); coverage_idx.has_value())
+				{
+					if(format == 1)
+					{
+						return scale_adjustments(parse_value_record(subtable, value_fmt), this->metrics.units_per_em);
+					}
+					else
+					{
+						auto num_records = consume_u16(subtable);
+						assert(coverage_idx < num_records);
+
+						subtable.remove_prefix(get_value_record_size(value_fmt) * *coverage_idx);
+						return scale_adjustments(parse_value_record(subtable, value_fmt), this->metrics.units_per_em);
+					}
 				}
 			}
 		}
@@ -259,7 +247,7 @@ namespace font
 			if(tbl.type >= GPOS_LOOKUP_MAX)
 				zpr::println("warning: invalid GPOS lookup table with type {}", tbl.type);
 			else
-				font->gpos_tables.lookup_tables[tbl.type] = std::move(tbl);
+				font->gpos_tables.lookup_tables[tbl.type].push_back(std::move(tbl));
 		}
 	}
 }

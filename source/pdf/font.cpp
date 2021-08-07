@@ -286,14 +286,6 @@ namespace pdf
 
 		// preload the things
 		ret->glyph_ligatures = font_file->getAllGlyphLigatures();
-		{
-			zpr::println("gid {} has {} ligs", 0x49, ret->glyph_ligatures[0x49].ligatures.size());
-			for(auto& lig : ret->glyph_ligatures[0x49].ligatures)
-			{
-				zpr::println("  {} {}", lig.num_glyphs, lig.glyphs);
-			}
-		}
-
 		return ret;
 	}
 

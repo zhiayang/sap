@@ -36,7 +36,6 @@ namespace font
 		consume_u16(buf);   // and the subtable_count
 
 		LookupTable tbl { };
-		tbl.present = true;
 		tbl.type = type;
 		tbl.file_offset = start.data() - font->file_bytes;
 
