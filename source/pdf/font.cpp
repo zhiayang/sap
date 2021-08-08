@@ -278,7 +278,7 @@ namespace pdf
 
 		// make a cmap to use for ToUnicode
 		ret->unicode_cmap = Stream::create(doc, { });
-		// ret->unicode_cmap->setCompressed(true);
+		ret->unicode_cmap->setCompressed(true);
 
 		// finally, construct the top-level Type0 font.
 		auto type0 = ret->font_dictionary;
