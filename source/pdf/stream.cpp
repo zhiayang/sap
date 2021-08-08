@@ -13,6 +13,13 @@ namespace pdf
 {
 	constexpr int COMPRESSION_LEVEL = 2048;
 
+	// TODO: FOR DEBUGGING
+	void Stream::write_to_file(void* f) const
+	{
+		auto file = (FILE*) f;
+		fwrite(this->bytes.data(), 1, this->bytes.size(), file);
+	}
+
 	Stream::~Stream()
 	{
 		// since we made the compressor state, we need to free it.

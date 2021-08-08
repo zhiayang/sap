@@ -12,7 +12,7 @@
 
 int main(int argc, char** argv)
 {
-#if 0
+#if 1
 	auto writer = util::make<pdf::Writer>("test.pdf");
 	auto doc = util::make<pdf::Document>();
 
@@ -60,6 +60,23 @@ int main(int argc, char** argv)
 	writer->close();
 #endif
 
+
+
+#if 0
+	auto doc = util::make<pdf::Document>();
+	auto f4 = pdf::Font::fromFontFile(doc, font::FontFile::parseFromFile("MyriadPro-Regular.ttf"));
+
+	for(char c : "abdef")
+		f4->loadMetricsForGlyph(f4->getGlyphIdFromCodepoint(c));
+
+	f4->serialise(doc);
+
+	font::FontFile::parseFromFile("test.ttf");
+#endif
+
+	// font::FontFile::parseFromFile("subset_Meiryo.ttf");
+
+
 	// font::FontFile::parseFromFile("SourceSansPro-Regular.ttf");
 	// font::FontFile::parseFromFile("Meiryo.ttf");
 	// font::FontFile::parseFromFile("Meiryo-Italic.ttf");
@@ -68,6 +85,6 @@ int main(int argc, char** argv)
 	// font::FontFile::parseFromFile("dejavu-subset.ttf");
 	// font::FontFile::parseFromFile("MyriadPro-Regular.ttf");
 	// font::FontFile::parseFromFile("myriad-subset.ttf");
-	font::FontFile::parseFromFile("XCharter-Roman.otf");
-	font::FontFile::parseFromFile("xcharter-subset.otf");
+	// font::FontFile::parseFromFile("XCharter-Roman.otf");
+	// font::FontFile::parseFromFile("xcharter-subset.otf");
 }

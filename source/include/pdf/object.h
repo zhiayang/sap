@@ -172,6 +172,12 @@ namespace pdf
 		void append(zst::byte_span xs);
 		void append(const uint8_t* arr, size_t num);
 
+		template <typename T>
+		void append_bytes(const T& value)
+		{
+			this->append(reinterpret_cast<const uint8_t*>(&value), sizeof(T));
+		}
+
 		void attach(Document* doc);
 
 		static Stream* create(Document* doc, zst::byte_buffer bytes);
@@ -181,6 +187,9 @@ namespace pdf
 
 		bool is_compressed = false;
 		Dictionary* dict = 0;
+
+		// TODO: FOR DEBUGGING
+		void write_to_file(void* f) const;
 
 	private:
 		void* compressor_state = 0;

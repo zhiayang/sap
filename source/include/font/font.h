@@ -17,6 +17,11 @@
 #include "font/tag.h"
 #include "font/features.h"
 
+namespace pdf
+{
+	struct Stream;
+}
+
 namespace font
 {
 	struct FontMetrics
@@ -100,6 +105,9 @@ namespace font
 		size_t num_hmetrics = 0;
 		Table hmtx_table { };
 
+		size_t num_glyphs = 0;
+		size_t loca_bytes_per_entry = 0;
+
 		GPosTable gpos_tables { };
 		GSubTable gsub_tables { };
 
@@ -124,8 +132,9 @@ namespace font
 		static constexpr int OUTLINES_CFF      = 2;
 	};
 
-	zst::byte_buffer createFontSubset(FontFile* font);
-
+	// the reason this takes in a `map<uint32_t, GlyphMetrics>` is that it's simply how the pdf::Font
+	// knows about which glyphs are used.
+	void writeFontSubset(FontFile* font, pdf::Stream* stream, const std::map<uint32_t, GlyphMetrics>& used_glyphs);
 
 
 	uint16_t peek_u16(const zst::byte_span& s);

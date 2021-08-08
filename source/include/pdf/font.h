@@ -60,6 +60,8 @@ namespace pdf
 		font::FontFile* source_file = 0;
 		Array* glyph_widths_array = 0;
 
+		Stream* embedded_contents = 0;
+
 		// pool needs to be a friend because it needs the constructor
 		template <typename> friend struct util::Pool;
 	};

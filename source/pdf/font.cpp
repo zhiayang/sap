@@ -55,6 +55,17 @@ namespace pdf
 			}
 		}
 
+		// finally, make a font subset based on the glyphs that we use. the assumption (which is perfectly valid)
+		// is that `this->glyph_metrics` has a 1-to-1 correspondence with the glyphs that are used from this font.
+		if(this->source_file && this->embedded_contents)
+		{
+			writeFontSubset(this->source_file, this->embedded_contents, this->glyph_metrics);
+
+			auto f = fopen(zpr::sprint("subset_{}.ttf", this->source_file->postscript_name).c_str(), "wb");
+			this->embedded_contents->write_to_file(f);
+			fclose(f);
+		}
+
 		return this->font_dictionary;
 	}
 
@@ -249,19 +260,17 @@ namespace pdf
 			TODO: for now we are dumping the entire file into the pdf; we probably want some kind of subsetting functionality,
 			which requires improving the robustness of the OTF parser (and handling its glyf [or the CFF equiv.]) table.
 		*/
-		auto file_contents = Stream::create(doc, { });
+		ret->embedded_contents = Stream::create(doc, { });
 		// file_contents->setCompressed(true);
 		{
-			auto subset = font::createFontSubset(font_file);
-			file_contents->append(subset.span());
+			// auto subset = font::createFontSubset(font_file);
+			// file_contents->append(subset.span());
 			// file_contents->append(font_file->file_bytes, font_file->file_size);
 		}
 
 		if(truetype_outlines)
 		{
-			// TODO: this makes a copy of the file (since Stream wants to own the memory also),
-			// which is not ideal.
-			font_desc->add(names::FontFile2, IndirectRef::create(file_contents));
+			font_desc->add(names::FontFile2, IndirectRef::create(ret->embedded_contents));
 			ret->font_type = FONT_TRUETYPE_CID;
 		}
 		else
@@ -269,9 +278,9 @@ namespace pdf
 			// the spec is very very poorly worded on this, BUT from what I can gather, for CFF fonts we can
 			// just always use FontFile3 and CIDFontType0C.
 
-			file_contents->dict->add(names::Subtype, names::CIDFontType0C.ptr());
+			ret->embedded_contents->dict->add(names::Subtype, names::CIDFontType0C.ptr());
 
-			font_desc->add(names::FontFile3, IndirectRef::create(file_contents));
+			font_desc->add(names::FontFile3, IndirectRef::create(ret->embedded_contents));
 			ret->font_type = FONT_CFF_CID;
 		}
 

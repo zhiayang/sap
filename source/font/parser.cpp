@@ -17,18 +17,10 @@ namespace font
 	// these are all BIG ENDIAN, because FUCK YOU.
 	uint16_t peek_u16(const zst::byte_span& s)
 	{
-		assert(s.size() >= sizeof(2));
+		assert(s.size() >= 2);
 		return ((uint16_t) s[0] << 8)
 			| ((uint16_t) s[1] << 0);
 	}
-
-	// static uint32_t peek_u24(const zst::byte_span& s)
-	// {
-	// 	assert(s.size() >= 3);
-	// 	return ((uint32_t) s[0] << 16)
-	// 		| ((uint32_t) s[1] << 8)
-	// 		| ((uint32_t) s[2] << 0);
-	// }
 
 	uint32_t peek_u32(const zst::byte_span& s)
 	{
@@ -59,13 +51,6 @@ namespace font
 		s.remove_prefix(2);
 		return static_cast<int16_t>(ret);
 	}
-
-	// uint32_t consume_u24(zst::byte_span& s)
-	// {
-	// 	auto ret = peek_u24(s);
-	// 	s.remove_prefix(3);
-	// 	return ret;
-	// }
 
 	uint32_t consume_u32(zst::byte_span& s)
 	{
@@ -262,6 +247,14 @@ namespace font
 		font->metrics.ymin = consume_i16(buf);
 		font->metrics.xmax = consume_i16(buf);
 		font->metrics.ymax = consume_i16(buf);
+
+		// skip some stuff
+		buf.remove_prefix(6);
+
+		if(consume_u16(buf) == 0)
+			font->loca_bytes_per_entry = 2;
+		else
+			font->loca_bytes_per_entry = 4;
 	}
 
 	static void parse_post_table(FontFile* font, const Table& post_table)
@@ -322,13 +315,26 @@ namespace font
 		font->metrics.cap_height = consume_i16(buf);
 	}
 
-	static void parse_htmx_table(FontFile* font, const Table& hmtx_table)
+	static void parse_hmtx_table(FontFile* font, const Table& hmtx_table)
 	{
 		// hhea should have been parsed already, so this should be present.
 		assert(font->num_hmetrics > 0);
 		font->hmtx_table = hmtx_table;
 
 		// deferred processing -- we only take the glyph data when it is requested.
+	}
+
+	static void parse_maxp_table(FontFile* font, const Table& maxp_table)
+	{
+		// we are only interested in the number of glyphs, so the version is
+		// not really relevant (neither is any other field)
+		auto buf = zst::byte_span(font->file_bytes, font->file_size);
+		buf.remove_prefix(maxp_table.offset);
+
+		auto version = consume_u32(buf);
+		(void) version;
+
+		font->num_glyphs = consume_u16(buf);
 	}
 
 
@@ -355,7 +361,7 @@ namespace font
 		table.offset = consume_u32(buf);
 		table.length = consume_u32(buf);
 
-		zpr::println("found '{}' table, ofs={x}, length={x}", table.tag.str(), table.offset, table.length);
+		// zpr::println("found '{}' table, ofs={x}, length={x}", table.tag.str(), table.offset, table.length);
 		return table;
 	}
 
@@ -399,7 +405,8 @@ namespace font
 			if(tbl.tag == Tag("cmap"))      parse_cmap_table(font, tbl);
 			else if(tbl.tag == Tag("head")) parse_head_table(font, tbl);
 			else if(tbl.tag == Tag("hhea")) parse_hhea_table(font, tbl);
-			else if(tbl.tag == Tag("hmtx")) parse_htmx_table(font, tbl);
+			else if(tbl.tag == Tag("hmtx")) parse_hmtx_table(font, tbl);
+			else if(tbl.tag == Tag("maxp")) parse_maxp_table(font, tbl);
 			else if(tbl.tag == Tag("name")) parse_name_table(font, tbl);
 			else if(tbl.tag == Tag("post")) parse_post_table(font, tbl);
 			else if(tbl.tag == Tag("GPOS")) parseGPos(font, tbl);
@@ -409,6 +416,21 @@ namespace font
 			font->tables.emplace(tbl.tag, tbl);
 		}
 
+	#if 0
+		for(auto& [ _, tbl ] : font->tables)
+		{
+			if(tbl.tag == Tag("loca"))
+			{
+				auto table = zst::byte_span(font->file_bytes, font->file_size)
+					.drop(tbl.offset).take(tbl.length);
+
+				zpr::println("{} glyphs, {} bytes per loca", font->num_glyphs, font->loca_bytes_per_entry);
+				for(size_t i = 0; i < font->num_glyphs; i++)
+					zpr::println("{} -> {}", i, consume_u32(table));
+			}
+		}
+	#endif
+
 		return font;
 	}
 
@@ -417,8 +439,6 @@ namespace font
 
 	FontFile* FontFile::parseFromFile(const std::string& path)
 	{
-		zpr::println("\nread {}", path);
-
 		auto [ buf, len ] = util::readEntireFile(path);
 		if(len < 4)
 			sap::internal_error("font file too short");
