@@ -24,4 +24,7 @@ namespace unicode
 	std::string utf8FromUtf16BigEndianBytes(zst::byte_span bytes);
 
 	uint32_t consumeCodepointFromUtf8(zst::byte_span& utf8);
+
+	// high-order surrogate first.
+	std::pair<uint16_t, uint16_t> codepointToSurrogatePair(uint32_t codepoint);
 }

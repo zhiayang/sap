@@ -103,6 +103,7 @@ namespace pdf
 						// perform the substitution:
 						gid = liga.substitute;
 						font->loadMetricsForGlyph(gid);
+						font->markLigatureUsed(liga);
 
 						// and drop the glyphs from the real array, noting that the first one was already consumed
 						for(size_t i = 1; i < liga.num_glyphs; i++)

@@ -61,9 +61,8 @@ namespace pdf
 		{
 			writeFontSubset(this->source_file, this->embedded_contents, this->glyph_metrics);
 
-			// auto f = fopen(zpr::sprint("subset_{}.ttf", this->source_file->postscript_name).c_str(), "wb");
-			// this->embedded_contents->write_to_file(f);
-			// fclose(f);
+			// and lastly, write the cmap we'll use for /ToUnicode.
+			this->writeUnicodeCMap(doc);
 		}
 
 		return this->font_dictionary;
@@ -71,7 +70,11 @@ namespace pdf
 
 
 
-
+	void Font::markLigatureUsed(const font::GlyphLigature& lig) const
+	{
+		if(std::find(this->used_ligatures.begin(), this->used_ligatures.end(), lig) == this->used_ligatures.end())
+			this->used_ligatures.push_back(lig);
+	}
 
 	std::optional<font::GlyphLigatureSet> Font::getLigaturesForGlyph(uint32_t glyph) const
 	{
@@ -114,7 +117,9 @@ namespace pdf
 				return it->second;
 
 			auto gid = this->source_file->getGlyphIndexForCodepoint(codepoint);
+
 			this->cmap_cache[codepoint] = gid;
+			this->reverse_cmap[gid] = codepoint;
 
 			this->loadMetricsForGlyph(gid);
 
@@ -172,7 +177,8 @@ namespace pdf
 				/FontFile0/1/2/3: the stream containing the actual file
 				/CIDSet: if we're doing a subset (which we aren't for now)
 		*/
-		auto basefont_name = Name::create(font::generateSubsetName(font_file));
+		ret->pdf_font_name = font::generateSubsetName(font_file);
+		auto basefont_name = Name::create(ret->pdf_font_name);
 
 		// start with making the CIDFontType2/0 entry.
 		auto cidfont_dict = Dictionary::createIndirect(doc, names::Font, { });
@@ -270,6 +276,9 @@ namespace pdf
 			ret->font_type = FONT_CFF_CID;
 		}
 
+		// make a cmap to use for ToUnicode
+		ret->unicode_cmap = Stream::create(doc, { });
+		// ret->unicode_cmap->setCompressed(true);
 
 		// finally, construct the top-level Type0 font.
 		auto type0 = ret->font_dictionary;
@@ -279,6 +288,9 @@ namespace pdf
 		// TODO: here's the thing about CMap. if we use Identity-H then we don't need a CMap, but it forces the text stream
 		// to contain glyph IDs instead of anything sensible.
 		type0->add(names::Encoding, Name::create("Identity-H"));
+
+		// add the unicode map so text selection isn't completely broken
+		type0->add(names::ToUnicode, IndirectRef::create(ret->unicode_cmap));
 
 		type0->add(names::DescendantFonts, Array::create(IndirectRef::create(cidfont_dict)));
 

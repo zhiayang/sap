@@ -169,6 +169,7 @@ namespace pdf
 
 		void setCompressed(bool compressed);
 
+		void append(zst::str_view xs);
 		void append(zst::byte_span xs);
 		void append(const uint8_t* arr, size_t num);
 
@@ -278,6 +279,7 @@ namespace pdf
 		static const auto FontFile3  = pdf::Name("FontFile3");
 		static const auto DescendantFonts  = pdf::Name("DescendantFonts");
 		static const auto CIDToGIDMap  = pdf::Name("CIDToGIDMap");
+		static const auto ToUnicode  = pdf::Name("ToUnicode");
 		static const auto CIDSystemInfo  = pdf::Name("CIDSystemInfo");
 		static const auto CIDFontType0  = pdf::Name("CIDFontType0");
 		static const auto CIDFontType0C = pdf::Name("CIDFontType0C");

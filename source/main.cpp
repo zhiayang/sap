@@ -22,7 +22,7 @@ int main(int argc, char** argv)
 
 	auto font = pdf::Font::fromBuiltin("Times-Roman");
 	auto f2 = pdf::Font::fromFontFile(doc, font::FontFile::parseFromFile("fonts/Meiryo.ttf"));
-	// auto f3 = pdf::Font::fromFontFile(doc, font::FontFile::parseFromFile("fonts/XCharter-Roman.otf"));
+	auto f3 = pdf::Font::fromFontFile(doc, font::FontFile::parseFromFile("fonts/XCharter-Roman.otf"));
 	// auto f4 = pdf::Font::fromFontFile(doc, font::FontFile::parseFromFile("fonts/MyriadPro-Regular.ttf"));
 
 	auto p1 = util::make<pdf::Page>();
@@ -38,12 +38,12 @@ int main(int argc, char** argv)
 	txt2->moveAbs(pdf::mm(10, 195));
 	txt2->addText("こんにちは、世界");
 
-	// auto txt3 = util::make<pdf::Text>();
-	// txt3->setFont(f3, pdf::mm(17));
-	// txt3->moveAbs(pdf::mm(10, 150));
-	// txt3->addText("AYAYA, world x\u030c");
-	// txt3->offset(pdf::mm(0, -20));
-	// txt3->addText("ffi AE ff ffl etc");
+	auto txt3 = util::make<pdf::Text>();
+	txt3->setFont(f3, pdf::mm(17));
+	txt3->moveAbs(pdf::mm(10, 150));
+	txt3->addText("AYAYA, world x\u030c");
+	txt3->offset(pdf::mm(0, -20));
+	txt3->addText("ffi AE ff ffl etc");
 
 	// auto txt4 = util::make<pdf::Text>();
 	// txt4->setFont(f4, pdf::mm(17));
@@ -54,7 +54,7 @@ int main(int argc, char** argv)
 
 	// p1->addObject(txt1);
 	p1->addObject(txt2);
-	// p1->addObject(txt3);
+	p1->addObject(txt3);
 	// p1->addObject(txt4);
 
 	doc->addPage(p1);

@@ -85,6 +85,11 @@ namespace pdf
 		w->writeln("endstream");
 	}
 
+	void Stream::append(zst::str_view xs)
+	{
+		this->append(reinterpret_cast<const uint8_t*>(xs.data()), xs.size());
+	}
+
 	void Stream::append(zst::byte_span xs)
 	{
 		this->append(xs.data(), xs.size());

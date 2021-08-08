@@ -32,6 +32,10 @@ namespace pdf
 		// and put it into the pdf, if not it uses the default width.
 		void loadMetricsForGlyph(uint32_t glyph) const;
 
+		// this has a similar function to `loadMetricsForGlyph`; we need to keep track of which
+		// ligatures are used, so we know which ones we should output to the pdf.
+		void markLigatureUsed(const font::GlyphLigature& ligature) const;
+
 		int font_type = 0;
 		int encoding_kind = 0;
 
@@ -50,8 +54,16 @@ namespace pdf
 		Font();
 		Dictionary* font_dictionary = 0;
 
+		void writeUnicodeCMap(Document* doc) const;
+
 		mutable std::map<uint32_t, uint32_t> cmap_cache { };
 		mutable std::map<uint32_t, font::GlyphMetrics> glyph_metrics { };
+
+		// TODO: this results in a bunch of copying. since we have an owned copy
+		// of every GlyphLigatureSet that is used, we should be able to refer to our internal
+		// copy, via a pointer or something.
+		mutable std::vector<font::GlyphLigature> used_ligatures { };
+		mutable std::map<uint32_t, uint32_t> reverse_cmap { };
 
 		std::map<uint32_t, font::GlyphLigatureSet> glyph_ligatures { };
 		std::map<std::pair<uint32_t, uint32_t>, font::KerningPair> kerning_pairs { };
@@ -61,6 +73,10 @@ namespace pdf
 		Array* glyph_widths_array = 0;
 
 		Stream* embedded_contents = 0;
+		Stream* unicode_cmap = 0;
+
+		// what goes in BaseName. for subsets, this includes the ABCDEF+ part.
+		std::string pdf_font_name;
 
 		// pool needs to be a friend because it needs the constructor
 		template <typename> friend struct util::Pool;

@@ -28,7 +28,7 @@ namespace unicode
 			if(snd <= 0xD7FF || snd >= 0xE000)
 				sap::internal_error("missing second surrogate in pair");
 
-			cp = (high << 10) | (low << 0);
+			cp = 0x10'0000 + (high << 10) | (low << 0);
 			surrogate = true;
 		}
 
@@ -82,5 +82,18 @@ namespace unicode
 
 		utf8.remove_prefix(read);
 		return static_cast<uint32_t>(codepoint);
+	}
+
+	std::pair<uint16_t, uint16_t> codepointToSurrogatePair(uint32_t codepoint)
+	{
+		assert(codepoint <= 0x10FFFF);
+
+		auto high = ((codepoint - 0x10'0000) & 0xFFC000) >> 10;
+		auto low  = ((codepoint - 0x10'0000) & 0x0003FF) >> 0;
+
+		return {
+			static_cast<uint16_t>(high + 0xD800),
+			static_cast<uint16_t>(low + 0xDC00)
+		};
 	}
 }
