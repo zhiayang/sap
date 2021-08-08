@@ -2,6 +2,8 @@
 // Copyright (c) 2021, zhiayang
 // Licensed under the Apache License Version 2.0.
 
+#include <cstdlib>
+
 #include "util.h"
 #include "error.h"
 #include "font/font.h"
@@ -13,11 +15,12 @@ namespace font
 
 	static bool should_exclude_table(const Tag& tag)
 	{
-		return tag == Tag("GPOS")
-			|| tag == Tag("GSUB")
-			|| tag == Tag("GDEF")
-			|| tag == Tag("BASE")
-			|| tag == Tag("FFTM");
+		return false;
+		// return tag == Tag("GPOS")
+		// 	|| tag == Tag("GSUB")
+		// 	|| tag == Tag("GDEF")
+		// 	|| tag == Tag("BASE")
+		// 	|| tag == Tag("FFTM");
 
 		// TODO: the OFF spec says that the 'post' table is required, but pdfTeX appears
 		// to strip that table when it makes a subset...
@@ -234,5 +237,17 @@ namespace font
 			for(auto& table : included_tables)
 				stream->append(file_contents.drop(table.offset).take(table.length));
 		}
+	}
+
+
+	std::string generateSubsetName(FontFile* font)
+	{
+		// does this really need to be very random? no.
+		const char* letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+
+		return zpr::sprint("{}{}{}{}{}{}+{}",
+			letters[rand() % 26], letters[rand() % 26], letters[rand() % 26],
+			letters[rand() % 26], letters[rand() % 26], letters[rand() % 26],
+			font->postscript_name);
 	}
 }

@@ -2,16 +2,23 @@
 // Copyright (c) 2021, zhiayang
 // Licensed under the Apache License Version 2.0.
 
+#include <cstdlib>
+
+#include <zpr.h>
+
 #include "pdf/pdf.h"
 #include "pdf/font.h"
 #include "pdf/text.h"
 
 #include "font/font.h"
 
-#include <zpr.h>
 
 int main(int argc, char** argv)
 {
+	srand(time(nullptr));
+
+
+
 #if 1
 	auto writer = util::make<pdf::Writer>("test.pdf");
 	auto doc = util::make<pdf::Document>();
@@ -58,24 +65,12 @@ int main(int argc, char** argv)
 	doc->write(writer);
 
 	writer->close();
-#endif
-
-
-
-#if 0
-	auto doc = util::make<pdf::Document>();
-	auto f4 = pdf::Font::fromFontFile(doc, font::FontFile::parseFromFile("MyriadPro-Regular.ttf"));
-
-	for(char c : "abdef")
-		f4->loadMetricsForGlyph(f4->getGlyphIdFromCodepoint(c));
-
-	f4->serialise(doc);
-
-	font::FontFile::parseFromFile("test.ttf");
+#else
+	font::FontFile::parseFromFile("subset_XCharter-Roman.ttf");
+	font::FontFile::parseFromFile("XCharter-Roman.otf");
 #endif
 
 	// font::FontFile::parseFromFile("subset_Meiryo.ttf");
-
 
 	// font::FontFile::parseFromFile("SourceSansPro-Regular.ttf");
 	// font::FontFile::parseFromFile("Meiryo.ttf");

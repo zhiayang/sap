@@ -172,7 +172,7 @@ namespace pdf
 				/FontFile0/1/2/3: the stream containing the actual file
 				/CIDSet: if we're doing a subset (which we aren't for now)
 		*/
-		auto basefont_name = Name::create(font_file->postscript_name);
+		auto basefont_name = Name::create(font::generateSubsetName(font_file));
 
 		// start with making the CIDFontType2/0 entry.
 		auto cidfont_dict = Dictionary::createIndirect(doc, names::Font, { });
