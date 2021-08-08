@@ -361,7 +361,7 @@ namespace font
 		table.offset = consume_u32(buf);
 		table.length = consume_u32(buf);
 
-		// zpr::println("found '{}' table, ofs={x}, length={x}", table.tag.str(), table.offset, table.length);
+		zpr::println("    found '{}' table, ofs={x}, length={x}", table.tag.str(), table.offset, table.length);
 		return table;
 	}
 
@@ -439,6 +439,8 @@ namespace font
 
 	FontFile* FontFile::parseFromFile(const std::string& path)
 	{
+		zpr::println("read {}", path);
+
 		auto [ buf, len ] = util::readEntireFile(path);
 		if(len < 4)
 			sap::internal_error("font file too short");
