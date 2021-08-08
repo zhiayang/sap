@@ -16,7 +16,7 @@
 */
 
 /*
-	Version 1.3.0
+	Version 1.3.1
 	=============
 
 
@@ -58,6 +58,12 @@
 
 	Version History
 	===============
+
+	1.3.1 - 08/08/2021
+	------------------
+	Fix a bug in buffer<T>::append_bytes being SFINAE-ed wrongly
+
+
 
 	1.3.0 - 03/08/2021
 	------------------
@@ -554,7 +560,7 @@ namespace zst
 				return *this;
 			}
 
-			template <typename T, typename A = value_type, typename = typename detail::enable_if<detail::is_same<T, uint8_t>::value>::type>
+			template <typename T, typename A = value_type, typename = typename detail::enable_if<detail::is_same<A, uint8_t>::value>::type>
 			inline buffer& append_bytes(const T& value)
 			{
 				this->expand(sizeof(T));

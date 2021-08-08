@@ -107,6 +107,7 @@ namespace font
 		int font_type = 0;
 		int outline_type = 0;
 
+		// note: this *MUST* be a std::map (ie. ordered) because the tables must be sorted by Tag.
 		std::map<Tag, Table> tables;
 
 		// cache this so we don't look for it.
@@ -122,6 +123,9 @@ namespace font
 		static constexpr int OUTLINES_TRUETYPE = 1;
 		static constexpr int OUTLINES_CFF      = 2;
 	};
+
+	zst::byte_buffer createFontSubset(FontFile* font);
+
 
 
 	uint16_t peek_u16(const zst::byte_span& s);

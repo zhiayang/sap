@@ -250,8 +250,12 @@ namespace pdf
 			which requires improving the robustness of the OTF parser (and handling its glyf [or the CFF equiv.]) table.
 		*/
 		auto file_contents = Stream::create(doc, { });
-		file_contents->setCompressed(true);
-		file_contents->append(font_file->file_bytes, font_file->file_size);
+		// file_contents->setCompressed(true);
+		{
+			auto subset = font::createFontSubset(font_file);
+			file_contents->append(subset.span());
+			// file_contents->append(font_file->file_bytes, font_file->file_size);
+		}
 
 		if(truetype_outlines)
 		{

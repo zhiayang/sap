@@ -384,6 +384,8 @@ namespace font
 		auto entry_selector = consume_u16(buf);
 		auto range_shift = consume_u16(buf);
 
+		zpr::println("{} tables", num_tables);
+
 		(void) search_range;
 		(void) entry_selector;
 		(void) range_shift;
