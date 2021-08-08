@@ -185,6 +185,7 @@ namespace pdf
 
 		static Stream* createDetached(Document* doc, Dictionary* dict, zst::byte_buffer bytes);
 
+		size_t uncompressed_length = 0;
 		bool is_compressed = false;
 		Dictionary* dict = 0;
 
@@ -242,6 +243,7 @@ namespace pdf
 		static const auto Parent    = pdf::Name("Parent");
 		static const auto Page      = pdf::Name("Page");
 		static const auto Length    = pdf::Name("Length");
+		static const auto Length1   = pdf::Name("Length1");
 		static const auto Pages     = pdf::Name("Pages");
 		static const auto Font      = pdf::Name("Font");
 		static const auto FontName      = pdf::Name("FontName");

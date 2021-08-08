@@ -61,9 +61,9 @@ namespace pdf
 		{
 			writeFontSubset(this->source_file, this->embedded_contents, this->glyph_metrics);
 
-			auto f = fopen(zpr::sprint("subset_{}.ttf", this->source_file->postscript_name).c_str(), "wb");
-			this->embedded_contents->write_to_file(f);
-			fclose(f);
+			// auto f = fopen(zpr::sprint("subset_{}.ttf", this->source_file->postscript_name).c_str(), "wb");
+			// this->embedded_contents->write_to_file(f);
+			// fclose(f);
 		}
 
 		return this->font_dictionary;
@@ -251,22 +251,8 @@ namespace pdf
 
 		cidfont_dict->add(names::FontDescriptor, IndirectRef::create(font_desc));
 
-		/*
-			TODO: we want to add the width table (/W) to the cidfont_dict as well. if we don't then the default
-			width is used for all glyphs, which is probably ugly af.
-		*/
-
-		/*
-			TODO: for now we are dumping the entire file into the pdf; we probably want some kind of subsetting functionality,
-			which requires improving the robustness of the OTF parser (and handling its glyf [or the CFF equiv.]) table.
-		*/
 		ret->embedded_contents = Stream::create(doc, { });
-		// file_contents->setCompressed(true);
-		{
-			// auto subset = font::createFontSubset(font_file);
-			// file_contents->append(subset.span());
-			// file_contents->append(font_file->file_bytes, font_file->file_size);
-		}
+		ret->embedded_contents->setCompressed(true);
 
 		if(truetype_outlines)
 		{

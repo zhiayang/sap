@@ -10,6 +10,7 @@
 
 *.sublime-*
 build/
+fonts/
 tmp/
 
 *.pdf

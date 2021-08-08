@@ -378,7 +378,7 @@ namespace font
 		if(sfnt_version == Tag("OTTO"))
 			font->outline_type = FontFile::OUTLINES_CFF;
 
-		else if(sfnt_version == Tag(0, 1, 0, 0))
+		else if(sfnt_version == Tag(0, 1, 0, 0) || sfnt_version == Tag("true"))
 			font->outline_type = FontFile::OUTLINES_TRUETYPE;
 
 		else
@@ -416,6 +416,8 @@ namespace font
 			font->tables.emplace(tbl.tag, tbl);
 		}
 
+		zpr::println("  {} glyphs found", font->num_glyphs);
+
 	#if 0
 		for(auto& [ _, tbl ] : font->tables)
 		{
@@ -445,7 +447,7 @@ namespace font
 		if(len < 4)
 			sap::internal_error("font file too short");
 
-		if(memcmp(buf, "OTTO", 4) == 0 || memcmp(buf, "\x00\x01\x00\x00", 4) == 0)
+		if(memcmp(buf, "OTTO", 4) == 0 || memcmp(buf, "true", 4) == 0 || memcmp(buf, "\x00\x01\x00\x00", 4) == 0)
 			return parseOTF(zst::byte_span(buf, len));
 
 		else

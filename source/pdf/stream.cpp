@@ -106,6 +106,7 @@ namespace pdf
 		}
 
 		this->dict->addOrReplace(names::Length, Integer::create(this->bytes.size()));
+		this->uncompressed_length += num;
 	}
 
 	void Stream::attach(Document* document)
