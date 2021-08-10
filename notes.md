@@ -42,3 +42,13 @@ This means that, for maximum flexibility, if a font doesn't contain a glyph for 
 should attempt to compose the codepoint, see if the font contains a glyph for that codepoint, and if
 so replace it. The conerse is also true --- if for some reason the font has the combining character glyph
 but not one for the composed form, then we should attempt to decompose the codepoint.
+
+
+
+
+
+
+
+## references
+
+(Global Multiple Objective Line Breaking (Holkner, 2006))[http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.585.8487&rep=rep1&type=pdf]

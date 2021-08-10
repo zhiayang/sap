@@ -18,10 +18,10 @@ namespace pdf
 		double x;
 	};
 
-	struct Coord
+	struct Vector
 	{
-		constexpr Coord() : x(0), y(0) { }
-		constexpr Coord(double x, double y) : x(x), y(y) { }
+		constexpr Vector() : x(0), y(0) { }
+		constexpr Vector(double x, double y) : x(x), y(y) { }
 
 		double x;
 		double y;
@@ -35,20 +35,20 @@ namespace pdf
 	constexpr inline Scalar millimetres(double x) { return Scalar(MM_PER_UNIT * x); }
 	constexpr inline Scalar centimetres(double x) { return Scalar(MM_PER_UNIT * x * MM_PER_CM); }
 
-	constexpr inline Coord millimetres(double x, double y)
+	constexpr inline Vector millimetres(double x, double y)
 	{
-		return Coord(MM_PER_UNIT * x, MM_PER_UNIT * y);
+		return Vector(MM_PER_UNIT * x, MM_PER_UNIT * y);
 	}
 
-	constexpr inline Coord centimetres(double x, double y)
+	constexpr inline Vector centimetres(double x, double y)
 	{
-		return Coord(MM_PER_UNIT * x * MM_PER_CM, MM_PER_UNIT * y * MM_PER_CM);
+		return Vector(MM_PER_UNIT * x * MM_PER_CM, MM_PER_UNIT * y * MM_PER_CM);
 	}
 
 	constexpr inline Scalar mm(double x) { return millimetres(x); }
 	constexpr inline Scalar cm(double x) { return centimetres(x); }
-	constexpr inline Coord mm(double x, double y) { return millimetres(x, y); }
-	constexpr inline Coord cm(double x, double y) { return centimetres(x, y); }
+	constexpr inline Vector mm(double x, double y) { return millimetres(x, y); }
+	constexpr inline Vector cm(double x, double y) { return centimetres(x, y); }
 }
 
 
@@ -65,10 +65,10 @@ namespace zpr
 	};
 
 	template <>
-	struct print_formatter<pdf::Coord>
+	struct print_formatter<pdf::Vector>
 	{
 		template <typename Cb>
-		void print(pdf::Coord x, Cb&& cb, format_args args)
+		void print(pdf::Vector x, Cb&& cb, format_args args)
 		{
 			detail::print(cb, "{} {}", x.x, x.y);
 		}

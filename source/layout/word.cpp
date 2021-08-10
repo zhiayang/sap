@@ -1,19 +1,19 @@
-// text.cpp
+// word.cpp
 // Copyright (c) 2021, zhiayang
 // Licensed under the Apache License Version 2.0.
 
-#include <cassert>
-
+#include "sap.h"
 #include "util.h"
-#include "pdf/font.h"
-#include "pdf/text.h"
-#include "pdf/page.h"
-#include "pdf/misc.h"
 
-namespace pdf
+#include "font/font.h"
+
+#include "pdf/misc.h"
+#include "pdf/font.h"
+
+namespace sap
 {
 	// TODO: this needs to handle unicode composing/decomposing also, which is a massive pain
-	static std::optional<uint32_t> peek_one_glyphid(const Font* font, zst::byte_span utf8, size_t* num_bytes)
+	static std::optional<uint32_t> peek_one_glyphid(const pdf::Font* font, zst::byte_span utf8, size_t* num_bytes)
 	{
 		if(utf8.empty())
 			return { };
@@ -28,7 +28,7 @@ namespace pdf
 		return gid;
 	}
 
-	static uint32_t read_one_glyphid(const Font* font, zst::byte_span& utf8)
+	static uint32_t read_one_glyphid(const pdf::Font* font, zst::byte_span& utf8)
 	{
 		assert(utf8.size() > 0);
 		size_t num = 0;
@@ -37,11 +37,9 @@ namespace pdf
 		return *gid;
 	}
 
-
-	// also encode it.
-	static std::string encode_text_with_font(const Font* font, zst::str_view text)
+	static std::vector<std::pair<uint32_t, int>> get_glyphs_and_spacing(const pdf::Font* font, zst::str_view text)
 	{
-		std::string ret;
+		std::vector<std::pair<uint32_t, int>> ret;
 		auto sv = text.bytes();
 
 		/*
@@ -115,105 +113,53 @@ namespace pdf
 				}
 			}
 
-			// TODO: use CMap or something to handle this situation.
-			if(gid > 0xffff)
-				pdf::error("TODO: sorry");
-
-			// TODO: this is pretty suboptimal output
-			auto append_glyph = [&ret, &font](uint32_t g) {
-				if(font->encoding_kind == Font::ENCODING_CID)
-					ret += zpr::sprint("<{02x}{02x}>", (g & 0xff00) >> 8, g & 0xff);
-				else
-					ret += zpr::sprint("<{02x}>", g & 0xff);
-			};
-
+			int adjust = 0;
 			if(prev_gid != static_cast<uint32_t>(-1))
 			{
 				auto kerning_pair = font->getKerningForGlyphs(prev_gid, gid);
 				if(kerning_pair.has_value())
 				{
-					auto adj = -1 * kerning_pair->first.horz_advance;
+					// note: since as mentioned above we're doing (prev, cur), the adjustment
+					// goes before the current glyph.
+
+					adjust = -1 * kerning_pair->first.horz_advance;
 
 					if(kerning_pair->second.horz_advance != 0)
 						zpr::println("warning: unsupported case where adj2 is not 0");
-
-					// note: since as mentioned above we're doing (prev, cur), the adjustment
-					// goes before the current glyph.
-					if(adj != 0)
-						ret += zpr::sprint("{}", adj);
 				}
 			}
 
-			append_glyph(gid);
+			ret.push_back({ gid, adjust });
 			prev_gid = gid;
 		}
 
 		return ret;
 	}
 
-
-
-	std::string Text::serialise(const Page* page) const
+	void Word::compute()
 	{
-		if(this->font == nullptr || this->font_height.zero())
-			return "";
+		auto font = this->display.font;
+		auto font_size = this->display.fontSize;
+		this->glyphs = get_glyphs_and_spacing(font, this->text);
 
-		return zpr::sprint("BT\n  /{} {} Tf\n {}\nET\n",
-			page->getNameForFont(this->font), this->font_height, commands);
-	}
+		// TODO: vertical writing mode
+		// TODO: cleaner unit abstraction
 
-	void Text::setFont(Font* font, Scalar height)
-	{
-		assert(font != nullptr);
-		this->font = font;
-		this->font_height = height;
-	}
+		// size is in sap units, which is in mm; metrics are in typographic units, so 72dpi;
+		// calculate the scale accordingly.
+		auto font_metrics = font->getFontMetrics();
 
-	// convention is that all appends to the command list should start with a " ".
-	void Text::moveAbs(Vector pos)
-	{
-		// do this in two steps; first, replace the text matrix with the identity to get to (0, 0),
-		// then perform an offset to get to the desired position.
-		this->commands += zpr::sprint(" 1 0 0 1 0 0 Tm");
-		this->offset(pos);
-	}
+		this->size = { 0, 0 };
+		this->size.y = (font_metrics.ymax - font_metrics.ymin) * (font_size.x / pdf::MM_PER_UNIT) / 1000.0;
 
-	void Text::offset(Vector offset)
-	{
-		this->commands += zpr::sprint(" {} {} Td", offset.x, offset.y);
-	}
+		for(auto& [ gid, kern ] : this->glyphs)
+		{
+			auto met = font->getMetricsForGlyph(gid);
 
-	void Text::startGroup()
-	{
-		if(this->in_group)
-			pdf::error("text groups (TJ) cannot be nested");
+			// note: positive kerns move left, so subtract it.
+			this->size.x += (met.horz_advance * (font_size.x / pdf::MM_PER_UNIT) - kern) / 1000.0;
+		}
 
-		this->in_group = true;
-		this->commands += " [";
-	}
-
-	void Text::addText(zst::str_view text)
-	{
-		if(this->in_group)
-			this->commands += zpr::sprint(" {}", encode_text_with_font(this->font, text));
-		else
-			this->commands += zpr::sprint(" [{}] TJ", encode_text_with_font(this->font, text));
-	}
-
-	void Text::addText(Scalar offset, zst::str_view text)
-	{
-		if(!this->in_group)
-			pdf::error("addText() with offset can only be used after beginGroup()");
-
-		this->commands += zpr::sprint(" {} {}", offset, encode_text_with_font(this->font, text));
-	}
-
-	void Text::endGroup()
-	{
-		if(!this->in_group)
-			pdf::error("endGroup() can only be used after beginGroup()");
-
-		this->in_group = false;
-		this->commands += "]";
+		zpr::println("size = {}, {}", this->size.x, this->size.y);
 	}
 }

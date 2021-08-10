@@ -245,6 +245,11 @@ namespace font
 
 	std::string generateSubsetName(FontFile* font)
 	{
+		static auto foo = []() {
+			srand(time(nullptr));
+			return 69;
+		}(); (void) foo;
+
 		// does this really need to be very random? no.
 		const char* letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
 

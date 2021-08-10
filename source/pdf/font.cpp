@@ -84,6 +84,12 @@ namespace pdf
 		return { };
 	}
 
+	font::GlyphMetrics Font::getMetricsForGlyph(uint32_t glyph) const
+	{
+		this->loadMetricsForGlyph(glyph);
+		return this->glyph_metrics[glyph];
+	}
+
 	void Font::loadMetricsForGlyph(uint32_t glyph) const
 	{
 		if(!this->source_file || this->glyph_metrics.find(glyph) != this->glyph_metrics.end())
@@ -342,5 +348,14 @@ namespace pdf
 		font->encoding_kind = ENCODING_WIN_ANSI;
 
 		return font;
+	}
+
+	font::FontMetrics Font::getFontMetrics() const
+	{
+		// TODO: metrics for the 14 built-in fonts
+		// see https://stackoverflow.com/questions/6383511/
+		assert(this->source_file);
+
+		return this->source_file->metrics;
 	}
 }

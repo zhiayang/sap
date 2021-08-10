@@ -361,7 +361,7 @@ namespace font
 		table.offset = consume_u32(buf);
 		table.length = consume_u32(buf);
 
-		zpr::println("    found '{}' table, ofs={x}, length={x}", table.tag.str(), table.offset, table.length);
+		// zpr::println("    found '{}' table, ofs={x}, length={x}", table.tag.str(), table.offset, table.length);
 		return table;
 	}
 
@@ -390,7 +390,7 @@ namespace font
 		auto entry_selector = consume_u16(buf);
 		auto range_shift = consume_u16(buf);
 
-		zpr::println("{} tables", num_tables);
+		// zpr::println("{} tables", num_tables);
 
 		(void) search_range;
 		(void) entry_selector;
@@ -416,7 +416,7 @@ namespace font
 			font->tables.emplace(tbl.tag, tbl);
 		}
 
-		zpr::println("  {} glyphs found", font->num_glyphs);
+		// zpr::println("  {} glyphs found", font->num_glyphs);
 
 	#if 0
 		for(auto& [ _, tbl ] : font->tables)
@@ -441,8 +441,7 @@ namespace font
 
 	FontFile* FontFile::parseFromFile(const std::string& path)
 	{
-		zpr::println("read {}", path);
-
+		// zpr::println("read {}", path);
 		auto [ buf, len ] = util::readEntireFile(path);
 		if(len < 4)
 			sap::internal_error("font file too short");

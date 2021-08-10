@@ -32,6 +32,10 @@ namespace pdf
 		// and put it into the pdf, if not it uses the default width.
 		void loadMetricsForGlyph(uint32_t glyph) const;
 
+		font::GlyphMetrics getMetricsForGlyph(uint32_t glyph) const;
+
+		font::FontMetrics getFontMetrics() const;
+
 		// this has a similar function to `loadMetricsForGlyph`; we need to keep track of which
 		// ligatures are used, so we know which ones we should output to the pdf.
 		void markLigatureUsed(const font::GlyphLigature& ligature) const;

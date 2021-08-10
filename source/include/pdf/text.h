@@ -18,8 +18,8 @@ namespace pdf
 
 		void setFont(Font* font, Scalar height);
 
-		void moveAbs(Coord pos);
-		void offset(Coord offset);
+		void moveAbs(Vector pos);
+		void offset(Vector offset);
 		void addText(zst::str_view text);
 
 		void startGroup();
