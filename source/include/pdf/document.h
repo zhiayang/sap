@@ -26,12 +26,15 @@ namespace pdf
 
 		void addPage(Page* page);
 
+		size_t getNextFontResourceNumber();
+
 	private:
 		size_t current_id = 0;
 		std::map<size_t, Object*> objects;
 
 		std::vector<Page*> pages;
 
+		size_t current_font_number = 0;
 		Dictionary* createPageTree();
 	};
 

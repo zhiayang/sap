@@ -111,4 +111,9 @@ namespace pdf
 	{
 		return ++this->current_id;
 	}
+
+	size_t Document::getNextFontResourceNumber()
+	{
+		return ++this->current_font_number;
+	}
 }

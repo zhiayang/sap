@@ -7,6 +7,7 @@
 #include "pdf/font.h"
 #include "pdf/misc.h"
 #include "pdf/object.h"
+#include "pdf/document.h"
 #include "pdf/win_ansi_encoding.h"
 
 #include "font/font.h"
@@ -319,10 +320,11 @@ namespace pdf
 		ret->glyph_ligatures = font_file->getAllGlyphLigatures();
 		// ret->kerning_pairs = font_file->getAllKerningPairs();
 
+		ret->font_resource_name = zpr::sprint("F{}", doc->getNextFontResourceNumber());
 		return ret;
 	}
 
-	Font* Font::fromBuiltin(zst::str_view name)
+	Font* Font::fromBuiltin(Document* doc, zst::str_view name)
 	{
 		const char* known_fonts[] = {
 			"Times-Roman", "Times-Italic", "Times-Bold", "Times-BoldItalic",
@@ -347,7 +349,14 @@ namespace pdf
 		dict->add(names::Encoding, Name::create("WinAnsiEncoding"));
 		font->encoding_kind = ENCODING_WIN_ANSI;
 
+		font->font_resource_name = zpr::sprint("F{}", doc->getNextFontResourceNumber());
+
 		return font;
+	}
+
+	std::string Font::getFontResourceName() const
+	{
+		return this->font_resource_name;
 	}
 
 	font::FontMetrics Font::getFontMetrics() const

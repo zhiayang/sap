@@ -11,6 +11,7 @@
 *.sublime-*
 build/
 fonts/
+specs/
 tmp/
 
 *.pdf

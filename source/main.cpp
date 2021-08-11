@@ -43,7 +43,7 @@ constexpr const char* para2 =
 
 int main(int argc, char** argv)
 {
-#if 0
+#if 1
 	auto doc = util::make<pdf::Document>();
 	auto font = pdf::Font::fromFontFile(doc, font::FontFile::parseFromFile("fonts/XCharter-Roman.otf"));
 
@@ -97,7 +97,7 @@ int main(int argc, char** argv)
 	auto writer = util::make<pdf::Writer>("test.pdf");
 	auto doc = util::make<pdf::Document>();
 
-	auto font = pdf::Font::fromBuiltin("Times-Roman");
+	auto font = pdf::Font::fromBuiltin(doc, "Times-Roman");
 	auto f2 = pdf::Font::fromFontFile(doc, font::FontFile::parseFromFile("fonts/Meiryo.ttf"));
 	auto f3 = pdf::Font::fromFontFile(doc, font::FontFile::parseFromFile("fonts/XCharter-Roman.otf"));
 	auto f4 = pdf::Font::fromFontFile(doc, font::FontFile::parseFromFile("fonts/MyriadPro-Regular.ttf"));
@@ -123,12 +123,12 @@ int main(int argc, char** argv)
 	// txt3->addText("ffi AE ff ffl etc");
 
 
-	auto txt3 = util::make<pdf::Text>();
-	txt3->setFont(f3, pdf::mm(4.8));
-	txt3->moveAbs(pdf::mm(10, 150));
-	txt3->addText("My");
-	txt3->offset(pdf::mm(6.6, 0));
-	txt3->addText("name");
+	// auto txt3 = util::make<pdf::Text>();
+	// txt3->setFont(f3, pdf::mm(4.8));
+	// txt3->moveAbs(pdf::mm(10, 150));
+	// txt3->addText("My");
+	// txt3->offset(pdf::mm(6.6, 0));
+	// txt3->addText("name");
 
 
 	// auto txt4 = util::make<pdf::Text>();

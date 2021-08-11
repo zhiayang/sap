@@ -40,10 +40,13 @@ namespace pdf
 		// ligatures are used, so we know which ones we should output to the pdf.
 		void markLigatureUsed(const font::GlyphLigature& ligature) const;
 
+		// get the name that we should put in the Resource dictionary of a page that uses this font.
+		std::string getFontResourceName() const;
+
 		int font_type = 0;
 		int encoding_kind = 0;
 
-		static Font* fromBuiltin(zst::str_view name);
+		static Font* fromBuiltin(Document* doc, zst::str_view name);
 		static Font* fromFontFile(Document* doc, font::FontFile* font);
 
 		static constexpr int FONT_TYPE1         = 1;
@@ -71,6 +74,10 @@ namespace pdf
 
 		std::map<uint32_t, font::GlyphLigatureSet> glyph_ligatures { };
 		std::map<std::pair<uint32_t, uint32_t>, font::KerningPair> kerning_pairs { };
+
+		// the name that goes into the Resource << >> dict in a page. This is a unique name
+		// that we get from the Document when the font is created.
+		std::string font_resource_name { };
 
 		// only used for embedded fonts
 		font::FontFile* source_file = 0;

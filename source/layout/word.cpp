@@ -143,7 +143,8 @@ namespace sap
 		this->glyphs = get_glyphs_and_spacing(font, this->text);
 
 		// TODO: vertical writing mode
-		// TODO: cleaner unit abstraction
+		// TODO: cleaner unit abstraction. lots of weird magic numbers right now.
+		// TODO: what the hell is the name for that 1000? font scaling parameter? idk
 
 		// size is in sap units, which is in mm; metrics are in typographic units, so 72dpi;
 		// calculate the scale accordingly.
@@ -159,7 +160,5 @@ namespace sap
 			// note: positive kerns move left, so subtract it.
 			this->size.x += (met.horz_advance * (font_size.x / pdf::MM_PER_UNIT) - kern) / 1000.0;
 		}
-
-		zpr::println("size = {}, {}", this->size.x, this->size.y);
 	}
 }
