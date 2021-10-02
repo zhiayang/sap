@@ -43,7 +43,7 @@
 
 
 /*
-	Version 2.5.0
+	Version 2.5.3
 	=============
 
 
@@ -469,6 +469,8 @@ namespace zpr::tt
 
 	struct str_view
 	{
+		using value_type = char;
+
 		str_view() : ptr(nullptr), len(0) { }
 		str_view(const char* p, size_t l) : ptr(p), len(l) { }
 
@@ -478,13 +480,6 @@ namespace zpr::tt
 		template <typename T, typename = tt::enable_if_t<tt::is_same_v<const char*, T>>>
 		str_view(T s) : ptr(s), len(strlen(s)) { }
 
-	#if ZPR_USE_STD
-
-		str_view(const std::string& str) : ptr(str.data()), len(str.size()) { }
-		str_view(const std::string_view& sv) : ptr(sv.data()), len(sv.size()) { }
-
-	#endif
-
 		str_view(str_view&&) = default;
 		str_view(const str_view&) = default;
 		str_view& operator= (str_view&&) = default;
@@ -493,7 +488,7 @@ namespace zpr::tt
 		inline bool operator== (const str_view& other) const
 		{
 			return (this->ptr == other.ptr && this->len == other.len)
-				|| (strncmp(this->ptr, other.ptr, tt::min(this->len, other.len)) == 0);
+				|| (this->len == other.len && strncmp(this->ptr, other.ptr, this->len) == 0);
 		}
 
 		inline bool operator!= (const str_view& other) const
@@ -518,9 +513,44 @@ namespace zpr::tt
 		inline str_view& remove_prefix(size_t n) { return (*this = this->drop(n)); }
 		inline str_view& remove_suffix(size_t n) { return (*this = this->drop_last(n)); }
 
-	private:
+		[[nodiscard]] inline str_view take_prefix(size_t n)
+		{
+			auto ret = this->take(n);
+			this->remove_prefix(n);
+			return ret;
+		}
+
+		inline size_t find(char c) const { return this->find(str_view(&c, 1)); }
+		inline size_t find(str_view sv) const
+		{
+			if(sv.size() > this->size())
+				return -1;
+
+			else if(sv.empty())
+				return 0;
+
+			for(size_t i = 0; i < 1 + this->size() - sv.size(); i++)
+			{
+				if(this->drop(i).take(sv.size()) == sv)
+					return i;
+			}
+
+			return -1;
+		}
+
 		inline str_view substr(size_t pos, size_t cnt) const { return str_view(this->ptr + pos, cnt); }
 
+
+	#if ZPR_USE_STD
+
+		str_view(const std::string& str) : ptr(str.data()), len(str.size()) { }
+		str_view(const std::string_view& sv) : ptr(sv.data()), len(sv.size()) { }
+
+		[[nodiscard]] inline std::string str() const { return std::string(this->ptr, this->len); }
+	#endif
+
+
+	private:
 		const char* ptr;
 		size_t len;
 	};
@@ -668,7 +698,10 @@ namespace zpr
 			}
 
 			tt::str_view fmt;
-			const void* values[sizeof...(Args)] { };
+
+			// msvc doesn't like a 0-sized array here
+			const size_t num_values = sizeof...(Args);
+			const void* values[sizeof...(Args) == 0 ? 1 : sizeof...(Args)] { };
 		};
 
 		struct dummy_appender
@@ -697,9 +730,12 @@ namespace zpr
 
 		template <typename T>
 		struct is_iterable<T, tt::void_t<
-			decltype(begin(tt::declval<T&>())),
-			decltype(end(tt::declval<T&>()))
+			decltype(begin(tt::declval<T&>())), decltype(end(tt::declval<T&>()))
 		>> : tt::true_type { };
+
+		// a bit hacky, but force this to be iterable.
+		template <>
+		struct is_iterable<tt::str_view> : tt::true_type { };
 
 		static inline format_args parse_fmt_spec(tt::str_view sv)
 		{
@@ -784,16 +820,22 @@ namespace zpr
 			if(args.have_precision())   string_length = tt::min(args.precision, static_cast<int64_t>(len));
 			else                        string_length = static_cast<int64_t>(len);
 
-			size_t ret = string_length;
+			size_t ret = static_cast<size_t>(string_length);
 			auto padding_width = args.width - string_length;
 
 			if(args.positive_width() && padding_width > 0)
-				cb(args.zero_pad() ? '0' : ' ', padding_width), ret += padding_width;
+			{
+				cb(args.zero_pad() ? '0' : ' ', static_cast<size_t>(padding_width));
+				ret += static_cast<size_t>(padding_width);
+			}
 
-			cb(str, string_length);
+			cb(str, static_cast<size_t>(string_length));
 
 			if(args.negative_width() && padding_width > 0)
-				cb(args.zero_pad() ? '0' : ' ', padding_width), ret += padding_width;
+			{
+				cb(args.zero_pad() ? '0' : ' ', static_cast<size_t>(padding_width));
+				ret += static_cast<size_t>(padding_width);
+			}
 
 			return ret;
 		}
@@ -1372,8 +1414,15 @@ namespace zpr
 
 					if constexpr (TypeErased)
 					{
-						print_one(cb, static_cast<format_args&&>(fmt_spec),
-							*reinterpret_cast<const typename tt::remove_reference<T>::type*>(value));
+						if(value == nullptr)
+						{
+							// don't do anything.
+						}
+						else
+						{
+							print_one(cb, static_cast<format_args&&>(fmt_spec),
+								*reinterpret_cast<const typename tt::remove_reference<T>::type*>(value));
+						}
 					}
 					else
 					{
@@ -1432,7 +1481,7 @@ namespace zpr
 
 
 		template <typename CallbackFn, typename... Args>
-		void print_erased(CallbackFn& cb, tt::str_view sv, const void* args[])
+		void print_erased(CallbackFn& cb, tt::str_view sv, const void* const* args, size_t num_args)
 		{
 			__print_state_t st;
 			st.len = sv.size();
@@ -1441,7 +1490,7 @@ namespace zpr
 			st.end = sv.data();
 
 			size_t idx = 0;
-			(skip_fmts<CallbackFn, Args&&, true>(&st, cb, args[idx++]), ...);
+			(skip_fmts<CallbackFn, Args&&, true>(&st, cb, idx < num_args ? args[idx++] : nullptr), ...);
 
 			// flush
 			cb(st.beg, st.len - (st.beg - st.fmt));
@@ -1934,7 +1983,7 @@ namespace zpr
 		void print(F&& fwd, Cb&& cb, format_args args)
 		{
 			(void) args;
-			detail::print_erased<Cb, Args&&...>(static_cast<Cb&&>(cb), static_cast<tt::str_view&&>(fwd.fmt), fwd.values);
+			detail::print_erased<Cb, Args&&...>(static_cast<Cb&&>(cb), fwd.fmt, &fwd.values[0], fwd.num_values);
 		}
 	};
 
@@ -2051,20 +2100,20 @@ namespace zpr
 				if(precpad_width <= 0) { use_precision = false; }
 
 				// pre-prefix
-				if(use_left_pad) cb(' ', padding_width);
+				if(use_left_pad) cb(' ', static_cast<size_t>(padding_width));
 
-				cb(prefix, prefix_len);
+				cb(prefix, static_cast<size_t>(prefix_len));
 
 				// post-prefix
-				if(use_zero_pad) cb('0', zeropad_width);
+				if(use_zero_pad) cb('0', static_cast<size_t>(zeropad_width));
 
 				// prec-string
-				if(use_precision) cb('0', precpad_width);
+				if(use_precision) cb('0', static_cast<size_t>(precpad_width));
 
-				cb(digits, digits_len);
+				cb(digits, static_cast<size_t>(digits_len));
 
 				// postfix
-				if(use_right_pad) cb(' ', padding_width);
+				if(use_right_pad) cb(' ', static_cast<size_t>(padding_width));
 			}
 		};
 	}
@@ -2331,6 +2380,24 @@ namespace zpr
 
 	Version History
 	===============
+
+	2.5.3 - 15/09/2021
+	------------------
+	Add additional methods to `tt::str_view`, and fix broken operator== on it
+
+
+
+	2.5.2 - 30/08/2021
+	------------------
+	Improve safety of zpr::fwd calls by adding range checking to the type-erased value array.
+
+
+
+	2.5.1 - 27/08/2021
+	------------------
+	Fix implicit integer casting warnings
+
+
 
 	2.5.0 - 07/08/2021
 	------------------
