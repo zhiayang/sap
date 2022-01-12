@@ -1,6 +1,6 @@
 // main.cpp
 // Copyright (c) 2021, zhiayang
-// Licensed under the Apache License Version 2.0.
+// SPDX-License-Identifier: Apache-2.0
 
 #include <cstdlib>
 
@@ -44,12 +44,12 @@ constexpr const char* para2 =
 int main(int argc, char** argv)
 {
 #if 1
-	auto doc = util::make<pdf::Document>();
-	auto font = pdf::Font::fromFontFile(doc, font::FontFile::parseFromFile("fonts/XCharter-Roman.otf"));
+	auto pdf_doc = util::make<pdf::Document>();
+	auto pdf_font = pdf::Font::fromFontFile(pdf_doc, font::FontFile::parseFromFile("fonts/XCharter-Roman.otf"));
 
 	auto para = sap::Paragraph();
 	auto disp = sap::DisplaySettings();
-	disp.font = font;
+	disp.font = pdf_font;
 	disp.fontSize = pdf::mm(4.8);
 
 	{
@@ -80,17 +80,24 @@ int main(int argc, char** argv)
 	}
 
 	for(auto& w : para.words)
+	{
 		w.compute();
+		zpr::println("x: {}", w.size);
+	}
+
+	auto page = util::make<sap::Page>();
+	page->add(std::move(para));
+
+	auto doc = util::make<sap::Document>();
+	doc->add(std::move(*page));
+
+	auto writer = util::make<pdf::Writer>("test.pdf");
+	doc->finalise(writer);
+
+	writer->close();
 
 
 
-
-	// auto writer = util::make<pdf::Writer>("test.pdf");
-	// auto doc = util::make<pdf::Document>();
-
-
-
-	// writer->close();
 
 #else
 

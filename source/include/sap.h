@@ -1,6 +1,6 @@
 // sap.h
 // Copyright (c) 2021, zhiayang
-// Licensed under the Apache License Version 2.0.
+// SPDX-License-Identifier: Apache-2.0
 
 #include <cstddef>
 #include <cstdint>
@@ -15,6 +15,9 @@
 namespace pdf
 {
 	struct Font;
+	struct Page;
+	struct Document;
+	struct Writer;
 }
 
 namespace sap
@@ -28,6 +31,18 @@ namespace sap
 	{
 		Scalar fontSize;
 		const pdf::Font* font;
+	};
+
+	// obviously needs more settings.
+	struct GeometrySettings
+	{
+		Scalar left_margin;
+		Scalar right_margin;
+		Scalar top_margin;
+		Scalar bottom_margin;
+
+		Scalar line_spacing;
+		Scalar paragraph_spacing;
 	};
 
 
@@ -70,7 +85,7 @@ namespace sap
 		// layout, eg. whether or not to insert a space (or how large of a space).
 		static constexpr int KIND_LATIN = 0;
 		static constexpr int KIND_CJK   = 1;
-		static constexpr int KIND_PUCNT = 2;
+		static constexpr int KIND_PUNCT = 2;
 
 		friend struct Paragraph;
 	};
@@ -84,5 +99,46 @@ namespace sap
 		void add(Word word);
 
 		std::vector<Word> words { };
+	};
+
+
+	struct Page
+	{
+		Page();
+
+		Page(const Page&) = delete;
+		Page& operator= (const Page&) = delete;
+
+		Page(Page&&) = default;
+		Page& operator= (Page&&) = default;
+
+		// add a paragraph to the page, optionally returning the remainder if
+		// the entire thing could not fit. `Paragraph` is a value type, so this
+		// is totally fine without pointers.
+		std::optional<Paragraph> add(Paragraph para);
+
+		std::vector<Paragraph> paragraphs { };
+		pdf::Page* pdf_page = 0;
+
+	private:
+
+	};
+
+	struct Document
+	{
+		Document();
+
+		Document(const Document&) = delete;
+		Document& operator= (const Document&) = delete;
+
+		Document(Document&&) = default;
+		Document& operator= (Document&&) = default;
+
+		void add(Page&& para);
+
+		void finalise(pdf::Writer* writer);
+
+		std::vector<Page> m_pages { };
+		pdf::Document m_pdf_document;
 	};
 }

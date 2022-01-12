@@ -1,6 +1,6 @@
 // parser.cpp
 // Copyright (c) 2021, zhiayang
-// Licensed under the Apache License Version 2.0.
+// SPDX-License-Identifier: Apache-2.0
 
 #include <zpr.h>
 #include <cstring>
