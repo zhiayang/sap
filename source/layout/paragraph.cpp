@@ -11,6 +11,12 @@ namespace sap
 {
 	void Paragraph::add(Word word)
 	{
-		this->words.push_back(std::move(word));
+		m_words.push_back(std::move(word));
+	}
+
+	void Paragraph::computeMetrics(const Style* parent_style)
+	{
+		for(auto& word : m_words)
+			word.computeMetrics(parent_style);
 	}
 }

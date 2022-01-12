@@ -136,10 +136,12 @@ namespace sap
 		return ret;
 	}
 
-	void Word::compute()
+	void Word::computeMetrics(const Style* parent_style)
 	{
-		auto font = this->display.font;
-		auto font_size = this->display.fontSize;
+		auto style = Style::fallback(m_style, parent_style);
+
+		auto font = style->font();
+		auto font_size = style->font_size();
 		this->glyphs = get_glyphs_and_spacing(font, this->text);
 
 		// TODO: vertical writing mode

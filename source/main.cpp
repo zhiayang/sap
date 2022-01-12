@@ -43,15 +43,13 @@ constexpr const char* para2 =
 
 int main(int argc, char** argv)
 {
-#if 1
-	auto pdf_doc = util::make<pdf::Document>();
-	auto pdf_font = pdf::Font::fromFontFile(pdf_doc, font::FontFile::parseFromFile("fonts/XCharter-Roman.otf"));
+	auto document = sap::Document();
+	auto font = pdf::Font::fromFontFile(
+		&document.pdfDocument(),
+		font::FontFile::parseFromFile("fonts/XCharter-Roman.otf")
+	);
 
 	auto para = sap::Paragraph();
-	auto disp = sap::DisplaySettings();
-	disp.font = pdf_font;
-	disp.fontSize = pdf::mm(4.8);
-
 	{
 		zst::str_view sv = para2;
 		while(sv.size() > 0)
@@ -68,38 +66,40 @@ int main(int argc, char** argv)
 			// if there is no more, take the last part and quit.
 			if(i == static_cast<size_t>(-1))
 			{
-				para.add(sap::Word(sap::Word::KIND_LATIN, disp, sv));
+				para.add(sap::Word(sap::Word::KIND_LATIN, sv));
 				break;
 			}
 			else
 			{
-				para.add(sap::Word(sap::Word::KIND_LATIN, disp, sv.take(i)));
+				para.add(sap::Word(sap::Word::KIND_LATIN, sv.take(i)));
 				sv.remove_prefix(i + 1);
 			}
 		}
 	}
 
-	for(auto& w : para.words)
-	{
-		w.compute();
-		zpr::println("x: {}", w.size);
-	}
+	auto style = sap::Style {};
+	style.set_font(font)
+		.set_font_size(pdf::mm(4.8))
+		.set_line_spacing(pdf::mm(1))
+		.set_layout_box(pdf::cm(10, 10));
+
+	document.setStyle(&style);
 
 	auto page = util::make<sap::Page>();
 	page->add(std::move(para));
 
-	auto doc = util::make<sap::Document>();
-	doc->add(std::move(*page));
+	document.add(std::move(*page));
 
 	auto writer = util::make<pdf::Writer>("test.pdf");
-	doc->finalise(writer);
+	auto pdf_doc = document.finalise();
 
+	pdf_doc.write(writer);
 	writer->close();
 
 
 
 
-#else
+#if 0
 
 	auto writer = util::make<pdf::Writer>("test.pdf");
 	auto doc = util::make<pdf::Document>();

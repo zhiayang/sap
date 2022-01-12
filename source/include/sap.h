@@ -10,7 +10,10 @@
 
 #include <zst.h>
 
+#include "sap/style.h"
+
 #include "pdf/units.h"
+#include "pdf/document.h"
 
 namespace pdf
 {
@@ -25,27 +28,6 @@ namespace sap
 	using Scalar = pdf::Scalar;
 	using Vector = pdf::Vector;
 
-
-	// add colour and all that
-	struct DisplaySettings
-	{
-		Scalar fontSize;
-		const pdf::Font* font;
-	};
-
-	// obviously needs more settings.
-	struct GeometrySettings
-	{
-		Scalar left_margin;
-		Scalar right_margin;
-		Scalar top_margin;
-		Scalar bottom_margin;
-
-		Scalar line_spacing;
-		Scalar paragraph_spacing;
-	};
-
-
 	/*
 		for now, the Word acts as the smallest indivisible unit of text in sap; we do not plan to adjust
 		intra-word (ie. letter) spacing at this time.
@@ -58,18 +40,21 @@ namespace sap
 		these will be done on a Word. Again, since letter spacing is not really changing here, these computed
 		values will be cached so less has to be computed on the PDF layer.
 	*/
-	struct Word
+	struct Word : Stylable
 	{
-		Word(int kind) : kind(kind) { }
-		Word(int kind, DisplaySettings ds, zst::str_view sv) : Word(kind, std::move(ds), sv.str()) { }
-		Word(int kind, DisplaySettings ds, std::string str) : kind(kind), display(std::move(ds)), text(std::move(str)) { }
+		explicit inline Word(int kind, const Style* style = nullptr)
+			: Stylable(style), kind(kind) { }
 
-		// TODO: this computes a bunch of stuff, so i'm not sure what to name this function.
-		// this fills in the `size` and the `glyphs` using the DisplaySettings and the text.
-		void compute();
+		inline Word(int kind, zst::str_view sv, const Style* style = nullptr)
+			: Word(kind, sv.str(), style) { }
+
+		inline Word(int kind, std::string str, const Style* style = nullptr)
+			: Stylable(style), kind(kind), text(std::move(str)) { }
+
+		// this fills in the `size` and the `glyphs`
+		void computeMetrics(const Style* parent_style);
 
 		int kind = 0;
-		DisplaySettings display { };
 		std::string text { };
 
 		// these are in sap units, which is in mm. note that `position` is not set internally, but rather
@@ -88,23 +73,28 @@ namespace sap
 		static constexpr int KIND_PUNCT = 2;
 
 		friend struct Paragraph;
+
+	private:
+		const Style* m_style;
 	};
 
 
 	// for now we are not concerned with lines.
-	struct Paragraph
+	struct Paragraph : Stylable
 	{
-		Paragraph() { }
+		explicit inline Paragraph(const Style* style = nullptr) : Stylable(style) { }
 
 		void add(Word word);
+		void computeMetrics(const Style* parent_style);
 
-		std::vector<Word> words { };
+	private:
+		std::vector<Word> m_words {};
 	};
 
 
-	struct Page
+	struct Page : Stylable
 	{
-		Page();
+		explicit inline Page(const Style* style = nullptr) : Stylable(style) { }
 
 		Page(const Page&) = delete;
 		Page& operator= (const Page&) = delete;
@@ -112,19 +102,19 @@ namespace sap
 		Page(Page&&) = default;
 		Page& operator= (Page&&) = default;
 
+		pdf::Page* finalise();
+
 		// add a paragraph to the page, optionally returning the remainder if
 		// the entire thing could not fit. `Paragraph` is a value type, so this
 		// is totally fine without pointers.
 		std::optional<Paragraph> add(Paragraph para);
 
-		std::vector<Paragraph> paragraphs { };
-		pdf::Page* pdf_page = 0;
+		std::vector<Paragraph> m_paragraphs { };
 
 	private:
-
 	};
 
-	struct Document
+	struct Document : Stylable
 	{
 		Document();
 
@@ -136,9 +126,13 @@ namespace sap
 
 		void add(Page&& para);
 
-		void finalise(pdf::Writer* writer);
+		pdf::Document& pdfDocument();
+		const pdf::Document& pdfDocument() const;
 
-		std::vector<Page> m_pages { };
-		pdf::Document m_pdf_document;
+		pdf::Document finalise();
+
+	private:
+		pdf::Document m_pdf_document {};
+		std::vector<Page> m_pages {};
 	};
 }
