@@ -4,7 +4,7 @@
 
 #pragma once
 
-#include "pdf/units.h"
+#include "defs.h"
 
 namespace pdf
 {
@@ -13,8 +13,8 @@ namespace pdf
 
 namespace sap
 {
-	using Scalar = pdf::Scalar;
-	using Vector = pdf::Vector;
+	using Scalar = dim::Scalar<dim::units::mm>;
+	using Vector2 = dim::Vector2<dim::units::mm>;
 
 	struct Style;
 	const Style& defaultStyle();
@@ -43,7 +43,6 @@ namespace sap
 		}
 
 		DEFINE_ACCESSOR(Scalar, m_font_size, font_size);
-		DEFINE_ACCESSOR(Vector, m_layout_box, layout_box);
 		DEFINE_ACCESSOR(Scalar, m_line_spacing, line_spacing);
 		DEFINE_ACCESSOR(Scalar, m_pre_para_spacing, pre_paragraph_spacing);
 		DEFINE_ACCESSOR(Scalar, m_post_para_spacing, post_paragraph_spacing);
@@ -58,7 +57,6 @@ namespace sap
 
 		DEFINE_SETTER(const pdf::Font*, m_font, set_font);
 		DEFINE_SETTER(Scalar, m_font_size, set_font_size);
-		DEFINE_SETTER(Vector, m_layout_box, set_layout_box);
 		DEFINE_SETTER(Scalar, m_line_spacing, set_line_spacing);
 		DEFINE_SETTER(Scalar, m_pre_para_spacing, set_pre_paragraph_spacing);
 		DEFINE_SETTER(Scalar, m_post_para_spacing, set_post_paragraph_spacing);
@@ -80,7 +78,6 @@ namespace sap
 	private:
 		const pdf::Font* m_font;
 		std::optional<Scalar> m_font_size;
-		std::optional<Vector> m_layout_box;
 		std::optional<Scalar> m_line_spacing;
 		std::optional<Scalar> m_pre_para_spacing;
 		std::optional<Scalar> m_post_para_spacing;

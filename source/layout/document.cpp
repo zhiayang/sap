@@ -22,15 +22,20 @@ namespace sap
 		return m_pdf_document;
 	}
 
-	void Document::add(Page&& para)
+	void Document::addObject(LayoutObject* obj)
 	{
-		m_pages.emplace_back(std::move(para));
+		m_objects.push_back(obj);
 	}
 
-	pdf::Document Document::finalise()
+	void Document::layout()
+	{
+
+	}
+
+	pdf::Document Document::render()
 	{
 		for(auto& page : m_pages)
-			m_pdf_document.addPage(page.finalise());
+			m_pdf_document.addPage(page.render());
 
 		return std::move(m_pdf_document);
 	}

@@ -33,8 +33,8 @@ namespace pdf
 		// must be called before the first text item is inserted (addText).
 		void setFont(const Font* font, Scalar height);
 
-		void moveAbs(Vector pos);
-		void offset(Vector offset);
+		void moveAbs(Position2d pos);
+		void offset(Offset2d offset);
 
 		// closes the current TJ group, inserts the pdf command *verbatim* into the command stream,
 		// and opens a new group; nothing else is done (and the TJ groups don't affect the

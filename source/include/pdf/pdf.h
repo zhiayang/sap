@@ -9,13 +9,9 @@
 
 #include "pdf/page.h"
 #include "pdf/misc.h"
+#include "pdf/units.h"
 #include "pdf/object.h"
 #include "pdf/writer.h"
 #include "pdf/document.h"
 
 #include "pool.h"
-
-namespace pdf
-{
-
-}

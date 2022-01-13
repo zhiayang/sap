@@ -7,6 +7,7 @@
 
 #include "font/font.h"
 
+#include "pdf/pdf.h"
 #include "pdf/misc.h"
 #include "pdf/font.h"
 
@@ -145,22 +146,24 @@ namespace sap
 		this->glyphs = get_glyphs_and_spacing(font, this->text);
 
 		// TODO: vertical writing mode
-		// TODO: cleaner unit abstraction. lots of weird magic numbers right now.
-		// TODO: what the hell is the name for that 1000? font scaling parameter? idk
+		// TODO: is '1000' here units_per_em? or is it something else?
 
 		// size is in sap units, which is in mm; metrics are in typographic units, so 72dpi;
 		// calculate the scale accordingly.
 		auto font_metrics = font->getFontMetrics();
 
+		constexpr auto tpu = [](auto... xs) -> auto { return pdf::typographic_unit(xs...); };
+
 		this->size = { 0, 0 };
-		this->size.y = (font_metrics.ymax - font_metrics.ymin) * (font_size.x / pdf::MM_PER_UNIT) / 1000.0;
+		this->size.y() = ((tpu(font_metrics.ymax) - tpu(font_metrics.ymin))
+						* (font_size.value() / 1000.0)).convertTo(sap::Scalar{});
 
 		for(auto& [ gid, kern ] : this->glyphs)
 		{
 			auto met = font->getMetricsForGlyph(gid);
 
 			// note: positive kerns move left, so subtract it.
-			this->size.x += (met.horz_advance * (font_size.x / pdf::MM_PER_UNIT) - kern) / 1000.0;
+			this->size.x() += ((met.horz_advance * tpu(font_size.x() - kern)) / 1000.0).convertTo(sap::Scalar{});
 		}
 	}
 }

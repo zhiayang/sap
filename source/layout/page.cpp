@@ -7,14 +7,7 @@
 
 namespace sap
 {
-	std::optional<Paragraph> Page::add(Paragraph para)
-	{
-		// para.computeMetrics(
-
-		return { };
-	}
-
-	pdf::Page* Page::finalise()
+	pdf::Page* Page::render()
 	{
 		return util::make<pdf::Page>();
 	}

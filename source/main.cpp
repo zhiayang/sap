@@ -14,6 +14,7 @@
 
 #include "font/font.h"
 
+#if 0
 constexpr const char* para1 =
 	"何 the fuck did you just fucking 言います about 私, you 小さい bitch ですか? 私’ll\n"
 	"have あなた know that 私 graduated top of my class in 日本語 3, and 私’ve been involved\n"
@@ -27,6 +28,7 @@ constexpr const char* para1 =
 	"that 殺す’s the pathetic 小さい thing あなた calls あなたの life. You’re fucking 死にました’d, 赤ちゃん.\n"
 	;
 	// "\n"
+#endif
 
 constexpr const char* para2 =
 	"My name is Yoshikage Kira. I'm 33 years old. My house is in the northeast section of Morioh,\n"
@@ -79,19 +81,15 @@ int main(int argc, char** argv)
 
 	auto style = sap::Style {};
 	style.set_font(font)
-		.set_font_size(pdf::mm(4.8))
-		.set_line_spacing(pdf::mm(1))
-		.set_layout_box(pdf::cm(10, 10));
+		.set_font_size(dim::mm(4.8))
+		.set_line_spacing(dim::mm(1));
 
 	document.setStyle(&style);
+	document.addObject(&para);
 
-	auto page = util::make<sap::Page>();
-	page->add(std::move(para));
-
-	document.add(std::move(*page));
 
 	auto writer = util::make<pdf::Writer>("test.pdf");
-	auto pdf_doc = document.finalise();
+	auto pdf_doc = document.render();
 
 	pdf_doc.write(writer);
 	writer->close();

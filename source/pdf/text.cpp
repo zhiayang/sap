@@ -31,21 +31,21 @@ namespace pdf
 	}
 
 	// convention is that all appends to the command list should start with a " ".
-	void Text::moveAbs(Vector pos)
+	void Text::moveAbs(Position2d pos)
 	{
 		// close the current group, and call the TJ operator.
 		this->commands += "] TJ\n";
 
 		// do this in two steps; first, replace the text matrix with the identity to get to (0, 0),
 		// then perform an offset to get to the desired position.
-		this->commands += zpr::sprint(" 1 0 0 1 0 0 Tm {} {} Td\n", pos.x, pos.y);
+		this->commands += zpr::sprint(" 1 0 0 1 0 0 Tm {} {} Td\n", pos.x(), pos.y());
 		this->commands += "[";
 	}
 
-	void Text::offset(Vector offset)
+	void Text::offset(Offset2d offset)
 	{
 		// again, close the current group, call the TJ operator, and start a new group
-		this->commands += zpr::sprint("] TJ {} {} Td\n", offset.x, offset.y);
+		this->commands += zpr::sprint("] TJ {} {} Td\n", offset.x(), offset.y());
 		this->commands += "[";
 	}
 
@@ -57,7 +57,7 @@ namespace pdf
 	void Text::offset(Scalar ofs)
 	{
 		// note that we specify that a positive offset moves the glyph to the right
-		this->commands += zpr::sprint(" {}", -1 * ofs.x);
+		this->commands += zpr::sprint(" {}", -1 * ofs.x());
 	}
 
 	void Text::addEncoded(size_t bytes, uint32_t encodedValue)
