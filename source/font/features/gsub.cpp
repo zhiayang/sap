@@ -89,6 +89,14 @@ namespace font
 	}
 
 
+	/*
+		TODO: have more discretion about which ligatures to use. ideally, we should just
+		parse out all the ligatures/substitutions and tie them into features. this way,
+		we (the layout engine) can choose which features to enable or disable.
+
+		with the current "substitute everything i can" approach, we include loads of nonsense
+		like discretionary ligatures (like ます -> 〼).
+	*/
 	void parseGSub(FontFile* font, const Table& gsub_table)
 	{
 		auto buf = zst::byte_span(font->file_bytes, font->file_size);

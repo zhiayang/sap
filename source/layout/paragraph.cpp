@@ -47,7 +47,7 @@ namespace sap
 		{
 			auto& word = m_words[word_idx];
 
-			// zpr::println("word = '{}', cursor = {}", word.text, region->cursor());
+			zpr::println("word = '{}', cursor = {}", word.text, region->cursor());
 
 			// if there's not enough space, break.
 			if(!region->haveSpaceAtCursor(word.size))

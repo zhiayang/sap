@@ -71,6 +71,7 @@ namespace sap
 		while(sv.size() > 0)
 		{
 			auto gid = read_one_glyphid(font, sv);
+		#if 0
 			if(auto ligatures = font->getLigaturesForGlyph(gid); ligatures.has_value())
 			{
 				auto copy = sv;
@@ -100,6 +101,8 @@ namespace sap
 
 					if(memcmp(liga.glyphs, lookahead, liga.num_glyphs * sizeof(uint32_t)) == 0)
 					{
+						sap::log("layout", "substituting ligature: '{}' -> '{}'", liga.glyphs, liga.substitute);
+
 						// perform the substitution:
 						gid = liga.substitute;
 						font->loadMetricsForGlyph(gid);
@@ -114,6 +117,7 @@ namespace sap
 					}
 				}
 			}
+		#endif
 
 			int adjust = 0;
 			if(prev_gid != static_cast<uint32_t>(-1))
@@ -168,7 +172,7 @@ namespace sap
 
 			// note: positive kerns move left, so subtract it.
 			// this->size.x() += ((tpu(met.horz_advance) * tpu(font_size.x() - kern)) / 1000.0).convertTo(sap::Scalar{});
-			this->size.x() += ((met.horz_advance * font_size_tpu) / 1000.0).convertTo(sap::Scalar{});
+			this->size.x() += ((met.horz_advance * font_size_tpu - tpu(kern)) / 1000.0).convertTo(sap::Scalar{});
 		}
 	}
 
@@ -179,7 +183,7 @@ namespace sap
 		for(auto& [ gid, kern ] : m_glyphs)
 		{
 			if(kern != 0)
-				text->offset(pdf::Scalar(kern));
+				text->offset(-pdf::Scalar(kern));
 
 			if(m_style->font()->encoding_kind == pdf::Font::ENCODING_CID)
 				text->addEncoded(2, gid);

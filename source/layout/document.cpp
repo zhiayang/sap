@@ -36,7 +36,7 @@ namespace sap
 		for(size_t i = 0; i < m_objects.size();)
 		{
 			if(m_pages.empty())
-				m_pages.emplace_back(dim::Vector2(dim::mm(210), dim::mm(297)).convertTo(Size2d{}));
+				m_pages.emplace_back(dim::Vector2(dim::mm(180), dim::mm(297)).convertTo(Size2d{}));
 
 			auto page = &m_pages.back();
 			auto obj = (overflow == nullptr ? m_objects[i] : overflow);

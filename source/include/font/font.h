@@ -123,8 +123,8 @@ namespace font
 
 		FontMetrics metrics { };
 
-		uint8_t* file_bytes;
-		size_t file_size;
+		uint8_t* file_bytes = nullptr;
+		size_t file_size = 0;
 
 		static constexpr int TYPE_OPEN_FONT    = 1;
 
