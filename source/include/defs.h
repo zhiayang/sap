@@ -8,9 +8,17 @@
 
 #include "zst.h"
 #include "zpr.h"
+#include "error.h"
 
 #include "units.h"
 
 namespace sap
 {
+}
+
+
+template <typename... Args>
+void zst::error_and_exit(const char* fmt, Args&&... args)
+{
+	sap::internal_error(fmt, static_cast<Args&&>(args)...);
 }

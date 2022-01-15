@@ -17,4 +17,23 @@ namespace sap
 		zpr::fprintln(stderr, "error: {}", zpr::fwd(fmt, static_cast<Args&&>(args)...));
 		exit(1);
 	}
+
+	template <typename... Args>
+	inline void log(const char* who, const char* fmt, Args&&... args)
+	{
+		zpr::println("[log] {}: {}", who, zpr::fwd(fmt, static_cast<Args&&>(args)...));
+	}
+
+	template <typename... Args>
+	inline void warn(const char* who, const char* fmt, Args&&... args)
+	{
+		zpr::println("[wrn] {}: {}", who, zpr::fwd(fmt, static_cast<Args&&>(args)...));
+	}
+
+	template <typename... Args>
+	[[noreturn]] inline void error(const char* who, const char* fmt, Args&&... args)
+	{
+		zpr::println("[err] {}: {}", who, zpr::fwd(fmt, static_cast<Args&&>(args)...));
+		exit(1);
+	}
 }

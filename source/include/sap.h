@@ -18,6 +18,7 @@ namespace pdf
 {
 	struct Font;
 	struct Page;
+	struct Text;
 	struct Document;
 	struct Writer;
 }
@@ -104,6 +105,13 @@ namespace sap
 		*/
 		virtual zst::Result<std::optional<LayoutObject*>, int> layout(LayoutRegion* region, const Style* parent_style) = 0;
 
+		/*
+			Render (emit PDF commands) the object. Must be called after layout(). For now, we render directly to
+			the PDF page (by construcitng and emitting PageObjects), instead of returning a pageobject -- some
+			layout objects might require multiple pdf page objects, so this is a more flexible design.
+		*/
+		virtual void render(const LayoutRegion* region, Position position, pdf::Page* page) const = 0;
+
 	private:
 		LayoutObject* m_parent = nullptr;
 		std::vector<LayoutObject*> m_children {};
@@ -115,24 +123,40 @@ namespace sap
 		layout process, the region has a cursor, which can be used as a convenient method to place objects
 		that "flow" across a page (each new object then advances the cursor by however large it is).
 
+		Positions are relative to the origin of the region, which is the top-left corner of its bounding box.
+
 		A region is used as a "target" inside which objects are placed during the layout phase. In the event
 		of nested layout areas (eg. a two-column layout), the LayoutObject (in this case, the two-column) would
 		be responsible for managing separate regions, such that a layout region is not a recursive structure.
 
 		For the most basic case, one page contains one layout region.
 
-		During the rendering phase, the layout region simply produces PDF commands to move to the given
-		position before calling the render method on the objects it contains, sequentially.
+		During the rendering phase, the layout region simply calls the render method on the objects it contains,
+		sequentially. Since layout has been completed, objects are expected to render directly to the PDF page.
 	*/
 	struct LayoutRegion
 	{
-		void moveCursor(Position pos);
-		void advanceCursor(Offset2d offset);
+		explicit LayoutRegion(Size2d size);
+
+		void moveCursorTo(Position pos);
+		void advanceCursorBy(Offset2d offset);
 
 		void addObjectAtCursor(LayoutObject* obj);
 		void addObjectAtPosition(LayoutObject* obj, Position pos);
 
+		Position cursor() const;
+		Size2d spaceAtCursor() const;
+		bool haveSpaceAtCursor(Size2d size) const;
+
+		/*
+			Here, `position` is the (absolute) position of the region in the page (since regions cannot nest). This
+			position is then added to the relative positions of each object.
+		*/
+		void render(Position position, pdf::Page* page) const;
+
 	private:
+		Size2d m_size {};
+
 		Position m_cursor {};
 		std::vector<std::pair<Position, LayoutObject*>> m_objects {};
 	};
@@ -164,6 +188,7 @@ namespace sap
 
 		// this fills in the `size` and the `glyphs`
 		void computeMetrics(const Style* parent_style);
+		void render(Position position, pdf::Text* text) const;
 
 		int kind = 0;
 		std::string text { };
@@ -174,9 +199,6 @@ namespace sap
 		Position position { };
 		Size2d size { };
 
-		// first element is the glyph id, second one is the adjustment to make for kerning (0 if none)
-		std::vector<std::pair<uint32_t, int>> glyphs { };
-
 		// the kind of word. this affects automatic handling of certain things during paragraph
 		// layout, eg. whether or not to insert a space (or how large of a space).
 		static constexpr int KIND_LATIN = 0;
@@ -186,8 +208,10 @@ namespace sap
 		friend struct Paragraph;
 
 	private:
-		const Style* m_style;
-		const Paragraph* m_paragraph;
+		const Paragraph* m_paragraph = nullptr;
+
+		// first element is the glyph id, second one is the adjustment to make for kerning (0 if none)
+		std::vector<std::pair<uint32_t, int>> m_glyphs {};
 	};
 
 
@@ -197,15 +221,17 @@ namespace sap
 		void add(Word word);
 
 		virtual zst::Result<std::optional<LayoutObject*>, int> layout(LayoutRegion* region, const Style* parent_style) override;
+		virtual void render(const LayoutRegion* region, Position position, pdf::Page* page) const override;
 
 	private:
 		std::vector<Word> m_words {};
+		std::vector<Position> m_word_positions {};
 	};
 
 
 	struct Page : Stylable
 	{
-		inline Page() { }
+		explicit Page(Size2d paper_size);
 
 		Page(const Page&) = delete;
 		Page& operator= (const Page&) = delete;
@@ -213,10 +239,13 @@ namespace sap
 		Page(Page&&) = default;
 		Page& operator= (Page&&) = default;
 
+		inline LayoutRegion* layoutRegion() { return &m_layout_region; }
+		inline const LayoutRegion* layoutRegion() const { return &m_layout_region; }
+
 		pdf::Page* render();
 
 	private:
-
+		LayoutRegion m_layout_region;
 	};
 
 
@@ -238,7 +267,7 @@ namespace sap
 		void addObject(LayoutObject* obj);
 
 		void layout();
-		pdf::Document render();
+		pdf::Document& render();
 
 	private:
 		pdf::Document m_pdf_document {};

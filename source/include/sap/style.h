@@ -4,7 +4,10 @@
 
 #pragma once
 
+#include <cassert>
+
 #include "defs.h"
+#include "pool.h"
 
 namespace pdf
 {
@@ -18,26 +21,33 @@ namespace sap
 
 	struct Style;
 	const Style& defaultStyle();
+	void setDefaultStyle(Style s);
 
 	struct Style
 	{
 		inline Style() : m_parent(nullptr) { }
 		explicit inline Style(const Style* parent) : m_parent(parent) { }
 
-	#define DEFINE_ACCESSOR(field_type, field_name, method_name)                        \
-		inline field_type method_name(const Style* default_parent = nullptr) const      \
-		{                                                                               \
-			if(field_name.has_value())  return *field_name;                             \
-			else if(m_parent)           return m_parent->method_name(default_parent);   \
-			else if(default_parent)     return default_parent->method_name();           \
-			else                        return defaultStyle().method_name();            \
+	#define DEFINE_ACCESSOR(field_type, field_name, method_name)                    \
+		inline field_type method_name(const Style* default_parent = nullptr) const  \
+		{                                                                           \
+			if(default_parent == this) default_parent = nullptr;                    \
+			auto par = (m_parent == this) ? nullptr : m_parent;                     \
+			if(field_name.has_value())  return *field_name;                         \
+			else if(m_parent)           return par->method_name(default_parent);    \
+			else if(default_parent)     return default_parent->method_name();       \
+			else                        return defaultStyle().method_name();        \
 		}
 
 		// font is special because it is already a nullable pointer
 		inline const pdf::Font* font(const Style* default_parent = nullptr) const
 		{
+			if(default_parent == this)
+				default_parent = nullptr;
+			auto par = (m_parent == this) ? nullptr : m_parent;
+
 			if(m_font)              return m_font;
-			else if(m_parent)       return m_parent->font(default_parent);
+			else if(m_parent)       return par->font(default_parent);
 			else if(default_parent) return default_parent->font();
 			else                    return defaultStyle().font();
 		}
@@ -64,25 +74,46 @@ namespace sap
 	#undef DEFINE_SETTER
 
 
-
-
 	const Style* parent() const { return m_parent; }
 
 
-	static inline const Style* fallback(const Style* main, const Style* backup)
+	// static inline const Style* fallback(const Style* main, const Style* backup)
+	// {
+	// 	return main ? main : backup;
+	// }
+
+	/*
+		basically, make a style that uses the fields from "main" if it exists (or any of its parents)
+		or from the backup style (or any of its parents). if both input styles are null, then the
+		default style is used.
+	*/
+	static inline const Style* combine(const Style* main, const Style* backup)
 	{
-		return main ? main : backup;
+		if(main == nullptr && backup == nullptr)
+			return &defaultStyle();
+
+		else if(main == nullptr)
+			main = backup, backup = nullptr;
+
+		auto style = util::make<Style>();
+		style->set_font(main->font(backup))
+			.set_font_size(main->font_size(backup))
+			.set_line_spacing(main->line_spacing(backup))
+			.set_pre_paragraph_spacing(main->pre_paragraph_spacing(backup))
+			.set_post_paragraph_spacing(main->post_paragraph_spacing(backup));
+
+		return style;
 	}
 
 
 	private:
-		const pdf::Font* m_font;
+		const pdf::Font* m_font = nullptr;
 		std::optional<Scalar> m_font_size;
 		std::optional<Scalar> m_line_spacing;
 		std::optional<Scalar> m_pre_para_spacing;
 		std::optional<Scalar> m_post_para_spacing;
 
-		const Style* m_parent = 0;
+		const Style* m_parent = nullptr;
 	};
 
 

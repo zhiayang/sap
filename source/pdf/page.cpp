@@ -12,7 +12,11 @@
 
 namespace pdf
 {
-	static const auto a4paper = Array::create(Integer::create(0), Integer::create(0), Decimal::create(595.276), Decimal::create(841.89));
+	// TODO: support custom paper sizes
+	static const auto a4paper = Array::create(
+		Integer::create(0), Integer::create(0),
+		Decimal::create(595.276), Decimal::create(841.89)
+	);
 
 	Dictionary* Page::serialise(Document* doc) const
 	{
@@ -32,10 +36,10 @@ namespace pdf
 		// need to do the fonts only after the objects, because serialising objects
 		// can use fonts.
 		auto font_dict = Dictionary::create({ });
-		for(size_t i = 0; i < this->fonts.size(); i++)
+		for(auto font : this->fonts)
 		{
-			auto f = this->fonts[i]->serialise(doc);
-			font_dict->add(Name(zpr::sprint("F{}", i)), IndirectRef::create(f));
+			auto fser = font->serialise(doc);
+			font_dict->add(Name(font->getFontResourceName()), IndirectRef::create(fser));
 		}
 
 		auto resources = Dictionary::create({ });
@@ -50,23 +54,12 @@ namespace pdf
 		});
 	}
 
-	void Page::useFont(Font* font)
+	void Page::useFont(const Font* font) const
 	{
 		if(std::find(this->fonts.begin(), this->fonts.end(), font) != this->fonts.end())
 			pdf::error("page already contains font");
 
 		this->fonts.push_back(font);
-	}
-
-	std::string Page::getNameForFont(Font* font) const
-	{
-		auto it = std::find(this->fonts.begin(), this->fonts.end(), font);
-		if(it != this->fonts.end())
-			return zpr::sprint("F{}", it - this->fonts.begin());
-
-		size_t n = this->fonts.size();
-		this->fonts.push_back(font);
-		return zpr::sprint("F{}", n);
 	}
 
 	void Page::addObject(PageObject* pobj)

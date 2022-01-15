@@ -7,8 +7,16 @@
 
 namespace sap
 {
+	// TODO: compute margins
+	Page::Page(Size2d paper_size) : m_layout_region(paper_size)
+	{
+	}
+
 	pdf::Page* Page::render()
 	{
-		return util::make<pdf::Page>();
+		auto page = util::make<pdf::Page>();
+		m_layout_region.render(Position(10, 10), page);
+
+		return page;
 	}
 }

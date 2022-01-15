@@ -26,6 +26,7 @@ namespace dim
 	struct Scalar
 	{
 		using value_type = _Type;
+		using unit_system = _System;
 		using self_type = Scalar<_System, _Type>;
 
 		static constexpr auto scale_factor = _System::scale_factor;
@@ -58,17 +59,21 @@ namespace dim
 		constexpr bool operator!= (const self_type& other) const { return this->_x != other._x; }
 		constexpr bool operator<= (const self_type& other) const { return this->_x <= other._x; }
 		constexpr bool operator>= (const self_type& other) const { return this->_x >= other._x; }
-		constexpr bool operator< (const self_type& other) const { return this->_x > other._x; }
-		constexpr bool operator> (const self_type& other) const { return this->_x < other._x; }
+		constexpr bool operator< (const self_type& other) const { return this->_x < other._x; }
+		constexpr bool operator> (const self_type& other) const { return this->_x > other._x; }
 
 		template <typename _S, typename _T>
-		constexpr Scalar<_S, _T> convertTo(Scalar<_S, _T> foo)
+		constexpr Scalar<_S, _T> convertTo(Scalar<_S, _T> foo) const
 		{
 			return Scalar<_S, _T>((this->_x * scale_factor) / _S::scale_factor);
 		}
 
+		template <>
+		constexpr self_type convertTo<unit_system, value_type>(self_type foo) const { return *this; }
+
+
 		template <typename _Target>
-		constexpr Scalar<_Target> convertTo(_Target foo)
+		constexpr Scalar<_Target> convertTo(_Target foo) const
 		{
 			return Scalar<_Target>((this->_x * scale_factor) / _Target::scale_factor);
 		}
@@ -80,6 +85,7 @@ namespace dim
 	struct Vector2
 	{
 		using value_type = _Type;
+		using unit_system = _System;
 		using scalar_type = Scalar<_System, _Type>;
 		using self_type = Vector2<_System, _Type>;
 
@@ -104,20 +110,26 @@ namespace dim
 		constexpr self_type& operator*= (value_type scale) { this->_x *= scale; this->_y *= scale; return *this; }
 		constexpr self_type& operator/= (value_type scale) { this->_x /= scale; this->_y /= scale; return *this; }
 
+		// we don't define >/</>=/<=, because sometimes we want (x1 > x2 && y1 > y2), but sometimes
+		// we want `||` instead. better to just make it explicit in the code.
 		constexpr bool operator== (const self_type& other) const { return this->_x == other._x && this->_y == other._y; }
 		constexpr bool operator!= (const self_type& other) const { return !(*this == other); }
 
 		template <typename _S, typename _T>
-		constexpr Vector2<_S, _T> convertTo(Vector2<_S, _T> foo)
+		constexpr Vector2<_S, _T> convertTo(Vector2<_S, _T> foo) const
 		{
 			return Vector2<_S, _T>(
-				(this->_x * scale_factor) / _S::scale_factor,
-				(this->_y * scale_factor) / _S::scale_factor
+				((this->_x * scale_factor) / _S::scale_factor)._x,
+				((this->_y * scale_factor) / _S::scale_factor)._x
 			);
 		}
 
+		template <>
+		constexpr self_type convertTo<unit_system, value_type>(self_type foo) const { return *this; }
+
+
 		template <typename _Target>
-		constexpr Vector2<_Target> convertTo(_Target foo)
+		constexpr Vector2<_Target> convertTo(_Target foo) const
 		{
 			return Vector2<_Target>(
 				(this->_x * scale_factor) / _Target::scale_factor,
@@ -207,13 +219,13 @@ namespace dim
 		return Scalar<_S, _T>(a._x - b._x);
 	}
 
-	template <typename _S, typename _T, typename _ScaleT>
+	template <typename _S, typename _T, typename _ScaleT, typename = std::enable_if_t<std::is_fundamental_v<_ScaleT>>>
 	constexpr inline Scalar<_S, _T> operator* (Scalar<_S, _T> value, _ScaleT scale)
 	{
 		return Scalar<_S, _T>(value._x * scale);
 	}
 
-	template <typename _S, typename _T, typename _ScaleT>
+	template <typename _S, typename _T, typename _ScaleT, typename = std::enable_if_t<std::is_fundamental_v<_ScaleT>>>
 	constexpr inline Scalar<_S, _T> operator* (_ScaleT scale, Scalar<_S, _T> value)
 	{
 		return Scalar<_S, _T>(value._x * scale);
@@ -261,6 +273,20 @@ namespace dim
 	constexpr inline Vector2<_S, _T> operator/ (Vector2<_S, _T> value, _ScaleT scale)
 	{
 		return Vector2<_S, _T>(value._x / scale, value._y / scale);
+	}
+
+	template <typename _S, typename _T>
+	constexpr inline Scalar<_S, _T> min(Scalar<_S, _T> a, Scalar<_S, _T> b)
+	{
+		if(a._x < b._x) return a;
+		else            return b;
+	}
+
+	template <typename _S, typename _T>
+	constexpr inline Scalar<_S, _T> max(Scalar<_S, _T> a, Scalar<_S, _T> b)
+	{
+		if(a._x > b._x) return a;
+		else            return b;
 	}
 }
 

@@ -30,18 +30,19 @@ constexpr const char* para1 =
 	// "\n"
 #endif
 
-constexpr const char* para2 =
-	"My name is Yoshikage Kira. I'm 33 years old. My house is in the northeast section of Morioh,\n"
-	"where all the villas are, and I am not married. I work as an employee for the Kame Yu department\n"
-	"stores, and I get home every day by 8 PM at the latest. I don't smoke, but I occasionally drink.\n"
-	"I'm in bed by 11 PM, and make sure I get eight hours of sleep, no matter what. After having a\n"
-	"glass of warm milk and doing about twenty minutes of stretches before going to bed, I usually\n"
-	"have no problems sleeping until morning. Just like a baby, I wake up without any fatigue or stress\n"
-	"in the morning. I was told there were no issues at my last check-up. I'm trying to explain that\n"
-	"I'm a person who wishes to live a very quiet life. I take care not to trouble myself with any enemies,\n"
-	"like winning and losing, that would cause me to lose sleep at night. That is how I deal with society,\n"
-	"and I know that is what brings me happiness. Although, if I were to fight I wouldn't lose to anyone.";
+// constexpr const char* para2 =
+// 	"My name is Yoshikage Kira. I'm 33 years old. My house is in the northeast section of Morioh,\n"
+// 	"where all the villas are, and I am not married. I work as an employee for the Kame Yu department\n"
+// 	"stores, and I get home every day by 8 PM at the latest. I don't smoke, but I occasionally drink.\n"
+// 	"I'm in bed by 11 PM, and make sure I get eight hours of sleep, no matter what. After having a\n"
+// 	"glass of warm milk and doing about twenty minutes of stretches before going to bed, I usually\n"
+// 	"have no problems sleeping until morning. Just like a baby, I wake up without any fatigue or stress\n"
+// 	"in the morning. I was told there were no issues at my last check-up. I'm trying to explain that\n"
+// 	"I'm a person who wishes to live a very quiet life. I take care not to trouble myself with any enemies,\n"
+// 	"like winning and losing, that would cause me to lose sleep at night. That is how I deal with society,\n"
+// 	"and I know that is what brings me happiness. Although, if I were to fight I wouldn't lose to anyone.";
 
+constexpr const char* para2 = "hello there";
 
 int main(int argc, char** argv)
 {
@@ -84,9 +85,18 @@ int main(int argc, char** argv)
 		.set_font_size(dim::mm(4.8))
 		.set_line_spacing(dim::mm(1));
 
+	auto default_style = sap::Style()
+		.set_font(pdf::Font::fromBuiltin(&document.pdfDocument(), "Times-Roman"))
+		.set_font_size(pdf::Scalar(12.0/72.0).convertTo(sap::Scalar{}))
+		.set_line_spacing(sap::Scalar(1.0))
+		.set_pre_paragraph_spacing(sap::Scalar(1.0))
+		.set_post_paragraph_spacing(sap::Scalar(1.0));
+
+	sap::setDefaultStyle(std::move(default_style));
+
 	document.setStyle(&style);
 	document.addObject(&para);
-
+	document.layout();
 
 	auto writer = util::make<pdf::Writer>("test.pdf");
 	auto pdf_doc = document.render();

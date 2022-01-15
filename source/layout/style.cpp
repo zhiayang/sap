@@ -6,10 +6,15 @@
 
 namespace sap
 {
+	static Style g_defaultStyle {};
+
 	const Style& defaultStyle()
 	{
-		static Style style {};
+		return g_defaultStyle;
+	}
 
-		return style;
+	void setDefaultStyle(Style s)
+	{
+		g_defaultStyle = s;
 	}
 }

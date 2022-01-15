@@ -4,6 +4,8 @@
 
 #pragma once
 
+#include <set>
+
 #include "pdf/object.h"
 #include "pdf/pageobject.h"
 
@@ -16,13 +18,11 @@ namespace pdf
 	{
 		Dictionary* serialise(Document* doc) const;
 
-		void useFont(Font* font);
+		void useFont(const Font* font) const;
 		void addObject(PageObject* obj);
 
-		std::string getNameForFont(Font* font) const;
-
 	private:
-		mutable std::vector<Font*> fonts;
+		mutable std::vector<const Font*> fonts;
 		std::vector<PageObject*> objects;
 	};
 }

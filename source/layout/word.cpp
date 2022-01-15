@@ -8,6 +8,7 @@
 #include "font/font.h"
 
 #include "pdf/pdf.h"
+#include "pdf/text.h"
 #include "pdf/misc.h"
 #include "pdf/font.h"
 
@@ -139,11 +140,12 @@ namespace sap
 
 	void Word::computeMetrics(const Style* parent_style)
 	{
-		auto style = Style::fallback(m_style, parent_style);
+		auto style = Style::combine(m_style, parent_style);
+		this->setStyle(style);
 
 		auto font = style->font();
 		auto font_size = style->font_size();
-		this->glyphs = get_glyphs_and_spacing(font, this->text);
+		m_glyphs = get_glyphs_and_spacing(font, this->text);
 
 		// TODO: vertical writing mode
 		// TODO: is '1000' here units_per_em? or is it something else?
@@ -158,12 +160,31 @@ namespace sap
 		this->size.y() = ((tpu(font_metrics.ymax) - tpu(font_metrics.ymin))
 						* (font_size.value() / 1000.0)).convertTo(sap::Scalar{});
 
-		for(auto& [ gid, kern ] : this->glyphs)
+		auto font_size_tpu = font_size.convertTo(pdf::Scalar{});
+
+		for(auto& [ gid, kern ] : m_glyphs)
 		{
 			auto met = font->getMetricsForGlyph(gid);
 
 			// note: positive kerns move left, so subtract it.
-			this->size.x() += ((met.horz_advance * tpu(font_size.x() - kern)) / 1000.0).convertTo(sap::Scalar{});
+			// this->size.x() += ((tpu(met.horz_advance) * tpu(font_size.x() - kern)) / 1000.0).convertTo(sap::Scalar{});
+			this->size.x() += ((met.horz_advance * font_size_tpu) / 1000.0).convertTo(sap::Scalar{});
+		}
+	}
+
+	void Word::render(Position pos, pdf::Text* text) const
+	{
+		text->setFont(m_style->font(), m_style->font_size().convertTo(pdf::Scalar{}));
+		text->moveAbs(pos.convertTo(pdf::Position2d{}));
+		for(auto& [ gid, kern ] : m_glyphs)
+		{
+			if(kern != 0)
+				text->offset(pdf::Scalar(kern));
+
+			if(m_style->font()->encoding_kind == pdf::Font::ENCODING_CID)
+				text->addEncoded(2, gid);
+			else
+				text->addEncoded(1, gid);
 		}
 	}
 }
