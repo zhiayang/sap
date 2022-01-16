@@ -63,17 +63,17 @@ namespace dim
 		constexpr bool operator> (const self_type& other) const { return this->_x > other._x; }
 
 		template <typename _S, typename _T>
-		constexpr Scalar<_S, _T> convertTo(Scalar<_S, _T> foo) const
+		constexpr Scalar<_S, _T> into(Scalar<_S, _T> foo) const
 		{
 			return Scalar<_S, _T>((this->_x * scale_factor) / _S::scale_factor);
 		}
 
 		template <>
-		constexpr self_type convertTo<unit_system, value_type>(self_type foo) const { return *this; }
+		constexpr self_type into<unit_system, value_type>(self_type foo) const { return *this; }
 
 
 		template <typename _Target>
-		constexpr Scalar<_Target> convertTo(_Target foo) const
+		constexpr Scalar<_Target> into(_Target foo) const
 		{
 			return Scalar<_Target>((this->_x * scale_factor) / _Target::scale_factor);
 		}
@@ -116,7 +116,7 @@ namespace dim
 		constexpr bool operator!= (const self_type& other) const { return !(*this == other); }
 
 		template <typename _S, typename _T>
-		constexpr Vector2<_S, _T> convertTo(Vector2<_S, _T> foo) const
+		constexpr Vector2<_S, _T> into(Vector2<_S, _T> foo) const
 		{
 			return Vector2<_S, _T>(
 				((this->_x * scale_factor) / _S::scale_factor)._x,
@@ -125,11 +125,11 @@ namespace dim
 		}
 
 		template <>
-		constexpr self_type convertTo<unit_system, value_type>(self_type foo) const { return *this; }
+		constexpr self_type into<unit_system, value_type>(self_type foo) const { return *this; }
 
 
 		template <typename _Target>
-		constexpr Vector2<_Target> convertTo(_Target foo) const
+		constexpr Vector2<_Target> into(_Target foo) const
 		{
 			return Vector2<_Target>(
 				(this->_x * scale_factor) / _Target::scale_factor,
@@ -199,6 +199,22 @@ namespace dim
 */
 DEFINE_UNIT_AND_ALIAS(millimetre, 1.0, mm);
 DEFINE_UNIT_AND_ALIAS(centimetre, 10.0, cm);
+
+
+
+#define DELETE_CONVERSION_VECTOR2(_FromUnit, _ToUnit)                                                                   \
+namespace dim                                                                                                           \
+{                                                                                                                       \
+	template <> template <>                                                                                             \
+	Vector2<units::_ToUnit> Vector2<units::_FromUnit>::into<units::_ToUnit>(Vector2<units::_ToUnit> _) const = delete;  \
+	template <> template <>                                                                                             \
+	Vector2<units::_ToUnit> Vector2<units::_FromUnit>::into(units::_ToUnit _) const = delete;                           \
+}
+
+
+
+
+
 
 
 

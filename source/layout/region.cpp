@@ -47,7 +47,7 @@ namespace sap
 
 	Size2d LayoutRegion::spaceAtCursor() const
 	{
-		return (m_size - m_cursor).convertTo(Size2d{});
+		return (m_size - m_cursor).into(Size2d{});
 	}
 
 	bool LayoutRegion::haveSpaceAtCursor(Size2d size) const

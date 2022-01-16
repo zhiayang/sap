@@ -91,7 +91,9 @@ namespace sap
 		auto text = util::make<pdf::Text>();
 		for(size_t i = 0; i < m_words.size(); i++)
 		{
-			text->moveAbs((position + m_word_positions[i]).convertTo(pdf::Position2d{}));
+			auto word_pos = (position + m_word_positions[i]).into(pdf::Position2d_YDown{});
+
+			text->moveAbs(page->convertVector2(word_pos));
 			m_words[i].render(text);
 		}
 

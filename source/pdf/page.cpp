@@ -18,6 +18,27 @@ namespace pdf
 		Decimal::create(595.276), Decimal::create(841.89)
 	);
 
+	Page::Page()
+	{
+		m_page_size = pdf::Size2d(595.276, 841.89);
+	}
+
+	Size2d Page::size() const
+	{
+		return m_page_size;
+	}
+
+	Vector2_YUp Page::convertVector2(Vector2_YDown v2) const
+	{
+		return Vector2_YUp(v2.x().value(), (m_page_size.y() - v2.y().into<dim::units::pdf_typographic_unit>({})).value());
+	}
+
+	Vector2_YDown Page::convertVector2(Vector2_YUp v2) const
+	{
+		return Vector2_YDown(v2.x().value(), (m_page_size.y() - v2.y()).value());
+	}
+
+
 	Dictionary* Page::serialise(Document* doc) const
 	{
 		Object* contents = Null::get();

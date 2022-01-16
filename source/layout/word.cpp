@@ -158,27 +158,26 @@ namespace sap
 		// calculate the scale accordingly.
 		auto font_metrics = font->getFontMetrics();
 
-		constexpr auto tpu = [](auto... xs) -> auto { return pdf::typographic_unit(xs...); };
+		constexpr auto tpu = [](auto... xs) -> auto { return pdf::typographic_unit_y_down(xs...); };
 
 		this->size = { 0, 0 };
 		this->size.y() = ((tpu(font_metrics.ymax) - tpu(font_metrics.ymin))
-						* (font_size.value() / 1000.0)).convertTo(sap::Scalar{});
+						* (font_size.value() / 1000.0)).into(sap::Scalar{});
 
-		auto font_size_tpu = font_size.convertTo(pdf::Scalar{});
+		auto font_size_tpu = font_size.into(dim::units::pdf_typographic_unit_y_down{});
 
 		for(auto& [ gid, kern ] : m_glyphs)
 		{
 			auto met = font->getMetricsForGlyph(gid);
 
 			// note: positive kerns move left, so subtract it.
-			// this->size.x() += ((tpu(met.horz_advance) * tpu(font_size.x() - kern)) / 1000.0).convertTo(sap::Scalar{});
-			this->size.x() += ((met.horz_advance * font_size_tpu - tpu(kern)) / 1000.0).convertTo(sap::Scalar{});
+			this->size.x() += ((met.horz_advance * font_size_tpu - tpu(kern)) / 1000.0).into(sap::Scalar{});
 		}
 	}
 
 	void Word::render(pdf::Text* text) const
 	{
-		text->setFont(m_style->font(), m_style->font_size().convertTo(pdf::Scalar{}));
+		text->setFont(m_style->font(), m_style->font_size().into(pdf::Scalar{}));
 		for(auto& [ gid, kern ] : m_glyphs)
 		{
 			if(kern != 0)

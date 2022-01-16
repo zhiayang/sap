@@ -8,6 +8,7 @@
 
 #include "defs.h"
 #include "pool.h"
+#include "sap/units.h"
 
 namespace pdf
 {
@@ -16,9 +17,6 @@ namespace pdf
 
 namespace sap
 {
-	using Scalar = dim::Scalar<dim::units::mm>;
-	using Vector2 = dim::Vector2<dim::units::mm>;
-
 	struct Style;
 	const Style& defaultStyle();
 	void setDefaultStyle(Style s);

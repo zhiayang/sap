@@ -89,7 +89,7 @@ int main(int argc, char** argv)
 
 	auto default_style = sap::Style()
 		.set_font(pdf::Font::fromBuiltin(&document.pdfDocument(), "Times-Roman"))
-		.set_font_size(pdf::Scalar(12.0/72.0).convertTo(sap::Scalar{}))
+		.set_font_size(pdf::Scalar(12.0/72.0).into(sap::Scalar{}))
 		.set_line_spacing(sap::Scalar(1.0))
 		.set_pre_paragraph_spacing(sap::Scalar(1.0))
 		.set_post_paragraph_spacing(sap::Scalar(1.0));
