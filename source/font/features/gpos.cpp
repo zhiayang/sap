@@ -119,7 +119,9 @@ namespace font
 
 							if(glyph == gid2)
 							{
-								auto tmp = pairset_table.drop(mid * PairRecordSize);
+								// we need to drop the glyph id itself to get to the actual data
+								auto tmp = pairset_table.drop(mid * PairRecordSize).drop(sizeof(uint16_t));
+
 								auto a1 = scale_adjustments(parse_value_record(tmp, value_fmt1), this->metrics.units_per_em);
 								auto a2 = scale_adjustments(parse_value_record(tmp, value_fmt2), this->metrics.units_per_em);
 								return std::make_pair(a1, a2);

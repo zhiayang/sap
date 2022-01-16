@@ -42,8 +42,10 @@ constexpr const char* para1 =
 // 	"like winning and losing, that would cause me to lose sleep at night. That is how I deal with society,\n"
 // 	"and I know that is what brings me happiness. Although, if I were to fight I wouldn't lose to anyone.";
 
-constexpr const char* para2 = "何 the fuck did you just fucking 言います about 私, you 小さい bitch ですか? 私'll\n"
-	"have あなた know that 私 graduated top of my class in 日本語 3, and 私've been involved\n";
+// constexpr const char* para2 = "何 the fuck did you just fucking 言います about 私, you 小さい bitch ですか? 私'll\n"
+// 	"have あなた know that 私 graduated top of my class in 日本語 3, and 私've been involved AYAYA Fo Vo\n";
+
+constexpr const char* para2 = "V.VoAYAY";
 
 int main(int argc, char** argv)
 {

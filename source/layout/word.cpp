@@ -65,6 +65,15 @@ namespace sap
 			do (prev_glyph, cur_glyph), since we are applying the kerning value to the second glyph
 			instead. this shouldn't have any noticeable effect on the output (as mentioned above),
 			but it is something to note in case any weird cases are discovered.
+
+
+			UPDATE:
+			ok, so I think the way it's *supposed* to work is that the kerning affects the *advance*
+			of the first glyph. it still has the same effect as moving the second glyph to the left
+			(and not the first glyph to the right), just via a slightly different mechanism.
+
+			the layout/rendering code below would need to be slightly modified to fit that. Still not
+			quite sure what to do with non-zero adj2 values...
 		*/
 
 		uint32_t prev_gid = -1;
@@ -127,7 +136,6 @@ namespace sap
 				{
 					// note: since as mentioned above we're doing (prev, cur), the adjustment
 					// goes before the current glyph.
-
 					adjust = -1 * kerning_pair->first.horz_advance;
 
 					if(kerning_pair->second.horz_advance != 0)
@@ -152,7 +160,10 @@ namespace sap
 		m_glyphs = get_glyphs_and_spacing(font, this->text);
 
 		// TODO: vertical writing mode
-		// TODO: is '1000' here units_per_em? or is it something else?
+
+		// PDF 1.7: 9.2.4 Glyph Positioning and Metrics
+		// ... the units of glyph space are one-thousandth of a unit of text space ...
+		constexpr auto GLYPH_SPACE_UNITS = 1000.0;
 
 		// size is in sap units, which is in mm; metrics are in typographic units, so 72dpi;
 		// calculate the scale accordingly.
@@ -162,7 +173,7 @@ namespace sap
 
 		this->size = { 0, 0 };
 		this->size.y() = ((tpu(font_metrics.ymax) - tpu(font_metrics.ymin))
-						* (font_size.value() / 1000.0)).into(sap::Scalar{});
+						* (font_size.value() / GLYPH_SPACE_UNITS)).into(sap::Scalar{});
 
 		auto font_size_tpu = font_size.into(dim::units::pdf_typographic_unit_y_down{});
 
@@ -170,8 +181,12 @@ namespace sap
 		{
 			auto met = font->getMetricsForGlyph(gid);
 
+			// TODO: kerning value appears to be slightly wrong.
+			zpr::println("gid = {}, adv = {}, kern = {}, upe = {}",
+				gid, met.horz_advance, kern, font->getFontMetrics().units_per_em);
+
 			// note: positive kerns move left, so subtract it.
-			this->size.x() += ((met.horz_advance * font_size_tpu - tpu(kern)) / 1000.0).into(sap::Scalar{});
+			this->size.x() += ((met.horz_advance * font_size_tpu - tpu(kern)) / GLYPH_SPACE_UNITS).into(sap::Scalar{});
 		}
 	}
 
