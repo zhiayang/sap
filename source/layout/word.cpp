@@ -176,10 +176,9 @@ namespace sap
 		}
 	}
 
-	void Word::render(Position pos, pdf::Text* text) const
+	void Word::render(pdf::Text* text) const
 	{
 		text->setFont(m_style->font(), m_style->font_size().convertTo(pdf::Scalar{}));
-		text->moveAbs(pos.convertTo(pdf::Position2d{}));
 		for(auto& [ gid, kern ] : m_glyphs)
 		{
 			if(kern != 0)

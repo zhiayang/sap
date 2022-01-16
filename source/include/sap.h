@@ -188,7 +188,13 @@ namespace sap
 
 		// this fills in the `size` and the `glyphs`
 		void computeMetrics(const Style* parent_style);
-		void render(Position position, pdf::Text* text) const;
+
+		/*
+			this assumes that the container (typically a paragraph) has already moved the PDF cursor (ie. wrote
+			some offset commands with TJ or Td), such that this method just needs to output the encoded glyph ids,
+			and any styling effects.
+		*/
+		void render(pdf::Text* text) const;
 
 		int kind = 0;
 		std::string text { };

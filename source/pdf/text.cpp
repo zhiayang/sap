@@ -33,8 +33,14 @@ namespace pdf
 	{
 		assert(font != nullptr);
 
+		if(m_current_font.font == font && m_current_font.height == height)
+			return;
+
 		m_used_fonts.insert(font);
 		this->insertPDFCommand(zpr::sprint(" /{} {} Tf", font->getFontResourceName(), height));
+
+		m_current_font.font = font;
+		m_current_font.height = height;
 	}
 
 	void Text::insertPDFCommand(zst::str_view sv)

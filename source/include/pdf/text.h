@@ -70,6 +70,11 @@ namespace pdf
 			std::string text;
 		};
 
+		struct {
+			const Font* font = nullptr;
+			Scalar height {};
+		} m_current_font { };
+
 		std::vector<Group> m_groups {};
 		std::set<const Font*> m_used_fonts {};
 	};

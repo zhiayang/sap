@@ -72,7 +72,7 @@ namespace sap
 			}
 
 			m_word_positions.push_back(region->cursor());
-			region->advanceCursorBy(Vector2(word.size.x(), Scalar(0)));
+			region->advanceCursorBy(Offset2d(word.size.x(), Scalar(0)));
 
 			line_height = dim::max(line_height, word.size.y());
 		}
@@ -90,7 +90,10 @@ namespace sap
 
 		auto text = util::make<pdf::Text>();
 		for(size_t i = 0; i < m_words.size(); i++)
-			m_words[i].render(position + m_word_positions[i], text);
+		{
+			text->moveAbs((position + m_word_positions[i]).convertTo(pdf::Position2d{}));
+			m_words[i].render(text);
+		}
 
 		page->addObject(text);
 	}

@@ -16,7 +16,7 @@
 
 #if 0
 constexpr const char* para1 =
-	"何 the fuck did you just fucking 言います about 私, you 小さい bitch ですか? 私’ll\n"
+	"何 the fuck did you just fucking 言います about 私, you 小さい bitch ですか? 私'll\n"
 	"have あなた know that 私 graduated top of my class in 日本語 3, and 私’ve been involved\n"
 	"in 色々な 日本語 tutoring sessions, and 私 have over ３００ perfect test scores. 私\n"
 	"am trained in 漢字, and 私 is the top letter writer in all of southern California. あなた are\n"
@@ -42,10 +42,8 @@ constexpr const char* para1 =
 // 	"like winning and losing, that would cause me to lose sleep at night. That is how I deal with society,\n"
 // 	"and I know that is what brings me happiness. Although, if I were to fight I wouldn't lose to anyone.";
 
-// constexpr const char* para2 = "何 the fuck did you just fucking 言います about 私, you 小さい bitch ですか? 私’ll\n"
-// 	"have あなた know that 私 graduated top of my class in 日本語 3, and 私’ve been involved\n";
-
-constexpr const char* para2 = "アト)";
+constexpr const char* para2 = "何 the fuck did you just fucking 言います about 私, you 小さい bitch ですか? 私'll\n"
+	"have あなた know that 私 graduated top of my class in 日本語 3, and 私've been involved\n";
 
 int main(int argc, char** argv)
 {
@@ -87,7 +85,7 @@ int main(int argc, char** argv)
 	auto style = sap::Style {};
 	style.set_font(font)
 		.set_font_size(dim::mm(4.8))
-		.set_line_spacing(dim::mm(1));
+		.set_line_spacing(dim::mm(2));
 
 	auto default_style = sap::Style()
 		.set_font(pdf::Font::fromBuiltin(&document.pdfDocument(), "Times-Roman"))
