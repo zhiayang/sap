@@ -150,6 +150,21 @@ namespace sap
 					// otherwise, break to the next line. in breaking to the next line, we need to set the positions
 					// of all the words on this line now that we have the ratio and stuff.
 					finalise_line(word_idx, current_ratio);
+
+					sap::Scalar foozle {};
+					zpr::println("width = {}", region_width);
+					zpr::println("space = {}, {}, ratio = {}", region_width - word_length, space_length, current_ratio);
+
+					for(size_t i = 0; i < words_in_line; i++)
+					{
+						auto& word = m_words[word_idx - words_in_line + i];
+						foozle += word.size.x() + (current_ratio * word.spaceWidth());
+
+						zpr::println("    {}", word.text);
+					}
+
+					zpr::println("expanded space = {}", foozle);
+
 					words_in_line = 0;
 					word_length = Scalar(0);
 					space_length = Scalar(0);
@@ -207,7 +222,7 @@ namespace sap
 		{
 			m_words[i].render(text);
 			if(m_words[i].m_linebreak_after && i + 1 < m_words.size())
-				text->nextLine(pdf::Offset2d(0, -m_words[i + 1].size.y().into(pdf::Scalar{}).value()));
+				text->nextLine(pdf::Offset2d(0, -1.65 * m_words[i + 1].size.y().into(pdf::Scalar{}).value()));
 		}
 
 		page->addObject(text);

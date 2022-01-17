@@ -44,11 +44,16 @@ namespace font
 
 	struct GlyphMetrics
 	{
-		int horz_advance;
-		int vert_advance;
+		double horz_advance;
+		double vert_advance;
 
-		int horz_placement;
-		int vert_placement;
+		double xmin;
+		double xmax;
+		double ymin;
+		double ymax;
+
+		double left_side_bearing;
+		double right_side_bearing;
 	};
 
 	struct Table

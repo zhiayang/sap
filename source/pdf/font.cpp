@@ -27,9 +27,11 @@ namespace pdf
 		// we need to write out the widths.
 		if(this->source_file && this->glyph_widths_array)
 		{
-			std::vector<std::pair<uint32_t, int>> widths;
+			auto scale_factor = 1000.0 / this->getFontMetrics().units_per_em;
+
+			std::vector<std::pair<uint32_t, double>> widths;
 			for(auto& [ gid, m ] : this->glyph_metrics)
-				widths.emplace_back(gid, m.horz_advance);
+				widths.emplace_back(gid, m.horz_advance * scale_factor);
 
 			std::sort(widths.begin(), widths.end(), [](const auto& a, const auto& b) -> bool {
 				return a.first < b.first;
@@ -38,14 +40,19 @@ namespace pdf
 			std::vector<std::pair<Integer*, std::vector<Object*>>> widths2;
 			for(size_t i = 0; i < widths.size(); i++)
 			{
-				if(!widths2.empty() && widths2.back().first->value == widths[i].first - 1)
+				if(widths2.empty())
 				{
-					widths2.back().second.push_back(Integer::create(widths[i].second));
+				foo:
+					widths2.emplace_back(Integer::create(widths[i].first),
+						std::vector<Object*> { Integer::create(widths[i].second) });
 				}
 				else
 				{
-					widths2.emplace_back(Integer::create(widths[i].first),
-						std::vector<Object*> { Integer::create(widths[i].second) });
+					auto& prev = widths2.back();
+					if(prev.first->value + prev.second.size() == widths[i].first)
+						prev.second.push_back(Integer::create(widths[i].second));
+					else
+						goto foo;
 				}
 			}
 
@@ -97,18 +104,7 @@ namespace pdf
 			return;
 
 		// get and cache the glyph widths as well.
-		auto metrics = this->source_file->getGlyphMetrics(glyph);
-
-		// if single adjustments are present, then add them now.
-		if(auto single_adj = this->source_file->getGlyphAdjustment(glyph); single_adj.has_value())
-		{
-			metrics.horz_advance += single_adj->horz_advance;
-			metrics.vert_advance += single_adj->vert_advance;
-			metrics.horz_placement += single_adj->horz_placement;
-			metrics.vert_placement += single_adj->vert_placement;
-		}
-
-		this->glyph_metrics[glyph] = metrics;
+		this->glyph_metrics[glyph] = this->source_file->getGlyphMetrics(glyph);
 	}
 
 	uint32_t Font::getGlyphIdFromCodepoint(uint32_t codepoint) const

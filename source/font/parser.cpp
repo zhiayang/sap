@@ -289,10 +289,8 @@ namespace font
 		// we should have already parsed the head table, so this value should be present.
 		assert(font->metrics.units_per_em != 0);
 
-		// PDF wants this value to be scaled to typographic units (not font design units),
-		// so apply the units_per_em scale here.
-		font->metrics.ascent = (consume_i16(buf) * 1000) / font->metrics.units_per_em;
-		font->metrics.descent = (consume_i16(buf) * 1000) / font->metrics.units_per_em;
+		font->metrics.ascent = consume_i16(buf);
+		font->metrics.descent = consume_i16(buf);
 
 		// skip all the nonsense
 		buf.remove_prefix(26);
@@ -402,6 +400,8 @@ namespace font
 		for(size_t i = 0; i < num_tables; i++)
 		{
 			auto tbl = parse_table(buf);
+			zpr::println("table: {}", tbl.tag.str());
+
 			if(tbl.tag == Tag("cmap"))      parse_cmap_table(font, tbl);
 			else if(tbl.tag == Tag("head")) parse_head_table(font, tbl);
 			else if(tbl.tag == Tag("hhea")) parse_hhea_table(font, tbl);

@@ -121,6 +121,10 @@ namespace sap
 		return ret;
 	}
 
+	// PDF 1.7: 9.2.4 Glyph Positioning and Metrics
+	// ... the units of glyph space are one-thousandth of a unit of text space ...
+	constexpr auto GLYPH_SPACE_UNITS = 1000.0;
+
 	void Word::computeMetrics(const Style* parent_style)
 	{
 		auto style = Style::combine(m_style, parent_style);
@@ -135,13 +139,13 @@ namespace sap
 
 		// TODO: vertical writing mode
 
-		// PDF 1.7: 9.2.4 Glyph Positioning and Metrics
-		// ... the units of glyph space are one-thousandth of a unit of text space ...
-		constexpr auto GLYPH_SPACE_UNITS = 1000.0;
 
 		// size is in sap units, which is in mm; metrics are in typographic units, so 72dpi;
 		// calculate the scale accordingly.
-		auto font_metrics = font->getFontMetrics();
+		const auto font_metrics = font->getFontMetrics();
+
+		const auto SCALE_FACTOR = GLYPH_SPACE_UNITS / font_metrics.units_per_em;
+
 
 		constexpr auto tpu = [](auto... xs) -> auto { return pdf::typographic_unit_y_down(xs...); };
 
@@ -156,13 +160,17 @@ namespace sap
 			auto met = font->getMetricsForGlyph(gid);
 
 			// note: positive kerns move left, so subtract it.
-			this->size.x() += ((met.horz_advance * font_size_tpu - tpu(kern)) / GLYPH_SPACE_UNITS).into(sap::Scalar{});
+			auto glyph_width = met.horz_advance * SCALE_FACTOR * font_size_tpu;
+
+			this->size.x() += ((glyph_width - tpu(kern)) / GLYPH_SPACE_UNITS).into(sap::Scalar{});
 		}
 
 		{
 			auto space_gid = font->getGlyphIdFromCodepoint(' ');
-			auto space_width = font->getMetricsForGlyph(space_gid).horz_advance;
-			m_space_width = ((space_width * font_size_tpu) / GLYPH_SPACE_UNITS).into(sap::Scalar{});
+			auto space_width = font->getMetricsForGlyph(space_gid).horz_advance
+								* SCALE_FACTOR * font_size_tpu;
+
+			m_space_width = (space_width / GLYPH_SPACE_UNITS).into(sap::Scalar{});
 		}
 	}
 
@@ -175,8 +183,11 @@ namespace sap
 	{
 		// zpr::println("word = '{}', cursor = {}, linebreak = {}", this->text, m_position, m_linebreak_after);
 
-		auto font = m_style->font();
-		auto font_size = m_style->font_size();
+		const auto font = m_style->font();
+		const auto font_size = m_style->font_size();
+
+		const auto font_metrics = font->getFontMetrics();
+		const auto SCALE_FACTOR = GLYPH_SPACE_UNITS / font_metrics.units_per_em;
 
 		text->setFont(font, font_size.into(pdf::Scalar{}));
 
@@ -192,20 +203,23 @@ namespace sap
 			add_gid(gid);
 
 			if(kern != 0)
-				text->offset(-pdf::Scalar(kern));
+				text->offset(-pdf::Scalar(kern * SCALE_FACTOR));
 		}
 
 		if(!m_linebreak_after && m_next_word != nullptr)
 		{
 			auto space_gid = font->getGlyphIdFromCodepoint(' ');
 			add_gid(space_gid);
+
 			if(m_post_space_ratio != 1.0)
 			{
-				auto space_adv = font->getMetricsForGlyph(space_gid);
+				auto space_adv = font->getMetricsForGlyph(space_gid).horz_advance;
 
 				// ratio > 1 = expand, < 1 = shrink
-				auto extra = space_adv.horz_advance * (m_post_space_ratio - 1.0);
+				auto extra = (space_adv * SCALE_FACTOR) * (m_post_space_ratio - 1.0);
 				text->offset(pdf::Scalar(extra));
+
+				// zpr::println("'{}': ratio = {}, extra = {}", this->text, m_post_space_ratio, extra);
 			}
 
 			/*

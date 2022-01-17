@@ -138,6 +138,12 @@ namespace font
 		turns out that some glyphs are actually just copies of other glyphs (eg. fullwidth variants). So,
 		just including the clone in the subset is not going to work if we don't also include its derivative;
 		so we need to figure out how to find out wtf the base glyph actually is...
+
+		(this only applies to fonts with truetype outlines -- we can't subset CFF outlines for now)
+
+		ok, so the idea is that we need to actually inspect (on a surface level at least) the glyph data in
+		the `glyf` table for the data, which tells us if it's a composite glyph, and if so which glyph(s) make
+		up its components.
 	*/
 	void writeFontSubset(FontFile* font, Stream* stream, const std::map<uint32_t, GlyphMetrics>& used_glyphs)
 	{

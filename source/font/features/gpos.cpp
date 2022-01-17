@@ -41,17 +41,6 @@ namespace font
 		return ret;
 	}
 
-	static GlyphAdjustment scale_adjustments(GlyphAdjustment adj, int units_per_em)
-	{
-		adj.horz_advance = (adj.horz_advance * 1000) / units_per_em;
-		adj.vert_advance = (adj.vert_advance * 1000) / units_per_em;
-		adj.horz_placement = (adj.horz_placement * 1000) / units_per_em;
-		adj.vert_placement = (adj.vert_placement * 1000) / units_per_em;
-
-		return adj;
-	}
-
-
 
 
 
@@ -122,8 +111,8 @@ namespace font
 								// we need to drop the glyph id itself to get to the actual data
 								auto tmp = pairset_table.drop(mid * PairRecordSize).drop(sizeof(uint16_t));
 
-								auto a1 = scale_adjustments(parse_value_record(tmp, value_fmt1), this->metrics.units_per_em);
-								auto a2 = scale_adjustments(parse_value_record(tmp, value_fmt2), this->metrics.units_per_em);
+								auto a1 = parse_value_record(tmp, value_fmt1);
+								auto a2 = parse_value_record(tmp, value_fmt2);
 								return std::make_pair(a1, a2);
 							}
 							else if(glyph < gid2)
@@ -156,8 +145,8 @@ namespace font
 							auto cls2_start = subtable.drop(g1_class * num_cls2 * RecordSize);
 							auto pair_start = cls2_start.drop(g2_class * RecordSize);
 
-							auto a1 = scale_adjustments(parse_value_record(pair_start, value_fmt1), this->metrics.units_per_em);
-							auto a2 = scale_adjustments(parse_value_record(pair_start, value_fmt2), this->metrics.units_per_em);
+							auto a1 = parse_value_record(pair_start, value_fmt1);
+							auto a2 = parse_value_record(pair_start, value_fmt2);
 
 							return std::make_pair(a1, a2);
 						}
@@ -201,7 +190,7 @@ namespace font
 				{
 					if(format == 1)
 					{
-						return scale_adjustments(parse_value_record(subtable, value_fmt), this->metrics.units_per_em);
+						return parse_value_record(subtable, value_fmt);
 					}
 					else
 					{
@@ -209,7 +198,7 @@ namespace font
 						assert(coverage_idx < num_records);
 
 						subtable.remove_prefix(get_value_record_size(value_fmt) * *coverage_idx);
-						return scale_adjustments(parse_value_record(subtable, value_fmt), this->metrics.units_per_em);
+						return parse_value_record(subtable, value_fmt);
 					}
 				}
 			}
@@ -269,8 +258,8 @@ namespace font
 						for(size_t k = 0; k < num_pairs; k++)
 						{
 							auto glyph_2 = consume_u16(pairset_table);
-							auto a1 = scale_adjustments(parse_value_record(pairset_table, value_fmt1), this->metrics.units_per_em);
-							auto a2 = scale_adjustments(parse_value_record(pairset_table, value_fmt2), this->metrics.units_per_em);
+							auto a1 = parse_value_record(pairset_table, value_fmt1);
+							auto a2 = parse_value_record(pairset_table, value_fmt2);
 
 							kerning_pairs[{ glyph_1, glyph_2 }] = { a1, a2 };
 						}
@@ -291,8 +280,8 @@ namespace font
 					{
 						for(size_t c2 = 0; c2 < num_cls2; c2++)
 						{
-							auto a1 = scale_adjustments(parse_value_record(subtable, value_fmt1), this->metrics.units_per_em);
-							auto a2 = scale_adjustments(parse_value_record(subtable, value_fmt2), this->metrics.units_per_em);
+							auto a1 = parse_value_record(subtable, value_fmt1);
+							auto a2 = parse_value_record(subtable, value_fmt2);
 
 							// for all the glyphs in each class, apply the adjustment.
 							for(auto g1 : classes_1[c1])

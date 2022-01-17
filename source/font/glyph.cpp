@@ -3,6 +3,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #include "util.h"
+#include "error.h"
 #include "font/font.h"
 
 namespace font
@@ -21,17 +22,33 @@ namespace font
 		{
 			// the remaining glyphs not in the array use the last value.
 			ret.horz_advance = util::convertBEU16(u16_array[(this->num_hmetrics - 1) * 2]);
+
+			// there is an array of lsbs for glyph_ids > num_hmetrics
+			auto lsb_array = buf.drop(2 * this->num_hmetrics);
+			auto tmp = lsb_array[glyphId - this->num_hmetrics];
+
+			ret.left_side_bearing = (int16_t) util::convertBEU16(tmp);
 		}
 		else
 		{
 			ret.horz_advance = util::convertBEU16(u16_array[glyphId * 2]);
+			ret.left_side_bearing = (int16_t) util::convertBEU16(u16_array[glyphId * 2 + 1]);
 		}
 
-		// again, pdf wants this in typographic units but these are in font design units,
-		// so do the units_per_em scale.
+		// now, figure out xmin and xmax
+		if(this->outline_type == OUTLINES_TRUETYPE)
+		{
+		}
+		else if(this->outline_type == OUTLINES_CFF)
+		{
+			// well, we're shit out of luck.
+			// best effort, i guess?
 
-		ret.horz_advance = (ret.horz_advance * 1000) / this->metrics.units_per_em;
-		ret.vert_advance = (ret.vert_advance * 1000) / this->metrics.units_per_em;
+		}
+		else
+		{
+			sap::internal_error("unsupported outline type?!");
+		}
 
 		return ret;
 	}
