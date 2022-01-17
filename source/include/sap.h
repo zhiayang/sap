@@ -178,6 +178,11 @@ namespace sap
 		since we need to run ligature substitution and kerning adjustments to determine the bounding box,
 		these will be done on a Word. Again, since letter spacing is not really changing here, these computed
 		values will be cached so less has to be computed on the PDF layer.
+
+		Words and paragraphs are intertwined; a word is not directly renderable, and must be contained in a
+		paragraph. A paragraph can have as little as one (or in fact zero) words. To this end, the Word
+		struct contains a bunch of information that is used to lay it out within the paragraph (eg. whether
+		the line breaks immediately after).
 	*/
 	struct Word : Stylable
 	{
@@ -196,13 +201,15 @@ namespace sap
 		*/
 		void render(pdf::Text* text) const;
 
+		/*
+			returns the width of a space in the font used by this word. This information is only available
+			after `computeMetrics()` is called. Otherwise, it returns 0.
+		*/
+		Scalar spaceWidth() const;
+
 		int kind = 0;
 		std::string text { };
 
-		// these are in sap units, which is in mm. note that `position` is not set internally, but rather
-		// is used by whoever is laying out the Word to store its position temporarily (instead of forcing
-		// some external associative container)
-		Position position { };
 		Size2d size { };
 
 		// the kind of word. this affects automatic handling of certain things during paragraph
@@ -218,6 +225,15 @@ namespace sap
 
 		// first element is the glyph id, second one is the adjustment to make for kerning (0 if none)
 		std::vector<std::pair<uint32_t, int>> m_glyphs {};
+
+		// stuff set by the containing Paragraph during layout and used during rendering.
+		Position m_position { };
+		Word* m_next_word = nullptr;
+		bool m_linebreak_after = false;
+		Scalar m_computed_space_advance {};
+
+		// set by computeMetrics;
+		Scalar m_space_width {};
 	};
 
 
@@ -231,7 +247,6 @@ namespace sap
 
 	private:
 		std::vector<Word> m_words {};
-		std::vector<Position> m_word_positions {};
 	};
 
 

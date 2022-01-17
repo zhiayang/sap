@@ -37,7 +37,7 @@ namespace pdf
 			return;
 
 		m_used_fonts.insert(font);
-		this->insertPDFCommand(zpr::sprint(" /{} {} Tf", font->getFontResourceName(), height));
+		this->insertPDFCommand(zpr::sprint(" /{} {} Tf\n", font->getFontResourceName(), height));
 
 		m_current_font.font = font;
 		m_current_font.height = height;

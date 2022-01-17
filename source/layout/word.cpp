@@ -181,17 +181,30 @@ namespace sap
 		{
 			auto met = font->getMetricsForGlyph(gid);
 
-			// TODO: kerning value appears to be slightly wrong.
-			zpr::println("gid = {}, adv = {}, kern = {}, upe = {}",
-				gid, met.horz_advance, kern, font->getFontMetrics().units_per_em);
-
 			// note: positive kerns move left, so subtract it.
 			this->size.x() += ((met.horz_advance * font_size_tpu - tpu(kern)) / GLYPH_SPACE_UNITS).into(sap::Scalar{});
 		}
+
+		{
+			auto space_gid = font->getGlyphIdFromCodepoint(' ');
+			auto space_width = font->getMetricsForGlyph(space_gid).horz_advance;
+			m_space_width = ((space_width * font_size_tpu) / GLYPH_SPACE_UNITS).into(sap::Scalar{});
+		}
+	}
+
+	Scalar Word::spaceWidth() const
+	{
+		return m_space_width;
 	}
 
 	void Word::render(pdf::Text* text) const
 	{
+		zpr::println("word = '{}', cursor = {}, linebreak = {}", this->text, m_position, m_linebreak_after);
+
+		// check if we have kerning for the
+
+
+
 		text->setFont(m_style->font(), m_style->font_size().into(pdf::Scalar{}));
 		for(auto& [ gid, kern ] : m_glyphs)
 		{

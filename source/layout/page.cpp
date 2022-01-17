@@ -15,7 +15,7 @@ namespace sap
 	pdf::Page* Page::render()
 	{
 		auto page = util::make<pdf::Page>();
-		m_layout_region.render(Position(10, 10), page);
+		m_layout_region.render(Position(15, 25), page);
 
 		return page;
 	}
