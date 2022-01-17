@@ -9,6 +9,8 @@
 #include <zst.h>
 
 #include "pool.h"
+
+#include "pdf/units.h"
 #include "font/font.h"
 
 namespace pdf
@@ -17,6 +19,10 @@ namespace pdf
 	struct Stream;
 	struct Document;
 	struct Dictionary;
+
+	// PDF 1.7: 9.2.4 Glyph Positioning and Metrics
+	// ... the units of glyph space are one-thousandth of a unit of text space ...
+	static constexpr double GLYPH_SPACE_UNITS = 1000.0;
 
 	struct Font
 	{
@@ -42,6 +48,15 @@ namespace pdf
 
 		// get the name that we should put in the Resource dictionary of a page that uses this font.
 		std::string getFontResourceName() const;
+
+		// abstracts away the scaling by units_per_em, to go from font units to pdf units
+		// this converts the metric to a **concrete size** (in pdf units, aka 1/72 inches)
+		Scalar scaleFontMetricForFontSize(double metric, Scalar font_size) const;
+
+		// this converts the metric to an **abstract size**, which is the text space. when
+		// drawing text, the /Tf directive already specifies the font scale!
+		Scalar scaleFontMetricForPDFTextSpace(double metric) const;
+
 
 		int font_type = 0;
 		int encoding_kind = 0;

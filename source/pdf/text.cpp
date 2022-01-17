@@ -67,6 +67,9 @@ namespace pdf
 
 	void Text::offset(Scalar ofs)
 	{
+		if(ofs.zero())
+			return;
+
 		if(m_groups.empty())
 			m_groups.emplace_back();
 

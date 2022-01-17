@@ -27,11 +27,9 @@ namespace pdf
 		// we need to write out the widths.
 		if(this->source_file && this->glyph_widths_array)
 		{
-			auto scale_factor = 1000.0 / this->getFontMetrics().units_per_em;
-
 			std::vector<std::pair<uint32_t, double>> widths;
 			for(auto& [ gid, m ] : this->glyph_metrics)
-				widths.emplace_back(gid, m.horz_advance * scale_factor);
+				widths.emplace_back(gid, this->scaleFontMetricForPDFTextSpace(m.horz_advance).value());
 
 			std::sort(widths.begin(), widths.end(), [](const auto& a, const auto& b) -> bool {
 				return a.first < b.first;
@@ -246,6 +244,8 @@ namespace pdf
 
 		// TODO: use the FontFile to determine what the flags should be. no idea how important this is
 		// for the pdf to display properly but it's probably entirely inconsequential.
+
+		// TODO: scale the metrics correctly!
 		auto font_desc = Dictionary::createIndirect(doc, names::FontDescriptor, {
 			{ names::FontName, basefont_name },
 			{ names::Flags, Integer::create(4) },
@@ -353,6 +353,16 @@ namespace pdf
 	std::string Font::getFontResourceName() const
 	{
 		return this->font_resource_name;
+	}
+
+	Scalar Font::scaleFontMetricForFontSize(double metric, Scalar font_size) const
+	{
+		return Scalar((metric * font_size.value()) / this->getFontMetrics().units_per_em);
+	}
+
+	Scalar Font::scaleFontMetricForPDFTextSpace(double metric) const
+	{
+		return Scalar((metric * GLYPH_SPACE_UNITS) / this->getFontMetrics().units_per_em);
 	}
 
 	font::FontMetrics Font::getFontMetrics() const
