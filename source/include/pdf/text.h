@@ -34,7 +34,7 @@ namespace pdf
 		void setFont(const Font* font, Scalar height);
 
 		void moveAbs(Position2d pos);
-		void offset(Offset2d offset);
+		void nextLine(Offset2d offset);
 
 		/*
 			closes the current TJ group, inserts the pdf command *verbatim* into the command stream,

@@ -60,7 +60,7 @@ namespace pdf
 		this->insertPDFCommand(zpr::sprint(" 1 0 0 1 0 0 Tm {} {} Td\n", pos.x(), pos.y()));
 	}
 
-	void Text::offset(Offset2d offset)
+	void Text::nextLine(Offset2d offset)
 	{
 		this->insertPDFCommand(zpr::sprint(" {} {} Td\n", offset.x(), offset.y()));
 	}

@@ -78,8 +78,8 @@ namespace sap
 			{
 				auto& word = m_words[word_idx - words_in_line + i];
 				word.m_position = cursor;
-				word.m_computed_space_advance = ratio * word.spaceWidth();
-				cursor.x() += word.size.x() + word.m_computed_space_advance;
+				word.m_post_space_ratio = ratio;
+				cursor.x() += word.size.x() + (ratio * word.spaceWidth());
 
 				line_height = dim::max(line_height, word.size.y());
 
@@ -137,7 +137,9 @@ namespace sap
 
 				// if the new ratio is not worse than the current one,
 				// and it doesn't squeeze the space too much, add it.
-				if(std::abs(new_ratio - 1.0) <= std::abs(current_ratio - 1.0) && MIN_RATIO <= new_ratio)
+				if(MIN_RATIO <= new_ratio
+					&& std::abs(new_ratio - 1.0) <= std::abs(current_ratio - 1.0)
+					&& word_length + word.size.x() < region_width)
 				{
 					word_length += word.size.x();
 					space_length += word.spaceWidth();
@@ -174,6 +176,18 @@ namespace sap
 
 		if(overflow)    return zst::Ok(std::optional(overflow));
 		else            return zst::Ok(std::nullopt);
+
+		/*
+			TODO: This algorithm is actually wrong
+
+			it doesn't account for kerning between
+			(a) the last glyph of a word and the proceeding space
+			(b) the space before a word, and its first glyph
+
+			the difference is usually small, but we should strive to follow the font whenever possible.
+			we probably want to do the computation here, at layout time, so we can accurately compute
+			the *real* width of the line, after all the adjustments.
+		*/
 	}
 
 
@@ -191,8 +205,9 @@ namespace sap
 
 		for(size_t i = 0; i < m_words.size(); i++)
 		{
-
 			m_words[i].render(text);
+			if(m_words[i].m_linebreak_after && i + 1 < m_words.size())
+				text->nextLine(pdf::Offset2d(0, -m_words[i + 1].size.y().into(pdf::Scalar{}).value()));
 		}
 
 		page->addObject(text);

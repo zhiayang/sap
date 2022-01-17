@@ -45,41 +45,13 @@ namespace sap
 		auto sv = text.bytes();
 
 		/*
-			TODO: honestly, i don't know how this is "supposed" to be handled. Our values
-			are the same as what lualatex puts out for the font, so that's ok. the problem
-			is that, according to the spec, adj1 is supposed to apply to the first glyph and
-			adj2 to the second one (duh).
-
-			except that all the kerning pairs only have adjustments for the first in the pair,
-			ie. their effect would be to move the first glyph closer to the second one, instead
-			of (logically) the second one closer to the first.
-
-			again, how lualatex does this is (apparently) to use adj1 to move the second glyph
-			instead (which produces the same graphical effect).
-
-			so far i haven't found a font that has a non-zero adj2 (and there's a warning here in
-			case such a font appears), so for now we just copy what lualatex (allegedly) does.
-
-
-			the result of that long paragraph is that instead of doing (cur_glyph, next_glyph), we
-			do (prev_glyph, cur_glyph), since we are applying the kerning value to the second glyph
-			instead. this shouldn't have any noticeable effect on the output (as mentioned above),
-			but it is something to note in case any weird cases are discovered.
-
-
-			UPDATE:
-			ok, so I think the way it's *supposed* to work is that the kerning affects the *advance*
-			of the first glyph. it still has the same effect as moving the second glyph to the left
-			(and not the first glyph to the right), just via a slightly different mechanism.
-
-			the layout/rendering code below would need to be slightly modified to fit that. Still not
-			quite sure what to do with non-zero adj2 values...
+			We handle the normal case correctly, in that `adj1` decreases the advance of the first
+			glyph, in effect moving the second glyph closer to the first. The thing is, I don't know
+			what to do for nonzero `adj2` values...
 		*/
 
-		uint32_t prev_gid = -1;
 		while(sv.size() > 0)
 		{
-			auto gid = read_one_glyphid(font, sv);
 		#if 0
 			if(auto ligatures = font->getLigaturesForGlyph(gid); ligatures.has_value())
 			{
@@ -129,22 +101,21 @@ namespace sap
 		#endif
 
 			int adjust = 0;
-			if(prev_gid != static_cast<uint32_t>(-1))
+			auto gid = read_one_glyphid(font, sv);
+			auto next_gid = peek_one_glyphid(font, sv, nullptr);
+
+			if(next_gid.has_value())
 			{
-				auto kerning_pair = font->getKerningForGlyphs(prev_gid, gid);
+				auto kerning_pair = font->getKerningForGlyphs(gid, *next_gid);
 				if(kerning_pair.has_value())
 				{
-					// note: since as mentioned above we're doing (prev, cur), the adjustment
-					// goes before the current glyph.
 					adjust = -1 * kerning_pair->first.horz_advance;
-
 					if(kerning_pair->second.horz_advance != 0)
 						zpr::println("warning: unsupported case where adj2 is not 0");
 				}
 			}
 
 			ret.push_back({ gid, adjust });
-			prev_gid = gid;
 		}
 
 		return ret;
@@ -158,6 +129,9 @@ namespace sap
 		auto font = style->font();
 		auto font_size = style->font_size();
 		m_glyphs = get_glyphs_and_spacing(font, this->text);
+
+		// we shouldn't have 0 glyphs in a word... right?
+		assert(m_glyphs.size() > 0);
 
 		// TODO: vertical writing mode
 
@@ -199,22 +173,45 @@ namespace sap
 
 	void Word::render(pdf::Text* text) const
 	{
-		zpr::println("word = '{}', cursor = {}, linebreak = {}", this->text, m_position, m_linebreak_after);
+		// zpr::println("word = '{}', cursor = {}, linebreak = {}", this->text, m_position, m_linebreak_after);
 
-		// check if we have kerning for the
+		auto font = m_style->font();
+		auto font_size = m_style->font_size();
 
+		text->setFont(font, font_size.into(pdf::Scalar{}));
 
-
-		text->setFont(m_style->font(), m_style->font_size().into(pdf::Scalar{}));
-		for(auto& [ gid, kern ] : m_glyphs)
-		{
-			if(kern != 0)
-				text->offset(-pdf::Scalar(kern));
-
-			if(m_style->font()->encoding_kind == pdf::Font::ENCODING_CID)
+		auto add_gid = [&font, text](uint32_t gid) {
+			if(font->encoding_kind == pdf::Font::ENCODING_CID)
 				text->addEncoded(2, gid);
 			else
 				text->addEncoded(1, gid);
+		};
+
+		for(auto& [ gid, kern ] : m_glyphs)
+		{
+			add_gid(gid);
+
+			if(kern != 0)
+				text->offset(-pdf::Scalar(kern));
+		}
+
+		if(!m_linebreak_after && m_next_word != nullptr)
+		{
+			auto space_gid = font->getGlyphIdFromCodepoint(' ');
+			add_gid(space_gid);
+			if(m_post_space_ratio != 1.0)
+			{
+				auto space_adv = font->getMetricsForGlyph(space_gid);
+
+				// ratio > 1 = expand, < 1 = shrink
+				auto extra = space_adv.horz_advance * (m_post_space_ratio - 1.0);
+				text->offset(pdf::Scalar(extra));
+			}
+
+			/*
+				TODO: here, we also want to handle kerning between the space and the start of the next word
+				(see the longer explanation in layout/paragraph.cpp)
+			*/
 		}
 	}
 }

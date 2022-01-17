@@ -230,7 +230,7 @@ namespace sap
 		Position m_position { };
 		Word* m_next_word = nullptr;
 		bool m_linebreak_after = false;
-		Scalar m_computed_space_advance {};
+		double m_post_space_ratio {};
 
 		// set by computeMetrics;
 		Scalar m_space_width {};

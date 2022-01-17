@@ -14,11 +14,11 @@
 
 #include "font/font.h"
 
-#if 0
-constexpr const char* para1 =
+#if 1
+constexpr const char* input_text =
 	"何 the fuck did you just fucking 言います about 私, you 小さい bitch ですか? 私'll\n"
 	"have あなた know that 私 graduated top of my class in 日本語 3, and 私’ve been involved\n"
-	"in 色々な 日本語 tutoring sessions, and 私 have over ３００ perfect test scores. 私\n"
+	"in 色々な 日本語 tutoring sessions, and 私 have over 300 perfect test scores. 私\n"
 	"am trained in 漢字, and 私 is the top letter writer in all of southern California. あなた are\n"
 	"nothing to 私 but just another weaboo. 私 will 殺す anata the fuck out with vocabulary\n"
 	"the likes of which has never been 見ます’d before on this continent, mark 私の fucking words.\n"
@@ -26,7 +26,7 @@ constexpr const char* para1 =
 	"fucker. As we 話します, 私 am contacting 私の secret ネット of オタクs across the USA,\n"
 	"and あなたの IP is being traced right now so you better 準備します for the ame, ウジ虫. The 雨\n"
 	"that 殺す’s the pathetic 小さい thing あなた calls あなたの life. You’re fucking 死にました’d, 赤ちゃん.\n"
-	;
+	"AVAYAYA V. Vo P. r.";
 	// "\n"
 #endif
 
@@ -42,10 +42,8 @@ constexpr const char* para1 =
 // 	"like winning and losing, that would cause me to lose sleep at night. That is how I deal with society,\n"
 // 	"and I know that is what brings me happiness. Although, if I were to fight I wouldn't lose to anyone.";
 
-constexpr const char* para2 = "何 the fuck did you just fucking 言います about 私, you 小さい bitch ですか? 私'll\n"
-	"have あなた know that 私 graduated top of my class in 日本語 3, and 私've been involved AYAYA Fo Vo\n";
-
-// constexpr const char* para2 = "Hello there, general kenobi!";
+// constexpr const char* para2 = "何 the fuck did you just fucking 言います about 私, you 小さい bitch ですか? 私'll\n"
+// 	"have あなた know that 私 graduated top of my class in 日本語 3, and 私've been involved AYAYA Fo Vo\n";
 
 int main(int argc, char** argv)
 {
@@ -58,7 +56,7 @@ int main(int argc, char** argv)
 
 	auto para = sap::Paragraph();
 	{
-		zst::str_view sv = para2;
+		zst::str_view sv = input_text;
 		while(sv.size() > 0)
 		{
 			// TODO: unicode whitespace check

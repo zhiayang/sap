@@ -132,10 +132,19 @@ namespace font
 
 
 
+	/*
+		TODO(big oof)
 
+		turns out that some glyphs are actually just copies of other glyphs (eg. fullwidth variants). So,
+		just including the clone in the subset is not going to work if we don't also include its derivative;
+		so we need to figure out how to find out wtf the base glyph actually is...
+	*/
 	void writeFontSubset(FontFile* font, Stream* stream, const std::map<uint32_t, GlyphMetrics>& used_glyphs)
 	{
 		auto file_contents = zst::byte_span(font->file_bytes, font->file_size);
+		// stream->append(file_contents);
+		// return;
+
 		GlyfOffset old_loca_table { };
 		zst::byte_span old_glyf_table;
 
@@ -195,7 +204,7 @@ namespace font
 			// because we need to compute the dumb checksum (and it comes *before* the table itself)
 			// we are forced to build a buffer beforehand, wasting memory & allocation & cpu cycles.
 			GlyfOffset loca_mapping { };
-			auto new_glyf_table = create_subset_glyf_table(font, loca_mapping, old_loca_table,used_glyphs, old_glyf_table);
+			auto new_glyf_table = create_subset_glyf_table(font, loca_mapping, old_loca_table, used_glyphs, old_glyf_table);
 			auto new_loca_table = create_subset_loca_table(font, loca_mapping);
 
 			for(auto& table : included_tables)
@@ -204,7 +213,6 @@ namespace font
 				size_t checksum = table.checksum;
 
 				// note: only need to check glyf -- loca should be the same size.
-				// TODO: need to compute the checksum!!
 				if(table.tag == Tag("glyf"))
 				{
 					size = new_glyf_table.size();
