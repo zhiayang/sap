@@ -15,7 +15,8 @@ namespace sap
 	[[noreturn]] inline void internal_error(const char* fmt, Args&&... args)
 	{
 		zpr::fprintln(stderr, "error: {}", zpr::fwd(fmt, static_cast<Args&&>(args)...));
-		exit(1);
+		// exit(1);
+		abort();
 	}
 
 	template <typename... Args>
@@ -34,6 +35,7 @@ namespace sap
 	[[noreturn]] inline void error(const char* who, const char* fmt, Args&&... args)
 	{
 		zpr::println("[err] {}: {}", who, zpr::fwd(fmt, static_cast<Args&&>(args)...));
-		exit(1);
+		// exit(1);
+		abort();
 	}
 }

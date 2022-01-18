@@ -15,6 +15,7 @@
 #include <zst.h>
 
 #include "font/tag.h"
+#include "font/cff.h"
 #include "font/features.h"
 
 namespace pdf
@@ -108,25 +109,33 @@ namespace font
 
 		// some stuff we need to save, internal use.
 		size_t num_hmetrics = 0;
-		Table hmtx_table { };
+		zst::byte_span hmtx_table {};
+		zst::byte_span loca_table {};
 
 		size_t num_glyphs = 0;
 		size_t loca_bytes_per_entry = 0;
 
-		GPosTable gpos_tables { };
-		GSubTable gsub_tables { };
+		GPosTable gpos_tables {};
+		GSubTable gsub_tables {};
 
 
 		int font_type = 0;
 		int outline_type = 0;
 
 		// note: this *MUST* be a std::map (ie. ordered) because the tables must be sorted by Tag.
-		std::map<Tag, Table> tables;
+		std::map<Tag, Table> tables {};
 
 		// cache this so we don't look for it.
-		CMapTable preferred_cmap { };
+		CMapTable preferred_cmap {};
 
-		FontMetrics metrics { };
+		FontMetrics metrics {};
+
+		// only valid if outline_type == OUTLINES_TRUETYPE
+		zst::byte_span glyf_table {};
+
+		// only valid if outline_type == OUTLINES_CFF
+		cff::CFFData* cff_data = nullptr;
+
 
 		uint8_t* file_bytes = nullptr;
 		size_t file_size = 0;

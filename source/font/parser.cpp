@@ -10,6 +10,7 @@
 #include "util.h"
 #include "error.h"
 
+#include "font/cff.h"
 #include "font/font.h"
 
 namespace font
@@ -317,10 +318,22 @@ namespace font
 	{
 		// hhea should have been parsed already, so this should be present.
 		assert(font->num_hmetrics > 0);
-		font->hmtx_table = hmtx_table;
+		font->hmtx_table = zst::byte_span(font->file_bytes, font->file_size)
+			.drop(hmtx_table.offset)
+			.take(hmtx_table.length);
 
 		// deferred processing -- we only take the glyph data when it is requested.
 	}
+
+	static void parse_loca_table(FontFile* font, const Table& loca_table)
+	{
+		font->loca_table = zst::byte_span(font->file_bytes, font->file_size)
+			.drop(loca_table.offset)
+			.take(loca_table.length);
+
+		// deferred processing -- we only take the glyph data when it is requested.
+	}
+
 
 	static void parse_maxp_table(FontFile* font, const Table& maxp_table)
 	{
@@ -406,6 +419,7 @@ namespace font
 			else if(tbl.tag == Tag("head")) parse_head_table(font, tbl);
 			else if(tbl.tag == Tag("hhea")) parse_hhea_table(font, tbl);
 			else if(tbl.tag == Tag("hmtx")) parse_hmtx_table(font, tbl);
+			else if(tbl.tag == Tag("loca")) parse_loca_table(font, tbl);
 			else if(tbl.tag == Tag("maxp")) parse_maxp_table(font, tbl);
 			else if(tbl.tag == Tag("name")) parse_name_table(font, tbl);
 			else if(tbl.tag == Tag("post")) parse_post_table(font, tbl);
@@ -413,25 +427,29 @@ namespace font
 			else if(tbl.tag == Tag("GSUB")) parseGSub(font, tbl);
 			else if(tbl.tag == Tag("OS/2")) parse_os2_table(font, tbl);
 
+			else if(tbl.tag == Tag("glyf"))
+			{
+				if(font->outline_type != FontFile::OUTLINES_TRUETYPE)
+					sap::internal_error("found 'glyf' table in non-truetype file!");
+
+				font->glyf_table = zst::byte_span(font->file_bytes, font->file_size)
+					.drop(tbl.offset)
+					.take(tbl.length);
+			}
+			else if(tbl.tag == Tag("CFF ") || tbl.tag == Tag("CFF2"))
+			{
+				if(font->outline_type != FontFile::OUTLINES_CFF)
+					sap::internal_error("found 'CFF' table in non-truetype file!");
+
+				auto cff_data = zst::byte_span(font->file_bytes, font->file_size)
+					.drop(tbl.offset)
+					.take(tbl.length);
+
+				font->cff_data = cff::parseCFFData(font, cff_data);
+			}
+
 			font->tables.emplace(tbl.tag, tbl);
 		}
-
-		// zpr::println("  {} glyphs found", font->num_glyphs);
-
-	#if 0
-		for(auto& [ _, tbl ] : font->tables)
-		{
-			if(tbl.tag == Tag("loca"))
-			{
-				auto table = zst::byte_span(font->file_bytes, font->file_size)
-					.drop(tbl.offset).take(tbl.length);
-
-				zpr::println("{} glyphs, {} bytes per loca", font->num_glyphs, font->loca_bytes_per_entry);
-				for(size_t i = 0; i < font->num_glyphs; i++)
-					zpr::println("{} -> {}", i, consume_u32(table));
-			}
-		}
-	#endif
 
 		return font;
 	}

@@ -16,9 +16,7 @@ namespace sap
 {
 }
 
-
-template <typename... Args>
-void zst::error_and_exit(const char* fmt, Args&&... args)
+inline void zst::error_and_exit(const char* str, size_t len)
 {
-	sap::internal_error(fmt, static_cast<Args&&>(args)...);
+	sap::internal_error("{}", zst::str_view(str, len));
 }

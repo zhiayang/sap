@@ -16,7 +16,7 @@
 */
 
 /*
-	Version 1.3.1
+	Version 1.4.0
 	=============
 
 
@@ -53,48 +53,7 @@
 	This may change in the future.
 
 
-
-
-
-	Version History
-	===============
-
-	1.3.1 - 08/08/2021
-	------------------
-	Fix a bug in buffer<T>::append_bytes being SFINAE-ed wrongly
-
-
-
-	1.3.0 - 03/08/2021
-	------------------
-	Add buffer<T>, which is essentially a lightweight std::vector. requires operator new[];
-
-	Add chars() for str_view where T = uint8_t, which returns a normal str_view
-	Add span<T> (== str_view<T>) and byte_span (== str_view<uint8_t>)
-
-
-
-	1.2.1 - 03/08/2021
-	------------------
-	Make str_view::operator[] const
-
-
-
-	1.2.0 - 05/06/2021
-	------------------
-	Add `starts_with` and `ends_with` for str_view
-
-
-
-	1.1.0 - 28/05/2021
-	------------------
-	Various changes...
-
-
-
-	1.0.0 - 24/05/2021
-	------------------
-	Initial Release
+	Version history is at the bottom of the file.
 */
 
 #pragma once
@@ -148,13 +107,17 @@
 
 
 // forward declare the zpr namespace...
-namespace zpr { }
+namespace zpr
+{
+	// as well as the print_formatter.
+	template <typename, typename>
+	struct print_formatter;
+}
 
 namespace zst
 {
 	// we need a forward-declaration of error_and_exit for expect().
-	template <typename... Args>
-	[[noreturn]] void error_and_exit(const char* fmt, Args&&... args);
+	[[noreturn]] void error_and_exit(const char* str, size_t n);
 
 	// we really just need a very small subset of <type_traits>, so don't include the whole thing.
 	namespace detail
@@ -195,6 +158,22 @@ namespace zst
 			&& decltype(test_pre_is_base_of<Base, Derived>(0))::value
 		>
 		{ };
+
+		template <typename T>
+		struct __stop_declval_eval { static constexpr bool __stop = false; };
+
+		template <typename T, typename U = T&&>
+		U __declval(int);
+
+		template <typename T>
+		T __declval(long);
+
+		template <typename T>
+		auto declval() -> decltype(__declval<T>(0))
+		{
+			static_assert(__stop_declval_eval<T>::__stop, "declval() must not be used!");
+			return __stop_declval_eval<T>::__unknown();
+		}
 	}
 }
 
@@ -208,42 +187,42 @@ namespace zst
 		{
 			using value_type = CharType;
 
-			str_view() : ptr(nullptr), len(0) { }
-			str_view(const value_type* p, size_t l) : ptr(p), len(l) { }
+			constexpr str_view() : ptr(nullptr), len(0) { }
+			constexpr str_view(const value_type* p, size_t l) : ptr(p), len(l) { }
 
 			template <size_t N>
-			str_view(const value_type (&s)[N]) : ptr(s), len(N - 1) { }
+			constexpr str_view(const value_type (&s)[N]) : ptr(s), len(N - 1) { }
 
 			template <typename T, typename = typename detail::enable_if<
 				detail::is_same<char, value_type>::value &&
 				detail::is_same<const char*, T>::value
 			>::type>
-			str_view(T s) : ptr(s), len(strlen(s)) { }
+			constexpr str_view(T s) : ptr(s), len(strlen(s)) { }
 
-			str_view(str_view&&) = default;
-			str_view(const str_view&) = default;
-			str_view& operator= (str_view&&) = default;
-			str_view& operator= (const str_view&) = default;
+			constexpr str_view(str_view&&) = default;
+			constexpr str_view(const str_view&) = default;
+			constexpr str_view& operator= (str_view&&) = default;
+			constexpr str_view& operator= (const str_view&) = default;
 
-			inline bool operator== (const str_view& other) const
+			constexpr inline bool operator== (const str_view& other) const
 			{
 				return (this->len == other.len) &&
 					(this->ptr == other.ptr || (memcmp(this->ptr, other.ptr, detail::min(this->len, other.len)) == 0)
 				);
 			}
 
-			inline bool operator!= (const str_view& other) const
+			constexpr inline bool operator!= (const str_view& other) const
 			{
 				return !(*this == other);
 			}
 
-			inline const value_type* begin() const { return this->ptr; }
-			inline const value_type* end() const { return this->ptr + len; }
+			constexpr inline const value_type* begin() const { return this->ptr; }
+			constexpr inline const value_type* end() const { return this->ptr + len; }
 
-			inline size_t length() const { return this->len; }
-			inline size_t size() const { return this->len; }
-			inline bool empty() const { return this->len == 0; }
-			inline const value_type* data() const { return this->ptr; }
+			constexpr inline size_t length() const { return this->len; }
+			constexpr inline size_t size() const { return this->len; }
+			constexpr inline bool empty() const { return this->len == 0; }
+			constexpr inline const value_type* data() const { return this->ptr; }
 
 			inline str_view<uint8_t> bytes() const { return str_view<uint8_t>(reinterpret_cast<const uint8_t*>(this->ptr), this->len); }
 
@@ -415,7 +394,25 @@ namespace zst
 			inline bool operator== (const std::basic_string<C>& other, str_view<C> sv) { return sv == str_view<C>(other); }
 
 			template <typename C>
+			inline bool operator== (str_view<C> sv, const std::basic_string<C>& other) { return sv == str_view<C>(other); }
+
+			template <typename C>
+			inline bool operator== (const std::basic_string_view<C>& other, str_view<C> sv) { return sv == str_view<C>(other); }
+
+			template <typename C>
+			inline bool operator== (str_view<C> sv, const std::basic_string_view<C>& other) { return sv == str_view<C>(other); }
+
+			template <typename C>
+			inline bool operator!= (const std::basic_string<C>& other, str_view<C> sv) { return sv != str_view<C>(other); }
+
+			template <typename C>
+			inline bool operator!= (str_view<C> sv, const std::basic_string<C>& other) { return sv != str_view<C>(other); }
+
+			template <typename C>
 			inline bool operator!= (std::basic_string_view<C> other, str_view<C> sv) { return sv != str_view<C>(other); }
+
+			template <typename C>
+			inline bool operator!= (str_view<C> sv, std::basic_string_view<C> other) { return sv != str_view<C>(other); }
 		#endif // ZST_USE_STD
 
 		template <typename C> inline const C* begin(const str_view<C>& sv) { return sv.begin(); }
@@ -610,6 +607,24 @@ namespace zst
 
 namespace zst
 {
+	namespace impl
+	{
+		template <typename... Args>
+		[[noreturn]] void error_wrapper(const char* fmt, Args&&... args);
+	}
+
+	template <typename, typename>
+	struct Result;
+
+	namespace detail
+	{
+		template <typename T>
+		struct is_result : detail::false_type { };
+
+		template <typename T, typename U>
+		struct is_result<Result<T, U>> : detail::true_type { };
+	}
+
 	template <typename T>
 	struct Ok
 	{
@@ -771,16 +786,17 @@ namespace zst
 		>>
 		operator Result<U, E> () const
 		{
-			if(state == STATE_VAL)  return Result<U, E>(this->val);
-			if(state == STATE_ERR)  return Result<U, E>(this->err);
+			using R = Result<U, E>;
+			if(state == STATE_VAL)  return R(typename R::tag_ok{}, this->val);
+			if(state == STATE_ERR)  return R(typename R::tag_err{}, this->err);
 
-			zst::error_and_exit("invalid state of Result");
+			impl::error_wrapper("invalid state of Result");
 		}
 
 		const T& expect(str_view msg) const
 		{
 			if(this->ok())  return this->unwrap();
-			else            zst::error_and_exit("{}: {}", msg, this->error());
+			else            impl::error_wrapper("{}: {}", msg, this->error());
 		}
 
 		const T& or_else(const T& default_value) const
@@ -789,17 +805,35 @@ namespace zst
 			else            return default_value;
 		}
 
+		template <typename Fn>
+		auto map(Fn&& fn) -> Result<decltype(fn(detail::declval<T>())), E> const
+		{
+			using Res = Result<decltype(fn(this->val)), E>;
+			if(this->ok())  return Res(typename Res::tag_ok{}, fn(this->val));
+			else            return Res(typename Res::tag_err{}, this->err);
+		}
+
+		template <typename Fn>
+		auto flatmap(Fn&& fn) -> decltype(fn(detail::declval<T>())) const
+		{
+			using Res = decltype(fn(this->val));
+
+			if(this->ok())  return fn(this->val);
+			else            return Res(typename Res::tag_err{}, this->err);
+		}
+
+
 	private:
 		inline void assert_has_value() const
 		{
 			if(this->state != STATE_VAL)
-				zst::error_and_exit("unwrapping result of Err: {}", this->error());
+				impl::error_wrapper("unwrapping result of Err: {}", this->error());
 		}
 
 		inline void assert_is_error() const
 		{
 			if(this->state != STATE_ERR)
-				zst::error_and_exit("result is not an Err");
+				impl::error_wrapper("result is not an Err");
 		}
 
 
@@ -811,6 +845,9 @@ namespace zst
 			T val;
 			E err;
 		};
+
+		// befriend all results
+		template <typename, typename> friend struct Result;
 	};
 
 
@@ -883,7 +920,7 @@ namespace zst
 		void expect(zst::str_view msg) const
 		{
 			if(!this->ok())
-				zst::error_and_exit("{}: {}", msg, this->error());
+				impl::error_wrapper("{}: {}", msg, this->error());
 		}
 
 		static Result of_value()
@@ -903,11 +940,29 @@ namespace zst
 			return Result<void, E>(E(static_cast<Args&&>(xs)...));
 		}
 
+		template <typename Fn>
+		auto map(Fn&& fn) -> Result<decltype(fn()), E> const
+		{
+			using Res = Result<decltype(fn()), E>;
+			if(this->ok())  return Res(typename Res::tag_ok{}, fn());
+			else            return Res(typename Res::tag_err{}, this->err);
+		}
+
+		template <typename Fn>
+		auto flatmap(Fn&& fn) -> decltype(fn()) const
+		{
+			using Res = decltype(fn());
+
+			if(this->ok())  return fn();
+			else            return Res(typename Res::tag_err{}, this->err);
+		}
+
+
 	private:
 		inline void assert_is_error() const
 		{
 			if(this->state != STATE_ERR)
-				zst::error_and_exit("result is not an Err");
+				impl::error_wrapper("result is not an Err");
 		}
 
 		int state = 0;
@@ -929,6 +984,17 @@ namespace zst
 	Err<std::string> ErrFmt(const char* fmt, Args&&... args)
 	{
 		return Err<std::string>(zpr::sprint(fmt, static_cast<Args&&>(args)...));
+	}
+
+	namespace impl
+	{
+		template <typename... Args>
+		[[noreturn]] void error_wrapper(const char* fmt, Args&&... args)
+		{
+			char buf[1024] { };
+			auto n = zpr::sprint(1024, buf, fmt, static_cast<Args&&>(args)...);
+			zst::error_and_exit(buf, n);
+		}
 	}
 }
 
@@ -982,4 +1048,83 @@ namespace zpr
 		}
 	};
 }
+#else
+
+// we need something here...
+
+namespace zst::impl
+{
+	template <typename... Args>
+	[[noreturn]] void error_wrapper(const char* fmt, Args&&... args)
+	{
+		constexpr const char msg[] = "internal error (no zpr, cannot elaborate)";
+		zst::error_and_exit(msg, sizeof(msg) - 1);
+	}
+}
+
 #endif
+
+
+
+/*
+	Version History
+	===============
+
+	1.4.0 - 08/09/2021
+	------------------
+	- add map() and flatmap() to Result
+
+
+
+	1.3.3 - 31/08/2021
+	------------------
+	- Fix implicit cast for inherited classes in Result
+	- Rearrange how the error function is called. It's now a normal function
+	  that just takes a string+length, because obviously we can't instantiate all possible
+	  templates ahead of time.
+
+
+
+	1.3.2 - 23/08/2021
+	------------------
+	Fix forward declaration of zpr::print_formatter.
+
+
+
+	1.3.1 - 08/08/2021
+	------------------
+	Fix a bug in buffer<T>::append_bytes being SFINAE-ed wrongly
+
+
+
+	1.3.0 - 03/08/2021
+	------------------
+	Add buffer<T>, which is essentially a lightweight std::vector. requires operator new[];
+
+	Add chars() for str_view where T = uint8_t, which returns a normal str_view
+	Add span<T> (== str_view<T>) and byte_span (== str_view<uint8_t>)
+
+
+
+	1.2.1 - 03/08/2021
+	------------------
+	Make str_view::operator[] const
+
+
+
+	1.2.0 - 05/06/2021
+	------------------
+	Add `starts_with` and `ends_with` for str_view
+
+
+
+	1.1.0 - 28/05/2021
+	------------------
+	Various changes...
+
+
+
+	1.0.0 - 24/05/2021
+	------------------
+	Initial Release
+*/

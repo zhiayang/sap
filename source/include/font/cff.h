@@ -1,0 +1,215 @@
+// cff.h
+// Copyright (c) 2022, zhiayang
+// SPDX-License-Identifier: Apache-2.0
+
+#pragma once
+
+#include <stdint.h>
+#include <stddef.h>
+
+#include <zpr.h>
+#include <zst.h>
+
+#include <vector>
+#include <optional>
+
+namespace font
+{
+	struct FontFile;
+}
+
+namespace font::cff
+{
+	// these are all 32-bit, because that's the maximum size it's specified to be.
+	// no reason to use larger types than we'll ever need.
+	struct IndexTable
+	{
+		uint16_t count;
+		uint8_t offset_bytes;
+
+		// of course, since we don't know beforehand the offset size, just use the largest (4 bytes)
+		std::vector<uint32_t> offsets;
+
+		zst::byte_span data;
+	};
+
+	struct Operand
+	{
+		int type;
+		union {
+			int32_t _integer;
+			double _decimal;
+		};
+
+		inline uint16_t string_id() const { return _integer; }
+		inline int32_t integer() const { return _integer; }
+		inline double decimal() const { return _decimal; }
+		inline double fixed() const { return ((_integer >> 16) & 0xFFFF) + (_integer & 0xFFFF) / 65536.0; }
+
+		inline Operand& string_id(uint16_t sid) { type = TYPE_STRING_ID; _integer = sid; return *this; }
+		inline Operand& integer(int32_t value) { type = TYPE_INTEGER; _integer = value; return *this; }
+		inline Operand& decimal(double value) { type = TYPE_DECIMAL; _decimal = value; return *this; }
+		inline Operand& fixed(int32_t value) { type = TYPE_FIXED; _integer = value; return *this; }
+
+		static constexpr int TYPE_INTEGER   = 0;
+		static constexpr int TYPE_STRING_ID = 1;
+		static constexpr int TYPE_DECIMAL   = 2;
+		static constexpr int TYPE_FIXED     = 3;
+	};
+
+	enum class DictKey : uint16_t;
+	struct Dictionary
+	{
+		std::map<DictKey, std::vector<Operand>> values;
+
+		inline std::vector<Operand>& operator[] (DictKey key) { return values[key]; }
+
+		uint16_t string_id(DictKey key) const;
+		int32_t integer(DictKey key) const;
+		double decimal(DictKey key) const;
+		double fixed(DictKey key) const;
+	};
+
+	struct CFFData
+	{
+		zst::byte_span bytes {};
+
+		// how many bytes *absolute offsets* take (1-4)
+		uint8_t absolute_offset_bytes = 0;
+
+		IndexTable string_table {};
+
+		Dictionary top_dict {};
+		Dictionary private_dict {};
+
+		zst::str_view get_string(uint16_t sid) const;
+	};
+
+
+
+
+	CFFData* parseCFFData(FontFile* font, zst::byte_span cff_data);
+
+
+
+
+	// charstring stuff
+
+	/*
+		Read a number from a *Type 2* CharString. For the 5-byte encoding which represents a
+		16.16 fixed point, the high 16 bits of the i32 are the integer part, and the low 16 bits
+		are the fractional part.
+
+		If the first byte in the buffer is not one of the number operand bytes, then an empty
+		optional is returned; this allows decoding optional operands.
+	*/
+	std::optional<Operand> readNumberFromCharString(zst::byte_span& buf);
+
+	/*
+		Read a number operand from a DICT data stream.
+	*/
+	std::optional<Operand> readNumberFromDICT(zst::byte_span& buf);
+
+	/*
+		Read operands from a DICT, up to (but excluding) the key operand itself.
+	*/
+	std::vector<Operand> readOperandsFromDICT(zst::byte_span& buf);
+
+	/*
+		Read operands from a Type 2 CharString, up to (but excluding) the command itself
+	*/
+	std::vector<Operand> readOperandsFromCharString(zst::byte_span& buf);
+
+	/*
+		Read a DICT, extracting all keys and values.
+	*/
+	Dictionary readDictionary(zst::byte_span dict);
+
+	/*
+		Fill the dictionary with default values for keys that didn't exist in the file.
+	*/
+	void populateDefaultValuesForTopDict(Dictionary& dict);
+}
+
+template <>
+struct zpr::print_formatter<font::cff::Operand>
+{
+	template <typename Cb>
+	void print(font::cff::Operand op, Cb&& cb, format_args args)
+	{
+		using namespace font::cff;
+
+		if(op.type == Operand::TYPE_INTEGER || op.type == Operand::TYPE_FIXED)
+			detail::print_one(static_cast<Cb&&>(cb), static_cast<format_args&&>(args), op.integer());
+		else if(op.type == Operand::TYPE_FIXED)
+			detail::print_one(static_cast<Cb&&>(cb), static_cast<format_args&&>(args), op.fixed());
+		else
+			detail::print_one(static_cast<Cb&&>(cb), static_cast<format_args&&>(args), op.decimal());
+	}
+};
+
+
+// CFF DICT operators
+namespace font::cff
+{
+	// keys are encoded as 0xAABB, where AA is 00 if the operator is 1 byte (then BB is simply
+	// that byte), and AA is 0C if the operator is 2 bytes (then BB is the second byte)
+	enum class DictKey : uint16_t
+	{
+		// 1-byte operators
+		version             = 0x00'00,
+		Notice              = 0x00'01,
+		FullName            = 0x00'02,
+		FamilyName          = 0x00'03,
+		Weight              = 0x00'04,
+		FontBBox            = 0x00'05,
+		BlueValues          = 0x00'06,
+		OtherBlues          = 0x00'07,
+		FamilyBlues         = 0x00'08,
+		FamilyOtherBlues    = 0x00'09,
+		StdHW               = 0x00'0A,
+		StdVW               = 0x00'0B,
+		UniqueID            = 0x00'0D,
+		XUID                = 0x00'0E,
+		charset             = 0x00'0F,
+		Encoding            = 0x00'10,
+		CharStrings         = 0x00'11,
+		Private             = 0x00'12,
+		Subrs               = 0x00'13,
+		defaultWidthX       = 0x00'14,
+		nominalWidthX       = 0x00'15,
+
+		// 2-byte operators
+		Copyright           = 0x0C'00,
+		isFixedPitch        = 0x0C'01,
+		ItalicAngle         = 0x0C'02,
+		UnderlinePosition   = 0x0C'03,
+		UnderlineThickness  = 0x0C'04,
+		PaintType           = 0x0C'05,
+		CharstringType      = 0x0C'06,
+		FontMatrix          = 0x0C'07,
+		StrokeWidth         = 0x0C'08,
+		BlueScale           = 0x0C'09,
+		BlueShift           = 0x0C'0A,
+		BlueFuzz            = 0x0C'0B,
+		StemSnapH           = 0x0C'0C,
+		StemSnapV           = 0x0C'0D,
+		ForceBold           = 0x0C'0E,  // 0f and 10 are reserved
+		LanguageGroup       = 0x0C'11,
+		ExpansionFactor     = 0x0C'12,
+		initialRandomSeed   = 0x0C'13,
+		SyntheticBase       = 0x0C'14,
+		PostScript          = 0x0C'15,
+		BaseFontName        = 0x0C'16,
+		BaseFontBlend       = 0x0C'17,
+		ROS                 = 0x0C'1e,  // 18 to 1d are reserved
+		CIDFontVersion      = 0x0C'1f,
+		CIDFontRevision     = 0x0C'20,
+		CIDFontType         = 0x0C'21,
+		CIDCount            = 0x0C'22,
+		UIDBase             = 0x0C'23,
+		FDArray             = 0x0C'24,
+		FDSelect            = 0x0C'25,
+		FontName            = 0x0C'26,
+	};
+}
