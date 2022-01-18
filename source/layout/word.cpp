@@ -154,7 +154,6 @@ namespace sap
 			// note: positive kerns move left, so subtract it.
 			auto glyph_width = font->scaleFontMetricForFontSize(met.horz_advance, font_size_tpu);
 			auto kern_adjust = font->scaleFontMetricForFontSize(kern, font_size_tpu);
-
 			this->size.x() += (glyph_width - kern_adjust).into(sap::Scalar{});
 		}
 
@@ -174,8 +173,6 @@ namespace sap
 
 	void Word::render(pdf::Text* text) const
 	{
-		// zpr::println("word = '{}', cursor = {}, linebreak = {}", this->text, m_position, m_linebreak_after);
-
 		const auto font = m_style->font();
 		const auto font_size = m_style->font_size();
 		text->setFont(font, font_size.into(pdf::Scalar{}));
@@ -205,8 +202,6 @@ namespace sap
 				// ratio > 1 = expand, < 1 = shrink
 				auto extra = font->scaleFontMetricForPDFTextSpace(space_adv) * (m_post_space_ratio - 1.0);
 				text->offset(extra);
-
-				// zpr::println("'{}': font = {}, ratio = {}, extra = {}", this->text, font_size_tpu, m_post_space_ratio, extra);
 			}
 
 			/*

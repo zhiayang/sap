@@ -35,10 +35,6 @@ namespace sap
 
 		region->addObjectAtCursor(this);
 
-		// we store word positions relative to the start of the paragraph (not the region), so mark
-		// where the paragraph starts.
-		auto para_begin = region->cursor();
-
 		Position cursor {};
 		auto region_width = region->spaceAtCursor().x();
 		auto region_height = region->spaceAtCursor().y();
@@ -70,9 +66,9 @@ namespace sap
 		size_t words_in_line = 0;       // the number of words in the line so far.
 
 		constexpr double MIN_RATIO = 0.9;
-		constexpr double MAX_RATIO = 1.1;
 
 		auto finalise_line = [&](size_t word_idx, double ratio) {
+
 			sap::Scalar line_height {};
 			for(size_t i = 0; i < words_in_line; i++)
 			{
@@ -123,7 +119,6 @@ namespace sap
 				// ok, we have vertical space. assume we have horizontal space (TODO: if we don't, that means
 				// a single word is very long -- we want to hyphenate in these cases!)
 				word_length += word.size.x();
-				space_length += word.spaceWidth();
 				words_in_line++;
 			}
 			else
@@ -132,8 +127,12 @@ namespace sap
 				// and `space_length` is how much "space character whitespace" we have.
 				auto current_ratio = (region_width - word_length) / space_length;
 
+				// the space between words is, for now, the maximum of the prev -> cur, and cur -> next
+				// (if the current word is of a different font size, then the distinction becomes important)
+				auto space_between = dim::max(m_words[word_idx - 1].spaceWidth(), word.spaceWidth());
+
 				// check the ratio again with an additional word
-				auto new_ratio = (region_width - word_length - word.size.x()) / (space_length + word.spaceWidth());
+				auto new_ratio = (region_width - word_length - word.size.x()) / (space_length + space_between);
 
 				// if the new ratio is not worse than the current one,
 				// and it doesn't squeeze the space too much, add it.
@@ -142,7 +141,7 @@ namespace sap
 					&& word_length + word.size.x() < region_width)
 				{
 					word_length += word.size.x();
-					space_length += word.spaceWidth();
+					space_length += space_between;
 					words_in_line++;
 				}
 				else
@@ -150,20 +149,6 @@ namespace sap
 					// otherwise, break to the next line. in breaking to the next line, we need to set the positions
 					// of all the words on this line now that we have the ratio and stuff.
 					finalise_line(word_idx, current_ratio);
-
-					sap::Scalar foozle {};
-					zpr::println("width = {}", region_width);
-					zpr::println("space = {}, {}, ratio = {}", region_width - word_length, space_length, current_ratio);
-
-					for(size_t i = 0; i < words_in_line; i++)
-					{
-						auto& word = m_words[word_idx - words_in_line + i];
-						foozle += word.size.x() + (current_ratio * word.spaceWidth());
-
-						zpr::println("    {}", word.text);
-					}
-
-					zpr::println("expanded space = {}", foozle);
 
 					words_in_line = 0;
 					word_length = Scalar(0);
@@ -218,11 +203,12 @@ namespace sap
 		auto text = util::make<pdf::Text>();
 		text->moveAbs(page->convertVector2(abs_para_position.into(pdf::Position2d_YDown{})));
 
+		// TODO: obviously, use the leading metric to advance the line...
 		for(size_t i = 0; i < m_words.size(); i++)
 		{
 			m_words[i].render(text);
 			if(m_words[i].m_linebreak_after && i + 1 < m_words.size())
-				text->nextLine(pdf::Offset2d(0, -1.65 * m_words[i + 1].size.y().into(pdf::Scalar{}).value()));
+				text->nextLine(pdf::Offset2d(0, -2.1 * m_words[i + 1].size.y().into(pdf::Scalar{}).value()));
 		}
 
 		page->addObject(text);

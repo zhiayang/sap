@@ -14,7 +14,7 @@
 
 #include "font/font.h"
 
-#if 1
+#if 0
 constexpr const char* input_text =
 	"何 the fuck did you just fucking 言います about 私, you 小さい bitch ですか? 私'll\n"
 	"have あなた know that 私 graduated top of my class in 日本語 3, and 私’ve been involved\n"
@@ -28,6 +28,7 @@ constexpr const char* input_text =
 	"that 殺す’s the pathetic 小さい thing あなた calls あなたの life. You’re fucking 死にました’d, 赤ちゃん.\n"
 	"AVAYAYA V. Vo P. r.";
 #else
+
 constexpr const char* input_text =
 	"My name is Yoshikage Kira. I'm 33 years old. My house is in the northeast section of Morioh,\n"
 	"where all the villas are, and I am not married. I work as an employee for the Kame Yu department\n"
@@ -38,19 +39,17 @@ constexpr const char* input_text =
 	"in the morning. I was told there were no issues at my last check-up. I'm trying to explain that\n"
 	"I'm a person who wishes to live a very quiet life. I take care not to trouble myself with any enemies,\n"
 	"like winning and losing, that would cause me to lose sleep at night. That is how I deal with society,\n"
-	"and I know that is what brings me happiness. Although, if I were to fight I wouldn't lose to anyone.";
+	"and I know that is what brings me happiness. Although, if I were to fight I wouldn't lose to anyone.\n"
+	"AVAYAYA V. Vo P. r.";
 #endif
-
-// constexpr const char* para2 = "何 the fuck did you just fucking 言います about 私, you 小さい bitch ですか? 私'll\n"
-// 	"have あなた know that 私 graduated top of my class in 日本語 3, and 私've been involved AYAYA Fo Vo\n";
 
 int main(int argc, char** argv)
 {
 	auto document = sap::Document();
 	auto font = pdf::Font::fromFontFile(
 		&document.pdfDocument(),
-		font::FontFile::parseFromFile("fonts/Meiryo.ttf")
-		// font::FontFile::parseFromFile("fonts/MyriadPro-Regular.ttf")
+		// font::FontFile::parseFromFile("fonts/Meiryo.ttf")
+		font::FontFile::parseFromFile("fonts/MyriadPro-Regular.ttf")
 		// font::FontFile::parseFromFile("fonts/XCharter-Roman.otf")
 	);
 
@@ -106,90 +105,4 @@ int main(int argc, char** argv)
 
 	pdf_doc.write(writer);
 	writer->close();
-
-
-
-
-#if 0
-
-	auto writer = util::make<pdf::Writer>("test.pdf");
-	auto doc = util::make<pdf::Document>();
-
-	auto font = pdf::Font::fromBuiltin(doc, "Times-Roman");
-	auto f2 = pdf::Font::fromFontFile(doc, font::FontFile::parseFromFile("fonts/Meiryo.ttf"));
-	auto f3 = pdf::Font::fromFontFile(doc, font::FontFile::parseFromFile("fonts/XCharter-Roman.otf"));
-	auto f4 = pdf::Font::fromFontFile(doc, font::FontFile::parseFromFile("fonts/MyriadPro-Regular.ttf"));
-
-	auto p1 = util::make<pdf::Page>();
-	// auto p2 = util::make<pdf::Page>();
-
-	// auto txt1 = util::make<pdf::Text>();
-	// txt1->setFont(font, pdf::mm(20));
-	// txt1->moveAbs(pdf::mm(10, 220));
-	// txt1->addText("hello, world");
-
-	// auto txt2 = util::make<pdf::Text>();
-	// txt2->setFont(f2, pdf::mm(17));
-	// txt2->moveAbs(pdf::mm(10, 195));
-	// txt2->addText("こんにちは、世界");
-
-	// auto txt3 = util::make<pdf::Text>();
-	// txt3->setFont(f3, pdf::mm(17));
-	// txt3->moveAbs(pdf::mm(10, 150));
-	// txt3->addText("AYAYA, world x\u030c");
-	// txt3->offset(pdf::mm(0, -20));
-	// txt3->addText("ffi AE ff ffl etc");
-
-
-	// auto txt3 = util::make<pdf::Text>();
-	// txt3->setFont(f3, pdf::mm(4.8));
-	// txt3->moveAbs(pdf::mm(10, 150));
-	// txt3->addText("My");
-	// txt3->offset(pdf::mm(6.6, 0));
-	// txt3->addText("name");
-
-
-	// auto txt4 = util::make<pdf::Text>();
-	// txt4->setFont(f4, pdf::mm(17));
-	// txt4->moveAbs(pdf::mm(10, 90));
-	// txt4->addText("AYAYA \x79\xcc\x8c");
-	// txt4->offset(pdf::mm(0, -20));
-	// txt4->addText("ffi AE ff ffl etc");
-
-	// p1->addObject(txt1);
-	// p1->addObject(txt2);
-	p1->addObject(txt3);
-	// p1->addObject(txt4);
-
-	doc->addPage(p1);
-	// doc->addPage(p2);
-	doc->write(writer);
-
-	writer->close();
-
-
-	font::FontFile::parseFromFile("fonts/Meiryo.ttf");
-	font::FontFile::parseFromFile("fonts/subset_Meiryo.ttf");
-	font::FontFile::parseFromFile("fonts/meiryo-subset.ttf");
-	font::FontFile::parseFromFile("tmp/meiryo-subset.ttf");
-	// font::FontFile::parseFromFile("fonts/meiryo-subset.ttf");
-	// font::FontFile::parseFromFile("fonts/meiryo-subset.ttf");
-
-	// font::FontFile::parseFromFile("fonts/myriad-subset.ttf");
-	// font::FontFile::parseFromFile("fonts/MyriadPro-Regular.ttf");
-
-
-	// font::FontFile::parseFromFile("fonts/subset_Meiryo.ttf");
-
-	// font::FontFile::parseFromFile("fonts/SourceSansPro-Regular.ttf");
-	// font::FontFile::parseFromFile("fonts/Meiryo.ttf");
-	// font::FontFile::parseFromFile("fonts/Meiryo-Italic.ttf");
-	// font::FontFile::parseFromFile("fonts/SF-Pro.ttf");
-	// font::FontFile::parseFromFile("fonts/DejaVuSansMono.ttf");
-	// font::FontFile::parseFromFile("fonts/dejavu-subset.ttf");
-	// font::FontFile::parseFromFile("fonts/MyriadPro-Regular.ttf");
-	// font::FontFile::parseFromFile("fonts/myriad-subset.ttf");
-	// font::FontFile::parseFromFile("fonts/XCharter-Roman.otf");
-	// font::FontFile::parseFromFile("fonts/xcharter-subset.otf");
-#endif
 }

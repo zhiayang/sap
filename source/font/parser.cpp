@@ -400,7 +400,7 @@ namespace font
 		for(size_t i = 0; i < num_tables; i++)
 		{
 			auto tbl = parse_table(buf);
-			zpr::println("table: {}", tbl.tag.str());
+			// zpr::println("table: {}", tbl.tag.str());
 
 			if(tbl.tag == Tag("cmap"))      parse_cmap_table(font, tbl);
 			else if(tbl.tag == Tag("head")) parse_head_table(font, tbl);

@@ -272,6 +272,7 @@ namespace pdf
 		static const auto XHeight  = pdf::Name("XHeight");
 		static const auto StemV  = pdf::Name("StemV");
 		static const auto W  = pdf::Name("W");
+		static const auto DW  = pdf::Name("DW");
 		static const auto Ascent  = pdf::Name("Ascent");
 		static const auto Descent  = pdf::Name("Descent");
 		static const auto ItalicAngle  = pdf::Name("ItalicAngle");
