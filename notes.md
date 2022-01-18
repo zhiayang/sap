@@ -1,5 +1,21 @@
 ## notes
 
+### on substitutions and ligatures
+
+While we can parse the most common GSUB and GPOS formats in the font and act on them, we are unable to do
+it intelligently at all. Quite a number of the GSUB substitutions are not simply "normal" ligatures; there's
+stuff like discretionary ligatures (which somehow turns `ます` into `〼`).
+
+The same is true of single-glyph GPOS tables (with the "placement" value) -- they're probably tied to some kind
+of specific feature (eg. sub/superscripts).
+
+The correct way is to look at the feature table, and only use the layout tables that correspond to the features
+that are enabled. For now, ligatures are disabled till we implement this discrimination.
+
+
+
+
+
 ### on font size optimisation
 
 There are quite a number of potential size savings that we haven't taken advantage of, in

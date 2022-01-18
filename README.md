@@ -57,15 +57,13 @@ While I appreciate the vast ecosystem that LaTeX has, having any kind of compati
 
 This also acts as a sort of TODO; as time goes on completed features may be removed from this list if they are deemed "trivial".
 
-- [x] PDF generation
-- [x] Unicode support (for the most part)
 - [x] OpenType font (otf/ttf) loading (and embedding into PDF)
 - [x] Embedded font subsetting (for fonts using TrueType outlines only)
 - [ ] Embedded CFF font subsetting
 - [ ] Further size optimisation for embedded fonts
 - [x] Compressed PDF streams
 - [x] Glyph kerning (via GPOS table)
-- [ ] Glyph kerning (via Apple `kern` table)
+- [ ] Glyph kerning (via Apple/ttf `kern` table)
 - [x] Glyph ligatures (via GSUB table)
 - [ ] Glyph ligatures (via Apple `morx` table)
 - [ ] More advanced typography support (`BASE`, `MATH`)
