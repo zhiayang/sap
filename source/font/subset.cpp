@@ -6,6 +6,7 @@
 
 #include "util.h"
 #include "error.h"
+#include "font/cff.h"
 #include "font/font.h"
 #include "pdf/object.h"
 
@@ -245,11 +246,31 @@ namespace font
 		}
 		else
 		{
-			for(auto& table : included_tables)
-				write_table_record(table.tag, table.checksum, table.length);
+			auto new_cff_data = cff::createCFFSubset(font, used_glyphs);
 
 			for(auto& table : included_tables)
-				stream->append(file_contents.drop(table.offset).take(table.length));
+			{
+				size_t size = table.length;
+				size_t checksum = table.checksum;
+				if(table.tag == Tag("CFF ") || table.tag == Tag("CFF2"))
+				{
+					size = new_cff_data.size();
+					checksum = compute_checksum(new_cff_data.span());
+				}
+				write_table_record(table.tag, checksum, size);
+			}
+
+			for(auto& table : included_tables)
+			{
+				if(table.tag == Tag("CFF ") || table.tag == Tag("CFF2"))
+				{
+					stream->append(new_cff_data.span());
+				}
+				else
+				{
+					stream->append(file_contents.drop(table.offset).take(table.length));
+				}
+			}
 		}
 
 		if(stream->is_compressed)

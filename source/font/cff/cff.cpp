@@ -27,13 +27,30 @@ namespace font::cff
 			// consuming the entire INDEX structure, subtract 1 to get the "real" offset
 			// from the start of the final buffer.
 			if(index.offset_bytes == 1)
+			{
 				index.offsets.push_back(consume_u8(buf) - 1);
+			}
 			else if(index.offset_bytes == 2)
+			{
 				index.offsets.push_back(consume_u16(buf) - 1);
+			}
+			else if(index.offset_bytes == 3)
+			{
+				// what a pain...
+				uint32_t b0 = consume_u8(buf);
+				uint32_t b1 = consume_u8(buf);
+				uint32_t b2 = consume_u8(buf);
+
+				index.offsets.push_back(((b0 << 16) | (b1 << 8) | (b2)) - 1);
+			}
 			else if(index.offset_bytes == 4)
+			{
 				index.offsets.push_back(consume_u32(buf) - 1);
+			}
 			else
+			{
 				sap::error("font/cff", "unsupported offset size '{}'", index.offset_bytes);
+			}
 		}
 
 		index.data = buf.take(index.offsets.back());
@@ -42,11 +59,36 @@ namespace font::cff
 		return index;
 	}
 
+	static std::vector<Subroutine> read_subrs_from_index(const IndexTable& index)
+	{
+		std::vector<Subroutine> subrs {};
+		for(size_t i = 0; i < index.count; i++)
+		{
+			auto data = index.get_item(i);
+
+			Subroutine subr {};
+			subr.charstring = data;
+			subr.subr_number = i;
+			subr.used = false;
+			subrs.push_back(std::move(subr));
+		}
+		return subrs;
+	}
+
 
 	CFFData* parseCFFData(FontFile* font, zst::byte_span buf)
 	{
 		auto cff = util::make<CFFData>();
 		cff->bytes = buf;
+
+		/*
+			the first 5 items are in a fixed order:
+			Header
+			Name (INDEX + Data)
+			Top DICT (INDEX + Data),
+			Strings (INDEX + Data),
+			Global Subrs INDEX
+		*/
 
 		// first, the header
 		{
@@ -107,13 +149,53 @@ namespace font::cff
 		// String INDEX
 		{
 			cff->string_table = read_index_table(buf);
-
-			zpr::println("notice = '{}'", cff->get_string(cff->top_dict.string_id(DictKey::version)));
+			buf.remove_prefix(cff->string_table.data.size());
 		}
 
+		// Global Subrs INDEX
+		{
+			auto index = read_index_table(buf);
+			cff->global_subrs = read_subrs_from_index(index);
 
+			buf.remove_prefix(index.data.size());
+		}
+
+		// read the local subrs from the private dict
+		{
+			auto foo = cff->top_dict[DictKey::Private];
+			if(foo.size() != 2)
+				sap::error("font/cff", "missing Private DICT");
+
+			auto size = foo[0].integer();
+			auto offset = foo[1].integer();
+
+			// private dict offset is specified from the beginning of the file
+			cff->private_dict = readDictionary(cff->bytes.drop(offset).take(size));
+
+			// local subrs index is specified from the beginning of *the private DICT data)
+			if(cff->private_dict.contains(DictKey::Subrs))
+			{
+				auto local_subr_offset = cff->private_dict.integer(DictKey::Subrs);
+				local_subr_offset += offset;
+
+				auto tmp = cff->bytes.drop(local_subr_offset);
+				auto index = read_index_table(tmp);
+
+				cff->local_subrs = read_subrs_from_index(index);
+			}
+		}
+
+		// read the charstrings index from the top dict
+		{
+			if(!cff->top_dict.contains(DictKey::CharStrings))
+				sap::error("font/cff", "Top DICT missing CharStrings key");
+
+			// specified from the beginning of the file
+			auto charstrings_offset = cff->top_dict.integer(DictKey::CharStrings);
+			auto tmp = cff->bytes.drop(charstrings_offset);
+			cff->charstrings_table = read_index_table(tmp);
+		}
 
 		return cff;
 	}
-
 }

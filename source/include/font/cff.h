@@ -16,6 +16,7 @@
 namespace font
 {
 	struct FontFile;
+	struct GlyphMetrics;
 }
 
 namespace font::cff
@@ -31,6 +32,14 @@ namespace font::cff
 		std::vector<uint32_t> offsets;
 
 		zst::byte_span data;
+
+		inline zst::byte_span get_item(size_t idx) const
+		{
+			if(idx >= this->count)
+				return {};
+
+			return data.drop(offsets[idx]).take(offsets[idx + 1] - offsets[idx]);
+		}
 	};
 
 	struct Operand
@@ -62,6 +71,7 @@ namespace font::cff
 	{
 		std::map<DictKey, std::vector<Operand>> values;
 
+		inline bool contains(DictKey key) const { return values.find(key) != values.end(); }
 		inline std::vector<Operand>& operator[] (DictKey key) { return values[key]; }
 
 		uint16_t string_id(DictKey key) const;
@@ -70,6 +80,20 @@ namespace font::cff
 		double fixed(DictKey key) const;
 	};
 
+	struct Subroutine
+	{
+		zst::byte_span charstring {};
+
+		uint32_t subr_number = 0;
+		bool used = false;
+	};
+
+	/*
+		Note: this in-memory representation is only suitable for CFF fonts embedded in OTF files,
+		and *NOT* for general-purpose CFF files.
+
+		For example, we only support 1 Top DICT (ie. no fontsets)
+	*/
 	struct CFFData
 	{
 		zst::byte_span bytes {};
@@ -78,18 +102,21 @@ namespace font::cff
 		uint8_t absolute_offset_bytes = 0;
 
 		IndexTable string_table {};
+		IndexTable charstrings_table {};
 
 		Dictionary top_dict {};
 		Dictionary private_dict {};
+
+		std::vector<Subroutine> global_subrs {};
+		std::vector<Subroutine> local_subrs {};
 
 		zst::str_view get_string(uint16_t sid) const;
 	};
 
 
-
-
 	CFFData* parseCFFData(FontFile* font, zst::byte_span cff_data);
 
+	zst::byte_buffer createCFFSubset(FontFile* file, const std::map<uint32_t, GlyphMetrics>& used_glyphs);
 
 
 

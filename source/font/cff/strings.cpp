@@ -76,10 +76,6 @@ namespace font::cff
 				sid + NUM_STANDARD_STRINGS, this->string_table.count);
 		}
 
-		auto offset = this->string_table.offsets[sid];
-		return this->string_table.data
-					.drop(offset)
-					.take(this->string_table.offsets[sid + 1] - offset)
-					.cast<char>();
+		return this->string_table.get_item(sid).cast<char>();
 	}
 }

@@ -15,7 +15,6 @@
 #include <zst.h>
 
 #include "font/tag.h"
-#include "font/cff.h"
 #include "font/features.h"
 
 namespace pdf
@@ -25,6 +24,11 @@ namespace pdf
 
 namespace font
 {
+	namespace cff
+	{
+		struct CFFData;
+	}
+
 	struct FontMetrics
 	{
 		int xmin;
