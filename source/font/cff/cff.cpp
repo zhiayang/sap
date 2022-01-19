@@ -107,6 +107,9 @@ namespace font::cff
 					font->full_name, a, b);
 			}
 
+			if(a == 2)
+				cff->cff2 = true;
+
 			// now comes the header size
 			auto hdr_size = consume_u8(buf);
 			cff->absolute_offset_bytes = consume_u8(buf);
@@ -123,8 +126,7 @@ namespace font::cff
 			if(name_index.count != 1)
 				sap::error("font/cff", "invalid number of entries in Name INDEX (expected 1, got {})", name_index.count);
 
-			// this isn't too important
-			// zpr::println("name = {}", name_data.cast<char>());
+			cff->name = name_index.get_item(0);
 
 			// now skip the data
 			buf.remove_prefix(name_index.data.size());
@@ -144,6 +146,84 @@ namespace font::cff
 				sap::error("font/cff", "unsupported charstring type '{}', expected '2'", foo);
 
 			buf.remove_prefix(dict_index.data.size());
+
+			// read the charstrings index from the top dict
+			{
+				if(!cff->top_dict.contains(DictKey::CharStrings))
+					sap::error("font/cff", "Top DICT missing CharStrings key");
+
+				// specified from the beginning of the file
+				auto charstrings_offset = cff->top_dict.integer(DictKey::CharStrings);
+				auto tmp = cff->bytes.drop(charstrings_offset);
+				cff->charstrings_table = read_index_table(tmp);
+				cff->num_glyphs = cff->charstrings_table.count;
+			}
+
+
+			if(cff->top_dict.contains(DictKey::Encoding))
+			{
+				// get the absolute offset to the encoding data. if the offset is 0 or 1, then it's
+				// a predefined (builtin) encoding, and doesn't contain any data.
+				auto encoding_ofs = cff->top_dict.integer(DictKey::Encoding);
+				if(encoding_ofs != 0 && encoding_ofs != 1)
+				{
+					auto encoding_data = cff->bytes.drop(encoding_ofs);
+					size_t encoding_size = 1;
+
+					// now we must calculate the size.
+					auto format = encoding_data[0] & 0x7F;
+					bool have_supplements = encoding_data[0] & 0x80;
+
+					if(format == 0)
+					{
+						auto num_codes = encoding_data[1];
+						encoding_size += (1 + num_codes);
+					}
+					else if(format == 1)
+					{
+						auto num_ranges = encoding_data[1];
+						encoding_size += (2 * num_ranges) + 1;
+					}
+					else
+					{
+						sap::error("font/cff", "unsupported Encodings format '{}' (expected 0 or 1)", format);
+					}
+
+					if(have_supplements)
+					{
+						auto tmp = encoding_data.drop(encoding_size);
+						auto num_sups = tmp[0];
+						tmp.remove_prefix(1);
+						encoding_size += 1;
+
+						// this contains SIDs, so we are forced to read it
+						while(num_sups > 0)
+						{
+							tmp.remove_prefix(1);   // code (Card8)
+
+							auto foo = tmp.size();
+							readNumberFromDICT(tmp);
+							encoding_size += 1 + (foo - tmp.size());
+
+							num_sups--;
+						}
+					}
+
+					cff->encoding_data = encoding_data.take(encoding_size);
+				}
+			}
+
+			if(cff->top_dict.contains(DictKey::FDArray))
+			{
+				auto fdarray_ofs = cff->top_dict.integer(DictKey::Encoding);
+				auto fdarray_data = cff->bytes.drop(fdarray_ofs);
+				cff->fdarray_table = read_index_table(fdarray_data);
+			}
+
+
+			// TODO: read charset and fdselect
+			std::optional<zst::byte_span> charset_data {};
+			std::optional<zst::byte_span> fdselect_data {};
 		}
 
 		// String INDEX
@@ -171,6 +251,7 @@ namespace font::cff
 
 			// private dict offset is specified from the beginning of the file
 			cff->private_dict = readDictionary(cff->bytes.drop(offset).take(size));
+			cff->private_dict_size = size;
 
 			// local subrs index is specified from the beginning of *the private DICT data)
 			if(cff->private_dict.contains(DictKey::Subrs))
@@ -185,17 +266,12 @@ namespace font::cff
 			}
 		}
 
-		// read the charstrings index from the top dict
-		{
-			if(!cff->top_dict.contains(DictKey::CharStrings))
-				sap::error("font/cff", "Top DICT missing CharStrings key");
-
-			// specified from the beginning of the file
-			auto charstrings_offset = cff->top_dict.integer(DictKey::CharStrings);
-			auto tmp = cff->bytes.drop(charstrings_offset);
-			cff->charstrings_table = read_index_table(tmp);
-		}
-
 		return cff;
+	}
+
+
+	size_t IndexTable::get_total_length() const
+	{
+		return 2 + 1 + (this->offsets.size() + 1) * this->offset_bytes + this->data.size();
 	}
 }

@@ -146,7 +146,8 @@ namespace font
 		the `glyf` table for the data, which tells us if it's a composite glyph, and if so which glyph(s) make
 		up its components.
 	*/
-	void writeFontSubset(FontFile* font, Stream* stream, const std::map<uint32_t, GlyphMetrics>& used_glyphs)
+	void writeFontSubset(FontFile* font, zst::str_view subset_name, Stream* stream,
+		const std::map<uint32_t, GlyphMetrics>& used_glyphs)
 	{
 		auto file_contents = zst::byte_span(font->file_bytes, font->file_size);
 		// stream->append(file_contents);
@@ -246,7 +247,7 @@ namespace font
 		}
 		else
 		{
-			auto new_cff_data = cff::createCFFSubset(font, used_glyphs);
+			auto new_cff_data = cff::createCFFSubset(font, subset_name, used_glyphs);
 
 			for(auto& table : included_tables)
 			{

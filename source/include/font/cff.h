@@ -33,6 +33,8 @@ namespace font::cff
 
 		zst::byte_span data;
 
+		size_t get_total_length() const;
+
 		inline zst::byte_span get_item(size_t idx) const
 		{
 			if(idx >= this->count)
@@ -50,20 +52,19 @@ namespace font::cff
 			double _decimal;
 		};
 
-		inline uint16_t string_id() const { return _integer; }
+		inline uint16_t string_id() const { return _integer & 0xFFFF; }
 		inline int32_t integer() const { return _integer; }
 		inline double decimal() const { return _decimal; }
 		inline double fixed() const { return ((_integer >> 16) & 0xFFFF) + (_integer & 0xFFFF) / 65536.0; }
 
-		inline Operand& string_id(uint16_t sid) { type = TYPE_STRING_ID; _integer = sid; return *this; }
+		inline Operand& string_id(uint16_t value) { type = TYPE_INTEGER; _integer = value; return *this; }
 		inline Operand& integer(int32_t value) { type = TYPE_INTEGER; _integer = value; return *this; }
 		inline Operand& decimal(double value) { type = TYPE_DECIMAL; _decimal = value; return *this; }
 		inline Operand& fixed(int32_t value) { type = TYPE_FIXED; _integer = value; return *this; }
 
 		static constexpr int TYPE_INTEGER   = 0;
-		static constexpr int TYPE_STRING_ID = 1;
-		static constexpr int TYPE_DECIMAL   = 2;
-		static constexpr int TYPE_FIXED     = 3;
+		static constexpr int TYPE_DECIMAL   = 1;
+		static constexpr int TYPE_FIXED     = 2;
 	};
 
 	enum class DictKey : uint16_t;
@@ -100,12 +101,23 @@ namespace font::cff
 
 		// how many bytes *absolute offsets* take (1-4)
 		uint8_t absolute_offset_bytes = 0;
+		bool cff2 = false;
+		size_t num_glyphs = 0;
+
+		zst::byte_span name {};
 
 		IndexTable string_table {};
 		IndexTable charstrings_table {};
 
+		std::optional<zst::byte_span> charset_data {};
+		std::optional<zst::byte_span> encoding_data {};
+
+		std::optional<IndexTable> fdarray_table {};
+		std::optional<zst::byte_span> fdselect_data {};
+
 		Dictionary top_dict {};
 		Dictionary private_dict {};
+		size_t private_dict_size = 0;
 
 		std::vector<Subroutine> global_subrs {};
 		std::vector<Subroutine> local_subrs {};
@@ -114,13 +126,10 @@ namespace font::cff
 	};
 
 
+	/*
+		Parse CFF data from the given buffer
+	*/
 	CFFData* parseCFFData(FontFile* font, zst::byte_span cff_data);
-
-	zst::byte_buffer createCFFSubset(FontFile* file, const std::map<uint32_t, GlyphMetrics>& used_glyphs);
-
-
-
-	// charstring stuff
 
 	/*
 		Read a number from a *Type 2* CharString. For the 5-byte encoding which represents a
@@ -157,6 +166,55 @@ namespace font::cff
 	*/
 	void populateDefaultValuesForTopDict(Dictionary& dict);
 }
+
+namespace font::cff
+{
+	/*
+		Subset the CFF font (given in `file`), including only the used_glyphs.
+	*/
+	zst::byte_buffer createCFFSubset(FontFile* file, zst::str_view subset_name,
+		const std::map<uint32_t, GlyphMetrics>& used_glyphs);
+
+	/*
+		Build an INDEX by appending the following data items.
+	*/
+	struct IndexTableBuilder
+	{
+		IndexTableBuilder& add(zst::byte_span data);
+		IndexTableBuilder& add(const IndexTable& table);
+		void writeInto(zst::byte_buffer& buf);
+
+	private:
+		std::vector<uint32_t> m_offsets {};
+		zst::byte_buffer m_data {};
+	};
+
+
+	/*
+		Build a DICT
+	*/
+	struct DictBuilder
+	{
+		DictBuilder();
+		explicit DictBuilder(const Dictionary& from_dict);
+
+		DictBuilder& setInteger(DictKey key, int32_t value);
+		DictBuilder& setStringId(DictKey key, uint16_t value);
+		DictBuilder& setIntegerPair(DictKey key, int32_t a, int32_t b);
+
+		void writeInto(zst::byte_buffer& buf);
+		zst::byte_buffer serialise();
+		size_t computeSize();
+
+	private:
+		std::map<DictKey, std::vector<Operand>> m_values;
+	};
+}
+
+
+
+
+
 
 template <>
 struct zpr::print_formatter<font::cff::Operand>

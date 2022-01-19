@@ -65,7 +65,7 @@ namespace pdf
 		// is that `this->glyph_metrics` has a 1-to-1 correspondence with the glyphs that are used from this font.
 		if(this->source_file && this->embedded_contents)
 		{
-			writeFontSubset(this->source_file, this->embedded_contents, this->glyph_metrics);
+			writeFontSubset(this->source_file, this->pdf_font_name, this->embedded_contents, this->glyph_metrics);
 
 			// and lastly, write the cmap we'll use for /ToUnicode.
 			this->writeUnicodeCMap(doc);

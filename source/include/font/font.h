@@ -152,9 +152,10 @@ namespace font
 
 	// the reason this takes in a `map<uint32_t, GlyphMetrics>` is that it's simply how the pdf::Font
 	// knows about which glyphs are used.
-	void writeFontSubset(FontFile* font, pdf::Stream* stream, const std::map<uint32_t, GlyphMetrics>& used_glyphs);
-	std::string generateSubsetName(FontFile* font);
+	void writeFontSubset(FontFile* font, zst::str_view subset_name, pdf::Stream* stream,
+		const std::map<uint32_t, GlyphMetrics>& used_glyphs);
 
+	std::string generateSubsetName(FontFile* font);
 
 	uint16_t peek_u16(const zst::byte_span& s);
 	uint32_t peek_u32(const zst::byte_span& s);
