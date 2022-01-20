@@ -50,7 +50,8 @@ int main(int argc, char** argv)
 		&document.pdfDocument(),
 		// font::FontFile::parseFromFile("fonts/Meiryo.ttf")
 		// font::FontFile::parseFromFile("fonts/MyriadPro-Regular.ttf")
-		font::FontFile::parseFromFile("fonts/XCharter-Roman.otf")
+		// font::FontFile::parseFromFile("fonts/XCharter-Roman.otf")
+		font::FontFile::parseFromFile("fonts/SourceSerif4-Regular.otf")
 		// font::FontFile::parseFromFile("fonts/SourceSerif4Variable-Roman.otf")
 	);
 

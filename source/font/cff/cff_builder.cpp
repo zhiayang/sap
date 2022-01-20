@@ -198,7 +198,7 @@ namespace font::cff
 
 	static constexpr DictKey g_AbsoluteOffsetKeys[] = {
 		DictKey::charset, DictKey::Encoding, DictKey::CharStrings,
-		DictKey::Private, DictKey::FDArray, DictKey::FDSelect
+		DictKey::Private, DictKey::FDArray, DictKey::FDSelect, DictKey::Subrs
 	};
 
 	static bool is_absolute_offset_key(DictKey key)
@@ -219,7 +219,7 @@ namespace font::cff
 		size_t total_size = 0;
 		for(auto& [ key, values ] : m_values)
 		{
-			if(static_cast<uint16_t>(key) >= 0xC00)
+			if(static_cast<uint16_t>(key) >= 0x0C00)
 				total_size += 2;
 			else
 				total_size += 1;

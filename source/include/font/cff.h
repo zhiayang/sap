@@ -33,8 +33,6 @@ namespace font::cff
 
 		zst::byte_span data;
 
-		size_t get_total_length() const;
-
 		inline zst::byte_span get_item(size_t idx) const
 		{
 			if(idx >= this->count)
@@ -117,7 +115,6 @@ namespace font::cff
 
 		Dictionary top_dict {};
 		Dictionary private_dict {};
-		size_t private_dict_size = 0;
 
 		std::vector<Subroutine> global_subrs {};
 		std::vector<Subroutine> local_subrs {};

@@ -157,6 +157,9 @@ namespace font::cff
 				auto tmp = cff->bytes.drop(charstrings_offset);
 				cff->charstrings_table = read_index_table(tmp);
 				cff->num_glyphs = cff->charstrings_table.count;
+
+				if(cff->num_glyphs == 0)
+					sap::error("font/cff", "font contains no glyphs!");
 			}
 
 
@@ -202,7 +205,7 @@ namespace font::cff
 							tmp.remove_prefix(1);   // code (Card8)
 
 							auto foo = tmp.size();
-							readNumberFromDICT(tmp);
+							consume_u16(tmp);
 							encoding_size += 1 + (foo - tmp.size());
 
 							num_sups--;
@@ -213,6 +216,54 @@ namespace font::cff
 				}
 			}
 
+			if(cff->top_dict.contains(DictKey::charset))
+			{
+				auto charset_ofs = cff->top_dict.integer(DictKey::charset);
+				// 0 = ISOAdobe, 1 = Expert, 2 = ExpertSubset. Skip those (they don't take up space)
+				if(charset_ofs != 0 && charset_ofs != 1 && charset_ofs != 2)
+				{
+					auto tmp_data = cff->bytes.drop(charset_ofs);
+					auto format = tmp_data[0];
+					tmp_data.remove_prefix(1);
+
+					if(format == 0)
+					{
+						// sids... and num_glyphs - 1 sids...
+						for(size_t i = 1; i < cff->num_glyphs; i++)
+							consume_u16(tmp_data);
+					}
+					else if(format == 1 || format == 2)
+					{
+						// fuck you, adobe. "The number of ranges is not explicitly specified in the font.
+						// Instead, software utilising this data simply processes ranges until all glyphs
+						// in the font are covered"
+						// stupid design, absolutely garbage.
+						size_t required_glyphs = cff->num_glyphs - 1;
+						while(required_glyphs > 0)
+						{
+							// read the sid.
+							consume_u16(tmp_data);
+
+							// read the nLeft (1 byte if format == 1, 2 if format == 2)
+							if(format == 1)
+								required_glyphs -= (1 + consume_u8(tmp_data));
+							else
+								required_glyphs -= (1 + consume_u16(tmp_data));
+						}
+					}
+					else
+					{
+						sap::error("font/cff", "unsupported charset format '{}' (expected 0, 1, or 2)", format);
+					}
+
+					auto charset_data = cff->bytes.drop(charset_ofs);
+					auto charset_size = charset_data.size() - tmp_data.size();
+
+					cff->charset_data = charset_data.take(charset_size);
+					zpr::println("charset size = {}", charset_size);
+				}
+			}
+
 			if(cff->top_dict.contains(DictKey::FDArray))
 			{
 				auto fdarray_ofs = cff->top_dict.integer(DictKey::Encoding);
@@ -220,11 +271,39 @@ namespace font::cff
 				cff->fdarray_table = read_index_table(fdarray_data);
 			}
 
+			if(cff->top_dict.contains(DictKey::FDSelect))
+			{
+				auto fdselect_ofs = cff->top_dict.integer(DictKey::FDSelect);
 
-			// TODO: read charset and fdselect
-			std::optional<zst::byte_span> charset_data {};
-			std::optional<zst::byte_span> fdselect_data {};
+				auto tmp_data = cff->bytes.drop(fdselect_ofs);
+				auto format = tmp_data[0];
+				tmp_data.remove_prefix(1);
+
+				if(format == 0)
+				{
+					for(size_t i = 0; i < cff->num_glyphs; i++)
+						consume_u16(tmp_data);
+				}
+				else if(format == 3)
+				{
+					auto num_ranges = consume_u16(tmp_data);
+					for(size_t i = 0; i < num_ranges; i++)
+						tmp_data.remove_prefix(3);
+
+					tmp_data.remove_prefix(2);
+				}
+				else
+				{
+					sap::error("font/cff", "unsupported FDSelect format '{}' (expected 0 or 3)", format);
+				}
+
+				auto fdselect_data = cff->bytes.drop(fdselect_ofs);
+				auto fdselect_size = fdselect_data.size() - tmp_data.size();
+
+				cff->fdselect_data = fdselect_data.take(fdselect_size);
+			}
 		}
+
 
 		// String INDEX
 		{
@@ -251,7 +330,6 @@ namespace font::cff
 
 			// private dict offset is specified from the beginning of the file
 			cff->private_dict = readDictionary(cff->bytes.drop(offset).take(size));
-			cff->private_dict_size = size;
 
 			// local subrs index is specified from the beginning of *the private DICT data)
 			if(cff->private_dict.contains(DictKey::Subrs))
@@ -267,11 +345,5 @@ namespace font::cff
 		}
 
 		return cff;
-	}
-
-
-	size_t IndexTable::get_total_length() const
-	{
-		return 2 + 1 + (this->offsets.size() + 1) * this->offset_bytes + this->data.size();
 	}
 }
