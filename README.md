@@ -57,11 +57,10 @@ While I appreciate the vast ecosystem that LaTeX has, having any kind of compati
 
 This also acts as a sort of TODO; as time goes on completed features may be removed from this list if they are deemed "trivial".
 
-- [x] OpenType font (otf/ttf) loading (and embedding into PDF)
-- [x] Embedded font subsetting (for fonts using TrueType outlines only)
-- [ ] Embedded CFF font subsetting
+- [x] OpenType font (otf/ttf) loading and embedding
+- [x] Embedded font subsetting (both TrueType and CFF)
+- [ ] Variable font support
 - [ ] Further size optimisation for embedded fonts
-- [x] Compressed PDF streams
 - [x] Glyph kerning (via GPOS table)
 - [ ] Glyph kerning (via Apple/ttf `kern` table)
 - [x] Glyph ligatures (via GSUB table)

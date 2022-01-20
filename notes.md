@@ -33,18 +33,6 @@ increasing order of complexity:
 	- also drastically shrinks the size of the text itself (since we no longer need 2 bytes for glyph ids)
 
 
-### on CFF subsetting
-
-CFF is a real pain, it's basically an entirely separate format embedded as a table in OTF. sucks. In theory
-it should be possible to subset, with a few steps:
-
-1. parse the basic structure of the CFF font
-2. find some relation between the OTF's cmap and the CFF's encoding/charset
-3. copy only the required glyphs
-4. for extra points, remove unnecessary `subrs` if any
-
-
-
 ### on unicode (de)composition
 
 The problem is that unicode combining characters let people write arbitrary things that combine with
