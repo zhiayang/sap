@@ -106,9 +106,17 @@ namespace font::cff
 		uint16_t cid;
 		zst::str_view glyph_name;
 		zst::byte_span charstring;
+
+		// which Font DICT to use, for CID fonts.
+		uint8_t font_dict_idx;
 	};
 
-
+	struct FontDict
+	{
+		Dictionary dict {};
+		Dictionary private_dict {};
+		std::vector<Subroutine> local_subrs {};
+	};
 
 	/*
 		Note: this in-memory representation is only suitable for CFF fonts embedded in OTF files,
@@ -133,15 +141,16 @@ namespace font::cff
 		std::optional<zst::byte_span> fdselect_data {};
 
 		Dictionary top_dict {};
-		Dictionary private_dict {};
-
 		std::vector<Subroutine> global_subrs {};
-		std::vector<Subroutine> local_subrs {};
 
 		std::vector<Glyph> glyphs {};
 
 		std::vector<std::string> string_ids {};
 		std::map<std::string, uint16_t> known_strings {};
+
+		// Font DICTs referenced in the FDArray for CID fonts. For non-CID fonts, there is always
+		// one FD in here, referencing the top-level Private and local_subrs data.
+		std::vector<FontDict> font_dicts {};
 
 		uint16_t get_or_add_string(zst::str_view str);
 		zst::str_view get_string(uint16_t sid) const;
@@ -182,6 +191,11 @@ namespace font::cff
 		Read a DICT, extracting all keys and values.
 	*/
 	Dictionary readDictionary(zst::byte_span dict);
+
+	/*
+		Read an INDEX, returning the total size of the table (including the header and all data)
+	*/
+	IndexTable readIndexTable(zst::byte_span buf, size_t* total_size = nullptr);
 
 	/*
 		Fill the dictionary with default values for keys that didn't exist in the file.

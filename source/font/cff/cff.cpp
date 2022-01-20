@@ -8,14 +8,20 @@
 
 namespace font::cff
 {
-	static IndexTable read_index_table(zst::byte_span& buf)
+	IndexTable readIndexTable(zst::byte_span buf, size_t* total_size)
 	{
 		IndexTable index {};
+
+		auto start = buf;
 
 		// if the count is 0, then no other data follows.
 		index.count = consume_u16(buf);
 		if(index.count == 0)
+		{
+			if(total_size)
+				*total_size = 2;
 			return index;
+		}
 
 		index.offset_bytes = consume_u8(buf);
 
@@ -56,6 +62,9 @@ namespace font::cff
 		index.data = buf.take(index.offsets.back());
 
 		assert(index.count + 1 == index.offsets.size());
+		if(total_size)
+			*total_size = (start.size() - buf.size()) + index.data.size();
+
 		return index;
 	}
 
@@ -121,21 +130,25 @@ namespace font::cff
 
 		// now, the Name INDEX. this is just a list of fonts
 		{
-			auto name_index = read_index_table(buf);
+			size_t size = 0;
+			auto name_index = readIndexTable(buf, &size);
+			buf.remove_prefix(size);
 
 			// CFF fonts embedded in OTFs must have exactly 1 font (ie. no font sets/collections)
 			if(name_index.count != 1)
 				sap::error("font/cff", "invalid number of entries in Name INDEX (expected 1, got {})", name_index.count);
 
 			cff->name = name_index.get_item(0);
-
-			// now skip the data
-			buf.remove_prefix(name_index.data.size());
 		}
+
+
 
 		// Top DICT
 		{
-			auto dict_index = read_index_table(buf);
+			size_t size = 0;
+			auto dict_index = readIndexTable(buf, &size);
+			buf.remove_prefix(size);
+
 			if(dict_index.count != 1)
 				sap::error("font/cff", "invalid number of entries in Top DICT INDEX (expected 1, got {})", dict_index.count);
 
@@ -149,100 +162,36 @@ namespace font::cff
 			if(auto foo = cff->top_dict.integer(DictKey::CharstringType); foo != 2)
 				sap::error("font/cff", "unsupported charstring type '{}', expected '2'", foo);
 
-			buf.remove_prefix(dict_index.data.size());
+
 
 			// read the charstrings index from the top dict
-			{
-				if(!cff->top_dict.contains(DictKey::CharStrings))
-					sap::error("font/cff", "Top DICT missing CharStrings key");
+			if(!cff->top_dict.contains(DictKey::CharStrings))
+				sap::error("font/cff", "Top DICT missing CharStrings key");
 
-				// specified from the beginning of the file
-				auto charstrings_offset = cff->top_dict.integer(DictKey::CharStrings);
-				auto tmp = cff->bytes.drop(charstrings_offset);
-				cff->charstrings_table = read_index_table(tmp);
+			// specified from the beginning of the file
+			auto charstrings_offset = cff->top_dict.integer(DictKey::CharStrings);
+			cff->charstrings_table = readIndexTable(cff->bytes.drop(charstrings_offset));
 
-				if(cff->charstrings_table.count == 0)
-					sap::error("font/cff", "font contains no glyphs!");
-			}
-
-			if(cff->top_dict.contains(DictKey::FDArray))
-			{
-				auto fdarray_ofs = cff->top_dict.integer(DictKey::Encoding);
-				auto fdarray_data = cff->bytes.drop(fdarray_ofs);
-				cff->fdarray_table = read_index_table(fdarray_data);
-			}
-
-			if(cff->top_dict.contains(DictKey::FDSelect))
-			{
-				auto fdselect_ofs = cff->top_dict.integer(DictKey::FDSelect);
-
-				auto tmp_data = cff->bytes.drop(fdselect_ofs);
-				auto format = tmp_data[0];
-				tmp_data.remove_prefix(1);
-
-				if(format == 0)
-				{
-					for(size_t i = 0; i < cff->charstrings_table.count; i++)
-						consume_u16(tmp_data);
-				}
-				else if(format == 3)
-				{
-					auto num_ranges = consume_u16(tmp_data);
-					for(size_t i = 0; i < num_ranges; i++)
-						tmp_data.remove_prefix(3);
-
-					tmp_data.remove_prefix(2);
-				}
-				else
-				{
-					sap::error("font/cff", "unsupported FDSelect format '{}' (expected 0 or 3)", format);
-				}
-
-				auto fdselect_data = cff->bytes.drop(fdselect_ofs);
-				auto fdselect_size = fdselect_data.size() - tmp_data.size();
-
-				cff->fdselect_data = fdselect_data.take(fdselect_size);
-			}
+			if(cff->charstrings_table.count == 0)
+				sap::error("font/cff", "font contains no glyphs!");
 		}
 
 
 		// String INDEX
-		auto string_table = read_index_table(buf);
-		buf.remove_prefix(string_table.data.size());
+		size_t string_table_size = 0;
+		auto string_table = readIndexTable(buf, &string_table_size);
+		buf.remove_prefix(string_table_size);
 
 
 		// Global Subrs INDEX
 		{
-			auto index = read_index_table(buf);
+			size_t size = 0;
+			auto index = readIndexTable(buf, &size);
+			buf.remove_prefix(size);
+
 			cff->global_subrs = read_subrs_from_index(index);
-
-			buf.remove_prefix(index.data.size());
 		}
 
-		// read the local subrs from the private dict
-		{
-			auto foo = cff->top_dict.get(DictKey::Private);
-			if(foo.size() != 2)
-				sap::error("font/cff", "missing Private DICT");
-
-			auto size = foo[0].integer();
-			auto offset = foo[1].integer();
-
-			// private dict offset is specified from the beginning of the file
-			cff->private_dict = readDictionary(cff->bytes.drop(offset).take(size));
-
-			// local subrs index is specified from the beginning of *the private DICT data)
-			if(cff->private_dict.contains(DictKey::Subrs))
-			{
-				auto local_subr_offset = cff->private_dict.integer(DictKey::Subrs);
-				local_subr_offset += offset;
-
-				auto tmp = cff->bytes.drop(local_subr_offset);
-				auto index = read_index_table(tmp);
-
-				cff->local_subrs = read_subrs_from_index(index);
-			}
-		}
 
 		// ensure we keep the copyright etc. strings available
 		{
@@ -295,6 +244,96 @@ namespace font::cff
 			}
 		}
 
+		auto read_private_dict_and_local_subrs_from_dict = [cff](const Dictionary& dict) -> auto {
+			auto foo = dict.get(DictKey::Private);
+			if(foo.size() != 2)
+				sap::error("font/cff", "missing Private DICT");
+
+			auto size = foo[0].integer();
+			auto offset = foo[1].integer();
+
+			// private dict offset is specified from the beginning of the file
+			auto private_dict = readDictionary(cff->bytes.drop(offset).take(size));
+			std::vector<Subroutine> local_subrs {};
+
+			// local subrs index is specified from the beginning of *the private DICT data)
+			if(private_dict.contains(DictKey::Subrs))
+			{
+				auto local_subr_offset = private_dict.integer(DictKey::Subrs);
+				local_subr_offset += offset;
+
+				auto index = readIndexTable(cff->bytes.drop(local_subr_offset));
+				local_subrs = read_subrs_from_index(index);
+			}
+
+			return std::pair(std::move(private_dict), std::move(local_subrs));
+		};
+
+
+		if(!cff->is_cidfont)
+		{
+			auto [ private_dict, local_subrs ] = read_private_dict_and_local_subrs_from_dict(cff->top_dict);
+
+			FontDict fontdict {};
+			fontdict.private_dict = std::move(private_dict);
+			fontdict.local_subrs = std::move(local_subrs);
+
+			cff->font_dicts.push_back(std::move(fontdict));
+		}
+		else
+		{
+			auto fdarray_ofs = cff->top_dict.integer(DictKey::FDArray);
+			auto fdarray_table = readIndexTable(cff->bytes.drop(fdarray_ofs));
+
+			for(auto i = 0; i < fdarray_table.count; i++)
+			{
+				FontDict fd {};
+				fd.dict = readDictionary(fdarray_table.get_item(i));
+
+				auto [ private_dict, local_subrs ] = read_private_dict_and_local_subrs_from_dict(fd.dict);
+				fd.private_dict = std::move(private_dict);
+				fd.local_subrs = std::move(local_subrs);
+
+				cff->font_dicts.push_back(std::move(fd));
+			}
+
+
+			auto fdselect_ofs = cff->top_dict.integer(DictKey::FDSelect);
+			auto fdselect_data = cff->bytes.drop(fdselect_ofs);
+
+			auto format = fdselect_data[0];
+			fdselect_data.remove_prefix(1);
+
+			if(format == 0)
+			{
+				for(size_t i = 0; i < cff->glyphs.size(); i++)
+					cff->glyphs[i].font_dict_idx = consume_u8(fdselect_data);
+			}
+			else if(format == 3)
+			{
+				auto num_ranges = consume_u16(fdselect_data);
+				auto last_gid = peek_u16(fdselect_data.drop(num_ranges * 3));
+
+				for(size_t i = 0; i < num_ranges; i++)
+				{
+					auto first = consume_u16(fdselect_data);
+					auto fd = consume_u8(fdselect_data);
+
+					auto last = (i + 1 == num_ranges)
+						? last_gid
+						: peek_u16(fdselect_data);
+
+					for(auto gid = first; gid < last; gid++)
+						cff->glyphs[gid].font_dict_idx = fd;
+				}
+
+				fdselect_data.remove_prefix(2);
+			}
+			else
+			{
+				sap::error("font/cff", "unsupported FDSelect format '{}' (expected 0 or 3)", format);
+			}
+		}
 
 
 		return cff;

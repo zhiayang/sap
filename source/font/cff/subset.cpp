@@ -30,6 +30,8 @@ namespace font::cff
 
 	static void prune_unused_glyphs(CFFData* cff, const std::map<uint32_t, GlyphMetrics>& used_glyphs)
 	{
+		std::set<uint8_t> used_font_dicts {};
+
 		auto foo = std::remove_if(cff->glyphs.begin(), cff->glyphs.end(), [&](auto& glyph) -> bool {
 			if(!cff->is_cidfont)
 			{
@@ -48,10 +50,38 @@ namespace font::cff
 					this seems to imply that glyph ids gotten from the PDF layer are actually CIDs to
 					the CFF font; thus, we match against CIDs instead.
 				*/
-				return glyph.gid != 0 && used_glyphs.find(glyph.cid) == used_glyphs.end();
+				bool unused = glyph.gid != 0 && used_glyphs.find(glyph.cid) == used_glyphs.end();
+
+				// also, mark the fontdict as used if the glyph was used.
+				if(!unused)
+					used_font_dicts.insert(glyph.font_dict_idx);
+
+				return unused;
 			}
 		});
+
 		cff->glyphs.erase(foo, cff->glyphs.end());
+
+		// if there were any unused font dicts, we can prune them
+		if(used_font_dicts.size() != cff->font_dicts.size())
+		{
+			std::map<uint8_t, uint8_t> fd_mapping {};
+			std::vector<FontDict> new_font_dicts {};
+
+			// use the `used_font_dicts` as a "not visited" array
+			for(auto& glyph : cff->glyphs)
+			{
+				if(fd_mapping.find(glyph.font_dict_idx) == fd_mapping.end())
+				{
+					fd_mapping[glyph.font_dict_idx] = new_font_dicts.size();
+					new_font_dicts.push_back(std::move(cff->font_dicts[glyph.font_dict_idx]));
+				}
+
+				glyph.font_dict_idx = fd_mapping[glyph.font_dict_idx];
+			}
+
+			cff->font_dicts = std::move(new_font_dicts);
+		}
 	}
 
 
@@ -132,6 +162,7 @@ namespace font::cff
 		// pre-set these to reserve space for them
 		top_dict.setInteger(DictKey::FDArray, 0);
 		top_dict.setInteger(DictKey::FDSelect, 0);
+		top_dict.setStringId(DictKey::FontName, subset_name_sid);
 		top_dict.setInteger(DictKey::CIDCount, cff->glyphs.size());
 
 		// Encoding can't be present for CID fonts, and Private will come from
@@ -184,64 +215,98 @@ namespace font::cff
 				+ string_table.size()
 				+ global_subrs_table.size();
 
+			const auto current_abs_ofs = [&]() {
+				return initial_abs_offset + tmp_buffer.size();
+			};
+
 			// call this *BEFORE* writing the data!!!
 			auto copy_kv_pair_with_abs_offset = [&](DictKey key, size_t size = 0) {
 				// Private needs special treatment (since it needs both a size and offset)
 				if(key == DictKey::Private)
-					top_dict.setIntegerPair(key, size, initial_abs_offset + tmp_buffer.size());
+					top_dict.setIntegerPair(key, size, current_abs_ofs());
 				else
-					top_dict.setInteger(key, initial_abs_offset + tmp_buffer.size());
+					top_dict.setInteger(key, current_abs_ofs());
+			};
+
+			// returns the absolute offset to the private dict
+			auto serialise_fontdict = [&](FontDict& fd) -> std::pair<size_t, size_t> {
+
+				auto priv_builder = DictBuilder(fd.private_dict);
+				auto priv_size = priv_builder.computeSize();
+				auto priv_ofs = current_abs_ofs();
+
+				// make the local subrs start immediately after the private dict.
+				if(fd.local_subrs.size() > 0)
+					priv_builder.setInteger(DictKey::Subrs, priv_size);
+
+				priv_builder.writeInto(tmp_buffer);
+
+				if(fd.local_subrs.size() > 0)
+				{
+					auto builder = IndexTableBuilder();
+					for(auto& subr : fd.local_subrs)
+						builder.add(subr.charstring);
+
+					builder.writeInto(tmp_buffer);
+				}
+
+				return { priv_size, priv_ofs };
 			};
 
 
+			std::vector<std::pair<size_t, size_t>> private_dicts {};
+
+			// if the original font was not a CIDFont, then we just create new ones, easy.
+			if(!cff->is_cidfont)
 			{
-				auto private_dict_builder = DictBuilder(cff->private_dict);
-				auto private_dict_size = private_dict_builder.computeSize();
-				auto private_dict_ofs = initial_abs_offset + tmp_buffer.size();
+				private_dicts.push_back(serialise_fontdict(cff->font_dicts[0]));
+			}
+			else
+			{
+				for(auto& fd : cff->font_dicts)
+					private_dicts.push_back(serialise_fontdict(fd));
+			}
 
-				private_dict_builder.setInteger(DictKey::Subrs, private_dict_size)
-									.writeInto(tmp_buffer);
 
-				/*
-					make the local subrs start immediately after the private dict.
+			{
+				copy_kv_pair_with_abs_offset(DictKey::FDArray);
 
-					There's actually a similar problem here with the dictionary data; writing
-					a new value for the private dict size (ie. the offset to the local subrs)
-					might change the size of the private dict! so, we use the same computeSize()
-					trick, and always fix the `Subrs` key to be 4-bytes. (see cff_builder.cpp)
-				*/
+				auto fdarray_builder = IndexTableBuilder();
+				for(auto& [ priv_size, priv_ofs ] : private_dicts)
 				{
-					auto local_subrs_builder = IndexTableBuilder();
-					for(auto& subr : cff->local_subrs)
-						local_subrs_builder.add(subr.charstring);
-
-					local_subrs_builder.writeInto(tmp_buffer);
+					auto builder = DictBuilder().setIntegerPair(DictKey::Private, priv_size, priv_ofs);
+					fdarray_builder.add(builder.serialise().span());
 				}
 
-				copy_kv_pair_with_abs_offset(DictKey::FDArray);
-				auto fdarray_builder = DictBuilder()
-					.setInteger(DictKey::FontName, subset_name_sid)
-					.setIntegerPair(DictKey::Private, private_dict_size, private_dict_ofs);
+				fdarray_builder.writeInto(tmp_buffer);
 
-				IndexTableBuilder()
-					.add(fdarray_builder.serialise().span())
-					.writeInto(tmp_buffer);
 
-				// write the fdselect.
+				// finally, the fdselect...
 				copy_kv_pair_with_abs_offset(DictKey::FDSelect);
+
+				if(!cff->is_cidfont)
 				{
+					// for non-cid fonts, we just use the same FD for all glyphs, easy.
 					tmp_buffer.append(3);
 					tmp_buffer.append_bytes(util::convertBEU16(1));
 					tmp_buffer.append_bytes(util::convertBEU16(0));
 					tmp_buffer.append(0);
 					tmp_buffer.append_bytes(util::convertBEU16(cff->glyphs.size()));
 				}
+				else
+				{
+					// for CID fonts, we just use whatever the font tells us to use.
+					// format 0, because idgaf
+					tmp_buffer.append(0);
+					for(auto& glyph : cff->glyphs)
+						tmp_buffer.append(glyph.font_dict_idx);
+				}
 			}
 
-			{
-				copy_kv_pair_with_abs_offset(DictKey::charset);
-				write_charset_table(cff, tmp_buffer, used_glyphs);
-			}
+
+			copy_kv_pair_with_abs_offset(DictKey::charset);
+			write_charset_table(cff, tmp_buffer, used_glyphs);
+
 
 			{
 				copy_kv_pair_with_abs_offset(DictKey::CharStrings);
@@ -253,6 +318,7 @@ namespace font::cff
 				builder.writeInto(tmp_buffer);
 			}
 
+
 			// finally, we write the top dict (with the new offsets) to the main buffer,
 			// followed by the tmp buffer.
 			IndexTableBuilder()
@@ -263,6 +329,7 @@ namespace font::cff
 			buffer.append(global_subrs_table.span());
 			buffer.append(tmp_buffer.span());
 		}
+
 
 #if 1
 		auto f = fopen("kekw.cff", "wb");
