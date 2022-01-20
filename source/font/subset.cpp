@@ -270,10 +270,11 @@ namespace font
 			}
 		}
 
+#if 0
 		auto foo = fopen("test.otf", "wb");
 		stream->write_to_file(foo);
 		fclose(foo);
-
+#endif
 		if(stream->is_compressed)
 			stream->dict->add(pdf::names::Length1, pdf::Integer::create(stream->uncompressed_length));
 	}

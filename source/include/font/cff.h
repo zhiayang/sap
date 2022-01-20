@@ -93,8 +93,6 @@ namespace font::cff
 	struct Subroutine
 	{
 		zst::byte_span charstring {};
-
-		uint32_t subr_number = 0;
 		bool used = false;
 	};
 
@@ -220,6 +218,12 @@ namespace font::cff
 		2 = ExpertSubset
 	*/
 	std::map<uint16_t, uint16_t> getPredefinedCharset(int num);
+
+	/*
+		Interpret the given charstring, and mark any used subroutines.
+	*/
+	void interpretCharStringAndMarkSubrs(zst::byte_span charstring, std::vector<Subroutine>& global_subrs,
+		std::vector<Subroutine>& local_subrs);
 }
 
 namespace font::cff

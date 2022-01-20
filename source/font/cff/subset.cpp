@@ -28,7 +28,7 @@ namespace font::cff
 		}
 	}
 
-	static void prune_unused_glyphs(CFFData* cff, const std::map<uint32_t, GlyphMetrics>& used_glyphs)
+	static void perform_glyph_pruning(CFFData* cff, const std::map<uint32_t, GlyphMetrics>& used_glyphs)
 	{
 		std::set<uint8_t> used_font_dicts {};
 
@@ -82,6 +82,14 @@ namespace font::cff
 
 			cff->font_dicts = std::move(new_font_dicts);
 		}
+
+
+		// finally, interpret the charstrings of all used glyphs, and mark used subrs for elimination.
+		for(auto& glyph : cff->glyphs)
+		{
+			interpretCharStringAndMarkSubrs(glyph.charstring, cff->global_subrs,
+				cff->font_dicts[glyph.font_dict_idx].local_subrs);
+		}
 	}
 
 
@@ -118,10 +126,17 @@ namespace font::cff
 				For CFF fonts, we need to use the `charset` table to translate CID to GID. However, it
 				appears as if the charset table translates GIDs to CIDs instead. Maybe the PDF renderer
 				is forced to build an internal reverse mapping for this.
+
+			4. for subrs, we interpret all the used glyphs and mark both global and local subrs that are used.
+				for unused subrs, we *still emit them* to the file, but with a 0-length charstring.
+
+				this allows us to not need to modify the charstring data for glyphs and re-number the subrs.
+				once the CFF is compressed, any decent compression algorithm should be able to reduce the
+				repeated values.
 		*/
 
 		// first, figure out which glyphs we don't use.
-		prune_unused_glyphs(cff, used_glyphs);
+		perform_glyph_pruning(cff, used_glyphs);
 
 
 		// write the header
@@ -201,7 +216,10 @@ namespace font::cff
 		{
 			auto builder = IndexTableBuilder();
 			for(auto& subr : cff->global_subrs)
-				builder.add(subr.charstring);
+			{
+				if(subr.used)   builder.add(subr.charstring);
+				else            builder.add(zst::byte_span{});
+			}
 
 			builder.writeInto(global_subrs_table);
 		}
@@ -245,7 +263,10 @@ namespace font::cff
 				{
 					auto builder = IndexTableBuilder();
 					for(auto& subr : fd.local_subrs)
-						builder.add(subr.charstring);
+					{
+						if(subr.used)   builder.add(subr.charstring);
+						else            builder.add(zst::byte_span{});
+					}
 
 					builder.writeInto(tmp_buffer);
 				}
@@ -331,7 +352,7 @@ namespace font::cff
 		}
 
 
-#if 1
+#if 0
 		auto f = fopen("kekw.cff", "wb");
 		fwrite(buffer.data(), 1, buffer.size(), f);
 		fclose(f);

@@ -77,7 +77,6 @@ namespace font::cff
 
 			Subroutine subr {};
 			subr.charstring = data;
-			subr.subr_number = i;
 			subr.used = false;
 			subrs.push_back(std::move(subr));
 		}
@@ -234,6 +233,7 @@ namespace font::cff
 				Glyph glyph {};
 				glyph.gid = gid;
 				glyph.charstring = cff->charstrings_table.get_item(gid);
+				glyph.font_dict_idx = 0;
 
 				if(!cff->is_cidfont)
 					glyph.glyph_name = string_table.get_item(sid - NUM_STANDARD_STRINGS).cast<char>();
