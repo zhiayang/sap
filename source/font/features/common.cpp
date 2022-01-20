@@ -27,19 +27,32 @@ namespace font
 		return ret;
 	}
 
-	LookupTable parseLookupTable(FontFile* font, zst::byte_span buf)
+	std::vector<LookupTable> parseLookupList(FontFile* font, zst::byte_span buf)
 	{
-		auto start = buf;
+		auto table_start = buf;
+		auto num_lookups = consume_u16(buf);
 
-		auto type = consume_u16(buf);
-		consume_u16(buf);   // ignore the flags
-		consume_u16(buf);   // and the subtable_count
+		std::vector<LookupTable> table_list {};
 
-		LookupTable tbl { };
-		tbl.type = type;
-		tbl.file_offset = start.data() - font->file_bytes;
+		for(size_t i = 0; i < num_lookups; i++)
+		{
+			auto offset = consume_u16(buf);
+			auto tbl_buf = table_start.drop(offset);
 
-		return tbl;
+			LookupTable lookup_table {};
+			lookup_table.data = tbl_buf;
+
+			lookup_table.type = consume_u16(tbl_buf);
+			lookup_table.flags = consume_u16(tbl_buf);
+
+			auto num_subtables = consume_u16(tbl_buf);
+			for(uint16_t i = 0; i < num_subtables; i++)
+				lookup_table.subtable_offsets.push_back(consume_u16(tbl_buf));
+
+			table_list.push_back(std::move(lookup_table));
+		}
+
+		return table_list;
 	}
 
 	std::map<int, uint32_t> parseCoverageTable(zst::byte_span cov_table)

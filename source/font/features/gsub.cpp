@@ -15,6 +15,7 @@ namespace font
 	{
 		std::map<uint32_t, GlyphLigatureSet> ligature_map;
 
+#if 0
 		for(auto& lookup : this->gsub_tables.lookup_tables[GSUB_LOOKUP_LIGATURE])
 		{
 			auto ofs = lookup.file_offset;
@@ -84,7 +85,7 @@ namespace font
 				}
 			}
 		}
-
+#endif
 		return ligature_map;
 	}
 
@@ -99,6 +100,8 @@ namespace font
 	*/
 	void parseGSub(FontFile* font, const Table& gsub_table)
 	{
+		return;
+#if 0
 		auto buf = zst::byte_span(font->file_bytes, font->file_size);
 		buf.remove_prefix(gsub_table.offset);
 
@@ -130,5 +133,6 @@ namespace font
 			else
 				font->gsub_tables.lookup_tables[tbl.type].push_back(std::move(tbl));
 		}
+#endif
 	}
 }

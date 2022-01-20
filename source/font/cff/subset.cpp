@@ -139,47 +139,39 @@ namespace font::cff
 				dict_builder.setInteger(DictKey::Subrs, dict_size)
 							.writeInto(tmp_buffer);
 
-				zpr::println("private dict size = {}", dict_size);
-
 				// local subrs
 				auto builder = IndexTableBuilder();
 				for(auto& subr : cff->local_subrs)
 					builder.add(subr.charstring);
 
-				zpr::println("{} local subrs", cff->local_subrs.size());
 				builder.writeInto(tmp_buffer);
 			}
 
 			if(cff->charset_data.has_value())
 			{
-				zpr::println("charset (ofs = {x})", initial_abs_offset + tmp_buffer.size());
 				copy_kv_pair_with_abs_offset(DictKey::charset);
 				tmp_buffer.append(*cff->charset_data);
 			}
 
 			if(cff->encoding_data.has_value())
 			{
-				zpr::println("Encoding");
 				copy_kv_pair_with_abs_offset(DictKey::Encoding);
 				tmp_buffer.append(*cff->encoding_data);
 			}
 
 			if(cff->fdarray_table.has_value())
 			{
-				zpr::println("fdarray");
 				copy_kv_pair_with_abs_offset(DictKey::FDArray);
 				IndexTableBuilder().add(*cff->fdarray_table).writeInto(tmp_buffer);
 			}
 
 			if(cff->fdselect_data.has_value())
 			{
-				zpr::println("fdselect");
 				copy_kv_pair_with_abs_offset(DictKey::FDSelect);
 				tmp_buffer.append(*cff->fdselect_data);
 			}
 
 			{
-				zpr::println("charstrings");
 				copy_kv_pair_with_abs_offset(DictKey::CharStrings);
 				IndexTableBuilder().add(cff->charstrings_table).writeInto(tmp_buffer);
 			}

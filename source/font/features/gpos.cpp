@@ -52,24 +52,14 @@ namespace font
 
 	std::optional<std::pair<GlyphAdjustment, GlyphAdjustment>> FontFile::getGlyphPairAdjustments(uint32_t gid1, uint32_t gid2) const
 	{
-		for(auto& lookup : this->gpos_tables.lookup_tables[GPOS_LOOKUP_PAIR])
+		for(auto& lookup : this->gpos_tables.lookup_tables)
 		{
-			auto ofs = lookup.file_offset;
-			auto buf = zst::byte_span(this->file_bytes, this->file_size).drop(ofs);
+			if(lookup.type != GPOS_LOOKUP_PAIR)
+				continue;
 
-			auto table_start = buf;
-
-			// we already know the type, so just skip it.
-			consume_u16(buf);
-			auto flags = consume_u16(buf);
-			auto num_subs = consume_u16(buf);
-
-			(void) flags;
-
-			for(size_t i = 0; i < num_subs; i++)
+			for(auto ofs : lookup.subtable_offsets)
 			{
-				auto ofs = consume_u16(buf);
-				auto subtable = table_start.drop(ofs);
+				auto subtable = lookup.data.drop(ofs);
 				auto subtable_start = subtable;
 
 				auto format = consume_u16(subtable);
@@ -160,23 +150,14 @@ namespace font
 
 	std::optional<GlyphAdjustment> FontFile::getGlyphAdjustment(uint32_t glyphId) const
 	{
-		for(auto& lookup : this->gpos_tables.lookup_tables[GPOS_LOOKUP_SINGLE])
+		for(auto& lookup : this->gpos_tables.lookup_tables)
 		{
-			auto ofs = lookup.file_offset;
-			auto buf = zst::byte_span(this->file_bytes, this->file_size).drop(ofs);
+			if(lookup.type != GPOS_LOOKUP_SINGLE)
+				continue;
 
-			auto table_start = buf;
-
-			// we already know the type, so just skip it.
-			consume_u16(buf);
-			auto flags = consume_u16(buf);
-			auto num_subs = consume_u16(buf);
-			(void) flags;
-
-			for(size_t i = 0; i < num_subs; i++)
+			for(auto ofs : lookup.subtable_offsets)
 			{
-				auto ofs = consume_u16(buf);
-				auto subtable = table_start.drop(ofs);
+				auto subtable = lookup.data.drop(ofs);
 				auto subtable_start = subtable;
 
 				auto format = consume_u16(subtable);
@@ -212,24 +193,14 @@ namespace font
 	{
 		std::map<std::pair<uint32_t, uint32_t>, KerningPair> kerning_pairs;
 
-		for(auto& lookup : this->gpos_tables.lookup_tables[GPOS_LOOKUP_PAIR])
+		for(auto& lookup : this->gpos_tables.lookup_tables)
 		{
-			auto ofs = lookup.file_offset;
-			auto buf = zst::byte_span(this->file_bytes, this->file_size).drop(ofs);
+			if(lookup.type != GPOS_LOOKUP_PAIR)
+				continue;
 
-			auto table_start = buf;
-
-			// we already know the type, so just skip it.
-			consume_u16(buf);
-			auto flags = consume_u16(buf);
-			auto num_subs = consume_u16(buf);
-
-			(void) flags;
-
-			for(size_t i = 0; i < num_subs; i++)
+			for(auto ofs : lookup.subtable_offsets)
 			{
-				auto ofs = consume_u16(buf);
-				auto subtable = table_start.drop(ofs);
+				auto subtable = lookup.data.drop(ofs);
 				auto subtable_start = subtable;
 
 				auto format = consume_u16(subtable);
@@ -297,7 +268,6 @@ namespace font
 			}
 		}
 
-		zpr::println("found {} kerning pairs", kerning_pairs.size());
 		return kerning_pairs;
 	}
 
@@ -320,19 +290,23 @@ namespace font
 		auto script_list = parseTaggedList(font, table_start.drop(consume_u16(buf)));
 		auto feature_list = parseTaggedList(font, table_start.drop(consume_u16(buf)));
 
-		auto lookup_list_ofs = consume_u16(buf);
-
-		auto lookup_tables = table_start.drop(lookup_list_ofs);
-		auto num_lookup_tables = consume_u16(lookup_tables);
-		for(size_t i = 0; i < num_lookup_tables; i++)
+#if 0
+		zpr::println("features: ({})", feature_list.size());
+		for(auto& feat : feature_list)
 		{
-			auto offset = consume_u16(lookup_tables);
-			auto tbl = parseLookupTable(font, table_start.drop(lookup_list_ofs + offset));
+			zpr::println("  feat: {}, ofs = {}", feat.tag.str(), feat.file_offset);
+			auto data = zst::byte_span(font->file_bytes, font->file_size).drop(feat.file_offset);
 
-			if(tbl.type >= GPOS_LOOKUP_MAX)
-				zpr::println("warning: invalid GPOS lookup table with type {}", tbl.type);
-			else
-				font->gpos_tables.lookup_tables[tbl.type].push_back(std::move(tbl));
+			consume_u16(data);
+			auto num_lookups = consume_u16(data);
+			for(size_t i = 0; i < num_lookups; i++)
+				zpr::println("    [{}]", consume_u16(data));
 		}
+#endif
+
+		auto lookup_list_ofs = consume_u16(buf);
+		auto lookup_tables = table_start.drop(lookup_list_ofs);
+
+		font->gpos_tables.lookup_tables = parseLookupList(font, lookup_tables);
 	}
 }

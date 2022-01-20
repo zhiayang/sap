@@ -31,7 +31,14 @@ namespace font
 	struct LookupTable
 	{
 		uint16_t type;
-		size_t file_offset;
+		uint16_t flags;
+		uint16_t mark_filtering_set;
+
+		// note: data includes the header, and offsets also include it
+		// ie. the first item will be at offset ≠ 0, and data[0] is *not* the first item.
+		// note also that the data span is *NOT* bounded! it will go to the end of the file.
+		std::vector<uint16_t> subtable_offsets;
+		zst::byte_span data;
 	};
 
 	constexpr uint16_t GPOS_LOOKUP_SINGLE           = 1;
@@ -48,7 +55,7 @@ namespace font
 	struct GPosTable
 	{
 		// indexed by the GPOS_LOOKUP enumeration.
-		std::vector<LookupTable> lookup_tables[GPOS_LOOKUP_MAX];
+		std::vector<LookupTable> lookup_tables;
 	};
 
 	constexpr uint16_t GSUB_LOOKUP_SINGLE           = 1;
@@ -93,7 +100,7 @@ namespace font
 
 
 	std::vector<TaggedTable> parseTaggedList(FontFile* font, zst::byte_span list);
-	LookupTable parseLookupTable(FontFile* font, zst::byte_span buf);
+	std::vector<LookupTable> parseLookupList(FontFile* font, zst::byte_span buf);
 
 	int getGlyphClass(zst::byte_span classdef_table, uint32_t glyphId);
 

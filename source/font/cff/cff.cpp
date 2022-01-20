@@ -260,7 +260,6 @@ namespace font::cff
 					auto charset_size = charset_data.size() - tmp_data.size();
 
 					cff->charset_data = charset_data.take(charset_size);
-					zpr::println("charset size = {}", charset_size);
 				}
 			}
 
