@@ -261,7 +261,7 @@ namespace pdf
 		cidfont_dict->add(names::FontDescriptor, IndirectRef::create(font_desc));
 
 		ret->embedded_contents = Stream::create(doc, { });
-		ret->embedded_contents->setCompressed(true);
+		ret->embedded_contents->setCompressed(false);
 
 		if(truetype_outlines)
 		{

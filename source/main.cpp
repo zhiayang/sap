@@ -29,7 +29,9 @@ constexpr const char* input_text =
 	"AVAYAYA V. Vo P. r.";
 #else
 
-constexpr const char* input_text =
+// constexpr const char* input_text = "hello, world!";
+
+/*
 	"My name is Yoshikage Kira. I'm 33 years old. My house is in the northeast section of Morioh,\n"
 	"where all the villas are, and I am not married. I work as an employee for the Kame Yu department\n"
 	"stores, and I get home every day by 8 PM at the latest. I don't smoke, but I occasionally drink.\n"
@@ -40,18 +42,25 @@ constexpr const char* input_text =
 	"I'm a person who wishes to live a very quiet life. I take care not to trouble myself with any enemies,\n"
 	"like winning and losing, that would cause me to lose sleep at night. That is how I deal with society,\n"
 	"and I know that is what brings me happiness. Although, if I were to fight I wouldn't lose to anyone.\n"
-	"AVAYAYA V. Vo P. r.";
+	"AVAYAYA V. Vo P. r.";*/
 #endif
 
 int main(int argc, char** argv)
 {
+	std::string foozle {};
+	for(int i = 0; i < 256; i++)
+		foozle.push_back((char) i);
+
+	const char* input_text = foozle.c_str();
+
 	auto document = sap::Document();
 	auto font = pdf::Font::fromFontFile(
 		&document.pdfDocument(),
 		// font::FontFile::parseFromFile("fonts/Meiryo.ttf")
 		// font::FontFile::parseFromFile("fonts/MyriadPro-Regular.ttf")
 		// font::FontFile::parseFromFile("fonts/XCharter-Roman.otf")
-		font::FontFile::parseFromFile("fonts/SourceSerif4-Regular.otf")
+		font::FontFile::parseFromFile("fonts/FDArrayTest257.otf")
+		// font::FontFile::parseFromFile("fonts/SourceSerif4-Regular.otf")
 		// font::FontFile::parseFromFile("fonts/SourceSerif4Variable-Roman.otf")
 	);
 

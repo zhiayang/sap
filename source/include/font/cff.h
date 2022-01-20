@@ -60,6 +60,17 @@ namespace font::cff
 		inline Operand& decimal(double value) { type = TYPE_DECIMAL; _decimal = value; return *this; }
 		inline Operand& fixed(int32_t value) { type = TYPE_FIXED; _integer = value; return *this; }
 
+		inline bool operator== (const Operand& other) const
+		{
+			return this->type == other.type
+				&& (this->type == TYPE_DECIMAL
+					? (this->_decimal == other._decimal)
+					: (this->_integer == other._integer)
+				);
+		}
+
+		inline bool operator!= (const Operand& other) const { return !(*this == other); }
+
 		static constexpr int TYPE_INTEGER   = 0;
 		static constexpr int TYPE_DECIMAL   = 1;
 		static constexpr int TYPE_FIXED     = 2;
@@ -71,8 +82,8 @@ namespace font::cff
 		std::map<DictKey, std::vector<Operand>> values;
 
 		inline bool contains(DictKey key) const { return values.find(key) != values.end(); }
-		inline std::vector<Operand>& operator[] (DictKey key) { return values[key]; }
 
+		std::vector<Operand> get(DictKey key) const;
 		uint16_t string_id(DictKey key) const;
 		int32_t integer(DictKey key) const;
 		double decimal(DictKey key) const;
@@ -87,6 +98,18 @@ namespace font::cff
 		bool used = false;
 	};
 
+
+	struct Glyph
+	{
+		uint16_t gid;
+
+		uint16_t cid;
+		zst::str_view glyph_name;
+		zst::byte_span charstring;
+	};
+
+
+
 	/*
 		Note: this in-memory representation is only suitable for CFF fonts embedded in OTF files,
 		and *NOT* for general-purpose CFF files.
@@ -97,17 +120,13 @@ namespace font::cff
 	{
 		zst::byte_span bytes {};
 
-		// how many bytes *absolute offsets* take (1-4)
-		uint8_t absolute_offset_bytes = 0;
 		bool cff2 = false;
-		size_t num_glyphs = 0;
+		bool is_cidfont = false;
 
 		zst::byte_span name {};
 
-		IndexTable string_table {};
 		IndexTable charstrings_table {};
 
-		std::optional<zst::byte_span> charset_data {};
 		std::optional<zst::byte_span> encoding_data {};
 
 		std::optional<IndexTable> fdarray_table {};
@@ -119,6 +138,12 @@ namespace font::cff
 		std::vector<Subroutine> global_subrs {};
 		std::vector<Subroutine> local_subrs {};
 
+		std::vector<Glyph> glyphs {};
+
+		std::vector<std::string> string_ids {};
+		std::map<std::string, uint16_t> known_strings {};
+
+		uint16_t get_or_add_string(zst::str_view str);
 		zst::str_view get_string(uint16_t sid) const;
 	};
 
@@ -162,6 +187,25 @@ namespace font::cff
 		Fill the dictionary with default values for keys that didn't exist in the file.
 	*/
 	void populateDefaultValuesForTopDict(Dictionary& dict);
+
+	/*
+		Returns (optionally) the default value for the given dictionary key.
+	*/
+	std::optional<std::vector<Operand>> getDefaultValueForDictKey(DictKey key);
+
+	/*
+		Read the charset from the buffer, returning a mapping from glyph IDs to glyph names (SIDs) or CIDs
+	*/
+	std::map<uint16_t, uint16_t> readCharsetTable(size_t num_glyphs, zst::byte_span dict);
+
+	/*
+		Get one of the predefined charsets, returning the mapping from glyph ID to SIDs.
+
+		0 = ISOAdobe
+		1 = Expert
+		2 = ExpertSubset
+	*/
+	std::map<uint16_t, uint16_t> getPredefinedCharset(int num);
 }
 
 namespace font::cff
@@ -195,9 +239,11 @@ namespace font::cff
 		DictBuilder();
 		explicit DictBuilder(const Dictionary& from_dict);
 
+		DictBuilder& set(DictKey key, std::vector<Operand> values);
 		DictBuilder& setInteger(DictKey key, int32_t value);
 		DictBuilder& setStringId(DictKey key, uint16_t value);
 		DictBuilder& setIntegerPair(DictKey key, int32_t a, int32_t b);
+		DictBuilder& erase(DictKey key);
 
 		void writeInto(zst::byte_buffer& buf);
 		zst::byte_buffer serialise();
@@ -234,6 +280,8 @@ struct zpr::print_formatter<font::cff::Operand>
 // CFF DICT operators
 namespace font::cff
 {
+	static constexpr size_t NUM_STANDARD_STRINGS = 391;
+
 	// keys are encoded as 0xAABB, where AA is 00 if the operator is 1 byte (then BB is simply
 	// that byte), and AA is 0C if the operator is 2 bytes (then BB is the second byte)
 	enum class DictKey : uint16_t

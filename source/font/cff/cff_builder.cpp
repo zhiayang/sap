@@ -170,6 +170,12 @@ namespace font::cff
 		m_values.insert(from_dict.values.begin(), from_dict.values.end());
 	}
 
+	DictBuilder& DictBuilder::set(DictKey key, std::vector<Operand> values)
+	{
+		m_values[key] = std::move(values);
+		return *this;
+	}
+
 	DictBuilder& DictBuilder::setInteger(DictKey key, int32_t value)
 	{
 		m_values[key] = { Operand().integer(value) };
@@ -185,6 +191,12 @@ namespace font::cff
 	DictBuilder& DictBuilder::setIntegerPair(DictKey key, int32_t a, int32_t b)
 	{
 		m_values[key] = { Operand().integer(a), Operand().integer(b) };
+		return *this;
+	}
+
+	DictBuilder& DictBuilder::erase(DictKey key)
+	{
+		m_values.erase(key);
 		return *this;
 	}
 
@@ -213,12 +225,12 @@ namespace font::cff
 
 	size_t DictBuilder::computeSize()
 	{
-		// TODO: omit writing keys with default values to save space
-		// (this also affects the computed size, obviously!)
-
 		size_t total_size = 0;
 		for(auto& [ key, values ] : m_values)
 		{
+			if(auto def = getDefaultValueForDictKey(key); def.has_value() && def == values)
+				continue;
+
 			if(static_cast<uint16_t>(key) >= 0x0C00)
 				total_size += 2;
 			else
@@ -232,11 +244,12 @@ namespace font::cff
 
 	void DictBuilder::writeInto(zst::byte_buffer& buf)
 	{
-		// TODO: omit writing keys with default values to save space
-
 		auto write_key_value = [&](DictKey key) {
 			if(auto it = m_values.find(key); it != m_values.end())
 			{
+				if(auto def = getDefaultValueForDictKey(key); def.has_value() && def == it->second)
+					return;
+
 				for(auto& value : it->second)
 					write_operand(value, buf, /* force_4byte: */ is_absolute_offset_key(key));
 

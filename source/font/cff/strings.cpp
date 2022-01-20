@@ -7,7 +7,6 @@
 
 namespace font::cff
 {
-	static constexpr size_t NUM_STANDARD_STRINGS = 391;
 	static constexpr zst::str_view g_StandardStrings[NUM_STANDARD_STRINGS] = {
 		".notdef", "space", "exclam", "quotedbl", "numbersign", "dollar", "percent", "ampersand",
 		"quoteright", "parenleft", "parenright", "asterisk", "plus", "comma", "hyphen", "period",
@@ -70,12 +69,25 @@ namespace font::cff
 			return g_StandardStrings[sid];
 
 		sid -= NUM_STANDARD_STRINGS;
-		if(sid >= this->string_table.count)
+		if(sid >= this->string_ids.size())
 		{
 			sap::error("font/cff", "invalid string with index '{}' (max is {})",
-				sid + NUM_STANDARD_STRINGS, this->string_table.count);
+				sid + NUM_STANDARD_STRINGS, this->string_ids.size());
 		}
 
-		return this->string_table.get_item(sid).cast<char>();
+		return zst::str_view(this->string_ids[sid].data(), this->string_ids[sid].size());
+	}
+
+	uint16_t CFFData::get_or_add_string(zst::str_view str)
+	{
+		auto foo = str.str();
+		if(auto it = this->known_strings.find(foo); it != this->known_strings.end())
+			return it->second;
+
+		auto sid = NUM_STANDARD_STRINGS + this->string_ids.size();
+		this->known_strings[foo] = sid;
+		this->string_ids.push_back(std::move(foo));
+
+		return sid;
 	}
 }

@@ -76,6 +76,7 @@ namespace font::cff
 	}
 
 
+
 	CFFData* parseCFFData(FontFile* font, zst::byte_span buf)
 	{
 		auto cff = util::make<CFFData>();
@@ -112,7 +113,7 @@ namespace font::cff
 
 			// now comes the header size
 			auto hdr_size = consume_u8(buf);
-			cff->absolute_offset_bytes = consume_u8(buf);
+			consume_u8(buf);
 
 			// remove any extra bytes of the header; we already read 4
 			buf.remove_prefix(hdr_size - 4);
@@ -142,6 +143,9 @@ namespace font::cff
 			cff->top_dict = readDictionary(dict_index.data);
 			populateDefaultValuesForTopDict(cff->top_dict);
 
+			if(cff->top_dict.contains(DictKey::ROS))
+				cff->is_cidfont = true;
+
 			if(auto foo = cff->top_dict.integer(DictKey::CharstringType); foo != 2)
 				sap::error("font/cff", "unsupported charstring type '{}', expected '2'", foo);
 
@@ -156,111 +160,9 @@ namespace font::cff
 				auto charstrings_offset = cff->top_dict.integer(DictKey::CharStrings);
 				auto tmp = cff->bytes.drop(charstrings_offset);
 				cff->charstrings_table = read_index_table(tmp);
-				cff->num_glyphs = cff->charstrings_table.count;
 
-				if(cff->num_glyphs == 0)
+				if(cff->charstrings_table.count == 0)
 					sap::error("font/cff", "font contains no glyphs!");
-			}
-
-
-			if(cff->top_dict.contains(DictKey::Encoding))
-			{
-				// get the absolute offset to the encoding data. if the offset is 0 or 1, then it's
-				// a predefined (builtin) encoding, and doesn't contain any data.
-				auto encoding_ofs = cff->top_dict.integer(DictKey::Encoding);
-				if(encoding_ofs != 0 && encoding_ofs != 1)
-				{
-					auto encoding_data = cff->bytes.drop(encoding_ofs);
-					size_t encoding_size = 1;
-
-					// now we must calculate the size.
-					auto format = encoding_data[0] & 0x7F;
-					bool have_supplements = encoding_data[0] & 0x80;
-
-					if(format == 0)
-					{
-						auto num_codes = encoding_data[1];
-						encoding_size += (1 + num_codes);
-					}
-					else if(format == 1)
-					{
-						auto num_ranges = encoding_data[1];
-						encoding_size += (2 * num_ranges) + 1;
-					}
-					else
-					{
-						sap::error("font/cff", "unsupported Encodings format '{}' (expected 0 or 1)", format);
-					}
-
-					if(have_supplements)
-					{
-						auto tmp = encoding_data.drop(encoding_size);
-						auto num_sups = tmp[0];
-						tmp.remove_prefix(1);
-						encoding_size += 1;
-
-						// this contains SIDs, so we are forced to read it
-						while(num_sups > 0)
-						{
-							tmp.remove_prefix(1);   // code (Card8)
-
-							auto foo = tmp.size();
-							consume_u16(tmp);
-							encoding_size += 1 + (foo - tmp.size());
-
-							num_sups--;
-						}
-					}
-
-					cff->encoding_data = encoding_data.take(encoding_size);
-				}
-			}
-
-			if(cff->top_dict.contains(DictKey::charset))
-			{
-				auto charset_ofs = cff->top_dict.integer(DictKey::charset);
-				// 0 = ISOAdobe, 1 = Expert, 2 = ExpertSubset. Skip those (they don't take up space)
-				if(charset_ofs != 0 && charset_ofs != 1 && charset_ofs != 2)
-				{
-					auto tmp_data = cff->bytes.drop(charset_ofs);
-					auto format = tmp_data[0];
-					tmp_data.remove_prefix(1);
-
-					if(format == 0)
-					{
-						// sids... and num_glyphs - 1 sids...
-						for(size_t i = 1; i < cff->num_glyphs; i++)
-							consume_u16(tmp_data);
-					}
-					else if(format == 1 || format == 2)
-					{
-						// fuck you, adobe. "The number of ranges is not explicitly specified in the font.
-						// Instead, software utilising this data simply processes ranges until all glyphs
-						// in the font are covered"
-						// stupid design, absolutely garbage.
-						size_t required_glyphs = cff->num_glyphs - 1;
-						while(required_glyphs > 0)
-						{
-							// read the sid.
-							consume_u16(tmp_data);
-
-							// read the nLeft (1 byte if format == 1, 2 if format == 2)
-							if(format == 1)
-								required_glyphs -= (1 + consume_u8(tmp_data));
-							else
-								required_glyphs -= (1 + consume_u16(tmp_data));
-						}
-					}
-					else
-					{
-						sap::error("font/cff", "unsupported charset format '{}' (expected 0, 1, or 2)", format);
-					}
-
-					auto charset_data = cff->bytes.drop(charset_ofs);
-					auto charset_size = charset_data.size() - tmp_data.size();
-
-					cff->charset_data = charset_data.take(charset_size);
-				}
 			}
 
 			if(cff->top_dict.contains(DictKey::FDArray))
@@ -280,7 +182,7 @@ namespace font::cff
 
 				if(format == 0)
 				{
-					for(size_t i = 0; i < cff->num_glyphs; i++)
+					for(size_t i = 0; i < cff->charstrings_table.count; i++)
 						consume_u16(tmp_data);
 				}
 				else if(format == 3)
@@ -305,10 +207,9 @@ namespace font::cff
 
 
 		// String INDEX
-		{
-			cff->string_table = read_index_table(buf);
-			buf.remove_prefix(cff->string_table.data.size());
-		}
+		auto string_table = read_index_table(buf);
+		buf.remove_prefix(string_table.data.size());
+
 
 		// Global Subrs INDEX
 		{
@@ -320,7 +221,7 @@ namespace font::cff
 
 		// read the local subrs from the private dict
 		{
-			auto foo = cff->top_dict[DictKey::Private];
+			auto foo = cff->top_dict.get(DictKey::Private);
 			if(foo.size() != 2)
 				sap::error("font/cff", "missing Private DICT");
 
@@ -342,6 +243,59 @@ namespace font::cff
 				cff->local_subrs = read_subrs_from_index(index);
 			}
 		}
+
+		// ensure we keep the copyright etc. strings available
+		{
+			auto add_string_if_needed = [&](DictKey key) {
+				if(cff->top_dict.contains(key))
+				{
+					auto sid = cff->top_dict.string_id(key);
+					auto foo = string_table.get_item(sid - NUM_STANDARD_STRINGS).cast<char>();
+					cff->top_dict.values[key] = { Operand().string_id(cff->get_or_add_string(foo)) };
+				}
+			};
+
+			add_string_if_needed(DictKey::version);
+			add_string_if_needed(DictKey::Notice);
+			add_string_if_needed(DictKey::Copyright);
+			add_string_if_needed(DictKey::FullName);
+			add_string_if_needed(DictKey::FamilyName);
+			add_string_if_needed(DictKey::Weight);
+		}
+
+
+
+
+
+
+		// populate the glyph list.
+		{
+			auto charset_ofs = cff->top_dict.integer(DictKey::charset);
+
+			std::map<uint16_t, uint16_t> charset_mapping {};
+
+			if(charset_ofs == 0 || charset_ofs == 1 || charset_ofs == 2)
+				charset_mapping = getPredefinedCharset(charset_ofs);
+			else
+				charset_mapping = readCharsetTable(cff->charstrings_table.count, cff->bytes.drop(charset_ofs));
+
+			// charset-mapping maps from gid -> sid or cid, depending on whether this is a CID font or not
+			for(auto& [ gid, sid ] : charset_mapping)
+			{
+				Glyph glyph {};
+				glyph.gid = gid;
+				glyph.charstring = cff->charstrings_table.get_item(gid);
+
+				if(!cff->is_cidfont)
+					glyph.glyph_name = string_table.get_item(sid - NUM_STANDARD_STRINGS).cast<char>();
+				else
+					glyph.cid = sid;
+
+				cff->glyphs.push_back(std::move(glyph));
+			}
+		}
+
+
 
 		return cff;
 	}

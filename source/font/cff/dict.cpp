@@ -44,44 +44,90 @@ namespace font::cff
 		return dictionary;
 	}
 
+
 	void populateDefaultValuesForTopDict(Dictionary& dict)
 	{
 		auto add_default = [&dict](DictKey key, std::vector<Operand> values) {
 			if(dict.values.find(key) == dict.values.end())
-				dict[key] = std::move(values);
+				dict.values[key] = std::move(values);
 		};
 
-		add_default(DictKey::FontBBox, {
-			Operand().integer(0), Operand().integer(0), Operand().integer(0), Operand().integer(0)
-		});
+		constexpr DictKey keys_with_defaults[] = {
+			DictKey::FontBBox, DictKey::charset, DictKey::Encoding, DictKey::isFixedPitch,
+			DictKey::ItalicAngle, DictKey::UnderlinePosition, DictKey::UnderlineThickness,
+			DictKey::PaintType, DictKey::CharstringType, DictKey::FontMatrix, DictKey::StrokeWidth,
+			DictKey::CIDFontVersion, DictKey::CIDFontRevision, DictKey::CIDFontType, DictKey::CIDCount
+		};
 
-		add_default(DictKey::charset, { Operand().integer(0) });
-		add_default(DictKey::Encoding, { Operand().integer(0) });
+		for(auto key : keys_with_defaults)
+			add_default(key, *getDefaultValueForDictKey(key));
+	}
 
-		add_default(DictKey::isFixedPitch, { Operand().integer(0) });
-		add_default(DictKey::ItalicAngle, { Operand().integer(0) });
-		add_default(DictKey::UnderlinePosition, { Operand().integer(-100) });
-		add_default(DictKey::UnderlineThickness, { Operand().integer(50) });
-		add_default(DictKey::PaintType, { Operand().integer(0) });
-		add_default(DictKey::CharstringType, { Operand().integer(2) });
+	std::optional<std::vector<Operand>> getDefaultValueForDictKey(DictKey key)
+	{
+	#define OP_INT(x) Operand().integer(x)
+	#define OP_DEC(x) Operand().decimal(x)
 
-		add_default(DictKey::FontMatrix, {
-			Operand().decimal(0.001), Operand().decimal(0), Operand().decimal(0),
-			Operand().decimal(0.001), Operand().decimal(0), Operand().decimal(0)
-		});
+		if(key == DictKey::FontBBox)
+			return std::vector<Operand> { OP_INT(0), OP_INT(0), OP_INT(0), OP_INT(0) };
+		else if(key == DictKey::charset)
+			return std::vector<Operand> { OP_INT(0) };
+		else if(key == DictKey::Encoding)
+			return std::vector<Operand> { OP_INT(0) };
+		else if(key == DictKey::isFixedPitch)
+			return std::vector<Operand> { OP_INT(0) };
+		else if(key == DictKey::ItalicAngle)
+			return std::vector<Operand> { OP_INT(0) };
+		else if(key == DictKey::UnderlinePosition)
+			return std::vector<Operand> { OP_INT(-100) };
+		else if(key == DictKey::UnderlineThickness)
+			return std::vector<Operand> { OP_INT(50) };
+		else if(key == DictKey::PaintType)
+			return std::vector<Operand> { OP_INT(0) };
+		else if(key == DictKey::CharstringType)
+			return std::vector<Operand> { OP_INT(2) };
+		else if(key == DictKey::StrokeWidth)
+			return std::vector<Operand> { OP_INT(0) };
+		else if(key == DictKey::CIDFontVersion)
+			return std::vector<Operand> { OP_INT(0) };
+		else if(key == DictKey::CIDFontRevision)
+			return std::vector<Operand> { OP_INT(0) };
+		else if(key == DictKey::CIDFontType)
+			return std::vector<Operand> { OP_INT(0) };
+		else if(key == DictKey::CIDCount)
+			return std::vector<Operand> { OP_INT(8720) };
+		else if(key == DictKey::FontMatrix)
+			return std::vector<Operand> { OP_DEC(0.001), OP_DEC(0), OP_DEC(0), OP_DEC(0.001), OP_DEC(0), OP_DEC(0) };
+		else
+			return std::nullopt;
 
-		add_default(DictKey::StrokeWidth, { Operand().integer(0) });
+	#undef OP_INT
+	#undef OP_DEC
+	}
 
-		add_default(DictKey::CIDFontVersion, { Operand().integer(0) });
-		add_default(DictKey::CIDFontRevision, { Operand().integer(0) });
-		add_default(DictKey::CIDFontType, { Operand().integer(0) });
-		add_default(DictKey::CIDCount, { Operand().integer(8720) });
+
+
+
+	std::vector<Operand> Dictionary::get(DictKey key) const
+	{
+		if(auto it = this->values.find(key); it != this->values.end())
+			return it->second;
+
+		else if(auto def = getDefaultValueForDictKey(key); def.has_value())
+			return *def;
+
+		else
+			return {};
 	}
 
 	uint16_t Dictionary::string_id(DictKey key) const
 	{
 		if(auto it = this->values.find(key); it != this->values.end() && it->second.size() > 0)
 			return it->second[0].string_id();
+
+		else if(auto def = getDefaultValueForDictKey(key); def.has_value())
+			return (*def)[0].string_id();
+
 		else
 			return 0;
 	}
@@ -90,6 +136,10 @@ namespace font::cff
 	{
 		if(auto it = this->values.find(key); it != this->values.end() && it->second.size() > 0)
 			return it->second[0].integer();
+
+		else if(auto def = getDefaultValueForDictKey(key); def.has_value())
+			return (*def)[0].integer();
+
 		else
 			return 0;
 	}
@@ -98,6 +148,10 @@ namespace font::cff
 	{
 		if(auto it = this->values.find(key); it != this->values.end() && it->second.size() > 0)
 			return it->second[0].decimal();
+
+		else if(auto def = getDefaultValueForDictKey(key); def.has_value())
+			return (*def)[0].decimal();
+
 		else
 			return 0;
 	}
@@ -106,6 +160,10 @@ namespace font::cff
 	{
 		if(auto it = this->values.find(key); it != this->values.end() && it->second.size() > 0)
 			return it->second[0].fixed();
+
+		else if(auto def = getDefaultValueForDictKey(key); def.has_value())
+			return (*def)[0].fixed();
+
 		else
 			return 0;
 	}

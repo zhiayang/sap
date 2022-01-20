@@ -20,11 +20,7 @@ namespace font
 			|| tag == Tag("GSUB")
 			|| tag == Tag("GDEF")
 			|| tag == Tag("BASE")
-			|| tag == Tag("FFTM")
-			|| tag == Tag("post");
-
-		// TODO: the OFF spec says that the 'post' table is required, but pdfTeX appears
-		// to strip that table when it makes a subset. for now we strip it also.
+			|| tag == Tag("FFTM");
 	}
 
 	static void write_num_tables_and_other_stuff(Stream* stream, size_t num_tables)
@@ -273,6 +269,10 @@ namespace font
 				}
 			}
 		}
+
+		auto foo = fopen("test.otf", "wb");
+		stream->write_to_file(foo);
+		fclose(foo);
 
 		if(stream->is_compressed)
 			stream->dict->add(pdf::names::Length1, pdf::Integer::create(stream->uncompressed_length));
