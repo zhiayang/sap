@@ -12,6 +12,7 @@
 
 #include "font/cff.h"
 #include "font/font.h"
+#include "font/truetype.h"
 
 namespace font
 {
@@ -252,10 +253,14 @@ namespace font
 		// skip some stuff
 		buf.remove_prefix(6);
 
-		if(consume_u16(buf) == 0)
-			font->loca_bytes_per_entry = 2;
-		else
-			font->loca_bytes_per_entry = 4;
+		// by the time we reach this place, the tt_data should have been created
+		// by the `glyf` table already.
+		auto loca_bytes = (consume_u16(buf) == 0) ? 2 : 4;
+		if(font->outline_type == FontFile::OUTLINES_TRUETYPE)
+		{
+			assert(font->truetype_data != nullptr);
+			font->truetype_data->loca_bytes_per_entry = loca_bytes;
+		}
 	}
 
 	static void parse_post_table(FontFile* font, const Table& post_table)
@@ -325,16 +330,6 @@ namespace font
 		// deferred processing -- we only take the glyph data when it is requested.
 	}
 
-	static void parse_loca_table(FontFile* font, const Table& loca_table)
-	{
-		font->loca_table = zst::byte_span(font->file_bytes, font->file_size)
-			.drop(loca_table.offset)
-			.take(loca_table.length);
-
-		// deferred processing -- we only take the glyph data when it is requested.
-	}
-
-
 	static void parse_maxp_table(FontFile* font, const Table& maxp_table)
 	{
 		// we are only interested in the number of glyphs, so the version is
@@ -348,6 +343,44 @@ namespace font
 		font->num_glyphs = consume_u16(buf);
 	}
 
+
+	static void parse_loca_table(FontFile* font, const Table& loca_table)
+	{
+		if(font->outline_type != FontFile::OUTLINES_TRUETYPE)
+			sap::internal_error("found 'loca' table in file with non-truetype outlines");
+
+		assert(font->truetype_data != nullptr);
+		auto table = zst::byte_span(font->file_bytes, font->file_size)
+			.drop(loca_table.offset)
+			.take(loca_table.length);
+
+		truetype::parseLocaTable(font, table);
+	}
+
+	static void parse_glyf_table(FontFile* font, const Table& glyf_table)
+	{
+		if(font->outline_type != FontFile::OUTLINES_TRUETYPE)
+			sap::internal_error("found 'glyf' table in file with non-truetype outlines");
+
+		assert(font->truetype_data != nullptr);
+		auto table = zst::byte_span(font->file_bytes, font->file_size)
+			.drop(glyf_table.offset)
+			.take(glyf_table.length);
+
+		truetype::parseGlyfTable(font, table);
+	}
+
+	static void parse_cff_table(FontFile* font, const Table& cff_table)
+	{
+		if(font->outline_type != FontFile::OUTLINES_CFF)
+			sap::internal_error("found 'CFF' table in file with non-CFF outlines");
+
+		auto cff_data = zst::byte_span(font->file_bytes, font->file_size)
+			.drop(cff_table.offset)
+			.take(cff_table.length);
+
+		font->cff_data = cff::parseCFFData(font, cff_data);
+	}
 
 
 
@@ -407,50 +440,47 @@ namespace font
 		(void) entry_selector;
 		(void) range_shift;
 
-		// note that the table records (not the tables themselves, but that's not important) are
-		// guaranteed to be sorted in ascending order. in this case, we know that head comes
-		// before hhea, and hhea comes before hmtx --- so we can avoid running the loop twice.
+		std::map<Tag, Table> parsed_tables {};
 		for(size_t i = 0; i < num_tables; i++)
 		{
 			auto tbl = parse_table(buf);
-			// zpr::println("table: {}", tbl.tag.str());
-
-			if(tbl.tag == Tag("cmap"))      parse_cmap_table(font, tbl);
-			else if(tbl.tag == Tag("head")) parse_head_table(font, tbl);
-			else if(tbl.tag == Tag("hhea")) parse_hhea_table(font, tbl);
-			else if(tbl.tag == Tag("hmtx")) parse_hmtx_table(font, tbl);
-			else if(tbl.tag == Tag("loca")) parse_loca_table(font, tbl);
-			else if(tbl.tag == Tag("maxp")) parse_maxp_table(font, tbl);
-			else if(tbl.tag == Tag("name")) parse_name_table(font, tbl);
-			else if(tbl.tag == Tag("post")) parse_post_table(font, tbl);
-			else if(tbl.tag == Tag("GPOS")) parseGPos(font, tbl);
-			else if(tbl.tag == Tag("GSUB")) parseGSub(font, tbl);
-			else if(tbl.tag == Tag("OS/2")) parse_os2_table(font, tbl);
-
-			else if(tbl.tag == Tag("glyf"))
-			{
-				if(font->outline_type != FontFile::OUTLINES_TRUETYPE)
-					sap::internal_error("found 'glyf' table in non-truetype file!");
-
-				font->glyf_table = zst::byte_span(font->file_bytes, font->file_size)
-					.drop(tbl.offset)
-					.take(tbl.length);
-			}
-			else if(tbl.tag == Tag("CFF ") || tbl.tag == Tag("CFF2"))
-			{
-				if(font->outline_type != FontFile::OUTLINES_CFF)
-					sap::internal_error("found 'CFF' table in non-truetype file!");
-
-				auto cff_data = zst::byte_span(font->file_bytes, font->file_size)
-					.drop(tbl.offset)
-					.take(tbl.length);
-
-				font->cff_data = cff::parseCFFData(font, cff_data);
-			}
-
+			parsed_tables[tbl.tag] = std::move(tbl);
 			font->tables.emplace(tbl.tag, tbl);
 		}
 
+		// there is an order that we want to use:
+		constexpr Tag table_processing_order[] = {
+			Tag("head"), Tag("name"), Tag("hhea"), Tag("hmtx"), Tag("maxp"),
+			Tag("post"), Tag("CFF "), Tag("CFF2"), Tag("glyf"), Tag("loca"),
+			Tag("cmap"), Tag("GPOS"), Tag("GSUB"), Tag("OS/2")
+		};
+
+		// CFF makes its own data (since everything is self-contained in the CFF table)
+		// but for TrueType, it's split across several tables, so just make one here.
+		if(font->outline_type == FontFile::OUTLINES_TRUETYPE)
+			font->truetype_data = util::make<truetype::TTData>();
+
+		for(auto tag : table_processing_order)
+		{
+			if(auto it = parsed_tables.find(tag); it != parsed_tables.end())
+			{
+				auto& tbl = it->second;
+				if(tag == Tag("CFF "))      parse_cff_table(font, tbl);
+				else if(tag == Tag("CFF2")) parse_cff_table(font, tbl);
+				else if(tag == Tag("GPOS")) parseGPos(font, tbl);
+				else if(tag == Tag("GSUB")) parseGSub(font, tbl);
+				else if(tag == Tag("OS/2")) parse_os2_table(font, tbl);
+				else if(tag == Tag("cmap")) parse_cmap_table(font, tbl);
+				else if(tag == Tag("glyf")) parse_glyf_table(font, tbl);
+				else if(tag == Tag("head")) parse_head_table(font, tbl);
+				else if(tag == Tag("hhea")) parse_hhea_table(font, tbl);
+				else if(tag == Tag("hmtx")) parse_hmtx_table(font, tbl);
+				else if(tag == Tag("loca")) parse_loca_table(font, tbl);
+				else if(tag == Tag("maxp")) parse_maxp_table(font, tbl);
+				else if(tag == Tag("name")) parse_name_table(font, tbl);
+				else if(tag == Tag("post")) parse_post_table(font, tbl);
+			}
+		}
 		return font;
 	}
 

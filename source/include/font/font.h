@@ -29,6 +29,11 @@ namespace font
 		struct CFFData;
 	}
 
+	namespace truetype
+	{
+		struct TTData;
+	}
+
 	struct FontMetrics
 	{
 		int xmin;
@@ -114,10 +119,8 @@ namespace font
 		// some stuff we need to save, internal use.
 		size_t num_hmetrics = 0;
 		zst::byte_span hmtx_table {};
-		zst::byte_span loca_table {};
 
 		size_t num_glyphs = 0;
-		size_t loca_bytes_per_entry = 0;
 
 		GPosTable gpos_tables {};
 		GSubTable gsub_tables {};
@@ -135,7 +138,7 @@ namespace font
 		FontMetrics metrics {};
 
 		// only valid if outline_type == OUTLINES_TRUETYPE
-		zst::byte_span glyf_table {};
+		truetype::TTData* truetype_data = nullptr;
 
 		// only valid if outline_type == OUTLINES_CFF
 		cff::CFFData* cff_data = nullptr;
