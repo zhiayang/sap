@@ -74,11 +74,12 @@ so replace it. The conerse is also true --- if for some reason the font has the 
 but not one for the composed form, then we should attempt to decompose the codepoint.
 
 
-
-
+update: it probably makes more sense to maximally compose codepoints (i think we can do that with utf8proc),
+since we want to prefer an "actual" glyph eg. for an accented character if that exists. If that fails, then
+we should try the decomposed version, and if that also fails, `.notdef` time.
 
 
 
 ## references
 
-(Global Multiple Objective Line Breaking (Holkner, 2006))[http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.585.8487&rep=rep1&type=pdf]
+[Global Multiple Objective Line Breaking (Holkner, 2006)](http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.585.8487&rep=rep1&type=pdf)
