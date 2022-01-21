@@ -52,7 +52,7 @@ namespace font
 
 	std::optional<std::pair<GlyphAdjustment, GlyphAdjustment>> FontFile::getGlyphPairAdjustments(uint32_t gid1, uint32_t gid2) const
 	{
-		for(auto& lookup : this->gpos_tables.lookup_tables)
+		for(auto& lookup : this->gpos_table.lookup_tables)
 		{
 			if(lookup.type != GPOS_LOOKUP_PAIR)
 				continue;
@@ -150,7 +150,7 @@ namespace font
 
 	std::optional<GlyphAdjustment> FontFile::getGlyphAdjustment(uint32_t glyphId) const
 	{
-		for(auto& lookup : this->gpos_tables.lookup_tables)
+		for(auto& lookup : this->gpos_table.lookup_tables)
 		{
 			if(lookup.type != GPOS_LOOKUP_SINGLE)
 				continue;
@@ -193,7 +193,7 @@ namespace font
 	{
 		std::map<std::pair<uint32_t, uint32_t>, KerningPair> kerning_pairs;
 
-		for(auto& lookup : this->gpos_tables.lookup_tables)
+		for(auto& lookup : this->gpos_table.lookup_tables)
 		{
 			if(lookup.type != GPOS_LOOKUP_PAIR)
 				continue;
@@ -278,8 +278,15 @@ namespace font::off
 	std::map<size_t, GlyphAdjustment> getPositioningAdjustmentsForGlyphSequence(FontFile* font,
 		zst::span<uint32_t> glyphs, const FeatureSet& features)
 	{
+		auto gpos = font->gpos_table;
+
 		return {};
 	}
+
+
+
+
+
 
 
 
@@ -303,27 +310,11 @@ namespace font::off
 		auto script_list = parseTaggedList(font, table_start.drop(consume_u16(buf)));
 		auto feature_list = parseTaggedList(font, table_start.drop(consume_u16(buf)));
 
-#if 0
-		zpr::println("scripts:");
-		for(auto& scr : script_list)
-			zpr::println("  {}", scr.tag.str());
-
-		zpr::println("features: ({})", feature_list.size());
-		for(auto& feat : feature_list)
-		{
-			zpr::println("  feat: {}, ofs = {}", feat.tag.str(), feat.file_offset);
-			auto data = zst::byte_span(font->file_bytes, font->file_size).drop(feat.file_offset);
-
-			consume_u16(data);
-			auto num_lookups = consume_u16(data);
-			for(size_t i = 0; i < num_lookups; i++)
-				zpr::println("    [{}]", consume_u16(data));
-		}
-#endif
-
 		auto lookup_list_ofs = consume_u16(buf);
 		auto lookup_tables = table_start.drop(lookup_list_ofs);
 
-		font->gpos_tables.lookup_tables = parseLookupList(font, lookup_tables);
+		font->gpos_table.lookup_tables = parseLookupList(font, lookup_tables);
+
+		getLookupTablesForFeatures(font->gpos_table, {});
 	}
 }

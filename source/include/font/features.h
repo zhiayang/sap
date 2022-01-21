@@ -128,7 +128,7 @@ namespace font::off
 	struct Language
 	{
 		Tag tag;
-		uint16_t required_feature;
+		std::optional<uint16_t> required_feature;
 		std::vector<uint16_t> features;
 	};
 
@@ -141,7 +141,7 @@ namespace font::off
 	struct Feature
 	{
 		Tag tag;
-		std::vector<size_t> lookups;
+		std::vector<uint16_t> lookups;
 	};
 
 	struct GPosTable
@@ -179,6 +179,36 @@ namespace font::off
 	*/
 	std::map<size_t, GlyphAdjustment> getPositioningAdjustmentsForGlyphSequence(FontFile* font,
 		zst::span<uint32_t> glyphs, const FeatureSet& features);
+
+
+
+	/*
+		private, implementation stuff
+		=============================
+	*/
+
+	struct TaggedTable2
+	{
+		Tag tag;
+		zst::byte_span data;
+	};
+
+
+	/*
+		Return a list of LookupTable indices for the given feature set in either the GPOS or GSUB tables.
+	*/
+	template <typename TableKind>
+	std::vector<uint16_t> getLookupTablesForFeatures(TableKind& gpos_or_gsub, const FeatureSet& features);
+
+	/*
+		Parse the script and language tables from the given buffer.
+	*/
+	std::map<Tag, Script> parseScriptAndLanguageTables(zst::byte_span buf);
+
+	/*
+
+	*/
+	std::vector<TaggedTable2> parseTaggedList(zst::byte_span buf);
 }
 
 

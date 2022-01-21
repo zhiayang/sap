@@ -9,6 +9,144 @@
 
 namespace font::off
 {
+	constexpr uint16_t NO_REQUIRED_FEATURE = 0xFFFF;
+	constexpr auto DEFAULT = Tag("DFLT");
+
+	template <typename TableKind>
+	std::vector<uint16_t> getLookupTablesForFeatures(TableKind& table, const FeatureSet& features)
+	{
+		// step 1: get the script.
+		Script* script = nullptr;
+		if(auto it = table.scripts.find(features.script); it != table.scripts.end())
+			script = &it->second;
+		else if(auto it = table.scripts.find(DEFAULT); it != table.scripts.end())
+			script = &it->second;
+		else
+			return {};  // found nothing
+
+		assert(script != nullptr);
+
+		// step 2: same thing for the language
+		Language* lang = nullptr;
+		if(auto it = script->languages.find(features.language); it != script->languages.end())
+			lang = &it->second;
+		else if(auto it = script->languages.find(DEFAULT); it != script->languages.end())
+			lang = &it->second;
+		else
+			return {};  // nothing again
+
+		assert(lang != nullptr);
+
+		std::vector<uint16_t> lookups {};
+
+		auto add_lookups_for_feature = [&](uint16_t idx, bool required) {
+			assert(idx < table.features.size());
+
+			auto& feature = table.features[idx];
+			if(required || (features.enabled_features.find(feature.tag) != features.enabled_features.end()))
+				lookups.insert(lookups.end(), feature.lookups.begin(), feature.lookups.end());
+		};
+
+
+		if(lang->required_feature.has_value())
+			add_lookups_for_feature(*lang->required_feature, /* required: */ true);
+
+		for(auto feat_idx : lang->features)
+			add_lookups_for_feature(feat_idx, /* required: */ false);
+
+		return lookups;
+	}
+
+
+
+	template std::vector<uint16_t> getLookupTablesForFeatures(GPosTable& table, const FeatureSet& features);
+
+	// template
+	// std::vector<size_t> getLookupTablesForFeatures(GSubTable& table, const FeatureSet& features);
+
+	static Language parse_one_language(Tag tag, zst::byte_span buf)
+	{
+		Language lang {};
+		lang.tag = tag;
+
+		consume_u16(buf);   // reserved
+		if(auto req = consume_u16(buf); req != NO_REQUIRED_FEATURE)
+			lang.required_feature = req;
+
+		auto num_features = consume_u16(buf);
+		for(size_t i = 0; i < num_features; i++)
+			lang.features.push_back(consume_u16(buf));
+
+		return lang;
+	}
+
+	static Script parse_one_script(Tag tag, zst::byte_span buf)
+	{
+		auto table_start = buf;
+
+		auto default_langsys = consume_u16(buf);
+
+		Script script {};
+		script.tag = tag;
+
+		// if the default langsys is specified, then it is the langsys for the DFLT language
+		if(default_langsys != 0)
+			script.languages[DEFAULT] = parse_one_language(DEFAULT, table_start.drop(default_langsys));
+
+		auto langsys_tables = parseTaggedList(buf);
+		for(auto& langsys : langsys_tables)
+			script.languages[langsys.tag] = parse_one_language(langsys.tag, langsys.data);
+
+		return script;
+	}
+
+
+	std::map<Tag, Script> parseScriptAndLanguageTables(zst::byte_span buf)
+	{
+		std::map<Tag, Script> scripts {};
+		auto script_tables = parseTaggedList(buf);
+
+		for(auto& script : script_tables)
+			scripts[script.tag] = parse_one_script(script.tag, script.data);
+
+		return scripts;
+	}
+
+	std::vector<TaggedTable2> parseTaggedList(zst::byte_span buf)
+	{
+		std::vector<TaggedTable2> ret {};
+
+		auto table_start = buf;
+		auto num = consume_u16(buf);
+		for(size_t i = 0; i < num; i++)
+		{
+			auto tag = Tag(consume_u32(buf));
+			auto ofs = consume_u16(buf);
+
+			ret.push_back({ tag, zst::byte_span(table_start.drop(ofs)) });
+		}
+
+		return ret;
+	}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 	std::vector<TaggedTable> parseTaggedList(FontFile* font, zst::byte_span list)
 	{
 		auto table_start = list;
@@ -53,102 +191,5 @@ namespace font::off
 		}
 
 		return table_list;
-	}
-
-	std::map<int, uint32_t> parseCoverageTable(zst::byte_span cov_table)
-	{
-		auto format = consume_u16(cov_table);
-		std::map<int, uint32_t> coverage_map;
-
-		if(format == 1)
-		{
-			auto count = consume_u16(cov_table);
-
-			// the first glyphid in the array has index 0, then 1, and so on.
-			for(size_t i = 0; i < count; i++)
-				coverage_map[i] = consume_u16(cov_table);
-		}
-		else if(format == 2)
-		{
-			auto num_ranges = consume_u16(cov_table);
-			for(size_t i = 0; i < num_ranges; i++)
-			{
-				auto first = consume_u16(cov_table);
-				auto last = consume_u16(cov_table);
-				auto start_cov = consume_u16(cov_table);
-
-				for(auto i = first; i < last + 1; i++)
-					coverage_map[start_cov + (i - first)] = i;
-			}
-		}
-		else
-		{
-			sap::internal_error("invalid OTF coverage table format ({})", format);
-		}
-
-		return coverage_map;
-	}
-
-	std::optional<int> getGlyphCoverageIndex(zst::byte_span cov_table, uint32_t glyphId)
-	{
-		auto format = consume_u16(cov_table);
-
-		if(format == 1)
-		{
-			auto count = consume_u16(cov_table);
-			auto array = cov_table.cast<uint16_t>();
-
-			// binary search
-			size_t low = 0;
-			size_t high = count;
-
-			while(low < high)
-			{
-				auto mid = (low + high) / 2u;
-				auto val = util::convertBEU16(array[mid]);
-
-				if(val == glyphId)
-					return static_cast<int32_t>(mid);
-				else if(val < glyphId)
-					low = mid + 1;
-				else
-					high = mid;
-			}
-
-			return { };
-		}
-		else if(format == 2)
-		{
-			struct RangeRecord { uint16_t start; uint16_t end; uint16_t cov_idx; } __attribute__((packed));
-			static_assert(sizeof(RangeRecord) == 3 * sizeof(uint16_t));
-
-			auto count = consume_u16(cov_table);
-			auto array = cov_table.take(count * sizeof(RangeRecord)).cast<RangeRecord>();
-
-			// binary search the RangeRecords
-			size_t low = 0;
-			size_t high = count;
-			while(low < high)
-			{
-				auto mid = (low + high) / 2u;
-				auto val = array[mid];
-
-				auto start = util::convertBEU16(val.start);
-				auto end = util::convertBEU16(val.end);
-
-				if(start <= glyphId && glyphId <= end)
-					return static_cast<int32_t>(util::convertBEU16(val.cov_idx) + glyphId - start);
-				else if(end < glyphId)
-					low = mid + 1;
-				else
-					high = mid;
-			}
-
-			return { };
-		}
-		else
-		{
-			sap::internal_error("invalid OTF coverage table format ({})", format);
-		}
 	}
 }

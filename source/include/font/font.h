@@ -122,8 +122,8 @@ namespace font
 
 		size_t num_glyphs = 0;
 
-		off::GPosTable gpos_tables {};
-		off::GSubTable gsub_tables {};
+		off::GPosTable gpos_table {};
+		off::GSubTable gsub_table {};
 
 
 		int font_type = 0;
