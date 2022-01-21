@@ -66,21 +66,6 @@ namespace font
 	}
 
 
-
-
-	/*
-		TODO(big oof)
-
-		turns out that some glyphs are actually just copies of other glyphs (eg. fullwidth variants). So,
-		just including the clone in the subset is not going to work if we don't also include its derivative;
-		so we need to figure out how to find out wtf the base glyph actually is...
-
-		(this only applies to fonts with truetype outlines -- we can't subset CFF outlines for now)
-
-		ok, so the idea is that we need to actually inspect (on a surface level at least) the glyph data in
-		the `glyf` table for the data, which tells us if it's a composite glyph, and if so which glyph(s) make
-		up its components.
-	*/
 	void writeFontSubset(FontFile* font, zst::str_view subset_name, Stream* stream,
 		const std::map<uint32_t, GlyphMetrics>& used_glyphs)
 	{
@@ -129,26 +114,6 @@ namespace font
 
 		if(font->outline_type == FontFile::OUTLINES_TRUETYPE)
 		{
-		#if 0
-			GlyfOffset old_loca_table {};
-			zst::byte_span old_glyf_table {};
-
-			for(auto& table : included_tables)
-			{
-				// by right, `loca` should only appear in ttf outline fonts.
-				if(table.tag == Tag("loca"))
-					old_loca_table = read_loca_table(font, file_contents.drop(table.offset).take(table.length));
-				else if(table.tag == Tag("glyf"))
-					old_glyf_table = file_contents.drop(table.offset).take(table.length);
-			}
-
-			// because we need to compute the dumb checksum (and it comes *before* the table itself)
-			// we are forced to build a buffer beforehand, wasting memory & allocation & cpu cycles.
-			GlyfOffset loca_mapping { };
-			auto new_glyf_table = create_subset_glyf_table(font, loca_mapping, old_loca_table, used_glyphs, old_glyf_table);
-			auto new_loca_table = create_subset_loca_table(font, loca_mapping);
-		#endif
-
 			auto subset = truetype::createTTSubset(font, used_glyphs);
 
 			for(auto& table : included_tables)
