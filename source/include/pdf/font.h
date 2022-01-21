@@ -51,11 +51,17 @@ namespace pdf
 
 		// abstracts away the scaling by units_per_em, to go from font units to pdf units
 		// this converts the metric to a **concrete size** (in pdf units, aka 1/72 inches)
-		Scalar scaleFontMetricForFontSize(double metric, Scalar font_size) const;
+		Scalar scaleMetricForFontSize(double metric, Scalar font_size) const;
 
 		// this converts the metric to an **abstract size**, which is the text space. when
 		// drawing text, the /Tf directive already specifies the font scale!
-		Scalar scaleFontMetricForPDFTextSpace(double metric) const;
+		Scalar scaleMetricForPDFTextSpace(double metric) const;
+
+		/*
+			A very thin wrapper around the identically-named method taking a FontFile
+		*/
+		std::map<size_t, font::GlyphAdjustment> getPositioningAdjustmentsForGlyphSequence(
+			zst::span<uint32_t> glyphs, const font::off::FeatureSet& features) const;
 
 
 		int font_type = 0;

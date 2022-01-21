@@ -22,28 +22,6 @@ namespace font
 		int16_t vert_advance;
 	};
 
-	constexpr uint16_t GPOS_LOOKUP_SINGLE           = 1;
-	constexpr uint16_t GPOS_LOOKUP_PAIR             = 2;
-	constexpr uint16_t GPOS_LOOKUP_CURSIVE          = 3;
-	constexpr uint16_t GPOS_LOOKUP_MARK_TO_BASE     = 4;
-	constexpr uint16_t GPOS_LOOKUP_MARK_TO_LIGA     = 5;
-	constexpr uint16_t GPOS_LOOKUP_MARK_TO_MARK     = 6;
-	constexpr uint16_t GPOS_LOOKUP_CONTEXT_POS      = 7;
-	constexpr uint16_t GPOS_LOOKUP_CHAINED_CONTEXT  = 8;
-	constexpr uint16_t GPOS_LOOKUP_EXTENSION_POS    = 9;
-	constexpr uint16_t GPOS_LOOKUP_MAX              = 10;
-
-
-	constexpr uint16_t GSUB_LOOKUP_SINGLE           = 1;
-	constexpr uint16_t GSUB_LOOKUP_MULTIPLE         = 2;
-	constexpr uint16_t GSUB_LOOKUP_ALTERNATE        = 3;
-	constexpr uint16_t GSUB_LOOKUP_LIGATURE         = 4;
-	constexpr uint16_t GSUB_LOOKUP_CONTEXT          = 5;
-	constexpr uint16_t GSUB_LOOKUP_CHAINED_CONTEXT  = 6;
-	constexpr uint16_t GSUB_LOOKUP_EXTENSION_SUBST  = 7;
-	constexpr uint16_t GSUB_LOOKUP_REVERSE_CHAIN    = 8;
-	constexpr uint16_t GSUB_LOOKUP_MAX              = 9;
-
 	constexpr size_t MAX_LIGATURE_LENGTH = 8;
 	struct GlyphLigature
 	{
@@ -80,9 +58,6 @@ namespace font::off
 
 	// returns a map from coverageIndex -> glyphId, for every glyph in the coverage table.
 	std::map<int, uint32_t> parseCoverageTable(zst::byte_span coverage_table);
-
-	void parseGPos(FontFile* font, const Table& gpos_table);
-	void parseGSub(FontFile* font, const Table& gsub_table);
 
 
 	/*
@@ -136,12 +111,18 @@ namespace font::off
 		std::vector<Feature> features;
 		std::map<Tag, Script> scripts;
 		std::vector<LookupTable> lookups;
+
+		std::optional<zst::byte_span> feature_variations_table;
 	};
 
 
 	struct GSubTable
 	{
-		// std::vector<LookupTable> lookup_tables;
+		std::vector<Feature> features;
+		std::map<Tag, Script> scripts;
+		std::vector<LookupTable> lookups;
+
+		std::optional<zst::byte_span> feature_variations_table;
 	};
 
 
@@ -156,15 +137,22 @@ namespace font::off
 	};
 
 	/*
-		parse the GPOS table, and try to look for positioning adjustments for the input glyph
+		Using the GPOS table, try to look for positioning adjustments for the input glyph
 		sequence, using the enabled features in the `feature_set`.
 
-		the return type is a map of glyph index (of the input sequence) to a GlyphAdjustment,
+		The return type is a map of glyph index (of the input sequence) to a GlyphAdjustment,
 		if that particular glyph needs to be adjusted. Only glyphs that need to be adjusted
 		will be part of the map.
 	*/
 	std::map<size_t, GlyphAdjustment> getPositioningAdjustmentsForGlyphSequence(FontFile* font,
 		zst::span<uint32_t> glyphs, const FeatureSet& features);
+
+
+	/*
+		Parse the GPOS and GSUB tables from the OTF top-level Table.
+	*/
+	void parseGPos(FontFile* font, const Table& gpos_table);
+	void parseGSub(FontFile* font, const Table& gsub_table);
 
 
 
@@ -215,7 +203,52 @@ namespace font::off
 }
 
 
-namespace font
+// declares GPOS-specific lookup functions
+namespace font::off::gpos
+{
+	constexpr uint16_t LOOKUP_SINGLE            = 1;
+	constexpr uint16_t LOOKUP_PAIR              = 2;
+	constexpr uint16_t LOOKUP_CURSIVE           = 3;
+	constexpr uint16_t LOOKUP_MARK_TO_BASE      = 4;
+	constexpr uint16_t LOOKUP_MARK_TO_LIGA      = 5;
+	constexpr uint16_t LOOKUP_MARK_TO_MARK      = 6;
+	constexpr uint16_t LOOKUP_CONTEXT_POS       = 7;
+	constexpr uint16_t LOOKUP_CHAINED_CONTEXT   = 8;
+	constexpr uint16_t LOOKUP_EXTENSION_POS     = 9;
+	constexpr uint16_t LOOKUP_MAX               = 10;
+
+	using OptionalGA = std::optional<GlyphAdjustment>;
+
+	OptionalGA lookupSingleAdjustment(LookupTable& lookup, uint32_t gid);
+
+	/*
+		It is important to know whether there was an adjustment for the second glyph in the pair
+		or not; see OFF 1.9, page 220:
+
+		If valueFormat2 is set to 0, then the second glyph of the pair is the "next" glyph
+		for which a lookup should be performed.
+
+		So, instead of returning an optional of pair, we return a pair of optionals.
+	*/
+	std::pair<OptionalGA, OptionalGA> lookupPairAdjustment(LookupTable& lookup, uint32_t gid1, uint32_t gid2);
+}
+
+// declares GSUB-specific lookup functions
+namespace font::off::gsub
+{
+	constexpr uint16_t LOOKUP_SINGLE            = 1;
+	constexpr uint16_t LOOKUP_MULTIPLE          = 2;
+	constexpr uint16_t LOOKUP_ALTERNATE         = 3;
+	constexpr uint16_t LOOKUP_LIGATURE          = 4;
+	constexpr uint16_t LOOKUP_CONTEXT           = 5;
+	constexpr uint16_t LOOKUP_CHAINED_CONTEXT   = 6;
+	constexpr uint16_t LOOKUP_EXTENSION_SUBST   = 7;
+	constexpr uint16_t LOOKUP_REVERSE_CHAIN     = 8;
+	constexpr uint16_t LOOKUP_MAX               = 9;
+}
+
+
+namespace font::off
 {
 	/*
 		GPOS FEATURES

@@ -47,7 +47,6 @@ namespace font::off
 				lookups.insert(lookups.end(), feature.lookups.begin(), feature.lookups.end());
 		};
 
-
 		if(lang->required_feature.has_value())
 			add_lookups_for_feature(*lang->required_feature, /* required: */ true);
 
@@ -60,9 +59,7 @@ namespace font::off
 
 
 	template std::vector<uint16_t> getLookupTablesForFeatures(GPosTable& table, const FeatureSet& features);
-
-	// template
-	// std::vector<size_t> getLookupTablesForFeatures(GSubTable& table, const FeatureSet& features);
+	template std::vector<uint16_t> getLookupTablesForFeatures(GSubTable& table, const FeatureSet& features);
 
 	static Language parse_one_language(Tag tag, zst::byte_span buf)
 	{
@@ -170,10 +167,6 @@ namespace font::off
 		return table_list;
 	}
 
-
-
-
-
 	std::vector<TaggedTable> parseTaggedList(zst::byte_span buf)
 	{
 		std::vector<TaggedTable> ret {};
@@ -189,5 +182,51 @@ namespace font::off
 		}
 
 		return ret;
+	}
+
+
+	template <typename TableType>
+	static void parseGPosOrGSub(FontFile* font, TableType* output, zst::byte_span buf)
+	{
+		auto table_start = buf;
+
+		auto major = consume_u16(buf);
+		auto minor = consume_u16(buf);
+
+		if(major != 1 || (minor != 0 && minor != 1))
+		{
+			zpr::println("warning: unsupported GPOS/GSUB table version {}.{}, ignoring", major, minor);
+			return;
+		}
+
+		auto script_list_ofs  = consume_u16(buf);
+		auto feature_list_ofs = consume_u16(buf);
+		auto lookup_list_ofs  = consume_u16(buf);
+
+		output->scripts  = parseScriptAndLanguageTables(table_start.drop(script_list_ofs));
+		output->features = parseFeatureList(table_start.drop(feature_list_ofs));
+		output->lookups  = parseLookupList(table_start.drop(lookup_list_ofs));
+
+		if(major == 1 && minor == 1)
+		{
+			if(auto feat_var_ofs = consume_u16(buf); feat_var_ofs != 0)
+				output->feature_variations_table = table_start.drop(feat_var_ofs);
+		}
+	}
+
+	void parseGPos(FontFile* font, const Table& table)
+	{
+		auto buf = zst::byte_span(font->file_bytes, font->file_size);
+		buf.remove_prefix(table.offset);
+
+		parseGPosOrGSub(font, &font->gpos_table, buf);
+	}
+
+	void parseGSub(FontFile* font, const Table& table)
+	{
+		auto buf = zst::byte_span(font->file_bytes, font->file_size);
+		buf.remove_prefix(table.offset);
+
+		parseGPosOrGSub(font, &font->gsub_table, buf);
 	}
 }

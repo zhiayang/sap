@@ -93,49 +93,4 @@ namespace font
 
 namespace font::off
 {
-	/*
-		TODO: have more discretion about which ligatures to use. ideally, we should just
-		parse out all the ligatures/substitutions and tie them into features. this way,
-		we (the layout engine) can choose which features to enable or disable.
-
-		with the current "substitute everything i can" approach, we include loads of nonsense
-		like discretionary ligatures (like ます -> 〼).
-	*/
-	void parseGSub(FontFile* font, const Table& gsub_table)
-	{
-		return;
-#if 0
-		auto buf = zst::byte_span(font->file_bytes, font->file_size);
-		buf.remove_prefix(gsub_table.offset);
-
-		auto table_start = buf;
-
-		auto major = consume_u16(buf);
-		auto minor = consume_u16(buf);
-
-		if(major != 1 || (minor != 0 && minor != 1))
-		{
-			zpr::println("warning: unsupported GSUB table version {}.{}, ignoring", major, minor);
-			return;
-		}
-
-		auto script_list = parseTaggedList(font, table_start.drop(consume_u16(buf)));
-		auto feature_list = parseTaggedList(font, table_start.drop(consume_u16(buf)));
-
-		auto lookup_list_ofs = consume_u16(buf);
-
-		auto lookup_tables = table_start.drop(lookup_list_ofs);
-		auto num_lookup_tables = consume_u16(lookup_tables);
-		for(size_t i = 0; i < num_lookup_tables; i++)
-		{
-			auto offset = consume_u16(lookup_tables);
-			auto tbl = parseLookupTable(font, table_start.drop(lookup_list_ofs + offset));
-
-			if(tbl.type >= GSUB_LOOKUP_MAX)
-				zpr::println("warning: invalid GSUB lookup table with type {}", tbl.type);
-			else
-				font->gsub_tables.lookup_tables[tbl.type].push_back(std::move(tbl));
-		}
-#endif
-	}
 }
