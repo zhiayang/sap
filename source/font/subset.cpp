@@ -188,7 +188,7 @@ namespace font
 		}
 
 
-#if 1
+#if 0
 		auto foo = fopen("test.otf", "wb");
 		stream->write_to_file(foo);
 		fclose(foo);

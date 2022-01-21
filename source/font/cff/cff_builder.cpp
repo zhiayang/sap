@@ -46,6 +46,9 @@ namespace font::cff
 		};
 
 		buf.append_bytes(util::convertBEU16(m_offsets.size()));
+		if(m_offsets.empty())
+			return;
+
 		buf.append(static_cast<uint8_t>(off_size));
 
 		// the offsets are biased by 1 (so the first entry has an offset of 1, not 0)

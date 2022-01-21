@@ -228,8 +228,8 @@ namespace font::cff
 			auto builder = IndexTableBuilder();
 			for(auto& subr : cff->global_subrs)
 			{
-				/*if(subr.used)   */builder.add(subr.charstring);
-				// else            builder.add(zst::byte_span{});
+				if(subr.used)   builder.add(subr.charstring);
+				else            builder.add(zst::byte_span{});
 			}
 
 			builder.writeInto(global_subrs_table);
@@ -275,8 +275,8 @@ namespace font::cff
 					auto builder = IndexTableBuilder();
 					for(auto& subr : fd.local_subrs)
 					{
-						/*if(subr.used)   */builder.add(subr.charstring);
-						// else            builder.add(zst::byte_span{});
+						if(subr.used)   builder.add(subr.charstring);
+						else            builder.add(zst::byte_span{});
 					}
 
 					builder.writeInto(tmp_buffer);
@@ -298,7 +298,6 @@ namespace font::cff
 				for(auto& fd : cff->font_dicts)
 					private_dicts.push_back(serialise_fontdict(fd));
 			}
-
 
 			{
 				copy_kv_pair_with_abs_offset(DictKey::FDArray);
@@ -366,7 +365,7 @@ namespace font::cff
 		}
 
 
-#if 1
+#if 0
 		auto f = fopen("kekw.cff", "wb");
 		fwrite(buffer.data(), 1, buffer.size(), f);
 		fclose(f);
