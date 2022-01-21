@@ -55,6 +55,7 @@ namespace pdf
 		w->writeln("trailer");
 		w->write(trailer);
 
+		w->writeln();
 		w->writeln("startxref");
 		w->writeln("{}", xref_position);
 		w->writeln("%%EOF");

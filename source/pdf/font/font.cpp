@@ -67,8 +67,11 @@ namespace pdf
 		{
 			writeFontSubset(this->source_file, this->pdf_font_name, this->embedded_contents, this->glyph_metrics);
 
-			// and lastly, write the cmap we'll use for /ToUnicode.
+			// write the cmap we'll use for /ToUnicode.
 			this->writeUnicodeCMap(doc);
+
+			// and the cidset
+			this->writeCIDSet(doc);
 		}
 
 		return this->font_dictionary;
@@ -186,7 +189,7 @@ namespace pdf
 
 		cidfont_dict->add(names::BaseFont, basefont_name);
 		cidfont_dict->add(names::CIDSystemInfo, Dictionary::create({
-			{ names::Registry, String::create("Sap") },
+			{ names::Registry, String::create("Adobe") },
 			{ names::Ordering, String::create("Identity") },
 			{ names::Supplement, Integer::create(0) },
 		}));
@@ -245,6 +248,9 @@ namespace pdf
 		// TODO: use the FontFile to determine what the flags should be. no idea how important this is
 		// for the pdf to display properly but it's probably entirely inconsequential.
 
+		// we need a CIDSet for subset fonts
+		ret->cidset = Stream::create(doc, { });
+
 		// TODO: scale the metrics correctly!
 		auto font_desc = Dictionary::createIndirect(doc, names::FontDescriptor, {
 			{ names::FontName, basefont_name },
@@ -255,13 +261,14 @@ namespace pdf
 			{ names::Descent, Integer::create(font_file->metrics.descent) },
 			{ names::CapHeight, Integer::create(cap_height) },
 			{ names::XHeight, Integer::create(69) },
-			{ names::StemV, Integer::create(STEMV_CONSTANT) }
+			{ names::StemV, Integer::create(STEMV_CONSTANT) },
+			{ names::CIDSet, IndirectRef::create(ret->cidset) }
 		});
 
 		cidfont_dict->add(names::FontDescriptor, IndirectRef::create(font_desc));
 
 		ret->embedded_contents = Stream::create(doc, { });
-		ret->embedded_contents->setCompressed(true);
+		// ret->embedded_contents->setCompressed(true);
 
 		if(truetype_outlines)
 		{

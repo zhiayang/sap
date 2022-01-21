@@ -66,11 +66,6 @@ namespace pdf
 		if(!this->is_indirect)
 			pdf::error("cannot write non-materialised stream (not bound to a document)");
 
-		IndirHelper helper(w, this);
-
-		this->dict->writeFull(w);
-		w->writeln("stream");
-
 		if(this->is_compressed)
 		{
 			// if we are compressed, flush the stream.
@@ -78,11 +73,19 @@ namespace pdf
 			if(res != TDEFL_STATUS_DONE)
 				pdf::error("failed to flush the stream: {}", res);
 		}
+		this->dict->addOrReplace(names::Length, Integer::create(this->bytes.size()));
+
+		IndirHelper helper(w, this);
+
+		this->dict->writeFull(w);
+
+		w->writeln();
+		w->writeln("stream\r");
 
 		w->writeBytes(this->bytes.data(), this->bytes.size());
 
-		w->writeln();
-		w->writeln("endstream");
+		w->writeln("\r");
+		w->write("endstream");
 	}
 
 	void Stream::append(zst::str_view xs)

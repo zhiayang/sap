@@ -14,6 +14,12 @@ that are enabled. For now, ligatures are disabled till we implement this discrim
 
 
 
+### on CFF subsetting
+
+So we got OpenType-CFF subsetting mostly working, but it doesn't work consistently in all viewers. So, instead
+of embedding the whole OTF, we only embed the raw CFF data. This follows what TeX does, which means it's
+probably fine.
+
 
 
 ### on font size optimisation

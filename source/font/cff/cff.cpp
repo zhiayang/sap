@@ -256,7 +256,7 @@ namespace font::cff
 			auto private_dict = readDictionary(cff->bytes.drop(offset).take(size));
 			std::vector<Subroutine> local_subrs {};
 
-			// local subrs index is specified from the beginning of *the private DICT data)
+			// local subrs index is specified from the beginning of the private DICT data)
 			if(private_dict.contains(DictKey::Subrs))
 			{
 				auto local_subr_offset = private_dict.integer(DictKey::Subrs);

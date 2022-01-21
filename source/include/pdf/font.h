@@ -77,6 +77,7 @@ namespace pdf
 		Dictionary* font_dictionary = 0;
 
 		void writeUnicodeCMap(Document* doc) const;
+		void writeCIDSet(Document* doc) const;
 
 		mutable std::map<uint32_t, uint32_t> cmap_cache { };
 		mutable std::map<uint32_t, font::GlyphMetrics> glyph_metrics { };
@@ -100,6 +101,7 @@ namespace pdf
 
 		Stream* embedded_contents = 0;
 		Stream* unicode_cmap = 0;
+		Stream* cidset = 0;
 
 		// what goes in BaseName. for subsets, this includes the ABCDEF+ part.
 		std::string pdf_font_name;

@@ -93,7 +93,7 @@ namespace font::cff
 	}
 
 
-	zst::byte_buffer createCFFSubset(FontFile* font, zst::str_view subset_name,
+	CFFSubset createCFFSubset(FontFile* font, zst::str_view subset_name,
 		const std::map<uint32_t, GlyphMetrics>& used_glyphs)
 	{
 		auto cff = font->cff_data;
@@ -105,7 +105,18 @@ namespace font::cff
 		if(cff->cff2)
 		{
 			buffer.append(cff->bytes);
-			return buffer;
+
+			CFFSubset ret {};
+			ret.cff = std::move(buffer);
+
+			auto orig_cmap_table = font->tables[Tag("cmap")];
+			ret.cmap.append(
+				zst::byte_span(font->file_bytes, font->file_size)
+					.drop(orig_cmap_table.offset)
+					.take(orig_cmap_table.length)
+			);
+
+			return ret;
 		}
 
 		/*
@@ -217,8 +228,8 @@ namespace font::cff
 			auto builder = IndexTableBuilder();
 			for(auto& subr : cff->global_subrs)
 			{
-				if(subr.used)   builder.add(subr.charstring);
-				else            builder.add(zst::byte_span{});
+				/*if(subr.used)   */builder.add(subr.charstring);
+				// else            builder.add(zst::byte_span{});
 			}
 
 			builder.writeInto(global_subrs_table);
@@ -264,8 +275,8 @@ namespace font::cff
 					auto builder = IndexTableBuilder();
 					for(auto& subr : fd.local_subrs)
 					{
-						if(subr.used)   builder.add(subr.charstring);
-						else            builder.add(zst::byte_span{});
+						/*if(subr.used)   */builder.add(subr.charstring);
+						// else            builder.add(zst::byte_span{});
 					}
 
 					builder.writeInto(tmp_buffer);
@@ -295,7 +306,10 @@ namespace font::cff
 				auto fdarray_builder = IndexTableBuilder();
 				for(auto& [ priv_size, priv_ofs ] : private_dicts)
 				{
-					auto builder = DictBuilder().setIntegerPair(DictKey::Private, priv_size, priv_ofs);
+					auto builder = DictBuilder()
+						.setStringId(DictKey::FontName, subset_name_sid)
+						.setIntegerPair(DictKey::Private, priv_size, priv_ofs);
+
 					fdarray_builder.add(builder.serialise().span());
 				}
 
@@ -312,7 +326,7 @@ namespace font::cff
 					tmp_buffer.append_bytes(util::convertBEU16(1));
 					tmp_buffer.append_bytes(util::convertBEU16(0));
 					tmp_buffer.append(0);
-					tmp_buffer.append_bytes(util::convertBEU16(cff->glyphs.size()));
+					tmp_buffer.append_bytes(util::convertBEU16(cff->glyphs.size() + 1));
 				}
 				else
 				{
@@ -352,12 +366,16 @@ namespace font::cff
 		}
 
 
-#if 0
+#if 1
 		auto f = fopen("kekw.cff", "wb");
 		fwrite(buffer.data(), 1, buffer.size(), f);
 		fclose(f);
 #endif
 
-		return buffer;
+		CFFSubset ret {};
+		ret.cff = std::move(buffer);
+		ret.cmap = createCMapForCFFSubset(font);
+
+		return ret;
 	}
 }

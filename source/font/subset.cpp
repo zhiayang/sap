@@ -70,6 +70,13 @@ namespace font
 		const std::map<uint32_t, GlyphMetrics>& used_glyphs)
 	{
 		auto file_contents = zst::byte_span(font->file_bytes, font->file_size);
+		if(font->outline_type == FontFile::OUTLINES_CFF)
+		{
+			auto subset = cff::createCFFSubset(font, subset_name, used_glyphs);
+			stream->append(subset.cff.span());
+			return;
+		}
+
 		// stream->append(file_contents);
 		// return;
 
@@ -148,7 +155,7 @@ namespace font
 		}
 		else
 		{
-			auto new_cff_data = cff::createCFFSubset(font, subset_name, used_glyphs);
+			auto cff_subset = cff::createCFFSubset(font, subset_name, used_glyphs);
 
 			for(auto& table : included_tables)
 			{
@@ -156,8 +163,13 @@ namespace font
 				size_t checksum = table.checksum;
 				if(table.tag == Tag("CFF ") || table.tag == Tag("CFF2"))
 				{
-					size = new_cff_data.size();
-					checksum = compute_checksum(new_cff_data.span());
+					size = cff_subset.cff.size();
+					checksum = compute_checksum(cff_subset.cff.span());
+				}
+				else if(table.tag == Tag("cmap"))
+				{
+					size = cff_subset.cmap.size();
+					checksum = compute_checksum(cff_subset.cmap.span());
 				}
 				write_table_record(table.tag, checksum, size);
 			}
@@ -165,14 +177,18 @@ namespace font
 			for(auto& table : included_tables)
 			{
 				if(table.tag == Tag("CFF ") || table.tag == Tag("CFF2"))
-					stream->append(new_cff_data.span());
+					stream->append(cff_subset.cff.span());
+
+				else if(table.tag == Tag("cmap"))
+					stream->append(cff_subset.cmap.span());
 
 				else
 					stream->append(file_contents.drop(table.offset).take(table.length));
 			}
 		}
 
-#if 0
+
+#if 1
 		auto foo = fopen("test.otf", "wb");
 		stream->write_to_file(foo);
 		fclose(foo);

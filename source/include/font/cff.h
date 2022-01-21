@@ -211,6 +211,11 @@ namespace font::cff
 	std::map<uint16_t, uint16_t> readCharsetTable(size_t num_glyphs, zst::byte_span dict);
 
 	/*
+		Create the cmap corresponding to the subset CFF file. Don't call this directly.
+	*/
+	zst::byte_buffer createCMapForCFFSubset(FontFile* file);
+
+	/*
 		Get one of the predefined charsets, returning the mapping from glyph ID to SIDs.
 
 		0 = ISOAdobe
@@ -228,11 +233,20 @@ namespace font::cff
 
 namespace font::cff
 {
+	struct CFFSubset
+	{
+		zst::byte_buffer cff;
+		zst::byte_buffer cmap;
+	};
+
+
 	/*
-		Subset the CFF font (given in `file`), including only the used_glyphs.
+		Subset the CFF font (given in `file`), including only the used_glyphs. Returns a new CFF and cmap table
+		for embedding into the OTF font.
 	*/
-	zst::byte_buffer createCFFSubset(FontFile* file, zst::str_view subset_name,
+	CFFSubset createCFFSubset(FontFile* file, zst::str_view subset_name,
 		const std::map<uint32_t, GlyphMetrics>& used_glyphs);
+
 
 	/*
 		Build an INDEX by appending the following data items.
