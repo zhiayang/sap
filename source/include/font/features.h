@@ -70,12 +70,6 @@ namespace font
 
 namespace font::off
 {
-	struct TaggedTable
-	{
-		Tag tag;
-		size_t file_offset;
-	};
-
 	int getGlyphClass(zst::byte_span classdef_table, uint32_t glyphId);
 
 	// returns a map from classId -> [ glyphIds ], for all glyphs that have a class
@@ -89,22 +83,6 @@ namespace font::off
 
 	void parseGPos(FontFile* font, const Table& gpos_table);
 	void parseGSub(FontFile* font, const Table& gsub_table);
-
-	struct LookupTable
-	{
-		uint16_t type;
-		uint16_t flags;
-		uint16_t mark_filtering_set;
-
-		// note: data includes the header, and offsets also include it
-		// ie. the first item will be at offset ≠ 0, and data[0] is *not* the first item.
-		// note also that the data span is *NOT* bounded! it will go to the end of the file.
-		std::vector<uint16_t> subtable_offsets;
-		zst::byte_span data;
-	};
-
-	std::vector<TaggedTable> parseTaggedList(FontFile* font, zst::byte_span list);
-	std::vector<LookupTable> parseLookupList(FontFile* font, zst::byte_span buf);
 
 
 	/*
@@ -141,15 +119,23 @@ namespace font::off
 	struct Feature
 	{
 		Tag tag;
+		std::optional<zst::byte_span> parameters_table;
 		std::vector<uint16_t> lookups;
+	};
+
+	struct LookupTable
+	{
+		uint16_t type;
+		uint16_t flags;
+		uint16_t mark_filtering_set;
+		std::vector<zst::byte_span> subtables;
 	};
 
 	struct GPosTable
 	{
 		std::vector<Feature> features;
 		std::map<Tag, Script> scripts;
-
-		std::vector<LookupTable> lookup_tables;
+		std::vector<LookupTable> lookups;
 	};
 
 
@@ -187,7 +173,7 @@ namespace font::off
 		=============================
 	*/
 
-	struct TaggedTable2
+	struct TaggedTable
 	{
 		Tag tag;
 		zst::byte_span data;
@@ -206,9 +192,26 @@ namespace font::off
 	std::map<Tag, Script> parseScriptAndLanguageTables(zst::byte_span buf);
 
 	/*
-
+		Parse the FeatureList.
 	*/
-	std::vector<TaggedTable2> parseTaggedList(zst::byte_span buf);
+	std::vector<Feature> parseFeatureList(zst::byte_span buf);
+
+	/*
+		Parse the LookupList.
+	*/
+	std::vector<LookupTable> parseLookupList(zst::byte_span buf);
+
+	/*
+		Parse a "Tagged List" -- with the following layout:
+
+		u16 count;
+		Record records[count];
+
+		Record:
+			u32 Tag
+			u16 offset_from_start_of_table
+	*/
+	std::vector<TaggedTable> parseTaggedList(zst::byte_span buf);
 }
 
 

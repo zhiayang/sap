@@ -52,7 +52,9 @@ namespace font
 
 	std::optional<std::pair<GlyphAdjustment, GlyphAdjustment>> FontFile::getGlyphPairAdjustments(uint32_t gid1, uint32_t gid2) const
 	{
-		for(auto& lookup : this->gpos_table.lookup_tables)
+		return {};
+#if 0
+		for(auto& lookup : this->gpos_table.lookups)
 		{
 			if(lookup.type != GPOS_LOOKUP_PAIR)
 				continue;
@@ -146,11 +148,14 @@ namespace font
 		}
 
 		return { };
+#endif
 	}
 
 	std::optional<GlyphAdjustment> FontFile::getGlyphAdjustment(uint32_t glyphId) const
 	{
-		for(auto& lookup : this->gpos_table.lookup_tables)
+		return {};
+#if 0
+		for(auto& lookup : this->gpos_table.lookups)
 		{
 			if(lookup.type != GPOS_LOOKUP_SINGLE)
 				continue;
@@ -186,14 +191,17 @@ namespace font
 		}
 
 		return { };
+#endif
 	}
 
 
 	std::map<std::pair<uint32_t, uint32_t>, KerningPair> FontFile::getAllKerningPairs() const
 	{
+		return {};
+	#if 0
 		std::map<std::pair<uint32_t, uint32_t>, KerningPair> kerning_pairs;
 
-		for(auto& lookup : this->gpos_table.lookup_tables)
+		for(auto& lookup : this->gpos_table.lookups)
 		{
 			if(lookup.type != GPOS_LOOKUP_PAIR)
 				continue;
@@ -269,6 +277,7 @@ namespace font
 		}
 
 		return kerning_pairs;
+#endif
 	}
 }
 
@@ -307,13 +316,15 @@ namespace font::off
 			return;
 		}
 
-		auto script_list = parseTaggedList(font, table_start.drop(consume_u16(buf)));
-		auto feature_list = parseTaggedList(font, table_start.drop(consume_u16(buf)));
+		auto& gpos = font->gpos_table;
 
-		auto lookup_list_ofs = consume_u16(buf);
-		auto lookup_tables = table_start.drop(lookup_list_ofs);
+		auto script_list_ofs  = consume_u16(buf);
+		auto feature_list_ofs = consume_u16(buf);
+		auto lookup_list_ofs  = consume_u16(buf);
 
-		font->gpos_table.lookup_tables = parseLookupList(font, lookup_tables);
+		gpos.scripts  = parseScriptAndLanguageTables(table_start.drop(script_list_ofs));
+		gpos.features = parseFeatureList(table_start.drop(feature_list_ofs));
+		gpos.lookups  = parseLookupList(table_start.drop(lookup_list_ofs));
 
 		getLookupTablesForFeatures(font->gpos_table, {});
 	}

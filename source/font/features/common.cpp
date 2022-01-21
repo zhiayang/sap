@@ -112,9 +112,71 @@ namespace font::off
 		return scripts;
 	}
 
-	std::vector<TaggedTable2> parseTaggedList(zst::byte_span buf)
+	static Feature parse_one_feature(Tag tag, zst::byte_span buf)
 	{
-		std::vector<TaggedTable2> ret {};
+		Feature feature {};
+		feature.tag = tag;
+
+		auto table_start = buf;
+
+		if(auto param_ofs = consume_u16(buf); param_ofs != 0)
+			feature.parameters_table = table_start.drop(param_ofs);
+
+		auto num_lookups = consume_u16(buf);
+		for(size_t i = 0; i < num_lookups; i++)
+			feature.lookups.push_back(consume_u16(buf));
+
+		return feature;
+	}
+
+	std::vector<Feature> parseFeatureList(zst::byte_span buf)
+	{
+		std::vector<Feature> features {};
+		auto feature_tables = parseTaggedList(buf);
+
+		for(auto& feat : feature_tables)
+			features.push_back(parse_one_feature(feat.tag, feat.data));
+
+		return features;
+	}
+
+
+	std::vector<LookupTable> parseLookupList(zst::byte_span buf)
+	{
+		auto table_start = buf;
+		auto num_lookups = consume_u16(buf);
+
+		std::vector<LookupTable> table_list {};
+
+		for(size_t i = 0; i < num_lookups; i++)
+		{
+			auto offset = consume_u16(buf);
+			auto tbl_buf = table_start.drop(offset);
+			auto lookup_start = tbl_buf;
+
+			LookupTable lookup {};
+			lookup.type = consume_u16(tbl_buf);
+			lookup.flags = consume_u16(tbl_buf);
+
+			auto num_subtables = consume_u16(tbl_buf);
+			for(uint16_t i = 0; i < num_subtables; i++)
+				lookup.subtables.push_back(lookup_start.drop(consume_u16(tbl_buf)));
+
+			lookup.mark_filtering_set = consume_u16(tbl_buf);
+
+			table_list.push_back(std::move(lookup));
+		}
+
+		return table_list;
+	}
+
+
+
+
+
+	std::vector<TaggedTable> parseTaggedList(zst::byte_span buf)
+	{
+		std::vector<TaggedTable> ret {};
 
 		auto table_start = buf;
 		auto num = consume_u16(buf);
@@ -127,69 +189,5 @@ namespace font::off
 		}
 
 		return ret;
-	}
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-	std::vector<TaggedTable> parseTaggedList(FontFile* font, zst::byte_span list)
-	{
-		auto table_start = list;
-
-		std::vector<TaggedTable> ret;
-
-		auto num = consume_u16(list);
-		for(size_t i = 0; i < num; i++)
-		{
-			auto tag = Tag(consume_u32(list));
-			auto ofs = consume_u16(list);
-
-			ret.push_back({ tag, static_cast<size_t>(ofs + (table_start.data() - font->file_bytes)) });
-		}
-
-		return ret;
-	}
-
-	std::vector<LookupTable> parseLookupList(FontFile* font, zst::byte_span buf)
-	{
-		auto table_start = buf;
-		auto num_lookups = consume_u16(buf);
-
-		std::vector<LookupTable> table_list {};
-
-		for(size_t i = 0; i < num_lookups; i++)
-		{
-			auto offset = consume_u16(buf);
-			auto tbl_buf = table_start.drop(offset);
-
-			LookupTable lookup_table {};
-			lookup_table.data = tbl_buf;
-
-			lookup_table.type = consume_u16(tbl_buf);
-			lookup_table.flags = consume_u16(tbl_buf);
-
-			auto num_subtables = consume_u16(tbl_buf);
-			for(uint16_t i = 0; i < num_subtables; i++)
-				lookup_table.subtable_offsets.push_back(consume_u16(tbl_buf));
-
-			table_list.push_back(std::move(lookup_table));
-		}
-
-		return table_list;
 	}
 }
