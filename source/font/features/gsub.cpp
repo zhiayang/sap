@@ -88,8 +88,11 @@ namespace font
 #endif
 		return ligature_map;
 	}
+}
 
 
+namespace font::off
+{
 	/*
 		TODO: have more discretion about which ligatures to use. ideally, we should just
 		parse out all the ligatures/substitutions and tie them into features. this way,

@@ -7,7 +7,7 @@
 #include "font/font.h"
 #include "font/features.h"
 
-namespace font
+namespace font::off
 {
 	std::vector<TaggedTable> parseTaggedList(FontFile* font, zst::byte_span list)
 	{

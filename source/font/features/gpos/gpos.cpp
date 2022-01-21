@@ -71,18 +71,18 @@ namespace font
 					sap::internal_error("unknown format {}", format);
 
 				// the coverage table only lists the first glyph id.
-				if(auto coverage_idx = getGlyphCoverageIndex(subtable_start.drop(cov_ofs), gid1); coverage_idx.has_value())
+				if(auto cov_idx = off::getGlyphCoverageIndex(subtable_start.drop(cov_ofs), gid1); cov_idx.has_value())
 				{
 					if(format == 1)
 					{
 						auto num_pair_sets = consume_u16(subtable);
-						assert(*coverage_idx < num_pair_sets);
+						assert(*cov_idx < num_pair_sets);
 
 						const auto PairRecordSize = sizeof(uint16_t)
 							+ get_value_record_size(value_fmt1)
 							+ get_value_record_size(value_fmt2);
 
-						auto pairset_offset = peek_u16(subtable.drop(*coverage_idx * sizeof(uint16_t)));
+						auto pairset_offset = peek_u16(subtable.drop(*cov_idx * sizeof(uint16_t)));
 						auto pairset_table = subtable_start.drop(pairset_offset);
 
 						auto num_pairs = consume_u16(pairset_table);
@@ -123,8 +123,8 @@ namespace font
 						auto num_cls1 = consume_u16(subtable);
 						auto num_cls2 = consume_u16(subtable);
 
-						auto g1_class = getGlyphClass(subtable_start.drop(cls_ofs1), gid1);
-						auto g2_class = getGlyphClass(subtable_start.drop(cls_ofs2), gid2);
+						auto g1_class = off::getGlyphClass(subtable_start.drop(cls_ofs1), gid1);
+						auto g2_class = off::getGlyphClass(subtable_start.drop(cls_ofs2), gid2);
 
 						// note that num_cls1/2 include class 0
 						if(g1_class < num_cls1 && g2_class < num_cls2)
@@ -167,7 +167,7 @@ namespace font
 				if(format != 1 && format != 2)
 					sap::internal_error("unknown format {}", format);
 
-				if(auto coverage_idx = getGlyphCoverageIndex(subtable_start.drop(cov_ofs), glyphId); coverage_idx.has_value())
+				if(auto cov_idx = off::getGlyphCoverageIndex(subtable_start.drop(cov_ofs), glyphId); cov_idx.has_value())
 				{
 					if(format == 1)
 					{
@@ -176,9 +176,9 @@ namespace font
 					else
 					{
 						auto num_records = consume_u16(subtable);
-						assert(coverage_idx < num_records);
+						assert(cov_idx < num_records);
 
-						subtable.remove_prefix(get_value_record_size(value_fmt) * *coverage_idx);
+						subtable.remove_prefix(get_value_record_size(value_fmt) * *cov_idx);
 						return parse_value_record(subtable, value_fmt);
 					}
 				}
@@ -211,7 +211,7 @@ namespace font
 				if(format != 1 && format != 2)
 					sap::internal_error("unknown format {}", format);
 
-				auto cov_table = parseCoverageTable(subtable_start.drop(cov_ofs));
+				auto cov_table = off::parseCoverageTable(subtable_start.drop(cov_ofs));
 
 				if(format == 1)
 				{
@@ -244,8 +244,8 @@ namespace font
 					auto num_cls1 = consume_u16(subtable);
 					auto num_cls2 = consume_u16(subtable);
 
-					auto classes_1 = parseClassDefTable(subtable_start.drop(cls_ofs1));
-					auto classes_2 = parseClassDefTable(subtable_start.drop(cls_ofs2));
+					auto classes_1 = off::parseClassDefTable(subtable_start.drop(cls_ofs1));
+					auto classes_2 = off::parseClassDefTable(subtable_start.drop(cls_ofs2));
 
 					for(size_t c1 = 0; c1 < num_cls1; c1++)
 					{
@@ -270,6 +270,19 @@ namespace font
 
 		return kerning_pairs;
 	}
+}
+
+
+namespace font::off
+{
+	std::map<size_t, GlyphAdjustment> getPositioningAdjustmentsForGlyphSequence(FontFile* font,
+		zst::span<uint32_t> glyphs, const FeatureSet& features)
+	{
+		return {};
+	}
+
+
+
 
 	void parseGPos(FontFile* font, const Table& gpos_table)
 	{

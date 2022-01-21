@@ -9,7 +9,7 @@
 #include "font/font.h"
 #include "font/features.h"
 
-namespace font
+namespace font::off
 {
 	int getGlyphClass(zst::byte_span table, uint32_t glyphId)
 	{

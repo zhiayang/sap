@@ -467,8 +467,8 @@ namespace font
 				auto& tbl = it->second;
 				if(tag == Tag("CFF "))      parse_cff_table(font, tbl);
 				else if(tag == Tag("CFF2")) parse_cff_table(font, tbl);
-				else if(tag == Tag("GPOS")) parseGPos(font, tbl);
-				else if(tag == Tag("GSUB")) parseGSub(font, tbl);
+				else if(tag == Tag("GPOS")) off::parseGPos(font, tbl);
+				else if(tag == Tag("GSUB")) off::parseGSub(font, tbl);
 				else if(tag == Tag("OS/2")) parse_os2_table(font, tbl);
 				else if(tag == Tag("cmap")) parse_cmap_table(font, tbl);
 				else if(tag == Tag("glyf")) parse_glyf_table(font, tbl);

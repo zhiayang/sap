@@ -320,7 +320,7 @@ namespace pdf
 			would eventually end up inside). kerning pairs are similar, where eventually every combination of 2
 			glyphs would end up inside ><
 		*/
-		ret->glyph_ligatures = font_file->getAllGlyphLigatures();
+		// ret->glyph_ligatures = font_file->getAllGlyphLigatures();
 		// ret->kerning_pairs = font_file->getAllKerningPairs();
 
 		ret->font_resource_name = zpr::sprint("F{}", doc->getNextFontResourceNumber());
