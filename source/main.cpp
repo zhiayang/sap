@@ -14,7 +14,7 @@
 
 #include "font/font.h"
 
-#if 1
+#if 0
 constexpr const char* input_text =
 	"何 the fuck did you just fucking 言います about 私, you 小さい bitch ですか? 私'll\n"
 	"have あなた know that 私 graduated top of my class in 日本語 3, and 私’ve been involved\n"
@@ -47,9 +47,9 @@ int main(int argc, char** argv)
 	auto document = sap::Document();
 	auto font = pdf::Font::fromFontFile(
 		&document.pdfDocument(),
-		font::FontFile::parseFromFile("fonts/Meiryo.ttf")
+		// font::FontFile::parseFromFile("fonts/Meiryo.ttf")
 		// font::FontFile::parseFromFile("fonts/MyriadPro-Regular.ttf")
-		// font::FontFile::parseFromFile("fonts/XCharter-Roman.otf")
+		font::FontFile::parseFromFile("fonts/XCharter-Roman.otf")
 		// font::FontFile::parseFromFile("fonts/FDArrayTest257.otf")
 		// font::FontFile::parseFromFile("fonts/SourceSerif4-Regular.otf")
 		// font::FontFile::parseFromFile("fonts/SourceSerif4Variable-Roman.otf")

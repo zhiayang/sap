@@ -21,7 +21,7 @@ namespace pdf
 	IndirHelper::~IndirHelper()
 	{
 		if(indirect)
-			w->writeln("endobj"), w->writeln();
+			w->writeln(), w->writeln("endobj"), w->writeln();
 	}
 
 	void Object::write(Writer* w) const
@@ -132,7 +132,7 @@ namespace pdf
 			first = false;
 		}
 		w->nesting--;
-		w->writeln("{}>>", zpr::w(w->nesting * 2)(""));
+		w->write("{}>>", zpr::w(w->nesting * 2)(""));
 	}
 
 

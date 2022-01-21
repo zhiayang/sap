@@ -54,7 +54,8 @@ namespace font
 
 	struct GPosTable
 	{
-		// indexed by the GPOS_LOOKUP enumeration.
+		std::map<Tag, std::vector<LookupTable>> features;
+
 		std::vector<LookupTable> lookup_tables;
 	};
 
@@ -70,8 +71,7 @@ namespace font
 
 	struct GSubTable
 	{
-		// indexed by the GPOS_LOOKUP enumeration.
-		std::vector<LookupTable> lookup_tables[GSUB_LOOKUP_MAX];
+		std::vector<LookupTable> lookup_tables;
 	};
 
 

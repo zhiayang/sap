@@ -291,6 +291,10 @@ namespace font
 		auto feature_list = parseTaggedList(font, table_start.drop(consume_u16(buf)));
 
 #if 0
+		zpr::println("scripts:");
+		for(auto& scr : script_list)
+			zpr::println("  {}", scr.tag.str());
+
 		zpr::println("features: ({})", feature_list.size());
 		for(auto& feat : feature_list)
 		{
