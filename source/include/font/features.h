@@ -48,12 +48,6 @@ namespace font
 
 namespace font::off
 {
-	std::optional<int> getGlyphCoverageIndex(zst::byte_span coverage_table, uint32_t glyphId);
-
-	// returns a map from coverageIndex -> glyphId, for every glyph in the coverage table.
-	std::map<int, uint32_t> parseCoverageTable(zst::byte_span coverage_table);
-
-
 	/*
 		From the OFF specification:
 
@@ -213,6 +207,18 @@ namespace font::off
 		a map from glyph id to class id. Again, glyphs with class 0 are not included.
 	*/
 	std::map<uint32_t, int> parseGlyphToClassMapping(zst::byte_span classdef_table);
+
+	/*
+		Returns the coverage index for the given glyphid within the given coverage table. Unlike classes,
+		there is no "default" coverage index -- you just skip the lookup if the glyph is not in the
+		coveraged table.
+	*/
+	std::optional<int> getGlyphCoverageIndex(zst::byte_span coverage_table, uint32_t glyphId);
+
+	/*
+		Returns a map from coverageIndex -> glyphId, for every glyph in the coverage table.
+	*/
+	std::map<int, uint32_t> parseCoverageTable(zst::byte_span coverage_table);
 }
 
 
@@ -242,11 +248,11 @@ namespace font::off::gpos
 
 		Lookups will be searched for glyphs starting from glyphs[position], and *not* at glyph.[0].
 	*/
-	std::map<size_t, GlyphAdjustment> lookupForGlyphSequence(GPosTable& gpos, LookupTable& lookup,
+	std::map<size_t, GlyphAdjustment> lookupForGlyphSequence(const GPosTable& gpos, const LookupTable& lookup,
 		zst::span<uint32_t> glyphs, size_t position);
 
 
-	OptionalGA lookupSingleAdjustment(LookupTable& lookup, uint32_t gid);
+	OptionalGA lookupSingleAdjustment(const LookupTable& lookup, uint32_t gid);
 
 	/*
 		It is important to know whether there was an adjustment for the second glyph in the pair
@@ -257,13 +263,13 @@ namespace font::off::gpos
 
 		So, instead of returning an optional of pair, we return a pair of optionals.
 	*/
-	std::pair<OptionalGA, OptionalGA> lookupPairAdjustment(LookupTable& lookup, uint32_t gid1, uint32_t gid2);
+	std::pair<OptionalGA, OptionalGA> lookupPairAdjustment(const LookupTable& lookup, uint32_t gid1, uint32_t gid2);
 
 	/*
 		This one needs to "recursively" perform lookups, so it needs the GPOS table as well. Returns a mapping
 		from the index in the given sequence to the adjustment.
 	*/
-	std::map<size_t, GlyphAdjustment> lookupContextualPositioning(GPosTable& gpos, LookupTable& lookup,
+	std::map<size_t, GlyphAdjustment> lookupContextualPositioning(const GPosTable& gpos, const LookupTable& lookup,
 		zst::span<uint32_t> glyphs);
 }
 

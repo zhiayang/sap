@@ -48,7 +48,7 @@ namespace font::off::gpos
 	}
 
 
-	OptionalGA lookupSingleAdjustment(LookupTable& lookup, uint32_t gid)
+	OptionalGA lookupSingleAdjustment(const LookupTable& lookup, uint32_t gid)
 	{
 		assert(lookup.type == LOOKUP_SINGLE);
 
@@ -86,7 +86,7 @@ namespace font::off::gpos
 		return std::nullopt;
 	}
 
-	std::pair<OptionalGA, OptionalGA> lookupPairAdjustment(LookupTable& lookup, uint32_t gid1, uint32_t gid2)
+	std::pair<OptionalGA, OptionalGA> lookupPairAdjustment(const LookupTable& lookup, uint32_t gid1, uint32_t gid2)
 	{
 		assert(lookup.type == LOOKUP_PAIR);
 		for(auto subtable : lookup.subtables)
@@ -181,7 +181,7 @@ namespace font::off::gpos
 		return { std::nullopt, std::nullopt };
 	}
 
-	static std::map<size_t, GlyphAdjustment> apply_lookup_records(GPosTable& gpos, size_t num_records,
+	static std::map<size_t, GlyphAdjustment> apply_lookup_records(const GPosTable& gpos, size_t num_records,
 		zst::byte_span records, zst::span<uint32_t> glyphs)
 	{
 		// ok, we matched this one.
@@ -204,7 +204,8 @@ namespace font::off::gpos
 
 
 
-	std::map<size_t, GlyphAdjustment> lookupContextualPositioning(GPosTable& gpos, LookupTable& lookup, zst::span<uint32_t> glyphs)
+	std::map<size_t, GlyphAdjustment> lookupContextualPositioning(const GPosTable& gpos, const LookupTable& lookup,
+		zst::span<uint32_t> glyphs)
 	{
 		assert(lookup.type == LOOKUP_CONTEXTUAL);
 		for(auto subtable : lookup.subtables)
@@ -221,18 +222,49 @@ namespace font::off::gpos
 
 			if(format == 3)
 			{
+				auto num_glyphs = consume_u16(subtable);
+				auto num_records = consume_u16(subtable);
+
+				// can't match this rule, not enough glyphs
+				if(glyphs.size() < num_glyphs)
+					continue;
+
+				bool matched = true;
+				for(size_t i = 0; i < num_glyphs; i++)
+				{
+					// basically, the idea is that for glyph[i], it must appear in coverage[i].
+					auto coverage = subtable_start.drop(consume_u16(subtable));
+					if(!getGlyphCoverageIndex(coverage, glyphs[i]).has_value())
+					{
+						matched = false;
+						break;
+					}
+				}
+
+				if(!matched)
+					continue;
+
+				return apply_lookup_records(gpos, num_records, subtable, glyphs);
 			}
 			else
 			{
 				assert(format == 1 || format == 2);
 				auto cov_ofs = consume_u16(subtable);
 
+				// both formats 1 and 2 uses a coverage table to gate the first glyph. If the first
+				// glyph in our sequence is not covered, skip this subtable.
 				auto cov_idx = off::getGlyphCoverageIndex(subtable_start.drop(cov_ofs), glyphs[0]);
 				if(!cov_idx.has_value())
 					continue;
 
 				if(format == 1)
 				{
+					/*
+						Format 1 defines lookups based on glyph ids. After slogging through the tables,
+						the fundamental idea is to match the input glyphstring with an expected sequence,
+						which is given in glyph ids.
+					*/
+
 					auto num_rulesets = consume_u16(subtable);
 					assert(*cov_idx < num_rulesets);
 
@@ -272,18 +304,24 @@ namespace font::off::gpos
 				}
 				else
 				{
+					/*
+						Format 2 defines lookups based on classes. The first glyph is still gated
+						by the initial coverage table. At the final stage (Rule), glyphs in the
+						input glyphstring are matched by *class id*, not glyph id.
+					*/
 					auto classdef_ofs = consume_u16(subtable);
 
-					auto class_mapping = parseGlyphToClassMapping(subtable_start.drop(classdef_ofs));
-					auto lookup_class = [&class_mapping](uint32_t gid) -> int {
-						if(auto it = class_mapping.find(gid); it != class_mapping.end())
-							return it->second;
-						return 0;
-					};
+					/*
+						Here, we don't parse the entire table at once, but rather lookup the classdef table
+						separately. We can perform a binary search on the table, so it's not too slow.
 
+						Building a datastructure (ie. parsing the whole table) is probably not a good idea,
+						since it won't (and can't, for now...) be cached between lookups.
+					*/
+					auto classdef_table = subtable_start.drop(classdef_ofs);
 					auto num_class_sets = consume_u16(subtable);
 
-					auto first_class_id = lookup_class(glyphs[0]);
+					auto first_class_id = getGlyphClass(classdef_table, glyphs[0]);
 					assert(first_class_id < num_class_sets);
 
 					auto classset = subtable_start.drop(peek_u16(subtable.drop(first_class_id * sizeof(uint16_t))));
@@ -296,10 +334,14 @@ namespace font::off::gpos
 						auto num_glyphs = consume_u16(rule);
 						auto num_records = consume_u16(rule);
 
+						// can't match this rule, not enough glyphs
+						if(glyphs.size() < num_glyphs)
+							continue;
+
 						bool matched = true;
 						for(auto k = 1; k < num_glyphs; k++)
 						{
-							if(lookup_class(glyphs[k]) != consume_u16(rule))
+							if(getGlyphClass(classdef_table, glyphs[k]) != consume_u16(rule))
 							{
 								matched = false;
 								break;

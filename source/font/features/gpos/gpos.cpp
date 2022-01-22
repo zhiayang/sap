@@ -64,7 +64,7 @@ namespace font::off
 		return adjustments;
 	}
 
-	std::map<size_t, GlyphAdjustment> gpos::lookupForGlyphSequence(GPosTable& gpos_table, LookupTable& lookup,
+	std::map<size_t, GlyphAdjustment> gpos::lookupForGlyphSequence(const GPosTable& gpos_table, const LookupTable& lookup,
 		zst::span<uint32_t> glyphs, size_t position)
 	{
 		std::map<size_t, GlyphAdjustment> adjs {};
