@@ -1,96 +1,151 @@
-// gsub.cpp
-// Copyright (c) 2021, zhiayang
+// lookup.cpp
+// Copyright (c) 2022, zhiayang
 // SPDX-License-Identifier: Apache-2.0
-
-#include <cassert>
 
 #include "util.h"
 #include "error.h"
+
 #include "font/font.h"
 #include "font/features.h"
 
-namespace font
+namespace font::off::gsub
 {
-	std::map<uint32_t, GlyphLigatureSet> FontFile::getAllGlyphLigatures() const
+	std::optional<uint32_t> lookupSingleSubstitution(const LookupTable& lookup, uint32_t gid)
 	{
-		std::map<uint32_t, GlyphLigatureSet> ligature_map;
+		assert(lookup.type == LOOKUP_SINGLE);
 
-#if 0
-		for(auto& lookup : this->gsub_tables.lookup_tables[GSUB_LOOKUP_LIGATURE])
+		for(auto subtable : lookup.subtables)
 		{
-			auto ofs = lookup.file_offset;
-			auto buf = zst::byte_span(this->file_bytes, this->file_size).drop(ofs);
+			auto subtable_start = subtable;
+			auto format = consume_u16(subtable);
 
-			auto table_start = buf;
-
-			// we already know the type, so just skip it.
-			consume_u16(buf);
-			auto flags = consume_u16(buf);
-			auto num_subs = consume_u16(buf);
-
-			(void) flags;
-
-			for(size_t i = 0; i < num_subs; i++)
+			if(format != 1 && format != 2)
 			{
-				auto ofs = consume_u16(buf);
-				auto subtable = table_start.drop(ofs);
-				auto subtable_start = subtable;
+				sap::warn("font/gsub", "unknown subtable format '{}' in GSUB/Single", format);
+				continue;
+			}
 
-				auto format = consume_u16(subtable);
-				auto cov_ofs = consume_u16(subtable);
+			// both of them have coverage tables.
+			auto cov_ofs = consume_u16(subtable);
+			auto cov_idx = getGlyphCoverageIndex(subtable_start.drop(cov_ofs), gid);
+			if(!cov_idx.has_value())
+				continue;
 
-				auto cov_table = parseCoverageTable(subtable_start.drop(cov_ofs));
+			if(format == 1)
+			{
+				// fixed delta for all covered glyphs.
+				auto delta = consume_u16(subtable);
+				return gid + delta;
+			}
+			else
+			{
+				auto num_glyphs = consume_u16(subtable);
+				assert(*cov_idx < num_glyphs);
 
-				if(format != 1)
-					sap::internal_error("unknown GSUB LookupTable format {}", format);
-
-				// this thing is 2 levels of indirection deep
-				auto num_liga_sets = consume_u16(subtable);
-
-				// there should be 1 LigatureSet for every covered glyph in the coverage table
-				assert(num_liga_sets == cov_table.size());
-
-				for(size_t i = 0; i < num_liga_sets; i++)
-				{
-					auto first_gid = cov_table[i];
-					auto liga_set = subtable_start.drop(consume_u16(subtable));
-					auto liga_set_start = liga_set;
-
-					auto num_ligatures = consume_u16(liga_set);
-
-					for(size_t k = 0; k < num_ligatures; k++)
-					{
-						auto liga_table = liga_set_start.drop(consume_u16(liga_set));
-						auto substitute = consume_u16(liga_table);
-						auto num_components = consume_u16(liga_table);
-
-						if(num_components > MAX_LIGATURE_LENGTH)
-						{
-							zpr::println("warning: skipping ligature with {} components (more than maximum of {})",
-								num_components, MAX_LIGATURE_LENGTH);
-							continue;
-						}
-
-						GlyphLigature lig { };
-						lig.num_glyphs = num_components;
-						lig.substitute = substitute;
-						lig.glyphs[0] = first_gid;
-
-						for(size_t i = 1; i < num_components; i++)
-							lig.glyphs[i] = consume_u16(liga_table);
-
-						// ligature_map[lig] = substitute;
-						ligature_map[first_gid].ligatures.push_back(lig);
-					}
-				}
+				return peek_u16(subtable.drop(*cov_idx * sizeof(uint16_t)));
 			}
 		}
-#endif
-		return ligature_map;
+
+		return std::nullopt;
 	}
-}
 
+	std::optional<std::vector<uint32_t>> lookupMultipleSubstitution(const LookupTable& lookup, uint32_t gid)
+	{
+		assert(lookup.type == LOOKUP_MULTIPLE);
+		for(auto subtable : lookup.subtables)
+		{
+			auto subtable_start = subtable;
+			auto format = consume_u16(subtable);
 
-namespace font::off
-{
+			if(format != 1)
+			{
+				sap::warn("font/gsub", "unknown subtable format '{}' in GSUB/Multiple", format);
+				continue;
+			}
+
+			auto cov_ofs = consume_u16(subtable);
+			auto cov_idx = getGlyphCoverageIndex(subtable_start.drop(cov_ofs), gid);
+			if(!cov_idx.has_value())
+				continue;
+
+			auto num_sequences = consume_u16(subtable);
+			assert(*cov_idx < num_sequences);
+
+			auto seq_ofs = peek_u16(subtable.drop(*cov_idx * sizeof(uint16_t)));
+			auto sequence = subtable_start.drop(seq_ofs);
+
+			/*
+				spec:
+
+				The use of multiple substitution for deletion of an input glyph is prohibited.
+				The glyphCount value should always be greater than 0.
+			*/
+			auto num_glyphs = consume_u16(sequence);
+			assert(num_glyphs > 0);
+
+			std::vector<uint32_t> subst {};
+			for(uint16_t i = 0; i < num_glyphs; i++)
+				subst.push_back(consume_u16(sequence));
+
+			return subst;
+		}
+
+		return std::nullopt;
+	}
+
+	std::optional<std::pair<uint32_t, size_t>> lookupLigatureSubstitution(const LookupTable& lookup,
+		zst::span<uint32_t> glyphs)
+	{
+		assert(glyphs.size() > 0);
+		assert(lookup.type == LOOKUP_LIGATURE);
+
+		for(auto subtable : lookup.subtables)
+		{
+			auto subtable_start = subtable;
+			auto format = consume_u16(subtable);
+
+			if(format != 1)
+			{
+				sap::warn("font/gsub", "unknown subtable format '{}' in GSUB/Ligature", format);
+				continue;
+			}
+
+			auto cov_ofs = consume_u16(subtable);
+			auto cov_idx = getGlyphCoverageIndex(subtable_start.drop(cov_ofs), glyphs[0]);
+			if(!cov_idx.has_value())
+				continue;
+
+			auto num_sets = consume_u16(subtable);
+			assert(*cov_idx < num_sets);
+
+			auto set_ofs = peek_u16(subtable.drop(*cov_idx * sizeof(uint16_t)));
+
+			auto ligature_set = subtable_start.drop(set_ofs);
+			auto ligature_set_start = ligature_set;
+
+			auto num_ligatures = consume_u16(ligature_set);
+			for(uint16_t i = 0; i < num_ligatures; i++)
+			{
+				auto ligature = ligature_set_start.drop(consume_u16(ligature_set));
+
+				uint32_t output_gid = consume_u16(ligature);
+				size_t num_components = consume_u16(ligature);
+
+				if(glyphs.size() < num_components)
+					continue;
+
+				bool matched = true;
+				for(size_t k = 1; matched && k < num_components; k++)
+				{
+					if(glyphs[k] != consume_u16(ligature))
+						matched = false;
+				}
+
+				if(matched)
+					return std::pair(output_gid, num_components);
+			}
+		}
+
+		return std::nullopt;
+	}
 }

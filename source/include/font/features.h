@@ -219,6 +219,26 @@ namespace font::off
 		Returns a map from coverageIndex -> glyphId, for every glyph in the coverage table.
 	*/
 	std::map<int, uint32_t> parseCoverageTable(zst::byte_span coverage_table);
+
+	/*
+		Parse and match the input glyphstring with the lookup *subtable* provided. Again, this should be a
+		lookup *subtable*, not the LookupTable itself.
+
+		Returns a list of PosLookupRecord (cf. SubstLookupRecord):
+			(first)  index of the glyph in the sequence
+			(second) lookup index to perform on that glyph
+
+		The data layouts for GPOS and GSUB are identical, so this is a common implementation. Use for GPOS type 7
+		and GSUB type 5.
+	*/
+	std::vector<std::pair<uint16_t, uint16_t>> performContextualLookup(zst::byte_span subtable, zst::span<uint32_t> glyphs);
+
+	/*
+		Parse and match the input glyphstring (where the current glyph is at glyphs[position], using the provided *subtable*.
+		The same caveats apply as for `performContextualLookup`. Use for GPOS type 8 and GSUB type 6.
+	*/
+	std::vector<std::pair<uint16_t, uint16_t>> performChainedContextLookup(zst::byte_span subtable,
+		zst::span<uint32_t> glyphs, size_t position);
 }
 
 
@@ -246,7 +266,7 @@ namespace font::off::gpos
 		glyphs at prior indices (ie. < position) are used as lookbehind for chained contextual lookups,
 		if necessary.
 
-		Lookups will be searched for glyphs starting from glyphs[position], and *not* at glyph.[0].
+		Lookups will be searched for glyphs starting from glyphs[position], and *not* at glyph[0].
 
 		In the returned mapping,
 			adjustments[0] adjusts glyphs[position],
@@ -259,11 +279,13 @@ namespace font::off::gpos
 
 
 	/*
-		Lookup a single glyph adjustment for the given glyph id.
+		Lookup a single glyph adjustment (type 1, LOOKUP_SINGLE) for the given glyph id.
 	*/
 	OptionalGA lookupSingleAdjustment(const LookupTable& lookup, uint32_t gid);
 
 	/*
+		Lookup a pair glyph adjustment (type 2, LOOKUP_PAIR).
+
 		It is important to know whether there was an adjustment for the second glyph in the pair
 		or not; see OFF 1.9, page 220:
 
@@ -275,6 +297,8 @@ namespace font::off::gpos
 	std::pair<OptionalGA, OptionalGA> lookupPairAdjustment(const LookupTable& lookup, uint32_t gid1, uint32_t gid2);
 
 	/*
+		Lookup contextual glyph adjustments (type 7, LOOKUP_CONTEXTUAL).
+
 		This one needs to "recursively" perform lookups, so it needs the GPOS table as well. Returns a mapping
 		from the index in the given sequence to the adjustment.
 	*/
@@ -282,6 +306,8 @@ namespace font::off::gpos
 		zst::span<uint32_t> glyphs);
 
 	/*
+		Lookup chained-context glyph adjustments (type 8, LOOKUP_CHAINING_CONTEXT).
+
 		This one also needs to recursively perform lookups. Additionally, this requires both lookahead and lookbehind,
 		so we take the *entire glyphstring*, as well as an index which is the position in the glyphstring that the
 		'current' glyph is actually at.
@@ -300,11 +326,34 @@ namespace font::off::gsub
 	constexpr uint16_t LOOKUP_MULTIPLE          = 2;
 	constexpr uint16_t LOOKUP_ALTERNATE         = 3;
 	constexpr uint16_t LOOKUP_LIGATURE          = 4;
-	constexpr uint16_t LOOKUP_CONTEXT           = 5;
-	constexpr uint16_t LOOKUP_CHAINED_CONTEXT   = 6;
+	constexpr uint16_t LOOKUP_CONTEXTUAL        = 5;
+	constexpr uint16_t LOOKUP_CHAINING_CONTEXT  = 6;
 	constexpr uint16_t LOOKUP_EXTENSION_SUBST   = 7;
 	constexpr uint16_t LOOKUP_REVERSE_CHAIN     = 8;
 	constexpr uint16_t LOOKUP_MAX               = 9;
+
+	/*
+		Lookup a single substitution (type 1, LOOKUP_SINGLE); replaces one input glyph with one output glyph.
+	*/
+	std::optional<uint32_t> lookupSingleSubstitution(const LookupTable& lookup, uint32_t glyph);
+
+	/*
+		Lookup a multiple glyph substitution (type 2, LOOKUP_MULTIPLE). Replaces one input glyph with
+		multiple output glyphs.
+	*/
+	std::optional<std::vector<uint32_t>> lookupMultipleSubstitution(const LookupTable& lookup, uint32_t glyph);
+
+	/*
+		Lookup a ligature substitution (type 4, LOOKUP_LIGATURE). Replaces multiple input glyphs with
+		a single output glyph.
+
+		The given input stream should be from the current glyph till the end of the glyphstring.
+		The return value is
+			(first) the output glyph id
+			(second) the number of input glyphs consumed.
+	*/
+	std::optional<std::pair<uint32_t, size_t>> lookupLigatureSubstitution(const LookupTable& lookup,
+		zst::span<uint32_t> glyphs);
 }
 
 

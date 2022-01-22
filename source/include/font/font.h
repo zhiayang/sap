@@ -94,8 +94,6 @@ namespace font
 		uint32_t getGlyphIndexForCodepoint(uint32_t codepoint) const;
 		GlyphMetrics getGlyphMetrics(uint32_t glyphId) const;
 
-		std::map<uint32_t, GlyphLigatureSet> getAllGlyphLigatures() const;
-
 		// corresponds to name IDs 16 and 17. if not present, they will have the same
 		// value as their *_compat counterparts.
 		std::string family;
