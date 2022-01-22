@@ -155,9 +155,33 @@ namespace font::off
 			lookup.type = consume_u16(tbl_buf);
 			lookup.flags = consume_u16(tbl_buf);
 
-			auto num_subtables = consume_u16(tbl_buf);
-			for(uint16_t i = 0; i < num_subtables; i++)
-				lookup.subtables.push_back(lookup_start.drop(consume_u16(tbl_buf)));
+			// handle extension types here, so we don't need to go in and fuck around later
+			if(lookup.type == gpos::LOOKUP_EXTENSION_POS || lookup.type == gsub::LOOKUP_EXTENSION_SUBST)
+			{
+				auto num_subtables = consume_u16(tbl_buf);
+				for(uint16_t i = 0; i < num_subtables; i++)
+				{
+					auto proxy = lookup_start.drop(consume_u16(tbl_buf));
+					auto proxy_start = proxy;
+
+					auto format = consume_u16(proxy);
+					if(format != 1)
+					{
+						sap::warn("font/otf", "unknown subtable format '{}' for GPOS/GSUB extension");
+						continue;
+					}
+
+					// change the lookup type (all the subtables must have the same type anyway)
+					lookup.type = consume_u16(proxy);
+					lookup.subtables.push_back(proxy_start.drop(consume_u32(proxy)));
+				}
+			}
+			else
+			{
+				auto num_subtables = consume_u16(tbl_buf);
+				for(uint16_t i = 0; i < num_subtables; i++)
+					lookup.subtables.push_back(lookup_start.drop(consume_u16(tbl_buf)));
+			}
 
 			lookup.mark_filtering_set = consume_u16(tbl_buf);
 

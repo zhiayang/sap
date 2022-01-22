@@ -247,11 +247,20 @@ namespace font::off::gpos
 		if necessary.
 
 		Lookups will be searched for glyphs starting from glyphs[position], and *not* at glyph.[0].
+
+		In the returned mapping,
+			adjustments[0] adjusts glyphs[position],
+			adjustments[1] adjusts glyphs[position + 1],
+
+		and so on. it does *not* apply to glyphs[0], glyphs[1], etc., unless position == 0.
 	*/
 	std::map<size_t, GlyphAdjustment> lookupForGlyphSequence(const GPosTable& gpos, const LookupTable& lookup,
 		zst::span<uint32_t> glyphs, size_t position);
 
 
+	/*
+		Lookup a single glyph adjustment for the given glyph id.
+	*/
 	OptionalGA lookupSingleAdjustment(const LookupTable& lookup, uint32_t gid);
 
 	/*
@@ -271,6 +280,17 @@ namespace font::off::gpos
 	*/
 	std::map<size_t, GlyphAdjustment> lookupContextualPositioning(const GPosTable& gpos, const LookupTable& lookup,
 		zst::span<uint32_t> glyphs);
+
+	/*
+		This one also needs to recursively perform lookups. Additionally, this requires both lookahead and lookbehind,
+		so we take the *entire glyphstring*, as well as an index which is the position in the glyphstring that the
+		'current' glyph is actually at.
+
+		Again, similar to `lookupForGlyphSequence` (whose behaviour is actually motivated by this lookup type...),
+		return[0] adjusts glyphs[position], return[1] adjsts glyphs[position + 1], etc.
+	*/
+	std::map<size_t, GlyphAdjustment> lookupChainedContextPositioning(const GPosTable& gpos, const LookupTable& lookup,
+		zst::span<uint32_t> glyphs, size_t position);
 }
 
 // declares GSUB-specific lookup functions
