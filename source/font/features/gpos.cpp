@@ -295,18 +295,18 @@ namespace font::off::gpos
 		return { std::nullopt, std::nullopt };
 	}
 
-	using PosLookupRecord = std::pair<uint16_t, uint16_t>;
+	using PosLookupRecord = ContextualLookupRecord;
 	static std::map<size_t, GlyphAdjustment> apply_lookup_records(const GPosTable& gpos,
-		const std::vector<PosLookupRecord>& records, zst::span<uint32_t> glyphs)
+		const std::pair<std::vector<PosLookupRecord>, size_t>& records, zst::span<uint32_t> glyphs, size_t position)
 	{
 		// ok, we matched this one.
 		std::map<size_t, GlyphAdjustment> adjustments {};
-		for(auto [ glyph_idx, lookup_idx ] : records)
+		for(auto [ glyph_idx, lookup_idx ] : records.first)
 		{
 			assert(lookup_idx < gpos.lookups.size());
 			auto& nested_lookup = gpos.lookups[lookup_idx];
 
-			auto new_adjs = lookupForGlyphSequence(gpos, nested_lookup, glyphs, /* pos: */ glyph_idx);
+			auto new_adjs = lookupForGlyphSequence(gpos, nested_lookup, glyphs, /* pos: */ position + glyph_idx);
 			for(auto& [ idx, adj ] : new_adjs)
 				combine_adjustments(adjustments[idx], adj);
 		}
@@ -320,9 +320,8 @@ namespace font::off::gpos
 		assert(lookup.type == LOOKUP_CONTEXTUAL);
 		for(auto subtable : lookup.subtables)
 		{
-			auto subs = performContextualLookup(subtable, glyphs);
-			if(subs.size() > 0)
-				return apply_lookup_records(gpos, subs, glyphs);
+			if(auto records = performContextualLookup(subtable, glyphs); records.has_value())
+				return apply_lookup_records(gpos, *records, glyphs, /* pos: */ 0);
 		}
 
 		return {};
@@ -336,9 +335,8 @@ namespace font::off::gpos
 
 		for(auto subtable : lookup.subtables)
 		{
-			auto subs = performChainedContextLookup(subtable, glyphs, position);
-			if(subs.size() > 0)
-				return apply_lookup_records(gpos, subs, glyphs.drop(position));
+			if(auto records = performChainedContextLookup(subtable, glyphs, position); records.has_value())
+				return apply_lookup_records(gpos, *records, glyphs, /* pos: */ position);
 		}
 
 		return {};

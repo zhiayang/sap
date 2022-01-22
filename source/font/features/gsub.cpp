@@ -148,4 +148,91 @@ namespace font::off::gsub
 
 		return std::nullopt;
 	}
+
+
+	std::optional<SubstitutionResult> lookupForGlyphSequence(const GSubTable& gsub_table, const LookupTable& lookup,
+		zst::span<uint32_t> glyphs, size_t position)
+	{
+
+
+		return std::nullopt;
+	}
+
+
+
+	using SubstLookupRecord = ContextualLookupRecord;
+	static SubstitutionResult apply_lookup_records(const GSubTable& gsub_table,
+		const std::pair<std::vector<SubstLookupRecord>, size_t>& records,
+		zst::span<uint32_t> glyphs, size_t position)
+	{
+		/*
+			so the idea is, instead of copying around the entire glyphstring like a fool,  when we
+			perform a lookup that substitutes stuff, we replace the input sequence part of this array,
+			without touching the lookbehind part. Then, we copy the lookahead part at the end. this saves...
+			a few copies, probably.
+		*/
+		auto num_input_glyphs = records.second;
+		auto glyphstring = std::vector<uint32_t>(glyphs.begin(), glyphs.end());
+		auto lookahead = glyphs.drop(position + num_input_glyphs);
+
+		for(auto [ glyph_idx, lookup_idx ] : records.first)
+		{
+			assert(lookup_idx < gsub_table.lookups.size());
+			auto& nested_lookup = gsub_table.lookups[lookup_idx];
+
+			auto span = zst::span<uint32_t>(glyphstring.data(), glyphstring.size());
+			auto result = lookupForGlyphSequence(gsub_table, nested_lookup, span, /* pos: */ glyph_idx + position);
+			if(result.has_value())
+			{
+				// clear the input sequence + lookahead part
+				glyphstring.erase(glyphstring.begin() + position, glyphstring.end());
+
+				// copy over the new input sequence
+				glyphstring.insert(glyphstring.end(),
+					std::move_iterator(result->glyphs.begin()),
+					std::move_iterator(result->glyphs.end())
+				);
+
+				// and finally, the lookahead
+				glyphstring.insert(glyphstring.end(), lookahead.begin(), lookahead.end());
+			}
+		}
+
+		SubstitutionResult result {};
+		result.input_consumed = num_input_glyphs;
+
+		// finally, the glyphs we return should only include the input sequence.
+		assert(glyphstring.size() > position + lookahead.size());
+		result.glyphs = std::vector<uint32_t>(glyphstring.begin() + position, glyphstring.end() - lookahead.size());
+
+		return result;
+	}
+
+	std::optional<SubstitutionResult> lookupContextualSubstitution(const GSubTable& gsub, const LookupTable& lookup,
+		zst::span<uint32_t> glyphs)
+	{
+		assert(lookup.type == LOOKUP_CONTEXTUAL);
+		for(auto subtable : lookup.subtables)
+		{
+			if(auto records = performContextualLookup(subtable, glyphs); records.has_value())
+				return apply_lookup_records(gsub, *records, glyphs, /* pos: */ 0);
+		}
+
+		return std::nullopt;
+	}
+
+	std::optional<SubstitutionResult> lookupChainedContextSubstitution(const GSubTable& gsub, const LookupTable& lookup,
+		zst::span<uint32_t> glyphs, size_t position)
+	{
+		assert(position < glyphs.size());
+		assert(lookup.type == LOOKUP_CHAINING_CONTEXT);
+
+		for(auto subtable : lookup.subtables)
+		{
+			if(auto records = performChainedContextLookup(subtable, glyphs, position); records.has_value())
+				return apply_lookup_records(gsub, *records, glyphs, /* pos: */ position);
+		}
+
+		return std::nullopt;
+	}
 }

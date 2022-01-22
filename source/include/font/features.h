@@ -220,24 +220,31 @@ namespace font::off
 	*/
 	std::map<int, uint32_t> parseCoverageTable(zst::byte_span coverage_table);
 
+	struct ContextualLookupRecord
+	{
+		uint16_t glyph_idx;
+		uint16_t lookup_idx;
+	};
+
 	/*
 		Parse and match the input glyphstring with the lookup *subtable* provided. Again, this should be a
 		lookup *subtable*, not the LookupTable itself.
 
-		Returns a list of PosLookupRecord (cf. SubstLookupRecord):
-			(first)  index of the glyph in the sequence
-			(second) lookup index to perform on that glyph
+		Returns value:
+			(first)  the list of lookup records, PosLookupRecord / SubstLookupRecord
+			(second) the number of glyphs in the input glyphstring that were matched
 
 		The data layouts for GPOS and GSUB are identical, so this is a common implementation. Use for GPOS type 7
 		and GSUB type 5.
 	*/
-	std::vector<std::pair<uint16_t, uint16_t>> performContextualLookup(zst::byte_span subtable, zst::span<uint32_t> glyphs);
+	std::optional<std::pair<std::vector<ContextualLookupRecord>, size_t>> performContextualLookup(zst::byte_span subtable,
+		zst::span<uint32_t> glyphs);
 
 	/*
 		Parse and match the input glyphstring (where the current glyph is at glyphs[position], using the provided *subtable*.
 		The same caveats apply as for `performContextualLookup`. Use for GPOS type 8 and GSUB type 6.
 	*/
-	std::vector<std::pair<uint16_t, uint16_t>> performChainedContextLookup(zst::byte_span subtable,
+	std::optional<std::pair<std::vector<ContextualLookupRecord>, size_t>> performChainedContextLookup(zst::byte_span subtable,
 		zst::span<uint32_t> glyphs, size_t position);
 }
 
@@ -354,6 +361,13 @@ namespace font::off::gsub
 	*/
 	std::optional<std::pair<uint32_t, size_t>> lookupLigatureSubstitution(const LookupTable& lookup,
 		zst::span<uint32_t> glyphs);
+
+
+	struct SubstitutionResult
+	{
+		size_t input_consumed;
+		std::vector<uint32_t> glyphs;
+	};
 }
 
 

@@ -9,16 +9,23 @@
 
 namespace font::off
 {
-	static std::vector<std::pair<uint16_t, uint16_t>> parse_records(size_t num_records, zst::byte_span table)
+	static std::vector<ContextualLookupRecord> parse_records(size_t num_records, zst::byte_span table)
 	{
-		std::vector<std::pair<uint16_t, uint16_t>> ret {};
+		std::vector<ContextualLookupRecord> ret {};
 		for(size_t k = 0; k < num_records; k++)
-			ret.emplace_back(consume_u16(table), consume_u16(table));
+		{
+			ContextualLookupRecord record {};
+			record.glyph_idx = consume_u16(table);
+			record.lookup_idx = consume_u16(table);
+
+			ret.push_back(std::move(record));
+		}
 
 		return ret;
 	}
 
-	std::vector<std::pair<uint16_t, uint16_t>> performContextualLookup(zst::byte_span subtable, zst::span<uint32_t> glyphs)
+	std::optional<std::pair<std::vector<ContextualLookupRecord>, size_t>> performContextualLookup(zst::byte_span subtable,
+		zst::span<uint32_t> glyphs)
 	{
 		auto subtable_start = subtable;
 		auto format = consume_u16(subtable);
@@ -26,7 +33,7 @@ namespace font::off
 		if(format != 1 && format != 2 && format != 3)
 		{
 			sap::warn("font/off", "unknown subtable format '{}' in GPOS/GSUB Contextual", format);
-			return {};
+			return std::nullopt;
 		}
 
 		if(format == 3)
@@ -36,17 +43,17 @@ namespace font::off
 
 			// can't match this rule, not enough glyphs
 			if(glyphs.size() < num_glyphs)
-				return {};
+				return std::nullopt;
 
 			for(size_t i = 0; i < num_glyphs; i++)
 			{
 				// basically, the idea is that for glyph[i], it must appear in coverage[i].
 				auto coverage = subtable_start.drop(consume_u16(subtable));
 				if(!getGlyphCoverageIndex(coverage, glyphs[i]).has_value())
-					return {};
+					return std::nullopt;
 			}
 
-			return parse_records(num_records, subtable);
+			return std::pair(parse_records(num_records, subtable), num_glyphs);
 		}
 		else
 		{
@@ -57,23 +64,23 @@ namespace font::off
 			// glyph in our sequence is not covered, skip this subtable.
 			auto cov_idx = off::getGlyphCoverageIndex(subtable_start.drop(cov_ofs), glyphs[0]);
 			if(!cov_idx.has_value())
-				return {};
+				return std::nullopt;
 
-			auto try_match_rule = [&glyphs](zst::byte_span& rule, auto&& trf) -> std::pair<bool, uint16_t> {
+			auto try_match_rule = [&glyphs](zst::byte_span& rule, auto&& trf) -> std::tuple<bool, uint16_t, uint16_t> {
 				auto num_glyphs = consume_u16(rule);
 				auto num_records = consume_u16(rule);
 
 				// can't match this rule, not enough glyphs
 				if(glyphs.size() < num_glyphs)
-					return { false, 0 };
+					return { false, 0, 0 };
 
 				for(auto k = 1; k < num_glyphs; k++)
 				{
 					if(trf(glyphs[k]) != consume_u16(rule))
-						return { false, 0 };
+						return { false, 0, 0 };
 				}
 
-				return { true, num_records };
+				return { true, num_glyphs, num_records };
 			};
 
 			if(format == 1)
@@ -97,10 +104,10 @@ namespace font::off
 				for(size_t i = 0; i < num_rules; i++)
 				{
 					auto rule = ruleset_table_start.drop(consume_u16(ruleset_table));
-					auto [ matched, num_records ] = try_match_rule(rule, [](auto x) { return x; });
+					auto [ matched, num_glyphs, num_records ] = try_match_rule(rule, [](auto x) { return x; });
 
 					if(matched)
-						return parse_records(num_records, rule);
+						return std::pair(parse_records(num_records, rule), num_glyphs);
 				}
 			}
 			else
@@ -132,21 +139,21 @@ namespace font::off
 				for(size_t i = 0; i < num_rules; i++)
 				{
 					auto rule = classset_start.drop(consume_u16(classset));
-					auto [ matched, num_records ] = try_match_rule(rule, [&classdef_table](auto gid) {
+					auto [ matched, num_glyphs, num_records ] = try_match_rule(rule, [&classdef_table](auto gid) {
 						return getGlyphClass(classdef_table, gid);
 					});
 
 					if(matched)
-						return parse_records(num_records, rule);
+						return std::pair(parse_records(num_records, rule), num_glyphs);
 				}
 			}
 		}
 
-		return {};
+		return std::nullopt;
 	}
 
 
-	std::vector<std::pair<uint16_t, uint16_t>> performChainedContextLookup(zst::byte_span subtable,
+	std::optional<std::pair<std::vector<ContextualLookupRecord>, size_t>> performChainedContextLookup(zst::byte_span subtable,
 		zst::span<uint32_t> glyphs, size_t position)
 	{
 		auto subtable_start = subtable;
@@ -155,7 +162,7 @@ namespace font::off
 		if(format != 1 && format != 2 && format != 3)
 		{
 			sap::warn("font/off", "unknown subtable format '{}' in GPOS/GSUB ChainingContext", format);
-			return {};
+			return std::nullopt;
 		}
 
 		if(format == 3)
@@ -167,17 +174,17 @@ namespace font::off
 			auto num_lookahead  = peek_u16(subtable.drop((num_lookbehind + num_glyphs + 1) * sizeof(uint16_t)));
 
 			if(position < num_lookbehind)
-				return {};
+				return std::nullopt;
 			else if(position + num_glyphs > glyphs.size())
-				return {};
+				return std::nullopt;
 			else if(position + num_glyphs + num_lookahead >= glyphs.size())
-				return {};
+				return std::nullopt;
 
 			for(size_t k = 0; k < num_lookbehind; k++)
 			{
 				auto coverage = subtable_start.drop(consume_u16(subtable));
 				if(!getGlyphCoverageIndex(coverage, glyphs[position - k - 1]).has_value())
-					return {};
+					return std::nullopt;
 			}
 
 			consume_u16(subtable);  // num_glyphs, which we already read
@@ -185,7 +192,7 @@ namespace font::off
 			{
 				auto coverage = subtable_start.drop(consume_u16(subtable));
 				if(!getGlyphCoverageIndex(coverage, glyphs[position + k]).has_value())
-					return {};
+					return std::nullopt;
 			}
 
 			consume_u16(subtable);  // num_lookahead, which we already read
@@ -193,12 +200,12 @@ namespace font::off
 			{
 				auto coverage = subtable_start.drop(consume_u16(subtable));
 				if(!getGlyphCoverageIndex(coverage, glyphs[position + num_glyphs + k]).has_value())
-					return {};
+					return std::nullopt;
 			}
 
 			// match success
 			auto num_records = consume_u16(subtable);
-			return parse_records(num_records, subtable);
+			return std::pair(parse_records(num_records, subtable), num_glyphs);
 		}
 		else
 		{
@@ -209,10 +216,10 @@ namespace font::off
 			// glyph in our sequence is not covered, skip this subtable.
 			auto cov_idx = off::getGlyphCoverageIndex(subtable_start.drop(cov_ofs), glyphs[position]);
 			if(!cov_idx.has_value())
-				return {};
+				return std::nullopt;
 
 			auto try_match_rule = [&glyphs, position](zst::byte_span& rule, auto&& lookbehind_trf,
-				auto&& gid_trf, auto&& lookahead_trf) -> bool
+				auto&& gid_trf, auto&& lookahead_trf) -> std::pair<bool, uint16_t>
 			{
 				auto num_lookbehind = consume_u16(rule);
 				auto num_glyphs = peek_u16(rule.drop(num_lookbehind * sizeof(uint16_t)));
@@ -223,33 +230,33 @@ namespace font::off
 
 				// if we don't have enough to backtrack, bail
 				if(position < num_lookbehind)
-					return false;
+					return { false, 0 };
 				else if(position + num_glyphs > glyphs.size())
-					return false;
+					return { false, 0 };
 				else if(position + num_glyphs + num_lookahead >= glyphs.size())
-					return false;
+					return { false, 0 };
 
 				for(size_t k = 0; k < num_lookbehind; k++)
 				{
 					if(lookbehind_trf(glyphs[position - k - 1]) != consume_u16(rule))
-						return false;
+						return { false, 0 };
 				}
 
 				consume_u16(rule);  // num_glyphs, which we already read
 				for(size_t k = 1; k < num_glyphs; k++)
 				{
 					if(gid_trf(glyphs[position + k]) != consume_u16(rule))
-						return false;
+						return { false, 0 };
 				}
 
 				consume_u16(rule);  // num_lookahead, which we already read
 				for(size_t k = 0; k < num_lookahead; k++)
 				{
 					if(lookahead_trf(glyphs[position + num_glyphs + k]) != consume_u16(rule))
-						return false;
+						return { false, 0 };
 				}
 
-				return true;
+				return { true, num_glyphs };
 			};
 
 
@@ -274,10 +281,10 @@ namespace font::off
 				for(size_t i = 0; i < num_rules; i++)
 				{
 					auto rule = ruleset_table_start.drop(consume_u16(ruleset_table));
-					if(try_match_rule(rule, identity_trf, identity_trf, identity_trf))
+					if(auto [ match, num_glyphs ] = try_match_rule(rule, identity_trf, identity_trf, identity_trf); match)
 					{
 						auto num_records = consume_u16(rule);
-						return parse_records(num_records, rule);
+						return std::pair(parse_records(num_records, rule), num_glyphs);
 					}
 				}
 			}
@@ -311,15 +318,15 @@ namespace font::off
 						return getGlyphClass(lookahead_classdefs, gid);
 					};
 
-					if(try_match_rule(rule, lookbehind_trf, input_trf, lookahead_trf))
+					if(auto [ match, num_glyphs ] = try_match_rule(rule, lookbehind_trf, input_trf, lookahead_trf); match)
 					{
 						auto num_records = consume_u16(rule);
-						return parse_records(num_records, rule);
+						return std::pair(parse_records(num_records, rule), num_glyphs);
 					}
 				}
 			}
 		}
 
-		return {};
+		return std::nullopt;
 	}
 }
