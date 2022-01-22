@@ -181,6 +181,29 @@ namespace font::off::gpos
 		return { std::nullopt, std::nullopt };
 	}
 
+	static std::map<size_t, GlyphAdjustment> apply_lookup_records(GPosTable& gpos, size_t num_records,
+		zst::byte_span records, zst::span<uint32_t> glyphs)
+	{
+		// ok, we matched this one.
+		std::map<size_t, GlyphAdjustment> adjustments {};
+		for(size_t k = 0; k < num_records; k++)
+		{
+			auto glyph_idx = consume_u16(records);
+			auto lookup_idx = consume_u16(records);
+
+			assert(lookup_idx < gpos.lookups.size());
+			auto& nested_lookup = gpos.lookups[lookup_idx];
+
+			auto new_adjs = lookupForGlyphSequence(gpos, nested_lookup, glyphs, /* pos: */ glyph_idx);
+			for(auto& [ idx, adj ] : new_adjs)
+				combine_adjustments(adjustments[idx], adj);
+		}
+
+		return adjustments;
+	}
+
+
+
 	std::map<size_t, GlyphAdjustment> lookupContextualPositioning(GPosTable& gpos, LookupTable& lookup, zst::span<uint32_t> glyphs)
 	{
 		assert(lookup.type == LOOKUP_CONTEXTUAL);
@@ -224,7 +247,7 @@ namespace font::off::gpos
 					{
 						auto rule = ruleset_table_start.drop(consume_u16(ruleset_table));
 						auto num_glyphs = consume_u16(rule);
-						auto num_pos = consume_u16(rule);
+						auto num_records = consume_u16(rule);
 
 						// can't match this rule, not enough glyphs
 						if(glyphs.size() < num_glyphs)
@@ -244,25 +267,50 @@ namespace font::off::gpos
 							continue;
 
 						// ok, we matched this one.
-						std::map<size_t, GlyphAdjustment> adjustments {};
-						for(size_t k = 0; k < num_pos; k++)
-						{
-							auto glyph_idx = consume_u16(rule);
-							auto lookup_idx = consume_u16(rule);
-
-							assert(lookup_idx < gpos.lookups.size());
-							auto& nested_lookup = gpos.lookups[lookup_idx];
-
-							auto new_adjs = lookupForGlyphSequence(gpos, nested_lookup, glyphs, /* pos: */ glyph_idx);
-							for(auto& [ idx, adj ] : new_adjs)
-								combine_adjustments(adjustments[idx], adj);
-						}
-
-						return adjustments;
+						return apply_lookup_records(gpos, num_records, rule, glyphs);
 					}
 				}
 				else
 				{
+					auto classdef_ofs = consume_u16(subtable);
+
+					auto class_mapping = parseGlyphToClassMapping(subtable_start.drop(classdef_ofs));
+					auto lookup_class = [&class_mapping](uint32_t gid) -> int {
+						if(auto it = class_mapping.find(gid); it != class_mapping.end())
+							return it->second;
+						return 0;
+					};
+
+					auto num_class_sets = consume_u16(subtable);
+
+					auto first_class_id = lookup_class(glyphs[0]);
+					assert(first_class_id < num_class_sets);
+
+					auto classset = subtable_start.drop(peek_u16(subtable.drop(first_class_id * sizeof(uint16_t))));
+					auto classset_start = classset;
+
+					auto num_rules = consume_u16(classset);
+					for(size_t i = 0; i < num_rules; i++)
+					{
+						auto rule = classset_start.drop(consume_u16(classset));
+						auto num_glyphs = consume_u16(rule);
+						auto num_records = consume_u16(rule);
+
+						bool matched = true;
+						for(auto k = 1; k < num_glyphs; k++)
+						{
+							if(lookup_class(glyphs[k]) != consume_u16(rule))
+							{
+								matched = false;
+								break;
+							}
+						}
+
+						if(!matched)
+							continue;
+
+						return apply_lookup_records(gpos, num_records, rule, glyphs);
+					}
 				}
 			}
 		}

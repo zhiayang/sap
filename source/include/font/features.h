@@ -48,12 +48,6 @@ namespace font
 
 namespace font::off
 {
-	int getGlyphClass(zst::byte_span classdef_table, uint32_t glyphId);
-
-	// returns a map from classId -> [ glyphIds ], for all glyphs that have a class
-	// defined (ie. that are not implicitly class 0)
-	std::map<int, std::vector<uint32_t>> parseClassDefTable(zst::byte_span classdef_table);
-
 	std::optional<int> getGlyphCoverageIndex(zst::byte_span coverage_table, uint32_t glyphId);
 
 	// returns a map from coverageIndex -> glyphId, for every glyph in the coverage table.
@@ -200,6 +194,25 @@ namespace font::off
 			u16 offset_from_start_of_table
 	*/
 	std::vector<TaggedTable> parseTaggedList(zst::byte_span buf);
+
+
+	/*
+		Get the class of a specific glyph id; 0 is returned if the glyph was not in any of
+		the classes specified in the given `classdef_table`.
+	*/
+	int getGlyphClass(zst::byte_span classdef_table, uint32_t glyphId);
+
+	/*
+		Returns a mapping from classid to a set of glyph ids. Note that class 0 (the default class)
+		is not included, because it would otherwise contain every other glyph (potentially a lot)
+	*/
+	std::map<int, std::set<uint32_t>> parseAllClassDefs(zst::byte_span classdef_table);
+
+	/*
+		Parses the same ClassDef table as `parseAllClassDefs`, but returns the inverse mapping;
+		a map from glyph id to class id. Again, glyphs with class 0 are not included.
+	*/
+	std::map<uint32_t, int> parseGlyphToClassMapping(zst::byte_span classdef_table);
 }
 
 
