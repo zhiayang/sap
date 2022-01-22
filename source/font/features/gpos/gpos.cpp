@@ -13,7 +13,8 @@
 
 namespace font::off
 {
-	static void combine_adjustments(GlyphAdjustment& a, const GlyphAdjustment& b)
+	// used in `lookup.cpp`
+	void combine_adjustments(GlyphAdjustment& a, const GlyphAdjustment& b)
 	{
 		a.horz_placement += b.horz_placement;
 		a.vert_placement += b.vert_placement;
@@ -52,29 +53,52 @@ namespace font::off
 			assert(lookup_idx < gpos.lookups.size());
 			auto& lookup = gpos.lookups[lookup_idx];
 
-			for(size_t i = 0; i < glyphs.size(); i++)
-			{
-				if(lookup.type == gpos::LOOKUP_SINGLE)
-				{
-					if(auto adj = gpos::lookupSingleAdjustment(lookup, glyphs[i]); adj.has_value())
-						combine_adjustments(adjustments[i], *adj);
-				}
-				else if((lookup.type == gpos::LOOKUP_PAIR) && (i + 1 < glyphs.size()))
-				{
-					auto [ a1, a2 ] = gpos::lookupPairAdjustment(lookup, glyphs[i], glyphs[i + 1]);
-					if(a1.has_value())
-						combine_adjustments(adjustments[i], *a1);
+			zpr::println("lookup {}", lookup.type);
 
-					if(a2.has_value())
-					{
-						// if the second adjustment was not null, then we skip the second glyph
-						combine_adjustments(adjustments[i + 1], *a2);
-						i += 1;
-					}
-				}
-			}
+			// in this case, we want to lookup the entire sequence, so start at position 0.
+			auto new_adjs = gpos::lookupForGlyphSequence(gpos, lookup, glyphs, /* position: */ 0);
+			for(auto& [ idx, adj ] : new_adjs)
+				combine_adjustments(adjustments[idx], adj);
 		}
 
 		return adjustments;
+	}
+
+	std::map<size_t, GlyphAdjustment> gpos::lookupForGlyphSequence(GPosTable& gpos_table, LookupTable& lookup,
+		zst::span<uint32_t> glyphs, size_t position)
+	{
+		std::map<size_t, GlyphAdjustment> adjs {};
+		for(size_t i = position; i < glyphs.size(); i++)
+		{
+			if(lookup.type == gpos::LOOKUP_SINGLE)
+			{
+				if(auto adj = gpos::lookupSingleAdjustment(lookup, glyphs[i]); adj.has_value())
+					return { { i, *adj } };
+			}
+			else if((lookup.type == gpos::LOOKUP_PAIR) && (i + 1 < glyphs.size()))
+			{
+				auto [ a1, a2 ] = gpos::lookupPairAdjustment(lookup, glyphs[i], glyphs[i + 1]);
+				if(a1.has_value())
+					combine_adjustments(adjs[i], *a1);
+
+				if(a2.has_value())
+				{
+					// if the second adjustment was not null, then we skip the second glyph
+					combine_adjustments(adjs[i + 1], *a2);
+					i += 1;
+				}
+			}
+			else if(lookup.type == gpos::LOOKUP_CONTEXTUAL)
+			{
+			}
+			else if(lookup.type == gpos::LOOKUP_CHAINING_CONTEXT)
+			{
+			}
+			else if(lookup.type == gpos::LOOKUP_EXTENSION_POS)
+			{
+			}
+		}
+
+		return adjs;
 	}
 }

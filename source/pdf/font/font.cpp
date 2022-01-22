@@ -46,14 +46,6 @@ namespace pdf
 			this->used_ligatures.push_back(lig);
 	}
 
-	std::optional<font::GlyphLigatureSet> Font::getLigaturesForGlyph(uint32_t glyph) const
-	{
-		if(auto it = this->glyph_ligatures.find(glyph); it != this->glyph_ligatures.end())
-			return it->second;
-
-		return { };
-	}
-
 	font::GlyphMetrics Font::getMetricsForGlyph(uint32_t glyph) const
 	{
 		this->loadMetricsForGlyph(glyph);
@@ -97,22 +89,6 @@ namespace pdf
 		{
 			pdf::error("unsupported encoding");
 		}
-	}
-
-	std::optional<font::KerningPair> Font::getKerningForGlyphs(uint32_t glyph1, uint32_t glyph2) const
-	{
-		auto pair = std::make_pair(glyph1, glyph2);
-		if(auto it = this->kerning_pairs.find(pair); it != this->kerning_pairs.end())
-			return it->second;
-
-		if(this->source_file != nullptr)
-		{
-			auto kp = this->source_file->getGlyphPairAdjustments(glyph1, glyph2);
-			if(kp.has_value())
-				return *kp;
-		}
-
-		return { };
 	}
 
 	std::map<size_t, font::GlyphAdjustment> Font::getPositioningAdjustmentsForGlyphSequence(

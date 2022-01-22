@@ -212,12 +212,26 @@ namespace font::off::gpos
 	constexpr uint16_t LOOKUP_MARK_TO_BASE      = 4;
 	constexpr uint16_t LOOKUP_MARK_TO_LIGA      = 5;
 	constexpr uint16_t LOOKUP_MARK_TO_MARK      = 6;
-	constexpr uint16_t LOOKUP_CONTEXT_POS       = 7;
-	constexpr uint16_t LOOKUP_CHAINED_CONTEXT   = 8;
+	constexpr uint16_t LOOKUP_CONTEXTUAL        = 7;
+	constexpr uint16_t LOOKUP_CHAINING_CONTEXT  = 8;
 	constexpr uint16_t LOOKUP_EXTENSION_POS     = 9;
 	constexpr uint16_t LOOKUP_MAX               = 10;
 
 	using OptionalGA = std::optional<GlyphAdjustment>;
+
+	/*
+		Perform a lookup in the provided table for any adjustments to glyphs in the provided sequence.
+		Returns a mapping from sequence index to the adjustment for the glyph at that index.
+
+		Since this is a general lookup, it takes the entire glyphstring as well as a current position;
+		glyphs at prior indices (ie. < position) are used as lookbehind for chained contextual lookups,
+		if necessary.
+
+		Lookups will be searched for glyphs starting from glyphs[position], and *not* at glyph.[0].
+	*/
+	std::map<size_t, GlyphAdjustment> lookupForGlyphSequence(GPosTable& gpos, LookupTable& lookup,
+		zst::span<uint32_t> glyphs, size_t position);
+
 
 	OptionalGA lookupSingleAdjustment(LookupTable& lookup, uint32_t gid);
 
@@ -231,6 +245,13 @@ namespace font::off::gpos
 		So, instead of returning an optional of pair, we return a pair of optionals.
 	*/
 	std::pair<OptionalGA, OptionalGA> lookupPairAdjustment(LookupTable& lookup, uint32_t gid1, uint32_t gid2);
+
+	/*
+		This one needs to "recursively" perform lookups, so it needs the GPOS table as well. Returns a mapping
+		from the index in the given sequence to the adjustment.
+	*/
+	std::map<size_t, GlyphAdjustment> lookupContextualPositioning(GPosTable& gpos, LookupTable& lookup,
+		zst::span<uint32_t> glyphs);
 }
 
 // declares GSUB-specific lookup functions

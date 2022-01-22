@@ -29,9 +29,6 @@ namespace pdf
 		Dictionary* serialise(Document* doc) const;
 
 		uint32_t getGlyphIdFromCodepoint(uint32_t codepoint) const;
-		std::optional<font::KerningPair> getKerningForGlyphs(uint32_t glyph1, uint32_t glyph2) const;
-
-		std::optional<font::GlyphLigatureSet> getLigaturesForGlyph(uint32_t glyph) const;
 
 		// this is necessary because ligature substitutions can result in obtaining glyphs that
 		// didn't come from `getGlyphIdFromCodepoint`, so we need to manually read its width
