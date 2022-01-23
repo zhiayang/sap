@@ -62,7 +62,7 @@ This also acts as a sort of TODO; as time goes on completed features may be remo
 - [ ] Variable font support
 - [ ] Further size optimisation for embedded fonts
 - [x] Glyph positioning (OpenType GPOS, lookups 1, 2, 7, 8, 9)
-- [ ] Glyph ligatures (OpenType GSUB)
+- [x] Glyph substitutions (incl. ligatures) (OpenType GSUB, lookups 1, 2, 4, 5, 6, 7)
 - [ ] Truetype/AAT `kern` table
 - [ ] AAT tables (`kerx`, `morx`)
 - [ ] More advanced typography support (`BASE`, `MATH`, `JSTF`)
