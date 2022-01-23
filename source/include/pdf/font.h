@@ -55,10 +55,13 @@ namespace pdf
 		Scalar scaleMetricForPDFTextSpace(double metric) const;
 
 		/*
-			A very thin wrapper around the identically-named method taking a FontFile
+			A very thin wrapper around the identically-named methods taking a FontFile
 		*/
 		std::map<size_t, font::GlyphAdjustment> getPositioningAdjustmentsForGlyphSequence(
 			zst::span<uint32_t> glyphs, const font::off::FeatureSet& features) const;
+
+		std::vector<uint32_t> performSubstitutionsForGlyphSequence(zst::span<uint32_t> glyphs,
+			const font::off::FeatureSet& features) const;
 
 
 		int font_type = 0;

@@ -38,11 +38,11 @@ namespace sap
 		features.script = Tag("latn");
 		features.language = Tag("DFLT");
 		features.enabled_features = {
-			Tag("kern")
+			Tag("kern"), Tag("liga"), Tag("ss01")
 		};
 
-		// TODO: next, use GSUB to substitute the glyphs.
-
+		// next, use GSUB to perform substitutions.
+		glyphs = font->performSubstitutionsForGlyphSequence(zst::span<uint32_t>(glyphs.data(), glyphs.size()), features);
 
 		// next, get base metrics for each glyph.
 		std::vector<Word::GlyphInfo> glyph_infos {};
@@ -65,7 +65,7 @@ namespace sap
 			info.adjustments.horz_placement += adj.horz_placement;
 			info.adjustments.vert_placement += adj.vert_placement;
 
-			zpr::println("adjusting {}: {}", i, adj.horz_advance);
+			// zpr::println("adjusting {}: {}", i, adj.horz_advance);
 		}
 
 		return glyph_infos;

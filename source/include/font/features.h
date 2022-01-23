@@ -135,6 +135,15 @@ namespace font::off
 	std::map<size_t, GlyphAdjustment> getPositioningAdjustmentsForGlyphSequence(FontFile* font,
 		zst::span<uint32_t> glyphs, const FeatureSet& features);
 
+	/*
+		Using the GSUB table, perform glyph substitutions using the enabled features in the feature set.
+
+		For simplicity of use, this API returns a vector of glyphs, which *wholesale* replace the
+		input glyph sequence -- even if no substitutions took place.
+	*/
+	std::vector<uint32_t> performSubstitutionsForGlyphSequence(FontFile* font, zst::span<uint32_t> glyphs,
+		const FeatureSet& features);
+
 
 	/*
 		Parse the GPOS and GSUB tables from the OTF top-level Table.
@@ -266,26 +275,6 @@ namespace font::off::gpos
 	using OptionalGA = std::optional<GlyphAdjustment>;
 
 	/*
-		Perform a lookup in the provided table for any adjustments to glyphs in the provided sequence.
-		Returns a mapping from sequence index to the adjustment for the glyph at that index.
-
-		Since this is a general lookup, it takes the entire glyphstring as well as a current position;
-		glyphs at prior indices (ie. < position) are used as lookbehind for chained contextual lookups,
-		if necessary.
-
-		Lookups will be searched for glyphs starting from glyphs[position], and *not* at glyph[0].
-
-		In the returned mapping,
-			adjustments[0] adjusts glyphs[position],
-			adjustments[1] adjusts glyphs[position + 1],
-
-		and so on. it does *not* apply to glyphs[0], glyphs[1], etc., unless position == 0.
-	*/
-	std::map<size_t, GlyphAdjustment> lookupForGlyphSequence(const GPosTable& gpos, const LookupTable& lookup,
-		zst::span<uint32_t> glyphs, size_t position);
-
-
-	/*
 		Lookup a single glyph adjustment (type 1, LOOKUP_SINGLE) for the given glyph id.
 	*/
 	OptionalGA lookupSingleAdjustment(const LookupTable& lookup, uint32_t gid);
@@ -303,13 +292,20 @@ namespace font::off::gpos
 	*/
 	std::pair<OptionalGA, OptionalGA> lookupPairAdjustment(const LookupTable& lookup, uint32_t gid1, uint32_t gid2);
 
+
+	struct AdjustmentResult
+	{
+		size_t input_consumed;
+		std::map<size_t, GlyphAdjustment> adjustments;
+	};
+
 	/*
 		Lookup contextual glyph adjustments (type 7, LOOKUP_CONTEXTUAL).
 
 		This one needs to "recursively" perform lookups, so it needs the GPOS table as well. Returns a mapping
 		from the index in the given sequence to the adjustment.
 	*/
-	std::map<size_t, GlyphAdjustment> lookupContextualPositioning(const GPosTable& gpos, const LookupTable& lookup,
+	std::optional<AdjustmentResult> lookupContextualPositioning(const GPosTable& gpos, const LookupTable& lookup,
 		zst::span<uint32_t> glyphs);
 
 	/*
@@ -322,7 +318,7 @@ namespace font::off::gpos
 		Again, similar to `lookupForGlyphSequence` (whose behaviour is actually motivated by this lookup type...),
 		return[0] adjusts glyphs[position], return[1] adjsts glyphs[position + 1], etc.
 	*/
-	std::map<size_t, GlyphAdjustment> lookupChainedContextPositioning(const GPosTable& gpos, const LookupTable& lookup,
+	std::optional<AdjustmentResult> lookupChainedContextPositioning(const GPosTable& gpos, const LookupTable& lookup,
 		zst::span<uint32_t> glyphs, size_t position);
 }
 
@@ -365,9 +361,31 @@ namespace font::off::gsub
 
 	struct SubstitutionResult
 	{
+		size_t input_start;
 		size_t input_consumed;
 		std::vector<uint32_t> glyphs;
 	};
+
+	/*
+		Lookup a contextual substitution (type 5, LOOKUP_CONTEXTUAL). Same semantics as GPOS contextual positioning.
+
+		The returned result replaces glyphs from `glyphs[input_start]` to `glyphs[input_consumed - 1]`
+		inclusive, with `result.glyphs`.
+	*/
+	std::optional<SubstitutionResult> lookupContextualSubstitution(const GSubTable& gsub, const LookupTable& lookup,
+		zst::span<uint32_t> glyphs);
+
+	/*
+		Lookup a chaining context substitution (type 6, LOOKUP_CHAINING_CONTEXT). Same semantics as GPOS chaining-context
+		positioning wrt. the `glyphs` and `position` values.
+
+		The returned result (if it exists) replaces glyphs from
+			`glyphs[input_start + position]` to `glyphs[input_start + position + input_consumed - 1]`
+
+		inclusive, with `result.glyphs`.
+	*/
+	std::optional<SubstitutionResult> lookupChainedContextSubstitution(const GSubTable& gsub, const LookupTable& lookup,
+		zst::span<uint32_t> glyphs, size_t position);
 }
 
 

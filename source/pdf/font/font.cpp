@@ -99,4 +99,13 @@ namespace pdf
 
 		return font::off::getPositioningAdjustmentsForGlyphSequence(this->source_file, glyphs, features);
 	}
+
+	std::vector<uint32_t> Font::performSubstitutionsForGlyphSequence(zst::span<uint32_t> glyphs,
+		const font::off::FeatureSet& features) const
+	{
+		if(!this->source_file)
+			return std::vector<uint32_t>(glyphs.begin(), glyphs.end());
+
+		return font::off::performSubstitutionsForGlyphSequence(this->source_file, glyphs, features);
+	}
 }
