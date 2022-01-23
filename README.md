@@ -61,11 +61,11 @@ This also acts as a sort of TODO; as time goes on completed features may be remo
 - [x] Embedded font subsetting (both TrueType and CFF)
 - [ ] Variable font support
 - [ ] Further size optimisation for embedded fonts
-- [x] Glyph kerning (via GPOS table)
-- [ ] Glyph kerning (via Apple/ttf `kern` table)
-- [x] Glyph ligatures (via GSUB table)
-- [ ] Glyph ligatures (via Apple `morx` table)
-- [ ] More advanced typography support (`BASE`, `MATH`)
+- [x] Glyph positioning (OpenType GPOS, lookups 1, 2, 7, 8, 9)
+- [ ] Glyph ligatures (OpenType GSUB)
+- [ ] Truetype/AAT `kern` table
+- [ ] AAT tables (`kerx`, `morx`)
+- [ ] More advanced typography support (`BASE`, `MATH`, `JSTF`)
 - [x] Text extraction (eg. copy/paste) support — `ToUnicode` table
 - [ ] Unicode substitution (eg. codepoint (de)composition)
 - [ ] Vertical writing

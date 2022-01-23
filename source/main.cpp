@@ -28,18 +28,18 @@ constexpr const char* input_text =
 	"that 殺す’s the pathetic 小さい thing あなた calls あなたの life. You’re fucking 死にました’d, 赤ちゃん.\n"
 	"AVAYAYA V. Vo P. r.";
 #else
-constexpr const char* input_text =
-	"My name is Yoshikage Kira. I'm 33 years old. My house is in the northeast section of Morioh,\n"
-	"where all the villas are, and I am not married. I work as an employee for the Kame Yu department\n"
-	"stores, and I get home every day by 8 PM at the latest. I don't smoke, but I occasionally drink.\n"
-	"I'm in bed by 11 PM, and make sure I get eight hours of sleep, no matter what. After having a\n"
-	"glass of warm milk and doing about twenty minutes of stretches before going to bed, I usually\n"
-	"have no problems sleeping until morning. Just like a baby, I wake up without any fatigue or stress\n"
-	"in the morning. I was told there were no issues at my last check-up. I'm trying to explain that\n"
-	"I'm a person who wishes to live a very quiet life. I take care not to trouble myself with any enemies,\n"
-	"like winning and losing, that would cause me to lose sleep at night. That is how I deal with society,\n"
-	"and I know that is what brings me happiness. Although, if I were to fight I wouldn't lose to anyone.\n"
-	"AVAYAYA V. Vo P. r.";
+constexpr const char* input_text = "Bсички хора се раждат свободни и равни по";
+	// "My name is Yoshikage Kira. I'm 33 years old. My house is in the northeast section of Morioh,\n"
+	// "where all the villas are, and I am not married. I work as an employee for the Kame Yu department\n"
+	// "stores, and I get home every day by 8 PM at the latest. I don't smoke, but I occasionally drink.\n"
+	// "I'm in bed by 11 PM, and make sure I get eight hours of sleep, no matter what. After having a\n"
+	// "glass of warm milk and doing about twenty minutes of stretches before going to bed, I usually\n"
+	// "have no problems sleeping until morning. Just like a baby, I wake up without any fatigue or stress\n"
+	// "in the morning. I was told there were no issues at my last check-up. I'm trying to explain that\n"
+	// "I'm a person who wishes to live a very quiet life. I take care not to trouble myself with any enemies,\n"
+	// "like winning and losing, that would cause me to lose sleep at night. That is how I deal with society,\n"
+	// "and I know that is what brings me happiness. Although, if I were to fight I wouldn't lose to anyone.\n"
+	// "AVAYAYA V. Vo P. r.";
 #endif
 
 int main(int argc, char** argv)
@@ -49,9 +49,9 @@ int main(int argc, char** argv)
 		&document.pdfDocument(),
 		// font::FontFile::parseFromFile("fonts/Meiryo.ttf")
 		// font::FontFile::parseFromFile("fonts/MyriadPro-Regular.ttf")
-		font::FontFile::parseFromFile("fonts/XCharter-Roman.otf")
+		// font::FontFile::parseFromFile("fonts/XCharter-Roman.otf")
 		// font::FontFile::parseFromFile("fonts/FDArrayTest257.otf")
-		// font::FontFile::parseFromFile("fonts/SourceSerif4-Regular.otf")
+		font::FontFile::parseFromFile("fonts/SourceSerif4-Regular.otf")
 		// font::FontFile::parseFromFile("fonts/SourceSerif4Variable-Roman.otf")
 	);
 

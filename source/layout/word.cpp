@@ -15,111 +15,67 @@
 namespace sap
 {
 	// TODO: this needs to handle unicode composing/decomposing also, which is a massive pain
-	static std::optional<uint32_t> peek_one_glyphid(const pdf::Font* font, zst::byte_span utf8, size_t* num_bytes)
-	{
-		if(utf8.empty())
-			return { };
-
-		auto copy = utf8;
-		auto cp = unicode::consumeCodepointFromUtf8(copy);
-		auto gid = font->getGlyphIdFromCodepoint(cp);
-
-		if(num_bytes != nullptr)
-			*num_bytes = utf8.size() - copy.size();
-
-		return gid;
-	}
-
 	static uint32_t read_one_glyphid(const pdf::Font* font, zst::byte_span& utf8)
 	{
 		assert(utf8.size() > 0);
-		size_t num = 0;
-		auto gid = peek_one_glyphid(font, utf8, &num);
-		utf8.remove_prefix(num);
-		return *gid;
+
+		auto cp = unicode::consumeCodepointFromUtf8(utf8);
+		return font->getGlyphIdFromCodepoint(cp);
 	}
 
-	static std::vector<std::pair<uint32_t, int>> get_glyphs_and_spacing(const pdf::Font* font, zst::str_view text)
+
+	static std::vector<Word::GlyphInfo> convert_to_glyphs(const pdf::Font* font, zst::str_view text)
 	{
-		std::vector<std::pair<uint32_t, int>> ret;
-		auto sv = text.bytes();
+		auto utf8 = text.bytes();
 
-		/*
-			We handle the normal case correctly, in that `adj1` decreases the advance of the first
-			glyph, in effect moving the second glyph closer to the first. The thing is, I don't know
-			what to do for nonzero `adj2` values...
-		*/
+		// first, convert all codepoints to glyphs
+		std::vector<uint32_t> glyphs {};
+		while(utf8.size() > 0)
+			glyphs.push_back(read_one_glyphid(font, utf8));
 
-		while(sv.size() > 0)
+		using font::Tag;
+		font::off::FeatureSet features {};
+		features.script = Tag("latn");
+		features.language = Tag("DFLT");
+		features.enabled_features = {
+			Tag("kern"), Tag("liga"), Tag("ss01")
+		};
+
+		// next, use GSUB to perform substitutions.
+		glyphs = font->performSubstitutionsForGlyphSequence(zst::span<uint32_t>(glyphs.data(), glyphs.size()), features);
+
+		// next, get base metrics for each glyph.
+		std::vector<Word::GlyphInfo> glyph_infos {};
+		for(auto g : glyphs)
 		{
-		#if 0
-			if(auto ligatures = font->getLigaturesForGlyph(gid); ligatures.has_value())
-			{
-				auto copy = sv;
-
-				// setup a small array and prime it with as many glyphs as we can.
-				size_t lookahead_size = 1;
-				uint32_t lookahead[font::MAX_LIGATURE_LENGTH] { };
-				size_t codepoint_bytes[font::MAX_LIGATURE_LENGTH] { };
-				lookahead[0] = gid;
-				codepoint_bytes[0] = 0; // this one is 0 because it doesn't matter.
-
-				for(; !copy.empty() && lookahead_size < font::MAX_LIGATURE_LENGTH; lookahead_size++)
-				{
-					size_t nbytes = 0;
-					auto tmp = peek_one_glyphid(font, copy, &nbytes);
-					assert(tmp.has_value());
-					copy.remove_prefix(nbytes);
-
-					lookahead[lookahead_size] = *tmp;
-					codepoint_bytes[lookahead_size] = nbytes;
-				}
-
-				for(auto& liga : ligatures->ligatures)
-				{
-					if(liga.num_glyphs > lookahead_size)
-						continue;
-
-					if(memcmp(liga.glyphs, lookahead, liga.num_glyphs * sizeof(uint32_t)) == 0)
-					{
-						sap::log("layout", "substituting ligature: '{}' -> '{}'", liga.glyphs, liga.substitute);
-
-						// perform the substitution:
-						gid = liga.substitute;
-						font->loadMetricsForGlyph(gid);
-						font->markLigatureUsed(liga);
-
-						// and drop the glyphs from the real array, noting that the first one was already consumed
-						for(size_t i = 1; i < liga.num_glyphs; i++)
-							sv.remove_prefix(codepoint_bytes[i]);
-
-						// and quit the loop.
-						break;
-					}
-				}
-			}
-		#endif
-
-			int adjust = 0;
-			auto gid = read_one_glyphid(font, sv);
-			auto next_gid = peek_one_glyphid(font, sv, nullptr);
-
-			if(next_gid.has_value())
-			{
-				auto kerning_pair = font->getKerningForGlyphs(gid, *next_gid);
-				if(kerning_pair.has_value())
-				{
-					adjust = -1 * kerning_pair->first.horz_advance;
-					if(kerning_pair->second.horz_advance != 0)
-						zpr::println("warning: unsupported case where adj2 is not 0");
-				}
-			}
-
-			ret.push_back({ gid, adjust });
+			Word::GlyphInfo info {};
+			info.gid = g;
+			info.metrics = font->getMetricsForGlyph(g);
+			glyph_infos.push_back(std::move(info));
 		}
 
-		return ret;
+		// finally, use GPOS
+		auto glyphs_span = zst::span<uint32_t>(glyphs.data(), glyphs.size());
+		auto adjustment_map = font->getPositioningAdjustmentsForGlyphSequence(glyphs_span, features);
+		for(auto& [ i, adj ] : adjustment_map)
+		{
+			auto& info = glyph_infos[i];
+			info.adjustments.horz_advance += adj.horz_advance;
+			info.adjustments.vert_advance += adj.vert_advance;
+			info.adjustments.horz_placement += adj.horz_placement;
+			info.adjustments.vert_placement += adj.vert_placement;
+
+			// zpr::println("adjusting {}: {}", i, adj.horz_advance);
+		}
+
+		return glyph_infos;
 	}
+
+
+
+
+
+
 
 	void Word::computeMetrics(const Style* parent_style)
 	{
@@ -128,39 +84,33 @@ namespace sap
 
 		auto font = style->font();
 		auto font_size = style->font_size();
-		m_glyphs = get_glyphs_and_spacing(font, this->text);
+
+		m_glyphs = convert_to_glyphs(font, this->text);
 
 		// we shouldn't have 0 glyphs in a word... right?
 		assert(m_glyphs.size() > 0);
 
-		// TODO: vertical writing mode
-
 		// size is in sap units, which is in mm; metrics are in typographic units, so 72dpi;
 		// calculate the scale accordingly.
 		const auto font_metrics = font->getFontMetrics();
-
 		constexpr auto tpu = [](auto... xs) -> auto { return pdf::typographic_unit(xs...); };
 
+		// TODO: what is this complicated formula???
 		this->size = { 0, 0 };
 		this->size.y() = ((tpu(font_metrics.ymax) - tpu(font_metrics.ymin))
 						* (font_size.value() / pdf::GLYPH_SPACE_UNITS)).into(sap::Scalar{});
 
 		auto font_size_tpu = font_size.into(dim::units::pdf_typographic_unit{});
-
-		for(auto& [ gid, kern ] : m_glyphs)
+		for(auto& glyph : m_glyphs)
 		{
-			auto met = font->getMetricsForGlyph(gid);
-
-			// note: positive kerns move left, so subtract it.
-			auto glyph_width = font->scaleFontMetricForFontSize(met.horz_advance, font_size_tpu);
-			auto kern_adjust = font->scaleFontMetricForFontSize(kern, font_size_tpu);
-			this->size.x() += (glyph_width - kern_adjust).into(sap::Scalar{});
+			auto width = glyph.metrics.horz_advance + glyph.adjustments.horz_advance;
+			this->size.x() += font->scaleMetricForFontSize(width, font_size_tpu).into(sap::Scalar{});
 		}
 
 		{
 			auto space_gid = font->getGlyphIdFromCodepoint(' ');
 			auto space_adv = font->getMetricsForGlyph(space_gid).horz_advance;
-			auto space_width = font->scaleFontMetricForFontSize(space_adv, font_size_tpu);
+			auto space_width = font->scaleMetricForFontSize(space_adv, font_size_tpu);
 
 			m_space_width = space_width.into(sap::Scalar{});
 		}
@@ -184,10 +134,12 @@ namespace sap
 				text->addEncoded(1, gid);
 		};
 
-		for(auto& [ gid, kern ] : m_glyphs)
+		for(auto& glyph : m_glyphs)
 		{
-			add_gid(gid);
-			text->offset(-font->scaleFontMetricForPDFTextSpace(kern));
+			add_gid(glyph.gid);
+
+			// TODO: handle placement as well
+			text->offset(font->scaleMetricForPDFTextSpace(glyph.adjustments.horz_advance));
 		}
 
 		if(!m_linebreak_after && m_next_word != nullptr)
@@ -200,7 +152,7 @@ namespace sap
 				auto space_adv = font->getMetricsForGlyph(space_gid).horz_advance;
 
 				// ratio > 1 = expand, < 1 = shrink
-				auto extra = font->scaleFontMetricForPDFTextSpace(space_adv) * (m_post_space_ratio - 1.0);
+				auto extra = font->scaleMetricForPDFTextSpace(space_adv) * (m_post_space_ratio - 1.0);
 				text->offset(extra);
 			}
 

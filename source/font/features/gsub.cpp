@@ -1,141 +1,365 @@
-// gsub.cpp
-// Copyright (c) 2021, zhiayang
+// lookup.cpp
+// Copyright (c) 2022, zhiayang
 // SPDX-License-Identifier: Apache-2.0
-
-#include <cassert>
 
 #include "util.h"
 #include "error.h"
+
 #include "font/font.h"
 #include "font/features.h"
 
-namespace font
+namespace font::off::gsub
 {
-	std::map<uint32_t, GlyphLigatureSet> FontFile::getAllGlyphLigatures() const
+	std::optional<SubstitutionResult> lookupForGlyphSequence(const GSubTable& gsub_table, const LookupTable& lookup,
+		zst::span<uint32_t> glyphs, size_t position)
 	{
-		std::map<uint32_t, GlyphLigatureSet> ligature_map;
+		/*
+			cf. the comment in `lookupForGlyphSequence` in gpos
 
-#if 0
-		for(auto& lookup : this->gsub_tables.lookup_tables[GSUB_LOOKUP_LIGATURE])
+			for GUSB i think it's a little more direct, because each "match" gives us the number of glyphs
+			to consume from the input sequence -- so we just skip that amount.
+		*/
+
+		size_t sub_begin = 0;
+		size_t sub_end = 0;
+		std::optional<SubstitutionResult> result {};
+		for(size_t i = position; i < glyphs.size(); i++)
 		{
-			auto ofs = lookup.file_offset;
-			auto buf = zst::byte_span(this->file_bytes, this->file_size).drop(ofs);
+			assert(lookup.type != gsub::LOOKUP_EXTENSION_SUBST);
 
-			auto table_start = buf;
-
-			// we already know the type, so just skip it.
-			consume_u16(buf);
-			auto flags = consume_u16(buf);
-			auto num_subs = consume_u16(buf);
-
-			(void) flags;
-
-			for(size_t i = 0; i < num_subs; i++)
-			{
-				auto ofs = consume_u16(buf);
-				auto subtable = table_start.drop(ofs);
-				auto subtable_start = subtable;
-
-				auto format = consume_u16(subtable);
-				auto cov_ofs = consume_u16(subtable);
-
-				auto cov_table = parseCoverageTable(subtable_start.drop(cov_ofs));
-
-				if(format != 1)
-					sap::internal_error("unknown GSUB LookupTable format {}", format);
-
-				// this thing is 2 levels of indirection deep
-				auto num_liga_sets = consume_u16(subtable);
-
-				// there should be 1 LigatureSet for every covered glyph in the coverage table
-				assert(num_liga_sets == cov_table.size());
-
-				for(size_t i = 0; i < num_liga_sets; i++)
+			auto init_result = [&](size_t num, std::vector<uint32_t> subst) {
+				if(result.has_value())
 				{
-					auto first_gid = cov_table[i];
-					auto liga_set = subtable_start.drop(consume_u16(subtable));
-					auto liga_set_start = liga_set;
+					/*
+						we need to perform some copying. say we have glyphs[0..9]. If we substituted
+						glyphs[1..3], then we have sub_begin=1, sub_end=3.
 
-					auto num_ligatures = consume_u16(liga_set);
+						if we are now at i=7 and we want to substitute glyphs[7..8], then we must
+						copy glyphs[4..6] to the output array as well.
+					*/
+					result->glyphs.insert(result->glyphs.end(),
+						glyphs.begin() + sub_end,
+						glyphs.begin() + i
+					);
 
-					for(size_t k = 0; k < num_ligatures; k++)
-					{
-						auto liga_table = liga_set_start.drop(consume_u16(liga_set));
-						auto substitute = consume_u16(liga_table);
-						auto num_components = consume_u16(liga_table);
+					sub_end = i + num;
+				}
+				else
+				{
+					sub_begin = i;
+					sub_end = i + num;
 
-						if(num_components > MAX_LIGATURE_LENGTH)
-						{
-							zpr::println("warning: skipping ligature with {} components (more than maximum of {})",
-								num_components, MAX_LIGATURE_LENGTH);
-							continue;
-						}
+					result = SubstitutionResult {};
+				}
 
-						GlyphLigature lig { };
-						lig.num_glyphs = num_components;
-						lig.substitute = substitute;
-						lig.glyphs[0] = first_gid;
+				result->glyphs.insert(result->glyphs.end(), subst.begin(), subst.end());
+			};
 
-						for(size_t i = 1; i < num_components; i++)
-							lig.glyphs[i] = consume_u16(liga_table);
 
-						// ligature_map[lig] = substitute;
-						ligature_map[first_gid].ligatures.push_back(lig);
-					}
+			if(lookup.type == gsub::LOOKUP_SINGLE)
+			{
+				if(auto subst = lookupSingleSubstitution(lookup, glyphs[i]); subst.has_value())
+					init_result(1, { *subst });
+			}
+			else if(lookup.type == gsub::LOOKUP_MULTIPLE)
+			{
+				if(auto subst = lookupMultipleSubstitution(lookup, glyphs[i]); subst.has_value())
+					init_result(1, std::move(*subst));
+			}
+			else if(lookup.type == gsub::LOOKUP_LIGATURE)
+			{
+				if(auto subst = lookupLigatureSubstitution(lookup, glyphs.drop(i)); subst.has_value())
+				{
+					init_result(subst->second, { subst->first });
+					i += subst->second - 1;   // skip over the processed glyphs
+				}
+			}
+			else if(lookup.type == LOOKUP_CONTEXTUAL || lookup.type == LOOKUP_CHAINING_CONTEXT)
+			{
+				std::optional<SubstitutionResult> subst {};
+				if(lookup.type == LOOKUP_CONTEXTUAL)
+					subst = lookupContextualSubstitution(gsub_table, lookup, glyphs.drop(i));
+				else
+					subst = lookupChainedContextSubstitution(gsub_table, lookup, glyphs, /* pos: */ i);
+
+				if(subst.has_value())
+				{
+					// in this context, we should never have input_start != 0, since the lookups always
+					// match starting from glyphs[0] (or glyphs[position]).
+					assert(subst->input_start == 0);
+					init_result(subst->input_consumed, std::move(subst->glyphs));
+
+					// again, skip over the processed glyphs.
+					i += subst->input_consumed - 1;
 				}
 			}
 		}
-#endif
-		return ligature_map;
+
+		if(result.has_value())
+		{
+			result->input_start = sub_begin;
+			result->input_consumed = sub_end - sub_begin;
+		}
+
+		return result;
+	}
+
+
+
+
+
+	std::optional<uint32_t> lookupSingleSubstitution(const LookupTable& lookup, uint32_t gid)
+	{
+		assert(lookup.type == LOOKUP_SINGLE);
+
+		for(auto subtable : lookup.subtables)
+		{
+			auto subtable_start = subtable;
+			auto format = consume_u16(subtable);
+
+			if(format != 1 && format != 2)
+			{
+				sap::warn("font/gsub", "unknown subtable format '{}' in GSUB/Single", format);
+				continue;
+			}
+
+			// both of them have coverage tables.
+			auto cov_ofs = consume_u16(subtable);
+			auto cov_idx = getGlyphCoverageIndex(subtable_start.drop(cov_ofs), gid);
+			if(!cov_idx.has_value())
+				continue;
+
+			if(format == 1)
+			{
+				// fixed delta for all covered glyphs.
+				auto delta = consume_u16(subtable);
+				return gid + delta;
+			}
+			else
+			{
+				auto num_glyphs = consume_u16(subtable);
+				assert(*cov_idx < num_glyphs);
+
+				return peek_u16(subtable.drop(*cov_idx * sizeof(uint16_t)));
+			}
+		}
+
+		return std::nullopt;
+	}
+
+	std::optional<std::vector<uint32_t>> lookupMultipleSubstitution(const LookupTable& lookup, uint32_t gid)
+	{
+		assert(lookup.type == LOOKUP_MULTIPLE);
+		for(auto subtable : lookup.subtables)
+		{
+			auto subtable_start = subtable;
+			auto format = consume_u16(subtable);
+
+			if(format != 1)
+			{
+				sap::warn("font/gsub", "unknown subtable format '{}' in GSUB/Multiple", format);
+				continue;
+			}
+
+			auto cov_ofs = consume_u16(subtable);
+			auto cov_idx = getGlyphCoverageIndex(subtable_start.drop(cov_ofs), gid);
+			if(!cov_idx.has_value())
+				continue;
+
+			auto num_sequences = consume_u16(subtable);
+			assert(*cov_idx < num_sequences);
+
+			auto seq_ofs = peek_u16(subtable.drop(*cov_idx * sizeof(uint16_t)));
+			auto sequence = subtable_start.drop(seq_ofs);
+
+			/*
+				spec:
+
+				The use of multiple substitution for deletion of an input glyph is prohibited.
+				The glyphCount value should always be greater than 0.
+			*/
+			auto num_glyphs = consume_u16(sequence);
+			assert(num_glyphs > 0);
+
+			std::vector<uint32_t> subst {};
+			for(uint16_t i = 0; i < num_glyphs; i++)
+				subst.push_back(consume_u16(sequence));
+
+			return subst;
+		}
+
+		return std::nullopt;
+	}
+
+	std::optional<std::pair<uint32_t, size_t>> lookupLigatureSubstitution(const LookupTable& lookup,
+		zst::span<uint32_t> glyphs)
+	{
+		assert(glyphs.size() > 0);
+		assert(lookup.type == LOOKUP_LIGATURE);
+
+		for(auto subtable : lookup.subtables)
+		{
+			auto subtable_start = subtable;
+			auto format = consume_u16(subtable);
+
+			if(format != 1)
+			{
+				sap::warn("font/gsub", "unknown subtable format '{}' in GSUB/Ligature", format);
+				continue;
+			}
+
+			auto cov_ofs = consume_u16(subtable);
+			auto cov_idx = getGlyphCoverageIndex(subtable_start.drop(cov_ofs), glyphs[0]);
+			if(!cov_idx.has_value())
+				continue;
+
+			auto num_sets = consume_u16(subtable);
+			assert(*cov_idx < num_sets);
+
+			auto set_ofs = peek_u16(subtable.drop(*cov_idx * sizeof(uint16_t)));
+
+			auto ligature_set = subtable_start.drop(set_ofs);
+			auto ligature_set_start = ligature_set;
+
+			auto num_ligatures = consume_u16(ligature_set);
+			for(uint16_t i = 0; i < num_ligatures; i++)
+			{
+				auto ligature = ligature_set_start.drop(consume_u16(ligature_set));
+
+				uint32_t output_gid = consume_u16(ligature);
+				size_t num_components = consume_u16(ligature);
+
+				if(glyphs.size() < num_components)
+					continue;
+
+				bool matched = true;
+				for(size_t k = 1; matched && k < num_components; k++)
+				{
+					if(glyphs[k] != consume_u16(ligature))
+						matched = false;
+				}
+
+				if(matched)
+					return std::pair(output_gid, num_components);
+			}
+		}
+
+		return std::nullopt;
+	}
+
+
+	using SubstLookupRecord = ContextualLookupRecord;
+	static SubstitutionResult apply_lookup_records(const GSubTable& gsub_table,
+		const std::pair<std::vector<SubstLookupRecord>, size_t>& records,
+		zst::span<uint32_t> glyphs, size_t position)
+	{
+		/*
+			so the idea is, instead of copying around the entire glyphstring like a fool,  when we
+			perform a lookup that substitutes stuff, we replace the input sequence part of this array,
+			without touching the lookbehind part. Then, we copy the lookahead part at the end. this saves...
+			a few copies, probably.
+		*/
+		auto num_input_glyphs = records.second;
+		auto glyphstring = std::vector<uint32_t>(glyphs.begin(), glyphs.end());
+		auto lookahead = glyphs.drop(position + num_input_glyphs);
+
+		for(auto [ glyph_idx, lookup_idx ] : records.first)
+		{
+			assert(lookup_idx < gsub_table.lookups.size());
+			auto& nested_lookup = gsub_table.lookups[lookup_idx];
+
+			auto span = zst::span<uint32_t>(glyphstring.data(), glyphstring.size());
+			auto result = lookupForGlyphSequence(gsub_table, nested_lookup, span, /* pos: */ glyph_idx + position);
+			if(result.has_value())
+			{
+				// erase out the replaced glyphs, leaving the untouched glyphs and the lookahead.
+				glyphstring.erase(
+					glyphstring.begin() + position + result->input_start,
+					glyphstring.begin() + position + result->input_consumed
+				);
+
+				// copy over the new glyphs to the correct location
+				glyphstring.insert(glyphstring.begin() + position + result->input_start,
+					std::move_iterator(result->glyphs.begin()),
+					std::move_iterator(result->glyphs.end())
+				);
+			}
+		}
+
+		SubstitutionResult result {};
+		result.input_start = 0;
+		result.input_consumed = num_input_glyphs;
+
+		// finally, the glyphs we return should only include the input sequence.
+		assert(glyphstring.size() > position + lookahead.size());
+		result.glyphs = std::vector<uint32_t>(glyphstring.begin() + position, glyphstring.end() - lookahead.size());
+		return result;
+	}
+
+	std::optional<SubstitutionResult> lookupContextualSubstitution(const GSubTable& gsub, const LookupTable& lookup,
+		zst::span<uint32_t> glyphs)
+	{
+		assert(lookup.type == LOOKUP_CONTEXTUAL);
+		for(auto subtable : lookup.subtables)
+		{
+			if(auto records = performContextualLookup(subtable, glyphs); records.has_value())
+				return apply_lookup_records(gsub, *records, glyphs, /* pos: */ 0);
+		}
+
+		return std::nullopt;
+	}
+
+	std::optional<SubstitutionResult> lookupChainedContextSubstitution(const GSubTable& gsub, const LookupTable& lookup,
+		zst::span<uint32_t> glyphs, size_t position)
+	{
+		assert(position < glyphs.size());
+		assert(lookup.type == LOOKUP_CHAINING_CONTEXT);
+
+		for(auto subtable : lookup.subtables)
+		{
+			if(auto records = performChainedContextLookup(subtable, glyphs, position); records.has_value())
+				return apply_lookup_records(gsub, *records, glyphs, /* pos: */ position);
+		}
+
+		return std::nullopt;
 	}
 }
+
 
 
 namespace font::off
 {
-	/*
-		TODO: have more discretion about which ligatures to use. ideally, we should just
-		parse out all the ligatures/substitutions and tie them into features. this way,
-		we (the layout engine) can choose which features to enable or disable.
-
-		with the current "substitute everything i can" approach, we include loads of nonsense
-		like discretionary ligatures (like ます -> 〼).
-	*/
-	void parseGSub(FontFile* font, const Table& gsub_table)
+	std::vector<uint32_t> performSubstitutionsForGlyphSequence(FontFile* font, zst::span<uint32_t> input,
+		const FeatureSet& features)
 	{
-		return;
-#if 0
-		auto buf = zst::byte_span(font->file_bytes, font->file_size);
-		buf.remove_prefix(gsub_table.offset);
+		auto gsub_table = font->gsub_table;
+		auto lookups = getLookupTablesForFeatures(font->gsub_table, features);
 
-		auto table_start = buf;
+		auto glyphs = std::vector<uint32_t>(input.begin(), input.end());
+		auto span = [](auto& g) { return zst::span<uint32_t>(g.data(), g.size()); };
 
-		auto major = consume_u16(buf);
-		auto minor = consume_u16(buf);
-
-		if(major != 1 || (minor != 0 && minor != 1))
+		for(auto& lookup_idx : lookups)
 		{
-			zpr::println("warning: unsupported GSUB table version {}.{}, ignoring", major, minor);
-			return;
+			assert(lookup_idx < gsub_table.lookups.size());
+			auto& lookup = gsub_table.lookups[lookup_idx];
+
+			// in this case, we want to lookup the entire sequence, so start at position 0.
+			auto subst = gsub::lookupForGlyphSequence(gsub_table, lookup, span(glyphs), /* position: */ 0);
+			if(subst.has_value())
+			{
+				glyphs.erase(
+					glyphs.begin() + subst->input_start,
+					glyphs.begin() + subst->input_start + subst->input_consumed
+				);
+				// copy over the new glyphs to the correct location
+				glyphs.insert(glyphs.begin() + subst->input_start,
+					std::move_iterator(subst->glyphs.begin()),
+					std::move_iterator(subst->glyphs.end())
+				);
+			}
 		}
 
-		auto script_list = parseTaggedList(font, table_start.drop(consume_u16(buf)));
-		auto feature_list = parseTaggedList(font, table_start.drop(consume_u16(buf)));
-
-		auto lookup_list_ofs = consume_u16(buf);
-
-		auto lookup_tables = table_start.drop(lookup_list_ofs);
-		auto num_lookup_tables = consume_u16(lookup_tables);
-		for(size_t i = 0; i < num_lookup_tables; i++)
-		{
-			auto offset = consume_u16(lookup_tables);
-			auto tbl = parseLookupTable(font, table_start.drop(lookup_list_ofs + offset));
-
-			if(tbl.type >= GSUB_LOOKUP_MAX)
-				zpr::println("warning: invalid GSUB lookup table with type {}", tbl.type);
-			else
-				font->gsub_tables.lookup_tables[tbl.type].push_back(std::move(tbl));
-		}
-#endif
+		return glyphs;
 	}
 }
+

@@ -11,6 +11,7 @@
 #include <zst.h>
 
 #include "defs.h"
+#include "font/font.h"
 #include "sap/style.h"
 #include "pdf/document.h"
 
@@ -220,11 +221,18 @@ namespace sap
 
 		friend struct Paragraph;
 
+		struct GlyphInfo
+		{
+			uint32_t gid;
+			font::GlyphMetrics metrics;
+			font::GlyphAdjustment adjustments;
+		};
+
 	private:
 		const Paragraph* m_paragraph = nullptr;
 
 		// first element is the glyph id, second one is the adjustment to make for kerning (0 if none)
-		std::vector<std::pair<uint32_t, int>> m_glyphs {};
+		std::vector<GlyphInfo> m_glyphs {};
 
 		// stuff set by the containing Paragraph during layout and used during rendering.
 		Position m_position { };

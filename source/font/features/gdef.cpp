@@ -64,10 +64,10 @@ namespace font::off
 		assert(false);
 	}
 
-	std::map<int, std::vector<uint32_t>> parseClassDefTable(zst::byte_span table)
-	{
-		std::map<int, std::vector<uint32_t>> class_ids;
 
+	template <typename Callback>
+	static void parse_classdef_table(zst::byte_span table, Callback&& callback)
+	{
 		auto format = consume_u16(table);
 
 		if(format != 1 && format != 2)
@@ -79,9 +79,9 @@ namespace font::off
 			auto num_glyphs = consume_u16(table);
 
 			for(size_t i = 0; i < num_glyphs; i++)
-				class_ids[consume_u16(table)].push_back(start_gid + i);
+				callback(consume_u16(table), start_gid + i);
 		}
-		else if(format == 2)
+		else
 		{
 			auto num_ranges = consume_u16(table);
 
@@ -92,13 +92,28 @@ namespace font::off
 				auto class_id = consume_u16(table);
 
 				for(auto g = first_gid; g <= last_gid; g++)
-					class_ids[class_id].push_back(g);
+					callback(class_id, g);
 			}
 		}
-		else
-		{
-			assert(false);
-		}
+	}
+
+
+	std::map<int, std::set<uint32_t>> parseAllClassDefs(zst::byte_span table)
+	{
+		std::map<int, std::set<uint32_t>> class_ids;
+		parse_classdef_table(table, [&](int cls, uint32_t gid) {
+			class_ids[cls].insert(gid);
+		});
+
+		return class_ids;
+	}
+
+	std::map<uint32_t, int> parseGlyphToClassMapping(zst::byte_span table)
+	{
+		std::map<uint32_t, int> class_ids;
+		parse_classdef_table(table, [&](int cls, uint32_t gid) {
+			class_ids[gid] = cls;
+		});
 
 		return class_ids;
 	}
