@@ -38,7 +38,7 @@ namespace sap
 		features.script = Tag("latn");
 		features.language = Tag("DFLT");
 		features.enabled_features = {
-			Tag("kern"), Tag("liga"), Tag("ss01")
+			Tag("kern"), Tag("liga")
 		};
 
 		// next, use GSUB to perform substitutions.
