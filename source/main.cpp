@@ -38,7 +38,7 @@ constexpr const char* input_text = "Bсички хора се раждат св�
 
 int main(int argc, char** argv)
 {
-	auto document = sap::Document();
+	auto document = sap::layout::Document();
 	auto font = pdf::Font::fromFontFile(
 		&document.pdfDocument(),
 		// font::FontFile::parseFromFile("fonts/Meiryo.ttf")

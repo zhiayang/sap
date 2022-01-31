@@ -12,7 +12,7 @@
 #include "pdf/misc.h"
 #include "pdf/font.h"
 
-namespace sap
+namespace sap::layout
 {
 	// TODO: this needs to handle unicode composing/decomposing also, which is a massive pain
 	static uint32_t read_one_glyphid(const pdf::Font* font, zst::byte_span& utf8)

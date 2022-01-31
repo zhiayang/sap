@@ -4,7 +4,7 @@
 
 #include "sap.h"
 
-namespace sap
+namespace sap::layout
 {
 	LayoutRegion::LayoutRegion(Size2d size) : m_size(std::move(size))
 	{

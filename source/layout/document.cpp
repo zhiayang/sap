@@ -6,7 +6,7 @@
 #include "pdf/page.h"
 #include "pdf/document.h"
 
-namespace sap
+namespace sap::layout
 {
 	Document::Document()
 	{
