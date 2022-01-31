@@ -35,10 +35,10 @@ namespace sap
 
 		using font::Tag;
 		font::off::FeatureSet features {};
-		features.script = Tag("latn");
-		features.language = Tag("DFLT");
+		features.script = Tag("cyrl");
+		features.language = Tag("SRB ");
 		features.enabled_features = {
-			Tag("kern"), Tag("liga")
+			Tag("kern"), Tag("liga"), Tag("locl")
 		};
 
 		// next, use GSUB to perform substitutions.
@@ -56,17 +56,17 @@ namespace sap
 
 		// finally, use GPOS
 		auto glyphs_span = zst::span<uint32_t>(glyphs.data(), glyphs.size());
-		auto adjustment_map = font->getPositioningAdjustmentsForGlyphSequence(glyphs_span, features);
-		for(auto& [ i, adj ] : adjustment_map)
-		{
-			auto& info = glyph_infos[i];
-			info.adjustments.horz_advance += adj.horz_advance;
-			info.adjustments.vert_advance += adj.vert_advance;
-			info.adjustments.horz_placement += adj.horz_placement;
-			info.adjustments.vert_placement += adj.vert_placement;
+		// auto adjustment_map = font->getPositioningAdjustmentsForGlyphSequence(glyphs_span, features);
+		// for(auto& [ i, adj ] : adjustment_map)
+		// {
+		// 	auto& info = glyph_infos[i];
+		// 	info.adjustments.horz_advance += adj.horz_advance;
+		// 	info.adjustments.vert_advance += adj.vert_advance;
+		// 	info.adjustments.horz_placement += adj.horz_placement;
+		// 	info.adjustments.vert_placement += adj.vert_placement;
 
-			// zpr::println("adjusting {}: {}", i, adj.horz_advance);
-		}
+		// 	// zpr::println("adjusting {}: {}", i, adj.horz_advance);
+		// }
 
 		return glyph_infos;
 	}

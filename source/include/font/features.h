@@ -189,14 +189,22 @@ namespace font::off
 	/*
 		Parse a "Tagged List" -- with the following layout:
 
+		[extra offset]
 		u16 count;
 		Record records[count];
 
 		Record:
 			u32 Tag
 			u16 offset_from_start_of_table
+
+		The extra offset is typically 0. However, for cases where the tagged list has some
+		extra data before the count, specify that number in bytes so that the tagged tables
+		have the correct offset.
+
+		(the subtables have offsets specified "from beginning of X table"; with the extra data,
+		this offset must be adjusted)
 	*/
-	std::vector<TaggedTable> parseTaggedList(zst::byte_span buf);
+	std::vector<TaggedTable> parseTaggedList(zst::byte_span buf, size_t starting_offset = 0);
 
 
 	/*

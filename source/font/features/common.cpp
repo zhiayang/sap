@@ -36,6 +36,9 @@ namespace font::off
 			return {};  // nothing again
 
 		assert(lang != nullptr);
+		size_t uwu = 0;
+		for(auto f : lang->features)
+			zpr::println("feat[{}]: {}", f, table.features[f].tag.str());
 
 		std::vector<uint16_t> lookups {};
 
@@ -90,7 +93,8 @@ namespace font::off
 		if(default_langsys != 0)
 			script.languages[DEFAULT] = parse_one_language(DEFAULT, table_start.drop(default_langsys));
 
-		auto langsys_tables = parseTaggedList(buf);
+		// we have the 2 byte "default_langsys" to account for.
+		auto langsys_tables = parseTaggedList(buf, /* starting_offset: */ sizeof(uint16_t));
 		for(auto& langsys : langsys_tables)
 			script.languages[langsys.tag] = parse_one_language(langsys.tag, langsys.data);
 
@@ -191,7 +195,7 @@ namespace font::off
 		return table_list;
 	}
 
-	std::vector<TaggedTable> parseTaggedList(zst::byte_span buf)
+	std::vector<TaggedTable> parseTaggedList(zst::byte_span buf, size_t starting_offset)
 	{
 		std::vector<TaggedTable> ret {};
 
@@ -202,7 +206,7 @@ namespace font::off
 			auto tag = Tag(consume_u32(buf));
 			auto ofs = consume_u16(buf);
 
-			ret.push_back({ tag, zst::byte_span(table_start.drop(ofs)) });
+			ret.push_back({ tag, zst::byte_span(table_start.drop(ofs - starting_offset)) });
 		}
 
 		return ret;
