@@ -2,6 +2,8 @@
 // Copyright (c) 2022, zhiayang
 // SPDX-License-Identifier: Apache-2.0
 
+#include <algorithm>
+
 #include "pdf/font.h"
 #include "pdf/misc.h"
 #include "pdf/object.h"
