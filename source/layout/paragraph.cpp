@@ -9,7 +9,7 @@
 #include "pdf/text.h"
 #include "pdf/units.h"
 
-namespace sap
+namespace sap::layout
 {
 	void Paragraph::add(Word word)
 	{

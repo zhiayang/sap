@@ -5,7 +5,7 @@
 #include "sap.h"
 #include "pdf/page.h"
 
-namespace sap
+namespace sap::layout
 {
 	// TODO: customisable margins
 	constexpr Scalar LEFT_MARGIN    = Scalar(25.0);
