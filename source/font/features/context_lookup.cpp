@@ -25,7 +25,7 @@ namespace font::off
 	}
 
 	std::optional<std::pair<std::vector<ContextualLookupRecord>, size_t>> performContextualLookup(zst::byte_span subtable,
-		zst::span<uint32_t> glyphs)
+		zst::span<GlyphId> glyphs)
 	{
 		auto subtable_start = subtable;
 		auto format = consume_u16(subtable);
@@ -154,7 +154,7 @@ namespace font::off
 
 
 	std::optional<std::pair<std::vector<ContextualLookupRecord>, size_t>> performChainedContextLookup(zst::byte_span subtable,
-		zst::span<uint32_t> glyphs, size_t position)
+		zst::span<GlyphId> glyphs, size_t position)
 	{
 		auto subtable_start = subtable;
 		auto format = consume_u16(subtable);
@@ -273,7 +273,7 @@ namespace font::off
 				auto ruleset_table = subtable_start.drop(ruleset_ofs);
 				auto ruleset_table_start = ruleset_table;
 
-				auto identity_trf = [](uint32_t x) {
+				auto identity_trf = [](GlyphId x) {
 					return x;
 				};
 
@@ -306,15 +306,15 @@ namespace font::off
 				for(size_t i = 0; i < num_rules; i++)
 				{
 					auto rule = classset_start.drop(consume_u16(classset));
-					auto lookbehind_trf = [&lookbehind_classdefs](uint32_t gid) {
+					auto lookbehind_trf = [&lookbehind_classdefs](GlyphId gid) {
 						return getGlyphClass(lookbehind_classdefs, gid);
 					};
 
-					auto input_trf = [&input_classdefs](uint32_t gid) {
+					auto input_trf = [&input_classdefs](GlyphId gid) {
 						return getGlyphClass(input_classdefs, gid);
 					};
 
-					auto lookahead_trf = [&lookahead_classdefs](uint32_t gid) {
+					auto lookahead_trf = [&lookahead_classdefs](GlyphId gid) {
 						return getGlyphClass(lookahead_classdefs, gid);
 					};
 

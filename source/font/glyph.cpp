@@ -11,7 +11,7 @@
 
 namespace font
 {
-	GlyphMetrics FontFile::getGlyphMetrics(uint32_t glyph_id) const
+	GlyphMetrics FontFile::getGlyphMetrics(GlyphId glyph_id) const
 	{
 		auto u16_array = this->hmtx_table.cast<uint16_t>();
 

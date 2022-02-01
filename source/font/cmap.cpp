@@ -13,7 +13,7 @@ namespace font
 {
 	// all of these return 0 if the codepoint is not found, which should (in all sensible fonts)
 	// correspond to the "notdef" character, which is usually a rectangle with an 'X' in it.
-	static uint32_t find_in_subtable_0(zst::byte_span subtable, uint32_t codepoint)
+	static GlyphId find_in_subtable_0(zst::byte_span subtable, Codepoint codepoint)
 	{
 		auto fmt = consume_u16(subtable);
 		assert(fmt == 0);
@@ -28,7 +28,7 @@ namespace font
 		else                 return 0;
 	}
 
-	static uint32_t find_in_subtable_4(zst::byte_span subtable, uint32_t codepoint)
+	static GlyphId find_in_subtable_4(zst::byte_span subtable, Codepoint codepoint)
 	{
 		auto fmt = consume_u16(subtable);
 		assert(fmt == 4);
@@ -81,7 +81,7 @@ namespace font
 		return 0;
 	}
 
-	static uint32_t find_in_subtable_6(zst::byte_span subtable, uint32_t codepoint)
+	static GlyphId find_in_subtable_6(zst::byte_span subtable, Codepoint codepoint)
 	{
 		auto fmt = consume_u16(subtable);
 		assert(fmt == 6);
@@ -101,7 +101,7 @@ namespace font
 		return subtable.cast<uint16_t>()[codepoint - first];
 	}
 
-	static uint32_t find_in_subtable_10(zst::byte_span subtable, uint32_t codepoint)
+	static GlyphId find_in_subtable_10(zst::byte_span subtable, Codepoint codepoint)
 	{
 		auto fmt = consume_u16(subtable);
 		assert(fmt == 10);
@@ -122,13 +122,13 @@ namespace font
 		// alignment may be a problem.
 		uint32_t ret = 0;
 
-		auto array = subtable.cast<uint32_t>();
-		memcpy(&ret, array.data() + (codepoint - first), sizeof(uint32_t));
+		auto array = subtable.cast<GlyphId>();
+		memcpy(&ret, array.data() + (codepoint - first), sizeof(GlyphId));
 		return ret;
 	}
 
 
-	static uint32_t find_in_subtable_12_or_13(zst::byte_span subtable, uint32_t codepoint)
+	static GlyphId find_in_subtable_12_or_13(zst::byte_span subtable, Codepoint codepoint)
 	{
 		auto fmt = consume_u16(subtable);
 		assert(fmt == 12 || fmt == 13);
@@ -211,7 +211,7 @@ namespace font
 	// codepoint at a time...
 
 	// note that this does not do any caching -- that should be done at the PDF level.
-	uint32_t FontFile::getGlyphIndexForCodepoint(uint32_t codepoint) const
+	GlyphId FontFile::getGlyphIndexForCodepoint(Codepoint codepoint) const
 	{
 		auto subtable = zst::byte_span(this->file_bytes, this->file_size)
 			.drop(this->preferred_cmap.file_offset);

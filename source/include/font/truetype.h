@@ -58,10 +58,10 @@ namespace font::truetype
 	/*
 		Return the bounding box data for the given glyph id by inspecting its glyf data.
 	*/
-	BoundingBox getGlyphBoundingBox(TTData* tt, uint32_t glyph_id);
+	BoundingBox getGlyphBoundingBox(TTData* tt, GlyphId glyph_id);
 
 	/*
 		Subset the glyphs in the original loca/glyf tables based on the provided `used_glyphs`.
 	*/
-	TTSubset createTTSubset(FontFile* font, const std::map<uint32_t, GlyphMetrics>& used_glyphs);
+	TTSubset createTTSubset(FontFile* font, const std::map<GlyphId, GlyphMetrics>& used_glyphs);
 }

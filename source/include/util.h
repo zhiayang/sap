@@ -9,6 +9,8 @@
 
 #include <zst.h>
 
+#include "types.h"
+
 namespace util
 {
 	std::pair<uint8_t*, size_t> readEntireFile(const std::string& path);
@@ -23,8 +25,8 @@ namespace unicode
 	std::string utf8FromUtf16(zst::span<uint16_t> utf16);
 	std::string utf8FromUtf16BigEndianBytes(zst::byte_span bytes);
 
-	uint32_t consumeCodepointFromUtf8(zst::byte_span& utf8);
+	Codepoint consumeCodepointFromUtf8(zst::byte_span& utf8);
 
 	// high-order surrogate first.
-	std::pair<uint16_t, uint16_t> codepointToSurrogatePair(uint32_t codepoint);
+	std::pair<uint16_t, uint16_t> codepointToSurrogatePair(Codepoint codepoint);
 }

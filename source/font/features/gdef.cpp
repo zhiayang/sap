@@ -11,7 +11,7 @@
 
 namespace font::off
 {
-	int getGlyphClass(zst::byte_span table, uint32_t glyphId)
+	int getGlyphClass(zst::byte_span table, GlyphId glyphId)
 	{
 		auto format = consume_u16(table);
 
@@ -98,20 +98,20 @@ namespace font::off
 	}
 
 
-	std::map<int, std::set<uint32_t>> parseAllClassDefs(zst::byte_span table)
+	std::map<int, std::set<GlyphId>> parseAllClassDefs(zst::byte_span table)
 	{
-		std::map<int, std::set<uint32_t>> class_ids;
-		parse_classdef_table(table, [&](int cls, uint32_t gid) {
+		std::map<int, std::set<GlyphId>> class_ids;
+		parse_classdef_table(table, [&](int cls, GlyphId gid) {
 			class_ids[cls].insert(gid);
 		});
 
 		return class_ids;
 	}
 
-	std::map<uint32_t, int> parseGlyphToClassMapping(zst::byte_span table)
+	std::map<GlyphId, int> parseGlyphToClassMapping(zst::byte_span table)
 	{
-		std::map<uint32_t, int> class_ids;
-		parse_classdef_table(table, [&](int cls, uint32_t gid) {
+		std::map<GlyphId, int> class_ids;
+		parse_classdef_table(table, [&](int cls, GlyphId gid) {
 			class_ids[gid] = cls;
 		});
 

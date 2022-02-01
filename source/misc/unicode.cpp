@@ -73,7 +73,7 @@ namespace unicode
 		return ret;
 	}
 
-	uint32_t consumeCodepointFromUtf8(zst::byte_span& utf8)
+	Codepoint consumeCodepointFromUtf8(zst::byte_span& utf8)
 	{
 		int32_t codepoint = 0;
 		auto read = utf8proc_iterate(utf8.data(), utf8.size(), &codepoint);
@@ -81,10 +81,10 @@ namespace unicode
 			sap::internal_error("utf8 conversion error");
 
 		utf8.remove_prefix(read);
-		return static_cast<uint32_t>(codepoint);
+		return static_cast<Codepoint>(codepoint);
 	}
 
-	std::pair<uint16_t, uint16_t> codepointToSurrogatePair(uint32_t codepoint)
+	std::pair<uint16_t, uint16_t> codepointToSurrogatePair(Codepoint codepoint)
 	{
 		assert(codepoint <= 0x10FFFF);
 

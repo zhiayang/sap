@@ -11,7 +11,7 @@
 namespace font::off::gsub
 {
 	static std::optional<GlyphReplacement> lookupForGlyphSequence(const GSubTable& gsub_table, const LookupTable& lookup,
-		zst::span<uint32_t> glyphs, size_t position)
+		zst::span<GlyphId> glyphs, size_t position)
 	{
 		/*
 			cf. the comment in `lookupForGlyphSequence` in gpos
@@ -27,7 +27,7 @@ namespace font::off::gsub
 		{
 			assert(lookup.type != gsub::LOOKUP_EXTENSION_SUBST);
 
-			auto init_result = [&](size_t num, std::vector<uint32_t> subst) {
+			auto init_result = [&](size_t num, std::vector<GlyphId> subst) {
 				if(result.has_value())
 				{
 					/*
@@ -108,7 +108,7 @@ namespace font::off::gsub
 
 
 
-	std::optional<uint32_t> lookupSingleSubstitution(const LookupTable& lookup, uint32_t gid)
+	std::optional<GlyphId> lookupSingleSubstitution(const LookupTable& lookup, GlyphId gid)
 	{
 		assert(lookup.type == LOOKUP_SINGLE);
 
@@ -147,7 +147,7 @@ namespace font::off::gsub
 		return std::nullopt;
 	}
 
-	std::optional<std::vector<uint32_t>> lookupMultipleSubstitution(const LookupTable& lookup, uint32_t gid)
+	std::optional<std::vector<GlyphId>> lookupMultipleSubstitution(const LookupTable& lookup, GlyphId gid)
 	{
 		assert(lookup.type == LOOKUP_MULTIPLE);
 		for(auto subtable : lookup.subtables)
@@ -181,7 +181,7 @@ namespace font::off::gsub
 			auto num_glyphs = consume_u16(sequence);
 			assert(num_glyphs > 0);
 
-			std::vector<uint32_t> subst {};
+			std::vector<GlyphId> subst {};
 			for(uint16_t i = 0; i < num_glyphs; i++)
 				subst.push_back(consume_u16(sequence));
 
@@ -191,8 +191,8 @@ namespace font::off::gsub
 		return std::nullopt;
 	}
 
-	std::optional<std::pair<uint32_t, size_t>> lookupLigatureSubstitution(const LookupTable& lookup,
-		zst::span<uint32_t> glyphs)
+	std::optional<std::pair<GlyphId, size_t>> lookupLigatureSubstitution(const LookupTable& lookup,
+		zst::span<GlyphId> glyphs)
 	{
 		assert(glyphs.size() > 0);
 		assert(lookup.type == LOOKUP_LIGATURE);
@@ -226,7 +226,7 @@ namespace font::off::gsub
 			{
 				auto ligature = ligature_set_start.drop(consume_u16(ligature_set));
 
-				uint32_t output_gid = consume_u16(ligature);
+				GlyphId output_gid = consume_u16(ligature);
 				size_t num_components = consume_u16(ligature);
 
 				if(glyphs.size() < num_components)
@@ -251,7 +251,7 @@ namespace font::off::gsub
 	using SubstLookupRecord = ContextualLookupRecord;
 	static GlyphReplacement apply_lookup_records(const GSubTable& gsub_table,
 		const std::pair<std::vector<SubstLookupRecord>, size_t>& records,
-		zst::span<uint32_t> glyphs, size_t position)
+		zst::span<GlyphId> glyphs, size_t position)
 	{
 		/*
 			so the idea is, instead of copying around the entire glyphstring like a fool,  when we
@@ -260,7 +260,7 @@ namespace font::off::gsub
 			a few copies, probably.
 		*/
 		auto num_input_glyphs = records.second;
-		auto glyphstring = std::vector<uint32_t>(glyphs.begin(), glyphs.end());
+		auto glyphstring = std::vector<GlyphId>(glyphs.begin(), glyphs.end());
 		auto lookahead = glyphs.drop(position + num_input_glyphs);
 
 		for(auto [ glyph_idx, lookup_idx ] : records.first)
@@ -268,7 +268,7 @@ namespace font::off::gsub
 			assert(lookup_idx < gsub_table.lookups.size());
 			auto& nested_lookup = gsub_table.lookups[lookup_idx];
 
-			auto span = zst::span<uint32_t>(glyphstring.data(), glyphstring.size());
+			auto span = zst::span<GlyphId>(glyphstring.data(), glyphstring.size());
 			auto result = lookupForGlyphSequence(gsub_table, nested_lookup, span, /* pos: */ glyph_idx + position);
 			if(result.has_value())
 			{
@@ -292,12 +292,12 @@ namespace font::off::gsub
 
 		// finally, the glyphs we return should only include the input sequence.
 		assert(glyphstring.size() > position + lookahead.size());
-		result.glyphs = std::vector<uint32_t>(glyphstring.begin() + position, glyphstring.end() - lookahead.size());
+		result.glyphs = std::vector<GlyphId>(glyphstring.begin() + position, glyphstring.end() - lookahead.size());
 		return result;
 	}
 
 	std::optional<GlyphReplacement> lookupContextualSubstitution(const GSubTable& gsub, const LookupTable& lookup,
-		zst::span<uint32_t> glyphs)
+		zst::span<GlyphId> glyphs)
 	{
 		assert(lookup.type == LOOKUP_CONTEXTUAL);
 		for(auto subtable : lookup.subtables)
@@ -310,7 +310,7 @@ namespace font::off::gsub
 	}
 
 	std::optional<GlyphReplacement> lookupChainedContextSubstitution(const GSubTable& gsub, const LookupTable& lookup,
-		zst::span<uint32_t> glyphs, size_t position)
+		zst::span<GlyphId> glyphs, size_t position)
 	{
 		assert(position < glyphs.size());
 		assert(lookup.type == LOOKUP_CHAINING_CONTEXT);
@@ -329,14 +329,14 @@ namespace font::off::gsub
 
 namespace font::off
 {
-	std::vector<uint32_t> performSubstitutionsForGlyphSequence(FontFile* font, zst::span<uint32_t> input,
+	std::vector<GlyphId> performSubstitutionsForGlyphSequence(FontFile* font, zst::span<GlyphId> input,
 		const FeatureSet& features)
 	{
 		auto gsub_table = font->gsub_table;
 		auto lookups = getLookupTablesForFeatures(font->gsub_table, features);
 
-		auto glyphs = std::vector<uint32_t>(input.begin(), input.end());
-		auto span = [](auto& g) { return zst::span<uint32_t>(g.data(), g.size()); };
+		auto glyphs = std::vector<GlyphId>(input.begin(), input.end());
+		auto span = [](auto& g) { return zst::span<GlyphId>(g.data(), g.size()); };
 
 		for(auto& lookup_idx : lookups)
 		{

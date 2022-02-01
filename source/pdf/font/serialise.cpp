@@ -27,7 +27,7 @@ namespace pdf
 		// we need to write out the widths.
 		if(this->source_file && this->glyph_widths_array)
 		{
-			std::vector<std::pair<uint32_t, double>> widths;
+			std::vector<std::pair<GlyphId, double>> widths;
 			for(auto& [ gid, m ] : this->glyph_metrics)
 				widths.emplace_back(gid, this->scaleMetricForPDFTextSpace(m.horz_advance).value());
 

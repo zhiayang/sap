@@ -91,7 +91,7 @@ namespace font::truetype
 	}
 
 
-	BoundingBox getGlyphBoundingBox(TTData* tt, uint32_t glyph_id)
+	BoundingBox getGlyphBoundingBox(TTData* tt, GlyphId glyph_id)
 	{
 		if(glyph_id >= tt->glyphs.size())
 			sap::error("font/ttf", "glyph index '{}' out of range (max is '{}')", glyph_id, tt->glyphs.size() - 1);

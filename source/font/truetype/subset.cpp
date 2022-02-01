@@ -9,7 +9,7 @@
 
 namespace font::truetype
 {
-	TTSubset createTTSubset(FontFile* font, const std::map<uint32_t, GlyphMetrics>& used_glyphs)
+	TTSubset createTTSubset(FontFile* font, const std::map<GlyphId, GlyphMetrics>& used_glyphs)
 	{
 		auto tt = font->truetype_data;
 		assert(tt != nullptr);

@@ -228,7 +228,7 @@ namespace sap::layout
 
 		struct GlyphInfo
 		{
-			uint32_t gid;
+			GlyphId gid;
 			font::GlyphMetrics metrics;
 			font::GlyphAdjustment adjustments;
 		};

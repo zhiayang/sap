@@ -67,7 +67,7 @@ namespace font
 
 
 	void writeFontSubset(FontFile* font, zst::str_view subset_name, Stream* stream,
-		const std::map<uint32_t, GlyphMetrics>& used_glyphs)
+		const std::map<GlyphId, GlyphMetrics>& used_glyphs)
 	{
 		auto file_contents = zst::byte_span(font->file_bytes, font->file_size);
 		if(font->outline_type == FontFile::OUTLINES_CFF)

@@ -39,13 +39,13 @@ namespace pdf
 	}
 
 
-	font::GlyphMetrics Font::getMetricsForGlyph(font::GlyphId glyph) const
+	font::GlyphMetrics Font::getMetricsForGlyph(GlyphId glyph) const
 	{
 		this->loadMetricsForGlyph(glyph);
 		return this->glyph_metrics[glyph];
 	}
 
-	void Font::loadMetricsForGlyph(font::GlyphId glyph) const
+	void Font::loadMetricsForGlyph(GlyphId glyph) const
 	{
 		if(!this->source_file || this->glyph_metrics.find(glyph) != this->glyph_metrics.end())
 			return;
@@ -54,7 +54,7 @@ namespace pdf
 		this->glyph_metrics[glyph] = this->source_file->getGlyphMetrics(glyph);
 	}
 
-	font::GlyphId Font::getGlyphIdFromCodepoint(uint32_t codepoint) const
+	GlyphId Font::getGlyphIdFromCodepoint(Codepoint codepoint) const
 	{
 		if(this->encoding_kind == ENCODING_WIN_ANSI)
 		{
@@ -83,7 +83,7 @@ namespace pdf
 	}
 
 	std::map<size_t, font::GlyphAdjustment> Font::getPositioningAdjustmentsForGlyphSequence(
-		zst::span<uint32_t> glyphs, const font::off::FeatureSet& features) const
+		zst::span<GlyphId> glyphs, const font::off::FeatureSet& features) const
 	{
 		if(!this->source_file)
 			return {};
@@ -91,11 +91,11 @@ namespace pdf
 		return font::off::getPositioningAdjustmentsForGlyphSequence(this->source_file, glyphs, features);
 	}
 
-	std::vector<uint32_t> Font::performSubstitutionsForGlyphSequence(zst::span<uint32_t> glyphs,
+	std::vector<GlyphId> Font::performSubstitutionsForGlyphSequence(zst::span<GlyphId> glyphs,
 		const font::off::FeatureSet& features) const
 	{
 		if(!this->source_file)
-			return std::vector<uint32_t>(glyphs.begin(), glyphs.end());
+			return std::vector<GlyphId>(glyphs.begin(), glyphs.end());
 
 		return font::off::performSubstitutionsForGlyphSequence(this->source_file, glyphs, features);
 	}

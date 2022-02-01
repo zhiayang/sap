@@ -7,6 +7,7 @@
 #include <map>
 #include <utility>
 
+#include "types.h"
 #include "font/tag.h"
 
 namespace font
@@ -110,7 +111,7 @@ namespace font::off
 		will be part of the map.
 	*/
 	std::map<size_t, GlyphAdjustment> getPositioningAdjustmentsForGlyphSequence(FontFile* font,
-		zst::span<uint32_t> glyphs, const FeatureSet& features);
+		zst::span<GlyphId> glyphs, const FeatureSet& features);
 
 	/*
 		The result of performing (all required) glyph substitutions on a glyph string; contains
@@ -124,8 +125,8 @@ namespace font::off
 	*/
 	struct SubstitutedGlyphString
 	{
-		std::vector<uint32_t> glyphs;
-		std::map<uint32_t, std::vector<uint32_t>> extra_unicode_mapping;
+		std::vector<GlyphId> glyphs;
+		std::map<GlyphId, std::vector<Codepoint>> extra_unicode_mapping;
 	};
 
 	/*
@@ -134,7 +135,7 @@ namespace font::off
 		For simplicity of use, this API returns a vector of glyphs, which *wholesale* replace the
 		input glyph sequence -- even if no substitutions took place.
 	*/
-	std::vector<uint32_t> performSubstitutionsForGlyphSequence(FontFile* font, zst::span<uint32_t> glyphs,
+	std::vector<GlyphId> performSubstitutionsForGlyphSequence(FontFile* font, zst::span<GlyphId> glyphs,
 		const FeatureSet& features);
 
 
@@ -204,31 +205,31 @@ namespace font::off
 		Get the class of a specific glyph id; 0 is returned if the glyph was not in any of
 		the classes specified in the given `classdef_table`.
 	*/
-	int getGlyphClass(zst::byte_span classdef_table, uint32_t glyphId);
+	int getGlyphClass(zst::byte_span classdef_table, GlyphId glyphId);
 
 	/*
 		Returns a mapping from classid to a set of glyph ids. Note that class 0 (the default class)
 		is not included, because it would otherwise contain every other glyph (potentially a lot)
 	*/
-	std::map<int, std::set<uint32_t>> parseAllClassDefs(zst::byte_span classdef_table);
+	std::map<int, std::set<GlyphId>> parseAllClassDefs(zst::byte_span classdef_table);
 
 	/*
 		Parses the same ClassDef table as `parseAllClassDefs`, but returns the inverse mapping;
 		a map from glyph id to class id. Again, glyphs with class 0 are not included.
 	*/
-	std::map<uint32_t, int> parseGlyphToClassMapping(zst::byte_span classdef_table);
+	std::map<GlyphId, int> parseGlyphToClassMapping(zst::byte_span classdef_table);
 
 	/*
 		Returns the coverage index for the given glyphid within the given coverage table. Unlike classes,
 		there is no "default" coverage index -- you just skip the lookup if the glyph is not in the
 		coveraged table.
 	*/
-	std::optional<int> getGlyphCoverageIndex(zst::byte_span coverage_table, uint32_t glyphId);
+	std::optional<int> getGlyphCoverageIndex(zst::byte_span coverage_table, GlyphId glyphId);
 
 	/*
 		Returns a map from coverageIndex -> glyphId, for every glyph in the coverage table.
 	*/
-	std::map<int, uint32_t> parseCoverageTable(zst::byte_span coverage_table);
+	std::map<int, GlyphId> parseCoverageTable(zst::byte_span coverage_table);
 
 	struct ContextualLookupRecord
 	{
@@ -248,14 +249,14 @@ namespace font::off
 		and GSUB type 5.
 	*/
 	std::optional<std::pair<std::vector<ContextualLookupRecord>, size_t>> performContextualLookup(zst::byte_span subtable,
-		zst::span<uint32_t> glyphs);
+		zst::span<GlyphId> glyphs);
 
 	/*
 		Parse and match the input glyphstring (where the current glyph is at glyphs[position], using the provided *subtable*.
 		The same caveats apply as for `performContextualLookup`. Use for GPOS type 8 and GSUB type 6.
 	*/
 	std::optional<std::pair<std::vector<ContextualLookupRecord>, size_t>> performChainedContextLookup(zst::byte_span subtable,
-		zst::span<uint32_t> glyphs, size_t position);
+		zst::span<GlyphId> glyphs, size_t position);
 }
 
 
@@ -278,7 +279,7 @@ namespace font::off::gpos
 	/*
 		Lookup a single glyph adjustment (type 1, LOOKUP_SINGLE) for the given glyph id.
 	*/
-	OptionalGA lookupSingleAdjustment(const LookupTable& lookup, uint32_t gid);
+	OptionalGA lookupSingleAdjustment(const LookupTable& lookup, GlyphId gid);
 
 	/*
 		Lookup a pair glyph adjustment (type 2, LOOKUP_PAIR).
@@ -291,7 +292,7 @@ namespace font::off::gpos
 
 		So, instead of returning an optional of pair, we return a pair of optionals.
 	*/
-	std::pair<OptionalGA, OptionalGA> lookupPairAdjustment(const LookupTable& lookup, uint32_t gid1, uint32_t gid2);
+	std::pair<OptionalGA, OptionalGA> lookupPairAdjustment(const LookupTable& lookup, GlyphId gid1, GlyphId gid2);
 
 
 	struct AdjustmentResult
@@ -307,7 +308,7 @@ namespace font::off::gpos
 		from the index in the given sequence to the adjustment.
 	*/
 	std::optional<AdjustmentResult> lookupContextualPositioning(const GPosTable& gpos, const LookupTable& lookup,
-		zst::span<uint32_t> glyphs);
+		zst::span<GlyphId> glyphs);
 
 	/*
 		Lookup chained-context glyph adjustments (type 8, LOOKUP_CHAINING_CONTEXT).
@@ -320,7 +321,7 @@ namespace font::off::gpos
 		return[0] adjusts glyphs[position], return[1] adjsts glyphs[position + 1], etc.
 	*/
 	std::optional<AdjustmentResult> lookupChainedContextPositioning(const GPosTable& gpos, const LookupTable& lookup,
-		zst::span<uint32_t> glyphs, size_t position);
+		zst::span<GlyphId> glyphs, size_t position);
 }
 
 // declares GSUB-specific lookup functions
@@ -339,13 +340,13 @@ namespace font::off::gsub
 	/*
 		Lookup a single substitution (type 1, LOOKUP_SINGLE); replaces one input glyph with one output glyph.
 	*/
-	std::optional<uint32_t> lookupSingleSubstitution(const LookupTable& lookup, uint32_t glyph);
+	std::optional<GlyphId> lookupSingleSubstitution(const LookupTable& lookup, GlyphId glyph);
 
 	/*
 		Lookup a multiple glyph substitution (type 2, LOOKUP_MULTIPLE). Replaces one input glyph with
 		multiple output glyphs.
 	*/
-	std::optional<std::vector<uint32_t>> lookupMultipleSubstitution(const LookupTable& lookup, uint32_t glyph);
+	std::optional<std::vector<GlyphId>> lookupMultipleSubstitution(const LookupTable& lookup, GlyphId glyph);
 
 	/*
 		Lookup a ligature substitution (type 4, LOOKUP_LIGATURE). Replaces multiple input glyphs with
@@ -356,15 +357,15 @@ namespace font::off::gsub
 			(first) the output glyph id
 			(second) the number of input glyphs consumed.
 	*/
-	std::optional<std::pair<uint32_t, size_t>> lookupLigatureSubstitution(const LookupTable& lookup,
-		zst::span<uint32_t> glyphs);
+	std::optional<std::pair<GlyphId, size_t>> lookupLigatureSubstitution(const LookupTable& lookup,
+		zst::span<GlyphId> glyphs);
 
 
 	struct GlyphReplacement
 	{
 		size_t input_start;
 		size_t input_consumed;
-		std::vector<uint32_t> glyphs;
+		std::vector<GlyphId> glyphs;
 	};
 
 	/*
@@ -374,7 +375,7 @@ namespace font::off::gsub
 		inclusive, with `result.glyphs`.
 	*/
 	std::optional<GlyphReplacement> lookupContextualSubstitution(const GSubTable& gsub, const LookupTable& lookup,
-		zst::span<uint32_t> glyphs);
+		zst::span<GlyphId> glyphs);
 
 	/*
 		Lookup a chaining context substitution (type 6, LOOKUP_CHAINING_CONTEXT). Same semantics as GPOS chaining-context
@@ -386,7 +387,7 @@ namespace font::off::gsub
 		inclusive, with `result.glyphs`.
 	*/
 	std::optional<GlyphReplacement> lookupChainedContextSubstitution(const GSubTable& gsub, const LookupTable& lookup,
-		zst::span<uint32_t> glyphs, size_t position);
+		zst::span<GlyphId> glyphs, size_t position);
 }
 
 

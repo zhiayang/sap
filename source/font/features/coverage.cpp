@@ -10,10 +10,10 @@
 
 namespace font::off
 {
-	std::map<int, uint32_t> parseCoverageTable(zst::byte_span cov_table)
+	std::map<int, GlyphId> parseCoverageTable(zst::byte_span cov_table)
 	{
 		auto format = consume_u16(cov_table);
-		std::map<int, uint32_t> coverage_map;
+		std::map<int, GlyphId> coverage_map;
 
 		if(format == 1)
 		{
@@ -44,7 +44,7 @@ namespace font::off
 		return coverage_map;
 	}
 
-	std::optional<int> getGlyphCoverageIndex(zst::byte_span cov_table, uint32_t glyphId)
+	std::optional<int> getGlyphCoverageIndex(zst::byte_span cov_table, GlyphId glyphId)
 	{
 		auto format = consume_u16(cov_table);
 

@@ -8,9 +8,9 @@
 
 namespace pdf::encoding
 {
-	static inline uint8_t WIN_ANSI(uint32_t cp)
+	static inline uint8_t WIN_ANSI(Codepoint cp)
 	{
-		static std::map<uint32_t, uint8_t> cmap;
+		static std::map<Codepoint, uint8_t> cmap;
 		if(cmap.empty())
 		{
 			for(int i = 0; i < 128; i++)

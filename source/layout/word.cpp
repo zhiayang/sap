@@ -15,7 +15,7 @@
 namespace sap::layout
 {
 	// TODO: this needs to handle unicode composing/decomposing also, which is a massive pain
-	static font::GlyphId read_one_glyphid(const pdf::Font* font, zst::byte_span& utf8)
+	static GlyphId read_one_glyphid(const pdf::Font* font, zst::byte_span& utf8)
 	{
 		assert(utf8.size() > 0);
 
@@ -29,7 +29,7 @@ namespace sap::layout
 		auto utf8 = text.bytes();
 
 		// first, convert all codepoints to glyphs
-		std::vector<font::GlyphId> glyphs {};
+		std::vector<GlyphId> glyphs {};
 		while(utf8.size() > 0)
 			glyphs.push_back(read_one_glyphid(font, utf8));
 
@@ -41,7 +41,7 @@ namespace sap::layout
 			Tag("kern"), Tag("liga"), Tag("locl")
 		};
 
-		auto span = [](auto& foo) { return zst::span<font::GlyphId>(foo.data(), foo.size()); };
+		auto span = [](auto& foo) { return zst::span<GlyphId>(foo.data(), foo.size()); };
 
 		// next, use GSUB to perform substitutions.
 		glyphs = font->performSubstitutionsForGlyphSequence(span(glyphs), features);
@@ -128,7 +128,7 @@ namespace sap::layout
 		const auto font_size = m_style->font_size();
 		text->setFont(font, font_size.into(pdf::Scalar{}));
 
-		auto add_gid = [&font, text](font::GlyphId gid) {
+		auto add_gid = [&font, text](GlyphId gid) {
 			if(font->encoding_kind == pdf::Font::ENCODING_CID)
 				text->addEncoded(2, gid);
 			else

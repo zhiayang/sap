@@ -9,8 +9,6 @@
 
 namespace font
 {
-	using GlyphId = uint32_t;
-
 	struct Tag
 	{
 		constexpr Tag() : value(0) { }

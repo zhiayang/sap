@@ -13,6 +13,8 @@
 #include <vector>
 #include <optional>
 
+#include "types.h"
+
 namespace font
 {
 	struct FontFile;
@@ -245,7 +247,7 @@ namespace font::cff
 		for embedding into the OTF font.
 	*/
 	CFFSubset createCFFSubset(FontFile* file, zst::str_view subset_name,
-		const std::map<uint32_t, GlyphMetrics>& used_glyphs);
+		const std::map<GlyphId, GlyphMetrics>& used_glyphs);
 
 
 	/*

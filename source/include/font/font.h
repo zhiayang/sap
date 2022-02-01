@@ -91,8 +91,8 @@ namespace font
 	{
 		static FontFile* parseFromFile(const std::string& path);
 
-		uint32_t getGlyphIndexForCodepoint(uint32_t codepoint) const;
-		GlyphMetrics getGlyphMetrics(uint32_t glyphId) const;
+		GlyphId getGlyphIndexForCodepoint(Codepoint codepoint) const;
+		GlyphMetrics getGlyphMetrics(GlyphId glyphId) const;
 
 		// corresponds to name IDs 16 and 17. if not present, they will have the same
 		// value as their *_compat counterparts.
@@ -150,10 +150,10 @@ namespace font
 		static constexpr int OUTLINES_CFF      = 2;
 	};
 
-	// the reason this takes in a `map<uint32_t, GlyphMetrics>` is that it's simply how the pdf::Font
+	// the reason this takes in a `map<GlyphId, GlyphMetrics>` is that it's simply how the pdf::Font
 	// knows about which glyphs are used.
 	void writeFontSubset(FontFile* font, zst::str_view subset_name, pdf::Stream* stream,
-		const std::map<uint32_t, GlyphMetrics>& used_glyphs);
+		const std::map<GlyphId, GlyphMetrics>& used_glyphs);
 
 	std::string generateSubsetName(FontFile* font);
 
