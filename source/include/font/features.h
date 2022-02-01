@@ -136,6 +136,22 @@ namespace font::off
 		zst::span<uint32_t> glyphs, const FeatureSet& features);
 
 	/*
+		The result of performing (all required) glyph substitutions on a glyph string; contains
+		the list of output glyph ids, as well as a mapping from the glyph id to a list of unicode
+		codepoints.
+
+		note that it is an *extra* mapping; the mapping is only filled with glyphs that were
+		substituted (eg. from ligatures -- which is why it is a list; eg. ffi has 3 codepoints). It
+		is expected that the caller (ie. somebody else) handles the "normal" mapping of glyph ids to
+		codepoints by reading the font file.
+	*/
+	struct SubstitutedGlyphString
+	{
+		std::vector<uint32_t> glyphs;
+		std::map<uint32_t, std::vector<uint32_t>> extra_unicode_mapping;
+	};
+
+	/*
 		Using the GSUB table, perform glyph substitutions using the enabled features in the feature set.
 
 		For simplicity of use, this API returns a vector of glyphs, which *wholesale* replace the
@@ -367,7 +383,7 @@ namespace font::off::gsub
 		zst::span<uint32_t> glyphs);
 
 
-	struct SubstitutionResult
+	struct GlyphReplacement
 	{
 		size_t input_start;
 		size_t input_consumed;
@@ -380,7 +396,7 @@ namespace font::off::gsub
 		The returned result replaces glyphs from `glyphs[input_start]` to `glyphs[input_consumed - 1]`
 		inclusive, with `result.glyphs`.
 	*/
-	std::optional<SubstitutionResult> lookupContextualSubstitution(const GSubTable& gsub, const LookupTable& lookup,
+	std::optional<GlyphReplacement> lookupContextualSubstitution(const GSubTable& gsub, const LookupTable& lookup,
 		zst::span<uint32_t> glyphs);
 
 	/*
@@ -392,7 +408,7 @@ namespace font::off::gsub
 
 		inclusive, with `result.glyphs`.
 	*/
-	std::optional<SubstitutionResult> lookupChainedContextSubstitution(const GSubTable& gsub, const LookupTable& lookup,
+	std::optional<GlyphReplacement> lookupChainedContextSubstitution(const GSubTable& gsub, const LookupTable& lookup,
 		zst::span<uint32_t> glyphs, size_t position);
 }
 

@@ -64,7 +64,7 @@ int main(int argc, char** argv)
 
 
 #if 1
-	auto para = sap::Paragraph();
+	auto para = sap::layout::Paragraph();
 	{
 		zst::str_view sv = input_text;
 		while(sv.size() > 0)
@@ -81,12 +81,12 @@ int main(int argc, char** argv)
 			// if there is no more, take the last part and quit.
 			if(i == static_cast<size_t>(-1))
 			{
-				para.add(sap::Word(sap::Word::KIND_LATIN, sv));
+				para.add(sap::layout::Word(sap::layout::Word::KIND_LATIN, sv));
 				break;
 			}
 			else
 			{
-				para.add(sap::Word(sap::Word::KIND_LATIN, sv.take(i)));
+				para.add(sap::layout::Word(sap::layout::Word::KIND_LATIN, sv.take(i)));
 				sv.remove_prefix(i + 1);
 			}
 		}

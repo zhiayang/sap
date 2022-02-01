@@ -10,7 +10,7 @@
 
 namespace font::off::gsub
 {
-	std::optional<SubstitutionResult> lookupForGlyphSequence(const GSubTable& gsub_table, const LookupTable& lookup,
+	static std::optional<GlyphReplacement> lookupForGlyphSequence(const GSubTable& gsub_table, const LookupTable& lookup,
 		zst::span<uint32_t> glyphs, size_t position)
 	{
 		/*
@@ -22,7 +22,7 @@ namespace font::off::gsub
 
 		size_t sub_begin = 0;
 		size_t sub_end = 0;
-		std::optional<SubstitutionResult> result {};
+		std::optional<GlyphReplacement> result {};
 		for(size_t i = position; i < glyphs.size(); i++)
 		{
 			assert(lookup.type != gsub::LOOKUP_EXTENSION_SUBST);
@@ -49,7 +49,7 @@ namespace font::off::gsub
 					sub_begin = i;
 					sub_end = i + num;
 
-					result = SubstitutionResult {};
+					result = GlyphReplacement {};
 				}
 
 				result->glyphs.insert(result->glyphs.end(), subst.begin(), subst.end());
@@ -76,7 +76,7 @@ namespace font::off::gsub
 			}
 			else if(lookup.type == LOOKUP_CONTEXTUAL || lookup.type == LOOKUP_CHAINING_CONTEXT)
 			{
-				std::optional<SubstitutionResult> subst {};
+				std::optional<GlyphReplacement> subst {};
 				if(lookup.type == LOOKUP_CONTEXTUAL)
 					subst = lookupContextualSubstitution(gsub_table, lookup, glyphs.drop(i));
 				else
@@ -249,7 +249,7 @@ namespace font::off::gsub
 
 
 	using SubstLookupRecord = ContextualLookupRecord;
-	static SubstitutionResult apply_lookup_records(const GSubTable& gsub_table,
+	static GlyphReplacement apply_lookup_records(const GSubTable& gsub_table,
 		const std::pair<std::vector<SubstLookupRecord>, size_t>& records,
 		zst::span<uint32_t> glyphs, size_t position)
 	{
@@ -286,7 +286,7 @@ namespace font::off::gsub
 			}
 		}
 
-		SubstitutionResult result {};
+		GlyphReplacement result {};
 		result.input_start = 0;
 		result.input_consumed = num_input_glyphs;
 
@@ -296,7 +296,7 @@ namespace font::off::gsub
 		return result;
 	}
 
-	std::optional<SubstitutionResult> lookupContextualSubstitution(const GSubTable& gsub, const LookupTable& lookup,
+	std::optional<GlyphReplacement> lookupContextualSubstitution(const GSubTable& gsub, const LookupTable& lookup,
 		zst::span<uint32_t> glyphs)
 	{
 		assert(lookup.type == LOOKUP_CONTEXTUAL);
@@ -309,7 +309,7 @@ namespace font::off::gsub
 		return std::nullopt;
 	}
 
-	std::optional<SubstitutionResult> lookupChainedContextSubstitution(const GSubTable& gsub, const LookupTable& lookup,
+	std::optional<GlyphReplacement> lookupChainedContextSubstitution(const GSubTable& gsub, const LookupTable& lookup,
 		zst::span<uint32_t> glyphs, size_t position)
 	{
 		assert(position < glyphs.size());

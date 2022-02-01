@@ -36,12 +36,8 @@ namespace font::off
 			return {};  // nothing again
 
 		assert(lang != nullptr);
-		size_t uwu = 0;
-		for(auto f : lang->features)
-			zpr::println("feat[{}]: {}", f, table.features[f].tag.str());
 
 		std::vector<uint16_t> lookups {};
-
 		auto add_lookups_for_feature = [&](uint16_t idx, bool required) {
 			assert(idx < table.features.size());
 
