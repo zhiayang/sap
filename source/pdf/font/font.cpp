@@ -39,20 +39,13 @@ namespace pdf
 	}
 
 
-
-	void Font::markLigatureUsed(const font::GlyphLigature& lig) const
-	{
-		if(std::find(this->used_ligatures.begin(), this->used_ligatures.end(), lig) == this->used_ligatures.end())
-			this->used_ligatures.push_back(lig);
-	}
-
-	font::GlyphMetrics Font::getMetricsForGlyph(uint32_t glyph) const
+	font::GlyphMetrics Font::getMetricsForGlyph(font::GlyphId glyph) const
 	{
 		this->loadMetricsForGlyph(glyph);
 		return this->glyph_metrics[glyph];
 	}
 
-	void Font::loadMetricsForGlyph(uint32_t glyph) const
+	void Font::loadMetricsForGlyph(font::GlyphId glyph) const
 	{
 		if(!this->source_file || this->glyph_metrics.find(glyph) != this->glyph_metrics.end())
 			return;
@@ -61,7 +54,7 @@ namespace pdf
 		this->glyph_metrics[glyph] = this->source_file->getGlyphMetrics(glyph);
 	}
 
-	uint32_t Font::getGlyphIdFromCodepoint(uint32_t codepoint) const
+	font::GlyphId Font::getGlyphIdFromCodepoint(uint32_t codepoint) const
 	{
 		if(this->encoding_kind == ENCODING_WIN_ANSI)
 		{
@@ -76,8 +69,6 @@ namespace pdf
 			auto gid = this->source_file->getGlyphIndexForCodepoint(codepoint);
 
 			this->cmap_cache[codepoint] = gid;
-			this->reverse_cmap[gid] = codepoint;
-
 			this->loadMetricsForGlyph(gid);
 
 			if(gid == 0)

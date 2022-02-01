@@ -21,29 +21,6 @@ namespace font
 		int16_t horz_advance;
 		int16_t vert_advance;
 	};
-
-	constexpr size_t MAX_LIGATURE_LENGTH = 8;
-	struct GlyphLigature
-	{
-		uint32_t num_glyphs;
-		uint32_t glyphs[MAX_LIGATURE_LENGTH];
-		uint32_t substitute;
-
-		bool operator== (const GlyphLigature& gl) const
-		{
-			return memcmp(this, &gl, sizeof(GlyphLigature)) == 0;
-		}
-	};
-
-	// honestly, this struct shouldn't have padding.
-	static_assert(sizeof(GlyphLigature) == (2 + MAX_LIGATURE_LENGTH) * sizeof(uint32_t));
-
-	struct GlyphLigatureSet
-	{
-		std::vector<GlyphLigature> ligatures;
-
-		bool operator== (const GlyphLigatureSet& gls) const { return this->ligatures == gls.ligatures; }
-	};
 }
 
 namespace font::off

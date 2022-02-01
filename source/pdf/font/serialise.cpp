@@ -222,27 +222,9 @@ namespace pdf
 
 		// add the unicode map so text selection isn't completely broken
 		type0->add(names::ToUnicode, IndirectRef::create(ret->unicode_cmap));
-
 		type0->add(names::DescendantFonts, Array::create(IndirectRef::create(cidfont_dict)));
 
 		ret->encoding_kind = ENCODING_CID;
-
-		/*
-			TODO: come up with a better way of loading these things. ligatures are probably fine (i don't expect
-			thousands of glyphs/combinations), but kerning pairs can explode if they use the ClassDef format of
-			defining pairs.
-
-			eg. a font like Myriad Pro that supports a few dozen languages already has 700k+ kerning pairs when
-			fully expanded. either we come up with a way to not have a fully expanded map (but that would basically
-			be the same as reading straight from the file), or don't preload them at all.
-
-			also, for both kerning and ligatures, ad-hoc caching might lead to the cache table filling up with
-			useless entries -- this is why ligatures aren't ad-hoc cached (if not every combination of 4 glyphs
-			would eventually end up inside). kerning pairs are similar, where eventually every combination of 2
-			glyphs would end up inside ><
-		*/
-		// ret->glyph_ligatures = font_file->getAllGlyphLigatures();
-		// ret->kerning_pairs = font_file->getAllKerningPairs();
 
 		ret->font_resource_name = zpr::sprint("F{}", doc->getNextFontResourceNumber());
 		return ret;

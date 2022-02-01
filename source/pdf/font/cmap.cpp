@@ -44,9 +44,9 @@ namespace pdf
 
 		cmap->append("endbfchar\n");
 
+#if 0
 		// now for the ligatures.
 		cmap->append(zpr::sprint("{} beginbfchar\n", this->used_ligatures.size()));
-
 		for(const auto& lig : this->used_ligatures)
 		{
 			cmap->append(zpr::sprint("<{04x}> <", lig.substitute));
@@ -66,8 +66,9 @@ namespace pdf
 
 			cmap->append(">\n");
 		}
-
 		cmap->append("endbfchar\n");
+#endif
+
 		write_cmap_footer(cmap);
 	}
 

@@ -39,10 +39,6 @@ namespace pdf
 
 		font::FontMetrics getFontMetrics() const;
 
-		// this has a similar function to `loadMetricsForGlyph`; we need to keep track of which
-		// ligatures are used, so we know which ones we should output to the pdf.
-		void markLigatureUsed(const font::GlyphLigature& ligature) const;
-
 		// get the name that we should put in the Resource dictionary of a page that uses this font.
 		std::string getFontResourceName() const;
 
@@ -87,15 +83,6 @@ namespace pdf
 
 		mutable std::map<uint32_t, uint32_t> cmap_cache { };
 		mutable std::map<uint32_t, font::GlyphMetrics> glyph_metrics { };
-
-		// TODO: this results in a bunch of copying. since we have an owned copy
-		// of every GlyphLigatureSet that is used, we should be able to refer to our internal
-		// copy, via a pointer or something.
-		mutable std::vector<font::GlyphLigature> used_ligatures { };
-		mutable std::map<uint32_t, uint32_t> reverse_cmap { };
-
-		std::map<uint32_t, font::GlyphLigatureSet> glyph_ligatures { };
-		std::map<std::pair<uint32_t, uint32_t>, font::KerningPair> kerning_pairs { };
 
 		// the name that goes into the Resource << >> dict in a page. This is a unique name
 		// that we get from the Document when the font is created.

@@ -15,7 +15,7 @@
 namespace sap::layout
 {
 	// TODO: this needs to handle unicode composing/decomposing also, which is a massive pain
-	static uint32_t read_one_glyphid(const pdf::Font* font, zst::byte_span& utf8)
+	static font::GlyphId read_one_glyphid(const pdf::Font* font, zst::byte_span& utf8)
 	{
 		assert(utf8.size() > 0);
 
@@ -29,7 +29,7 @@ namespace sap::layout
 		auto utf8 = text.bytes();
 
 		// first, convert all codepoints to glyphs
-		std::vector<uint32_t> glyphs {};
+		std::vector<font::GlyphId> glyphs {};
 		while(utf8.size() > 0)
 			glyphs.push_back(read_one_glyphid(font, utf8));
 
@@ -41,8 +41,10 @@ namespace sap::layout
 			Tag("kern"), Tag("liga"), Tag("locl")
 		};
 
+		auto span = [](auto& foo) { return zst::span<font::GlyphId>(foo.data(), foo.size()); };
+
 		// next, use GSUB to perform substitutions.
-		glyphs = font->performSubstitutionsForGlyphSequence(zst::span<uint32_t>(glyphs.data(), glyphs.size()), features);
+		glyphs = font->performSubstitutionsForGlyphSequence(span(glyphs), features);
 
 		// next, get base metrics for each glyph.
 		std::vector<Word::GlyphInfo> glyph_infos {};
@@ -55,8 +57,7 @@ namespace sap::layout
 		}
 
 		// finally, use GPOS
-		auto glyphs_span = zst::span<uint32_t>(glyphs.data(), glyphs.size());
-		auto adjustment_map = font->getPositioningAdjustmentsForGlyphSequence(glyphs_span, features);
+		auto adjustment_map = font->getPositioningAdjustmentsForGlyphSequence(span(glyphs), features);
 		for(auto& [ i, adj ] : adjustment_map)
 		{
 			auto& info = glyph_infos[i];
@@ -127,7 +128,7 @@ namespace sap::layout
 		const auto font_size = m_style->font_size();
 		text->setFont(font, font_size.into(pdf::Scalar{}));
 
-		auto add_gid = [&font, text](uint32_t gid) {
+		auto add_gid = [&font, text](font::GlyphId gid) {
 			if(font->encoding_kind == pdf::Font::ENCODING_CID)
 				text->addEncoded(2, gid);
 			else
