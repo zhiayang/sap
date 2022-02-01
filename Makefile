@@ -61,8 +61,8 @@ $(OUTPUT_BIN): $(CXXOBJ) $(UTF8PROC_OBJS) $(MINIZ_OBJS)
 clean:
 	-@find source -iname "*.cpp.d" | xargs rm
 	-@find source -iname "*.cpp.o" | xargs rm
-	-@rm $(PRECOMP_GCH)
-	-@rm $(OUTPUT_BIN)
+	-@rm -f $(PRECOMP_GCH)
+	-@rm -f $(OUTPUT_BIN)
 
 -include $(CXXDEPS)
 -include $(CDEPS)

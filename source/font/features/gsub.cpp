@@ -133,14 +133,14 @@ namespace font::off::gsub
 			{
 				// fixed delta for all covered glyphs.
 				auto delta = consume_u16(subtable);
-				return gid + delta;
+				return GlyphId { static_cast<uint32_t>(gid) + delta };
 			}
 			else
 			{
 				auto num_glyphs = consume_u16(subtable);
 				assert(*cov_idx < num_glyphs);
 
-				return peek_u16(subtable.drop(*cov_idx * sizeof(uint16_t)));
+				return GlyphId { peek_u16(subtable.drop(*cov_idx * sizeof(uint16_t))) };
 			}
 		}
 
@@ -183,7 +183,7 @@ namespace font::off::gsub
 
 			std::vector<GlyphId> subst {};
 			for(uint16_t i = 0; i < num_glyphs; i++)
-				subst.push_back(consume_u16(sequence));
+				subst.push_back(GlyphId { consume_u16(sequence) });
 
 			return subst;
 		}
@@ -226,7 +226,7 @@ namespace font::off::gsub
 			{
 				auto ligature = ligature_set_start.drop(consume_u16(ligature_set));
 
-				GlyphId output_gid = consume_u16(ligature);
+				auto output_gid = GlyphId { consume_u16(ligature) };
 				size_t num_components = consume_u16(ligature);
 
 				if(glyphs.size() < num_components)
@@ -235,7 +235,7 @@ namespace font::off::gsub
 				bool matched = true;
 				for(size_t k = 1; matched && k < num_components; k++)
 				{
-					if(glyphs[k] != consume_u16(ligature))
+					if(glyphs[k] != GlyphId { consume_u16(ligature) })
 						matched = false;
 				}
 

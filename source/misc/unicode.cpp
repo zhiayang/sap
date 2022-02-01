@@ -86,10 +86,11 @@ namespace unicode
 
 	std::pair<uint16_t, uint16_t> codepointToSurrogatePair(Codepoint codepoint)
 	{
-		assert(codepoint <= 0x10FFFF);
+		auto cp = static_cast<uint32_t>(codepoint);
+		assert(cp <= 0x10FFFF);
 
-		auto high = ((codepoint - 0x10'0000) & 0xFFC000) >> 10;
-		auto low  = ((codepoint - 0x10'0000) & 0x0003FF) >> 0;
+		auto high = ((cp - 0x10'0000) & 0xFFC000) >> 10;
+		auto low  = ((cp - 0x10'0000) & 0x0003FF) >> 0;
 
 		return {
 			static_cast<uint16_t>(high + 0xD800),

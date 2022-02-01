@@ -14,9 +14,9 @@ namespace pdf
 
 		int num_bits = 0;
 		uint8_t current = 0;
-		for(size_t gid = 0; gid < this->source_file->num_glyphs; gid++)
+		for(uint32_t gid = 0; gid < this->source_file->num_glyphs; gid++)
 		{
-			bool bit = this->glyph_metrics.find(gid) != this->glyph_metrics.end();
+			bool bit = this->glyph_metrics.find(GlyphId { gid }) != this->glyph_metrics.end();
 			current <<= 1;
 			current |= (bit ? 1 : 0);
 			num_bits++;

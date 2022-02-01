@@ -109,7 +109,7 @@ namespace sap::layout
 		}
 
 		{
-			auto space_gid = font->getGlyphIdFromCodepoint(' ');
+			auto space_gid = font->getGlyphIdFromCodepoint(Codepoint {' '});
 			auto space_adv = font->getMetricsForGlyph(space_gid).horz_advance;
 			auto space_width = font->scaleMetricForFontSize(space_adv, font_size_tpu);
 
@@ -130,9 +130,9 @@ namespace sap::layout
 
 		auto add_gid = [&font, text](GlyphId gid) {
 			if(font->encoding_kind == pdf::Font::ENCODING_CID)
-				text->addEncoded(2, gid);
+				text->addEncoded(2, static_cast<uint32_t>(gid));
 			else
-				text->addEncoded(1, gid);
+				text->addEncoded(1, static_cast<uint32_t>(gid));
 		};
 
 		for(auto& glyph : m_glyphs)
@@ -145,7 +145,7 @@ namespace sap::layout
 
 		if(!m_linebreak_after && m_next_word != nullptr)
 		{
-			auto space_gid = font->getGlyphIdFromCodepoint(' ');
+			auto space_gid = font->getGlyphIdFromCodepoint(Codepoint {' '});
 			add_gid(space_gid);
 
 			if(m_post_space_ratio != 1.0)

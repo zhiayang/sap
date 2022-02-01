@@ -21,9 +21,10 @@ namespace font::truetype
 
 		for(auto& [ gid, _ ] : used_glyphs)
 		{
-			auto& comps = tt->glyphs[gid].component_gids;
+			auto gid32 = static_cast<uint32_t>(gid);
+			auto& comps = tt->glyphs[gid32].component_gids;
 
-			used_gids.insert(gid);
+			used_gids.insert(gid32);
 			used_gids.insert(comps.begin(), comps.end());
 		}
 

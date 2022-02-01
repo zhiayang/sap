@@ -120,7 +120,6 @@ namespace pdf
 
 		w->writeln("<<");
 		w->nesting++;
-		bool first = true;
 		for(auto& [ name, value ] : this->values)
 		{
 			w->write("{}", zpr::w(w->nesting * 2)(""));
@@ -128,8 +127,6 @@ namespace pdf
 			w->write(" ");
 			value->write(w);
 			w->writeln();
-
-			first = false;
 		}
 		w->nesting--;
 		w->write("{}>>", zpr::w(w->nesting * 2)(""));

@@ -76,7 +76,7 @@ namespace font::off
 
 				for(auto k = 1; k < num_glyphs; k++)
 				{
-					if(trf(glyphs[k]) != consume_u16(rule))
+					if(static_cast<uint16_t>(trf(glyphs[k])) != consume_u16(rule))
 						return { false, 0, 0 };
 				}
 
@@ -238,21 +238,21 @@ namespace font::off
 
 				for(size_t k = 0; k < num_lookbehind; k++)
 				{
-					if(lookbehind_trf(glyphs[position - k - 1]) != consume_u16(rule))
+					if(static_cast<uint16_t>(lookbehind_trf(glyphs[position - k - 1])) != consume_u16(rule))
 						return { false, 0 };
 				}
 
 				consume_u16(rule);  // num_glyphs, which we already read
 				for(size_t k = 1; k < num_glyphs; k++)
 				{
-					if(gid_trf(glyphs[position + k]) != consume_u16(rule))
+					if(static_cast<uint16_t>(gid_trf(glyphs[position + k])) != consume_u16(rule))
 						return { false, 0 };
 				}
 
 				consume_u16(rule);  // num_lookahead, which we already read
 				for(size_t k = 0; k < num_lookahead; k++)
 				{
-					if(lookahead_trf(glyphs[position + num_glyphs + k]) != consume_u16(rule))
+					if(static_cast<uint16_t>(lookahead_trf(glyphs[position + num_glyphs + k])) != consume_u16(rule))
 						return { false, 0 };
 				}
 

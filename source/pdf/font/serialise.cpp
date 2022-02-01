@@ -41,14 +41,14 @@ namespace pdf
 				if(widths2.empty())
 				{
 				foo:
-					widths2.emplace_back(Integer::create(widths[i].first),
+					widths2.emplace_back(Integer::create(static_cast<uint32_t>(widths[i].first)),
 						std::vector<Object*> { Integer::create(widths[i].second) });
 				}
 				else
 				{
 					auto& prev = widths2.back();
-					if(prev.first->value + prev.second.size() == widths[i].first)
-						prev.second.push_back(Integer::create(widths[i].second));
+					if(prev.first->value + prev.second.size() == static_cast<uint32_t>(widths[i].first))
+						prev.second.push_back(Integer::create(static_cast<uint32_t>(widths[i].second)));
 					else
 						goto foo;
 				}

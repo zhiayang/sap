@@ -224,7 +224,7 @@ namespace font::off::gpos
 					while(low < high)
 					{
 						auto mid = (low + high) / 2u;
-						auto glyph = peek_u16(pairset_table.drop(mid * PairRecordSize));
+						auto glyph = GlyphId { peek_u16(pairset_table.drop(mid * PairRecordSize)) };
 
 						if(glyph == gid2)
 						{

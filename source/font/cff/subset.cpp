@@ -38,7 +38,7 @@ namespace font::cff
 			if(!cff->is_cidfont)
 			{
 				// for non-CID fonts, the glyph we get from sap/pdf is already the gid.
-				return glyph.gid != 0 && used_glyphs.find(glyph.gid) == used_glyphs.end();
+				return glyph.gid != 0 && used_glyphs.find(GlyphId { glyph.gid }) == used_glyphs.end();
 			}
 			else
 			{
@@ -52,7 +52,7 @@ namespace font::cff
 					this seems to imply that glyph ids gotten from the PDF layer are actually CIDs to
 					the CFF font; thus, we match against CIDs instead.
 				*/
-				bool unused = glyph.gid != 0 && used_glyphs.find(glyph.cid) == used_glyphs.end();
+				bool unused = glyph.gid != 0 && used_glyphs.find(GlyphId { glyph.cid }) == used_glyphs.end();
 
 				// also, mark the fontdict as used if the glyph was used.
 				if(!unused)

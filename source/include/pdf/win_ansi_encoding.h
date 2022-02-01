@@ -6,6 +6,8 @@
 
 #include <map>
 
+#include "types.h"
+
 namespace pdf::encoding
 {
 	static inline uint8_t WIN_ANSI(Codepoint cp)
@@ -13,39 +15,39 @@ namespace pdf::encoding
 		static std::map<Codepoint, uint8_t> cmap;
 		if(cmap.empty())
 		{
-			for(int i = 0; i < 128; i++)
-				cmap[i] = i;
+			for(uint32_t i = 0; i < 128; i++)
+				cmap[Codepoint { i }] = i;
 
-			cmap[0x20ac] = 128;
-			cmap[0x201a] = 130;
-			cmap[0x0192] = 131;
-			cmap[0x201e] = 132;
-			cmap[0x2026] = 133;
-			cmap[0x2020] = 134;
-			cmap[0x2021] = 135;
-			cmap[0x02c6] = 136;
-			cmap[0x2030] = 137;
-			cmap[0x0160] = 138;
-			cmap[0x2039] = 139;
-			cmap[0x0152] = 140;
-			cmap[0x017d] = 142;
-			cmap[0x2018] = 145;
-			cmap[0x2019] = 146;
-			cmap[0x201c] = 147;
-			cmap[0x201d] = 148;
-			cmap[0x2022] = 149;
-			cmap[0x2013] = 150;
-			cmap[0x2014] = 151;
-			cmap[0x02dc] = 152;
-			cmap[0x2122] = 153;
-			cmap[0x0161] = 154;
-			cmap[0x203a] = 155;
-			cmap[0x0153] = 156;
-			cmap[0x017e] = 158;
-			cmap[0x0178] = 159;
+			cmap[0x20ac_codepoint] = 128;
+			cmap[0x201a_codepoint] = 130;
+			cmap[0x0192_codepoint] = 131;
+			cmap[0x201e_codepoint] = 132;
+			cmap[0x2026_codepoint] = 133;
+			cmap[0x2020_codepoint] = 134;
+			cmap[0x2021_codepoint] = 135;
+			cmap[0x02c6_codepoint] = 136;
+			cmap[0x2030_codepoint] = 137;
+			cmap[0x0160_codepoint] = 138;
+			cmap[0x2039_codepoint] = 139;
+			cmap[0x0152_codepoint] = 140;
+			cmap[0x017d_codepoint] = 142;
+			cmap[0x2018_codepoint] = 145;
+			cmap[0x2019_codepoint] = 146;
+			cmap[0x201c_codepoint] = 147;
+			cmap[0x201d_codepoint] = 148;
+			cmap[0x2022_codepoint] = 149;
+			cmap[0x2013_codepoint] = 150;
+			cmap[0x2014_codepoint] = 151;
+			cmap[0x02dc_codepoint] = 152;
+			cmap[0x2122_codepoint] = 153;
+			cmap[0x0161_codepoint] = 154;
+			cmap[0x203a_codepoint] = 155;
+			cmap[0x0153_codepoint] = 156;
+			cmap[0x017e_codepoint] = 158;
+			cmap[0x0178_codepoint] = 159;
 
-			for(int i = 0xa0; i <= 0xff; i++)
-				cmap[i] = i;
+			for(uint32_t i = 0xa0; i <= 0xff; i++)
+				cmap[Codepoint { i }] = i;
 		}
 
 		return cmap[cp];

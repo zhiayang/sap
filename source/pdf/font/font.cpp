@@ -58,7 +58,7 @@ namespace pdf
 	{
 		if(this->encoding_kind == ENCODING_WIN_ANSI)
 		{
-			return encoding::WIN_ANSI(codepoint);
+			return GlyphId { encoding::WIN_ANSI(codepoint) };
 		}
 		else if(this->encoding_kind == ENCODING_CID)
 		{
@@ -71,7 +71,7 @@ namespace pdf
 			this->cmap_cache[codepoint] = gid;
 			this->loadMetricsForGlyph(gid);
 
-			if(gid == 0)
+			if(gid == GlyphId::notdef)
 				zpr::println("warning: glyph for codepoint U+{04x} not found in font", codepoint);
 
 			return gid;

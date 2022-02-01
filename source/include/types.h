@@ -6,6 +6,8 @@
 
 #include <cstdint>
 
-// global namespace
-using GlyphId = uint32_t;
-using Codepoint = uint32_t;
+enum class GlyphId : uint32_t { notdef = 0 };
+enum class Codepoint : uint32_t { };
+
+constexpr inline GlyphId operator""_gid(unsigned long long x) { return static_cast<GlyphId>(x); }
+constexpr inline Codepoint operator""_codepoint(unsigned long long x) { return static_cast<Codepoint>(x); }

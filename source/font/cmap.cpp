@@ -24,8 +24,10 @@ namespace font
 		auto lang = consume_u16(subtable);
 		(void) lang;
 
-		if(codepoint <= 255) return subtable[codepoint];
-		else                 return 0;
+		if(codepoint <= 255_codepoint)
+			return GlyphId { subtable[static_cast<uint32_t>(codepoint)] };
+		else
+			return GlyphId::notdef;
 	}
 
 	static GlyphId find_in_subtable_4(zst::byte_span subtable, Codepoint codepoint)
@@ -33,8 +35,8 @@ namespace font
 		auto fmt = consume_u16(subtable);
 		assert(fmt == 4);
 
-		if(codepoint > 0xffff)
-			return 0;
+		if(codepoint > 0xffff_codepoint)
+			return GlyphId::notdef;
 
 		auto len = consume_u16(subtable);
 		auto lang = consume_u16(subtable);
@@ -57,6 +59,7 @@ namespace font
 		auto id_deltas = u16_array.take_prefix(seg_count);
 		auto id_range_offsets = u16_array.take_prefix(seg_count);
 
+		auto cp16 = static_cast<uint16_t>(codepoint);
 		for(size_t i = 0; i < seg_count; i++)
 		{
 			auto start = util::convertBEU16(start_codes[i]);
@@ -64,21 +67,21 @@ namespace font
 			auto delta = util::convertBEU16(id_deltas[i]);
 			auto range_ofs = util::convertBEU16(id_range_offsets[i]);
 
-			if(start <= codepoint && codepoint <= end)
+			if(start <= cp16 && cp16 <= end)
 			{
 				if(range_ofs != 0)
 				{
-					auto idx = util::convertBEU16(*(id_range_offsets.data() + i + range_ofs / 2 + (codepoint - start)));
-					return (delta + idx) & 0xffff;
+					auto idx = util::convertBEU16(*(id_range_offsets.data() + i + range_ofs / 2 + (cp16 - start)));
+					return GlyphId { static_cast<uint32_t>((delta + idx) & 0xffff) };
 				}
 				else
 				{
-					return (delta + codepoint) & 0xffff;
+					return GlyphId { static_cast<uint32_t>((delta + cp16) & 0xffff) };
 				}
 			}
 		}
 
-		return 0;
+		return GlyphId::notdef;
 	}
 
 	static GlyphId find_in_subtable_6(zst::byte_span subtable, Codepoint codepoint)
@@ -95,10 +98,11 @@ namespace font
 		auto first = consume_u16(subtable);
 		auto count = consume_u16(subtable);
 
-		if(codepoint < first || codepoint >= first + count)
-			return 0;
+		auto cp16 = static_cast<uint16_t>(codepoint);
+		if(cp16 < first || cp16 >= first + count)
+			return GlyphId::notdef;
 
-		return subtable.cast<uint16_t>()[codepoint - first];
+		return GlyphId { subtable.cast<uint16_t>()[cp16 - first] };
 	}
 
 	static GlyphId find_in_subtable_10(zst::byte_span subtable, Codepoint codepoint)
@@ -116,14 +120,15 @@ namespace font
 		auto first = consume_u32(subtable);
 		auto count = consume_u32(subtable);
 
-		if(codepoint < first || codepoint >= first + count)
-			return 0;
+		auto cp32 = static_cast<uint32_t>(codepoint);
+		if(cp32 < first || cp32 >= first + count)
+			return GlyphId::notdef;
 
 		// alignment may be a problem.
-		uint32_t ret = 0;
-
+		GlyphId ret {};
 		auto array = subtable.cast<GlyphId>();
-		memcpy(&ret, array.data() + (codepoint - first), sizeof(GlyphId));
+		memcpy(&ret, array.data() + (cp32 - first), sizeof(GlyphId));
+
 		return ret;
 	}
 
@@ -157,6 +162,8 @@ namespace font
 		size_t low = 0;
 		size_t high = num_groups;
 
+		auto cp32 = static_cast<uint32_t>(codepoint);
+
 		while(low < high)
 		{
 			size_t grp_num = (low + high) / 2;
@@ -166,12 +173,12 @@ namespace font
 			auto lst = util::convertBEU32(grp.last);
 			auto gid = util::convertBEU32(grp.glyphid);
 
-			if(fst <= codepoint && codepoint <= lst)
+			if(fst <= cp32 && cp32 <= lst)
 			{
-				if(fmt == 12) return gid + (codepoint - fst);
-				else          return gid;
+				if(fmt == 12) return GlyphId { gid + (cp32 - fst) };
+				else          return GlyphId { gid };
 			}
-			else if(codepoint < fst)
+			else if(cp32 < fst)
 			{
 				high = grp_num;
 			}
@@ -181,7 +188,7 @@ namespace font
 			}
 		}
 
-		return 0;
+		return GlyphId::notdef;
 	}
 
 
@@ -225,7 +232,7 @@ namespace font
 			case 12: return find_in_subtable_12_or_13(subtable, codepoint);
 			case 13: return find_in_subtable_12_or_13(subtable, codepoint);
 			default:
-				return 0;
+				return GlyphId::notdef;
 		}
 	}
 }

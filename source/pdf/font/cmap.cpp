@@ -29,15 +29,16 @@ namespace pdf
 		// but that requires a whole bunch of extra work.
 		cmap->append(zpr::sprint("{} beginbfchar\n", this->cmap_cache.size()));
 
-		for(auto& [ codepoint, glyph ] : this->cmap_cache)
+		for(auto& [ cp, glyph ] : this->cmap_cache)
 		{
+			auto codepoint = static_cast<uint32_t>(cp);
 			if(codepoint <= 0xFFFF)
 			{
 				cmap->append(zpr::sprint("<{04x}> <{04x}>\n", glyph, codepoint));
 			}
 			else
 			{
-				auto [ high, low ] = unicode::codepointToSurrogatePair(codepoint);
+				auto [ high, low ] = unicode::codepointToSurrogatePair(cp);
 				cmap->append(zpr::sprint("<{04x}> <{04x}{04x}>\n", glyph, high, low));
 			}
 		}

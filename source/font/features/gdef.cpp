@@ -18,17 +18,18 @@ namespace font::off
 		if(format != 1 && format != 2)
 			sap::internal_error("invalid ClassDef format {}", format);
 
+		auto gid16 = static_cast<uint16_t>(glyphId);
 		if(format == 1)
 		{
 			auto start_gid = consume_u16(table);
 			auto num_glyphs = consume_u16(table);
 
 			// 0 is the default class.
-			if(glyphId < start_gid || glyphId >= start_gid + num_glyphs)
+			if(gid16 < start_gid || gid16 >= start_gid + num_glyphs)
 				return 0;
 
 			auto array = table.cast<uint16_t>();
-			return util::convertBEU16(array[glyphId - start_gid]);
+			return util::convertBEU16(array[gid16 - start_gid]);
 		}
 		else if(format == 2)
 		{
@@ -49,9 +50,9 @@ namespace font::off
 				auto start_gid = util::convertBEU16(rec.start_gid);
 				auto end_gid = util::convertBEU16(rec.end_gid);
 
-				if(start_gid <= glyphId && glyphId <= end_gid)
+				if(start_gid <= gid16 && gid16 <= end_gid)
 					return util::convertBEU16(rec.glyph_class);
-				else if(end_gid < glyphId)
+				else if(end_gid < gid16)
 					low = mid + 1;
 				else
 					high = mid;
@@ -78,8 +79,8 @@ namespace font::off
 			auto start_gid = consume_u16(table);
 			auto num_glyphs = consume_u16(table);
 
-			for(size_t i = 0; i < num_glyphs; i++)
-				callback(consume_u16(table), start_gid + i);
+			for(uint32_t i = 0; i < num_glyphs; i++)
+				callback(consume_u16(table), GlyphId { start_gid + i });
 		}
 		else
 		{
@@ -92,7 +93,7 @@ namespace font::off
 				auto class_id = consume_u16(table);
 
 				for(auto g = first_gid; g <= last_gid; g++)
-					callback(class_id, g);
+					callback(class_id, GlyphId { g });
 			}
 		}
 	}

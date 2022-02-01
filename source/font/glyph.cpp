@@ -16,23 +16,24 @@ namespace font
 		auto u16_array = this->hmtx_table.cast<uint16_t>();
 
 		GlyphMetrics ret { };
+		auto gid32 = static_cast<uint32_t>(glyph_id);
 
 		// note the *2, because there's also an 2-byte "lsb".
-		if(glyph_id >= this->num_hmetrics)
+		if(gid32 >= this->num_hmetrics)
 		{
 			// the remaining glyphs not in the array use the last value.
 			ret.horz_advance = util::convertBEU16(u16_array[(this->num_hmetrics - 1) * 2]);
 
 			// there is an array of lsbs for glyph_ids > num_hmetrics
 			auto lsb_array = this->hmtx_table.drop(2 * this->num_hmetrics);
-			auto tmp = lsb_array[glyph_id - this->num_hmetrics];
+			auto tmp = lsb_array[gid32 - this->num_hmetrics];
 
 			ret.left_side_bearing = (int16_t) util::convertBEU16(tmp);
 		}
 		else
 		{
-			ret.horz_advance = util::convertBEU16(u16_array[glyph_id * 2]);
-			ret.left_side_bearing = (int16_t) util::convertBEU16(u16_array[glyph_id * 2 + 1]);
+			ret.horz_advance = util::convertBEU16(u16_array[gid32 * 2]);
+			ret.left_side_bearing = (int16_t) util::convertBEU16(u16_array[gid32 * 2 + 1]);
 		}
 
 		// now, figure out xmin and xmax

@@ -13,7 +13,7 @@ namespace font::off
 	std::map<int, GlyphId> parseCoverageTable(zst::byte_span cov_table)
 	{
 		auto format = consume_u16(cov_table);
-		std::map<int, GlyphId> coverage_map;
+		std::map<int, GlyphId> coverage_map {};
 
 		if(format == 1)
 		{
@@ -21,7 +21,7 @@ namespace font::off
 
 			// the first glyphid in the array has index 0, then 1, and so on.
 			for(size_t i = 0; i < count; i++)
-				coverage_map[i] = consume_u16(cov_table);
+				coverage_map[i] = GlyphId { consume_u16(cov_table) };
 		}
 		else if(format == 2)
 		{
@@ -33,7 +33,7 @@ namespace font::off
 				auto start_cov = consume_u16(cov_table);
 
 				for(auto i = first; i < last + 1; i++)
-					coverage_map[start_cov + (i - first)] = i;
+					coverage_map[start_cov + (i - first)] = GlyphId { i };
 			}
 		}
 		else
@@ -48,6 +48,7 @@ namespace font::off
 	{
 		auto format = consume_u16(cov_table);
 
+		auto gid16 = static_cast<uint16_t>(glyphId);
 		if(format == 1)
 		{
 			auto count = consume_u16(cov_table);
@@ -62,9 +63,9 @@ namespace font::off
 				auto mid = (low + high) / 2u;
 				auto val = util::convertBEU16(array[mid]);
 
-				if(val == glyphId)
+				if(val == gid16)
 					return static_cast<int32_t>(mid);
-				else if(val < glyphId)
+				else if(val < gid16)
 					low = mid + 1;
 				else
 					high = mid;
@@ -91,9 +92,9 @@ namespace font::off
 				auto start = util::convertBEU16(val.start);
 				auto end = util::convertBEU16(val.end);
 
-				if(start <= glyphId && glyphId <= end)
-					return static_cast<int32_t>(util::convertBEU16(val.cov_idx) + glyphId - start);
-				else if(end < glyphId)
+				if(start <= gid16 && gid16 <= end)
+					return static_cast<int32_t>(util::convertBEU16(val.cov_idx) + gid16 - start);
+				else if(end < gid16)
 					low = mid + 1;
 				else
 					high = mid;
