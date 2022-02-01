@@ -188,7 +188,7 @@ namespace font::off
 			}
 
 			consume_u16(subtable);  // num_glyphs, which we already read
-			for(size_t k = 1; k < num_glyphs; k++)
+			for(size_t k = 0; k < num_glyphs; k++)
 			{
 				auto coverage = subtable_start.drop(consume_u16(subtable));
 				if(!getGlyphCoverageIndex(coverage, glyphs[position + k]).has_value())
