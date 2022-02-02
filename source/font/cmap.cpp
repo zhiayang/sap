@@ -185,12 +185,6 @@ namespace font
 		}
 	}
 
-
-
-	// TODO: we can probably also optimise this API so it returns more than a single
-	// codepoint at a time...
-
-	// note that this does not do any caching -- that should be done at the PDF level.
 	GlyphId FontFile::getGlyphIndexForCodepoint(Codepoint codepoint) const
 	{
 		auto& fwd = this->character_mapping.forward;

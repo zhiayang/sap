@@ -80,7 +80,6 @@ namespace pdf
 		void writeUnicodeCMap(Document* doc) const;
 		void writeCIDSet(Document* doc) const;
 
-		mutable std::map<Codepoint, GlyphId> cmap_cache {};
 		mutable std::map<GlyphId, font::GlyphMetrics> glyph_metrics {};
 
 		mutable std::map<GlyphId, std::vector<Codepoint>> m_extra_unicode_mappings {};

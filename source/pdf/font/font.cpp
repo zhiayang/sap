@@ -56,13 +56,9 @@ namespace pdf
 		else if(this->encoding_kind == ENCODING_CID)
 		{
 			assert(this->source_file != nullptr);
-			if(auto it = this->cmap_cache.find(codepoint); it != this->cmap_cache.end())
-				return it->second;
 
+			// also pre-load the metrics (because in all likelihood we'll need the metrics soon)
 			auto gid = this->source_file->getGlyphIndexForCodepoint(codepoint);
-
-			// pre-load the metrics (because in all likelihood we'll need the metrics soon)
-			this->cmap_cache[codepoint] = gid;
 			this->getMetricsForGlyph(gid);
 
 			if(gid == GlyphId::notdef)

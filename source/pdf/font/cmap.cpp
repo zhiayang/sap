@@ -25,11 +25,14 @@ namespace pdf
 			"endcodespacerange\n"
 		);
 
+		assert(this->source_file != nullptr);
+		auto& mapping = this->source_file->character_mapping.forward;
+
 		// TODO: this is not very optimal. ideally we want to make ranges whenever we can,
 		// but that requires a whole bunch of extra work.
-		cmap->append(zpr::sprint("{} beginbfchar\n", this->cmap_cache.size()));
+		cmap->append(zpr::sprint("{} beginbfchar\n", mapping.size()));
 
-		for(auto& [ cp, glyph ] : this->cmap_cache)
+		for(auto& [ cp, glyph ] : mapping)
 		{
 			auto codepoint = static_cast<uint32_t>(cp);
 			if(codepoint <= 0xFFFF)
