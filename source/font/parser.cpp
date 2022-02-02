@@ -174,8 +174,14 @@ namespace font
 		auto num_tables = consume_u16(buf);
 		// zpr::println("{} encoding records", num_tables);
 
-		std::vector<CMapTable> subtables;
+		struct CMapTable
+		{
+			uint16_t platform_id;
+			uint16_t encoding_id;
+			uint32_t offset;
+		};
 
+		std::vector<CMapTable> subtables {};
 		for(size_t i = 0; i < num_tables; i++)
 		{
 			auto platform_id = consume_u16(buf);
@@ -183,7 +189,7 @@ namespace font
 			auto offset = consume_u32(buf);
 
 			// zpr::println("  pid = {}, eid = {}", platform_id, encoding_id);
-			subtables.push_back({ platform_id, encoding_id, offset, 0 });
+			subtables.push_back(CMapTable { platform_id, encoding_id, offset });
 		}
 
 		/*
@@ -197,7 +203,7 @@ namespace font
 		*/
 
 		bool found = false;
-		CMapTable chosen_table { };
+		CMapTable chosen_table {};
 		int asdf[][2] = { { 0, 6 }, { 0, 4 }, { 0, 3 }, { 3, 10 }, { 3, 1 }, { 1, 0 } };
 
 		for(auto& [ p, e ] : asdf)
@@ -217,16 +223,13 @@ namespace font
 		}
 
 		if(!found)
-			sap::internal_error("could not find suitable cmap table");
+			sap::error("font/off", "could not find suitable cmap table");
 
+		auto foo = table_start.drop(chosen_table.offset);
+		font->character_mapping = readCMapTable(foo);
 
-		// read the format, and also adjust the file offset to be from the start of the file.
-		chosen_table.format = peek_u16(table_start.drop(chosen_table.file_offset));
-		chosen_table.file_offset = table_start.drop(chosen_table.file_offset).data() - font->file_bytes;
-
-		// only start searching the tables when we want to look for a glyph.
-		font->preferred_cmap = chosen_table;
-		// zpr::println("found cmap: pid {}, eid {}, format {}", chosen_table.platform_id, chosen_table.encoding_id, chosen_table.format);
+		// zpr::println("found cmap: pid {}, eid {}, format {}", chosen_table.platform_id,
+		//	chosen_table.encoding_id, chosen_table.format);
 	}
 
 

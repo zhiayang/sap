@@ -10,19 +10,28 @@
 
 namespace font::off::gsub
 {
+	static SubstitutionMapping& combine_subst_mapping(SubstitutionMapping& to, SubstitutionMapping&& from)
+	{
+		to.extra_glyphs.insert(std::move_iterator(from.extra_glyphs.begin()), std::move_iterator(from.extra_glyphs.end()));
+		to.contractions.insert(std::move_iterator(from.contractions.begin()), std::move_iterator(from.contractions.end()));
+		to.replacements.insert(std::move_iterator(from.replacements.begin()), std::move_iterator(from.replacements.end()));
+		return to;
+	}
+
 	static std::optional<GlyphReplacement> lookupForGlyphSequence(const GSubTable& gsub_table, const LookupTable& lookup,
 		zst::span<GlyphId> glyphs, size_t position)
 	{
 		/*
 			cf. the comment in `lookupForGlyphSequence` in gpos
 
-			for GUSB i think it's a little more direct, because each "match" gives us the number of glyphs
+			for GSUB i think it's a little more direct, because each "match" gives us the number of glyphs
 			to consume from the input sequence -- so we just skip that amount.
 		*/
 
 		size_t sub_begin = 0;
 		size_t sub_end = 0;
 		std::optional<GlyphReplacement> result {};
+
 		for(size_t i = position; i < glyphs.size(); i++)
 		{
 			assert(lookup.type != gsub::LOOKUP_EXTENSION_SUBST);
@@ -59,18 +68,28 @@ namespace font::off::gsub
 			if(lookup.type == gsub::LOOKUP_SINGLE)
 			{
 				if(auto subst = lookupSingleSubstitution(lookup, glyphs[i]); subst.has_value())
+				{
 					init_result(1, { *subst });
+					result->mapping.replacements.insert({ *subst, glyphs[i] });
+				}
 			}
 			else if(lookup.type == gsub::LOOKUP_MULTIPLE)
 			{
 				if(auto subst = lookupMultipleSubstitution(lookup, glyphs[i]); subst.has_value())
-					init_result(1, std::move(*subst));
+				{
+					init_result(1, *subst);
+					result->mapping.extra_glyphs.insert(std::move_iterator(subst->begin()), std::move_iterator(subst->end()));
+				}
 			}
 			else if(lookup.type == gsub::LOOKUP_LIGATURE)
 			{
 				if(auto subst = lookupLigatureSubstitution(lookup, glyphs.drop(i)); subst.has_value())
 				{
 					init_result(subst->second, { subst->first });
+
+					auto foo = glyphs.drop(i).take(subst->second);
+					result->mapping.contractions.insert({ subst->first, std::vector(foo.begin(), foo.end()) });
+
 					i += subst->second - 1;   // skip over the processed glyphs
 				}
 			}
@@ -89,9 +108,16 @@ namespace font::off::gsub
 					assert(subst->input_start == 0);
 					init_result(subst->input_consumed, std::move(subst->glyphs));
 
+					// i can't think of a better way to combine them, so just insert wholesale...
+					combine_subst_mapping(result->mapping, std::move(subst->mapping));
+
 					// again, skip over the processed glyphs.
 					i += subst->input_consumed - 1;
 				}
+			}
+			else
+			{
+				sap::warn("font/gsub", "unsupported lookup type '{}'", lookup.type);
 			}
 		}
 
@@ -103,9 +129,6 @@ namespace font::off::gsub
 
 		return result;
 	}
-
-
-
 
 
 	std::optional<GlyphId> lookupSingleSubstitution(const LookupTable& lookup, GlyphId gid)
@@ -263,6 +286,8 @@ namespace font::off::gsub
 		auto glyphstring = std::vector<GlyphId>(glyphs.begin(), glyphs.end());
 		auto lookahead = glyphs.drop(position + num_input_glyphs);
 
+		SubstitutionMapping sub_mapping {};
+
 		for(auto [ glyph_idx, lookup_idx ] : records.first)
 		{
 			assert(lookup_idx < gsub_table.lookups.size());
@@ -283,12 +308,15 @@ namespace font::off::gsub
 					std::move_iterator(result->glyphs.begin()),
 					std::move_iterator(result->glyphs.end())
 				);
+
+				combine_subst_mapping(sub_mapping, std::move(result->mapping));
 			}
 		}
 
 		GlyphReplacement result {};
 		result.input_start = 0;
 		result.input_consumed = num_input_glyphs;
+		result.mapping = std::move(sub_mapping);
 
 		// finally, the glyphs we return should only include the input sequence.
 		assert(glyphstring.size() > position + lookahead.size());
@@ -329,13 +357,17 @@ namespace font::off::gsub
 
 namespace font::off
 {
-	std::vector<GlyphId> performSubstitutionsForGlyphSequence(FontFile* font, zst::span<GlyphId> input,
+	SubstitutedGlyphString performSubstitutionsForGlyphSequence(FontFile* font, zst::span<GlyphId> input,
 		const FeatureSet& features)
 	{
 		auto gsub_table = font->gsub_table;
 		auto lookups = getLookupTablesForFeatures(font->gsub_table, features);
 
-		auto glyphs = std::vector<GlyphId>(input.begin(), input.end());
+		SubstitutedGlyphString result {};
+
+		result.glyphs = std::vector<GlyphId>(input.begin(), input.end());
+		auto& glyphs = result.glyphs;
+
 		auto span = [](auto& g) { return zst::span<GlyphId>(g.data(), g.size()); };
 
 		for(auto& lookup_idx : lookups)
@@ -356,10 +388,12 @@ namespace font::off
 					std::move_iterator(subst->glyphs.begin()),
 					std::move_iterator(subst->glyphs.end())
 				);
+
+				gsub::combine_subst_mapping(result.mapping, std::move(subst->mapping));
 			}
 		}
 
-		return glyphs;
+		return result;
 	}
 }
 

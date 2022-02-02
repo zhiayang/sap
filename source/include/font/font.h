@@ -77,16 +77,15 @@ namespace font
 		uint32_t checksum;
 	};
 
-	struct CMapTable
+	struct CharacterMapping
 	{
-		uint16_t platform_id;
-		uint16_t encoding_id;
-		uint32_t file_offset;
-		uint32_t format;
+		std::unordered_map<Codepoint, GlyphId> forward;
+		std::unordered_map<GlyphId, Codepoint> reverse;
 	};
 
 	using KerningPair = std::pair<GlyphAdjustment, GlyphAdjustment>;
 
+	// TODO: clean up this entire struct
 	struct FontFile
 	{
 		static FontFile* parseFromFile(const std::string& path);
@@ -108,8 +107,7 @@ namespace font
 		std::string full_name;          // name 4
 		std::string postscript_name;    // name 6
 
-		// when embedding this font, we are probably legally required to reproduce
-		// the license.
+		// when embedding this font, we are probably legally required to reproduce the license.
 		std::string copyright_info;     // name 0
 		std::string license_info;       // name 13
 
@@ -129,8 +127,7 @@ namespace font
 		// note: this *MUST* be a std::map (ie. ordered) because the tables must be sorted by Tag.
 		std::map<Tag, Table> tables {};
 
-		// cache this so we don't look for it.
-		CMapTable preferred_cmap {};
+		CharacterMapping character_mapping {};
 
 		FontMetrics metrics {};
 
@@ -154,6 +151,8 @@ namespace font
 	// knows about which glyphs are used.
 	void writeFontSubset(FontFile* font, zst::str_view subset_name, pdf::Stream* stream,
 		const std::map<GlyphId, GlyphMetrics>& used_glyphs);
+
+	CharacterMapping readCMapTable(zst::byte_span table);
 
 	std::string generateSubsetName(FontFile* font);
 

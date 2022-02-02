@@ -41,17 +41,10 @@ namespace pdf
 
 	font::GlyphMetrics Font::getMetricsForGlyph(GlyphId glyph) const
 	{
-		this->loadMetricsForGlyph(glyph);
-		return this->glyph_metrics[glyph];
-	}
-
-	void Font::loadMetricsForGlyph(GlyphId glyph) const
-	{
 		if(!this->source_file || this->glyph_metrics.find(glyph) != this->glyph_metrics.end())
-			return;
+			return { };
 
-		// get and cache the glyph widths as well.
-		this->glyph_metrics[glyph] = this->source_file->getGlyphMetrics(glyph);
+		return (this->glyph_metrics[glyph] = this->source_file->getGlyphMetrics(glyph));
 	}
 
 	GlyphId Font::getGlyphIdFromCodepoint(Codepoint codepoint) const
@@ -68,8 +61,9 @@ namespace pdf
 
 			auto gid = this->source_file->getGlyphIndexForCodepoint(codepoint);
 
+			// pre-load the metrics (because in all likelihood we'll need the metrics soon)
 			this->cmap_cache[codepoint] = gid;
-			this->loadMetricsForGlyph(gid);
+			this->getMetricsForGlyph(gid);
 
 			if(gid == GlyphId::notdef)
 				zpr::println("warning: glyph for codepoint U+{04x} not found in font", codepoint);
@@ -91,11 +85,15 @@ namespace pdf
 		return font::off::getPositioningAdjustmentsForGlyphSequence(this->source_file, glyphs, features);
 	}
 
-	std::vector<GlyphId> Font::performSubstitutionsForGlyphSequence(zst::span<GlyphId> glyphs,
+	font::off::SubstitutedGlyphString Font::performSubstitutionsForGlyphSequence(zst::span<GlyphId> glyphs,
 		const font::off::FeatureSet& features) const
 	{
 		if(!this->source_file)
-			return std::vector<GlyphId>(glyphs.begin(), glyphs.end());
+		{
+			font::off::SubstitutedGlyphString result {};
+			result.glyphs = std::vector<GlyphId>(glyphs.begin(), glyphs.end());
+			return result;
+		}
 
 		return font::off::performSubstitutionsForGlyphSequence(this->source_file, glyphs, features);
 	}

@@ -2,18 +2,14 @@
 // Copyright (c) 2021, zhiayang
 // SPDX-License-Identifier: Apache-2.0
 
-#include <zst.h>
-#include <cassert>
-#include <cstring>
-
 #include "util.h"
+#include "error.h"
+
 #include "font/font.h"
 
 namespace font
 {
-	// all of these return 0 if the codepoint is not found, which should (in all sensible fonts)
-	// correspond to the "notdef" character, which is usually a rectangle with an 'X' in it.
-	static GlyphId find_in_subtable_0(zst::byte_span subtable, Codepoint codepoint)
+	static CharacterMapping read_subtable_0(zst::byte_span subtable)
 	{
 		auto fmt = consume_u16(subtable);
 		assert(fmt == 0);
@@ -21,37 +17,34 @@ namespace font
 		auto len = consume_u16(subtable);
 		assert(len == 3 * sizeof(uint16_t) + 256 * sizeof(uint8_t));
 
-		auto lang = consume_u16(subtable);
-		(void) lang;
+		consume_u16(subtable);  // lang (ignored)
 
-		if(codepoint <= 255_codepoint)
-			return GlyphId { subtable[static_cast<uint32_t>(codepoint)] };
-		else
-			return GlyphId::notdef;
+		CharacterMapping mapping {};
+		for(uint32_t cp = 0; cp < 256; cp++)
+		{
+			auto gid = GlyphId { subtable[cp] };
+			mapping.forward[Codepoint { cp }] = gid;
+			mapping.reverse[gid] = Codepoint { cp };
+		}
+
+		return mapping;
 	}
 
-	static GlyphId find_in_subtable_4(zst::byte_span subtable, Codepoint codepoint)
+	static CharacterMapping read_subtable_4(zst::byte_span subtable)
 	{
 		auto fmt = consume_u16(subtable);
 		assert(fmt == 4);
 
-		if(codepoint > 0xffff_codepoint)
-			return GlyphId::notdef;
-
-		auto len = consume_u16(subtable);
-		auto lang = consume_u16(subtable);
-
-		(void) len;
-		(void) lang;
+		consume_u16(subtable);  // len (ignored)
+		consume_u16(subtable);  // lang (ignored)
 
 		// what the fuck is this format? fmt 12 is so much better.
 		auto seg_count = consume_u16(subtable) / 2u;
-		consume_u16(subtable);  // search_range, ignored
-		consume_u16(subtable);  // entry_selector, ignored
-		consume_u16(subtable);  // range_shift, ignored
+		consume_u16(subtable);  // search_range (ignored)
+		consume_u16(subtable);  // entry_selector (ignored)
+		consume_u16(subtable);  // range_shift (ignored)
 
 		auto u16_array = subtable.cast<uint16_t>();
-
 		auto end_codes = u16_array.take_prefix(seg_count);
 		u16_array.remove_prefix(1); // reserved
 
@@ -59,7 +52,7 @@ namespace font
 		auto id_deltas = u16_array.take_prefix(seg_count);
 		auto id_range_offsets = u16_array.take_prefix(seg_count);
 
-		auto cp16 = static_cast<uint16_t>(codepoint);
+		CharacterMapping mapping {};
 		for(size_t i = 0; i < seg_count; i++)
 		{
 			auto start = util::convertBEU16(start_codes[i]);
@@ -67,128 +60,107 @@ namespace font
 			auto delta = util::convertBEU16(id_deltas[i]);
 			auto range_ofs = util::convertBEU16(id_range_offsets[i]);
 
-			if(start <= cp16 && cp16 <= end)
+			for(auto cp = start; cp <= end; cp++)
 			{
 				if(range_ofs != 0)
 				{
-					auto idx = util::convertBEU16(*(id_range_offsets.data() + i + range_ofs / 2 + (cp16 - start)));
-					return GlyphId { static_cast<uint32_t>((delta + idx) & 0xffff) };
+					auto idx = util::convertBEU16(*(id_range_offsets.data() + i + range_ofs / 2 + (cp - start)));
+					auto gid = GlyphId { static_cast<uint32_t>((delta + idx) & 0xffff) };
+					mapping.forward[Codepoint { cp }] = gid;
+					mapping.reverse[gid] = Codepoint { cp };
 				}
 				else
 				{
-					return GlyphId { static_cast<uint32_t>((delta + cp16) & 0xffff) };
+					auto gid = GlyphId { static_cast<uint32_t>((delta + cp) & 0xffff) };
+					mapping.forward[Codepoint { cp }] = gid;
+					mapping.reverse[gid] = Codepoint { cp };
 				}
 			}
 		}
 
-		return GlyphId::notdef;
+		return mapping;
 	}
 
-	static GlyphId find_in_subtable_6(zst::byte_span subtable, Codepoint codepoint)
+	static CharacterMapping read_subtable_6(zst::byte_span subtable)
 	{
 		auto fmt = consume_u16(subtable);
 		assert(fmt == 6);
 
-		auto len = consume_u16(subtable);
-		auto lang = consume_u16(subtable);
-
-		(void) len;
-		(void) lang;
+		consume_u16(subtable);  // len
+		consume_u16(subtable);  // lang
 
 		auto first = consume_u16(subtable);
 		auto count = consume_u16(subtable);
 
-		auto cp16 = static_cast<uint16_t>(codepoint);
-		if(cp16 < first || cp16 >= first + count)
-			return GlyphId::notdef;
+		CharacterMapping mapping {};
+		for(size_t i = 0; i < count; i++)
+		{
+			auto cp = Codepoint { static_cast<uint32_t>(first + i) };
+			auto gid = GlyphId { subtable.cast<uint16_t>()[i] };
 
-		return GlyphId { subtable.cast<uint16_t>()[cp16 - first] };
+			mapping.forward[cp] = gid;
+			mapping.reverse[gid] = cp;
+		}
+		return mapping;
 	}
 
-	static GlyphId find_in_subtable_10(zst::byte_span subtable, Codepoint codepoint)
+	static CharacterMapping read_subtable_10(zst::byte_span subtable)
 	{
 		auto fmt = consume_u16(subtable);
 		assert(fmt == 10);
 
 		consume_u16(subtable);  // reserved
-		auto len = consume_u32(subtable);
-		auto lang = consume_u32(subtable);
-
-		(void) len;
-		(void) lang;
+		consume_u32(subtable);  // len
+		consume_u32(subtable);  // lang
 
 		auto first = consume_u32(subtable);
 		auto count = consume_u32(subtable);
 
-		auto cp32 = static_cast<uint32_t>(codepoint);
-		if(cp32 < first || cp32 >= first + count)
-			return GlyphId::notdef;
+		CharacterMapping mapping {};
+		for(size_t i = 0; i < count; i++)
+		{
+			auto cp = Codepoint { static_cast<uint32_t>(first + i) };
+			auto gid = GlyphId { subtable.cast<uint32_t>()[i] };
 
-		// alignment may be a problem.
-		GlyphId ret {};
-		auto array = subtable.cast<GlyphId>();
-		memcpy(&ret, array.data() + (cp32 - first), sizeof(GlyphId));
+			mapping.forward[cp] = gid;
+			mapping.reverse[gid] = cp;
+		}
 
-		return ret;
+		return mapping;
 	}
 
-
-	static GlyphId find_in_subtable_12_or_13(zst::byte_span subtable, Codepoint codepoint)
+	static CharacterMapping read_subtable_12_or_13(zst::byte_span subtable)
 	{
 		auto fmt = consume_u16(subtable);
 		assert(fmt == 12 || fmt == 13);
 
 		consume_u16(subtable);  // reserved
-		auto len = consume_u32(subtable);
-		auto lang = consume_u32(subtable);
-
-		(void) len;
-		(void) lang;
+		consume_u32(subtable);  // len
+		consume_u32(subtable);  // lang
 
 		auto num_groups = consume_u32(subtable);
 
-		struct Group
+		CharacterMapping mapping {};
+		for(size_t i = 0; i < num_groups; i++)
 		{
-			uint32_t first;
-			uint32_t last;
-			uint32_t glyphid;
-		} __attribute__((packed));
+			auto first = consume_u32(subtable);
+			auto last = consume_u32(subtable);
+			auto g = consume_u32(subtable);
 
-		static_assert(sizeof(Group) == 3 * sizeof(uint32_t), "your compiler is broken");
-
-		// the group_array starts right after the number of groups
-		auto group_array = subtable.cast<Group>();
-
-		size_t low = 0;
-		size_t high = num_groups;
-
-		auto cp32 = static_cast<uint32_t>(codepoint);
-
-		while(low < high)
-		{
-			size_t grp_num = (low + high) / 2;
-			auto grp = group_array[grp_num];
-
-			auto fst = util::convertBEU32(grp.first);
-			auto lst = util::convertBEU32(grp.last);
-			auto gid = util::convertBEU32(grp.glyphid);
-
-			if(fst <= cp32 && cp32 <= lst)
+			for(auto x = first; x <= last; x++)
 			{
-				if(fmt == 12) return GlyphId { gid + (cp32 - fst) };
-				else          return GlyphId { gid };
-			}
-			else if(cp32 < fst)
-			{
-				high = grp_num;
-			}
-			else
-			{
-				low = grp_num + 1;
+				auto cp = Codepoint { x };
+
+				GlyphId gid {};
+				if(fmt == 12)   gid = GlyphId { g + (x - first) };
+				else            gid = GlyphId { g };
+
+				mapping.forward[cp] = gid;
+				mapping.reverse[gid] = cp;
 			}
 		}
 
-		return GlyphId::notdef;
+		return mapping;
 	}
 
 
@@ -196,21 +168,22 @@ namespace font
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+	CharacterMapping readCMapTable(zst::byte_span table)
+	{
+		auto format = peek_u16(table);
+		switch(format)
+		{
+			case 0:     return read_subtable_0(table);
+			case 4:     return read_subtable_4(table);
+			case 6:     return read_subtable_6(table);
+			case 10:    return read_subtable_10(table);
+			case 12:    return read_subtable_12_or_13(table);
+			case 13:    return read_subtable_12_or_13(table);
+			default:
+				sap::warn("font/off", "no supported cmap table! no glyphs will be available");
+				return {};
+		}
+	}
 
 
 
@@ -220,19 +193,10 @@ namespace font
 	// note that this does not do any caching -- that should be done at the PDF level.
 	GlyphId FontFile::getGlyphIndexForCodepoint(Codepoint codepoint) const
 	{
-		auto subtable = zst::byte_span(this->file_bytes, this->file_size)
-			.drop(this->preferred_cmap.file_offset);
-
-		switch(this->preferred_cmap.format)
-		{
-			case 0:  return find_in_subtable_0(subtable, codepoint);
-			case 4:  return find_in_subtable_4(subtable, codepoint);
-			case 6:  return find_in_subtable_6(subtable, codepoint);
-			case 10: return find_in_subtable_10(subtable, codepoint);
-			case 12: return find_in_subtable_12_or_13(subtable, codepoint);
-			case 13: return find_in_subtable_12_or_13(subtable, codepoint);
-			default:
-				return GlyphId::notdef;
-		}
+		auto& fwd = this->character_mapping.forward;
+		if(auto it = fwd.find(codepoint); it != fwd.end())
+			return it->second;
+		else
+			return GlyphId::notdef;
 	}
 }

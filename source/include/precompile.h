@@ -14,6 +14,7 @@
 #include <optional>
 #include <type_traits>
 #include <string_view>
+#include <unordered_map>
 
 #include "zpr.h"
 #include "zst.h"

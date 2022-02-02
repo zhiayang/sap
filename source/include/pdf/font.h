@@ -30,12 +30,11 @@ namespace pdf
 
 		GlyphId getGlyphIdFromCodepoint(Codepoint codepoint) const;
 
-		// this is necessary because ligature substitutions can result in obtaining glyphs that
-		// didn't come from `getGlyphIdFromCodepoint`, so we need to manually read its width
-		// and put it into the pdf, if not it uses the default width.
-		void loadMetricsForGlyph(GlyphId glyph) const;
-
 		font::GlyphMetrics getMetricsForGlyph(GlyphId glyph) const;
+
+		// add an explicit mapping from glyph id to a list of codepoints. This is useful for
+		// ligature substitutions (eg. 'ffi' -> 'f', 'f', 'i') and for single replacements.
+		void addGlyphUnicodeMapping(GlyphId glyph, std::vector<Codepoint> codepoints) const;
 
 		font::FontMetrics getFontMetrics() const;
 
@@ -56,7 +55,7 @@ namespace pdf
 		std::map<size_t, font::GlyphAdjustment> getPositioningAdjustmentsForGlyphSequence(
 			zst::span<GlyphId> glyphs, const font::off::FeatureSet& features) const;
 
-		std::vector<GlyphId> performSubstitutionsForGlyphSequence(zst::span<GlyphId> glyphs,
+		font::off::SubstitutedGlyphString performSubstitutionsForGlyphSequence(zst::span<GlyphId> glyphs,
 			const font::off::FeatureSet& features) const;
 
 
@@ -81,8 +80,10 @@ namespace pdf
 		void writeUnicodeCMap(Document* doc) const;
 		void writeCIDSet(Document* doc) const;
 
-		mutable std::map<Codepoint, GlyphId> cmap_cache { };
-		mutable std::map<GlyphId, font::GlyphMetrics> glyph_metrics { };
+		mutable std::map<Codepoint, GlyphId> cmap_cache {};
+		mutable std::map<GlyphId, font::GlyphMetrics> glyph_metrics {};
+
+		mutable std::map<GlyphId, std::vector<Codepoint>> m_extra_unicode_mappings {};
 
 		// the name that goes into the Resource << >> dict in a page. This is a unique name
 		// that we get from the Document when the font is created.

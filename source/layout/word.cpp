@@ -44,7 +44,13 @@ namespace sap::layout
 		auto span = [](auto& foo) { return zst::span<GlyphId>(foo.data(), foo.size()); };
 
 		// next, use GSUB to perform substitutions.
-		glyphs = font->performSubstitutionsForGlyphSequence(span(glyphs), features);
+		auto substituted = font->performSubstitutionsForGlyphSequence(span(glyphs), features);
+		glyphs = std::move(substituted.glyphs);
+
+		zpr::println("mapping: ");
+		zpr::println("  extra: {}", substituted.mapping.extra_glyphs);
+		zpr::println("  contr: {}", substituted.mapping.contractions);
+		zpr::println("  replc: {}", substituted.mapping.replacements);
 
 		// next, get base metrics for each glyph.
 		std::vector<Word::GlyphInfo> glyph_infos {};
