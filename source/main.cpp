@@ -22,7 +22,7 @@ constexpr const char* input_text =
 
 	"AVAYAYA V. Vo P. r.";
 #else
-constexpr const char* input_text = "ffi Bсички хора се раждат свободни и равни по";
+constexpr const char* input_text = "ffi fl Bсички хора се раждат свободни и равни по";
 	// "My name is Yoshikage Kira. I'm 33 years old. My house is in the northeast section of Morioh,\n"
 	// "where all the villas are, and I am not married. I work as an employee for the Kame Yu department\n"
 	// "stores, and I get home every day by 8 PM at the latest. I don't smoke, but I occasionally drink.\n"

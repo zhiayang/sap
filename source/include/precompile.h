@@ -15,6 +15,7 @@
 #include <type_traits>
 #include <string_view>
 #include <unordered_map>
+#include <unordered_set>
 
 #include "zpr.h"
 #include "zst.h"

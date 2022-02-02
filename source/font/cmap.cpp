@@ -60,7 +60,7 @@ namespace font
 			auto delta = util::convertBEU16(id_deltas[i]);
 			auto range_ofs = util::convertBEU16(id_range_offsets[i]);
 
-			for(auto cp = start; cp <= end; cp++)
+			for(uint32_t cp = start; cp <= end; cp++)
 			{
 				if(range_ofs != 0)
 				{

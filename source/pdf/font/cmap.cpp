@@ -34,6 +34,9 @@ namespace pdf
 
 		for(auto& [ cp, glyph ] : mapping)
 		{
+			if(m_used_glyphs.find(glyph) == m_used_glyphs.end())
+				continue;
+
 			auto codepoint = static_cast<uint32_t>(cp);
 			if(codepoint <= 0xFFFF)
 			{
@@ -48,16 +51,15 @@ namespace pdf
 
 		cmap->append("endbfchar\n");
 
-#if 0
+
 		// now for the ligatures.
-		cmap->append(zpr::sprint("{} beginbfchar\n", this->used_ligatures.size()));
-		for(const auto& lig : this->used_ligatures)
+		cmap->append(zpr::sprint("{} beginbfchar\n", m_extra_unicode_mappings.size()));
+		for(auto& [ gid, cps ] : m_extra_unicode_mappings)
 		{
-			cmap->append(zpr::sprint("<{04x}> <", lig.substitute));
-			for(size_t i = 0; i < lig.num_glyphs; i++)
+			cmap->append(zpr::sprint("<{04x}> <", gid));
+			for(auto cp : cps)
 			{
-				auto cp = this->reverse_cmap[lig.glyphs[i]];
-				if(cp <= 0xFFFF)
+				if(cp <= 0xFFFF_codepoint)
 				{
 					cmap->append(zpr::sprint("{04x}", cp));
 				}
@@ -71,7 +73,7 @@ namespace pdf
 			cmap->append(">\n");
 		}
 		cmap->append("endbfchar\n");
-#endif
+
 
 		write_cmap_footer(cmap);
 	}
