@@ -27,9 +27,12 @@ namespace pdf
 		// we need to write out the widths.
 		if(this->source_file && this->glyph_widths_array)
 		{
-			std::vector<std::pair<GlyphId, double>> widths;
-			for(auto& [ gid, m ] : this->glyph_metrics)
-				widths.emplace_back(gid, this->scaleMetricForPDFTextSpace(m.horz_advance).value());
+			std::vector<std::pair<GlyphId, double>> widths {};
+			for(auto& gid : m_used_glyphs)
+			{
+				auto width = this->getMetricsForGlyph(gid).horz_advance;
+				widths.emplace_back(gid, this->scaleMetricForPDFTextSpace(width).value());
+			}
 
 			std::sort(widths.begin(), widths.end(), [](const auto& a, const auto& b) -> bool {
 				return a.first < b.first;
@@ -61,11 +64,10 @@ namespace pdf
 			}
 		}
 
-		// finally, make a font subset based on the glyphs that we use. the assumption (which is perfectly valid)
-		// is that `this->glyph_metrics` has a 1-to-1 correspondence with the glyphs that are used from this font.
+		// finally, make a font subset based on the glyphs that we use.
 		if(this->source_file && this->embedded_contents)
 		{
-			writeFontSubset(this->source_file, this->pdf_font_name, this->embedded_contents, this->glyph_metrics);
+			writeFontSubset(this->source_file, this->pdf_font_name, this->embedded_contents, m_used_glyphs);
 
 			// write the cmap we'll use for /ToUnicode.
 			this->writeUnicodeCMap(doc);

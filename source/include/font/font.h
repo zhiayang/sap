@@ -8,6 +8,7 @@
 #include <string>
 #include <vector>
 #include <optional>
+#include <unordered_set>
 
 #include <cstddef>
 #include <cstdint>
@@ -147,10 +148,7 @@ namespace font
 		static constexpr int OUTLINES_CFF      = 2;
 	};
 
-	// the reason this takes in a `map<GlyphId, GlyphMetrics>` is that it's simply how the pdf::Font
-	// knows about which glyphs are used.
-	void writeFontSubset(FontFile* font, zst::str_view subset_name, pdf::Stream* stream,
-		const std::map<GlyphId, GlyphMetrics>& used_glyphs);
+	void writeFontSubset(FontFile* font, zst::str_view subset_name, pdf::Stream* stream, const std::unordered_set<GlyphId>& used_glyphs);
 
 	CharacterMapping readCMapTable(zst::byte_span table);
 

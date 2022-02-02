@@ -48,11 +48,14 @@ namespace pdf
 	{
 		this->markGlyphAsUsed(glyph);
 
-		if(!this->source_file || this->glyph_metrics.find(glyph) != this->glyph_metrics.end())
+		if(!this->source_file)
 			return { };
 
+		else if(auto it = m_glyph_metrics.find(glyph); it != m_glyph_metrics.end())
+			return it->second;
+
 		auto metrics = this->source_file->getGlyphMetrics(glyph);
-		this->glyph_metrics[glyph] = metrics;
+		m_glyph_metrics[glyph] = metrics;
 
 		return metrics;
 	}
@@ -69,7 +72,6 @@ namespace pdf
 
 			// also pre-load the metrics (because in all likelihood we'll need the metrics soon)
 			auto gid = this->source_file->getGlyphIndexForCodepoint(codepoint);
-			this->getMetricsForGlyph(gid);
 			this->markGlyphAsUsed(gid);
 
 			if(gid == GlyphId::notdef)

@@ -12,7 +12,7 @@
 
 namespace font::cff
 {
-	static void write_charset_table(CFFData* cff, zst::byte_buffer& buffer, const std::map<GlyphId, GlyphMetrics>& used_glyphs)
+	static void write_charset_table(CFFData* cff, zst::byte_buffer& buffer, const std::unordered_set<GlyphId>& used_glyphs)
 	{
 		// format 0
 		buffer.append(0);
@@ -30,7 +30,7 @@ namespace font::cff
 		}
 	}
 
-	static void perform_glyph_pruning(CFFData* cff, const std::map<GlyphId, GlyphMetrics>& used_glyphs)
+	static void perform_glyph_pruning(CFFData* cff, const std::unordered_set<GlyphId>& used_glyphs)
 	{
 		std::set<uint8_t> used_font_dicts {};
 
@@ -95,7 +95,7 @@ namespace font::cff
 	}
 
 
-	CFFSubset createCFFSubset(FontFile* font, zst::str_view subset_name, const std::map<GlyphId, GlyphMetrics>& used_glyphs)
+	CFFSubset createCFFSubset(FontFile* font, zst::str_view subset_name, const std::unordered_set<GlyphId>& used_glyphs)
 	{
 		auto cff = font->cff_data;
 		assert(cff != nullptr);

@@ -85,7 +85,7 @@ namespace pdf
 		void writeCIDSet(Document* doc) const;
 
 		mutable std::unordered_set<GlyphId> m_used_glyphs {};
-		mutable std::map<GlyphId, font::GlyphMetrics> glyph_metrics {};
+		mutable std::map<GlyphId, font::GlyphMetrics> m_glyph_metrics {};
 		mutable std::map<GlyphId, std::vector<Codepoint>> m_extra_unicode_mappings {};
 
 		// the name that goes into the Resource << >> dict in a page. This is a unique name

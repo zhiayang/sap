@@ -6,6 +6,7 @@
 
 #include <zst.h>
 #include <utility>
+#include <unordered_set>
 
 namespace font
 {
@@ -63,5 +64,5 @@ namespace font::truetype
 	/*
 		Subset the glyphs in the original loca/glyf tables based on the provided `used_glyphs`.
 	*/
-	TTSubset createTTSubset(FontFile* font, const std::map<GlyphId, GlyphMetrics>& used_glyphs);
+	TTSubset createTTSubset(FontFile* font, const std::unordered_set<GlyphId>& used_glyphs);
 }

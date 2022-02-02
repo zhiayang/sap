@@ -12,6 +12,7 @@
 
 #include <vector>
 #include <optional>
+#include <unordered_set>
 
 #include "types.h"
 
@@ -246,8 +247,7 @@ namespace font::cff
 		Subset the CFF font (given in `file`), including only the used_glyphs. Returns a new CFF and cmap table
 		for embedding into the OTF font.
 	*/
-	CFFSubset createCFFSubset(FontFile* file, zst::str_view subset_name,
-		const std::map<GlyphId, GlyphMetrics>& used_glyphs);
+	CFFSubset createCFFSubset(FontFile* file, zst::str_view subset_name, const std::unordered_set<GlyphId>& used_glyphs);
 
 
 	/*
