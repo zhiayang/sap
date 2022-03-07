@@ -4,10 +4,16 @@
 
 #pragma once
 
-#include "sap/layout.h"
+#include "sap/document.h"
+
+namespace pdf
+{
+	struct Document;
+}
 
 namespace sap
 {
+	pdf::Document compile();
 }
 
 

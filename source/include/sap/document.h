@@ -31,6 +31,11 @@ namespace sap
 	using Size2d = Vector2;
 	using Position = Vector2;
 	using Offset2d = Vector2;
+
+	namespace tree
+	{
+		struct Document;
+	}
 }
 
 namespace sap::layout
@@ -120,7 +125,7 @@ namespace sap::layout
 
 	private:
 		LayoutObject* m_parent = nullptr;
-		std::vector<LayoutObject*> m_children {};
+		std::vector<std::unique_ptr<LayoutObject>> m_children {};
 	};
 
 
@@ -298,7 +303,7 @@ namespace sap::layout
 		pdf::Document& pdfDocument();
 		const pdf::Document& pdfDocument() const;
 
-		void addObject(LayoutObject* obj);
+		void addObject(std::unique_ptr<LayoutObject> obj);
 
 		void layout();
 		pdf::Document& render();
@@ -307,6 +312,8 @@ namespace sap::layout
 		pdf::Document m_pdf_document {};
 		std::vector<Page> m_pages {};
 
-		std::vector<LayoutObject*> m_objects {};
+		std::vector<std::unique_ptr<LayoutObject>> m_objects {};
 	};
+
+	Document createDocumentLayout(tree::Document& document);
 }

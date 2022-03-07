@@ -22,9 +22,9 @@ namespace sap::layout
 		return m_pdf_document;
 	}
 
-	void Document::addObject(LayoutObject* obj)
+	void Document::addObject(std::unique_ptr<LayoutObject> obj)
 	{
-		m_objects.push_back(obj);
+		m_objects.push_back(std::move(obj));
 	}
 
 	void Document::layout()
@@ -32,14 +32,14 @@ namespace sap::layout
 		if(m_objects.empty())
 			return;
 
-		LayoutObject* overflow = nullptr;
+		std::unique_ptr<LayoutObject> overflow {};
 		for(size_t i = 0; i < m_objects.size();)
 		{
 			if(m_pages.empty())
 				m_pages.emplace_back(dim::Vector2(dim::mm(210), dim::mm(297)).into(Size2d{}));
 
 			auto page = &m_pages.back();
-			auto obj = (overflow == nullptr ? m_objects[i] : overflow);
+			auto obj = (overflow == nullptr ? m_objects[i] : overflow).get();
 
 			// TODO: handle this more elegantly (we should try to move this to the next page)
 			if(auto result = obj->layout(page->layoutRegion(), m_style); !result.ok())
@@ -48,7 +48,7 @@ namespace sap::layout
 			}
 			else if(result->has_value())
 			{
-				overflow = result->value();
+				overflow = std::unique_ptr<LayoutObject>(result->value());
 			}
 			else
 			{
@@ -64,4 +64,5 @@ namespace sap::layout
 
 		return m_pdf_document;
 	}
+
 }

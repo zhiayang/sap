@@ -1,4 +1,4 @@
-// lexer.h
+// frontend.h
 // Copyright (c) 2022, zhiayang
 // SPDX-License-Identifier: Apache-2.0
 
@@ -8,6 +8,11 @@
 #include <stddef.h>
 
 #include "location.h"
+
+namespace sap::tree
+{
+	struct Document;
+}
 
 namespace sap::frontend
 {
@@ -19,6 +24,8 @@ namespace sap::frontend
 		// common tokens
 		Backslash,
 		Comment,
+		LBrace,
+		RBrace,
 
 		// text mode tokens
 		Word,
@@ -37,11 +44,6 @@ namespace sap::frontend
 		std::string str() const { return this->text.str(); }
 	};
 
-
-
-
-
-
 	/*
 		This lexer has some internal state, so let's make it a struct. Also, due to
 		the nature of this language, we cannot lex all tokens at once without some level
@@ -51,10 +53,12 @@ namespace sap::frontend
 	*/
 	struct Lexer
 	{
-		Lexer(zst::str_view contents, zst::str_view filename);
+		Lexer(zst::str_view filename, zst::str_view contents);
 
 		Token peek() const;
 		Token next();
+
+		void skipComments();
 
 	private:
 		enum class Mode
@@ -66,4 +70,9 @@ namespace sap::frontend
 		zst::str_view m_stream {};
 		Location m_location {};
 	};
+
+
+
+
+	tree::Document parse(zst::str_view filename, zst::str_view contents);
 }

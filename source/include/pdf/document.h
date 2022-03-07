@@ -19,6 +19,12 @@ namespace pdf
 	{
 		Document();
 
+		Document(const Document&) = delete;
+		Document& operator= (const Document&) = delete;
+
+		Document(Document&&) = default;
+		Document& operator= (Document&&) = default;
+
 		void write(Writer* stream);
 		void addObject(Object* obj);
 

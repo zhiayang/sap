@@ -78,7 +78,7 @@ namespace pdf
 	void Page::useFont(const Font* font) const
 	{
 		if(std::find(this->fonts.begin(), this->fonts.end(), font) != this->fonts.end())
-			pdf::error("page already contains font");
+			return;
 
 		this->fonts.push_back(font);
 	}

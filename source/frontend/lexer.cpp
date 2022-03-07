@@ -2,7 +2,7 @@
 // Copyright (c) 2022, zhiayang
 // SPDX-License-Identifier: Apache-2.0
 
-#include "frontend/lexer.h"
+#include "sap/frontend.h"
 
 namespace sap::frontend
 {
@@ -143,11 +143,20 @@ namespace sap::frontend
 			loc.line += lines;
 			return ret;
 		}
-		else if(stream[0] == '\\' && (stream.size() == 1 || (stream[1] != '\\' && stream[1] != '#')))
+		else if(stream[0] == '\\' && (stream.size() == 1
+			|| (stream[1] != '\\' && stream[1] != '#' && stream[1] != '{' && stream[1] != '}')))
 		{
 			return advance_and_return(Token {
 				.loc = loc,
 				.type = TokenType::Backslash,
+				.text = stream.take(1)
+			}, 1);
+		}
+		else if(stream[0] == '{' || stream[0] == '}')
+		{
+			return advance_and_return(Token {
+				.loc = loc,
+				.type = (stream[0] == '{' ? TokenType::LBrace : TokenType::RBrace),
 				.text = stream.take(1)
 			}, 1);
 		}
@@ -164,6 +173,10 @@ namespace sap::frontend
 					else if(stream[n + 1] == '\\')
 						n += 2;
 					else if(stream[n + 1] == '#')
+						n += 2;
+					else if(stream[n + 1] == '{')
+						n += 2;
+					else if(stream[n + 1] == '}')
 						n += 2;
 					else
 					{
@@ -189,6 +202,8 @@ namespace sap::frontend
 				}
 			}
 
+			// note: this does imply that the parser needs to "re-parse" any escape sequences, but that's fine
+			// because we don't want to deal with lifetime issues regarding a constructed string in the Token.
 			return advance_and_return(Token {
 				.loc = loc,
 				.type = TokenType::Word,
@@ -216,7 +231,7 @@ namespace sap::frontend
 
 
 
-	Lexer::Lexer(zst::str_view contents, zst::str_view filename) : m_stream(contents)
+	Lexer::Lexer(zst::str_view filename, zst::str_view contents) : m_stream(contents)
 	{
 		m_location = Location {
 			.line = 0,
@@ -243,5 +258,11 @@ namespace sap::frontend
 			return consume_text_token(m_stream, m_location);
 		else
 			assert(false);
+	}
+
+	void Lexer::skipComments()
+	{
+		while(this->peek() == TokenType::Comment)
+			this->next();
 	}
 }

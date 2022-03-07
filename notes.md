@@ -1,39 +1,6 @@
 ## notes
 
 
-### glyph positioning, substitution, and rendering
-
-The correct way to lookup substitutions and positioning adjustments is already documented in `features.h` (but
-not implemented yet, as of now).
-
-During the layout, we already convert words (characters) to glyphs wholesale. I think the GSUB and GPOS interfaces
-need to change so that they operate on an entire glyphstring at once.
-
-For instance, there are a number of contextual lookup types that possibly require lookahead *and* lookbehind, so it
-probably makes more sense to just pass a span of glyph ids, and put all the substitution/positioning stuff into
-the font-side code. We would return a (new) list of glyphs for GSUB, and probably a pair of glyphid+GlyphAdjustment
-for GPOS.
-
-We might combine this with the GPOS step or have it be a separate step; either way, we need to compute adjusted GlyphMetrics
-from the builtin metrics for the base glyph, adjusted by the adjustment for that glyph. After this, computing the
-word spacing becomes rather easy without having to explicitly deal with kerning.
-
-During rendering, we probably still need to keep the adjustment values around, because (eg.) we must adjust positioning
-(eg. vertically for super/subscripts, horizontally for kerning) *after* accounting for the "default" movement due to
-the glyph width done by PDF.
-
-
-
-
-
-
-
-
-
-
-
-
-
 ### on CFF subsetting
 
 So we got OpenType-CFF subsetting mostly working, but it doesn't work consistently in all viewers. So, instead

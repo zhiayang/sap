@@ -15,29 +15,97 @@
 
 #include "font/font.h"
 
-#include "frontend/lexer.h"
+#include "sap/frontend.h"
+
+#include "interp/tree.h"
 
 #if 0
 constexpr const char* input_text =
 
 	"AVAYAYA V. Vo P. r.";
 #else
-constexpr const char* input_text = "ffi fl Bсички хора се раждат свободни и равни по";
-	// "My name is Yoshikage Kira. I'm 33 years old. My house is in the northeast section of Morioh,\n"
-	// "where all the villas are, and I am not married. I work as an employee for the Kame Yu department\n"
-	// "stores, and I get home every day by 8 PM at the latest. I don't smoke, but I occasionally drink.\n"
-	// "I'm in bed by 11 PM, and make sure I get eight hours of sleep, no matter what. After having a\n"
-	// "glass of warm milk and doing about twenty minutes of stretches before going to bed, I usually\n"
-	// "have no problems sleeping until morning. Just like a baby, I wake up without any fatigue or stress\n"
-	// "in the morning. I was told there were no issues at my last check-up. I'm trying to explain that\n"
-	// "I'm a person who wishes to live a very quiet life. I take care not to trouble myself with any enemies,\n"
-	// "like winning and losing, that would cause me to lose sleep at night. That is how I deal with society,\n"
-	// "and I know that is what brings me happiness. Although, if I were to fight I wouldn't lose to anyone.\n"
-	// "AVAYAYA V. Vo P. r.";
+constexpr const char* input_text = // "ffi fl Bсички хора се раждат свободни и равни по";
+	"My name is Yoshikage Kira. I'm 33 years old. My house is in the northeast section of Morioh,\n"
+	"where all the villas are, and I am not married. I work as an employee for the Kame Yu department\n"
+	"stores, and I get home every day by 8 PM at the latest. I don't smoke, but I occasionally drink.\n"
+	"I'm in bed by 11 PM, and make sure I get eight hours of sleep, no matter what. After having a\n"
+	"glass of warm milk and doing about twenty minutes of stretches before going to bed, I usually\n"
+	"have no problems sleeping until morning. Just like a baby, I wake up without any fatigue or stress\n"
+	"in the morning. I was told there were no issues at my last check-up. I'm trying to explain that\n"
+	"I'm a person who wishes to live a very quiet life. I take care not to trouble myself with any enemies,\n"
+	"like winning and losing, that would cause me to lose sleep at night. That is how I deal with society,\n"
+	"and I know that is what brings me happiness. Although, if I were to fight I wouldn't lose to anyone.\n"
+	"AVAYAYA V. Vo P. r.";
 #endif
+
+
+
+namespace sap
+{
+	pdf::Document compile()
+	{
+		auto document = sap::layout::Document();
+
+
+		return std::move(document.render());
+	}
+}
+
+
+
+
+
+
+
 
 int main(int argc, char** argv)
 {
+#if 1
+	auto [ buf, size ] = util::readEntireFile("test.sap");
+	auto document = sap::frontend::parse("test.sap", { (char*) buf, size });
+
+	auto layout_doc = sap::layout::createDocumentLayout(document);
+	auto font = pdf::Font::fromFontFile(
+		&layout_doc.pdfDocument(),
+		font::FontFile::parseFromFile("fonts/SourceSerif4-Regular.otf")
+	);
+
+	auto style = sap::Style {};
+	style.set_font(font)
+		// .set_font_size(pdf::Scalar(12).into(sap::Scalar{}))
+		.set_font_size(dim::mm(4.8))
+		.set_line_spacing(dim::mm(3));
+
+	auto default_style = sap::Style()
+		.set_font(pdf::Font::fromBuiltin(&layout_doc.pdfDocument(), "Times-Roman"))
+		.set_font_size(pdf::Scalar(12.0/72.0).into(sap::Scalar{}))
+		.set_line_spacing(sap::Scalar(1.0))
+		.set_pre_paragraph_spacing(sap::Scalar(1.0))
+		.set_post_paragraph_spacing(sap::Scalar(1.0));
+
+	sap::setDefaultStyle(std::move(default_style));
+
+	layout_doc.setStyle(&style);
+	layout_doc.layout();
+
+	auto writer = util::make<pdf::Writer>("test.pdf");
+	auto& pdf_doc = layout_doc.render();
+
+	pdf_doc.write(writer);
+	writer->close();
+#endif
+
+
+
+
+
+
+
+
+
+
+
+#if 0
 	auto document = sap::layout::Document();
 	auto font = pdf::Font::fromFontFile(
 		&document.pdfDocument(),
@@ -49,22 +117,6 @@ int main(int argc, char** argv)
 		// font::FontFile::parseFromFile("fonts/SourceSerif4Variable-Roman.otf")
 	);
 
-#if 0
-	auto [ buf, size ] = util::readEntireFile("test.sap");
-	auto lexer = sap::frontend::Lexer({ (char*) buf, size }, "test.sap");
-	while(true)
-	{
-		auto tok = lexer.next();
-		zpr::println("{} = '{}'", tok.type, tok.text);
-
-		if(tok == sap::frontend::TokenType::EndOfFile)
-			break;
-	}
-#endif
-
-
-
-#if 1
 	auto para = sap::layout::Paragraph();
 	{
 		zst::str_view sv = input_text;
@@ -119,3 +171,4 @@ int main(int argc, char** argv)
 	writer->close();
 #endif
 }
+
