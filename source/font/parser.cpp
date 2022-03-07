@@ -24,6 +24,11 @@ namespace font
 			| ((uint16_t) s[1] << 0);
 	}
 
+	int16_t peek_i16(const zst::byte_span& s)
+	{
+		return static_cast<int16_t>(peek_u16(s));
+	}
+
 	uint32_t peek_u32(const zst::byte_span& s)
 	{
 		assert(s.size() >= 4);
@@ -298,11 +303,12 @@ namespace font
 		// we should have already parsed the head table, so this value should be present.
 		assert(font->metrics.units_per_em != 0);
 
-		font->metrics.ascent = consume_i16(buf);
-		font->metrics.descent = consume_i16(buf);
+		font->metrics.hhea_ascent = consume_i16(buf);
+		font->metrics.hhea_descent = consume_i16(buf);
+		font->metrics.hhea_linegap = consume_i16(buf);
 
 		// skip all the nonsense
-		buf.remove_prefix(26);
+		buf.remove_prefix(24);
 
 		font->num_hmetrics = consume_u16(buf);
 	}
@@ -312,14 +318,26 @@ namespace font
 		auto buf = zst::byte_span(font->file_bytes, font->file_size);
 		buf.remove_prefix(os2_table.offset);
 
-		// we only want this table for sxHeight and sCapHeight, but they only appear
-		// in version >= 2. so if it's less then just gtfo.
 		auto version = consume_u16(buf);
-		if(version < 2) return;
 
-		buf.remove_prefix(84);
-		font->metrics.x_height = consume_i16(buf);
-		font->metrics.cap_height = consume_i16(buf);
+		// the sTypo things are always available, even at version 0
+		font->metrics.typo_ascent  = peek_i16(buf.drop(66));
+		font->metrics.typo_descent = peek_i16(buf.drop(68));
+		font->metrics.typo_linegap = peek_i16(buf.drop(70));
+
+		// "it is strongly recommended to use OS/2.sTypoAscender - OS/2.sTypoDescender+ OS/2.sTypoLineGap
+		// as a value for default line spacing for this font."
+		// (note: we do this regardless of whether fsSelection & USE_TYPO_METRICS is true)
+		// TODO: check if these values are 0 or something -- though they shouldn't be
+		font->metrics.default_line_spacing = font->metrics.typo_ascent
+										   - font->metrics.typo_descent
+										   + font->metrics.typo_linegap;
+
+		if(version >= 2)
+		{
+			font->metrics.x_height = peek_i16(buf.drop(84));
+			font->metrics.cap_height = peek_i16(buf.drop(84 + 2));
+		}
 	}
 
 	static void parse_hmtx_table(FontFile* font, const Table& hmtx_table)

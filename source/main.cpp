@@ -72,8 +72,8 @@ int main(int argc, char** argv)
 
 	auto style = sap::Style {};
 	style.set_font(font)
-		// .set_font_size(pdf::Scalar(12).into(sap::Scalar{}))
-		.set_font_size(dim::mm(4.8))
+		.set_font_size(pdf::Scalar(12).into(sap::Scalar{}))
+		// .set_font_size(dim::mm(4.8))
 		.set_line_spacing(dim::mm(3));
 
 	auto default_style = sap::Style()

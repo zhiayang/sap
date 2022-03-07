@@ -203,12 +203,24 @@ namespace sap::layout
 		auto text = util::make<pdf::Text>();
 		text->moveAbs(page->convertVector2(abs_para_position.into(pdf::Position2d_YDown{})));
 
-		// TODO: obviously, use the leading metric to advance the line...
+		/*
+			not sure if this is legit, but words basically don't actually use their own `m_position` when
+			rendering; we just pass the words to the PDF, and the viewer uses the font metrics to adjust.
+
+			we do use the computed position when advancing to the next line, to account for line spacing
+			differences if there's more than one font-size on a line.
+		*/
+		Position current_pos {};
 		for(size_t i = 0; i < m_words.size(); i++)
 		{
+			current_pos = m_words[i].m_position;
 			m_words[i].render(text);
+
 			if(m_words[i].m_linebreak_after && i + 1 < m_words.size())
-				text->nextLine(pdf::Offset2d(0, -2.1 * m_words[i + 1].size.y().into(pdf::Scalar{}).value()));
+			{
+				auto skip = m_words[i + 1].m_position.y() - current_pos.y();
+				text->nextLine(pdf::Offset2d(0, -1.0 * skip.into(pdf::Scalar{}).value()));
+			}
 		}
 
 		page->addObject(text);

@@ -92,14 +92,13 @@ namespace sap::layout
 		// size is in sap units, which is in mm; metrics are in typographic units, so 72dpi;
 		// calculate the scale accordingly.
 		const auto font_metrics = font->getFontMetrics();
-		constexpr auto tpu = [](auto... xs) -> auto { return pdf::typographic_unit(xs...); };
+		auto font_size_tpu = font_size.into(dim::units::pdf_typographic_unit{});
 
 		// TODO: what is this complicated formula???
 		this->size = { 0, 0 };
-		this->size.y() = ((tpu(font_metrics.ymax) - tpu(font_metrics.ymin))
-						* (font_size.value() / pdf::GLYPH_SPACE_UNITS)).into(sap::Scalar{});
+		this->size.y() = font->scaleMetricForFontSize(font_metrics.default_line_spacing, font_size_tpu)
+			.into(sap::Scalar{});
 
-		auto font_size_tpu = font_size.into(dim::units::pdf_typographic_unit{});
 		for(auto& glyph : m_glyphs)
 		{
 			auto width = glyph.metrics.horz_advance + glyph.adjustments.horz_advance;

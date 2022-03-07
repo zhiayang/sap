@@ -42,12 +42,19 @@ namespace font
 		int xmax;
 		int ymax;
 
-		int ascent;
-		int descent;
+		int hhea_ascent;
+		int hhea_descent;
+		int hhea_linegap;
 		int units_per_em;
 
 		int x_height;
 		int cap_height;
+
+		int typo_ascent;
+		int typo_descent;
+		int typo_linegap;
+
+		int default_line_spacing;
 
 		bool is_monospaced;
 		double italic_angle;
