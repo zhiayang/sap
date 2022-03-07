@@ -103,6 +103,8 @@ namespace sap::layout
 				// we might not have vertical space.
 				if(region_height - cursor.y() < word.size.y())
 				{
+					zpr::println("overflowing: {}", word_idx);
+
 					// no space -- break the rest of the words, and quit.
 					overflow = util::make<Paragraph>();
 					overflow->m_words.insert(overflow->m_words.end(),
