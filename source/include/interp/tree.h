@@ -9,6 +9,9 @@
 
 #include <memory>
 
+#include "interp/interp.h"
+
+
 // pun not intended
 namespace sap::tree
 {

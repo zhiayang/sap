@@ -10,9 +10,32 @@ namespace sap::frontend
 	using TT = TokenType;
 	using namespace sap::tree;
 
-	static std::string escape_word_text(zst::str_view text)
+	static std::string escape_word_text(const Location& loc, zst::str_view text)
 	{
-		return text.str();
+		std::string ret {};
+		ret.reserve(text.size());
+
+		for(size_t i = 0; i < text.size(); i++)
+		{
+			if(text[i] == '\\')
+			{
+				// lexer should've caught this
+				assert(i + 1 < text.size());
+
+				i += 1;
+				if(text[i] == '\\')     ret.push_back('\\');
+				else if(text[i] == '{') ret.push_back('{');
+				else if(text[i] == '}') ret.push_back('}');
+				else if(text[i] == '#') ret.push_back('#');
+				else                    error(loc, "unrecognised escape sequence '\\{}'", text[i]);
+			}
+			else
+			{
+				ret.push_back(text[i]);
+			}
+		}
+
+		return ret;
 	}
 
 	static std::shared_ptr<Paragraph> parseParagraph(Lexer& lexer)
@@ -23,7 +46,7 @@ namespace sap::frontend
 			auto tok = lexer.next();
 			if(tok == TT::Word)
 			{
-				para->addObject(std::make_shared<Word>(escape_word_text(tok.text)));
+				para->addObject(std::make_shared<Word>(escape_word_text(tok.loc, tok.text)));
 			}
 			else if(tok == TT::ParagraphBreak || tok == TT::EndOfFile)
 			{
