@@ -32,12 +32,27 @@ namespace sap::frontend
 		ParagraphBreak,
 
 		// script mode tokens
+		Identifier,
+
+		LParen,
+		RParen,
+		Colon,
+		Comma,
+
+		LBrace,
+		RBrace,
+		Plus,
+		Minus,
+		Asterisk,
+		Slash,
+		Equal,
 	};
 
 	struct Token
 	{
 		Location loc;
 		TokenType type = TokenType::Invalid;
+		bool whitespace_before = false;
 		zst::str_view text;
 
 		inline operator TokenType() const { return this->type; }
@@ -53,24 +68,53 @@ namespace sap::frontend
 	*/
 	struct Lexer
 	{
+	private:
+		struct SaveState
+		{
+			zst::str_view stream {};
+			Location location {};
+		};
+
+	public:
+		enum class Mode
+		{
+			Text,
+			Script,
+		};
+
 		Lexer(zst::str_view filename, zst::str_view contents);
 
 		Token peek() const;
 		Token next();
 
+		bool expect(TokenType type);
+
+		Token peekWithMode(Mode mode) const;
+
 		void skipComments();
 
-	private:
-		enum class Mode
-		{
-			Text
-		};
+		SaveState save();
+		void rewind(SaveState st);
 
-		Mode m_mode = Mode::Text;
+		Mode mode() const;
+		void pushMode(Mode mode);
+		void popMode(Mode mode);
+
+	private:
+		std::vector<Mode> m_mode_stack {};
 		zst::str_view m_stream {};
 		Location m_location {};
 	};
 
+	struct LexerModer
+	{
+		LexerModer(Lexer& lexer, Lexer::Mode mode) : m_lexer(lexer), m_mode(mode) { m_lexer.pushMode(m_mode); }
+		~LexerModer() { m_lexer.popMode(m_mode); }
+
+	private:
+		Lexer& m_lexer;
+		Lexer::Mode m_mode;
+	};
 
 
 

@@ -3,6 +3,8 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #include "interp/tree.h"
+#include "interp/interp.h"
+
 #include "sap/frontend.h"
 
 namespace sap::frontend
@@ -38,9 +40,94 @@ namespace sap::frontend
 		return ret;
 	}
 
-	static std::shared_ptr<Paragraph> parseParagraph(Lexer& lexer)
+	constexpr auto KW_SCRIPT_BLOCK  = "script";
+
+	static interp::QualifiedId parseQualifiedId(Lexer& lexer)
 	{
-		auto para = std::make_shared<Paragraph>();
+		// TODO: parse qualified ids. for now we just parse normal ids.
+		auto tok = lexer.next();
+		if(tok != TT::Identifier)
+			error(tok.loc, "expected identifier");
+
+		return interp::QualifiedId {
+			.name = tok.text.str()
+		};
+	}
+
+	static std::unique_ptr<interp::Expr> parseExpr(Lexer& lexer)
+	{
+		return {};
+	}
+
+
+
+	static std::unique_ptr<ScriptBlock> parseScriptBlock(Lexer& lexer)
+	{
+		auto lm = LexerModer(lexer, Lexer::Mode::Script);
+		return {};
+	}
+
+	static std::unique_ptr<ScriptCall> parseInlineScript(Lexer& lexer)
+	{
+		auto lm = LexerModer(lexer, Lexer::Mode::Script);
+
+		auto qid = parseQualifiedId(lexer);
+		auto open_paren = lexer.next();
+		if(open_paren != TT::LParen)
+			error(open_paren.loc, "expected '(' after qualified-id in inline script call");
+
+		auto call = std::make_unique<interp::FunctionCall>();
+
+		// parse arguments.
+		while(lexer.peek() != TT::RParen)
+		{
+			bool flag = false;
+
+			interp::FunctionCall::Arg arg {};
+			if(lexer.peek() == TT::Identifier)
+			{
+				auto save = lexer.save();
+				auto name = lexer.next();
+
+				if(lexer.expect(TT::Colon))
+				{
+					arg.value = parseExpr(lexer);
+					arg.name = name.text.str();
+					flag = true;
+				}
+				else
+				{
+					lexer.rewind(save);
+				}
+			}
+
+			if(not flag)
+			{
+				arg.name = {};
+				arg.value = parseExpr(lexer);
+			}
+
+			call->arguments.push_back(std::move(arg));
+
+			if(not lexer.expect(TT::Comma) && lexer.peek() != TT::RParen)
+				error(lexer.peek().loc, "expected ',' or ')' in call argument list");
+		}
+
+		if(not lexer.expect(TT::RParen))
+			error(lexer.peek().loc, "expected ')'");
+
+		// TODO: (potentially multiple) trailing blocks
+
+		auto sc = std::make_unique<ScriptCall>();
+		sc->call = std::move(call);
+
+		return sc;
+	}
+
+
+	static std::unique_ptr<Paragraph> parseParagraph(Lexer& lexer)
+	{
+		auto para = std::make_unique<Paragraph>();
 		while(true)
 		{
 			auto tok = lexer.next();
@@ -52,6 +139,21 @@ namespace sap::frontend
 			{
 				break;
 			}
+			else if(tok == TT::Backslash)
+			{
+				auto next = lexer.peekWithMode(Lexer::Mode::Script);
+				if(next == TT::Identifier)
+				{
+					if(next.text == KW_SCRIPT_BLOCK)
+						para->addObject(parseScriptBlock(lexer));
+					else
+						para->addObject(parseInlineScript(lexer));
+				}
+				else
+				{
+					error(next.loc, "unexpected token '{}' after '\\'", next.text);
+				}
+			}
 			else
 			{
 				error(tok.loc, "unexpected token '{}' in paragraph", tok.text);
@@ -62,7 +164,7 @@ namespace sap::frontend
 	}
 
 
-	static std::shared_ptr<DocumentObject> parseTopLevel(Lexer& lexer)
+	static std::unique_ptr<DocumentObject> parseTopLevel(Lexer& lexer)
 	{
 		while(true)
 		{
@@ -96,7 +198,7 @@ namespace sap::frontend
 			lexer.skipComments();
 			auto tok = lexer.peek();
 
-			if(tok == TokenType::EndOfFile)
+			if(tok == TT::EndOfFile)
 				break;
 
 			document.addObject(parseTopLevel(lexer));

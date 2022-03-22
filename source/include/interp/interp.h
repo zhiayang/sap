@@ -21,6 +21,12 @@ namespace sap::interp
 	{
 	};
 
+
+	struct QualifiedId
+	{
+		std::string name;
+	};
+
 	struct FunctionCall : Expr
 	{
 		struct Arg
@@ -29,7 +35,7 @@ namespace sap::interp
 			std::unique_ptr<Expr> value;
 		};
 
-		std::string callee;
+		QualifiedId callee;
 		std::vector<Arg> arguments;
 	};
 }

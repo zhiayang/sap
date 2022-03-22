@@ -39,6 +39,9 @@ Not sure if we want to support multiple trailing blocks... probably? might be us
 
 
 
+some care is needed for verbatim environments; I think there's no alternative to explicit begin/end tokens. we can
+have something like `\rawbegin_foo ... \rawend_foo` where `foo` is just any alphanumeric thing.
+
 
 
 

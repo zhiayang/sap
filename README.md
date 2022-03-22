@@ -69,7 +69,7 @@ This also acts as a sort of TODO; as time goes on completed features may be remo
 - [x] Text extraction (eg. copy/paste) support — `ToUnicode` table
 - [ ] Unicode substitution (eg. codepoint (de)composition)
 - [ ] Vertical writing
-- [ ] Literally any text typesetting
+- [x] Very very (very very...) basic paragraph layout, linebreaking, and pagination
 - [ ] Literally any metalanguage
 
 

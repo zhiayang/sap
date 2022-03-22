@@ -98,5 +98,6 @@ namespace sap::tree
 
 	struct ScriptCall : InlineObject, DocumentObject
 	{
+		std::unique_ptr<interp::FunctionCall> call;
 	};
 }
