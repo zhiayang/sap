@@ -59,9 +59,9 @@ $(OUTPUT_BIN): $(CXXOBJ) $(UTF8PROC_OBJS) $(MINIZ_OBJS)
 	@$(CXX) $(CXXFLAGS) $(WARNINGS) $(INCLUDES) -MMD -MP -x c++-header -o $@ $<
 
 clean:
-	-@find source -delete -iname "*.cpp.d"
-	-@find source -delete -iname "*.cpp.o"
-	-@find source -delete -iname "*.h.d"
+	-@find source -iname "*.cpp.d" -delete
+	-@find source -iname "*.cpp.o" -delete
+	-@find source -iname "*.h.d" -delete
 	-@rm -f $(PRECOMP_GCH)
 	-@rm -f $(OUTPUT_BIN)
 
