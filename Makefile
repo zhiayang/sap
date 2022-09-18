@@ -66,7 +66,8 @@ clean:
 	-@rm -f $(OUTPUT_BIN)
 
 format:
-	clang-format -i source/**/*.*
+	clang-format -i source/**/*.cpp
+	clang-format -i source/**/*.h
 
 -include $(CXXDEPS)
 -include $(CDEPS)
