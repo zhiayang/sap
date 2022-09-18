@@ -8,6 +8,8 @@
 #include <stddef.h>
 
 #include <vector>
+#include <functional>
+#include <memory>
 #include <string>
 
 #include <zpr.h>
