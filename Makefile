@@ -64,6 +64,9 @@ clean:
 	-@rm -f $(PRECOMP_GCH)
 	-@rm -f $(OUTPUT_BIN)
 
+format:
+	clang-format -i source/**/*.*
+
 -include $(CXXDEPS)
 -include $(CDEPS)
 -include $(PRECOMP_GCH:.gch=.d)

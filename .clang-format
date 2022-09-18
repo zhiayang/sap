@@ -50,8 +50,8 @@ IndentFunctionDeclarationAfterType: false
 IndentWidth: 4
 IndentExternBlock: AfterExternBlock
 IndentPPDirectives: None
-KeepEmptyLinesAtTheStartOfBlocks: false
-MaxEmptyLinesToKeep: 10
+KeepEmptyLinesAtTheStartOfBlocks: true
+MaxEmptyLinesToKeep: 100
 NamespaceIndentation: All
 PenaltyBreakBeforeFirstCallParameter: 100
 PenaltyBreakComment: 300
@@ -61,8 +61,6 @@ PenaltyExcessCharacter: 10000000
 PenaltyReturnTypeOnItsOwnLine: 200
 PPIndentWidth: -1
 PointerAlignment: Left
-RequiresClausePosition: OwnLine
-IndentRequiresClause: true
 SortIncludes: false
 SortUsingDeclarations: false
 SpaceAfterCStyleCast: true
