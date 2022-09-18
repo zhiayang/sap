@@ -17,7 +17,8 @@ namespace sap::layout
 		m_words.push_back(std::move(word));
 	}
 
-	zst::Result<std::optional<LayoutObject*>, int> Paragraph::layout(LayoutRegion* region, const Style* parent_style)
+	zst::Result<std::optional<LayoutObject*>, int> Paragraph::layout(interp::Interpreter* cs, LayoutRegion* region,
+		const Style* parent_style)
 	{
 		// first, all words need their metrics computed. forward the default style down to them.
 		auto combined = Style::combine(m_style, parent_style);
@@ -191,7 +192,7 @@ namespace sap::layout
 	}
 
 
-	void Paragraph::render(const LayoutRegion* region, Position abs_para_position, pdf::Page* page) const
+	void Paragraph::render(interp::Interpreter* cs, const LayoutRegion* region, Position abs_para_position, pdf::Page* page) const
 	{
 		(void) region;
 

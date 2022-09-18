@@ -10,7 +10,7 @@ CC              := clang
 CXX             := clang++
 
 CFLAGS          = $(COMMON_CFLAGS) -std=c99 -fPIC -O3
-CXXFLAGS        = $(COMMON_CFLAGS) -Wno-old-style-cast -std=c++17 -fno-exceptions
+CXXFLAGS        = $(COMMON_CFLAGS) -Wno-old-style-cast -std=c++20 -fno-exceptions
 
 CXXSRC          = $(shell find source -iname "*.cpp" -print)
 CXXOBJ          = $(CXXSRC:.cpp=.cpp.o)

@@ -33,19 +33,23 @@ namespace sap::frontend
 
 		// script mode tokens
 		Identifier,
+		Number,
 
 		LParen,
 		RParen,
+		LSquare,
+		RSquare,
 		Colon,
 		Comma,
 
-		LBrace,
-		RBrace,
+		Semicolon,
 		Plus,
 		Minus,
 		Asterisk,
 		Slash,
 		Equal,
+
+		ColonColon,
 	};
 
 	struct Token
@@ -86,8 +90,10 @@ namespace sap::frontend
 
 		Token peek() const;
 		Token next();
+		bool eof() const;
 
 		bool expect(TokenType type);
+		std::optional<Token> match(TokenType type);
 
 		Token peekWithMode(Mode mode) const;
 

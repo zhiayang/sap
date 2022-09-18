@@ -1,6 +1,6 @@
 /*
 	zpr.h
-	Copyright 2020 - 2021, zhiayang
+	Copyright 2020 - 2022, zhiayang
 
 	Licensed under the Apache License, Version 2.0 (the "License");
 	you may not use this file except in compliance with the License.
@@ -43,7 +43,7 @@
 
 
 /*
-	Version 2.5.3
+	Version 2.7.3
 	=============
 
 
@@ -147,7 +147,7 @@
 	* it should be a function object defining "operator() (const char*, size_t)",
 	* and should print the string pointed to by the first argument, with length
 	* specified by the second argument.
-	size_t cprint(const CallbackFn& callback, tt::str_view fmt, Args&&... args);
+	size_t cprint(const _CallbackFn& callback, tt::str_view fmt, Args&&... args);
 
 	* print to a buffer, given by the pointer 'buf', with maximum size 'len'.
 	* no NULL terminator will be appended to the buffer, including in the situation
@@ -174,7 +174,27 @@
 	* print function; the purpose is to avoid an unnecessary round-trip through a std::string.
 	auto fwd(tt::str_view fmt, Args&&... args);
 
+	* instead of having to specialise a print_formatter<T>, use this to specify the formatter for a
+	* certain type using a lambda. The formatter given must return some sort of string-like object.
+	auto zpr::with(T value, auto&& formatter);
 
+
+	Type-erased API
+	---------------
+
+	Most of the formatting functions above are also available with a 'v' prefix, which is the type-erased
+	version. The aim of this is to reduce the number of variadic template instantiatons, limiting it to the
+	top-level entry-point (the `vprintX` function itself).
+
+	This slightly increases the runtime cost (since there is now an indirect call through a function pointer),
+	but now, there is one instantiation per callback type (`file_appender`, `buffer_appender`, etc.), and one
+	for each combination of (callback_type, value_type).
+
+	Of course, there will still be one template for each combination of argument types for the top-level function,
+	but that is unavoidable --- we try to keep those functions small so code-size-explosion is reduced.
+
+
+	----
 	Version history has been moved to the bottom of the file.
 */
 
@@ -248,7 +268,6 @@
 #if !ZPR_FREESTANDING && ZPR_USE_STD
 	#include <string>
 	#include <string_view>
-	#include <type_traits>
 #endif
 
 
@@ -256,216 +275,52 @@
 #undef ZPR_EXPAND
 
 
+// we can't really use [[likely]]/[[unlikely]] since (a) they go in a different place
+// and (b) I want to keep the minimum c++ version as c++17.
+#if defined(_MSC_VER)
+	#define ZPR_ALWAYS_INLINE __forceinline inline
+	#define ZPR_UNLIKELY(x)   (x)
+	#define ZPR_LIKELY(x)     (x)
+#elif defined(__GNUC__)
+	#define ZPR_ALWAYS_INLINE __attribute__((always_inline)) inline
+	#define ZPR_UNLIKELY(x)   __builtin_expect((x), 0)
+	#define ZPR_LIKELY(x)     __builtin_expect((x), 1)
+#else
+	#define ZPR_ALWAYS_INLINE
+	#define ZPR_UNLIKELY(x)   (x)
+	#define ZPR_LIKELY(x)     (x)
+#endif
+
+
+
+
+#include <type_traits>
+
 
 namespace zpr::tt
 {
-#if 0
-
+	// just use <type_traits> since it's a freestanding thing
 	using namespace std;
 
-#else
-	template <typename T> struct type_identity { using type = T; };
 
-	template <typename T> struct remove_reference      { using type = T; };
-	template <typename T> struct remove_reference<T&>  { using type = T; };
-	template <typename T> struct remove_reference<T&&> { using type = T; };
+	struct __invalid {};
 
-	template <typename T, T v>
-	struct integral_constant
+	template <typename _Type> _Type _Minimum(const _Type& a, const _Type& b) { return a < b ? a : b; }
+	template <typename _Type> _Type _Maximum(const _Type& a, const _Type& b) { return a > b ? a : b; }
+	template <typename _Type> _Type _Absolute(const _Type& x) { return x < 0 ? -x : x; }
+
+	template <typename _Type>
+	void swap(_Type& t1, _Type& t2)
 	{
-		static constexpr T value = v;
-		typedef T value_type;
-		typedef integral_constant type;
-
-		constexpr operator value_type() const { return value; }
-		constexpr value_type operator()() const { return value; }
-	};
-
-	using true_type = integral_constant<bool, true>;
-	using false_type = integral_constant<bool, false>;
-
-	template <typename T> struct remove_cv                   { using type = T; };
-	template <typename T> struct remove_cv<const T>          { using type = T; };
-	template <typename T> struct remove_cv<volatile T>       { using type = T; };
-	template <typename T> struct remove_cv<const volatile T> { using type = T; };
-
-	template <typename T> using remove_cv_t = typename remove_cv<T>::type;
-
-	template <typename> struct is_integral_base : false_type { };
-
-	template <> struct is_integral_base<bool>               : true_type { };
-	template <> struct is_integral_base<char>               : true_type { };
-	template <> struct is_integral_base<signed char>        : true_type { };
-	template <> struct is_integral_base<signed short>       : true_type { };
-	template <> struct is_integral_base<signed int>         : true_type { };
-	template <> struct is_integral_base<signed long>        : true_type { };
-	template <> struct is_integral_base<signed long long>   : true_type { };
-	template <> struct is_integral_base<unsigned char>      : true_type { };
-	template <> struct is_integral_base<unsigned short>     : true_type { };
-	template <> struct is_integral_base<unsigned int>       : true_type { };
-	template <> struct is_integral_base<unsigned long>      : true_type { };
-	template <> struct is_integral_base<unsigned long long> : true_type { };
-
-	template <typename T> struct is_integral : is_integral_base<remove_cv_t<T>> { };
-	template <typename T> constexpr auto is_integral_v = is_integral<T>::value;
-
-
-	template <typename> struct is_signed_base : false_type { };
-
-	template <> struct is_signed_base<signed char>        : true_type { };
-	template <> struct is_signed_base<signed short>       : true_type { };
-	template <> struct is_signed_base<signed int>         : true_type { };
-	template <> struct is_signed_base<signed long>        : true_type { };
-	template <> struct is_signed_base<signed long long>   : true_type { };
-
-	template <typename T> struct is_signed : is_signed_base<remove_cv_t<T>> { };
-	template <typename T> constexpr auto is_signed_v = is_signed<T>::value;
-
-	template <typename T, typename U>   struct is_same : false_type { };
-	template <typename T>               struct is_same<T, T> : true_type { };
-
-	template <typename A, typename B>
-	constexpr auto is_same_v = is_same<A, B>::value;
-
-	// the 3 major compilers -- clang, gcc, and msvc -- support __is_enum. it's not
-	// tenable implement is_enum without compiler magic.
-	template <typename T> struct is_enum { static constexpr bool value = __is_enum(T); };
-	template <typename T> constexpr auto is_enum_v = is_enum<T>::value;
-
-	template <typename T> struct is_reference      : false_type { };
-	template <typename T> struct is_reference<T&>  : true_type { };
-	template <typename T> struct is_reference<T&&> : true_type { };
-
-	template <typename T> struct is_const          : false_type { };
-	template <typename T> struct is_const<const T> : true_type { };
-
-	template <typename T> constexpr auto is_const_v = is_const<T>::value;
-	template <typename T> constexpr auto is_reference_v = is_reference<T>::value;
-
-	// a similar story exists for __underlying_type.
-	template <typename T> struct underlying_type { using type = __underlying_type(T); };
-	template <typename T> using underlying_type_t = typename underlying_type<T>::type;
-
-	template <bool B, typename T = void> struct enable_if { };
-	template <typename T> struct enable_if<true, T> { using type = T; };
-	template <bool B, typename T = void> using enable_if_t = typename enable_if<B, T>::type;
-
-	template <typename T> struct is_array : false_type { };
-	template <typename T> struct is_array<T[]> : true_type { };
-	template <typename T, size_t N> struct is_array<T[N]> : true_type { };
-
-	template <typename T> struct remove_extent { using type = T; };
-	template <typename T> struct remove_extent<T[]> { using type = T; };
-	template <typename T, size_t N> struct remove_extent<T[N]> { using type = T; };
-
-	template <typename T> struct is_function : integral_constant<bool, !is_const_v<const T> && !is_reference_v<T>> { };
-	template <typename T> constexpr auto is_function_v = is_function<T>::value;
-
-	template <typename T> auto try_add_pointer(int) -> type_identity<typename remove_reference<T>::type*>;
-	template <typename T> auto try_add_pointer(...) -> type_identity<T>;
-
-	template <typename T>
-	struct add_pointer : decltype(try_add_pointer<T>(0)) { };
-
-	template <bool B, typename T, typename F> struct conditional { using type = T; };
-	template <typename T, typename F> struct conditional<false, T, F> { using type = F; };
-	template <bool B, typename T, typename F> using conditional_t = typename conditional<B,T,F>::type;
-
-	template <typename...> struct conjunction : true_type { };
-	template <typename B1> struct conjunction<B1> : B1 { };
-	template <typename B1, typename... Bn>
-	struct conjunction<B1, Bn...> : conditional_t<bool(B1::value), conjunction<Bn...>, B1> { };
-
-	template <typename...> struct disjunction : false_type { };
-	template <typename B1> struct disjunction<B1> : B1 { };
-	template <typename B1, typename... Bn>
-	struct disjunction<B1, Bn...> : conditional_t<bool(B1::value), B1, disjunction<Bn...>>  { };
-
-	template <typename B>
-	struct negation : integral_constant<bool, !bool(B::value)> { };
-
-	template <typename T>
-	struct decay
-	{
-	private:
-		using U = typename remove_reference<T>::type;
-	public:
-		using type = typename conditional<
-			is_array<U>::value,
-			typename remove_extent<U>::type*,
-			typename conditional<
-				is_function<U>::value,
-				typename add_pointer<U>::type,
-				typename remove_cv<U>::type
-			>::type
-		>::type;
-	};
-
-	template <typename T> using decay_t = typename decay<T>::type;
-
-	template <typename T, bool = is_integral<T>::value>
-	struct _is_unsigned : integral_constant<bool, (T(0) < T(-1))> { };
-
-	template <typename T>
-	struct _is_unsigned<T, false> : false_type { };
-
-	template <typename T>
-	struct is_unsigned : _is_unsigned<T>::type { };
-
-	template <typename T>
-	struct make_unsigned { };
-
-	template <> struct make_unsigned<signed char> { using type = unsigned char; };
-	template <> struct make_unsigned<unsigned char> { using type = unsigned char; };
-	template <> struct make_unsigned<signed short> { using type = unsigned short; };
-	template <> struct make_unsigned<unsigned short> { using type = unsigned short; };
-	template <> struct make_unsigned<signed int> { using type = unsigned int; };
-	template <> struct make_unsigned<unsigned int> { using type = unsigned int; };
-	template <> struct make_unsigned<signed long> { using type = unsigned long; };
-	template <> struct make_unsigned<unsigned long> { using type = unsigned long; };
-	template <> struct make_unsigned<signed long long> { using type = unsigned long long; };
-	template <> struct make_unsigned<unsigned long long> { using type = unsigned long long; };
-
-	template <typename T>
-	using make_unsigned_t = typename make_unsigned<T>::type;
-
-
-	template <typename... Xs>
-	using void_t = void;
-
-	template <typename T>
-	struct __stop_declval_eval { static constexpr bool __stop = false; };
-
-	template <typename T, typename U = T&&>
-	U __declval(int);
-
-	template <typename T>
-	T __declval(long);
-
-	template <typename T>
-	auto declval() -> decltype(__declval<T>(0))
-	{
-		static_assert(__stop_declval_eval<T>::__stop, "declval() must not be used!");
-		return __stop_declval_eval<T>::__unknown();
+		_Type temp = static_cast<_Type&&>(t1);
+		t1 = static_cast<_Type&&>(t2);
+		t2 = static_cast<_Type&&>(temp);
 	}
 
-	template <typename T> T min(const T& a, const T& b) { return a < b ? a : b; }
-	template <typename T> T max(const T& a, const T& b) { return a > b ? a : b; }
-	template <typename T> T abs(const T& x) { return x < 0 ? -x : x; }
-
-	template <typename T>
-	void swap(T& t1, T& t2)
-	{
-		T temp = static_cast<T&&>(t1);
-		t1 = static_cast<T&&>(t2);
-		t2 = static_cast<T&&>(temp);
-	}
-
-#endif
 
 	// is_any<X, A, B, ... Z> -> is_same<X, A> || is_same<X, B> || ...
-	template <typename T, typename... Ts>
-	struct is_any : disjunction<is_same<T, Ts>...> { };
+	template <typename _Type, typename... _Ts>
+	struct is_any : disjunction<is_same<_Type, _Ts>...> { };
 
 	struct str_view
 	{
@@ -474,11 +329,11 @@ namespace zpr::tt
 		str_view() : ptr(nullptr), len(0) { }
 		str_view(const char* p, size_t l) : ptr(p), len(l) { }
 
-		template <size_t N>
-		str_view(const char (&s)[N]) : ptr(s), len(N - 1) { }
+		template <size_t _Number>
+		str_view(const char (&s)[_Number]) : ptr(s), len(_Number - 1) { }
 
-		template <typename T, typename = tt::enable_if_t<tt::is_same_v<const char*, T>>>
-		str_view(T s) : ptr(s), len(strlen(s)) { }
+		template <typename _Type, typename = tt::enable_if_t<tt::is_same_v<const char*, _Type>>>
+		str_view(_Type s) : ptr(s), len(strlen(s)) { }
 
 		str_view(str_view&&) = default;
 		str_view(const str_view&) = default;
@@ -524,7 +379,7 @@ namespace zpr::tt
 		inline size_t find(str_view sv) const
 		{
 			if(sv.size() > this->size())
-				return -1;
+				return static_cast<size_t>(-1);
 
 			else if(sv.empty())
 				return 0;
@@ -535,7 +390,7 @@ namespace zpr::tt
 					return i;
 			}
 
-			return -1;
+			return static_cast<size_t>(-1);
 		}
 
 		inline str_view substr(size_t pos, size_t cnt) const { return str_view(this->ptr + pos, cnt); }
@@ -575,39 +430,42 @@ namespace zpr
 		int64_t length      = -1;
 		int64_t precision   = -1;
 
-		bool zero_pad() const       { return this->flags & FMT_FLAG_ZERO_PAD; }
-		bool alternate() const      { return this->flags & FMT_FLAG_ALTERNATE; }
-		bool have_width() const     { return this->flags & FMT_FLAG_HAVE_WIDTH; }
-		bool have_precision() const { return this->flags & FMT_FLAG_HAVE_PRECISION; }
-		bool prepend_plus() const   { return this->flags & FMT_FLAG_PREPEND_PLUS; }
-		bool prepend_space() const  { return this->flags & FMT_FLAG_PREPEND_SPACE; }
+		ZPR_ALWAYS_INLINE bool zero_pad() const       { return this->flags & FMT_FLAG_ZERO_PAD; }
+		ZPR_ALWAYS_INLINE bool alternate() const      { return this->flags & FMT_FLAG_ALTERNATE; }
+		ZPR_ALWAYS_INLINE bool have_width() const     { return this->flags & FMT_FLAG_HAVE_WIDTH; }
+		ZPR_ALWAYS_INLINE bool have_precision() const { return this->flags & FMT_FLAG_HAVE_PRECISION; }
+		ZPR_ALWAYS_INLINE bool prepend_plus() const   { return this->flags & FMT_FLAG_PREPEND_PLUS; }
+		ZPR_ALWAYS_INLINE bool prepend_space() const  { return this->flags & FMT_FLAG_PREPEND_SPACE; }
 
-		bool negative_width() const { return have_width() && (this->flags & FMT_FLAG_WIDTH_NEGATIVE); }
-		bool positive_width() const { return have_width() && !negative_width(); }
+		ZPR_ALWAYS_INLINE bool negative_width() const { return have_width() && (this->flags & FMT_FLAG_WIDTH_NEGATIVE); }
+		ZPR_ALWAYS_INLINE bool positive_width() const { return have_width() && !negative_width(); }
 
-		void set_precision(int64_t p)
+		ZPR_ALWAYS_INLINE void set_precision(int64_t p)
 		{
 			this->precision = p;
 			this->flags |= FMT_FLAG_HAVE_PRECISION;
 		}
 
-		void set_width(int64_t w)
+		ZPR_ALWAYS_INLINE void set_width(int64_t w)
 		{
 			this->width = w;
 			this->flags |= FMT_FLAG_HAVE_WIDTH;
 
 			if(w < 0)
+			{
+				this->width = -w;
 				this->flags |= FMT_FLAG_WIDTH_NEGATIVE;
+			}
 		}
 	};
 
-	template <typename T, typename = void>
+	template <typename _Type, typename = void>
 	struct print_formatter { };
 
 
 	namespace detail
 	{
-		template <typename T>
+		template <typename _Type>
 		struct __fmtarg_w
 		{
 			__fmtarg_w(__fmtarg_w&&) = delete;
@@ -615,13 +473,13 @@ namespace zpr
 			__fmtarg_w& operator= (__fmtarg_w&&) = delete;
 			__fmtarg_w& operator= (const __fmtarg_w&) = delete;
 
-			__fmtarg_w(T&& x, int width) : arg(static_cast<T&&>(x)), width(width) { }
+			__fmtarg_w(_Type&& x, int width) : arg(static_cast<_Type&&>(x)), width(width) { }
 
-			T arg;
+			_Type arg;
 			int width;
 		};
 
-		template <typename T>
+		template <typename _Type>
 		struct __fmtarg_p
 		{
 			__fmtarg_p(__fmtarg_p&&) = delete;
@@ -629,13 +487,13 @@ namespace zpr
 			__fmtarg_p& operator= (__fmtarg_p&&) = delete;
 			__fmtarg_p& operator= (const __fmtarg_p&) = delete;
 
-			__fmtarg_p(T&& x, int prec) : arg(static_cast<T&&>(x)), prec(prec) { }
+			__fmtarg_p(_Type&& x, int prec) : arg(static_cast<_Type&&>(x)), prec(prec) { }
 
-			T arg;
+			_Type arg;
 			int prec;
 		};
 
-		template <typename T>
+		template <typename _Type>
 		struct __fmtarg_wp
 		{
 			__fmtarg_wp(__fmtarg_wp&&) = delete;
@@ -643,9 +501,9 @@ namespace zpr
 			__fmtarg_wp& operator= (__fmtarg_wp&&) = delete;
 			__fmtarg_wp& operator= (const __fmtarg_wp&) = delete;
 
-			__fmtarg_wp(T&& x, int width, int prec) : arg(static_cast<T&&>(x)), prec(prec), width(width) { }
+			__fmtarg_wp(_Type&& x, int width, int prec) : arg(static_cast<_Type&&>(x)), prec(prec), width(width) { }
 
-			T arg;
+			_Type arg;
 			int prec;
 			int width;
 		};
@@ -654,9 +512,10 @@ namespace zpr
 		{
 			__fmtarg_w_helper(int w) : width(w) { }
 
-			template <typename T> inline __fmtarg_w<T&&> operator() (T&& val)
+			template <typename _Type>
+			ZPR_ALWAYS_INLINE __fmtarg_w<_Type&&> operator() (_Type&& val)
 			{
-				return __fmtarg_w<T&&>(static_cast<T&&>(val), this->width);
+				return __fmtarg_w<_Type&&>(static_cast<_Type&&>(val), this->width);
 			}
 
 			int width;
@@ -666,9 +525,10 @@ namespace zpr
 		{
 			__fmtarg_p_helper(int p) : prec(p) { }
 
-			template <typename T> inline __fmtarg_p<T&&> operator() (T&& val)
+			template <typename _Type>
+			ZPR_ALWAYS_INLINE __fmtarg_p<_Type&&> operator() (_Type&& val)
 			{
-				return __fmtarg_p<T&&>(static_cast<T&&>(val), this->prec);
+				return __fmtarg_p<_Type&&>(static_cast<_Type&&>(val), this->prec);
 			}
 
 			int prec;
@@ -678,20 +538,21 @@ namespace zpr
 		{
 			__fmtarg_wp_helper(int w, int p) : width(w), prec(p) { }
 
-			template <typename T> inline __fmtarg_wp<T&&> operator() (T&& val)
+			template <typename _Type>
+			ZPR_ALWAYS_INLINE __fmtarg_wp<_Type&&> operator() (_Type&& val)
 			{
-				return __fmtarg_wp<T&&>(static_cast<T&&>(val), this->width, this->prec);
+				return __fmtarg_wp<_Type&&>(static_cast<_Type&&>(val), this->width, this->prec);
 			}
 
 			int width;
 			int prec;
 		};
 
-		template <typename... Args>
+		template <typename... _Types>
 		struct __forward_helper
 		{
 			template <typename... Xs>
-			__forward_helper(tt::str_view fmt, Xs&&... xs) : fmt(static_cast<tt::str_view&&>(fmt))
+			ZPR_ALWAYS_INLINE __forward_helper(tt::str_view fmt, Xs&&... xs) : fmt(static_cast<tt::str_view&&>(fmt))
 			{
 				size_t idx = 0;
 				((values[idx++] = &xs), ...);
@@ -700,8 +561,8 @@ namespace zpr
 			tt::str_view fmt;
 
 			// msvc doesn't like a 0-sized array here
-			const size_t num_values = sizeof...(Args);
-			const void* values[sizeof...(Args) == 0 ? 1 : sizeof...(Args)] { };
+			const size_t num_values = sizeof...(_Types);
+			const void* values[sizeof...(_Types) == 0 ? 1 : sizeof...(_Types)] { };
 		};
 
 		struct dummy_appender
@@ -713,24 +574,40 @@ namespace zpr
 			void operator() (const char* begin, size_t len);
 		};
 
-		template <typename T, typename = void>
+		template <typename _Type, typename = void>
 		struct has_formatter : tt::false_type { };
 
-		template <typename T>
-		struct has_formatter<T, tt::void_t<decltype(tt::declval<print_formatter<T>>()
-			.print(tt::declval<T>(), dummy_appender(), { }))>
+		template <typename _Type>
+		struct has_formatter<_Type, tt::void_t<decltype(tt::declval<print_formatter<_Type>>()
+			.print(tt::declval<_Type>(), dummy_appender(), format_args{}))>
 		> : tt::true_type { };
 
-		template <typename T>
-		constexpr bool has_formatter_v = has_formatter<T>::value;
+		template <typename _Type>
+		constexpr bool has_formatter_v = has_formatter<_Type>::value;
 
 
-		template <typename T, typename = void>
+		template <typename _Type, typename = void>
+		struct has_required_size_calc : tt::false_type { };
+
+		template <typename _Type>
+		struct has_required_size_calc<_Type, tt::enable_if_t<tt::is_integral_v<decltype(tt::declval<print_formatter<_Type>>()
+			.length(tt::declval<_Type>(), format_args{}))>>
+		> : tt::true_type { };
+
+		template <typename _Type>
+		constexpr bool has_required_size_calc_v = has_required_size_calc<_Type>::value;
+
+
+
+
+
+
+		template <typename _Type, typename = void>
 		struct is_iterable : tt::false_type { };
 
-		template <typename T>
-		struct is_iterable<T, tt::void_t<
-			decltype(begin(tt::declval<T&>())), decltype(end(tt::declval<T&>()))
+		template <typename _Type>
+		struct is_iterable<_Type, tt::void_t<
+			decltype(begin(tt::declval<_Type&>())), decltype(end(tt::declval<_Type&>()))
 		>> : tt::true_type { };
 
 		// a bit hacky, but force this to be iterable.
@@ -812,12 +689,12 @@ namespace zpr
 			return fmt_args;
 		}
 
-		template <typename CallbackFn>
-		size_t print_string(CallbackFn& cb, const char* str, size_t len, format_args args)
+		template <typename _CallbackFn>
+		ZPR_ALWAYS_INLINE size_t print_string(_CallbackFn& cb, const char* str, size_t len, format_args args)
 		{
 			int64_t string_length = 0;
 
-			if(args.have_precision())   string_length = tt::min(args.precision, static_cast<int64_t>(len));
+			if(args.have_precision())   string_length = tt::_Minimum(args.precision, static_cast<int64_t>(len));
 			else                        string_length = static_cast<int64_t>(len);
 
 			size_t ret = static_cast<size_t>(string_length);
@@ -840,8 +717,8 @@ namespace zpr
 			return ret;
 		}
 
-		template <typename CallbackFn>
-		size_t print_special_floating(CallbackFn& cb, double value, format_args args)
+		template <typename _CallbackFn>
+		ZPR_ALWAYS_INLINE size_t print_special_floating(_CallbackFn& cb, double value, format_args args)
 		{
 			// uwu. apparently, `inf` and `nan` are never truncated.
 			args.set_precision(999);
@@ -869,16 +746,16 @@ namespace zpr
 
 
 		// forward declare these
-		template <typename CallbackFn>
-		size_t print_floating(CallbackFn& cb, double value, format_args args);
+		template <typename _CallbackFn>
+		size_t print_floating(_CallbackFn& cb, double value, format_args args);
 
-		template <typename T>
-		char* print_decimal_integer(char* buf, size_t bufsz, T value);
+		template <typename _Type>
+		char* print_decimal_integer(char* buf, size_t bufsz, _Type value);
 
 
 
-		template <typename CallbackFn>
-		size_t print_exponent(CallbackFn& cb, double value, format_args args)
+		template <typename _CallbackFn>
+		size_t print_exponent(_CallbackFn& cb, double value, format_args args)
 		{
 			constexpr int DEFAULT_PRECISION = 6;
 
@@ -913,9 +790,10 @@ namespace zpr
 			auto expval = static_cast<int64_t>(0.1760912590558 + exp2 * 0.301029995663981 + (conv.F - 1.5) * 0.289529654602168);
 
 			// now we want to compute 10^expval but we want to be sure it won't overflow
-			exp2 = static_cast<int64_t>(expval * 3.321928094887362 + 0.5);
+			exp2 = static_cast<int64_t>(static_cast<double>(expval) * 3.321928094887362 + 0.5);
 
-			const double z = expval * 2.302585092994046 - exp2 * 0.6931471805599453;
+			const double z = static_cast<double>(expval) * 2.302585092994046
+				- static_cast<double>(exp2) * 0.6931471805599453;
 			const double z2 = z * z;
 
 			conv.U = static_cast<uint64_t>(exp2 + 1023) << 52U;
@@ -940,7 +818,7 @@ namespace zpr
 				if((value >= 1e-4) && (value < 1e6))
 				{
 					if(static_cast<int64_t>(prec) > expval)
-						prec = static_cast<uint64_t>(static_cast<int64_t>(prec) - expval - 1);
+						prec = static_cast<int>(static_cast<int64_t>(prec) - expval - 1);
 
 					else
 						prec = 0;
@@ -960,11 +838,11 @@ namespace zpr
 			}
 
 			// will everything fit?
-			uint64_t fwidth = args.width;
+			auto fwidth = static_cast<uint64_t>(args.width);
 			if(args.width > minwidth)
 			{
 				// we didn't fall-back so subtract the characters required for the exponent
-				fwidth -= minwidth;
+				fwidth -= static_cast<uint64_t>(minwidth);
 			}
 			else
 			{
@@ -985,7 +863,7 @@ namespace zpr
 			// output the floating part
 
 			auto args_copy = args;
-			args_copy.width = fwidth;
+			args_copy.width = static_cast<int64_t>(fwidth);
 			auto len = static_cast<int64_t>(print_floating(cb, negative ? -value : value, args_copy));
 
 			// output the exponent part
@@ -999,8 +877,8 @@ namespace zpr
 				char digits_buf[8] = { };
 				size_t digits_len = 0;
 
-				auto buf = print_decimal_integer(digits_buf, 8, static_cast<int64_t>(tt::abs(expval)));
-				digits_len = 8 - (buf - digits_buf);
+				auto buf = print_decimal_integer(digits_buf, 8, static_cast<int64_t>(tt::_Absolute(expval)));
+				digits_len = 8 - static_cast<size_t>(buf - digits_buf);
 
 				len += digits_len + 1;
 				cb(expval < 0 ? '-' : '+');
@@ -1016,12 +894,12 @@ namespace zpr
 					cb(' ', args.width - len), len = args.width;
 			}
 
-			return len;
+			return static_cast<size_t>(len);
 		}
 
 
-		template <typename CallbackFn>
-		size_t print_floating(CallbackFn& cb, double value, format_args args)
+		template <typename _CallbackFn>
+		size_t print_floating(_CallbackFn& cb, double value, format_args args)
 		{
 			constexpr int DEFAULT_PRECISION = 6;
 			constexpr size_t MAX_BUFFER_LEN = 128;
@@ -1083,17 +961,17 @@ namespace zpr
 			}
 
 			auto whole = static_cast<int64_t>(value);
-			auto tmp = (value - whole) * pow10[prec];
+			auto tmp = (value - static_cast<double>(whole)) * pow10[prec];
 			auto frac = static_cast<unsigned long>(tmp);
 
-			double diff = tmp - frac;
+			double diff = tmp - static_cast<double>(frac);
 
 			if(diff > 0.5)
 			{
 				frac += 1;
 
 				// handle rollover, e.g. case 0.99 with prec 1 is 1.0
-				if(frac >= pow10[prec])
+				if(frac >= static_cast<unsigned long>(pow10[prec]))
 				{
 					frac = 0;
 					whole += 1;
@@ -1184,7 +1062,7 @@ namespace zpr
 			for(size_t i = 0; i < len / 2; i++)
 				tt::swap(buf[i], buf[len - i - 1]);
 
-			auto padding_width = tt::max(int64_t(0), args.width - static_cast<int64_t>(len));
+			auto padding_width = static_cast<size_t>(tt::_Maximum(int64_t(0), args.width - static_cast<int64_t>(len)));
 
 			if(use_left_pad) cb(' ', padding_width);
 			if(use_zero_pad) cb('0', padding_width);
@@ -1198,10 +1076,10 @@ namespace zpr
 		}
 
 
-		template <typename T>
-		char* print_hex_integer(char* buf, size_t bufsz, T value)
+		template <typename _Type>
+		char* print_hex_integer(char* buf, size_t bufsz, _Type value)
 		{
-			static_assert(sizeof(T) <= 8);
+			static_assert(sizeof(_Type) <= 8);
 
 		#if ZPR_HEXADECIMAL_LOOKUP_TABLE
 			constexpr const char lookup_table[] =
@@ -1217,9 +1095,9 @@ namespace zpr
 
 			constexpr auto hex_digit = [](int x) -> char {
 				if(0 <= x && x <= 9)
-					return '0' + x;
+					return static_cast<char>('0' + x);
 
-				return 'a' + x - 10;
+				return static_cast<char>('a' + x - 10);
 			};
 
 			char* ptr = buf + bufsz;
@@ -1231,12 +1109,12 @@ namespace zpr
 				memcpy(dst, src, 2);
 			};
 
-			if constexpr (sizeof(T) > 1)
+			if constexpr (sizeof(_Type) > 1)
 			{
 				while(value >= 0x100)
 				{
 					copy((ptr -= 2), &lookup_table[(value & 0xFF) * 2]);
-					value /= static_cast<T>(0x100);
+					value /= static_cast<_Type>(0x100);
 				}
 			}
 
@@ -1259,8 +1137,8 @@ namespace zpr
 			return ptr;
 		}
 
-		template <typename T>
-		char* print_binary_integer(char* buf, size_t bufsz, T value)
+		template <typename _Type>
+		char* print_binary_integer(char* buf, size_t bufsz, _Type value)
 		{
 			char* ptr = buf + bufsz;
 
@@ -1273,10 +1151,10 @@ namespace zpr
 			return ptr;
 		}
 
-		template <typename T>
-		char* print_decimal_integer(char* buf, size_t bufsz, T value)
+		template <typename _Type>
+		char* print_decimal_integer(char* buf, size_t bufsz, _Type value)
 		{
-			static_assert(sizeof(T) <= 8);
+			static_assert(sizeof(_Type) <= 8);
 
 		#if ZPR_DECIMAL_LOOKUP_TABLE
 			constexpr const char lookup_table[] =
@@ -1287,7 +1165,7 @@ namespace zpr
 		#endif
 
 			bool neg = false;
-			if constexpr (tt::is_signed_v<T>)
+			if constexpr (tt::is_signed_v<_Type>)
 			{
 				neg = (value < 0);
 				if(neg)
@@ -1331,8 +1209,8 @@ namespace zpr
 			return ptr;
 		}
 
-		template <typename T>
-		char* print_integer(char* buf, size_t bufsz, T value, int base)
+		template <typename _Type>
+		ZPR_ALWAYS_INLINE char* print_integer(char* buf, size_t bufsz, _Type value, int base)
 		{
 			if(base == 2)       return print_binary_integer(buf, bufsz, value);
 			else if(base == 16) return print_hex_integer(buf, bufsz, value);
@@ -1346,10 +1224,9 @@ namespace zpr
 
 		struct __print_state_t
 		{
-			size_t len;
-			const char* fmt;
 			const char* beg;
 			const char* end;
+			const char* fmtend;
 		};
 
 		/*
@@ -1362,33 +1239,37 @@ namespace zpr
 			`fmt_args`  -- the format specifiers to use
 			`value`     -- the value to print
 		*/
-		template <typename CallbackFn, typename T>
-		void print_one(CallbackFn& cb, format_args fmt_args, T&& value)
+		template <typename _CallbackFn, typename _Type>
+		ZPR_ALWAYS_INLINE void print_one(_CallbackFn& cb, format_args fmt_args, _Type&& value)
 		{
-			using Decayed_T = tt::decay_t<T>;
+			using Decayed_T = tt::decay_t<_Type>;
 
-			static_assert(has_formatter_v<T> || has_formatter_v<Decayed_T>,
+			static_assert(has_formatter_v<_Type> || has_formatter_v<Decayed_T>,
 				"no formatter for type");
 
-			if constexpr (has_formatter<T>::value)
+			if constexpr (has_formatter<_Type>::value)
 			{
-				print_formatter<T>().print(static_cast<T&&>(value),
+				print_formatter<_Type>().print(static_cast<_Type&&>(value),
 					cb, static_cast<format_args&&>(fmt_args));
 			}
 			else
 			{
-				print_formatter<Decayed_T>().print(static_cast<T&&>(value),
+				print_formatter<Decayed_T>().print(static_cast<_Type&&>(value),
 					cb, static_cast<format_args&&>(fmt_args));
 			}
 		}
 
-		template <typename CallbackFn, typename T, bool TypeErased = false>
-		void skip_fmts(__print_state_t* pst, CallbackFn& cb, tt::conditional_t<TypeErased, const void*, T&&> value)
+		template <typename _PrintOne, typename _CallbackFn>
+		ZPR_ALWAYS_INLINE void skip_fmts_impl(__print_state_t* pst, _CallbackFn& cb, _PrintOne&& one_printer)
 		{
-			while((static_cast<size_t>(pst->end - pst->fmt) <= pst->len) && pst->end && *pst->end)
+			bool printed = false;
+			while(pst->end < pst->fmtend)
 			{
 				if(*pst->end == '{')
 				{
+					if(printed)
+						break;
+
 					auto tmp = pst->end;
 
 					// flush whatever we have first:
@@ -1410,27 +1291,12 @@ namespace zpr
 
 					pst->end++;
 
-					auto fmt_spec = parse_fmt_spec(tt::str_view(tmp, pst->end - tmp));
+					printed = true;
+					auto fmt_spec = parse_fmt_spec(tt::str_view(tmp, static_cast<size_t>(pst->end - tmp)));
 
-					if constexpr (TypeErased)
-					{
-						if(value == nullptr)
-						{
-							// don't do anything.
-						}
-						else
-						{
-							print_one(cb, static_cast<format_args&&>(fmt_spec),
-								*reinterpret_cast<const typename tt::remove_reference<T>::type*>(value));
-						}
-					}
-					else
-					{
-						print_one(cb, static_cast<format_args&&>(fmt_spec), static_cast<T&&>(value));
-					}
+					one_printer(static_cast<format_args&&>(fmt_spec));
 
 					pst->beg = pst->end;
-					break;
 				}
 				else if(*pst->end == '}')
 				{
@@ -1448,6 +1314,28 @@ namespace zpr
 					pst->end++;
 				}
 			}
+
+			if(not printed)
+				one_printer(format_args{});
+		}
+
+
+
+		template <typename _CallbackFn, typename _Type, bool TypeErased = false>
+		ZPR_ALWAYS_INLINE void skip_fmts(__print_state_t* pst, _CallbackFn& cb,
+			tt::conditional_t<TypeErased, const void*, _Type&&> value)
+		{
+			skip_fmts_impl(pst, cb, [&](format_args fmt_args) {
+				if constexpr (TypeErased)
+				{
+					if(value != nullptr)
+						print_one(cb, fmt_args, *reinterpret_cast<const typename tt::remove_reference<_Type>::type*>(value));
+				}
+				else
+				{
+					print_one(cb, fmt_args, static_cast<_Type&&>(value));
+				}
+			});
 		}
 
 
@@ -1462,61 +1350,152 @@ namespace zpr
 			`sv`    -- the format string
 			`args`  -- the values to print
 		*/
-		template <typename CallbackFn, typename... Args>
-		void print(CallbackFn& cb, tt::str_view sv, Args&&... args)
+		template <typename _CallbackFn, typename... _Types>
+		ZPR_ALWAYS_INLINE void print(_CallbackFn& cb, tt::str_view sv, _Types&&... args)
 		{
-			__print_state_t st;
-			st.len = sv.size();
-			st.fmt = sv.data();
+			__print_state_t st {};
 			st.beg = sv.data();
 			st.end = sv.data();
+			st.fmtend = sv.end();
 
-			(skip_fmts<CallbackFn, Args&&>(&st, cb, static_cast<Args&&>(args)), ...);
+			(skip_fmts<_CallbackFn, _Types&&>(&st, cb, static_cast<_Types&&>(args)), ...);
 
 			// flush
-			cb(st.beg, st.len - (st.beg - st.fmt));
+			cb(st.beg, static_cast<size_t>(st.fmtend - st.beg));
 		}
 
 
 
 
-		template <typename CallbackFn, typename... Args>
-		void print_erased(CallbackFn& cb, tt::str_view sv, const void* const* args, size_t num_args)
+		template <typename _CallbackFn, typename... _Types>
+		ZPR_ALWAYS_INLINE void print_erased(_CallbackFn& cb, tt::str_view sv, const void* const* args, size_t num_args)
 		{
-			__print_state_t st;
-			st.len = sv.size();
-			st.fmt = sv.data();
+			__print_state_t st {};
 			st.beg = sv.data();
 			st.end = sv.data();
+			st.fmtend = sv.end();
 
 			size_t idx = 0;
-			(skip_fmts<CallbackFn, Args&&, true>(&st, cb, idx < num_args ? args[idx++] : nullptr), ...);
+			(skip_fmts<_CallbackFn, _Types&&, true>(&st, cb, idx < num_args ? args[idx++] : nullptr), ...);
 
 			// flush
-			cb(st.beg, st.len - (st.beg - st.fmt));
+			cb(st.beg, static_cast<size_t>(st.fmtend - st.beg));
 		}
 
 
-		// str_view has a constructor that takes the lvalue-ref-to-array, so this overload should
-		// be strictly unnecessary.
-		#if 0
-		template <size_t N, typename CallbackFn, typename... Args>
-		void print(CallbackFn& cb, const char (&fmt)[N], Args&&... args)
+		template <typename _Type>
+		ZPR_ALWAYS_INLINE size_t compute_required_length(_Type&& value, const format_args& fmt)
 		{
-			print(cb, tt::str_view(fmt, N - 1), static_cast<Args&&>(args)...);
+			using Decayed_T = tt::decay_t<_Type>;
+			static_assert(has_formatter_v<_Type> || has_formatter_v<Decayed_T>,
+				"no formatter for type");
+
+			if constexpr (has_required_size_calc_v<_Type>)
+				return print_formatter<_Type>().length(static_cast<_Type&&>(value), fmt);
+
+			else if constexpr (has_required_size_calc_v<Decayed_T>)
+				return print_formatter<Decayed_T>().length(static_cast<_Type&&>(value), fmt);
+
+			else
+				return 1;
 		}
-		#endif
+
+		template <typename... _Types>
+		ZPR_ALWAYS_INLINE size_t compute_required_lengths(const _Types&... values)
+		{
+			format_args fmt {};
+			return (0 + ... + compute_required_length(values, fmt));
+		}
+
+
+	#if ZPR_USE_STD
+		template <typename _Type, typename = void>
+		struct has_resize_default_init
+		{
+			ZPR_ALWAYS_INLINE constexpr static void resize_default_init(std::string& s, size_t n)
+			{
+				s.resize(n);
+			}
+		};
+
+		template <typename _Type>
+		struct has_resize_default_init<_Type, tt::void_t<decltype(tt::declval<_Type>().__resize_default_init(1))>>
+		{
+			ZPR_ALWAYS_INLINE constexpr static void resize_default_init(_Type& s, size_t n)
+			{
+				s.__resize_default_init(n);
+			}
+		};
+
+		ZPR_ALWAYS_INLINE void resize_string_cheaply(std::string& str, size_t required_size)
+		{
+			has_resize_default_init<std::string>::resize_default_init(str, required_size);
+		}
+	#endif
+
+
 
 	#if ZPR_USE_STD
 		struct string_appender
 		{
-			string_appender(std::string& buf) : buf(buf) { }
+			string_appender(std::string& buf) : m_ptr(buf.data()), m_buf(buf) { }
+			~string_appender()
+			{
+				m_buf.resize(static_cast<size_t>(m_ptr - m_buf.data()));
+			}
 
-			inline void operator() (char c) { this->buf += c; }
-			inline void operator() (tt::str_view sv) { this->buf += std::string_view(sv.data(), sv.size()); }
-			inline void operator() (char c, size_t n) { this->buf.resize(this->buf.size() + n, c); }
-			inline void operator() (const char* begin, const char* end) { this->buf.append(begin, end); }
-			inline void operator() (const char* begin, size_t len) { this->buf.append(begin, begin + len); }
+			ZPR_ALWAYS_INLINE void operator() (char c)
+			{
+				if(ZPR_UNLIKELY(get_remaining() < 1))
+					this->reserve(m_buf.size() + 1);
+
+				*m_ptr++ = c;
+			}
+
+			ZPR_ALWAYS_INLINE void operator() (tt::str_view sv)
+			{
+				if(ZPR_UNLIKELY(get_remaining() < sv.size()))
+					this->reserve(m_buf.size() + sv.size());
+
+				memmove(m_ptr, sv.data(), sv.size());
+				m_ptr += sv.size();
+			}
+
+			ZPR_ALWAYS_INLINE void operator() (char c, size_t n)
+			{
+				if(ZPR_UNLIKELY(get_remaining() < n))
+					this->reserve(m_buf.size() + n);
+
+				memset(m_ptr, c, n);
+				m_ptr += n;
+			}
+
+			ZPR_ALWAYS_INLINE void operator() (const char* begin, const char* end)
+			{
+				auto n = static_cast<size_t>(end - begin);
+				if(ZPR_UNLIKELY(get_remaining() < n))
+					this->reserve(m_buf.size() + n);
+
+				memmove(m_ptr, begin, n);
+				m_ptr += n;
+			}
+
+			ZPR_ALWAYS_INLINE void operator() (const char* begin, size_t len)
+			{
+				if(ZPR_UNLIKELY(get_remaining() < len))
+					this->reserve(m_buf.size() + len);
+
+				memmove(m_ptr, begin, len);
+				m_ptr += len;
+			}
+
+			ZPR_ALWAYS_INLINE void reserve(size_t amount)
+			{
+				auto old_size = m_buf.size() - get_remaining();
+
+				resize_string_cheaply(m_buf, amount);
+				m_ptr = m_buf.data() + old_size;
+			}
 
 			string_appender(string_appender&&) = delete;
 			string_appender(const string_appender&) = delete;
@@ -1524,7 +1503,13 @@ namespace zpr
 			string_appender& operator= (const string_appender&) = delete;
 
 		private:
-			std::string& buf;
+			char* m_ptr = 0;
+			std::string& m_buf;
+
+			ZPR_ALWAYS_INLINE size_t get_remaining()
+			{
+				return static_cast<size_t>(m_buf.data() + m_buf.size() - m_ptr);
+			}
 		};
 	#endif
 
@@ -1540,16 +1525,16 @@ namespace zpr
 			file_appender& operator= (file_appender&&) = delete;
 			file_appender& operator= (const file_appender&) = delete;
 
-			inline void operator() (char c) { *ptr++ = c; flush(); }
+			ZPR_ALWAYS_INLINE void operator() (char c) { *ptr++ = c; flush(); }
 
-			inline void operator() (tt::str_view sv) { (*this)(sv.data(), sv.size()); }
-			inline void operator() (const char* begin, const char* end) { (*this)(begin, static_cast<size_t>(end - begin)); }
+			ZPR_ALWAYS_INLINE void operator() (tt::str_view sv) { (*this)(sv.data(), sv.size()); }
+			ZPR_ALWAYS_INLINE void operator() (const char* begin, const char* end) { (*this)(begin, static_cast<size_t>(end - begin)); }
 
-			inline void operator() (char c, size_t n)
+			ZPR_ALWAYS_INLINE void operator() (char c, size_t n)
 			{
 				while(n > 0)
 				{
-					auto x = tt::min(n, remaining());
+					auto x = tt::_Minimum(n, remaining());
 					memset(ptr, c, x);
 					ptr += x;
 					n -= x;
@@ -1557,11 +1542,11 @@ namespace zpr
 				}
 			}
 
-			inline void operator() (const char* begin, size_t len)
+			ZPR_ALWAYS_INLINE void operator() (const char* begin, size_t len)
 			{
 				while(len > 0)
 				{
-					auto x = tt::min(len, remaining());
+					auto x = tt::_Minimum(len, remaining());
 					memcpy(ptr, begin, x);
 					ptr += x;
 					begin += x;
@@ -1571,10 +1556,12 @@ namespace zpr
 				}
 			}
 
+			ZPR_ALWAYS_INLINE void reserve(size_t) {}
+
 		private:
 			inline size_t remaining()
 			{
-				return Limit - (ptr - buf);
+				return Limit - static_cast<size_t>(ptr - buf);
 			}
 
 			inline void flush(bool last = false)
@@ -1589,8 +1576,8 @@ namespace zpr
 
 				if(!last || !Newline)
 				{
-					fwrite(buf, sizeof(char), ptr - buf, fd);
-					written += ptr - buf;
+					fwrite(buf, sizeof(char), static_cast<size_t>(ptr - buf), fd);
+					written += static_cast<size_t>(ptr - buf);
 
 					ptr = buf;
 				}
@@ -1598,8 +1585,8 @@ namespace zpr
 				{
 					// here's a special trick -- write one extra, because we always ensure that
 					// "one-past" the last character in our buffer is a newline.
-					fwrite(buf, sizeof(char), ptr - buf + 1, fd);
-					written += (ptr - buf) + 1;
+					fwrite(buf, sizeof(char), static_cast<size_t>(ptr - buf + 1), fd);
+					written += static_cast<size_t>(ptr - buf) + 1;
 
 					ptr = buf;
 				}
@@ -1613,17 +1600,38 @@ namespace zpr
 		};
 	#endif
 
-		template <typename Fn>
+		template <typename _Fn>
 		struct callback_appender
 		{
-			callback_appender(Fn* callback, bool newline) : len(0), newline(newline), callback(callback) { }
+			static_assert(tt::is_invocable<_Fn, const char*, size_t>::value,
+				"incompatible callback passed (signature must be compatible with [const char*, size_t])");
+
+
+			callback_appender(_Fn* callback, bool newline) : len(0), newline(newline), callback(callback) { }
 			~callback_appender() { if(newline) { (*callback)("\n", 1); } }
 
-			inline void operator() (char c) { (*callback)(&c, 1); this->len += 1; }
-			inline void operator() (tt::str_view sv) { (*callback)(sv.data(), sv.size()); this->len += sv.size(); }
-			inline void operator() (const char* begin, const char* end) { (*callback)(begin, end - begin); this->len += (end - begin); }
-			inline void operator() (const char* begin, size_t len) { (*callback)(begin, len); this->len += len; }
-			inline void operator() (char c, size_t n)
+			ZPR_ALWAYS_INLINE void reserve(size_t) {}
+
+			ZPR_ALWAYS_INLINE void operator() (char c)
+			{
+				(*callback)(&c, 1);
+				this->len += 1;
+			}
+
+			ZPR_ALWAYS_INLINE void operator() (tt::str_view sv)
+			{
+				(*callback)(sv.data(), sv.size());
+				this->len += sv.size();
+			}
+
+			ZPR_ALWAYS_INLINE void operator() (const char* begin, const char* end)
+			{
+				(*callback)(begin, end - begin);
+				this->len += (end - begin);
+			}
+
+			ZPR_ALWAYS_INLINE void operator() (const char* begin, size_t len) { (*callback)(begin, len); this->len += len; }
+			ZPR_ALWAYS_INLINE void operator() (char c, size_t n)
 			{
 				for(size_t i = 0; i < n; i++)
 					(*callback)(&c, 1);
@@ -1636,45 +1644,51 @@ namespace zpr
 			callback_appender& operator= (callback_appender&&) = delete;
 			callback_appender& operator= (const callback_appender&) = delete;
 
-			size_t size() { return this->len; }
+			ZPR_ALWAYS_INLINE size_t size() { return this->len; }
 
 		private:
 			size_t len;
 			bool newline;
-			Fn* callback;
+			_Fn* callback;
 		};
 
 		struct buffer_appender
 		{
 			buffer_appender(char* buf, size_t cap) : buf(buf), cap(cap), len(0) { }
 
-			inline void operator() (char c)
+			ZPR_ALWAYS_INLINE void reserve(size_t) {}
+
+			ZPR_ALWAYS_INLINE void operator() (char c)
 			{
 				if(this->len < this->cap)
 					this->buf[this->len++] = c;
 			}
 
-			inline void operator() (tt::str_view sv)
+			ZPR_ALWAYS_INLINE void operator() (tt::str_view sv)
 			{
 				auto l = this->remaining(sv.size());
 				memmove(&this->buf[this->len], sv.data(), l);
 				this->len += l;
 			}
 
-			inline void operator() (char c, size_t n)
+			ZPR_ALWAYS_INLINE void operator() (char c, size_t n)
 			{
 				for(size_t i = 0; i < this->remaining(n); i++)
 					this->buf[this->len++] = c;
 			}
 
-			inline void operator() (const char* begin, const char* end)
+			ZPR_ALWAYS_INLINE void operator() (const char* begin, const char* end)
 			{
-				(*this)(tt::str_view(begin, end - begin));
+				auto l = this->remaining(static_cast<size_t>(end - begin));
+				memmove(&this->buf[this->len], begin, l);
+				this->len += l;
 			}
 
-			inline void operator() (const char* begin, size_t len)
+			ZPR_ALWAYS_INLINE void operator() (const char* begin, size_t len)
 			{
-				(*this)(tt::str_view(begin, len));
+				auto l = this->remaining(len);
+				memmove(&this->buf[this->len], begin, l);
+				this->len += l;
 			}
 
 			buffer_appender(buffer_appender&&) = delete;
@@ -1682,10 +1696,10 @@ namespace zpr
 			buffer_appender& operator= (buffer_appender&&) = delete;
 			buffer_appender& operator= (const buffer_appender&) = delete;
 
-			inline size_t size() { return this->len; }
+			ZPR_ALWAYS_INLINE size_t size() { return this->len; }
 
 		private:
-			inline size_t remaining(size_t n) { return tt::min(this->cap - this->len, n); }
+			ZPR_ALWAYS_INLINE size_t remaining(size_t n) { return tt::_Minimum(this->cap - this->len, n); }
 
 			char* buf = 0;
 			size_t cap = 0;
@@ -1710,13 +1724,13 @@ namespace zpr
 
 		Returns the number of bytes printed.
 	*/
-	template <typename CallbackFn, typename... Args>
-	size_t cprint(CallbackFn&& callback, tt::str_view fmt, Args&&... args)
+	template <typename _CallbackFn, typename... _Types>
+	size_t cprint(_CallbackFn&& callback, tt::str_view fmt, _Types&&... args)
 	{
 		size_t n = 0;
 		{
 			auto appender = detail::callback_appender(&callback, /* newline: */ false);
-			detail::print(appender, fmt, static_cast<Args&&>(args)...);
+			detail::print(appender, fmt, static_cast<_Types&&>(args)...);
 			n = appender.size();
 		}
 		return n;
@@ -1735,13 +1749,13 @@ namespace zpr
 
 		Returns the number of bytes printed.
 	*/
-	template <typename CallbackFn, typename... Args>
-	size_t cprintln(CallbackFn&& callback, tt::str_view fmt, Args&&... args)
+	template <typename _CallbackFn, typename... _Types>
+	size_t cprintln(_CallbackFn&& callback, tt::str_view fmt, _Types&&... args)
 	{
 		size_t n = 0;
 		{
 			auto appender = detail::callback_appender(&callback, /* newline: */ true);
-			detail::print(appender, fmt, static_cast<Args&&>(args)...);
+			detail::print(appender, fmt, static_cast<_Types&&>(args)...);
 			n = appender.size();
 		}
 		return n;
@@ -1760,17 +1774,41 @@ namespace zpr
 
 		Returns the number of bytes printed.
 	*/
-	template <typename... Args>
-	size_t sprint(size_t len, char* buf, tt::str_view fmt, Args&&... args)
+	template <typename... _Types>
+	size_t sprint(size_t len, char* buf, tt::str_view fmt, _Types&&... args)
 	{
 		size_t n = 0;
 		{
 			auto appender = detail::buffer_appender(buf, len);
-			detail::print(appender, fmt, static_cast<Args&&>(args)...);
+			detail::print(appender, fmt, static_cast<_Types&&>(args)...);
 			n = appender.size();
 		}
 		return n;
 	}
+
+#if ZPR_USE_STD
+	/*
+		Prints to a std::string.
+
+		Arguments:
+		`fmt`       -- the format string
+		`args`      -- the values to print
+
+		Returns the std::string.
+	*/
+	template <typename... _Types>
+	std::string sprint(tt::str_view fmt, _Types&&... args)
+	{
+		std::string buf {};
+		{
+			auto appender = detail::string_appender(buf);
+			appender.reserve(fmt.size() + detail::compute_required_lengths(args...));
+			detail::print(appender, fmt, static_cast<_Types&&>(args)...);
+		}
+		return buf;
+	}
+#endif
+
 
 	/*
 		Forward the provided format-string and arguments to another zpr printing function. The implementation
@@ -1792,10 +1830,10 @@ namespace zpr
 
 		Again, do not store the return value of this function.
 	*/
-	template <typename... Args>
-	auto fwd(tt::str_view fmt, Args&&... args)
+	template <typename... _Types>
+	auto fwd(tt::str_view fmt, _Types&&... args)
 	{
-		return detail::__forward_helper<Args&&...>(static_cast<tt::str_view&&>(fmt), static_cast<Args&&>(args)...);
+		return detail::__forward_helper<_Types&&...>(static_cast<tt::str_view&&>(fmt), static_cast<_Types&&>(args)...);
 	}
 
 
@@ -1812,13 +1850,13 @@ namespace zpr
 
 		Returns the number of bytes printed.
 	*/
-	template <typename... Args>
-	size_t print(tt::str_view fmt, Args&&... args)
+	template <typename... _Types>
+	size_t print(tt::str_view fmt, _Types&&... args)
 	{
 		size_t ret = 0;
 		{
 			auto appender = detail::file_appender<detail::STDIO_BUFFER_SIZE, false>(stdout, ret);
-			detail::print(appender, fmt, static_cast<Args&&>(args)...);
+			detail::print(appender, fmt, static_cast<_Types&&>(args)...);
 		}
 		return ret;
 	}
@@ -1832,13 +1870,13 @@ namespace zpr
 
 		Returns the number of bytes printed.
 	*/
-	template <typename... Args>
-	size_t println(tt::str_view fmt, Args&&... args)
+	template <typename... _Types>
+	size_t println(tt::str_view fmt, _Types&&... args)
 	{
 		size_t ret = 0;
 		{
 			auto appender = detail::file_appender<detail::STDIO_BUFFER_SIZE, true>(stdout, ret);
-			detail::print(appender, fmt, static_cast<Args&&>(args)...);
+			detail::print(appender, fmt, static_cast<_Types&&>(args)...);
 		}
 		return ret;
 	}
@@ -1853,13 +1891,13 @@ namespace zpr
 
 		Returns the number of bytes printed.
 	*/
-	template <typename... Args>
-	size_t fprint(FILE* file, tt::str_view fmt, Args&&... args)
+	template <typename... _Types>
+	size_t fprint(FILE* file, tt::str_view fmt, _Types&&... args)
 	{
 		size_t ret = 0;
 		{
 			auto appender = detail::file_appender<detail::STDIO_BUFFER_SIZE, false>(file, ret);
-			detail::print(appender, fmt, static_cast<Args&&>(args)...);
+			detail::print(appender, fmt, static_cast<_Types&&>(args)...);
 		}
 		return ret;
 	}
@@ -1874,13 +1912,13 @@ namespace zpr
 
 		Returns the number of bytes printed.
 	*/
-	template <typename... Args>
-	size_t fprintln(FILE* file, tt::str_view fmt, Args&&... args)
+	template <typename... _Types>
+	size_t fprintln(FILE* file, tt::str_view fmt, _Types&&... args)
 	{
 		size_t ret = 0;
 		{
 			auto appender = detail::file_appender<detail::STDIO_BUFFER_SIZE, true>(file, ret);
-			detail::print(appender, fmt, static_cast<Args&&>(args)...);
+			detail::print(appender, fmt, static_cast<_Types&&>(args)...);
 		}
 		return ret;
 	}
@@ -1899,7 +1937,7 @@ namespace zpr
 
 		Returns a wrapper struct that accepts the value to print.
 	*/
-	inline detail::__fmtarg_w_helper w(int width)
+	ZPR_ALWAYS_INLINE detail::__fmtarg_w_helper w(int width)
 	{
 		return detail::__fmtarg_w_helper(width);
 	}
@@ -1916,7 +1954,7 @@ namespace zpr
 
 		Returns a wrapper struct that accepts the value to print.
 	*/
-	inline detail::__fmtarg_p_helper p(int prec)
+	ZPR_ALWAYS_INLINE detail::__fmtarg_p_helper p(int prec)
 	{
 		return detail::__fmtarg_p_helper(prec);
 	}
@@ -1935,73 +1973,217 @@ namespace zpr
 
 		Returns a wrapper struct that accepts the value to print.
 	*/
-	inline detail::__fmtarg_wp_helper wp(int width, int prec)
+	ZPR_ALWAYS_INLINE detail::__fmtarg_wp_helper wp(int width, int prec)
 	{
 		return detail::__fmtarg_wp_helper(width, prec);
 	}
 
 
+	namespace detail
+	{
+		template <typename _Type>
+		constexpr auto is_stringlike_helper(_Type&& t) -> decltype(tt::conjunction<
+			tt::disjunction<
+				tt::is_same<char*, tt::decay_t<decltype(tt::declval<_Type>().data())>>,
+				tt::is_same<const char*, tt::decay_t<decltype(tt::declval<_Type>().data())>>
+			>, tt::is_integral<tt::decay_t<decltype(tt::declval<_Type>().size())>>>::value
+		);
+
+		constexpr auto is_stringlike_helper(...) -> tt::__invalid;
+
+		template <typename _Type>
+		struct is_stringlike
+		{
+			static constexpr bool value = !tt::is_same_v<tt::__invalid, decltype(is_stringlike_helper(tt::declval<_Type>()))>;
+		};
+
+	#if ZPR_USE_STD
+		template <>
+		struct is_stringlike<std::string> : tt::true_type {};
+	#endif
+
+		template <typename _Type, bool _HasFormatArgs>
+		struct __extracted_return_type_wrapper
+		{
+			static constexpr bool has_format_args = _HasFormatArgs;
+			using type = _Type;
+		};
+
+		template <typename _Func, typename _Type>
+		constexpr auto __extract_return_type(_Func&& fn, _Type&& x)
+			-> __extracted_return_type_wrapper<decltype(tt::declval<_Func>()(tt::declval<_Type>())), false>;
+
+		template <typename _Func, typename _Type>
+		constexpr auto __extract_return_type(_Func&& fn, _Type&& x)
+			-> __extracted_return_type_wrapper<decltype(tt::declval<_Func>()(tt::declval<_Type>(), format_args{})), true>;
+
+
+		template <typename _Func, typename _Type>
+		struct __with_helper_ret
+		{
+			using return_type = decltype(__extract_return_type(tt::declval<_Func>(), tt::declval<_Type>()));
+
+			static constexpr bool has_format_args = return_type::has_format_args;
+			static constexpr bool returns_value = tt::is_same_v<typename return_type::type, const char*>
+				|| tt::is_same_v<typename return_type::type, char*>
+				|| is_stringlike<typename return_type::type>::value;
+
+			static_assert(returns_value, "'zpr::with' can only be used with callbacks returning a string-like value");
+
+			template <typename __Func, typename __Type>
+			__with_helper_ret(__Func&& printer, __Type&& value) :
+				printer(static_cast<__Func&&>(printer)), value(static_cast<__Type&&>(value)) { }
+
+			_Func&& printer;
+			_Type&& value;
+		};
+	}
+
+	template <typename _Func, typename _Type>
+	struct print_formatter<detail::__with_helper_ret<_Func, _Type>>
+	{
+		template <typename _Helper, typename _Cb>
+		ZPR_ALWAYS_INLINE void print(_Helper&& uwu, _Cb&& cb, format_args args)
+		{
+			if constexpr (_Helper::has_format_args)
+				print_one(cb, {}, uwu.printer(static_cast<_Type&&>(uwu.value), static_cast<format_args&&>(args)));
+			else
+				print_one(cb, static_cast<format_args&&>(args), uwu.printer(static_cast<_Type&&>(uwu.value)));
+		}
+	};
+
+
+
+	/*
+		Create a special wrapper struct that prints the first argument using the functor in the second. This
+		function can be used when making a specialisation of `print_formatter` is unnecessary, or too troublesome.
+
+		Example usage: `zpr::println("{}", zpr::with(69, [](auto&&) { return "uwu"; }))`
+		This always prints '69'. clearly, a more complex lambda/function can be used.
+
+		The provided functor should have one of these signatures:
+		- `StringLike (Value)`                      -- should return the value as a string-like object
+		- `StringLike (Value, format_args)`         -- like above, but also takes a `format_args`
+		- `void (Callback, Value)`                  -- should print the value to the provided callback
+		- `void (Callback, Value, format_args)`     -- like above, but also takes a `format_args`
+
+		`StringLike` refers to a type that is either `char*` or `const char*`, OR meets BOTH the following criteria:
+		1. has a `.data()` method that returns either `char*` or `const char*`
+		2. has a `.size()` method that returns an integral type
+
+		Thus, `std::string` and other stringlike-containers will work. Note that the requirements are less
+		restrictive than the built-in string-printing formatter.
+
+		`Callback` is a functor a signature of `void (const char*, size_t)` (though you should not rely on the
+		return type). This variant can be useful to avoid any memory allocations; you can call it as many
+		times as necessary in your functor.
+
+		For the variants that *do not* take `format_args`, any provided format arguments (eg. `{.3f}`) are
+		passed to the string printer (ie. the string that you return will be formatted accordingly).
+
+		For the variants that *do* take it, the format args are passed directly to your functor, and the
+		string itself is printed with default formatting.
+
+		Arguments:
+		`value`     -- the value to print
+		`printer`   -- the functor to print with
+
+		Returns a wrapper struct that
+	*/
+	template <typename _Func, typename _Type>
+	ZPR_ALWAYS_INLINE auto with(_Type&& value, _Func&& printer) -> detail::__with_helper_ret<_Func, _Type>
+	{
+		return detail::__with_helper_ret<_Func, _Type>(static_cast<_Func&&>(printer), static_cast<_Type&&>(value));
+	}
+
+
+
+
+
+
+
 	// formatters lie here.
-	template <typename T>
-	struct print_formatter<detail::__fmtarg_w<T>>
+	// because we use explicit template args for the vprint stuff, it can only come after we
+	// specialise all the print_formatters for the builtin types.
+	template <typename _Type>
+	struct print_formatter<detail::__fmtarg_w<_Type>>
 	{
-		template <typename Cb, typename F = detail::__fmtarg_w<T>>
-		void print(F&& x, Cb&& cb, format_args args)
+		template <typename _Cb, typename _Func = detail::__fmtarg_w<_Type>>
+		ZPR_ALWAYS_INLINE void print(_Func&& x, _Cb&& cb, format_args args)
 		{
 			args.set_width(x.width);
-			detail::print_one(static_cast<Cb&&>(cb), static_cast<format_args&&>(args), static_cast<T&&>(x.arg));
+			detail::print_one(static_cast<_Cb&&>(cb), static_cast<format_args&&>(args), static_cast<_Type&&>(x.arg));
+		}
+
+		ZPR_ALWAYS_INLINE size_t length(const _Type& x, format_args args)
+		{
+			args.set_width(x.width);
+			return compute_required_length(x.arg, args);
 		}
 	};
 
-	template <typename T>
-	struct print_formatter<detail::__fmtarg_p<T>>
+	template <typename _Type>
+	struct print_formatter<detail::__fmtarg_p<_Type>>
 	{
-		template <typename Cb, typename F = detail::__fmtarg_p<T>>
-		void print(F&& x, Cb&& cb, format_args args)
+		template <typename _Cb, typename _Func = detail::__fmtarg_p<_Type>>
+		ZPR_ALWAYS_INLINE void print(_Func&& x, _Cb&& cb, format_args args)
 		{
 			args.set_precision(x.prec);
-			detail::print_one(static_cast<Cb&&>(cb), static_cast<format_args&&>(args), static_cast<T&&>(x.arg));
+			detail::print_one(static_cast<_Cb&&>(cb), static_cast<format_args&&>(args), static_cast<_Type&&>(x.arg));
+		}
+
+		ZPR_ALWAYS_INLINE size_t length(const _Type& x, format_args args)
+		{
+			args.set_precision(x.prec);
+			return compute_required_length(x.arg, args);
 		}
 	};
 
-	template <typename T>
-	struct print_formatter<detail::__fmtarg_wp<T>>
+	template <typename _Type>
+	struct print_formatter<detail::__fmtarg_wp<_Type>>
 	{
-		template <typename Cb, typename F = detail::__fmtarg_wp<T>>
-		void print(F&& x, Cb&& cb, format_args args)
+		template <typename _Cb, typename _Func = detail::__fmtarg_wp<_Type>>
+		ZPR_ALWAYS_INLINE void print(_Func&& x, _Cb&& cb, format_args args)
 		{
 			args.set_width(x.width);
 			args.set_precision(x.prec);
-			detail::print_one(static_cast<Cb&&>(cb), static_cast<format_args&&>(args), static_cast<T&&>(x.arg));
+			detail::print_one(static_cast<_Cb&&>(cb), static_cast<format_args&&>(args), static_cast<_Type&&>(x.arg));
+		}
+
+		ZPR_ALWAYS_INLINE size_t length(const _Type& x, format_args args)
+		{
+			args.set_width(x.width);
+			args.set_precision(x.prec);
+			return compute_required_length(x.arg, args);
 		}
 	};
 
-	template <typename... Args>
-	struct print_formatter<detail::__forward_helper<Args...>>
+	template <typename... _Types>
+	struct print_formatter<detail::__forward_helper<_Types...>>
 	{
-		template <typename Cb, typename F = detail::__forward_helper<Args...>>
-		void print(F&& fwd, Cb&& cb, format_args args)
+		template <typename _Cb, typename _Func = detail::__forward_helper<_Types...>>
+		ZPR_ALWAYS_INLINE void print(_Func&& fwd, _Cb&& cb, format_args args)
 		{
 			(void) args;
-			detail::print_erased<Cb, Args&&...>(static_cast<Cb&&>(cb), fwd.fmt, &fwd.values[0], fwd.num_values);
+			detail::print_erased<_Cb, _Types&&...>(static_cast<_Cb&&>(cb), fwd.fmt, &fwd.values[0], fwd.num_values);
 		}
 	};
 
 	namespace detail
 	{
-		template <typename T>
+		template <typename _Type>
 		struct __int_formatter
 		{
-			using Decayed_T = tt::decay_t<T>;
+			using Decayed_T = tt::decay_t<_Type>;
 
-			template <typename Cb>
-			void print(T x, Cb&& cb, format_args args)
+			template <typename _Cb>
+			void print(_Type x, _Cb&& cb, format_args args)
 			{
 				if(args.specifier == 'c')
 				{
 					// we can't access the print_formatter<char> specialisation here (because... declaration order)
 					// so just print it as a string, which is what we do in the char formatter anyway.
-					detail::print_string(static_cast<Cb&&>(cb), reinterpret_cast<char*>(&x), 1,
+					detail::print_string(static_cast<_Cb&&>(cb), reinterpret_cast<char*>(&x), 1,
 						static_cast<format_args&&>(args));
 					return;
 				}
@@ -2028,7 +2210,7 @@ namespace zpr
 					if constexpr (tt::is_unsigned<Decayed_T>::value)
 					{
 						digits = detail::print_integer(digits_buf, digits_buf_sz, x, base);
-						digits_len = digits_buf_sz - (digits - digits_buf);
+						digits_len = digits_buf_sz - static_cast<size_t>(digits - digits_buf);
 					}
 					else
 					{
@@ -2037,14 +2219,14 @@ namespace zpr
 							digits = detail::print_integer(digits_buf, digits_buf_sz,
 								static_cast<tt::make_unsigned_t<Decayed_T>>(x), base);
 
-							digits_len = digits_buf_sz - (digits - digits_buf);
+							digits_len = digits_buf_sz - static_cast<size_t>(digits - digits_buf);
 						}
 						else
 						{
-							auto abs_val = tt::abs(x);
+							auto abs_val = tt::_Absolute(x);
 							digits = detail::print_integer(digits_buf, digits_buf_sz, abs_val, base);
 
-							digits_len = digits_buf_sz - (digits - digits_buf);
+							digits_len = digits_buf_sz - static_cast<size_t>(digits - digits_buf);
 						}
 					}
 
@@ -2078,7 +2260,7 @@ namespace zpr
 				}
 
 				int64_t output_length_with_precision = (args.have_precision()
-					? tt::max(args.precision, static_cast<int64_t>(digits_len))
+					? tt::_Maximum(args.precision, static_cast<int64_t>(digits_len))
 					: static_cast<int64_t>(digits_len)
 				);
 
@@ -2129,129 +2311,149 @@ namespace zpr
 	template <> struct print_formatter<signed long long> : detail::__int_formatter<signed long long> { };
 	template <> struct print_formatter<unsigned long long> : detail::__int_formatter<unsigned long long> { };
 
-	template <typename T>
-	struct print_formatter<T, typename tt::enable_if<(
-		tt::is_enum_v<tt::decay_t<T>>
+	template <typename _Type>
+	struct print_formatter<_Type, typename tt::enable_if<(
+		tt::is_enum_v<tt::decay_t<_Type>>
 	)>::type>
 	{
-		template <typename Cb>
-		void print(T x, Cb&& cb, format_args args)
+		template <typename _Cb>
+		ZPR_ALWAYS_INLINE void print(_Type x, _Cb&& cb, format_args args)
 		{
-			using underlying = tt::underlying_type_t<tt::decay_t<T>>;
-			detail::print_one(static_cast<Cb&&>(cb), static_cast<format_args&&>(args), static_cast<underlying>(x));
+			using underlying = tt::underlying_type_t<tt::decay_t<_Type>>;
+			detail::print_one(static_cast<_Cb&&>(cb), static_cast<format_args&&>(args), static_cast<underlying>(x));
 		}
 	};
 
 	template <>
 	struct print_formatter<float>
 	{
-		template <typename Cb>
-		void print(float x, Cb&& cb, format_args args)
+		template <typename _Cb>
+		ZPR_ALWAYS_INLINE void print(float x, _Cb&& cb, format_args args)
 		{
 			if(args.specifier == 'e' || args.specifier == 'E')
-				print_exponent(static_cast<Cb&&>(cb), x, static_cast<format_args&&>(args));
+				print_exponent(static_cast<_Cb&&>(cb), x, static_cast<format_args&&>(args));
 
 			else
-				print_floating(static_cast<Cb&&>(cb), x, static_cast<format_args&&>(args));
+				print_floating(static_cast<_Cb&&>(cb), x, static_cast<format_args&&>(args));
 		}
 
-		template <typename Cb>
-		void print(double x, Cb&& cb, format_args args)
+		template <typename _Cb>
+		ZPR_ALWAYS_INLINE void print(double x, _Cb&& cb, format_args args)
 		{
 			if(args.specifier == 'e' || args.specifier == 'E')
-				print_exponent(static_cast<Cb&&>(cb), x, static_cast<format_args&&>(args));
+				print_exponent(static_cast<_Cb&&>(cb), x, static_cast<format_args&&>(args));
 
 			else
-				print_floating(static_cast<Cb&&>(cb), x, static_cast<format_args&&>(args));
+				print_floating(static_cast<_Cb&&>(cb), x, static_cast<format_args&&>(args));
 		}
 	};
 
-	template <size_t N>
-	struct print_formatter<const char (&)[N]>
+	template <size_t _Number>
+	struct print_formatter<const char (&)[_Number]>
 	{
-		template <typename Cb>
-		void print(const char (&x)[N], Cb&& cb, format_args args)
+		template <typename _Cb>
+		ZPR_ALWAYS_INLINE void print(const char (&x)[_Number], _Cb&& cb, format_args args)
 		{
-			detail::print_string(static_cast<Cb&&>(cb), x, N - 1, static_cast<format_args&&>(args));
+			detail::print_string(static_cast<_Cb&&>(cb), x, _Number - 1, static_cast<format_args&&>(args));
+		}
+
+		size_t length(...)
+		{
+			return _Number - 1;
 		}
 	};
 
 	template <>
 	struct print_formatter<const char*>
 	{
-		template <typename Cb>
-		void print(const char* x, Cb&& cb, format_args args)
+		template <typename _Cb>
+		ZPR_ALWAYS_INLINE void print(const char* x, _Cb&& cb, format_args args)
 		{
-			detail::print_string(static_cast<Cb&&>(cb), x, strlen(x), static_cast<format_args&&>(args));
+			detail::print_string(static_cast<_Cb&&>(cb), x, strlen(x), static_cast<format_args&&>(args));
 		}
 	};
 
 	template <>
 	struct print_formatter<char>
 	{
-		template <typename Cb>
-		void print(char x, Cb&& cb, format_args args)
+		template <typename _Cb>
+		ZPR_ALWAYS_INLINE void print(char x, _Cb&& cb, format_args args)
 		{
 			if(args.specifier != -1 && args.specifier != 'c')
 			{
 				print_formatter<unsigned char>().print(static_cast<unsigned char>(x),
-					static_cast<Cb&&>(cb),
+					static_cast<_Cb&&>(cb),
 					static_cast<format_args&&>(args));
 			}
 			else
 			{
-				detail::print_string(static_cast<Cb&&>(cb), &x, 1, static_cast<format_args&&>(args));
+				detail::print_string(static_cast<_Cb&&>(cb), &x, 1, static_cast<format_args&&>(args));
 			}
+		}
+
+		size_t length(char x, format_args fmt)
+		{
+			return 1;
 		}
 	};
 
 	template <>
 	struct print_formatter<bool>
 	{
-		template <typename Cb>
-		void print(bool x, Cb&& cb, format_args args)
+		template <typename _Cb>
+		ZPR_ALWAYS_INLINE void print(bool x, _Cb&& cb, format_args args)
 		{
-			detail::print_string(static_cast<Cb&&>(cb),
+			detail::print_string(static_cast<_Cb&&>(cb),
 				x ? "true" : "false",
 				x ? 4      : 5,
 				static_cast<format_args&&>(args)
 			);
+		}
+
+		size_t length(char x, format_args fmt)
+		{
+			return 5;
 		}
 	};
 
 	template <>
 	struct print_formatter<const void*>
 	{
-		template <typename Cb>
-		void print(const void* x, Cb&& cb, format_args args)
+		template <typename _Cb>
+		ZPR_ALWAYS_INLINE void print(const void* x, _Cb&& cb, format_args args)
 		{
 			args.specifier = 'p';
-			print_one(static_cast<Cb&&>(cb), static_cast<format_args&&>(args), reinterpret_cast<uintptr_t>(x));
+			print_one(static_cast<_Cb&&>(cb), static_cast<format_args&&>(args), reinterpret_cast<uintptr_t>(x));
 		}
 	};
 
-	template <typename T>
-	struct print_formatter<T, typename tt::enable_if<(
-		tt::conjunction<detail::is_iterable<T>, tt::is_same<tt::remove_cv_t<typename T::value_type>, char>>::value
+	template <typename _Type>
+	struct print_formatter<_Type, typename tt::enable_if<(
+		tt::conjunction<detail::is_iterable<_Type>, tt::is_same<tt::remove_cv_t<typename _Type::value_type>, char>>::value
 	)>::type>
 	{
-		template <typename Cb>
-		void print(const T& x, Cb&& cb, format_args args)
+		template <typename _Cb>
+		ZPR_ALWAYS_INLINE void print(const _Type& x, _Cb&& cb, format_args args)
 		{
-			detail::print_string(static_cast<Cb&&>(cb), x.data(), x.size(), static_cast<format_args&&>(args));
+			detail::print_string(static_cast<_Cb&&>(cb), x.data(), x.size(), static_cast<format_args&&>(args));
+		}
+
+		size_t length(const _Type& x, format_args fmt)
+		{
+			return x.size();
 		}
 	};
 
 	// exclude strings and string_views
-	template <typename T>
-	struct print_formatter<T, typename tt::enable_if<(
-		tt::conjunction<detail::is_iterable<T>,
-			tt::negation<tt::is_same<typename T::value_type, char>>
+	template <typename _Type>
+	struct print_formatter<_Type, typename tt::enable_if<(
+		tt::conjunction<detail::is_iterable<_Type>,
+			tt::negation<tt::is_same<typename _Type::value_type, char>>
 		>::value
 	)>::type>
 	{
-		template <typename Cb>
-		void print(const T& x, Cb&& cb, format_args args)
+		template <typename _Cb>
+		void print(const _Type& x, _Cb&& cb, format_args args)
 		{
 			if(begin(x) == end(x))
 			{
@@ -2265,7 +2467,7 @@ namespace zpr
 
 			for(auto it = begin(x);;)
 			{
-				detail::print_one(static_cast<Cb&&>(cb), args, *it);
+				detail::print_one(static_cast<_Cb&&>(cb), args, *it);
 				++it;
 
 				if(it != end(x))
@@ -2284,13 +2486,13 @@ namespace zpr
 		}
 	};
 
-	template <typename T, size_t N>
-	struct print_formatter<T (&)[N]>
+	template <typename _Type, size_t _Number>
+	struct print_formatter<_Type (&)[_Number]>
 	{
-		template <typename Cb>
-		void print(const T (&array)[N], Cb&& cb, format_args args)
+		template <typename _Cb>
+		void print(const _Type (&array)[_Number], _Cb&& cb, format_args args)
 		{
-			if(N == 0)
+			if(_Number == 0)
 			{
 				if(!args.alternate())
 					cb("[ ]");
@@ -2300,10 +2502,10 @@ namespace zpr
 			if(!args.alternate())
 				cb("[");
 
-			for(size_t i = 0; i < N; i++)
+			for(size_t i = 0; i < _Number; i++)
 			{
-				detail::print_one(static_cast<Cb&&>(cb), args, array[i]);
-				if(i + 1 != N)
+				detail::print_one(static_cast<_Cb&&>(cb), args, array[i]);
+				if(i + 1 != _Number)
 				{
 					if(!args.alternate())
 						cb(", ");
@@ -2331,55 +2533,276 @@ namespace zpr
 	template <>
 	struct print_formatter<double> : print_formatter<float> { };
 
-	template <size_t N>
-	struct print_formatter<char (&)[N]> : print_formatter<const char (&)[N]> { };
+	template <size_t _Number>
+	struct print_formatter<char (&)[_Number]> : print_formatter<const char (&)[_Number]> { };
 
 
 
 
 #if ZPR_USE_STD
-
-	/*
-		Prints to a std::string.
-
-		Arguments:
-		`fmt`       -- the format string
-		`args`      -- the values to print
-
-		Returns the std::string.
-	*/
-	template <typename... Args>
-	std::string sprint(tt::str_view fmt, Args&&... args)
+	template <typename _Type1, typename _Type2>
+	struct print_formatter<std::pair<_Type1, _Type2>>
 	{
-		std::string buf;
-		{
-			auto appender = detail::string_appender(buf);
-			detail::print(appender, fmt, static_cast<Args&&>(args)...);
-		}
-		return buf;
-	}
-
-	template <typename A, typename B>
-	struct print_formatter<std::pair<A, B>>
-	{
-		template <typename Cb>
-		void print(const std::pair<A, B>& x, Cb&& cb, format_args args)
+		template <typename _Cb>
+		void print(const std::pair<_Type1, _Type2>& x, _Cb&& cb, format_args args)
 		{
 			cb("{ ");
-			detail::print_one(static_cast<Cb&&>(cb), args, x.first);
+			detail::print_one(static_cast<_Cb&&>(cb), args, x.first);
 			cb(", ");
-			detail::print_one(static_cast<Cb&&>(cb), args, x.second);
+			detail::print_one(static_cast<_Cb&&>(cb), args, x.second);
 			cb(" }");
+		}
+
+		size_t length(const std::pair<_Type1, _Type2>& x, format_args fmt)
+		{
+			// 6 for the '{ ', ', ', and ' }'.
+			return 6 + detail::compute_required_length(x.first, fmt) + detail::compute_required_length(x.second, fmt);
 		}
 	};
 #endif
+
+
+
+
+	// vprint stuff
+	namespace detail
+	{
+		template <typename _CallbackFn>
+		struct type_erased_arg
+		{
+			const void* data;
+			void (*type_erased_printer)(const void*, _CallbackFn&, format_args);
+		};
+
+		template <typename _Type, typename _CallbackFn>
+		type_erased_arg<_CallbackFn> erase_argument(_CallbackFn& callback, _Type&& arg)
+		{
+			using DecayedT = tt::decay_t<_Type>;
+
+			type_erased_arg<_CallbackFn> erased {};
+			erased.data = &arg;
+			erased.type_erased_printer = [](const void* value, _CallbackFn& cb, format_args fa) {
+				print_formatter<DecayedT>().print(*reinterpret_cast<const DecayedT*>(value), cb, fa);
+			};
+
+			return erased;
+		}
+
+		template <typename _CallbackFn>
+		void vprint_impl(tt::str_view fmt, _CallbackFn& callback, const type_erased_arg<_CallbackFn>* args, size_t num_args)
+		{
+			__print_state_t st {};
+			st.beg = fmt.data();
+			st.end = fmt.data();
+			st.fmtend = fmt.end();
+
+			size_t i = 0;
+			auto thingy = [&](format_args fmt_args) {
+				args[i].type_erased_printer(args[i].data, callback, static_cast<format_args&&>(fmt_args));
+			};
+
+			for(; i < num_args; i++)
+				skip_fmts_impl(&st, callback, thingy);
+
+			// flush
+			callback(st.beg, st.fmtend - st.beg);
+		}
+	}
+
+	#define ERASE_ARGUMENT_LIST(name, num)                                          \
+		size_t num = 0;                                                             \
+		detail::type_erased_arg<decltype(appender)> name[sizeof...(_Types)] {};     \
+		do { ((name[num++] = detail::erase_argument(appender, args)), ...); } while(0)
+
+
+	template <typename _CallbackFn, typename... _Types>
+	size_t vcprint(_CallbackFn&& callback, tt::str_view fmt, _Types&&... args)
+	{
+		size_t n = 0;
+		{
+			auto appender = detail::callback_appender(&callback, /* newline: */ false);
+
+			ERASE_ARGUMENT_LIST(erased_args, num);
+			detail::vprint_impl(static_cast<tt::str_view&&>(fmt), appender, &erased_args[0], num);
+
+			n = appender.size();
+		}
+		return n;
+	}
+
+	template <typename _CallbackFn, typename... _Types>
+	size_t vcprintln(_CallbackFn&& callback, tt::str_view fmt, _Types&&... args)
+	{
+		size_t n = 0;
+		{
+			auto appender = detail::callback_appender(&callback, /* newline: */ true);
+			ERASE_ARGUMENT_LIST(erased_args, num);
+			detail::vprint_impl(static_cast<tt::str_view&&>(fmt), appender, &erased_args[0], num);
+
+			n = appender.size();
+		}
+		return n;
+	}
+
+	template <typename... _Types>
+	size_t vsprint(size_t len, char* buf, tt::str_view fmt, _Types&&... args)
+	{
+		size_t n = 0;
+		{
+			auto appender = detail::buffer_appender(buf, len);
+			ERASE_ARGUMENT_LIST(erased_args, num);
+			detail::vprint_impl(static_cast<tt::str_view&&>(fmt), appender, &erased_args[0], num);
+
+			n = appender.size();
+		}
+		return n;
+	}
+
+
+
+
+#if !ZPR_FREESTANDING
+	template <typename... _Types>
+	size_t vprint(tt::str_view fmt, _Types&&... args)
+	{
+		size_t ret = 0;
+		{
+			auto appender = detail::file_appender<detail::STDIO_BUFFER_SIZE, /* newline: */ false>(stdout, ret);
+			ERASE_ARGUMENT_LIST(erased_args, num);
+			detail::vprint_impl(static_cast<tt::str_view&&>(fmt), appender, &erased_args[0], num);
+		}
+		return ret;
+	}
+
+	template <typename... _Types>
+	size_t vprintln(tt::str_view fmt, _Types&&... args)
+	{
+		size_t ret = 0;
+		{
+			auto appender = detail::file_appender<detail::STDIO_BUFFER_SIZE, /* newline: */ true>(stdout, ret);
+			ERASE_ARGUMENT_LIST(erased_args, num);
+			detail::vprint_impl(static_cast<tt::str_view&&>(fmt), appender, &erased_args[0], num);
+		}
+		return ret;
+	}
+
+	template <typename... _Types>
+	size_t vfprint(FILE* file, tt::str_view fmt, _Types&&... args)
+	{
+		size_t ret = 0;
+		{
+			auto appender = detail::file_appender<detail::STDIO_BUFFER_SIZE, /* newline: */ false>(file, ret);
+			ERASE_ARGUMENT_LIST(erased_args, num);
+			detail::vprint_impl(static_cast<tt::str_view&&>(fmt), appender, &erased_args[0], num);
+		}
+		return ret;
+	}
+
+	template <typename... _Types>
+	size_t vfprintln(FILE* file, tt::str_view fmt, _Types&&... args)
+	{
+		size_t ret = 0;
+		{
+			auto appender = detail::file_appender<detail::STDIO_BUFFER_SIZE, /* newline: */ true>(file, ret);
+			ERASE_ARGUMENT_LIST(erased_args, num);
+			detail::vprint_impl(static_cast<tt::str_view&&>(fmt), appender, &erased_args[0], num);
+		}
+		return ret;
+	}
+#endif
+
+#if ZPR_USE_STD
+	template <typename... _Types>
+	std::string vsprint(tt::str_view fmt, _Types&&... args)
+	{
+		std::string ret {};
+		{
+			auto appender = detail::string_appender(ret);
+			ERASE_ARGUMENT_LIST(erased_args, num);
+			detail::vprint_impl(static_cast<tt::str_view&&>(fmt), appender, &erased_args[0], num);
+		}
+		return ret;
+	}
+#endif
+
+	#undef ERASE_ARGUMENT_LIST
 }
+
+
+
+
 
 
 /*
 
 	Version History
 	===============
+
+	2.7.3 - 10/08/2022
+	------------------
+	- Fix '}}' not actually printing '}'
+
+
+
+	2.7.2 - 10/08/2022
+	------------------
+	- Fix a bunch of implicit sign conversion warnings
+
+
+
+	2.7.1 - 10/08/2022
+	------------------
+	- Fix a memory bug with string_appender due to accounting errors
+
+
+
+	2.7.0 - 30/04/2022
+	------------------
+	- Add vprint API, which are functions prefixed with `v`. This API path tries to reduce the number of template
+		instantiations produced by type-erasing the arguments as far as possible in order to prevent code bloat.
+
+
+
+	2.6.0 - 29/04/2022
+	------------------
+	- Add `zpr::with` that lets you print a value with a lambda/function directly, instead of having to specialise a
+		`print_formatter`.
+
+	- Remove our type traits implementation since <type_traits> is a freestanding header that should always be available.
+	- Add a new `length()` member to print_formatter to allow `sprint()` to `std::string` to pre-reserve the string buffer
+		so we pay less for constant append/resize.
+		(this method is optional; if you don't implement it, then you don't get the speedup, but it's not any slower).
+
+
+
+	2.5.7 - 26/11/2021
+	------------------
+	Bug fixes:
+	- fix mishandling of negative widths (ie. left-align/right-pad) when using `zpr::w` or `zpr::wp`.
+
+
+
+	2.5.6 - 18/10/2021
+	------------------
+	Bug fixes:
+	- increase protection against macros with better naming
+
+
+
+	2.5.5 - 18/10/2021
+	------------------
+	Bug fixes:
+	- increase protection against macros with more underscores
+
+
+
+	2.5.4 - 18/10/2021
+	------------------
+	Add improved error message (static_assert) if an incompatible callback function is passed to `cprint`.
+	Bug fixes:
+	- add more protection against havoc-wrecking macros (abs, B1...) by adding underscores
+
+
 
 	2.5.3 - 15/09/2021
 	------------------

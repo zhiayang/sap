@@ -242,18 +242,11 @@ namespace sap::frontend
 
 	static Token consume_script_token(zst::str_view& stream, Location& loc)
 	{
-		// skip horizontal whitespace
+		// skip whitespace
 		while(stream.size() > 0)
 		{
-			if(stream[0] == ' ' || stream[0] == '\t')
+			if(stream[0] == ' ' || stream[0] == '\t' || stream[0] == '\r' || stream[0] == '\n')
 				loc.column++, stream.remove_prefix(1);
-
-			else if(stream[0] == '\n' && not stream.starts_with("\n\n"))
-				loc.column = 0, loc.line++, stream.remove_prefix(1);
-
-			else if(stream.starts_with("\r\n") && not stream.starts_with("\r\n\r\n"))
-				loc.column = 0, loc.line++, stream.remove_prefix(2);
-
 			else
 				break;
 		}
@@ -265,6 +258,15 @@ namespace sap::frontend
 				.type = TT::EndOfFile,
 				.text = ""
 			};
+		}
+
+		else if(stream.starts_with("#"))
+		{
+			return parse_comment(stream, loc);
+		}
+		else if(stream.starts_with(":#"))
+		{
+			sap::error(loc, "unexpected end of block comment");
 		}
 
 		// TODO: unicode identifiers
@@ -279,6 +281,26 @@ namespace sap::frontend
 				.type = TT::Identifier,
 				.text = stream.take(n)
 			}, n);
+		}
+		else if(isascii(stream[0]) && isdigit(stream[0]))
+		{
+			size_t n = 0;
+			while(isascii(stream[n]) && isdigit(stream[n]))
+				n++;
+
+			return advance_and_return(stream, loc, Token {
+				.loc = loc,
+				.type = TT::Number,
+				.text = stream.take(n)
+			}, n);
+		}
+		else if(stream.starts_with("::"))
+		{
+			return advance_and_return(stream, loc, Token {
+				.loc = loc,
+				.type = TT::ColonColon,
+				.text = stream.take(2)
+			}, 2);
 		}
 		else
 		{
@@ -296,6 +318,7 @@ namespace sap::frontend
 				case '*':   tt = TT::Asterisk; break;
 				case '/':   tt = TT::Slash; break;
 				case '=':   tt = TT::Equal; break;
+				case ';':   tt = TT::Semicolon; break;
 
 				default:
 					sap::error(loc, "unknown token '{}'", stream[0]);
@@ -347,12 +370,27 @@ namespace sap::frontend
 		auto foo = m_stream;
 		auto bar = m_location;
 
+		// TODO: figure out how we wanna handle comments
 		if(mode == Mode::Text)
-			return consume_text_token(foo, bar);
+		{
+			Token ret {};
+			do {
+				ret = consume_text_token(foo, bar);
+			} while(ret == TT::Comment);
+			return ret;
+		}
 		else if(mode == Mode::Script)
-			return consume_script_token(foo, bar);
+		{
+			Token ret {};
+			do {
+				ret = consume_script_token(foo, bar);
+			} while(ret == TT::Comment);
+			return ret;
+		}
 		else
+		{
 			assert(false);
+		}
 	}
 
 	Token Lexer::peek() const
@@ -360,14 +398,33 @@ namespace sap::frontend
 		return this->peekWithMode(this->mode());
 	}
 
+	bool Lexer::eof() const
+	{
+		return this->peek() == TT::EndOfFile;
+	}
+
 	Token Lexer::next()
 	{
 		if(this->mode() == Mode::Text)
-			return consume_text_token(m_stream, m_location);
+		{
+			Token ret {};
+			do {
+				ret = consume_text_token(m_stream, m_location);
+			} while(ret == TT::Comment);
+			return ret;
+		}
 		else if(this->mode() == Mode::Script)
-			return consume_script_token(m_stream, m_location);
+		{
+			Token ret {};
+			do {
+				ret = consume_script_token(m_stream, m_location);
+			} while(ret == TT::Comment);
+			return ret;
+		}
 		else
+		{
 			assert(false);
+		}
 	}
 
 	bool Lexer::expect(TokenType type)
@@ -379,6 +436,14 @@ namespace sap::frontend
 		}
 
 		return false;
+	}
+
+	std::optional<Token> Lexer::match(TokenType type)
+	{
+		if(this->peek() == type)
+			return this->next();
+
+		return {};
 	}
 
 	Lexer::Mode Lexer::mode() const

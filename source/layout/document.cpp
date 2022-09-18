@@ -27,7 +27,7 @@ namespace sap::layout
 		m_objects.push_back(std::move(obj));
 	}
 
-	void Document::layout()
+	void Document::layout(interp::Interpreter* cs)
 	{
 		if(m_objects.empty())
 			return;
@@ -42,7 +42,7 @@ namespace sap::layout
 			auto obj = (overflow == nullptr ? m_objects[i].get() : overflow);
 
 			// TODO: handle this more elegantly (we should try to move this to the next page)
-			if(auto result = obj->layout(page->layoutRegion(), m_style); !result.ok())
+			if(auto result = obj->layout(cs, page->layoutRegion(), m_style); !result.ok())
 			{
 				sap::error("layout/page", "page layout failed");
 			}
@@ -58,10 +58,10 @@ namespace sap::layout
 		}
 	}
 
-	pdf::Document& Document::render()
+	pdf::Document& Document::render(interp::Interpreter* cs)
 	{
 		for(auto& page : m_pages)
-			m_pdf_document.addPage(page.render());
+			m_pdf_document.addPage(page.render(cs));
 
 		return m_pdf_document;
 	}

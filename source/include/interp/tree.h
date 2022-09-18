@@ -92,11 +92,16 @@ namespace sap::tree
 		inheriting both of them. We want this hierarchy because script blocks and calls can
 		appear both at the top-level (with blocks or floats), and within blocks/floats as well.
 	*/
-	struct ScriptBlock : InlineObject, DocumentObject
+	struct ScriptObject : InlineObject, DocumentObject
 	{
 	};
 
-	struct ScriptCall : InlineObject, DocumentObject
+	struct ScriptBlock : ScriptObject
+	{
+		std::vector<std::unique_ptr<interp::Stmt>> statements;
+	};
+
+	struct ScriptCall : ScriptObject
 	{
 		std::unique_ptr<interp::FunctionCall> call;
 	};

@@ -11,6 +11,8 @@
 #include <stddef.h>
 #include <stdlib.h>
 
+#include <optional>
+
 namespace sap
 {
 	/*
@@ -30,5 +32,19 @@ namespace sap
 		zpr::fprintln(stderr, "{}:{}:{}: error: {}", loc.file, loc.line + 1, loc.column + 1,
 			zpr::fwd(fmt, static_cast<Args&&>(args)...));
 		exit(1);
+	}
+
+	template <typename... Args>
+	[[noreturn]] void error(const std::optional<Location>& loc, const char* fmt, Args&&... args)
+	{
+		if(loc.has_value())
+		{
+			error(*loc, fmt, static_cast<Args&&>(args)...);
+		}
+		else
+		{
+			zpr::fprintln(stderr, "<no location>: error: {}",  zpr::fwd(fmt, static_cast<Args&&>(args)...));
+			exit(1);
+		}
 	}
 }

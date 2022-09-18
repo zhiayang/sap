@@ -18,6 +18,7 @@
 #include "sap/frontend.h"
 
 #include "interp/tree.h"
+#include "interp/state.h"
 
 
 namespace sap
@@ -26,8 +27,8 @@ namespace sap
 	{
 		auto document = sap::layout::Document();
 
-
-		return std::move(document.render());
+		auto cs = interp::Interpreter();
+		return std::move(document.render(&cs));
 	}
 }
 
@@ -43,7 +44,9 @@ int main(int argc, char** argv)
 	auto [ buf, size ] = util::readEntireFile("test.sap");
 	auto document = sap::frontend::parse("test.sap", { (char*) buf, size });
 
-	auto layout_doc = sap::layout::createDocumentLayout(document);
+	auto interpreter = sap::interp::Interpreter();
+
+	auto layout_doc = sap::layout::createDocumentLayout(&interpreter, document);
 	auto font = pdf::Font::fromFontFile(
 		&layout_doc.pdfDocument(),
 		font::FontFile::parseFromFile("fonts/SourceSerif4-Regular.otf")
@@ -63,10 +66,10 @@ int main(int argc, char** argv)
 	sap::setDefaultStyle(std::move(default_style));
 
 	layout_doc.setStyle(&style);
-	layout_doc.layout();
+	layout_doc.layout(&interpreter);
 
 	auto writer = util::make<pdf::Writer>("test.pdf");
-	auto& pdf_doc = layout_doc.render();
+	auto& pdf_doc = layout_doc.render(&interpreter);
 
 	pdf_doc.write(writer);
 	writer->close();

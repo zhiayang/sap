@@ -36,6 +36,11 @@ namespace sap
 	{
 		struct Document;
 	}
+
+	namespace interp
+	{
+		struct Interpreter;
+	}
 }
 
 namespace sap::layout
@@ -114,14 +119,15 @@ namespace sap::layout
 			it could not be split (eg. images, graphics). In this case, placement should continue on the
 			subsequent page.
 		*/
-		virtual zst::Result<std::optional<LayoutObject*>, int> layout(LayoutRegion* region, const Style* parent_style) = 0;
+		virtual zst::Result<std::optional<LayoutObject*>, int> layout(interp::Interpreter* cs, LayoutRegion* region,
+			const Style* parent_style) = 0;
 
 		/*
 			Render (emit PDF commands) the object. Must be called after layout(). For now, we render directly to
 			the PDF page (by construcitng and emitting PageObjects), instead of returning a pageobject -- some
 			layout objects might require multiple pdf page objects, so this is a more flexible design.
 		*/
-		virtual void render(const LayoutRegion* region, Position position, pdf::Page* page) const = 0;
+		virtual void render(interp::Interpreter* cs, const LayoutRegion* region, Position position, pdf::Page* page) const = 0;
 
 	private:
 		LayoutObject* m_parent = nullptr;
@@ -163,7 +169,7 @@ namespace sap::layout
 			Here, `position` is the (absolute) position of the region in the page (since regions cannot nest). This
 			position is then added to the relative positions of each object.
 		*/
-		void render(Position position, pdf::Page* page) const;
+		void render(interp::Interpreter* cs, Position position, pdf::Page* page) const;
 
 	private:
 		Size2d m_size {};
@@ -260,8 +266,10 @@ namespace sap::layout
 	{
 		void add(Word word);
 
-		virtual zst::Result<std::optional<LayoutObject*>, int> layout(LayoutRegion* region, const Style* parent_style) override;
-		virtual void render(const LayoutRegion* region, Position position, pdf::Page* page) const override;
+		virtual zst::Result<std::optional<LayoutObject*>, int> layout(interp::Interpreter* cs, LayoutRegion* region,
+			const Style* parent_style) override;
+		virtual void render(interp::Interpreter* cs, const LayoutRegion* region, Position position,
+			pdf::Page* page) const override;
 
 	private:
 		std::vector<Word> m_words {};
@@ -281,7 +289,7 @@ namespace sap::layout
 		inline LayoutRegion* layoutRegion() { return &m_layout_region; }
 		inline const LayoutRegion* layoutRegion() const { return &m_layout_region; }
 
-		pdf::Page* render();
+		pdf::Page* render(interp::Interpreter* cs);
 
 	private:
 		LayoutRegion m_layout_region;
@@ -305,8 +313,8 @@ namespace sap::layout
 
 		void addObject(std::unique_ptr<LayoutObject> obj);
 
-		void layout();
-		pdf::Document& render();
+		void layout(interp::Interpreter* cs);
+		pdf::Document& render(interp::Interpreter* cs);
 
 	private:
 		pdf::Document m_pdf_document {};
@@ -315,5 +323,5 @@ namespace sap::layout
 		std::vector<std::unique_ptr<LayoutObject>> m_objects {};
 	};
 
-	Document createDocumentLayout(tree::Document& document);
+	Document createDocumentLayout(interp::Interpreter* cs, tree::Document& document);
 }
