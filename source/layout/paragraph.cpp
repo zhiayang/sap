@@ -62,9 +62,9 @@ namespace sap::layout
 		    This basically continues till we either consume all words or run out of vertical space in the
 		    layout region.
 		*/
-		Scalar word_length {};    // the amount of space required for words
-		Scalar space_length {};   // ... for inter-word spaces
-		size_t words_in_line = 0; // the number of words in the line so far.
+		Scalar word_length {};     // the amount of space required for words
+		Scalar space_length {};    // ... for inter-word spaces
+		size_t words_in_line = 0;  // the number of words in the line so far.
 
 		constexpr double MIN_RATIO = 0.9;
 

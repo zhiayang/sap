@@ -17,7 +17,7 @@ namespace font
 		auto len = consume_u16(subtable);
 		assert(len == 3 * sizeof(uint16_t) + 256 * sizeof(uint8_t));
 
-		consume_u16(subtable); // lang (ignored)
+		consume_u16(subtable);  // lang (ignored)
 
 		CharacterMapping mapping {};
 		for(uint32_t cp = 0; cp < 256; cp++)
@@ -35,18 +35,18 @@ namespace font
 		auto fmt = consume_u16(subtable);
 		assert(fmt == 4);
 
-		consume_u16(subtable); // len (ignored)
-		consume_u16(subtable); // lang (ignored)
+		consume_u16(subtable);  // len (ignored)
+		consume_u16(subtable);  // lang (ignored)
 
 		// what the fuck is this format? fmt 12 is so much better.
 		auto seg_count = consume_u16(subtable) / 2u;
-		consume_u16(subtable); // search_range (ignored)
-		consume_u16(subtable); // entry_selector (ignored)
-		consume_u16(subtable); // range_shift (ignored)
+		consume_u16(subtable);  // search_range (ignored)
+		consume_u16(subtable);  // entry_selector (ignored)
+		consume_u16(subtable);  // range_shift (ignored)
 
 		auto u16_array = subtable.cast<uint16_t>();
 		auto end_codes = u16_array.take_prefix(seg_count);
-		u16_array.remove_prefix(1); // reserved
+		u16_array.remove_prefix(1);  // reserved
 
 		auto start_codes = u16_array.take_prefix(seg_count);
 		auto id_deltas = u16_array.take_prefix(seg_count);
@@ -86,8 +86,8 @@ namespace font
 		auto fmt = consume_u16(subtable);
 		assert(fmt == 6);
 
-		consume_u16(subtable); // len
-		consume_u16(subtable); // lang
+		consume_u16(subtable);  // len
+		consume_u16(subtable);  // lang
 
 		auto first = consume_u16(subtable);
 		auto count = consume_u16(subtable);
@@ -109,9 +109,9 @@ namespace font
 		auto fmt = consume_u16(subtable);
 		assert(fmt == 10);
 
-		consume_u16(subtable); // reserved
-		consume_u32(subtable); // len
-		consume_u32(subtable); // lang
+		consume_u16(subtable);  // reserved
+		consume_u32(subtable);  // len
+		consume_u32(subtable);  // lang
 
 		auto first = consume_u32(subtable);
 		auto count = consume_u32(subtable);
@@ -134,9 +134,9 @@ namespace font
 		auto fmt = consume_u16(subtable);
 		assert(fmt == 12 || fmt == 13);
 
-		consume_u16(subtable); // reserved
-		consume_u32(subtable); // len
-		consume_u32(subtable); // lang
+		consume_u16(subtable);  // reserved
+		consume_u32(subtable);  // len
+		consume_u32(subtable);  // lang
 
 		auto num_groups = consume_u32(subtable);
 

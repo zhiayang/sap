@@ -293,7 +293,7 @@ namespace font
 		}
 
 
-		consume_u32(buf); // skip the two underline-related metrics
+		consume_u32(buf);  // skip the two underline-related metrics
 
 		font->metrics.is_monospaced = consume_u32(buf) != 0;
 	}
