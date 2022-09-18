@@ -28,7 +28,13 @@ namespace sap::tree
 
 
 
-	DocumentObject::~DocumentObject() { }
-	InlineObject::~InlineObject() { }
-	BlockObject::~BlockObject() { }
+	DocumentObject::~DocumentObject()
+	{
+	}
+	InlineObject::~InlineObject()
+	{
+	}
+	BlockObject::~BlockObject()
+	{
+	}
 }

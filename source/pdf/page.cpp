@@ -13,10 +13,8 @@
 namespace pdf
 {
 	// TODO: support custom paper sizes
-	static const auto a4paper = Array::create(
-		Integer::create(0), Integer::create(0),
-		Decimal::create(595.276), Decimal::create(841.89)
-	);
+	static const auto a4paper =
+		Array::create(Integer::create(0), Integer::create(0), Decimal::create(595.276), Decimal::create(841.89));
 
 	Page::Page()
 	{
@@ -44,7 +42,7 @@ namespace pdf
 		Object* contents = Null::get();
 		if(!this->objects.empty())
 		{
-			auto strm = Stream::create(doc, { });
+			auto strm = Stream::create(doc, {});
 			for(auto obj : this->objects)
 			{
 				auto ser = obj->serialise(this);
@@ -56,23 +54,20 @@ namespace pdf
 
 		// need to do the fonts only after the objects, because serialising objects
 		// can use fonts.
-		auto font_dict = Dictionary::create({ });
+		auto font_dict = Dictionary::create({});
 		for(auto font : this->fonts)
 		{
 			auto fser = font->serialise(doc);
 			font_dict->add(Name(font->getFontResourceName()), IndirectRef::create(fser));
 		}
 
-		auto resources = Dictionary::create({ });
+		auto resources = Dictionary::create({});
 		if(!font_dict->values.empty())
 			resources->add(names::Font, font_dict);
 
 
-		return Dictionary::createIndirect(doc, names::Page, {
-			{ names::Resources, resources },
-			{ names::MediaBox, a4paper },
-			{ names::Contents, contents }
-		});
+		return Dictionary::createIndirect(doc, names::Page,
+			{ { names::Resources, resources }, { names::MediaBox, a4paper }, { names::Contents, contents } });
 	}
 
 	void Page::useFont(const Font* font) const
@@ -88,5 +83,7 @@ namespace pdf
 		this->objects.push_back(pobj);
 	}
 
-	PageObject::~PageObject() { }
+	PageObject::~PageObject()
+	{
+	}
 }

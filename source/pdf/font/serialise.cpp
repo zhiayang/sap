@@ -16,7 +16,7 @@ namespace pdf
 {
 	Font::Font()
 	{
-		this->font_dictionary = Dictionary::create(names::Font, { });
+		this->font_dictionary = Dictionary::create(names::Font, {});
 	}
 
 	Dictionary* Font::serialise(Document* doc) const
@@ -57,7 +57,7 @@ namespace pdf
 				}
 			}
 
-			for(auto& [ gid, ws ] : widths2)
+			for(auto& [gid, ws] : widths2)
 			{
 				this->glyph_widths_array->values.push_back(gid);
 				this->glyph_widths_array->values.push_back(Array::create(std::move(ws)));
@@ -85,41 +85,41 @@ namespace pdf
 		ret->source_file = font_file;
 
 		/*
-			this is the general structure for composite fonts (which we always create, for now):
+		    this is the general structure for composite fonts (which we always create, for now):
 
-			/Font: /Subtype Type0
-				/Encoding: something
-				/BaseFont: the postscript name
-				/DescendantFonts: [ bunch of CIDFonts ]
-				/ToUnicode: unicode mapping
+		    /Font: /Subtype Type0
+		        /Encoding: something
+		        /BaseFont: the postscript name
+		        /DescendantFonts: [ bunch of CIDFonts ]
+		        /ToUnicode: unicode mapping
 
-			/Font: /Subtype CIDFontType2/CIDFontType0 (depending on truetype or CFF)
-				/BaseFont: the postscript name
-				/W: a table of widths
-				/FontDescriptor: the font descriptor
-				/CIDSystemInfo: some useless (but required) stuff
+		    /Font: /Subtype CIDFontType2/CIDFontType0 (depending on truetype or CFF)
+		        /BaseFont: the postscript name
+		        /W: a table of widths
+		        /FontDescriptor: the font descriptor
+		        /CIDSystemInfo: some useless (but required) stuff
 
-			/FontDescriptor:
-				/bunch of metrics;
-				/FontFile0/1/2/3: the stream containing the actual file
-				/CIDSet: if we're doing a subset (which we aren't for now)
+		    /FontDescriptor:
+		        /bunch of metrics;
+		        /FontFile0/1/2/3: the stream containing the actual file
+		        /CIDSet: if we're doing a subset (which we aren't for now)
 		*/
 		ret->pdf_font_name = font::generateSubsetName(font_file);
 		auto basefont_name = Name::create(ret->pdf_font_name);
 
 		// start with making the CIDFontType2/0 entry.
-		auto cidfont_dict = Dictionary::createIndirect(doc, names::Font, { });
+		auto cidfont_dict = Dictionary::createIndirect(doc, names::Font, {});
 
 		cidfont_dict->add(names::BaseFont, basefont_name);
 		cidfont_dict->add(names::CIDSystemInfo, Dictionary::create({
-			{ names::Registry, String::create("Adobe") },
-			{ names::Ordering, String::create("Identity") },
-			{ names::Supplement, Integer::create(0) },
-		}));
+													{ names::Registry, String::create("Adobe") },
+													{ names::Ordering, String::create("Identity") },
+													{ names::Supplement, Integer::create(0) },
+												}));
 
 		bool truetype_outlines = (font_file->outline_type == font::FontFile::OUTLINES_TRUETYPE);
 
-		ret->glyph_widths_array = Array::createIndirect(doc, { });
+		ret->glyph_widths_array = Array::createIndirect(doc, {});
 		cidfont_dict->add(names::W, IndirectRef::create(ret->glyph_widths_array));
 
 		if(truetype_outlines)
@@ -133,22 +133,18 @@ namespace pdf
 		}
 
 		/*
-			TODO:
-			for now we are outputting glyph IDs to the pdf, which is pretty dumb. in the future
-			we probably want to either:
+		    TODO:
+		    for now we are outputting glyph IDs to the pdf, which is pretty dumb. in the future
+		    we probably want to either:
 
-			(a) find a way to make a CMap that reads utf-8 from the text stream and converts that to GIDs
-			(b) use some font-specific weirdness to directly map utf-16 (or rather ucs-2) to GIDs. with
-				otf-cmap format types 6, 10, 12, and 13, we can very easily make a CMap that is not
-				monstrous in size.
+		    (a) find a way to make a CMap that reads utf-8 from the text stream and converts that to GIDs
+		    (b) use some font-specific weirdness to directly map utf-16 (or rather ucs-2) to GIDs. with
+		        otf-cmap format types 6, 10, 12, and 13, we can very easily make a CMap that is not
+		        monstrous in size.
 		*/
 
-		auto font_bbox = Array::create({
-			Integer::create(font_file->metrics.xmin),
-			Integer::create(font_file->metrics.ymin),
-			Integer::create(font_file->metrics.xmax),
-			Integer::create(font_file->metrics.ymax)
-		});
+		auto font_bbox = Array::create({ Integer::create(font_file->metrics.xmin), Integer::create(font_file->metrics.ymin),
+			Integer::create(font_file->metrics.xmax), Integer::create(font_file->metrics.ymax) });
 
 		int cap_height = 0;
 		if(font_file->metrics.cap_height != 0)
@@ -172,25 +168,20 @@ namespace pdf
 		// for the pdf to display properly but it's probably entirely inconsequential.
 
 		// we need a CIDSet for subset fonts
-		ret->cidset = Stream::create(doc, { });
+		ret->cidset = Stream::create(doc, {});
 
 		// TODO: scale the metrics correctly!
-		auto font_desc = Dictionary::createIndirect(doc, names::FontDescriptor, {
-			{ names::FontName, basefont_name },
-			{ names::Flags, Integer::create(4) },
-			{ names::FontBBox, font_bbox },
-			{ names::ItalicAngle, Integer::create(font_file->metrics.italic_angle) },
-			{ names::Ascent, Integer::create(font_file->metrics.hhea_ascent) },
-			{ names::Descent, Integer::create(font_file->metrics.hhea_descent) },
-			{ names::CapHeight, Integer::create(cap_height) },
-			{ names::XHeight, Integer::create(69) },
-			{ names::StemV, Integer::create(STEMV_CONSTANT) },
-			{ names::CIDSet, IndirectRef::create(ret->cidset) }
-		});
+		auto font_desc = Dictionary::createIndirect(doc, names::FontDescriptor,
+			{ { names::FontName, basefont_name }, { names::Flags, Integer::create(4) }, { names::FontBBox, font_bbox },
+				{ names::ItalicAngle, Integer::create(font_file->metrics.italic_angle) },
+				{ names::Ascent, Integer::create(font_file->metrics.hhea_ascent) },
+				{ names::Descent, Integer::create(font_file->metrics.hhea_descent) },
+				{ names::CapHeight, Integer::create(cap_height) }, { names::XHeight, Integer::create(69) },
+				{ names::StemV, Integer::create(STEMV_CONSTANT) }, { names::CIDSet, IndirectRef::create(ret->cidset) } });
 
 		cidfont_dict->add(names::FontDescriptor, IndirectRef::create(font_desc));
 
-		ret->embedded_contents = Stream::create(doc, { });
+		ret->embedded_contents = Stream::create(doc, {});
 		ret->embedded_contents->setCompressed(true);
 
 		if(truetype_outlines)
@@ -210,7 +201,7 @@ namespace pdf
 		}
 
 		// make a cmap to use for ToUnicode
-		ret->unicode_cmap = Stream::create(doc, { });
+		ret->unicode_cmap = Stream::create(doc, {});
 		ret->unicode_cmap->setCompressed(true);
 
 		// finally, construct the top-level Type0 font.
@@ -235,10 +226,20 @@ namespace pdf
 	Font* Font::fromBuiltin(Document* doc, zst::str_view name)
 	{
 		const char* known_fonts[] = {
-			"Times-Roman", "Times-Italic", "Times-Bold", "Times-BoldItalic",
-			"Helvetica", "Helvetica-Oblique", "Helvetica-Bold", "Helvetica-BoldOblique",
-			"Courier", "Courier-Oblique", "Courier-Bold", "Courier-BoldOblique",
-			"Symbol", "ZapfDingbats",
+			"Times-Roman",
+			"Times-Italic",
+			"Times-Bold",
+			"Times-BoldItalic",
+			"Helvetica",
+			"Helvetica-Oblique",
+			"Helvetica-Bold",
+			"Helvetica-BoldOblique",
+			"Courier",
+			"Courier-Oblique",
+			"Courier-Bold",
+			"Courier-BoldOblique",
+			"Symbol",
+			"ZapfDingbats",
 		};
 
 		auto it = std::find_if(std::begin(known_fonts), std::end(known_fonts), [&name](auto& n) {

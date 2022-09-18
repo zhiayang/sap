@@ -12,7 +12,7 @@ namespace sap::layout
 
 	void LayoutRegion::render(interp::Interpreter* cs, Position position, pdf::Page* page) const
 	{
-		for(auto& [ pos, obj ] : m_objects)
+		for(auto& [pos, obj] : m_objects)
 			obj->render(cs, this, pos + position, page);
 	}
 
@@ -47,7 +47,7 @@ namespace sap::layout
 
 	Size2d LayoutRegion::spaceAtCursor() const
 	{
-		return (m_size - m_cursor).into(Size2d{});
+		return (m_size - m_cursor).into(Size2d {});
 	}
 
 	bool LayoutRegion::haveSpaceAtCursor(Size2d size) const

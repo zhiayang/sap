@@ -54,10 +54,10 @@ namespace pdf
 		Scalar scaleMetricForPDFTextSpace(double metric) const;
 
 		/*
-			A very thin wrapper around the identically-named methods taking a FontFile
+		    A very thin wrapper around the identically-named methods taking a FontFile
 		*/
-		std::map<size_t, font::GlyphAdjustment> getPositioningAdjustmentsForGlyphSequence(
-			zst::span<GlyphId> glyphs, const font::off::FeatureSet& features) const;
+		std::map<size_t, font::GlyphAdjustment> getPositioningAdjustmentsForGlyphSequence(zst::span<GlyphId> glyphs,
+			const font::off::FeatureSet& features) const;
 
 		std::vector<GlyphId> performSubstitutionsForGlyphSequence(zst::span<GlyphId> glyphs,
 			const font::off::FeatureSet& features) const;
@@ -69,13 +69,13 @@ namespace pdf
 		static Font* fromBuiltin(Document* doc, zst::str_view name);
 		static Font* fromFontFile(Document* doc, font::FontFile* font);
 
-		static constexpr int FONT_TYPE1         = 1;
-		static constexpr int FONT_TRUETYPE      = 2;
-		static constexpr int FONT_CFF_CID       = 3;
-		static constexpr int FONT_TRUETYPE_CID  = 4;
+		static constexpr int FONT_TYPE1 = 1;
+		static constexpr int FONT_TRUETYPE = 2;
+		static constexpr int FONT_CFF_CID = 3;
+		static constexpr int FONT_TRUETYPE_CID = 4;
 
-		static constexpr int ENCODING_WIN_ANSI  = 1;
-		static constexpr int ENCODING_CID       = 2;
+		static constexpr int ENCODING_WIN_ANSI = 1;
+		static constexpr int ENCODING_CID = 2;
 
 	private:
 		Font();
@@ -90,7 +90,7 @@ namespace pdf
 
 		// the name that goes into the Resource << >> dict in a page. This is a unique name
 		// that we get from the Document when the font is created.
-		std::string font_resource_name { };
+		std::string font_resource_name {};
 
 		// only used for embedded fonts
 		font::FontFile* source_file = 0;
@@ -104,6 +104,7 @@ namespace pdf
 		std::string pdf_font_name;
 
 		// pool needs to be a friend because it needs the constructor
-		template <typename> friend struct util::Pool;
+		template <typename>
+		friend struct util::Pool;
 	};
 }

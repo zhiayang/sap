@@ -17,7 +17,7 @@ namespace pdf
 		for(auto font : m_used_fonts)
 			page->useFont(font);
 
-		std::string ret  = "q BT\n";
+		std::string ret = "q BT\n";
 		for(auto& group : m_groups)
 		{
 			for(auto& cmd : group.commands)

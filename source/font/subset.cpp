@@ -18,11 +18,7 @@ namespace font
 
 	static bool should_exclude_table(const Tag& tag)
 	{
-		return tag == Tag("GPOS")
-			|| tag == Tag("GSUB")
-			|| tag == Tag("GDEF")
-			|| tag == Tag("BASE")
-			|| tag == Tag("FFTM");
+		return tag == Tag("GPOS") || tag == Tag("GSUB") || tag == Tag("GDEF") || tag == Tag("BASE") || tag == Tag("FFTM");
 	}
 
 	static void write_num_tables_and_other_stuff(Stream* stream, size_t num_tables)
@@ -66,7 +62,8 @@ namespace font
 	}
 
 
-	void writeFontSubset(FontFile* font, zst::str_view subset_name, Stream* stream, const std::unordered_set<GlyphId>& used_glyphs)
+	void writeFontSubset(FontFile* font, zst::str_view subset_name, Stream* stream,
+		const std::unordered_set<GlyphId>& used_glyphs)
 	{
 		auto file_contents = zst::byte_span(font->file_bytes, font->file_size);
 		if(font->outline_type == FontFile::OUTLINES_CFF)
@@ -82,7 +79,7 @@ namespace font
 		// it's easier to keep a list of which tables we want to keep, so we at least
 		// know how many there are because we need to compute the offsets.
 		std::vector<Table> included_tables {};
-		for(auto& [ _, table ] : font->tables)
+		for(auto& [_, table] : font->tables)
 		{
 			// for now, use a blacklist. too lazy to figure out what each table does.
 			if(!should_exclude_table(table.tag))
@@ -105,9 +102,7 @@ namespace font
 
 		// not exactly the current offset; this includes the size of the header
 		// and of *all* the table records. makes writing the table offset easy.
-		size_t current_table_offset = sizeof(uint32_t)
-			+ (4 * sizeof(uint16_t))
-			+ included_tables.size() * TableRecordSize;
+		size_t current_table_offset = sizeof(uint32_t) + (4 * sizeof(uint16_t)) + included_tables.size() * TableRecordSize;
 
 		auto write_table_record = [&stream, &current_table_offset](const Tag& tag, uint32_t checksum, uint32_t size) {
 			stream->append_bytes(util::convertBEU32(tag.value));
@@ -202,14 +197,13 @@ namespace font
 		static auto foo = []() {
 			srand(time(nullptr));
 			return 69;
-		}(); (void) foo;
+		}();
+		(void) foo;
 
 		// does this really need to be very random? no.
 		const char* letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
 
-		return zpr::sprint("{}{}{}{}{}{}+{}",
-			letters[rand() % 26], letters[rand() % 26], letters[rand() % 26],
-			letters[rand() % 26], letters[rand() % 26], letters[rand() % 26],
-			font->postscript_name);
+		return zpr::sprint("{}{}{}{}{}{}+{}", letters[rand() % 26], letters[rand() % 26], letters[rand() % 26],
+			letters[rand() % 26], letters[rand() % 26], letters[rand() % 26], font->postscript_name);
 	}
 }

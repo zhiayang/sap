@@ -35,7 +35,8 @@ namespace util
 				// TODO: report a proper error
 				void* ptr = 0;
 				if(posix_memalign(&ptr, alignment, capacity) != 0)
-					sap::internal_error("out of memory (trying to allocate {} bytes with {}-byte alignment)", capacity, alignment);
+					sap::internal_error("out of memory (trying to allocate {} bytes with {}-byte alignment)", capacity,
+						alignment);
 
 				this->memory = reinterpret_cast<uint8_t*>(ptr);
 				assert(this->memory != nullptr);

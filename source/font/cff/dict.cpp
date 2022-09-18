@@ -52,12 +52,10 @@ namespace font::cff
 				dict.values[key] = std::move(values);
 		};
 
-		constexpr DictKey keys_with_defaults[] = {
-			DictKey::FontBBox, DictKey::charset, DictKey::Encoding, DictKey::isFixedPitch,
-			DictKey::ItalicAngle, DictKey::UnderlinePosition, DictKey::UnderlineThickness,
-			DictKey::PaintType, DictKey::CharstringType, DictKey::FontMatrix, DictKey::StrokeWidth,
-			DictKey::CIDFontVersion, DictKey::CIDFontRevision, DictKey::CIDFontType, DictKey::CIDCount
-		};
+		constexpr DictKey keys_with_defaults[] = { DictKey::FontBBox, DictKey::charset, DictKey::Encoding, DictKey::isFixedPitch,
+			DictKey::ItalicAngle, DictKey::UnderlinePosition, DictKey::UnderlineThickness, DictKey::PaintType,
+			DictKey::CharstringType, DictKey::FontMatrix, DictKey::StrokeWidth, DictKey::CIDFontVersion, DictKey::CIDFontRevision,
+			DictKey::CIDFontType, DictKey::CIDCount };
 
 		for(auto key : keys_with_defaults)
 			add_default(key, *getDefaultValueForDictKey(key));
@@ -65,8 +63,8 @@ namespace font::cff
 
 	std::optional<std::vector<Operand>> getDefaultValueForDictKey(DictKey key)
 	{
-	#define OP_INT(x) Operand().integer(x)
-	#define OP_DEC(x) Operand().decimal(x)
+#define OP_INT(x) Operand().integer(x)
+#define OP_DEC(x) Operand().decimal(x)
 
 		if(key == DictKey::FontBBox)
 			return std::vector<Operand> { OP_INT(0), OP_INT(0), OP_INT(0), OP_INT(0) };
@@ -101,8 +99,8 @@ namespace font::cff
 		else
 			return std::nullopt;
 
-	#undef OP_INT
-	#undef OP_DEC
+#undef OP_INT
+#undef OP_DEC
 	}
 
 

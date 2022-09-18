@@ -8,7 +8,7 @@ namespace pdf
 {
 	std::string encodeStringLiteral(zst::str_view sv)
 	{
-	#if 0
+#if 0
 		std::string ret; ret.reserve(sv.size());
 		ret += "(";
 		for(char c : sv)
@@ -36,8 +36,9 @@ namespace pdf
 		}
 
 		return ret + ")";
-	#else
-		std::string ret; ret.reserve(sv.size() * 2 + 2);
+#else
+		std::string ret;
+		ret.reserve(sv.size() * 2 + 2);
 
 		ret += "<";
 		for(uint8_t c : sv)
@@ -45,6 +46,6 @@ namespace pdf
 
 		ret += ">";
 		return ret;
-	#endif
+#endif
 	}
 }

@@ -40,9 +40,12 @@ namespace font::cff
 			off_size = 4;
 
 		auto write_offset = [&off_size, &buf](uint32_t offset) {
-			if(off_size == 1)       buf.append_bytes(static_cast<uint8_t>(offset));
-			else if(off_size == 2)  buf.append_bytes(util::convertBEU16(offset));
-			else                    buf.append_bytes(util::convertBEU32(offset));
+			if(off_size == 1)
+				buf.append_bytes(static_cast<uint8_t>(offset));
+			else if(off_size == 2)
+				buf.append_bytes(util::convertBEU16(offset));
+			else
+				buf.append_bytes(util::convertBEU32(offset));
 		};
 
 		buf.append_bytes(util::convertBEU16(m_offsets.size()));
@@ -151,11 +154,16 @@ namespace font::cff
 		if(op.type == Operand::TYPE_INTEGER)
 		{
 			auto foo = op._integer;
-			if(!force_4byte && -107 <= foo && foo <= 107)           return 1;
-			else if(!force_4byte && 108 <= foo && foo <= 1131)      return 2;
-			else if(!force_4byte && -1131 <= foo && foo <= -108)    return 2;
-			else if(!force_4byte && -32768 <= foo && foo <= 32767)  return 3;
-			else                                                    return 5;
+			if(!force_4byte && -107 <= foo && foo <= 107)
+				return 1;
+			else if(!force_4byte && 108 <= foo && foo <= 1131)
+				return 2;
+			else if(!force_4byte && -1131 <= foo && foo <= -108)
+				return 2;
+			else if(!force_4byte && -32768 <= foo && foo <= 32767)
+				return 3;
+			else
+				return 5;
 		}
 		else if(op.type == Operand::TYPE_DECIMAL)
 		{
@@ -167,7 +175,9 @@ namespace font::cff
 	}
 
 
-	DictBuilder::DictBuilder() { }
+	DictBuilder::DictBuilder()
+	{
+	}
 	DictBuilder::DictBuilder(const Dictionary& from_dict)
 	{
 		m_values.insert(from_dict.values.begin(), from_dict.values.end());
@@ -203,7 +213,7 @@ namespace font::cff
 		return *this;
 	}
 
-	zst::byte_buffer DictBuilder:: serialise()
+	zst::byte_buffer DictBuilder::serialise()
 	{
 		zst::byte_buffer buf {};
 		this->writeInto(buf);
@@ -211,10 +221,8 @@ namespace font::cff
 		return buf;
 	}
 
-	static constexpr DictKey g_AbsoluteOffsetKeys[] = {
-		DictKey::charset, DictKey::Encoding, DictKey::CharStrings,
-		DictKey::Private, DictKey::FDArray, DictKey::FDSelect, DictKey::Subrs
-	};
+	static constexpr DictKey g_AbsoluteOffsetKeys[] = { DictKey::charset, DictKey::Encoding, DictKey::CharStrings,
+		DictKey::Private, DictKey::FDArray, DictKey::FDSelect, DictKey::Subrs };
 
 	static bool is_absolute_offset_key(DictKey key)
 	{
@@ -229,7 +237,7 @@ namespace font::cff
 	size_t DictBuilder::computeSize()
 	{
 		size_t total_size = 0;
-		for(auto& [ key, values ] : m_values)
+		for(auto& [key, values] : m_values)
 		{
 			if(auto def = getDefaultValueForDictKey(key); def.has_value() && def == values)
 				continue;
@@ -270,7 +278,7 @@ namespace font::cff
 		write_key_value(DictKey::SyntheticBase);
 
 		// then, for all keys (skipping ROS or SyntheticBase), just write them.
-		for(auto& [ key, _ ] : m_values)
+		for(auto& [key, _] : m_values)
 		{
 			if(key != DictKey::ROS && key != DictKey::SyntheticBase)
 				write_key_value(key);

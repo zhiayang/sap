@@ -12,7 +12,8 @@ namespace sap::interp
 	{
 
 	private:
-		union {
+		union
+		{
 			// only one non-trivial class,
 			std::vector<Value> v_value_list;
 

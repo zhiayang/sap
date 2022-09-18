@@ -20,8 +20,7 @@ namespace font
 	uint16_t peek_u16(const zst::byte_span& s)
 	{
 		assert(s.size() >= 2);
-		return ((uint16_t) s[0] << 8)
-			| ((uint16_t) s[1] << 0);
+		return ((uint16_t) s[0] << 8) | ((uint16_t) s[1] << 0);
 	}
 
 	int16_t peek_i16(const zst::byte_span& s)
@@ -32,10 +31,7 @@ namespace font
 	uint32_t peek_u32(const zst::byte_span& s)
 	{
 		assert(s.size() >= 4);
-		return ((uint32_t) s[0] << 24)
-			| ((uint32_t) s[1] << 16)
-			| ((uint32_t) s[2] << 8)
-			| ((uint32_t) s[3] << 0);
+		return ((uint32_t) s[0] << 24) | ((uint32_t) s[1] << 16) | ((uint32_t) s[2] << 8) | ((uint32_t) s[3] << 0);
 	}
 
 	uint8_t consume_u8(zst::byte_span& s)
@@ -141,15 +137,24 @@ namespace font
 			auto u16 = storage.drop(nr.offset).take(nr.length);
 			auto text = unicode::utf8FromUtf16BigEndianBytes(u16);
 
-			if(nr.name_id == 0)         font->copyright_info = text;
-			else if(nr.name_id == 1)    font->family_compat = text;
-			else if(nr.name_id == 2)    font->subfamily_compat = text;
-			else if(nr.name_id == 3)    font->unique_name = text;
-			else if(nr.name_id == 4)    font->full_name = text;
-			else if(nr.name_id == 6)    font->postscript_name = text;
-			else if(nr.name_id == 13)   font->license_info = text;
-			else if(nr.name_id == 16)   font->family = text;
-			else if(nr.name_id == 17)   font->subfamily = text;
+			if(nr.name_id == 0)
+				font->copyright_info = text;
+			else if(nr.name_id == 1)
+				font->family_compat = text;
+			else if(nr.name_id == 2)
+				font->subfamily_compat = text;
+			else if(nr.name_id == 3)
+				font->unique_name = text;
+			else if(nr.name_id == 4)
+				font->full_name = text;
+			else if(nr.name_id == 6)
+				font->postscript_name = text;
+			else if(nr.name_id == 13)
+				font->license_info = text;
+			else if(nr.name_id == 16)
+				font->family = text;
+			else if(nr.name_id == 17)
+				font->subfamily = text;
 		}
 
 		if(font->family.empty())
@@ -198,20 +203,20 @@ namespace font
 		}
 
 		/*
-			preferred table order:
+		    preferred table order:
 
-			1. unicode (0): 6, 4, 3
-			2. windows (3): 10, 1
-			3. macos (1): 0
+		    1. unicode (0): 6, 4, 3
+		    2. windows (3): 10, 1
+		    3. macos (1): 0
 
-			TODO: we might also want to discriminate based on the format kind?
+		    TODO: we might also want to discriminate based on the format kind?
 		*/
 
 		bool found = false;
 		CMapTable chosen_table {};
 		int asdf[][2] = { { 0, 6 }, { 0, 4 }, { 0, 3 }, { 3, 10 }, { 3, 1 }, { 1, 0 } };
 
-		for(auto& [ p, e ] : asdf)
+		for(auto& [p, e] : asdf)
 		{
 			for(auto& tbl : subtables)
 			{
@@ -277,7 +282,8 @@ namespace font
 		buf.remove_prefix(post_table.offset);
 
 		// for now we only need the italic angle and the "isfixedpitch" flag.
-		auto version = consume_u32(buf); (void) version;
+		auto version = consume_u32(buf);
+		(void) version;
 
 		{
 			auto whole = consume_i16(buf);
@@ -321,7 +327,7 @@ namespace font
 		auto version = consume_u16(buf);
 
 		// the sTypo things are always available, even at version 0
-		font->metrics.typo_ascent  = peek_i16(buf.drop(66));
+		font->metrics.typo_ascent = peek_i16(buf.drop(66));
 		font->metrics.typo_descent = peek_i16(buf.drop(68));
 		font->metrics.typo_linegap = peek_i16(buf.drop(70));
 
@@ -329,9 +335,7 @@ namespace font
 		// as a value for default line spacing for this font."
 		// (note: we do this regardless of whether fsSelection & USE_TYPO_METRICS is true)
 		// TODO: check if these values are 0 or something -- though they shouldn't be
-		font->metrics.default_line_spacing = font->metrics.typo_ascent
-										   - font->metrics.typo_descent
-										   + font->metrics.typo_linegap;
+		font->metrics.default_line_spacing = font->metrics.typo_ascent - font->metrics.typo_descent + font->metrics.typo_linegap;
 
 		if(version >= 2)
 		{
@@ -344,9 +348,7 @@ namespace font
 	{
 		// hhea should have been parsed already, so this should be present.
 		assert(font->num_hmetrics > 0);
-		font->hmtx_table = zst::byte_span(font->file_bytes, font->file_size)
-			.drop(hmtx_table.offset)
-			.take(hmtx_table.length);
+		font->hmtx_table = zst::byte_span(font->file_bytes, font->file_size).drop(hmtx_table.offset).take(hmtx_table.length);
 
 		// deferred processing -- we only take the glyph data when it is requested.
 	}
@@ -371,9 +373,7 @@ namespace font
 			sap::internal_error("found 'loca' table in file with non-truetype outlines");
 
 		assert(font->truetype_data != nullptr);
-		auto table = zst::byte_span(font->file_bytes, font->file_size)
-			.drop(loca_table.offset)
-			.take(loca_table.length);
+		auto table = zst::byte_span(font->file_bytes, font->file_size).drop(loca_table.offset).take(loca_table.length);
 
 		truetype::parseLocaTable(font, table);
 	}
@@ -384,9 +384,7 @@ namespace font
 			sap::internal_error("found 'glyf' table in file with non-truetype outlines");
 
 		assert(font->truetype_data != nullptr);
-		auto table = zst::byte_span(font->file_bytes, font->file_size)
-			.drop(glyf_table.offset)
-			.take(glyf_table.length);
+		auto table = zst::byte_span(font->file_bytes, font->file_size).drop(glyf_table.offset).take(glyf_table.length);
 
 		truetype::parseGlyfTable(font, table);
 	}
@@ -396,9 +394,7 @@ namespace font
 		if(font->outline_type != FontFile::OUTLINES_CFF)
 			sap::internal_error("found 'CFF' table in file with non-CFF outlines");
 
-		auto cff_data = zst::byte_span(font->file_bytes, font->file_size)
-			.drop(cff_table.offset)
-			.take(cff_table.length);
+		auto cff_data = zst::byte_span(font->file_bytes, font->file_size).drop(cff_table.offset).take(cff_table.length);
 
 		font->cff_data = cff::parseCFFData(font, cff_data);
 	}
@@ -412,15 +408,15 @@ namespace font
 
 
 	/*
-		TODO: we need a better way to parse this. probably some kind of Parser
-		struct that allows marking offset starts and other stuff.
+	    TODO: we need a better way to parse this. probably some kind of Parser
+	    struct that allows marking offset starts and other stuff.
 	*/
 	static Table parse_table(zst::byte_span& buf)
 	{
 		if(buf.size() < 4 * sizeof(uint32_t))
 			sap::internal_error("unexpected end of file (while parsing table header)");
 
-		Table table { };
+		Table table {};
 		table.tag = Tag(consume_u32(buf));
 		table.checksum = consume_u32(buf);
 		table.offset = consume_u32(buf);
@@ -470,11 +466,8 @@ namespace font
 		}
 
 		// there is an order that we want to use:
-		constexpr Tag table_processing_order[] = {
-			Tag("head"), Tag("name"), Tag("hhea"), Tag("hmtx"), Tag("maxp"),
-			Tag("post"), Tag("CFF "), Tag("CFF2"), Tag("glyf"), Tag("loca"),
-			Tag("cmap"), Tag("GPOS"), Tag("GSUB"), Tag("OS/2")
-		};
+		constexpr Tag table_processing_order[] = { Tag("head"), Tag("name"), Tag("hhea"), Tag("hmtx"), Tag("maxp"), Tag("post"),
+			Tag("CFF "), Tag("CFF2"), Tag("glyf"), Tag("loca"), Tag("cmap"), Tag("GPOS"), Tag("GSUB"), Tag("OS/2") };
 
 		// CFF makes its own data (since everything is self-contained in the CFF table)
 		// but for TrueType, it's split across several tables, so just make one here.
@@ -486,20 +479,34 @@ namespace font
 			if(auto it = parsed_tables.find(tag); it != parsed_tables.end())
 			{
 				auto& tbl = it->second;
-				if(tag == Tag("CFF "))      parse_cff_table(font, tbl);
-				else if(tag == Tag("CFF2")) parse_cff_table(font, tbl);
-				else if(tag == Tag("GPOS")) off::parseGPos(font, tbl);
-				else if(tag == Tag("GSUB")) off::parseGSub(font, tbl);
-				else if(tag == Tag("OS/2")) parse_os2_table(font, tbl);
-				else if(tag == Tag("cmap")) parse_cmap_table(font, tbl);
-				else if(tag == Tag("glyf")) parse_glyf_table(font, tbl);
-				else if(tag == Tag("head")) parse_head_table(font, tbl);
-				else if(tag == Tag("hhea")) parse_hhea_table(font, tbl);
-				else if(tag == Tag("hmtx")) parse_hmtx_table(font, tbl);
-				else if(tag == Tag("loca")) parse_loca_table(font, tbl);
-				else if(tag == Tag("maxp")) parse_maxp_table(font, tbl);
-				else if(tag == Tag("name")) parse_name_table(font, tbl);
-				else if(tag == Tag("post")) parse_post_table(font, tbl);
+				if(tag == Tag("CFF "))
+					parse_cff_table(font, tbl);
+				else if(tag == Tag("CFF2"))
+					parse_cff_table(font, tbl);
+				else if(tag == Tag("GPOS"))
+					off::parseGPos(font, tbl);
+				else if(tag == Tag("GSUB"))
+					off::parseGSub(font, tbl);
+				else if(tag == Tag("OS/2"))
+					parse_os2_table(font, tbl);
+				else if(tag == Tag("cmap"))
+					parse_cmap_table(font, tbl);
+				else if(tag == Tag("glyf"))
+					parse_glyf_table(font, tbl);
+				else if(tag == Tag("head"))
+					parse_head_table(font, tbl);
+				else if(tag == Tag("hhea"))
+					parse_hhea_table(font, tbl);
+				else if(tag == Tag("hmtx"))
+					parse_hmtx_table(font, tbl);
+				else if(tag == Tag("loca"))
+					parse_loca_table(font, tbl);
+				else if(tag == Tag("maxp"))
+					parse_maxp_table(font, tbl);
+				else if(tag == Tag("name"))
+					parse_name_table(font, tbl);
+				else if(tag == Tag("post"))
+					parse_post_table(font, tbl);
 			}
 		}
 		return font;
@@ -511,7 +518,7 @@ namespace font
 	FontFile* FontFile::parseFromFile(const std::string& path)
 	{
 		// zpr::println("read {}", path);
-		auto [ buf, len ] = util::readEntireFile(path);
+		auto [buf, len] = util::readEntireFile(path);
 		if(len < 4)
 			sap::internal_error("font file too short");
 

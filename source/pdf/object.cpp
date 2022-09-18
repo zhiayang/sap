@@ -120,7 +120,7 @@ namespace pdf
 
 		w->writeln("<<");
 		w->nesting++;
-		for(auto& [ name, value ] : this->values)
+		for(auto& [name, value] : this->values)
 		{
 			w->write("{}", zpr::w(w->nesting * 2)(""));
 			name.write(w);

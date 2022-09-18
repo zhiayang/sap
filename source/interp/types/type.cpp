@@ -6,7 +6,9 @@
 
 namespace sap::interp
 {
-	Type::~Type() {}
+	Type::~Type()
+	{
+	}
 
 	std::string Type::str() const
 	{
@@ -32,8 +34,8 @@ namespace sap::interp
 		// note: if the kind is a "primitive", we know that we can just compare m_kind.
 		// otherwise, we should call the virtual function. However, we are a primitive; this means
 		// that the other guy must be the non-primitive, so call their sameAs() instead.
-		if(m_kind == KIND_VOID || m_kind == KIND_NUMBER || m_kind == KIND_STRING
-			|| m_kind == KIND_ANY || m_kind == KIND_TREE_INLINE_OBJ)
+		if(m_kind == KIND_VOID || m_kind == KIND_NUMBER || m_kind == KIND_STRING || m_kind == KIND_ANY ||
+			m_kind == KIND_TREE_INLINE_OBJ)
 		{
 			return true;
 		}
@@ -47,18 +49,12 @@ namespace sap::interp
 
 	struct type_eq
 	{
-		constexpr bool operator() (const Type* a, const Type* b) const
-		{
-			return a->sameAs(b);
-		}
+		constexpr bool operator()(const Type* a, const Type* b) const { return a->sameAs(b); }
 	};
 
 	struct type_hash
 	{
-		size_t operator() (const Type* type) const
-		{
-			return std::hash<std::string>{}(type->str());
-		}
+		size_t operator()(const Type* type) const { return std::hash<std::string> {}(type->str()); }
 	};
 
 	std::unordered_set<Type*, type_hash, type_eq> g_type_cache;

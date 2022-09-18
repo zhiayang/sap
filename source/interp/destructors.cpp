@@ -6,5 +6,7 @@
 
 namespace sap::interp
 {
-	Stmt::~Stmt() { }
+	Stmt::~Stmt()
+	{
+	}
 }

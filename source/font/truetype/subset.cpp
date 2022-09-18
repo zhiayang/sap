@@ -40,8 +40,10 @@ namespace font::truetype
 
 			for(size_t gid = 0; gid < font->num_glyphs; gid++)
 			{
-				if(half) loca.append_bytes(util::convertBEU16(glyf.size() / 2));
-				else     loca.append_bytes(util::convertBEU32(glyf.size()));
+				if(half)
+					loca.append_bytes(util::convertBEU16(glyf.size() / 2));
+				else
+					loca.append_bytes(util::convertBEU32(glyf.size()));
 
 				if(used_gids.find(gid) != used_gids.end())
 					glyf.append(tt->glyphs[gid].glyph_data);

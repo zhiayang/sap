@@ -49,7 +49,7 @@ namespace pdf
 		this->markGlyphAsUsed(glyph);
 
 		if(!this->source_file)
-			return { };
+			return {};
 
 		else if(auto it = m_glyph_metrics.find(glyph); it != m_glyph_metrics.end())
 			return it->second;
@@ -89,16 +89,16 @@ namespace pdf
 	{
 		if(auto it = m_extra_unicode_mappings.find(glyph); it != m_extra_unicode_mappings.end() && it->second != codepoints)
 		{
-			sap::warn("font", "conflicting unicode mapping for glyph '{}' (existing: {}, new: {})",
-				glyph, it->second, codepoints);
+			sap::warn("font", "conflicting unicode mapping for glyph '{}' (existing: {}, new: {})", glyph, it->second,
+				codepoints);
 		}
 
 		m_extra_unicode_mappings[glyph] = std::move(codepoints);
 	}
 
 
-	std::map<size_t, font::GlyphAdjustment> Font::getPositioningAdjustmentsForGlyphSequence(
-		zst::span<GlyphId> glyphs, const font::off::FeatureSet& features) const
+	std::map<size_t, font::GlyphAdjustment> Font::getPositioningAdjustmentsForGlyphSequence(zst::span<GlyphId> glyphs,
+		const font::off::FeatureSet& features) const
 	{
 		if(!this->source_file)
 			return {};
@@ -115,7 +115,7 @@ namespace pdf
 		auto subst = font::off::performSubstitutionsForGlyphSequence(this->source_file, glyphs, features);
 
 		auto& cmap = this->source_file->character_mapping;
-		for(auto& [ out, in ] : subst.mapping.replacements)
+		for(auto& [out, in] : subst.mapping.replacements)
 		{
 			this->markGlyphAsUsed(out);
 
@@ -155,7 +155,7 @@ namespace pdf
 			}
 		};
 
-		for(auto& [ out, ins ] : subst.mapping.contractions)
+		for(auto& [out, ins] : subst.mapping.contractions)
 		{
 			this->markGlyphAsUsed(out);
 			std::vector<Codepoint> in_cps {};

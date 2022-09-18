@@ -21,15 +21,15 @@ namespace pdf
 	struct Writer;
 
 	/*
-		PDF objects, which include: booleans, integers,
-		real numbers, arrays, dictionaries, and streams.
+	    PDF objects, which include: booleans, integers,
+	    real numbers, arrays, dictionaries, and streams.
 
-		dictionaries and streams are always referred to indirectly by
-		default, except when written with writeFull(). Otherwise,
-		the "simple types" (including arrays) are written out in full
-		at their point of use, and don't get an id/generation.
+	    dictionaries and streams are always referred to indirectly by
+	    default, except when written with writeFull(). Otherwise,
+	    the "simple types" (including arrays) are written out in full
+	    at their point of use, and don't get an id/generation.
 
-		names are never indirect, they are always written properly.
+	    names are never indirect, they are always written properly.
 	*/
 
 	struct Stream;
@@ -95,7 +95,7 @@ namespace pdf
 		static String* create(zst::str_view value);
 
 
-		std::string value { };
+		std::string value {};
 	};
 
 	struct Name : Object
@@ -108,7 +108,7 @@ namespace pdf
 		// special because our builtin names are values and not pointers
 		Name* ptr() const { return const_cast<Name*>(this); }
 
-		std::string name { };
+		std::string name {};
 	};
 
 	struct Array : Object
@@ -225,7 +225,7 @@ namespace pdf
 
 
 
-	static inline bool operator < (const Name& a, const Name& b)
+	static inline bool operator<(const Name& a, const Name& b)
 	{
 		return a.name < b.name;
 	}
@@ -235,57 +235,57 @@ namespace pdf
 	namespace names
 	{
 		// TODO: this shit needs to be interned without a shitty usage api like this
-		static const auto Type            = pdf::Name("Type");
-		static const auto Catalog         = pdf::Name("Catalog");
-		static const auto Size            = pdf::Name("Size");
-		static const auto Count           = pdf::Name("Count");
-		static const auto Kids            = pdf::Name("Kids");
-		static const auto Root            = pdf::Name("Root");
-		static const auto Parent          = pdf::Name("Parent");
-		static const auto Page            = pdf::Name("Page");
-		static const auto Length          = pdf::Name("Length");
-		static const auto Length1         = pdf::Name("Length1");
-		static const auto Pages           = pdf::Name("Pages");
-		static const auto Font            = pdf::Name("Font");
-		static const auto FontName        = pdf::Name("FontName");
-		static const auto Contents        = pdf::Name("Contents");
-		static const auto Type0           = pdf::Name("Type0");
-		static const auto Type1           = pdf::Name("Type1");
-		static const auto Subtype         = pdf::Name("Subtype");
-		static const auto Name            = pdf::Name("Name");
-		static const auto BaseFont        = pdf::Name("BaseFont");
-		static const auto Identity        = pdf::Name("Identity");
-		static const auto Registry        = pdf::Name("Registry");
-		static const auto Sap             = pdf::Name("Sap");
-		static const auto Ordering        = pdf::Name("Ordering");
-		static const auto Supplement      = pdf::Name("Supplement");
-		static const auto FontDescriptor  = pdf::Name("FontDescriptor");
-		static const auto Encoding        = pdf::Name("Encoding");
-		static const auto Flags           = pdf::Name("Flags");
-		static const auto Filter          = pdf::Name("Filter");
-		static const auto FlateDecode     = pdf::Name("FlateDecode");
-		static const auto Resources       = pdf::Name("Resources");
-		static const auto MediaBox        = pdf::Name("MediaBox");
-		static const auto TrueType        = pdf::Name("TrueType");
-		static const auto FontBBox        = pdf::Name("FontBBox");
-		static const auto CapHeight       = pdf::Name("CapHeight");
-		static const auto XHeight         = pdf::Name("XHeight");
-		static const auto StemV           = pdf::Name("StemV");
-		static const auto W               = pdf::Name("W");
-		static const auto DW              = pdf::Name("DW");
-		static const auto Ascent          = pdf::Name("Ascent");
-		static const auto Descent         = pdf::Name("Descent");
-		static const auto ItalicAngle     = pdf::Name("ItalicAngle");
-		static const auto FontFile2       = pdf::Name("FontFile2");
-		static const auto FontFile3       = pdf::Name("FontFile3");
+		static const auto Type = pdf::Name("Type");
+		static const auto Catalog = pdf::Name("Catalog");
+		static const auto Size = pdf::Name("Size");
+		static const auto Count = pdf::Name("Count");
+		static const auto Kids = pdf::Name("Kids");
+		static const auto Root = pdf::Name("Root");
+		static const auto Parent = pdf::Name("Parent");
+		static const auto Page = pdf::Name("Page");
+		static const auto Length = pdf::Name("Length");
+		static const auto Length1 = pdf::Name("Length1");
+		static const auto Pages = pdf::Name("Pages");
+		static const auto Font = pdf::Name("Font");
+		static const auto FontName = pdf::Name("FontName");
+		static const auto Contents = pdf::Name("Contents");
+		static const auto Type0 = pdf::Name("Type0");
+		static const auto Type1 = pdf::Name("Type1");
+		static const auto Subtype = pdf::Name("Subtype");
+		static const auto Name = pdf::Name("Name");
+		static const auto BaseFont = pdf::Name("BaseFont");
+		static const auto Identity = pdf::Name("Identity");
+		static const auto Registry = pdf::Name("Registry");
+		static const auto Sap = pdf::Name("Sap");
+		static const auto Ordering = pdf::Name("Ordering");
+		static const auto Supplement = pdf::Name("Supplement");
+		static const auto FontDescriptor = pdf::Name("FontDescriptor");
+		static const auto Encoding = pdf::Name("Encoding");
+		static const auto Flags = pdf::Name("Flags");
+		static const auto Filter = pdf::Name("Filter");
+		static const auto FlateDecode = pdf::Name("FlateDecode");
+		static const auto Resources = pdf::Name("Resources");
+		static const auto MediaBox = pdf::Name("MediaBox");
+		static const auto TrueType = pdf::Name("TrueType");
+		static const auto FontBBox = pdf::Name("FontBBox");
+		static const auto CapHeight = pdf::Name("CapHeight");
+		static const auto XHeight = pdf::Name("XHeight");
+		static const auto StemV = pdf::Name("StemV");
+		static const auto W = pdf::Name("W");
+		static const auto DW = pdf::Name("DW");
+		static const auto Ascent = pdf::Name("Ascent");
+		static const auto Descent = pdf::Name("Descent");
+		static const auto ItalicAngle = pdf::Name("ItalicAngle");
+		static const auto FontFile2 = pdf::Name("FontFile2");
+		static const auto FontFile3 = pdf::Name("FontFile3");
 		static const auto DescendantFonts = pdf::Name("DescendantFonts");
-		static const auto CIDToGIDMap     = pdf::Name("CIDToGIDMap");
-		static const auto ToUnicode       = pdf::Name("ToUnicode");
-		static const auto CIDSet          = pdf::Name("CIDSet");
-		static const auto CIDSystemInfo   = pdf::Name("CIDSystemInfo");
-		static const auto CIDFontType0    = pdf::Name("CIDFontType0");
-		static const auto CIDFontType0C   = pdf::Name("CIDFontType0C");
-		static const auto CIDFontType2    = pdf::Name("CIDFontType2");
-		static const auto OpenType        = pdf::Name("OpenType");
+		static const auto CIDToGIDMap = pdf::Name("CIDToGIDMap");
+		static const auto ToUnicode = pdf::Name("ToUnicode");
+		static const auto CIDSet = pdf::Name("CIDSet");
+		static const auto CIDSystemInfo = pdf::Name("CIDSystemInfo");
+		static const auto CIDFontType0 = pdf::Name("CIDFontType0");
+		static const auto CIDFontType0C = pdf::Name("CIDFontType0C");
+		static const auto CIDFontType2 = pdf::Name("CIDFontType2");
+		static const auto OpenType = pdf::Name("OpenType");
 	}
 }

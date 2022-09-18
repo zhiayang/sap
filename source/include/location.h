@@ -16,7 +16,7 @@
 namespace sap
 {
 	/*
-		Internal location members are 0-based; when printing, convert to 1-based yourself.
+	    Internal location members are 0-based; when printing, convert to 1-based yourself.
 	*/
 	struct Location
 	{
@@ -43,7 +43,7 @@ namespace sap
 		}
 		else
 		{
-			zpr::fprintln(stderr, "<no location>: error: {}",  zpr::fwd(fmt, static_cast<Args&&>(args)...));
+			zpr::fprintln(stderr, "<no location>: error: {}", zpr::fwd(fmt, static_cast<Args&&>(args)...));
 			exit(1);
 		}
 	}

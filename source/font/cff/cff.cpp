@@ -91,12 +91,12 @@ namespace font::cff
 		cff->bytes = buf;
 
 		/*
-			the first 5 items are in a fixed order:
-			Header
-			Name (INDEX + Data)
-			Top DICT (INDEX + Data),
-			Strings (INDEX + Data),
-			Global Subrs INDEX
+		    the first 5 items are in a fixed order:
+		    Header
+		    Name (INDEX + Data)
+		    Top DICT (INDEX + Data),
+		    Strings (INDEX + Data),
+		    Global Subrs INDEX
 		*/
 
 		// first, the header
@@ -107,13 +107,11 @@ namespace font::cff
 			// TODO: we might not have parsed the name information yet!
 			if(a != 1 && a != 2)
 			{
-				sap::error("font/cff", "font '{}' has unsupported CFF version '{}.{}'",
-					font->full_name, a, b);
+				sap::error("font/cff", "font '{}' has unsupported CFF version '{}.{}'", font->full_name, a, b);
 			}
 			else if(b != 0)
 			{
-				sap::warn("font/cff", "font '{}' has unsupported CFF version '{}.{}' (expected minor 0)",
-					font->full_name, a, b);
+				sap::warn("font/cff", "font '{}' has unsupported CFF version '{}.{}' (expected minor 0)", font->full_name, a, b);
 			}
 
 			if(a == 2)
@@ -228,7 +226,7 @@ namespace font::cff
 				charset_mapping = readCharsetTable(cff->charstrings_table.count, cff->bytes.drop(charset_ofs));
 
 			// charset-mapping maps from gid -> sid or cid, depending on whether this is a CID font or not
-			for(auto& [ gid, sid ] : charset_mapping)
+			for(auto& [gid, sid] : charset_mapping)
 			{
 				Glyph glyph {};
 				glyph.gid = gid;
@@ -244,7 +242,8 @@ namespace font::cff
 			}
 		}
 
-		auto read_private_dict_and_local_subrs_from_dict = [cff](const Dictionary& dict) -> auto {
+		auto read_private_dict_and_local_subrs_from_dict = [cff](const Dictionary& dict) -> auto
+		{
 			auto foo = dict.get(DictKey::Private);
 			if(foo.size() != 2)
 				sap::error("font/cff", "missing Private DICT");
@@ -272,7 +271,7 @@ namespace font::cff
 
 		if(!cff->is_cidfont)
 		{
-			auto [ private_dict, local_subrs ] = read_private_dict_and_local_subrs_from_dict(cff->top_dict);
+			auto [private_dict, local_subrs] = read_private_dict_and_local_subrs_from_dict(cff->top_dict);
 
 			FontDict fontdict {};
 			fontdict.private_dict = std::move(private_dict);
@@ -290,7 +289,7 @@ namespace font::cff
 				FontDict fd {};
 				fd.dict = readDictionary(fdarray_table.get_item(i));
 
-				auto [ private_dict, local_subrs ] = read_private_dict_and_local_subrs_from_dict(fd.dict);
+				auto [private_dict, local_subrs] = read_private_dict_and_local_subrs_from_dict(fd.dict);
 				fd.private_dict = std::move(private_dict);
 				fd.local_subrs = std::move(local_subrs);
 
@@ -319,9 +318,7 @@ namespace font::cff
 					auto first = consume_u16(fdselect_data);
 					auto fd = consume_u8(fdselect_data);
 
-					auto last = (i + 1 == num_ranges)
-						? last_gid
-						: peek_u16(fdselect_data);
+					auto last = (i + 1 == num_ranges) ? last_gid : peek_u16(fdselect_data);
 
 					for(auto gid = first; gid < last; gid++)
 						cff->glyphs[gid].font_dict_idx = fd;

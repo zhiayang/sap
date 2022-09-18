@@ -58,12 +58,9 @@ namespace unicode
 		std::string ret;
 		for(size_t i = 0; i < bytes.size(); i += 2)
 		{
-			uint16_t fst = ((uint16_t) bytes[i + 0] << 8)
-						 | ((uint16_t) bytes[i + 1] << 0);
+			uint16_t fst = ((uint16_t) bytes[i + 0] << 8) | ((uint16_t) bytes[i + 1] << 0);
 
-			uint16_t snd = i + 3 < bytes.size()
-				? ((uint16_t) bytes[i + 2] << 8) | ((uint16_t) bytes[i + 3] << 0)
-				: 0;
+			uint16_t snd = i + 3 < bytes.size() ? ((uint16_t) bytes[i + 2] << 8) | ((uint16_t) bytes[i + 3] << 0) : 0;
 
 			bool surrogate = convert_one_utf16(ret, fst, snd);
 			if(surrogate)
@@ -90,11 +87,8 @@ namespace unicode
 		assert(cp <= 0x10FFFF);
 
 		auto high = ((cp - 0x10'0000) & 0xFFC000) >> 10;
-		auto low  = ((cp - 0x10'0000) & 0x0003FF) >> 0;
+		auto low = ((cp - 0x10'0000) & 0x0003FF) >> 0;
 
-		return {
-			static_cast<uint16_t>(high + 0xD800),
-			static_cast<uint16_t>(low + 0xDC00)
-		};
+		return { static_cast<uint16_t>(high + 0xD800), static_cast<uint16_t>(low + 0xDC00) };
 	}
 }

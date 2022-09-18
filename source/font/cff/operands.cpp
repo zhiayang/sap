@@ -16,35 +16,35 @@ namespace font::cff
 			return {};
 
 		auto b0 = buf[0];
-		if(32 <= b0 && b0 <= 246)           // 0x20 - 0xf6
+		if(32 <= b0 && b0 <= 246) // 0x20 - 0xf6
 		{
 			buf.remove_prefix(1);
 			return Operand().integer(b0 - 139);
 		}
-		else if(247 <= b0 && b0 <= 250)     // 0xf7 - 0xfa
+		else if(247 <= b0 && b0 <= 250) // 0xf7 - 0xfa
 		{
 			auto b1 = buf[1];
 			buf.remove_prefix(2);
 			return Operand().integer((b0 - 247) * 256 + b1 + 108);
 		}
-		else if(251 <= b0 && b0 <= 254)     // 0xfb - 0xfe
+		else if(251 <= b0 && b0 <= 254) // 0xfb - 0xfe
 		{
 			auto b1 = buf[1];
 			buf.remove_prefix(2);
 			return Operand().integer(-(b0 - 251) * 256 - b1 - 108);
 		}
-		else if(b0 == 28)                   // 0x1c
+		else if(b0 == 28) // 0x1c
 		{
 			// easy (big endian)
 			buf.remove_prefix(1);
 			return Operand().integer((int16_t) consume_u16(buf));
 		}
-		else if(is_dict && b0 == 29)        // 0x1d
+		else if(is_dict && b0 == 29) // 0x1d
 		{
 			buf.remove_prefix(1);
 			return Operand().integer((int32_t) consume_u32(buf));
 		}
-		else if(!is_dict && b0 == 255)      // 0x1e
+		else if(!is_dict && b0 == 255) // 0x1e
 		{
 			buf.remove_prefix(1);
 			return Operand().fixed((int32_t) consume_u32(buf));
@@ -138,8 +138,10 @@ namespace font::cff
 
 			while(exponent != 0)
 			{
-				if(negative_exponent)   value /= 10.0;
-				else                    value *= 10.0;
+				if(negative_exponent)
+					value /= 10.0;
+				else
+					value *= 10.0;
 				exponent--;
 			}
 

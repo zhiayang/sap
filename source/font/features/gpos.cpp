@@ -21,40 +21,40 @@ namespace font::off::gpos
 	}
 
 	/*
-		Perform a lookup in the provided table for any adjustments to glyphs in the provided sequence.
-		Returns a mapping from sequence index to the adjustment for the glyph at that index.
+	    Perform a lookup in the provided table for any adjustments to glyphs in the provided sequence.
+	    Returns a mapping from sequence index to the adjustment for the glyph at that index.
 
-		Since this is a general lookup, it takes the entire glyphstring as well as a current position;
-		glyphs at prior indices (ie. < position) are used as lookbehind for chained contextual lookups,
-		if necessary.
+	    Since this is a general lookup, it takes the entire glyphstring as well as a current position;
+	    glyphs at prior indices (ie. < position) are used as lookbehind for chained contextual lookups,
+	    if necessary.
 
-		Lookups will be searched for glyphs starting from glyphs[position], and *not* at glyph[0].
+	    Lookups will be searched for glyphs starting from glyphs[position], and *not* at glyph[0].
 
-		In the returned mapping,
-			adjustments[0] adjusts glyphs[position],
-			adjustments[1] adjusts glyphs[position + 1],
+	    In the returned mapping,
+	        adjustments[0] adjusts glyphs[position],
+	        adjustments[1] adjusts glyphs[position + 1],
 
-		and so on. it does *not* apply to glyphs[0], glyphs[1], etc., unless position == 0.
+	    and so on. it does *not* apply to glyphs[0], glyphs[1], etc., unless position == 0.
 	*/
 	std::map<size_t, GlyphAdjustment> lookupForGlyphSequence(const GPosTable& gpos_table, const LookupTable& lookup,
 		zst::span<GlyphId> glyphs, size_t position)
 	{
 		/*
-			OFF 1.9, page 217 (part 2)
+		    OFF 1.9, page 217 (part 2)
 
-			To move to the "next" glyph, the client will typically skip all the glyphs that participated
-			in the lookup operation: glyphs that were positioned as well as any other glyphs that formed a
-			context for the operation.
+		    To move to the "next" glyph, the client will typically skip all the glyphs that participated
+		    in the lookup operation: glyphs that were positioned as well as any other glyphs that formed a
+		    context for the operation.
 
-			There is just one exception: the "next" glyph in a sequence may be one of those that formed a
-			context for the operation just performed. For example, in the case of pair positioning operations
-			(i.e., kerning), if the ValueRecord for the second glyph is null, that glyph is treated as the
-			"next" glyph in the sequence.
-			-----------------------------
+		    There is just one exception: the "next" glyph in a sequence may be one of those that formed a
+		    context for the operation just performed. For example, in the case of pair positioning operations
+		    (i.e., kerning), if the ValueRecord for the second glyph is null, that glyph is treated as the
+		    "next" glyph in the sequence.
+		    -----------------------------
 
-			TL;DR: i have no fucking clue. In which cases are there exceptions? In which cases not? idk.
-			For now, the only exception is the pair lookup. For contextual and chaining lookups, we know
-			the number of glyphs in the input sequence, so I assume that they all get skipped.
+		    TL;DR: i have no fucking clue. In which cases are there exceptions? In which cases not? idk.
+		    For now, the only exception is the pair lookup. For contextual and chaining lookups, we know
+		    the number of glyphs in the input sequence, so I assume that they all get skipped.
 		*/
 
 		std::map<size_t, GlyphAdjustment> adjustments {};
@@ -70,7 +70,7 @@ namespace font::off::gpos
 			}
 			else if((lookup.type == gpos::LOOKUP_PAIR) && (i + 1 < glyphs.size()))
 			{
-				auto [ a1, a2 ] = gpos::lookupPairAdjustment(lookup, glyphs[i], glyphs[i + 1]);
+				auto [a1, a2] = gpos::lookupPairAdjustment(lookup, glyphs[i], glyphs[i + 1]);
 				if(a1.has_value())
 					combine_adjustments(adjustments[i - position], *a1);
 
@@ -94,7 +94,7 @@ namespace font::off::gpos
 				if(result.has_value())
 				{
 					// same deal with offsets and jumping as normal contextual lookups
-					for(auto& [ idx, adj ] : result->adjustments)
+					for(auto& [idx, adj] : result->adjustments)
 						combine_adjustments(adjustments[i + idx - position], adj);
 
 					// i already gets incremented by 1 by the loop
@@ -115,16 +115,24 @@ namespace font::off::gpos
 		if(format == 0)
 			return std::nullopt;
 
-		GlyphAdjustment ret { };
+		GlyphAdjustment ret {};
 
-		if(format & 0x01)   ret.horz_placement = consume_u16(buf);
-		if(format & 0x02)   ret.vert_placement = consume_u16(buf);
-		if(format & 0x04)   ret.horz_advance = consume_u16(buf);
-		if(format & 0x08)   ret.vert_advance = consume_u16(buf);
-		if(format & 0x10)   consume_u16(buf);   // X_PLACEMENT_DEVICE
-		if(format & 0x20)   consume_u16(buf);   // Y_PLACEMENT_DEVICE
-		if(format & 0x40)   consume_u16(buf);   // X_ADVANCE_DEVICE
-		if(format & 0x80)   consume_u16(buf);   // Y_ADVANCE_DEVICE
+		if(format & 0x01)
+			ret.horz_placement = consume_u16(buf);
+		if(format & 0x02)
+			ret.vert_placement = consume_u16(buf);
+		if(format & 0x04)
+			ret.horz_advance = consume_u16(buf);
+		if(format & 0x08)
+			ret.vert_advance = consume_u16(buf);
+		if(format & 0x10)
+			consume_u16(buf); // X_PLACEMENT_DEVICE
+		if(format & 0x20)
+			consume_u16(buf); // Y_PLACEMENT_DEVICE
+		if(format & 0x40)
+			consume_u16(buf); // X_ADVANCE_DEVICE
+		if(format & 0x80)
+			consume_u16(buf); // Y_ADVANCE_DEVICE
 
 		return ret;
 	}
@@ -132,14 +140,22 @@ namespace font::off::gpos
 	constexpr static size_t get_value_record_size(uint16_t format)
 	{
 		size_t ret = 0;
-		if(format & 0x01)   ret += sizeof(uint16_t);
-		if(format & 0x02)   ret += sizeof(uint16_t);
-		if(format & 0x04)   ret += sizeof(uint16_t);
-		if(format & 0x08)   ret += sizeof(uint16_t);
-		if(format & 0x10)   ret += sizeof(uint16_t);
-		if(format & 0x20)   ret += sizeof(uint16_t);
-		if(format & 0x40)   ret += sizeof(uint16_t);
-		if(format & 0x80)   ret += sizeof(uint16_t);
+		if(format & 0x01)
+			ret += sizeof(uint16_t);
+		if(format & 0x02)
+			ret += sizeof(uint16_t);
+		if(format & 0x04)
+			ret += sizeof(uint16_t);
+		if(format & 0x08)
+			ret += sizeof(uint16_t);
+		if(format & 0x10)
+			ret += sizeof(uint16_t);
+		if(format & 0x20)
+			ret += sizeof(uint16_t);
+		if(format & 0x40)
+			ret += sizeof(uint16_t);
+		if(format & 0x80)
+			ret += sizeof(uint16_t);
 		return ret;
 	}
 
@@ -208,9 +224,8 @@ namespace font::off::gpos
 					auto num_pair_sets = consume_u16(subtable);
 					assert(*cov_idx < num_pair_sets);
 
-					const auto PairRecordSize = sizeof(uint16_t)
-						+ get_value_record_size(value_fmt1)
-						+ get_value_record_size(value_fmt2);
+					const auto PairRecordSize =
+						sizeof(uint16_t) + get_value_record_size(value_fmt1) + get_value_record_size(value_fmt2);
 
 					auto pairset_offset = peek_u16(subtable.drop(*cov_idx * sizeof(uint16_t)));
 					auto pairset_table = subtable_start.drop(pairset_offset);
@@ -289,13 +304,13 @@ namespace font::off::gpos
 	{
 		// ok, we matched this one.
 		std::map<size_t, GlyphAdjustment> adjustments {};
-		for(auto [ glyph_idx, lookup_idx ] : records.first)
+		for(auto [glyph_idx, lookup_idx] : records.first)
 		{
 			assert(lookup_idx < gpos.lookups.size());
 			auto& nested_lookup = gpos.lookups[lookup_idx];
 
 			auto new_adjs = lookupForGlyphSequence(gpos, nested_lookup, glyphs, /* pos: */ position + glyph_idx);
-			for(auto& [ idx, adj ] : new_adjs)
+			for(auto& [idx, adj] : new_adjs)
 				combine_adjustments(adjustments[idx], adj);
 		}
 
@@ -338,20 +353,20 @@ namespace font::off::gpos
 
 namespace font::off
 {
-	std::map<size_t, GlyphAdjustment> getPositioningAdjustmentsForGlyphSequence(FontFile* font,
-		zst::span<GlyphId> glyphs, const FeatureSet& features)
+	std::map<size_t, GlyphAdjustment> getPositioningAdjustmentsForGlyphSequence(FontFile* font, zst::span<GlyphId> glyphs,
+		const FeatureSet& features)
 	{
 		auto gpos = font->gpos_table;
 
 		/*
-			OFF 1.9, page 217
+		    OFF 1.9, page 217
 
-			During text processing, a client applies a lookup to each glyph in the string before moving
-			to the next lookup. A lookup is finished for a glyph after the client locates the target glyph
-			or glyph context and performs a positioning action, if specified.
-			-----------------------------
+		    During text processing, a client applies a lookup to each glyph in the string before moving
+		    to the next lookup. A lookup is finished for a glyph after the client locates the target glyph
+		    or glyph context and performs a positioning action, if specified.
+		    -----------------------------
 
-			TL;DR: for(lookups) { for(glyphs) { ... } }, and *NOT* the transposed.
+		    TL;DR: for(lookups) { for(glyphs) { ... } }, and *NOT* the transposed.
 		*/
 
 		std::map<size_t, GlyphAdjustment> adjustments {};
@@ -364,11 +379,10 @@ namespace font::off
 
 			// in this case, we want to lookup the entire sequence, so start at position 0.
 			auto new_adjs = gpos::lookupForGlyphSequence(gpos, lookup, glyphs, /* position: */ 0);
-			for(auto& [ idx, adj ] : new_adjs)
+			for(auto& [idx, adj] : new_adjs)
 				gpos::combine_adjustments(adjustments[idx], adj);
 		}
 
 		return adjustments;
 	}
 }
-

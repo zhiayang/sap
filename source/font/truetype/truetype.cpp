@@ -30,13 +30,18 @@ namespace font::truetype
 			auto gid = consume_u16(data);
 
 			// ARG_1_AND_2_ARE_WORDS
-			if(flags & 0x0001)      consume_u16(data), consume_u16(data);
-			else                    consume_u8(data), consume_u8(data);
+			if(flags & 0x0001)
+				consume_u16(data), consume_u16(data);
+			else
+				consume_u8(data), consume_u8(data);
 
 			// WE_HAVE_A_SCALE (0x8); WE_HAVE_AN_X_AND_Y_SCALE (0x40); WE_HAVE_A_TWO_BY_TWO (0x80)
-			if(flags & 0x0008)      consume_u16(data);
-			else if(flags & 0x0040) consume_u16(data), consume_u16(data);
-			else if(flags & 0x0080) consume_u16(data), consume_u16(data), consume_u16(data), consume_u16(data);
+			if(flags & 0x0008)
+				consume_u16(data);
+			else if(flags & 0x0040)
+				consume_u16(data), consume_u16(data);
+			else if(flags & 0x0080)
+				consume_u16(data), consume_u16(data), consume_u16(data), consume_u16(data);
 
 			// TODO: handle `USE_MY_METRICS` flag, or see if it's even useful. isn't there hmtx for that?
 
@@ -58,13 +63,17 @@ namespace font::truetype
 
 		bool half = tt->loca_bytes_per_entry == 2;
 		auto get_ofs = [&]() -> uint32_t {
-			if(half)    return 2 * consume_u16(loca_table);
-			else        return 1 * consume_u32(loca_table);
+			if(half)
+				return 2 * consume_u16(loca_table);
+			else
+				return 1 * consume_u32(loca_table);
 		};
 
 		auto peek_ofs = [&]() -> uint32_t {
-			if(half)    return 2 * peek_u16(loca_table);
-			else        return 1 * peek_u32(loca_table);
+			if(half)
+				return 2 * peek_u16(loca_table);
+			else
+				return 1 * peek_u32(loca_table);
 		};
 
 		for(size_t i = 0; i < font->num_glyphs; i++)

@@ -22,10 +22,10 @@ namespace font::off::gsub
 		zst::span<GlyphId> glyphs, size_t position)
 	{
 		/*
-			cf. the comment in `lookupForGlyphSequence` in gpos
+		    cf. the comment in `lookupForGlyphSequence` in gpos
 
-			for GSUB i think it's a little more direct, because each "match" gives us the number of glyphs
-			to consume from the input sequence -- so we just skip that amount.
+		    for GSUB i think it's a little more direct, because each "match" gives us the number of glyphs
+		    to consume from the input sequence -- so we just skip that amount.
 		*/
 
 		size_t sub_begin = 0;
@@ -40,16 +40,13 @@ namespace font::off::gsub
 				if(result.has_value())
 				{
 					/*
-						we need to perform some copying. say we have glyphs[0..9]. If we substituted
-						glyphs[1..3], then we have sub_begin=1, sub_end=3.
+					    we need to perform some copying. say we have glyphs[0..9]. If we substituted
+					    glyphs[1..3], then we have sub_begin=1, sub_end=3.
 
-						if we are now at i=7 and we want to substitute glyphs[7..8], then we must
-						copy glyphs[4..6] to the output array as well.
+					    if we are now at i=7 and we want to substitute glyphs[7..8], then we must
+					    copy glyphs[4..6] to the output array as well.
 					*/
-					result->glyphs.insert(result->glyphs.end(),
-						glyphs.begin() + sub_end,
-						glyphs.begin() + i
-					);
+					result->glyphs.insert(result->glyphs.end(), glyphs.begin() + sub_end, glyphs.begin() + i);
 
 					sub_end = i + num;
 				}
@@ -90,7 +87,7 @@ namespace font::off::gsub
 					auto foo = glyphs.drop(i).take(subst->second);
 					result->mapping.contractions.insert({ subst->first, std::vector(foo.begin(), foo.end()) });
 
-					i += subst->second - 1;   // skip over the processed glyphs
+					i += subst->second - 1; // skip over the processed glyphs
 				}
 			}
 			else if(lookup.type == LOOKUP_CONTEXTUAL || lookup.type == LOOKUP_CHAINING_CONTEXT)
@@ -196,10 +193,10 @@ namespace font::off::gsub
 			auto sequence = subtable_start.drop(seq_ofs);
 
 			/*
-				spec:
+			    spec:
 
-				The use of multiple substitution for deletion of an input glyph is prohibited.
-				The glyphCount value should always be greater than 0.
+			    The use of multiple substitution for deletion of an input glyph is prohibited.
+			    The glyphCount value should always be greater than 0.
 			*/
 			auto num_glyphs = consume_u16(sequence);
 			assert(num_glyphs > 0);
@@ -214,8 +211,7 @@ namespace font::off::gsub
 		return std::nullopt;
 	}
 
-	std::optional<std::pair<GlyphId, size_t>> lookupLigatureSubstitution(const LookupTable& lookup,
-		zst::span<GlyphId> glyphs)
+	std::optional<std::pair<GlyphId, size_t>> lookupLigatureSubstitution(const LookupTable& lookup, zst::span<GlyphId> glyphs)
 	{
 		assert(glyphs.size() > 0);
 		assert(lookup.type == LOOKUP_LIGATURE);
@@ -273,14 +269,13 @@ namespace font::off::gsub
 
 	using SubstLookupRecord = ContextualLookupRecord;
 	static GlyphReplacement apply_lookup_records(const GSubTable& gsub_table,
-		const std::pair<std::vector<SubstLookupRecord>, size_t>& records,
-		zst::span<GlyphId> glyphs, size_t position)
+		const std::pair<std::vector<SubstLookupRecord>, size_t>& records, zst::span<GlyphId> glyphs, size_t position)
 	{
 		/*
-			so the idea is, instead of copying around the entire glyphstring like a fool,  when we
-			perform a lookup that substitutes stuff, we replace the input sequence part of this array,
-			without touching the lookbehind part. Then, we copy the lookahead part at the end. this saves...
-			a few copies, probably.
+		    so the idea is, instead of copying around the entire glyphstring like a fool,  when we
+		    perform a lookup that substitutes stuff, we replace the input sequence part of this array,
+		    without touching the lookbehind part. Then, we copy the lookahead part at the end. this saves...
+		    a few copies, probably.
 		*/
 		auto num_input_glyphs = records.second;
 		auto glyphstring = std::vector<GlyphId>(glyphs.begin(), glyphs.end());
@@ -288,7 +283,7 @@ namespace font::off::gsub
 
 		SubstitutionMapping sub_mapping {};
 
-		for(auto [ glyph_idx, lookup_idx ] : records.first)
+		for(auto [glyph_idx, lookup_idx] : records.first)
 		{
 			assert(lookup_idx < gsub_table.lookups.size());
 			auto& nested_lookup = gsub_table.lookups[lookup_idx];
@@ -298,16 +293,12 @@ namespace font::off::gsub
 			if(result.has_value())
 			{
 				// erase out the replaced glyphs, leaving the untouched glyphs and the lookahead.
-				glyphstring.erase(
-					glyphstring.begin() + position + result->input_start,
-					glyphstring.begin() + position + result->input_consumed
-				);
+				glyphstring.erase(glyphstring.begin() + position + result->input_start,
+					glyphstring.begin() + position + result->input_consumed);
 
 				// copy over the new glyphs to the correct location
 				glyphstring.insert(glyphstring.begin() + position + result->input_start,
-					std::move_iterator(result->glyphs.begin()),
-					std::move_iterator(result->glyphs.end())
-				);
+					std::move_iterator(result->glyphs.begin()), std::move_iterator(result->glyphs.end()));
 
 				combine_subst_mapping(sub_mapping, std::move(result->mapping));
 			}
@@ -368,7 +359,9 @@ namespace font::off
 		result.glyphs = std::vector<GlyphId>(input.begin(), input.end());
 		auto& glyphs = result.glyphs;
 
-		auto span = [](auto& g) { return zst::span<GlyphId>(g.data(), g.size()); };
+		auto span = [](auto& g) {
+			return zst::span<GlyphId>(g.data(), g.size());
+		};
 
 		for(auto& lookup_idx : lookups)
 		{
@@ -379,15 +372,10 @@ namespace font::off
 			auto subst = gsub::lookupForGlyphSequence(gsub_table, lookup, span(glyphs), /* position: */ 0);
 			if(subst.has_value())
 			{
-				glyphs.erase(
-					glyphs.begin() + subst->input_start,
-					glyphs.begin() + subst->input_start + subst->input_consumed
-				);
+				glyphs.erase(glyphs.begin() + subst->input_start, glyphs.begin() + subst->input_start + subst->input_consumed);
 				// copy over the new glyphs to the correct location
-				glyphs.insert(glyphs.begin() + subst->input_start,
-					std::move_iterator(subst->glyphs.begin()),
-					std::move_iterator(subst->glyphs.end())
-				);
+				glyphs.insert(glyphs.begin() + subst->input_start, std::move_iterator(subst->glyphs.begin()),
+					std::move_iterator(subst->glyphs.end()));
 
 				gsub::combine_subst_mapping(result.mapping, std::move(subst->mapping));
 			}
@@ -396,4 +384,3 @@ namespace font::off
 		return result;
 	}
 }
-

@@ -20,12 +20,10 @@ namespace pdf
 		w->writeln();
 
 		auto pagetree = this->createPageTree();
-		auto root = Dictionary::createIndirect(this, names::Catalog, {
-			{ names::Pages, IndirectRef::create(pagetree) }
-		});
+		auto root = Dictionary::createIndirect(this, names::Catalog, { { names::Pages, IndirectRef::create(pagetree) } });
 
 		// write all the objects.
-		for(auto [ _, obj ] : this->objects)
+		for(auto [_, obj] : this->objects)
 			obj->writeFull(w);
 
 		// write the xref table
@@ -47,10 +45,8 @@ namespace pdf
 
 		w->writeln();
 
-		auto trailer = Dictionary::create({
-			{ names::Size, Integer::create(num_objects) },
-			{ names::Root, IndirectRef::create(root) }
-		});
+		auto trailer =
+			Dictionary::create({ { names::Size, Integer::create(num_objects) }, { names::Root, IndirectRef::create(root) } });
 
 		w->writeln("trailer");
 		w->write(trailer);
@@ -71,11 +67,9 @@ namespace pdf
 	{
 		// TODO: make this more efficient -- make some kind of balanced tree.
 
-		auto pagetree = Dictionary::createIndirect(this, names::Pages, {
-			{ names::Count, Integer::create(this->pages.size()) }
-		});
+		auto pagetree = Dictionary::createIndirect(this, names::Pages, { { names::Count, Integer::create(this->pages.size()) } });
 
-		auto array = Array::create({ });
+		auto array = Array::create({});
 		for(auto page : this->pages)
 		{
 			auto obj = page->serialise(this);

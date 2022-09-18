@@ -71,11 +71,16 @@ namespace font::off
 					high = mid;
 			}
 
-			return { };
+			return {};
 		}
 		else if(format == 2)
 		{
-			struct RangeRecord { uint16_t start; uint16_t end; uint16_t cov_idx; } __attribute__((packed));
+			struct RangeRecord
+			{
+				uint16_t start;
+				uint16_t end;
+				uint16_t cov_idx;
+			} __attribute__((packed));
 			static_assert(sizeof(RangeRecord) == 3 * sizeof(uint16_t));
 
 			auto count = consume_u16(cov_table);
@@ -100,7 +105,7 @@ namespace font::off
 					high = mid;
 			}
 
-			return { };
+			return {};
 		}
 		else
 		{

@@ -15,7 +15,7 @@ namespace font
 	{
 		auto u16_array = this->hmtx_table.cast<uint16_t>();
 
-		GlyphMetrics ret { };
+		GlyphMetrics ret {};
 		auto gid32 = static_cast<uint32_t>(glyph_id);
 
 		// note the *2, because there's also an 2-byte "lsb".

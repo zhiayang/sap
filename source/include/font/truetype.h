@@ -47,22 +47,22 @@ namespace font::truetype
 	};
 
 	/*
-		Parse the `loca` table from the given buffer, filling the information into the TTData struct.
+	    Parse the `loca` table from the given buffer, filling the information into the TTData struct.
 	*/
 	void parseLocaTable(FontFile* font, zst::byte_span loca_table);
 
 	/*
-		Parse the `glyf` table from the given buffer, filling the information into the TTData struct.
+	    Parse the `glyf` table from the given buffer, filling the information into the TTData struct.
 	*/
 	void parseGlyfTable(FontFile* font, zst::byte_span glyf_table);
 
 	/*
-		Return the bounding box data for the given glyph id by inspecting its glyf data.
+	    Return the bounding box data for the given glyph id by inspecting its glyf data.
 	*/
 	BoundingBox getGlyphBoundingBox(TTData* tt, GlyphId glyph_id);
 
 	/*
-		Subset the glyphs in the original loca/glyf tables based on the provided `used_glyphs`.
+	    Subset the glyphs in the original loca/glyf tables based on the provided `used_glyphs`.
 	*/
 	TTSubset createTTSubset(FontFile* font, const std::unordered_set<GlyphId>& used_glyphs);
 }

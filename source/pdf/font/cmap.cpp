@@ -19,11 +19,9 @@ namespace pdf
 		auto cmap = this->unicode_cmap;
 		write_cmap_header(cmap, this->pdf_font_name);
 
-		cmap->append(
-			"1 begincodespacerange\n"
-			"<0000> <FFFF>\n"
-			"endcodespacerange\n"
-		);
+		cmap->append("1 begincodespacerange\n"
+					 "<0000> <FFFF>\n"
+					 "endcodespacerange\n");
 
 		assert(this->source_file != nullptr);
 		auto& mapping = this->source_file->character_mapping.forward;
@@ -32,7 +30,7 @@ namespace pdf
 		// but that requires a whole bunch of extra work.
 		cmap->append(zpr::sprint("{} beginbfchar\n", mapping.size()));
 
-		for(auto& [ cp, glyph ] : mapping)
+		for(auto& [cp, glyph] : mapping)
 		{
 			if(m_used_glyphs.find(glyph) == m_used_glyphs.end())
 				continue;
@@ -44,7 +42,7 @@ namespace pdf
 			}
 			else
 			{
-				auto [ high, low ] = unicode::codepointToSurrogatePair(cp);
+				auto [high, low] = unicode::codepointToSurrogatePair(cp);
 				cmap->append(zpr::sprint("<{04x}> <{04x}{04x}>\n", glyph, high, low));
 			}
 		}
@@ -54,7 +52,7 @@ namespace pdf
 
 		// now for the ligatures.
 		cmap->append(zpr::sprint("{} beginbfchar\n", m_extra_unicode_mappings.size()));
-		for(auto& [ gid, cps ] : m_extra_unicode_mappings)
+		for(auto& [gid, cps] : m_extra_unicode_mappings)
 		{
 			cmap->append(zpr::sprint("<{04x}> <", gid));
 			for(auto cp : cps)
@@ -65,7 +63,7 @@ namespace pdf
 				}
 				else
 				{
-					auto [ high, low ] = unicode::codepointToSurrogatePair(cp);
+					auto [high, low] = unicode::codepointToSurrogatePair(cp);
 					cmap->append(zpr::sprint("{04x}{04x}", high, low));
 				}
 			}
@@ -92,43 +90,36 @@ namespace pdf
 		auto registry = "Sap";
 		auto supplement = 0;
 
-		auto header = zpr::sprint(
-			"%!PS-Adobe-3.0 Resource-CMap\n"
-			"%%DocumentNeededResources: ProcSet (CIDInit)\n"
-			"%%IncludeResource: ProcSet (CIDInit)\n"
-			"%%BeginResource: CMap ({})\n"
-			"%%Title: ({} {} {} {})\n"
-			"%%Version: 1\n"
-			"%%EndComments\n"
-			"/CIDInit /ProcSet findresource begin\n"
-			"12 dict begin\n"
-			"begincmap\n"
-			"/CIDSystemInfo <<\n"
-			"  /Registry ({})\n"
-			"  /Ordering ({})\n"
-			"  /Supplement {}\n"
-			">> def\n"
-			"/CMapName /{} def\n"
-			"/CMapType 2 def\n",
+		auto header = zpr::sprint("%!PS-Adobe-3.0 Resource-CMap\n"
+								  "%%DocumentNeededResources: ProcSet (CIDInit)\n"
+								  "%%IncludeResource: ProcSet (CIDInit)\n"
+								  "%%BeginResource: CMap ({})\n"
+								  "%%Title: ({} {} {} {})\n"
+								  "%%Version: 1\n"
+								  "%%EndComments\n"
+								  "/CIDInit /ProcSet findresource begin\n"
+								  "12 dict begin\n"
+								  "begincmap\n"
+								  "/CIDSystemInfo <<\n"
+								  "  /Registry ({})\n"
+								  "  /Ordering ({})\n"
+								  "  /Supplement {}\n"
+								  ">> def\n"
+								  "/CMapName /{} def\n"
+								  "/CMapType 2 def\n",
 
-			cmap_name,
-			cmap_name, registry, ordering, supplement,
-			registry, ordering, supplement,
-			cmap_name
-		);
+			cmap_name, cmap_name, registry, ordering, supplement, registry, ordering, supplement, cmap_name);
 
 		s->append(header);
 	}
 
 	static void write_cmap_footer(Stream* s)
 	{
-		s->append(zst::str_view(
-			"endcmap\n"
-			"CMapName currentdict /CMap defineresource pop\n"
-			"end\n"
-			"end\n"
-			"%%EndResource"
-			"%%EOF"
-		));
+		s->append(zst::str_view("endcmap\n"
+								"CMapName currentdict /CMap defineresource pop\n"
+								"end\n"
+								"end\n"
+								"%%EndResource"
+								"%%EOF"));
 	}
 }

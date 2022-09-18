@@ -70,12 +70,10 @@ namespace sap::frontend
 			assert(stream.starts_with(":#"));
 			stream.remove_prefix(2);
 
-			return Token {
-				.loc = begin_loc,
+			return Token { .loc = begin_loc,
 				.type = TT::Comment,
 				.whitespace_before = false,
-				.text = begin.drop_last(stream.size())
-			};
+				.text = begin.drop_last(stream.size()) };
 		}
 		else if(stream.starts_with("#"))
 		{
@@ -89,12 +87,10 @@ namespace sap::frontend
 			loc.column = 0;
 			loc.line += 1;
 
-			return Token {
-				.loc = begin_loc,
+			return Token { .loc = begin_loc,
 				.type = TT::Comment,
 				.whitespace_before = false,
-				.text = begin.drop_last(stream.size() + 1)
-			};
+				.text = begin.drop_last(stream.size() + 1) };
 		}
 		else
 		{
@@ -156,12 +152,8 @@ namespace sap::frontend
 					break;
 			}
 
-			auto ret = advance_and_return(stream, loc, Token {
-				.loc = loc,
-				.type = TT::ParagraphBreak,
-				.whitespace_before = ws_before,
-				.text = stream.take(num)
-			}, num);
+			auto ret = advance_and_return(stream, loc,
+				Token { .loc = loc, .type = TT::ParagraphBreak, .whitespace_before = ws_before, .text = stream.take(num) }, num);
 
 			loc.column = 0;
 			loc.line += lines;
@@ -169,22 +161,18 @@ namespace sap::frontend
 		}
 		else if(stream[0] == '{' || stream[0] == '}')
 		{
-			return advance_and_return(stream, loc, Token {
-				.loc = loc,
-				.type = (stream[0] == '{' ? TT::LBrace : TT::RBrace),
-				.whitespace_before = ws_before,
-				.text = stream.take(1)
-			}, 1);
+			return advance_and_return(stream, loc,
+				Token { .loc = loc,
+					.type = (stream[0] == '{' ? TT::LBrace : TT::RBrace),
+					.whitespace_before = ws_before,
+					.text = stream.take(1) },
+				1);
 		}
-		else if(stream[0] == '\\' && (stream.size() == 1
-			|| (stream[1] != '\\' && stream[1] != '#' && stream[1] != '{' && stream[1] != '}')))
+		else if(stream[0] == '\\' &&
+				(stream.size() == 1 || (stream[1] != '\\' && stream[1] != '#' && stream[1] != '{' && stream[1] != '}')))
 		{
-			return advance_and_return(stream, loc, Token {
-				.loc = loc,
-				.type = TT::Backslash,
-				.whitespace_before = ws_before,
-				.text = stream.take(1)
-			}, 1);
+			return advance_and_return(stream, loc,
+				Token { .loc = loc, .type = TT::Backslash, .whitespace_before = ws_before, .text = stream.take(1) }, 1);
 		}
 		else
 		{
@@ -216,12 +204,8 @@ namespace sap::frontend
 				}
 				else if(stream[n] == ' ' || stream[n] == '\t' || stream[n] == '\n' || stream[n] == '\r')
 				{
-					return advance_and_return(stream, loc, Token {
-						.loc = loc,
-						.type = TT::Word,
-						.whitespace_before = ws_before,
-						.text = stream.take(n)
-					}, n);
+					return advance_and_return(stream, loc,
+						Token { .loc = loc, .type = TT::Word, .whitespace_before = ws_before, .text = stream.take(n) }, n);
 				}
 				else
 				{
@@ -231,12 +215,8 @@ namespace sap::frontend
 
 			// note: this does imply that the parser needs to "re-parse" any escape sequences, but that's fine
 			// because we don't want to deal with lifetime issues regarding a constructed string in the Token.
-			return advance_and_return(stream, loc, Token {
-				.loc = loc,
-				.type = TT::Word,
-				.whitespace_before = ws_before,
-				.text = stream.take(n)
-			}, n);
+			return advance_and_return(stream, loc,
+				Token { .loc = loc, .type = TT::Word, .whitespace_before = ws_before, .text = stream.take(n) }, n);
 		}
 	}
 
@@ -253,11 +233,7 @@ namespace sap::frontend
 
 		if(stream.empty())
 		{
-			return Token {
-				.loc = loc,
-				.type = TT::EndOfFile,
-				.text = ""
-			};
+			return Token { .loc = loc, .type = TT::EndOfFile, .text = "" };
 		}
 
 		else if(stream.starts_with("#"))
@@ -276,11 +252,7 @@ namespace sap::frontend
 			while(isascii(stream[n]) && (isdigit(stream[n]) || isalpha(stream[n]) || stream[n] == '_'))
 				n++;
 
-			return advance_and_return(stream, loc, Token {
-				.loc = loc,
-				.type = TT::Identifier,
-				.text = stream.take(n)
-			}, n);
+			return advance_and_return(stream, loc, Token { .loc = loc, .type = TT::Identifier, .text = stream.take(n) }, n);
 		}
 		else if(isascii(stream[0]) && isdigit(stream[0]))
 		{
@@ -288,48 +260,60 @@ namespace sap::frontend
 			while(isascii(stream[n]) && isdigit(stream[n]))
 				n++;
 
-			return advance_and_return(stream, loc, Token {
-				.loc = loc,
-				.type = TT::Number,
-				.text = stream.take(n)
-			}, n);
+			return advance_and_return(stream, loc, Token { .loc = loc, .type = TT::Number, .text = stream.take(n) }, n);
 		}
 		else if(stream.starts_with("::"))
 		{
-			return advance_and_return(stream, loc, Token {
-				.loc = loc,
-				.type = TT::ColonColon,
-				.text = stream.take(2)
-			}, 2);
+			return advance_and_return(stream, loc, Token { .loc = loc, .type = TT::ColonColon, .text = stream.take(2) }, 2);
 		}
 		else
 		{
 			auto tt = TT::Invalid;
 			switch(stream[0])
 			{
-				case '(':   tt = TT::LParen; break;
-				case ')':   tt = TT::RParen; break;
-				case ',':   tt = TT::Comma; break;
-				case ':':   tt = TT::Colon; break;
-				case '{':   tt = TT::LBrace; break;
-				case '}':   tt = TT::RBrace; break;
-				case '+':   tt = TT::Plus; break;
-				case '-':   tt = TT::Minus; break;
-				case '*':   tt = TT::Asterisk; break;
-				case '/':   tt = TT::Slash; break;
-				case '=':   tt = TT::Equal; break;
-				case ';':   tt = TT::Semicolon; break;
+				case '(':
+					tt = TT::LParen;
+					break;
+				case ')':
+					tt = TT::RParen;
+					break;
+				case ',':
+					tt = TT::Comma;
+					break;
+				case ':':
+					tt = TT::Colon;
+					break;
+				case '{':
+					tt = TT::LBrace;
+					break;
+				case '}':
+					tt = TT::RBrace;
+					break;
+				case '+':
+					tt = TT::Plus;
+					break;
+				case '-':
+					tt = TT::Minus;
+					break;
+				case '*':
+					tt = TT::Asterisk;
+					break;
+				case '/':
+					tt = TT::Slash;
+					break;
+				case '=':
+					tt = TT::Equal;
+					break;
+				case ';':
+					tt = TT::Semicolon;
+					break;
 
 				default:
 					sap::error(loc, "unknown token '{}'", stream[0]);
 					break;
 			}
 
-			return advance_and_return(stream, loc, Token {
-				.loc = loc,
-				.type = tt,
-				.text = stream.take(1)
-			}, 1);
+			return advance_and_return(stream, loc, Token { .loc = loc, .type = tt, .text = stream.take(1) }, 1);
 		}
 
 
@@ -357,11 +341,7 @@ namespace sap::frontend
 	{
 		m_mode_stack.push_back(Mode::Text);
 
-		m_location = Location {
-			.line = 0,
-			.column = 0,
-			.file = filename
-		};
+		m_location = Location { .line = 0, .column = 0, .file = filename };
 	}
 
 	Token Lexer::peekWithMode(Lexer::Mode mode) const
@@ -374,7 +354,8 @@ namespace sap::frontend
 		if(mode == Mode::Text)
 		{
 			Token ret {};
-			do {
+			do
+			{
 				ret = consume_text_token(foo, bar);
 			} while(ret == TT::Comment);
 			return ret;
@@ -382,7 +363,8 @@ namespace sap::frontend
 		else if(mode == Mode::Script)
 		{
 			Token ret {};
-			do {
+			do
+			{
 				ret = consume_script_token(foo, bar);
 			} while(ret == TT::Comment);
 			return ret;
@@ -408,7 +390,8 @@ namespace sap::frontend
 		if(this->mode() == Mode::Text)
 		{
 			Token ret {};
-			do {
+			do
+			{
 				ret = consume_text_token(m_stream, m_location);
 			} while(ret == TT::Comment);
 			return ret;
@@ -416,7 +399,8 @@ namespace sap::frontend
 		else if(this->mode() == Mode::Script)
 		{
 			Token ret {};
-			do {
+			do
+			{
 				ret = consume_script_token(m_stream, m_location);
 			} while(ret == TT::Comment);
 			return ret;
@@ -462,8 +446,7 @@ namespace sap::frontend
 	{
 		if(m_mode_stack.empty() || m_mode_stack.back() != mode)
 		{
-			sap::internal_error("unbalanced mode stack: {} / {}",
-				m_mode_stack.back(), mode);
+			sap::internal_error("unbalanced mode stack: {} / {}", m_mode_stack.back(), mode);
 		}
 
 		m_mode_stack.pop_back();
@@ -471,10 +454,7 @@ namespace sap::frontend
 
 	Lexer::SaveState Lexer::save()
 	{
-		return SaveState {
-			.stream = m_stream,
-			.location = m_location
-		};
+		return SaveState { .stream = m_stream, .location = m_location };
 	}
 
 	void Lexer::rewind(SaveState st)

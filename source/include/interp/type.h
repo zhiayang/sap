@@ -26,15 +26,7 @@ namespace sap::interp
 		bool isFunction() const { return m_kind == KIND_FUNCTION; }
 		bool isTreeInlineObj() const { return m_kind == KIND_TREE_INLINE_OBJ; }
 
-		bool isBuiltin() const
-		{
-			return isAny()
-				|| isVoid()
-				|| isNumber()
-				|| isString()
-				|| isFunction()
-				|| isTreeInlineObj();
-		}
+		bool isBuiltin() const { return isAny() || isVoid() || isNumber() || isString() || isFunction() || isTreeInlineObj(); }
 
 		// the conversion functions can't be inline because dynamic_cast needs
 		// a complete type (and obviously derived types need the complete definition of Type)
@@ -54,17 +46,17 @@ namespace sap::interp
 		static const ArrayType* makeArray(const Type* element_type, bool is_variadic = false);
 
 	protected:
-		static constexpr int KIND_ANY               = 0;
-		static constexpr int KIND_VOID              = 1;
-		static constexpr int KIND_NUMBER            = 2;
-		static constexpr int KIND_STRING            = 3;
-		static constexpr int KIND_FUNCTION          = 4;
-		static constexpr int KIND_TREE_INLINE_OBJ   = 5;
-		static constexpr int KIND_ARRAY             = 6;
+		static constexpr int KIND_ANY = 0;
+		static constexpr int KIND_VOID = 1;
+		static constexpr int KIND_NUMBER = 2;
+		static constexpr int KIND_STRING = 3;
+		static constexpr int KIND_FUNCTION = 4;
+		static constexpr int KIND_TREE_INLINE_OBJ = 5;
+		static constexpr int KIND_ARRAY = 6;
 
 		int m_kind;
 
-		Type(int kind) : m_kind(kind) {}
+		Type(int kind) : m_kind(kind) { }
 		virtual ~Type();
 	};
 

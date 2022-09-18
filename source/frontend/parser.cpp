@@ -25,11 +25,16 @@ namespace sap::frontend
 				assert(i + 1 < text.size());
 
 				i += 1;
-				if(text[i] == '\\')     ret.push_back('\\');
-				else if(text[i] == '{') ret.push_back('{');
-				else if(text[i] == '}') ret.push_back('}');
-				else if(text[i] == '#') ret.push_back('#');
-				else                    error(loc, "unrecognised escape sequence '\\{}'", text[i]);
+				if(text[i] == '\\')
+					ret.push_back('\\');
+				else if(text[i] == '{')
+					ret.push_back('{');
+				else if(text[i] == '}')
+					ret.push_back('}');
+				else if(text[i] == '#')
+					ret.push_back('#');
+				else
+					error(loc, "unrecognised escape sequence '\\{}'", text[i]);
 			}
 			else
 			{
@@ -74,18 +79,26 @@ namespace sap::frontend
 	{
 		switch(lexer.peek())
 		{
-			case TT::Plus:      lexer.next(); return interp::Op::Add;
-			case TT::Minus:     lexer.next(); return interp::Op::Subtract;
-			case TT::Asterisk:  lexer.next(); return interp::Op::Multiply;
-			case TT::Slash:     lexer.next(); return interp::Op::Divide;
+			case TT::Plus:
+				lexer.next();
+				return interp::Op::Add;
+			case TT::Minus:
+				lexer.next();
+				return interp::Op::Subtract;
+			case TT::Asterisk:
+				lexer.next();
+				return interp::Op::Multiply;
+			case TT::Slash:
+				lexer.next();
+				return interp::Op::Divide;
 			default:
 				error(lexer.peek().loc, "unknown operator token '{}'", lexer.peek().text);
 		}
 	}
 
 
-	constexpr auto KW_LET           = "let";
-	constexpr auto KW_SCRIPT_BLOCK  = "script";
+	constexpr auto KW_LET = "let";
+	constexpr auto KW_SCRIPT_BLOCK = "script";
 
 	static std::unique_ptr<interp::Expr> parseExpr(Lexer& lexer);
 	static std::unique_ptr<interp::Expr> parseUnary(Lexer& lexer);
@@ -330,7 +343,7 @@ namespace sap::frontend
 	{
 		auto lm = LexerModer(lexer, Lexer::Mode::Script);
 		if(auto x = lexer.match(TT::Identifier); not x || x->text != KW_SCRIPT_BLOCK)
-			error(Location{}, "?????");
+			error(Location {}, "?????");
 
 		auto openbrace = lexer.next();
 		if(openbrace != TT::LBrace)

@@ -26,12 +26,12 @@ namespace sap::layout
 			word.computeMetrics(combined);
 
 		/*
-			now, start placing words. we take linespacing into account, but for words where the height
-			is larger than the line spacing, that particular line advances by the word height. otherwise,
-			the linespacing is not changed.
+		    now, start placing words. we take linespacing into account, but for words where the height
+		    is larger than the line spacing, that particular line advances by the word height. otherwise,
+		    the linespacing is not changed.
 
-			of course, this is currently a very 3head algorithm, and obviously we'll have a better one
-			in due time. won't be a very good typesetting program if the text layout is trash.
+		    of course, this is currently a very 3head algorithm, and obviously we'll have a better one
+		    in due time. won't be a very good typesetting program if the text layout is trash.
 		*/
 
 		region->addObjectAtCursor(this);
@@ -41,35 +41,34 @@ namespace sap::layout
 		auto region_height = region->spaceAtCursor().y();
 
 		/*
-			Currently, this algorithm only handles justified text, and will fill the entire horizontal
-			extent of the layout region with text, except for possibly the last line.
+		    Currently, this algorithm only handles justified text, and will fill the entire horizontal
+		    extent of the layout region with text, except for possibly the last line.
 
-			the general idea is as follows: as we iterate through each word, we increase the required
-			space, as well as the number of words so far. Note that words do not account for interword spaces
-			in their size (that is for us to find out and potentially squeeze/stretch).
+		    the general idea is as follows: as we iterate through each word, we increase the required
+		    space, as well as the number of words so far. Note that words do not account for interword spaces
+		    in their size (that is for us to find out and potentially squeeze/stretch).
 
-			we assume that the word-breaking algorithm simply splits on horizontal whitespace (tabs, spaces),
-			and that we treat those the same way. So, given N words, we will have N-1 inter-word spaces.
+		    we assume that the word-breaking algorithm simply splits on horizontal whitespace (tabs, spaces),
+		    and that we treat those the same way. So, given N words, we will have N-1 inter-word spaces.
 
-			We define a minimum and maximum spacing ratio, which is how much the `space_length` will be multiplied
-			by at the end. For example, a ratio of 1.1 means that inter-word spaces will be expanded by 10%.
+		    We define a minimum and maximum spacing ratio, which is how much the `space_length` will be multiplied
+		    by at the end. For example, a ratio of 1.1 means that inter-word spaces will be expanded by 10%.
 
-			For each word, we initially check the remaining space, and then calculate the required expansion ratio
-			to fill that space. If it is too large, then we add another word. If adding that word makes the ratio
-			worse than the current ratio (eg. the next word is super long), then we break here. (TODO: here, we should
-			hyphenate!)
+		    For each word, we initially check the remaining space, and then calculate the required expansion ratio
+		    to fill that space. If it is too large, then we add another word. If adding that word makes the ratio
+		    worse than the current ratio (eg. the next word is super long), then we break here. (TODO: here, we should
+		    hyphenate!)
 
-			This basically continues till we either consume all words or run out of vertical space in the
-			layout region.
+		    This basically continues till we either consume all words or run out of vertical space in the
+		    layout region.
 		*/
-		Scalar word_length {};          // the amount of space required for words
-		Scalar space_length {};         // ... for inter-word spaces
-		size_t words_in_line = 0;       // the number of words in the line so far.
+		Scalar word_length {};    // the amount of space required for words
+		Scalar space_length {};   // ... for inter-word spaces
+		size_t words_in_line = 0; // the number of words in the line so far.
 
 		constexpr double MIN_RATIO = 0.9;
 
 		auto finalise_line = [&](size_t word_idx, double ratio) {
-
 			sap::Scalar line_height {};
 			for(size_t i = 0; i < words_in_line; i++)
 			{
@@ -106,8 +105,7 @@ namespace sap::layout
 				{
 					// no space -- break the rest of the words, and quit.
 					overflow = util::make<Paragraph>();
-					overflow->m_words.insert(overflow->m_words.end(),
-						std::move_iterator(m_words.begin() + word_idx),
+					overflow->m_words.insert(overflow->m_words.end(), std::move_iterator(m_words.begin() + word_idx),
 						std::move_iterator(m_words.end()));
 
 					m_words.erase(m_words.begin() + word_idx, m_words.end());
@@ -137,9 +135,8 @@ namespace sap::layout
 
 				// if the new ratio is not worse than the current one,
 				// and it doesn't squeeze the space too much, add it.
-				if(MIN_RATIO <= new_ratio
-					&& std::abs(new_ratio - 1.0) <= std::abs(current_ratio - 1.0)
-					&& word_length + word.size.x() < region_width)
+				if(MIN_RATIO <= new_ratio && std::abs(new_ratio - 1.0) <= std::abs(current_ratio - 1.0) &&
+					word_length + word.size.x() < region_width)
 				{
 					word_length += word.size.x();
 					space_length += space_between;
@@ -175,19 +172,21 @@ namespace sap::layout
 
 		region->advanceCursorBy(cursor);
 
-		if(overflow)    return zst::Ok(std::optional(overflow));
-		else            return zst::Ok(std::nullopt);
+		if(overflow)
+			return zst::Ok(std::optional(overflow));
+		else
+			return zst::Ok(std::nullopt);
 
 		/*
-			TODO: This algorithm is actually wrong
+		    TODO: This algorithm is actually wrong
 
-			it doesn't account for kerning between
-			(a) the last glyph of a word and the proceeding space
-			(b) the space before a word, and its first glyph
+		    it doesn't account for kerning between
+		    (a) the last glyph of a word and the proceeding space
+		    (b) the space before a word, and its first glyph
 
-			the difference is usually small, but we should strive to follow the font whenever possible.
-			we probably want to do the computation here, at layout time, so we can accurately compute
-			the *real* width of the line, after all the adjustments.
+		    the difference is usually small, but we should strive to follow the font whenever possible.
+		    we probably want to do the computation here, at layout time, so we can accurately compute
+		    the *real* width of the line, after all the adjustments.
 		*/
 	}
 
@@ -197,19 +196,19 @@ namespace sap::layout
 		(void) region;
 
 		/*
-			here, `abs_para_position` (as the name suggests) is the absolute position of the paragraph
-			within the page. The word positions are stored relative to the start of the paragraph,
-			which means it's a simple addition to get the absolute position of the word.
+		    here, `abs_para_position` (as the name suggests) is the absolute position of the paragraph
+		    within the page. The word positions are stored relative to the start of the paragraph,
+		    which means it's a simple addition to get the absolute position of the word.
 		*/
 		auto text = util::make<pdf::Text>();
-		text->moveAbs(page->convertVector2(abs_para_position.into(pdf::Position2d_YDown{})));
+		text->moveAbs(page->convertVector2(abs_para_position.into(pdf::Position2d_YDown {})));
 
 		/*
-			not sure if this is legit, but words basically don't actually use their own `m_position` when
-			rendering; we just pass the words to the PDF, and the viewer uses the font metrics to adjust.
+		    not sure if this is legit, but words basically don't actually use their own `m_position` when
+		    rendering; we just pass the words to the PDF, and the viewer uses the font metrics to adjust.
 
-			we do use the computed position when advancing to the next line, to account for line spacing
-			differences if there's more than one font-size on a line.
+		    we do use the computed position when advancing to the next line, to account for line spacing
+		    differences if there's more than one font-size on a line.
 		*/
 		Position current_pos {};
 		for(size_t i = 0; i < m_words.size(); i++)
@@ -220,7 +219,7 @@ namespace sap::layout
 			if(m_words[i].m_linebreak_after && i + 1 < m_words.size())
 			{
 				auto skip = m_words[i + 1].m_position.y() - current_pos.y();
-				text->nextLine(pdf::Offset2d(0, -1.0 * skip.into(pdf::Scalar{}).value()));
+				text->nextLine(pdf::Offset2d(0, -1.0 * skip.into(pdf::Scalar {}).value()));
 			}
 		}
 

@@ -25,7 +25,6 @@ namespace sap::interp
 			return false;
 
 		auto of = other->toArray();
-		return m_element_type == of->m_element_type
-			&& m_is_variadic == of->m_is_variadic;
+		return m_element_type == of->m_element_type && m_is_variadic == of->m_is_variadic;
 	}
 }

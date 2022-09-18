@@ -35,7 +35,12 @@ namespace font::off
 		{
 			auto num_ranges = consume_u16(table);
 
-			struct ClassRangeRecord { uint16_t start_gid; uint16_t end_gid; uint16_t glyph_class; } __attribute__((packed));
+			struct ClassRangeRecord
+			{
+				uint16_t start_gid;
+				uint16_t end_gid;
+				uint16_t glyph_class;
+			} __attribute__((packed));
 			static_assert(sizeof(ClassRangeRecord) == 3 * sizeof(uint16_t));
 
 			auto array = table.take(num_ranges * sizeof(ClassRangeRecord)).cast<ClassRangeRecord>();

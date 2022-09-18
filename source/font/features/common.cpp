@@ -22,7 +22,7 @@ namespace font::off
 		else if(auto it = table.scripts.find(DEFAULT); it != table.scripts.end())
 			script = &it->second;
 		else
-			return {};  // found nothing
+			return {}; // found nothing
 
 		assert(script != nullptr);
 
@@ -33,7 +33,7 @@ namespace font::off
 		else if(auto it = script->languages.find(DEFAULT); it != script->languages.end())
 			lang = &it->second;
 		else
-			return {};  // nothing again
+			return {}; // nothing again
 
 		assert(lang != nullptr);
 
@@ -65,7 +65,7 @@ namespace font::off
 		Language lang {};
 		lang.tag = tag;
 
-		consume_u16(buf);   // reserved
+		consume_u16(buf); // reserved
 		if(auto req = consume_u16(buf); req != NO_REQUIRED_FEATURE)
 			lang.required_feature = req;
 
@@ -223,13 +223,13 @@ namespace font::off
 			return;
 		}
 
-		auto script_list_ofs  = consume_u16(buf);
+		auto script_list_ofs = consume_u16(buf);
 		auto feature_list_ofs = consume_u16(buf);
-		auto lookup_list_ofs  = consume_u16(buf);
+		auto lookup_list_ofs = consume_u16(buf);
 
-		output->scripts  = parseScriptAndLanguageTables(table_start.drop(script_list_ofs));
+		output->scripts = parseScriptAndLanguageTables(table_start.drop(script_list_ofs));
 		output->features = parseFeatureList(table_start.drop(feature_list_ofs));
-		output->lookups  = parseLookupList(table_start.drop(lookup_list_ofs));
+		output->lookups = parseLookupList(table_start.drop(lookup_list_ofs));
 
 		if(major == 1 && minor == 1)
 		{

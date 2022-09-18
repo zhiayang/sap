@@ -29,7 +29,6 @@ namespace sap::interp
 			return false;
 
 		auto of = other->toFunction();
-		return m_params == of->m_params
-			&& m_return_type == of->m_return_type;
+		return m_params == of->m_params && m_return_type == of->m_return_type;
 	}
 }

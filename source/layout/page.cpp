@@ -8,10 +8,10 @@
 namespace sap::layout
 {
 	// TODO: customisable margins
-	constexpr Scalar LEFT_MARGIN    = Scalar(25.0);
-	constexpr Scalar RIGHT_MARGIN   = Scalar(25.0);
-	constexpr Scalar TOP_MARGIN     = Scalar(22.5);
-	constexpr Scalar BOTTOM_MARGIN  = Scalar(25.0);
+	constexpr Scalar LEFT_MARGIN = Scalar(25.0);
+	constexpr Scalar RIGHT_MARGIN = Scalar(25.0);
+	constexpr Scalar TOP_MARGIN = Scalar(22.5);
+	constexpr Scalar BOTTOM_MARGIN = Scalar(25.0);
 
 	Page::Page(Size2d paper_size)
 		: m_layout_region(paper_size - Size2d(LEFT_MARGIN, TOP_MARGIN) - Size2d(RIGHT_MARGIN, BOTTOM_MARGIN))

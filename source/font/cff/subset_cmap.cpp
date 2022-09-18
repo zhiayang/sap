@@ -14,7 +14,7 @@ namespace font::cff
 	zst::byte_buffer createCMapForCFFSubset(FontFile* file)
 	{
 		/*
-			i guess what we want to do is just map the cid to the gid...
+		    i guess what we want to do is just map the cid to the gid...
 		*/
 
 		auto append16 = [](zst::byte_buffer& buf, uint16_t x) {
@@ -61,7 +61,7 @@ namespace font::cff
 		zst::byte_buffer id_deltas {};
 		zst::byte_buffer id_range_offsets {};
 
-		for(auto& [ gid, cid ] : mapping)
+		for(auto& [gid, cid] : mapping)
 		{
 			append16(start_codes, gid);
 			append16(end_codes, gid + 1);

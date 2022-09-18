@@ -86,9 +86,9 @@ namespace font::off
 			if(format == 1)
 			{
 				/*
-					Format 1 defines lookups based on glyph ids. After slogging through the tables,
-					the fundamental idea is to match the input glyphstring with an expected sequence,
-					which is given in glyph ids.
+				    Format 1 defines lookups based on glyph ids. After slogging through the tables,
+				    the fundamental idea is to match the input glyphstring with an expected sequence,
+				    which is given in glyph ids.
 				*/
 
 				auto num_rulesets = consume_u16(subtable);
@@ -104,7 +104,9 @@ namespace font::off
 				for(size_t i = 0; i < num_rules; i++)
 				{
 					auto rule = ruleset_table_start.drop(consume_u16(ruleset_table));
-					auto [ matched, num_glyphs, num_records ] = try_match_rule(rule, [](auto x) { return x; });
+					auto [matched, num_glyphs, num_records] = try_match_rule(rule, [](auto x) {
+						return x;
+					});
 
 					if(matched)
 						return std::pair(parse_records(num_records, rule), num_glyphs);
@@ -113,18 +115,18 @@ namespace font::off
 			else
 			{
 				/*
-					Format 2 defines lookups based on classes. The first glyph is still gated
-					by the initial coverage table. At the final stage (Rule), glyphs in the
-					input glyphstring are matched by *class id*, not glyph id.
+				    Format 2 defines lookups based on classes. The first glyph is still gated
+				    by the initial coverage table. At the final stage (Rule), glyphs in the
+				    input glyphstring are matched by *class id*, not glyph id.
 				*/
 				auto classdef_ofs = consume_u16(subtable);
 
 				/*
-					Here, we don't parse the entire table at once, but rather lookup the classdef table
-					separately. We can perform a binary search on the table, so it's not too slow.
+				    Here, we don't parse the entire table at once, but rather lookup the classdef table
+				    separately. We can perform a binary search on the table, so it's not too slow.
 
-					Building a datastructure (ie. parsing the whole table) is probably not a good idea,
-					since it won't (and can't, for now...) be cached between lookups.
+				    Building a datastructure (ie. parsing the whole table) is probably not a good idea,
+				    since it won't (and can't, for now...) be cached between lookups.
 				*/
 				auto classdef_table = subtable_start.drop(classdef_ofs);
 				auto num_class_sets = consume_u16(subtable);
@@ -139,7 +141,7 @@ namespace font::off
 				for(size_t i = 0; i < num_rules; i++)
 				{
 					auto rule = classset_start.drop(consume_u16(classset));
-					auto [ matched, num_glyphs, num_records ] = try_match_rule(rule, [&classdef_table](auto gid) {
+					auto [matched, num_glyphs, num_records] = try_match_rule(rule, [&classdef_table](auto gid) {
 						return getGlyphClass(classdef_table, gid);
 					});
 
@@ -168,10 +170,10 @@ namespace font::off
 		if(format == 3)
 		{
 			auto num_lookbehind = consume_u16(subtable);
-			auto num_glyphs     = peek_u16(subtable.drop(num_lookbehind * sizeof(uint16_t)));
+			auto num_glyphs = peek_u16(subtable.drop(num_lookbehind * sizeof(uint16_t)));
 
 			// note: here, the input sequence includes glyph[position] itself, so there is no -1 to cancel
-			auto num_lookahead  = peek_u16(subtable.drop((num_lookbehind + num_glyphs + 1) * sizeof(uint16_t)));
+			auto num_lookahead = peek_u16(subtable.drop((num_lookbehind + num_glyphs + 1) * sizeof(uint16_t)));
 
 			if(position < num_lookbehind)
 				return std::nullopt;
@@ -187,7 +189,7 @@ namespace font::off
 					return std::nullopt;
 			}
 
-			consume_u16(subtable);  // num_glyphs, which we already read
+			consume_u16(subtable); // num_glyphs, which we already read
 			for(size_t k = 0; k < num_glyphs; k++)
 			{
 				auto coverage = subtable_start.drop(consume_u16(subtable));
@@ -195,7 +197,7 @@ namespace font::off
 					return std::nullopt;
 			}
 
-			consume_u16(subtable);  // num_lookahead, which we already read
+			consume_u16(subtable); // num_lookahead, which we already read
 			for(size_t k = 0; k < num_lookahead; k++)
 			{
 				auto coverage = subtable_start.drop(consume_u16(subtable));
@@ -218,9 +220,8 @@ namespace font::off
 			if(!cov_idx.has_value())
 				return std::nullopt;
 
-			auto try_match_rule = [&glyphs, position](zst::byte_span& rule, auto&& lookbehind_trf,
-				auto&& gid_trf, auto&& lookahead_trf) -> std::pair<bool, uint16_t>
-			{
+			auto try_match_rule = [&glyphs, position](zst::byte_span& rule, auto&& lookbehind_trf, auto&& gid_trf,
+									  auto&& lookahead_trf) -> std::pair<bool, uint16_t> {
 				auto num_lookbehind = consume_u16(rule);
 				auto num_glyphs = peek_u16(rule.drop(num_lookbehind * sizeof(uint16_t)));
 
@@ -242,14 +243,14 @@ namespace font::off
 						return { false, 0 };
 				}
 
-				consume_u16(rule);  // num_glyphs, which we already read
+				consume_u16(rule); // num_glyphs, which we already read
 				for(size_t k = 1; k < num_glyphs; k++)
 				{
 					if(static_cast<uint16_t>(gid_trf(glyphs[position + k])) != consume_u16(rule))
 						return { false, 0 };
 				}
 
-				consume_u16(rule);  // num_lookahead, which we already read
+				consume_u16(rule); // num_lookahead, which we already read
 				for(size_t k = 0; k < num_lookahead; k++)
 				{
 					if(static_cast<uint16_t>(lookahead_trf(glyphs[position + num_glyphs + k])) != consume_u16(rule))
@@ -281,7 +282,7 @@ namespace font::off
 				for(size_t i = 0; i < num_rules; i++)
 				{
 					auto rule = ruleset_table_start.drop(consume_u16(ruleset_table));
-					if(auto [ match, num_glyphs ] = try_match_rule(rule, identity_trf, identity_trf, identity_trf); match)
+					if(auto [match, num_glyphs] = try_match_rule(rule, identity_trf, identity_trf, identity_trf); match)
 					{
 						auto num_records = consume_u16(rule);
 						return std::pair(parse_records(num_records, rule), num_glyphs);
@@ -291,8 +292,8 @@ namespace font::off
 			else
 			{
 				auto lookbehind_classdefs = subtable_start.drop(consume_u16(subtable));
-				auto input_classdefs      = subtable_start.drop(consume_u16(subtable));
-				auto lookahead_classdefs  = subtable_start.drop(consume_u16(subtable));
+				auto input_classdefs = subtable_start.drop(consume_u16(subtable));
+				auto lookahead_classdefs = subtable_start.drop(consume_u16(subtable));
 
 				auto num_class_sets = consume_u16(subtable);
 
@@ -318,7 +319,7 @@ namespace font::off
 						return getGlyphClass(lookahead_classdefs, gid);
 					};
 
-					if(auto [ match, num_glyphs ] = try_match_rule(rule, lookbehind_trf, input_trf, lookahead_trf); match)
+					if(auto [match, num_glyphs] = try_match_rule(rule, lookbehind_trf, input_trf, lookahead_trf); match)
 					{
 						auto num_records = consume_u16(rule);
 						return std::pair(parse_records(num_records, rule), num_glyphs);

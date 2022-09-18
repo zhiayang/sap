@@ -23,14 +23,14 @@ namespace util
 		using is_transparent = void;
 		using H = std::hash<std::string_view>;
 
-		size_t operator() (const char* str) const        { return H{}(str); }
-		size_t operator() (std::string_view str) const   { return H{}(str); }
-		size_t operator() (const std::string& str) const { return H{}(str); }
+		size_t operator()(const char* str) const { return H {}(str); }
+		size_t operator()(std::string_view str) const { return H {}(str); }
+		size_t operator()(const std::string& str) const { return H {}(str); }
 
 		template <typename A, typename B>
-		size_t operator() (const std::pair<A, B>& p) const
+		size_t operator()(const std::pair<A, B>& p) const
 		{
-			return std::hash<A>{}(p.first) ^ std::hash<B>{}(p.second);
+			return std::hash<A> {}(p.first) ^ std::hash<B> {}(p.second);
 		}
 	};
 
@@ -58,4 +58,3 @@ inline void zst::error_and_exit(const char* str, size_t len)
 {
 	sap::internal_error("{}", zst::str_view(str, len));
 }
-

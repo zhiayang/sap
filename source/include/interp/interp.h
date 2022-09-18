@@ -102,7 +102,7 @@ namespace sap::interp
 	struct Definition;
 	struct Declaration : Stmt
 	{
-		Declaration(const std::string& name, const Type* ty) : name(name), type(ty) {}
+		Declaration(const std::string& name, const Type* ty) : name(name), type(ty) { }
 
 		std::string name;
 		const Type* type;
@@ -123,12 +123,10 @@ namespace sap::interp
 
 	struct BuiltinFunctionDefn : Definition
 	{
-		using FuncTy = std::function<std::unique_ptr<Expr> (Interpreter*, const std::vector<const Expr*>&)>;
+		using FuncTy = std::function<std::unique_ptr<Expr>(Interpreter*, const std::vector<const Expr*>&)>;
 
 		BuiltinFunctionDefn(const std::string& name, const Type* type, const FuncTy& fn)
-			: Definition(name, type), function(fn)
-		{
-		}
+			: Definition(name, type), function(fn) { }
 
 		FuncTy function;
 	};

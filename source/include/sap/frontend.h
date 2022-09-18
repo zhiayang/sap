@@ -64,11 +64,11 @@ namespace sap::frontend
 	};
 
 	/*
-		This lexer has some internal state, so let's make it a struct. Also, due to
-		the nature of this language, we cannot lex all tokens at once without some level
-		of parsing, so we just fetch one token at a time.
+	    This lexer has some internal state, so let's make it a struct. Also, due to
+	    the nature of this language, we cannot lex all tokens at once without some level
+	    of parsing, so we just fetch one token at a time.
 
-		Lookahead is limited to one (for now) via `peek()`.
+	    Lookahead is limited to one (for now) via `peek()`.
 	*/
 	struct Lexer
 	{

@@ -37,11 +37,11 @@ namespace sap::layout
 		font::off::FeatureSet features {};
 		features.script = Tag("cyrl");
 		features.language = Tag("BGR ");
-		features.enabled_features = {
-			Tag("kern"), Tag("liga"), Tag("locl")
-		};
+		features.enabled_features = { Tag("kern"), Tag("liga"), Tag("locl") };
 
-		auto span = [](auto& foo) { return zst::span<GlyphId>(foo.data(), foo.size()); };
+		auto span = [](auto& foo) {
+			return zst::span<GlyphId>(foo.data(), foo.size());
+		};
 
 		// next, use GSUB to perform substitutions.
 		glyphs = font->performSubstitutionsForGlyphSequence(span(glyphs), features);
@@ -58,7 +58,7 @@ namespace sap::layout
 
 		// finally, use GPOS
 		auto adjustment_map = font->getPositioningAdjustmentsForGlyphSequence(span(glyphs), features);
-		for(auto& [ i, adj ] : adjustment_map)
+		for(auto& [i, adj] : adjustment_map)
 		{
 			auto& info = glyph_infos[i];
 			info.adjustments.horz_advance += adj.horz_advance;
@@ -92,25 +92,24 @@ namespace sap::layout
 		// size is in sap units, which is in mm; metrics are in typographic units, so 72dpi;
 		// calculate the scale accordingly.
 		const auto font_metrics = font->getFontMetrics();
-		auto font_size_tpu = font_size.into(dim::units::pdf_typographic_unit{});
+		auto font_size_tpu = font_size.into(dim::units::pdf_typographic_unit {});
 
 		// TODO: what is this complicated formula???
 		this->size = { 0, 0 };
-		this->size.y() = font->scaleMetricForFontSize(font_metrics.default_line_spacing, font_size_tpu)
-			.into(sap::Scalar{});
+		this->size.y() = font->scaleMetricForFontSize(font_metrics.default_line_spacing, font_size_tpu).into(sap::Scalar {});
 
 		for(auto& glyph : m_glyphs)
 		{
 			auto width = glyph.metrics.horz_advance + glyph.adjustments.horz_advance;
-			this->size.x() += font->scaleMetricForFontSize(width, font_size_tpu).into(sap::Scalar{});
+			this->size.x() += font->scaleMetricForFontSize(width, font_size_tpu).into(sap::Scalar {});
 		}
 
 		{
-			auto space_gid = font->getGlyphIdFromCodepoint(Codepoint {' '});
+			auto space_gid = font->getGlyphIdFromCodepoint(Codepoint { ' ' });
 			auto space_adv = font->getMetricsForGlyph(space_gid).horz_advance;
 			auto space_width = font->scaleMetricForFontSize(space_adv, font_size_tpu);
 
-			m_space_width = space_width.into(sap::Scalar{});
+			m_space_width = space_width.into(sap::Scalar {});
 		}
 	}
 
@@ -123,7 +122,7 @@ namespace sap::layout
 	{
 		const auto font = m_style->font();
 		const auto font_size = m_style->font_size();
-		text->setFont(font, font_size.into(pdf::Scalar{}));
+		text->setFont(font, font_size.into(pdf::Scalar {}));
 
 		auto add_gid = [&font, text](GlyphId gid) {
 			if(font->encoding_kind == pdf::Font::ENCODING_CID)
@@ -142,7 +141,7 @@ namespace sap::layout
 
 		if(!m_linebreak_after && m_next_word != nullptr)
 		{
-			auto space_gid = font->getGlyphIdFromCodepoint(Codepoint {' '});
+			auto space_gid = font->getGlyphIdFromCodepoint(Codepoint { ' ' });
 			add_gid(space_gid);
 
 			if(m_post_space_ratio != 1.0)
@@ -155,8 +154,8 @@ namespace sap::layout
 			}
 
 			/*
-				TODO: here, we also want to handle kerning between the space and the start of the next word
-				(see the longer explanation in layout/paragraph.cpp)
+			    TODO: here, we also want to handle kerning between the space and the start of the next word
+			    (see the longer explanation in layout/paragraph.cpp)
 			*/
 		}
 	}

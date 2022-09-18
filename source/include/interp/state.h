@@ -23,7 +23,7 @@ namespace sap::interp
 		ErrorOr<void> define(std::unique_ptr<Definition> defn);
 
 	private:
-		DefnTree(std::string name) : m_name(std::move(name)) {}
+		DefnTree(std::string name) : m_name(std::move(name)) { }
 
 		std::string m_name;
 		util::hashmap<std::string, std::unique_ptr<DefnTree>> m_children;

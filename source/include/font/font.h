@@ -110,14 +110,14 @@ namespace font
 		std::string family_compat;
 		std::string subfamily_compat;
 
-		std::string unique_name;        // name 3
+		std::string unique_name; // name 3
 
-		std::string full_name;          // name 4
-		std::string postscript_name;    // name 6
+		std::string full_name;       // name 4
+		std::string postscript_name; // name 6
 
 		// when embedding this font, we are probably legally required to reproduce the license.
-		std::string copyright_info;     // name 0
-		std::string license_info;       // name 13
+		std::string copyright_info; // name 0
+		std::string license_info;   // name 13
 
 		// some stuff we need to save, internal use.
 		size_t num_hmetrics = 0;
@@ -149,13 +149,14 @@ namespace font
 		uint8_t* file_bytes = nullptr;
 		size_t file_size = 0;
 
-		static constexpr int TYPE_OPEN_FONT    = 1;
+		static constexpr int TYPE_OPEN_FONT = 1;
 
 		static constexpr int OUTLINES_TRUETYPE = 1;
-		static constexpr int OUTLINES_CFF      = 2;
+		static constexpr int OUTLINES_CFF = 2;
 	};
 
-	void writeFontSubset(FontFile* font, zst::str_view subset_name, pdf::Stream* stream, const std::unordered_set<GlyphId>& used_glyphs);
+	void writeFontSubset(FontFile* font, zst::str_view subset_name, pdf::Stream* stream,
+		const std::unordered_set<GlyphId>& used_glyphs);
 
 	CharacterMapping readCMapTable(zst::byte_span table);
 
