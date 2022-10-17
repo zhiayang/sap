@@ -6,6 +6,8 @@ WARNINGS        = -Wno-padded -Wno-cast-align -Wno-unreachable-code -Wno-packed 
 
 COMMON_CFLAGS   = -Wall -O0 -g
 
+OUTPUT_DIR      := build
+
 CC              := clang
 CXX             := clang++
 
@@ -13,22 +15,22 @@ CFLAGS          = $(COMMON_CFLAGS) -std=c99 -fPIC -O3
 CXXFLAGS        = $(COMMON_CFLAGS) -Wno-old-style-cast -std=c++20 -fno-exceptions
 
 CXXSRC          = $(shell find source -iname "*.cpp" -print)
-CXXOBJ          = $(CXXSRC:.cpp=.cpp.o)
+CXXOBJ          = $(CXXSRC:%.cpp=$(OUTPUT_DIR)/%.cpp.o)
 CXXDEPS         = $(CXXOBJ:.o=.d)
 
 UTF8PROC_SRCS   = external/utf8proc/utf8proc.c
-UTF8PROC_OBJS   = $(UTF8PROC_SRCS:.c=.c.o)
+UTF8PROC_OBJS   = $(UTF8PROC_SRCS:%.c=$(OUTPUT_DIR)/%.c.o)
 
 MINIZ_SRCS      = external/miniz/miniz.c
-MINIZ_OBJS      = $(MINIZ_SRCS:.c=.c.o)
+MINIZ_OBJS      = $(MINIZ_SRCS:%.c=$(OUTPUT_DIR)/%.c.o)
 
 PRECOMP_HDRS    := source/include/precompile.h
-PRECOMP_GCH     := $(PRECOMP_HDRS:.h=.h.gch)
+PRECOMP_GCH     := $(PRECOMP_HDRS:%.h=$(OUTPUT_DIR)/%.h.gch)
 
 DEFINES         :=
 INCLUDES        := -Isource/include -Iexternal
 
-OUTPUT_BIN      := build/sap
+OUTPUT_BIN      := $(OUTPUT_DIR)/sap
 
 .PHONY: all clean build
 .PRECIOUS: $(PRECOMP_GCH)
@@ -46,24 +48,23 @@ $(OUTPUT_BIN): $(CXXOBJ) $(UTF8PROC_OBJS) $(MINIZ_OBJS)
 	@mkdir -p build
 	@$(CXX) $(CXXFLAGS) $(WARNINGS) $(DEFINES) -Iexternal -o $@ $^
 
-%.cpp.o: %.cpp Makefile $(PRECOMP_GCH)
+$(OUTPUT_DIR)/%.cpp.o: %.cpp Makefile $(PRECOMP_GCH)
 	@echo "  $(notdir $<)"
-	@$(CXX) $(CXXFLAGS) $(WARNINGS) $(INCLUDES) $(DEFINES) -include source/include/precompile.h -MMD -MP -c -o $@ $<
+	@mkdir -p $(shell dirname $@)
+	@$(CXX) $(CXXFLAGS) $(WARNINGS) $(INCLUDES) $(DEFINES) -include $(PRECOMP_HDRS) -MMD -MP -c -o $@ $<
 
-%.c.o: %.c Makefile
+$(OUTPUT_DIR)/%.c.o: %.c Makefile
 	@echo "  $(notdir $<)"
+	@mkdir -p $(shell dirname $@)
 	@$(CC) $(CFLAGS) -MMD -MP -c -o $@ $<
 
-%.h.gch: %.h Makefile
+$(OUTPUT_DIR)/%.h.gch: %.h Makefile
 	@printf "# precompiling header $<\n"
+	@mkdir -p $(shell dirname $@)
 	@$(CXX) $(CXXFLAGS) $(WARNINGS) $(INCLUDES) -MMD -MP -x c++-header -o $@ $<
 
 clean:
-	-@find source -iname "*.cpp.d" -delete
-	-@find source -iname "*.cpp.o" -delete
-	-@find source -iname "*.h.d" -delete
-	-@rm -f $(PRECOMP_GCH)
-	-@rm -f $(OUTPUT_BIN)
+	-@rm -rf $(OUTPUT_DIR)
 
 format:
 	clang-format -i source/**/*.cpp
@@ -71,7 +72,7 @@ format:
 
 -include $(CXXDEPS)
 -include $(CDEPS)
--include $(PRECOMP_GCH:.gch=.d)
+-include $(PRECOMP_GCH:%.gch=%.d)
 
 
 
