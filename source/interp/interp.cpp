@@ -9,16 +9,16 @@ namespace sap::interp
 {
 	Interpreter::Interpreter()
 	{
-		auto ns_builtin = m_top->lookupOrDeclareNamespace("builtin");
+		/* auto ns_builtin = m_top->lookupOrDeclareNamespace("builtin"); */
 
-		using BFD = BuiltinFunctionDefn;
-		auto tio = Type::makeTreeInlineObj();
-		auto num = Type::makeNumber();
-		auto str = Type::makeString();
+		/* using BFD = BuiltinFunctionDefn; */
+		/* auto tio = Type::makeTreeInlineObj(); */
+		/* auto num = Type::makeNumber(); */
+		/* auto str = Type::makeString(); */
 
-		ns_builtin->define(std::make_unique<BFD>("__bold1", Type::makeFunction({ tio }, tio), &builtin::bold1));
-		ns_builtin->define(std::make_unique<BFD>("__bold1", Type::makeFunction({ num }, tio), &builtin::bold1));
-		ns_builtin->define(std::make_unique<BFD>("__bold1", Type::makeFunction({ str }, tio), &builtin::bold1));
+		/* ns_builtin->define(std::make_unique<BFD>("__bold1", Type::makeFunction({ tio }, tio), &builtin::bold1)); */
+		/* ns_builtin->define(std::make_unique<BFD>("__bold1", Type::makeFunction({ num }, tio), &builtin::bold1)); */
+		/* ns_builtin->define(std::make_unique<BFD>("__bold1", Type::makeFunction({ str }, tio), &builtin::bold1)); */
 	}
 
 	ErrorOr<DefnTree*> DefnTree::lookupNamespace(std::string_view name)
