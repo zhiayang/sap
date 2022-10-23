@@ -16,6 +16,15 @@
 
 namespace util
 {
+
+	// clang-format off
+	template <typename A>
+	concept has_hash_method = requires(A a)
+	{
+		{ a.hash() } -> std::same_as<size_t>;
+	};
+	// clang-format on
+
 	// https://en.cppreference.com/w/cpp/container/unordered_map/find
 	// stupid language
 	struct hasher
@@ -27,15 +36,11 @@ namespace util
 		size_t operator()(std::string_view str) const { return H {}(str); }
 		size_t operator()(const std::string& str) const { return H {}(str); }
 
-		template <typename A, typename B>
-		size_t operator()(const std::pair<A, B>& p) const
-		{
-			return std::hash<A> {}(p.first) ^ std::hash<B> {}(p.second);
-		}
+		size_t operator()(const has_hash_method auto& a) const { return a.hash(); }
 	};
 
-	template <typename K, typename V>
-	using hashmap = std::unordered_map<K, V, hasher, std::equal_to<>>;
+	template <typename K, typename V, typename H = hasher>
+	using hashmap = std::unordered_map<K, V, H, std::equal_to<>>;
 
 	template <typename T>
 	using hashset = std::unordered_set<T, hasher, std::equal_to<>>;
