@@ -15,7 +15,7 @@ namespace pdf::encoding
 		static std::map<Codepoint, uint8_t> cmap;
 		if(cmap.empty())
 		{
-			for(uint32_t i = 0; i < 128; i++)
+			for(uint8_t i = 0; i < 128; i++)
 				cmap[Codepoint { i }] = i;
 
 			cmap[0x20ac_codepoint] = 128;
@@ -46,7 +46,7 @@ namespace pdf::encoding
 			cmap[0x017e_codepoint] = 158;
 			cmap[0x0178_codepoint] = 159;
 
-			for(uint32_t i = 0xa0; i <= 0xff; i++)
+			for(uint8_t i = 0xa0; i <= 0xff; i++)
 				cmap[Codepoint { i }] = i;
 		}
 

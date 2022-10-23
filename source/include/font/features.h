@@ -224,7 +224,7 @@ namespace font::off
 	    Get the class of a specific glyph id; 0 is returned if the glyph was not in any of
 	    the classes specified in the given `classdef_table`.
 	*/
-	int getGlyphClass(zst::byte_span classdef_table, GlyphId glyphId);
+	uint16_t getGlyphClass(zst::byte_span classdef_table, GlyphId glyphId);
 
 	/*
 	    Returns a mapping from classid to a set of glyph ids. Note that class 0 (the default class)
@@ -243,7 +243,7 @@ namespace font::off
 	    there is no "default" coverage index -- you just skip the lookup if the glyph is not in the
 	    coveraged table.
 	*/
-	std::optional<int> getGlyphCoverageIndex(zst::byte_span coverage_table, GlyphId glyphId);
+	std::optional<size_t> getGlyphCoverageIndex(zst::byte_span coverage_table, GlyphId glyphId);
 
 	/*
 	    Returns a map from coverageIndex -> glyphId, for every glyph in the coverage table.

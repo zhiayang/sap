@@ -18,7 +18,7 @@ namespace font::cff
 		if(format == 0)
 		{
 			// sids... and num_glyphs - 1 sids...
-			for(size_t i = 1; i < num_glyphs; i++)
+			for(uint16_t i = 1; i < num_glyphs; i++)
 				mapping[i] = consume_u16(buffer);
 		}
 		else if(format == 1 || format == 2)
@@ -27,7 +27,7 @@ namespace font::cff
 			// Instead, software utilising this data simply processes ranges until all glyphs
 			// in the font are covered". stupid design, absolutely garbage.
 
-			size_t gid = 1;
+			uint16_t gid = 1;
 			while(gid < num_glyphs)
 			{
 				// read the sid.
@@ -40,7 +40,7 @@ namespace font::cff
 				else
 					num_sids += consume_u16(buffer);
 
-				for(size_t k = 0; k < num_sids + 1; k++)
+				for(uint16_t k = 0; k < num_sids + 1; k++)
 					mapping[gid + k] = sid + k;
 
 				gid += num_sids + 1;

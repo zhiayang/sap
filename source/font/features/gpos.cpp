@@ -118,21 +118,21 @@ namespace font::off::gpos
 		GlyphAdjustment ret {};
 
 		if(format & 0x01)
-			ret.horz_placement = consume_u16(buf);
+			ret.horz_placement = consume_i16(buf);
 		if(format & 0x02)
-			ret.vert_placement = consume_u16(buf);
+			ret.vert_placement = consume_i16(buf);
 		if(format & 0x04)
-			ret.horz_advance = consume_u16(buf);
+			ret.horz_advance = consume_i16(buf);
 		if(format & 0x08)
-			ret.vert_advance = consume_u16(buf);
+			ret.vert_advance = consume_i16(buf);
 		if(format & 0x10)
-			consume_u16(buf); // X_PLACEMENT_DEVICE
+			consume_u16(buf);  // X_PLACEMENT_DEVICE
 		if(format & 0x20)
-			consume_u16(buf); // Y_PLACEMENT_DEVICE
+			consume_u16(buf);  // Y_PLACEMENT_DEVICE
 		if(format & 0x40)
-			consume_u16(buf); // X_ADVANCE_DEVICE
+			consume_u16(buf);  // X_ADVANCE_DEVICE
 		if(format & 0x80)
-			consume_u16(buf); // Y_ADVANCE_DEVICE
+			consume_u16(buf);  // Y_ADVANCE_DEVICE
 
 		return ret;
 	}

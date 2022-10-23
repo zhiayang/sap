@@ -20,7 +20,7 @@ namespace font
 	uint16_t peek_u16(const zst::byte_span& s)
 	{
 		assert(s.size() >= 2);
-		return ((uint16_t) s[0] << 8) | ((uint16_t) s[1] << 0);
+		return (uint16_t) (((uint16_t) s[0] << (uint16_t) 8) | ((uint16_t) s[1] << (uint16_t) 0));
 	}
 
 	int16_t peek_i16(const zst::byte_span& s)
@@ -268,7 +268,7 @@ namespace font
 
 		// by the time we reach this place, the tt_data should have been created
 		// by the `glyf` table already.
-		auto loca_bytes = (consume_u16(buf) == 0) ? 2 : 4;
+		size_t loca_bytes = (consume_u16(buf) == 0) ? 2 : 4;
 		if(font->outline_type == FontFile::OUTLINES_TRUETYPE)
 		{
 			assert(font->truetype_data != nullptr);

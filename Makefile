@@ -2,9 +2,14 @@
 # Copyright (c) 2021, zhiayang
 # Licensed under the Apache License Version 2.0.
 
-WARNINGS        = -Wno-padded -Wno-cast-align -Wno-unreachable-code -Wno-packed -Wno-missing-noreturn -Wno-float-equal -Wno-unused-macros -Werror=return-type -Wextra -Wno-unused-parameter -Wno-trigraphs
+WARNINGS        = -Wno-padded -Wno-cast-align -Wno-unreachable-code -Wno-packed -Wno-missing-noreturn -Wno-float-equal -Wno-unused-macros -Wextra -Wconversion -Wpedantic -Wall -Wno-unused-parameter -Wno-trigraphs
+WARNINGS += -Werror
+WARNINGS += -Wno-error=unused-parameter
+WARNINGS += -Wno-error=unused-variable
+WARNINGS += -Wno-error=unused-function
+WARNINGS += -Wno-unused-but-set-variable
 
-COMMON_CFLAGS   = -Wconversion -Wextra -Wall -O0 -g
+COMMON_CFLAGS   = -O0 -g
 
 OUTPUT_DIR      := build
 

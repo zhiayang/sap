@@ -6,6 +6,9 @@
 
 #include <string>
 #include <utility>
+#include <concepts>
+#include <assert.h>
+#include <numeric>
 
 #include <zst.h>
 
@@ -17,6 +20,82 @@ namespace util
 
 	uint16_t convertBEU16(uint16_t x);
 	uint32_t convertBEU32(uint32_t x);
+
+	template <std::integral From>
+	std::make_unsigned_t<From> to_unsigned(From f)
+	{
+		return static_cast<std::make_unsigned_t<From>>(f);
+	}
+
+	template <std::integral To, std::integral From>
+	requires requires()
+	{
+		requires sizeof(To) < sizeof(From);
+	}
+	To checked_cast(From f)
+	{
+		if constexpr(std::signed_integral<To> && std::unsigned_integral<From>)
+		{
+			assert(f <= static_cast<From>(std::numeric_limits<To>::max()));
+		}
+		else if constexpr(std::unsigned_integral<To> && std::signed_integral<From>)
+		{
+			assert(f >= 0);
+			assert(f <= static_cast<From>(std::numeric_limits<To>::max()));
+		}
+		else
+		{
+			// same signedness
+			assert(f >= static_cast<From>(std::numeric_limits<To>::min()));
+			assert(f <= static_cast<From>(std::numeric_limits<To>::max()));
+		}
+		return static_cast<To>(f);
+	}
+
+	template <std::integral To, std::integral From>
+	requires requires()
+	{
+		requires sizeof(To) == sizeof(From);
+	}
+	To checked_cast(From f)
+	{
+		if constexpr(std::signed_integral<To> && std::unsigned_integral<From>)
+		{
+			assert(f <= static_cast<From>(std::numeric_limits<To>::max()));
+		}
+		else if constexpr(std::unsigned_integral<To> && std::signed_integral<From>)
+		{
+			assert(f >= 0);
+		}
+		else
+		{
+			// same signedness and same size, no checks required
+		}
+		return static_cast<To>(f);
+	}
+
+	template <std::integral To, std::integral From>
+	requires requires()
+	{
+		requires sizeof(To) > sizeof(From);
+	}
+	To checked_cast(From f)
+	{
+		if constexpr(std::signed_integral<To> && std::unsigned_integral<From>)
+		{
+			// To bigger signed, no check required
+		}
+		else if constexpr(std::unsigned_integral<To> && std::signed_integral<From>)
+		{
+			assert(f >= 0);
+		}
+		else
+		{
+			// same signedness and casting to bigger size, no check required
+		}
+		return static_cast<To>(f);
+	}
+
 }
 
 

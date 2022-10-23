@@ -2,6 +2,7 @@
 // Copyright (c) 2021, zhiayang
 // SPDX-License-Identifier: Apache-2.0
 
+#include "util.h"
 #include "pdf/misc.h"
 #include "pdf/object.h"
 #include "pdf/writer.h"
@@ -68,8 +69,8 @@ namespace pdf
 
 		// for now, always write strings as their hexadecimal encoding...
 		w->write("<");
-		for(uint8_t c : this->value)
-			w->write("{02x}", c);
+		for(char c : this->value)
+			w->write("{02x}", static_cast<uint8_t>(c));
 
 		w->write(">");
 	}
@@ -82,10 +83,10 @@ namespace pdf
 			std::string ret;
 			ret.reserve(sv.size());
 
-			for(uint8_t c : sv)
+			for(char c : sv)
 			{
 				if(c < '!' || c > '~' || c == '#')
-					ret += zpr::sprint("#{02x}", c);
+					ret += zpr::sprint("#{02x}", static_cast<uint8_t>(c));
 
 				else
 					ret.push_back(c);
@@ -263,7 +264,7 @@ namespace pdf
 		if(!ref->is_indirect)
 			pdf::error("cannot make indirect reference to non-indirect object");
 
-		return createObject<IndirectRef>(ref->id, ref->gen);
+		return createObject<IndirectRef>(util::checked_cast<int64_t>(ref->id), util::checked_cast<int64_t>(ref->gen));
 	}
 
 	IndirectRef* IndirectRef::create(int64_t id, int64_t gen)

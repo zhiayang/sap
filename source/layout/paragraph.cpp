@@ -4,6 +4,7 @@
 
 #include "sap.h"
 
+#include "util.h"
 #include "pdf/page.h"
 #include "pdf/font.h"
 #include "pdf/text.h"
@@ -105,10 +106,11 @@ namespace sap::layout
 				{
 					// no space -- break the rest of the words, and quit.
 					overflow = util::make<Paragraph>();
-					overflow->m_words.insert(overflow->m_words.end(), std::move_iterator(m_words.begin() + word_idx),
+					overflow->m_words.insert(overflow->m_words.end(),
+						std::move_iterator(m_words.begin() + util::checked_cast<ssize_t>(word_idx)),
 						std::move_iterator(m_words.end()));
 
-					m_words.erase(m_words.begin() + word_idx, m_words.end());
+					m_words.erase(m_words.begin() + util::checked_cast<ssize_t>(word_idx), m_words.end());
 					for(auto& w : overflow->m_words)
 						w.m_paragraph = overflow;
 

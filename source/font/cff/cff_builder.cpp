@@ -11,10 +11,10 @@ namespace font::cff
 {
 	IndexTableBuilder& IndexTableBuilder::add(zst::byte_span data)
 	{
-		if(m_offsets.size() > 65535)
+		if(m_offsets.size() > 65534)
 			sap::error("font/cff", "too many entries in CFF INDEX");
 
-		m_offsets.push_back(m_data.size());
+		m_offsets.push_back(static_cast<uint32_t>(m_data.size()));
 		m_data.append(data);
 
 		return *this;
@@ -43,12 +43,12 @@ namespace font::cff
 			if(off_size == 1)
 				buf.append_bytes(static_cast<uint8_t>(offset));
 			else if(off_size == 2)
-				buf.append_bytes(util::convertBEU16(offset));
+				buf.append_bytes(util::convertBEU16(static_cast<uint16_t>(offset)));
 			else
 				buf.append_bytes(util::convertBEU32(offset));
 		};
 
-		buf.append_bytes(util::convertBEU16(m_offsets.size()));
+		buf.append_bytes(util::convertBEU16(static_cast<uint16_t>(m_offsets.size())));
 		if(m_offsets.empty())
 			return;
 
@@ -56,10 +56,10 @@ namespace font::cff
 
 		// the offsets are biased by 1 (so the first entry has an offset of 1, not 0)
 		for(auto ofs : m_offsets)
-			write_offset(ofs + 1);
+			write_offset(static_cast<uint32_t>(ofs + 1));
 
 		// write the last one
-		write_offset(m_data.size() + 1);
+		write_offset(util::checked_cast<uint32_t>(m_data.size() + 1));
 		buf.append(m_data.span());
 	}
 
@@ -89,12 +89,12 @@ namespace font::cff
 			else if(!force_4byte && -32768 <= foo && foo <= 32767)
 			{
 				buf.append(28);
-				buf.append_bytes(util::convertBEU16(foo));
+				buf.append_bytes(util::convertBEU16(util::checked_cast<uint16_t>(foo)));
 			}
 			else
 			{
 				buf.append(29);
-				buf.append_bytes(util::convertBEU32(foo));
+				buf.append_bytes(util::convertBEU32(util::checked_cast<uint32_t>(foo)));
 			}
 		}
 		else if(op.type == Operand::TYPE_DECIMAL)
@@ -105,7 +105,7 @@ namespace font::cff
 			size_t nibbles = 0;
 
 			auto add_nibble = [&](uint8_t nib) {
-				byte = (byte << 4) | (nib & 0xF);
+				byte = util::checked_cast<uint8_t>(byte << 4) | (nib & 0xF);
 				if((++nibbles % 2) == 0)
 					buf.append(byte), byte = 0;
 			};
@@ -126,7 +126,7 @@ namespace font::cff
 				}
 				else if('0' <= c && c <= '9')
 				{
-					add_nibble(c - '0');
+					add_nibble(static_cast<uint8_t>(c - '0'));
 				}
 				else if(c == 'e')
 				{
@@ -268,7 +268,7 @@ namespace font::cff
 				if(kv >= 0x0C00)
 					buf.append(12), kv &= 0xFF;
 
-				buf.append(kv);
+				buf.append(util::checked_cast<uint8_t>(kv));
 			}
 		};
 

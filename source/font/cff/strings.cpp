@@ -2,6 +2,7 @@
 // Copyright (c) 2022, zhiayang
 // SPDX-License-Identifier: Apache-2.0
 
+#include "util.h"
 #include "error.h"
 #include "font/cff.h"
 
@@ -72,7 +73,7 @@ namespace font::cff
 		if(auto it = this->known_strings.find(foo); it != this->known_strings.end())
 			return it->second;
 
-		auto sid = NUM_STANDARD_STRINGS + this->string_ids.size();
+		auto sid = util::checked_cast<uint16_t>(NUM_STANDARD_STRINGS + this->string_ids.size());
 		this->known_strings[foo] = sid;
 		this->string_ids.push_back(std::move(foo));
 

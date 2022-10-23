@@ -2,6 +2,7 @@
 // Copyright (c) 2022, zhiayang
 // SPDX-License-Identifier: Apache-2.0
 
+#include "util.h"
 #include "error.h"
 
 #include "font/font.h"
@@ -67,14 +68,14 @@ namespace font::off
 				return std::nullopt;
 
 			auto try_match_rule = [&glyphs](zst::byte_span& rule, auto&& trf) -> std::tuple<bool, uint16_t, uint16_t> {
-				auto num_glyphs = consume_u16(rule);
-				auto num_records = consume_u16(rule);
+				size_t num_glyphs = consume_u16(rule);
+				size_t num_records = consume_u16(rule);
 
 				// can't match this rule, not enough glyphs
 				if(glyphs.size() < num_glyphs)
 					return { false, 0, 0 };
 
-				for(auto k = 1; k < num_glyphs; k++)
+				for(size_t k = 1; k < num_glyphs; k++)
 				{
 					if(static_cast<uint16_t>(trf(glyphs[k])) != consume_u16(rule))
 						return { false, 0, 0 };
@@ -134,7 +135,8 @@ namespace font::off
 				auto first_class_id = getGlyphClass(classdef_table, glyphs[0]);
 				assert(first_class_id < num_class_sets);
 
-				auto classset = subtable_start.drop(peek_u16(subtable.drop(first_class_id * sizeof(uint16_t))));
+				auto classset =
+					subtable_start.drop(peek_u16(subtable.drop(util::checked_cast<size_t>(first_class_id) * sizeof(uint16_t))));
 				auto classset_start = classset;
 
 				auto num_rules = consume_u16(classset);
@@ -189,7 +191,7 @@ namespace font::off
 					return std::nullopt;
 			}
 
-			consume_u16(subtable); // num_glyphs, which we already read
+			consume_u16(subtable);  // num_glyphs, which we already read
 			for(size_t k = 0; k < num_glyphs; k++)
 			{
 				auto coverage = subtable_start.drop(consume_u16(subtable));
@@ -197,7 +199,7 @@ namespace font::off
 					return std::nullopt;
 			}
 
-			consume_u16(subtable); // num_lookahead, which we already read
+			consume_u16(subtable);  // num_lookahead, which we already read
 			for(size_t k = 0; k < num_lookahead; k++)
 			{
 				auto coverage = subtable_start.drop(consume_u16(subtable));
@@ -243,14 +245,14 @@ namespace font::off
 						return { false, 0 };
 				}
 
-				consume_u16(rule); // num_glyphs, which we already read
+				consume_u16(rule);  // num_glyphs, which we already read
 				for(size_t k = 1; k < num_glyphs; k++)
 				{
 					if(static_cast<uint16_t>(gid_trf(glyphs[position + k])) != consume_u16(rule))
 						return { false, 0 };
 				}
 
-				consume_u16(rule); // num_lookahead, which we already read
+				consume_u16(rule);  // num_lookahead, which we already read
 				for(size_t k = 0; k < num_lookahead; k++)
 				{
 					if(static_cast<uint16_t>(lookahead_trf(glyphs[position + num_glyphs + k])) != consume_u16(rule))
@@ -300,7 +302,8 @@ namespace font::off
 				auto first_class_id = getGlyphClass(input_classdefs, glyphs[position]);
 				assert(first_class_id < num_class_sets);
 
-				auto classset = subtable_start.drop(peek_u16(subtable.drop(first_class_id * sizeof(uint16_t))));
+				auto classset =
+					subtable_start.drop(peek_u16(subtable.drop(util::checked_cast<size_t>(first_class_id) * sizeof(uint16_t))));
 				auto classset_start = classset;
 
 				auto num_rules = consume_u16(classset);

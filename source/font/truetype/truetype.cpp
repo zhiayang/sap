@@ -17,7 +17,7 @@ namespace font::truetype
 			return;
 
 		// num_contours >= 0 -> simple glyph, no components
-		int16_t num_contours = consume_u16(data);
+		int16_t num_contours = consume_i16(data);
 		if(num_contours >= 0)
 			return;
 
@@ -76,7 +76,7 @@ namespace font::truetype
 				return 1 * peek_u32(loca_table);
 		};
 
-		for(size_t i = 0; i < font->num_glyphs; i++)
+		for(uint16_t i = 0; i < font->num_glyphs; i++)
 		{
 			Glyph glyph {};
 			glyph.gid = i;

@@ -200,6 +200,9 @@
 
 #pragma once
 
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wsign-conversion"
+
 #include <cfloat>
 #include <cstddef>
 #include <cstdint>
@@ -787,7 +790,7 @@ namespace zpr
 			conv.U = (conv.U & ((1ULL << 52U) - 1U)) | (1023ULL << 52U);        // drop the exponent so conv.F is now in [1,2)
 
 			// now approximate log10 from the log2 integer part and an expansion of ln around 1.5
-			auto expval = static_cast<int64_t>(0.1760912590558 + exp2 * 0.301029995663981 + (conv.F - 1.5) * 0.289529654602168);
+			auto expval = static_cast<int64_t>(0.1760912590558 + static_cast<double>(exp2) * 0.301029995663981 + (conv.F - 1.5) * 0.289529654602168);
 
 			// now we want to compute 10^expval but we want to be sure it won't overflow
 			exp2 = static_cast<int64_t>(static_cast<double>(expval) * 3.321928094887362 + 0.5);
@@ -2729,6 +2732,7 @@ namespace zpr
 }
 
 
+#pragma GCC diagnostic pop
 
 
 

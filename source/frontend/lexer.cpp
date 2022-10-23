@@ -4,6 +4,7 @@
 
 #include <ctype.h>
 
+#include "util.h"
 #include "error.h"
 #include "sap/frontend.h"
 
@@ -14,7 +15,7 @@ namespace sap::frontend
 	static Token advance_and_return(zst::str_view& stream, Location& loc, Token tok, size_t n)
 	{
 		loc.column += n;
-		tok.loc.length = n;
+		tok.loc.length = util::checked_cast<uint32_t>(n);
 
 		stream.remove_prefix(n);
 		return tok;
@@ -94,7 +95,7 @@ namespace sap::frontend
 		}
 		else
 		{
-			assert(not "not a comment, hello?!");
+			assert(not(const char*) "not a comment, hello?!");
 		}
 	}
 

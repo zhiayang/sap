@@ -75,7 +75,7 @@ namespace font::cff
 			{
 				if(fd_mapping.find(glyph.font_dict_idx) == fd_mapping.end())
 				{
-					fd_mapping[glyph.font_dict_idx] = new_font_dicts.size();
+					fd_mapping[glyph.font_dict_idx] = util::checked_cast<uint8_t>(new_font_dicts.size());
 					new_font_dicts.push_back(std::move(cff->font_dicts[glyph.font_dict_idx]));
 				}
 
@@ -149,10 +149,10 @@ namespace font::cff
 
 
 		// write the header
-		buffer.append(1); // major
-		buffer.append(0); // minor
-		buffer.append(4); // hdrSize
-		buffer.append(4); // offSize (for now, always 4. I don't even know what this field is used for)
+		buffer.append(1);  // major
+		buffer.append(0);  // minor
+		buffer.append(4);  // hdrSize
+		buffer.append(4);  // offSize (for now, always 4. I don't even know what this field is used for)
 
 		// Name INDEX (there is only 1)
 		IndexTableBuilder().add(subset_name.bytes()).writeInto(buffer);
@@ -176,16 +176,16 @@ namespace font::cff
 		*/
 		auto top_dict = DictBuilder(cff->top_dict);
 		top_dict.set(DictKey::ROS, {
-									   Operand().string_id(cff->get_or_add_string("Adobe")),    // registry
-									   Operand().string_id(cff->get_or_add_string("Identity")), // ordering
-									   Operand().integer(0)                                     // supplement
+									   Operand().string_id(cff->get_or_add_string("Adobe")),     // registry
+									   Operand().string_id(cff->get_or_add_string("Identity")),  // ordering
+									   Operand().integer(0)                                      // supplement
 								   });
 
 		// pre-set these to reserve space for them
 		top_dict.setInteger(DictKey::FDArray, 0);
 		top_dict.setInteger(DictKey::FDSelect, 0);
 		top_dict.setStringId(DictKey::FontName, subset_name_sid);
-		top_dict.setInteger(DictKey::CIDCount, cff->glyphs.size());
+		top_dict.setInteger(DictKey::CIDCount, util::checked_cast<int32_t>(cff->glyphs.size()));
 
 		// Encoding can't be present for CID fonts, and Private will come from
 		// the FDArray/FDSelect Font DICT instead of the Top one.
@@ -207,7 +207,7 @@ namespace font::cff
 			else
 				off_size = 4;
 
-			top_dict_size += 2 + 1 + (2 * off_size);
+			top_dict_size += util::checked_cast<unsigned long>(2 + 1 + (2 * off_size));
 		}
 
 		// String INDEX
@@ -250,9 +250,10 @@ namespace font::cff
 			auto copy_kv_pair_with_abs_offset = [&](DictKey key, size_t size = 0) {
 				// Private needs special treatment (since it needs both a size and offset)
 				if(key == DictKey::Private)
-					top_dict.setIntegerPair(key, size, current_abs_ofs());
+					top_dict.setIntegerPair(key, util::checked_cast<int32_t>(size),
+						util::checked_cast<int32_t>(current_abs_ofs()));
 				else
-					top_dict.setInteger(key, current_abs_ofs());
+					top_dict.setInteger(key, util::checked_cast<int32_t>(current_abs_ofs()));
 			};
 
 			// returns the absolute offset to the private dict
@@ -263,7 +264,7 @@ namespace font::cff
 
 				// make the local subrs start immediately after the private dict.
 				if(fd.local_subrs.size() > 0)
-					priv_builder.setInteger(DictKey::Subrs, priv_size);
+					priv_builder.setInteger(DictKey::Subrs, util::checked_cast<int32_t>(priv_size));
 
 				priv_builder.writeInto(tmp_buffer);
 
@@ -306,7 +307,8 @@ namespace font::cff
 				{
 					auto builder = DictBuilder()
 					                   .setStringId(DictKey::FontName, subset_name_sid)
-					                   .setIntegerPair(DictKey::Private, priv_size, priv_ofs);
+					                   .setIntegerPair(DictKey::Private, util::checked_cast<int32_t>(priv_size),
+										   util::checked_cast<int32_t>(priv_ofs));
 
 					fdarray_builder.add(builder.serialise().span());
 				}
@@ -324,7 +326,7 @@ namespace font::cff
 					tmp_buffer.append_bytes(util::convertBEU16(1));
 					tmp_buffer.append_bytes(util::convertBEU16(0));
 					tmp_buffer.append(0);
-					tmp_buffer.append_bytes(util::convertBEU16(cff->glyphs.size() + 1));
+					tmp_buffer.append_bytes(util::convertBEU16(util::checked_cast<uint16_t>(cff->glyphs.size() + 1)));
 				}
 				else
 				{

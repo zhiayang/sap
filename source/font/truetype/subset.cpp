@@ -21,10 +21,10 @@ namespace font::truetype
 
 		for(auto& gid : used_glyphs)
 		{
-			auto gid32 = static_cast<uint32_t>(gid);
-			auto& comps = tt->glyphs[gid32].component_gids;
+			auto gid16 = util::checked_cast<uint16_t>(static_cast<uint32_t>(gid));
+			auto& comps = tt->glyphs[gid16].component_gids;
 
-			used_gids.insert(gid32);
+			used_gids.insert(gid16);
 			used_gids.insert(comps.begin(), comps.end());
 		}
 
@@ -38,12 +38,12 @@ namespace font::truetype
 			zst::byte_buffer loca {};
 			zst::byte_buffer glyf {};
 
-			for(size_t gid = 0; gid < font->num_glyphs; gid++)
+			for(uint16_t gid = 0; gid < font->num_glyphs; gid++)
 			{
 				if(half)
-					loca.append_bytes(util::convertBEU16(glyf.size() / 2));
+					loca.append_bytes(util::convertBEU16(util::checked_cast<uint16_t>(glyf.size() / 2)));
 				else
-					loca.append_bytes(util::convertBEU32(glyf.size()));
+					loca.append_bytes(util::convertBEU32(util::checked_cast<uint32_t>(glyf.size())));
 
 				if(used_gids.find(gid) != used_gids.end())
 					glyf.append(tt->glyphs[gid].glyph_data);

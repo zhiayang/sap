@@ -33,11 +33,11 @@ namespace font::cff
 
 		append16(cmap, 0);
 		append16(cmap, 4);
-		cmap.append_bytes(util::convertBEU32(subtable_offset));
+		cmap.append_bytes(util::convertBEU32(util::checked_cast<uint32_t>(subtable_offset)));
 
 		append16(cmap, 3);
 		append16(cmap, 1);
-		cmap.append_bytes(util::convertBEU32(subtable_offset));
+		cmap.append_bytes(util::convertBEU32(util::checked_cast<uint32_t>(subtable_offset)));
 
 		std::map<uint16_t, uint16_t> mapping {};
 		for(auto& glyph : cff->glyphs)
@@ -47,14 +47,14 @@ namespace font::cff
 
 		// format 4
 		append16(cmap, 4);
-		append16(cmap, 8 * 2 + (4 * 2 * seg_count));
+		append16(cmap, util::checked_cast<uint16_t>(8 * 2 + (4 * 2 * seg_count)));
 		append16(cmap, 0);
-		append16(cmap, 2 * seg_count);
+		append16(cmap, util::checked_cast<uint16_t>(2 * seg_count));
 
-		auto search_range = 2 * (1 << (int) log2(seg_count));
-		append16(cmap, search_range);
-		append16(cmap, log2(search_range / 2));
-		append16(cmap, 2 * seg_count - search_range);
+		auto search_range = 2 * (1 << (int) log2(static_cast<double>(seg_count)));
+		append16(cmap, util::checked_cast<uint16_t>(search_range));
+		append16(cmap, util::checked_cast<uint16_t>((int) log2(static_cast<double>(search_range)) - 1));
+		append16(cmap, util::checked_cast<uint16_t>(2 * seg_count - util::to_unsigned(search_range)));
 
 		zst::byte_buffer start_codes {};
 		zst::byte_buffer end_codes {};

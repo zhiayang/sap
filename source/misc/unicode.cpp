@@ -58,9 +58,10 @@ namespace unicode
 		std::string ret;
 		for(size_t i = 0; i < bytes.size(); i += 2)
 		{
-			uint16_t fst = ((uint16_t) bytes[i + 0] << 8) | ((uint16_t) bytes[i + 1] << 0);
+			uint16_t fst = (uint16_t) (((uint16_t) bytes[i + 0] << 8) | ((uint16_t) bytes[i + 1] << 0));
 
-			uint16_t snd = i + 3 < bytes.size() ? ((uint16_t) bytes[i + 2] << 8) | ((uint16_t) bytes[i + 3] << 0) : 0;
+			uint16_t snd =
+				i + 3 < bytes.size() ? (uint16_t) (((uint16_t) bytes[i + 2] << 8) | ((uint16_t) bytes[i + 3] << 0)) : 0;
 
 			bool surrogate = convert_one_utf16(ret, fst, snd);
 			if(surrogate)
@@ -73,11 +74,11 @@ namespace unicode
 	Codepoint consumeCodepointFromUtf8(zst::byte_span& utf8)
 	{
 		int32_t codepoint = 0;
-		auto read = utf8proc_iterate(utf8.data(), utf8.size(), &codepoint);
+		auto read = utf8proc_iterate(utf8.data(), util::checked_cast<ptrdiff_t>(utf8.size()), &codepoint);
 		if(codepoint == -1)
 			sap::internal_error("utf8 conversion error");
 
-		utf8.remove_prefix(read);
+		utf8.remove_prefix(util::checked_cast<size_t>(read));
 		return static_cast<Codepoint>(codepoint);
 	}
 

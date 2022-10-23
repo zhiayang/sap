@@ -34,7 +34,7 @@ namespace util
 
 	uint16_t convertBEU16(uint16_t x)
 	{
-		return ((x & 0x00ff) << 8) | ((x & 0xff00) >> 8);
+		return (uint16_t)(((uint16_t)(x & 0x00ff) << 8) | ((uint16_t)(x & 0xff00) >> 8));
 	}
 
 	uint32_t convertBEU32(uint32_t x)

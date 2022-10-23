@@ -2,6 +2,7 @@
 // Copyright (c) 2021, zhiayang
 // SPDX-License-Identifier: Apache-2.0
 
+#include "util.h"
 #include "pdf/page.h"
 #include "pdf/misc.h"
 #include "pdf/writer.h"
@@ -45,8 +46,8 @@ namespace pdf
 
 		w->writeln();
 
-		auto trailer =
-			Dictionary::create({ { names::Size, Integer::create(num_objects) }, { names::Root, IndirectRef::create(root) } });
+		auto trailer = Dictionary::create({ { names::Size, Integer::create(util::checked_cast<int64_t>(num_objects)) },
+			{ names::Root, IndirectRef::create(root) } });
 
 		w->writeln("trailer");
 		w->write(trailer);
@@ -67,7 +68,8 @@ namespace pdf
 	{
 		// TODO: make this more efficient -- make some kind of balanced tree.
 
-		auto pagetree = Dictionary::createIndirect(this, names::Pages, { { names::Count, Integer::create(this->pages.size()) } });
+		auto pagetree = Dictionary::createIndirect(this, names::Pages,
+			{ { names::Count, Integer::create(util::checked_cast<int64_t>(this->pages.size())) } });
 
 		auto array = Array::create({});
 		for(auto page : this->pages)

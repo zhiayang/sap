@@ -45,12 +45,12 @@ namespace pdf
 				{
 				foo:
 					widths2.emplace_back(Integer::create(static_cast<uint32_t>(widths[i].first)),
-						std::vector<Object*> { Integer::create(widths[i].second) });
+						std::vector<Object*> { Integer::create(static_cast<uint32_t>(widths[i].second)) });
 				}
 				else
 				{
 					auto& prev = widths2.back();
-					if(prev.first->value + prev.second.size() == static_cast<uint32_t>(widths[i].first))
+					if(static_cast<uint64_t>(prev.first->value) + prev.second.size() == static_cast<uint64_t>(widths[i].first))
 						prev.second.push_back(Integer::create(static_cast<uint32_t>(widths[i].second)));
 					else
 						goto foo;
@@ -173,7 +173,7 @@ namespace pdf
 		// TODO: scale the metrics correctly!
 		auto font_desc = Dictionary::createIndirect(doc, names::FontDescriptor,
 			{ { names::FontName, basefont_name }, { names::Flags, Integer::create(4) }, { names::FontBBox, font_bbox },
-				{ names::ItalicAngle, Integer::create(font_file->metrics.italic_angle) },
+				{ names::ItalicAngle, Integer::create(static_cast<uint32_t>(font_file->metrics.italic_angle)) },
 				{ names::Ascent, Integer::create(font_file->metrics.hhea_ascent) },
 				{ names::Descent, Integer::create(font_file->metrics.hhea_descent) },
 				{ names::CapHeight, Integer::create(cap_height) }, { names::XHeight, Integer::create(69) },

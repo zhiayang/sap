@@ -4,6 +4,7 @@
 
 #include <miniz/miniz.h>
 
+#include "util.h"
 #include "pdf/misc.h"
 #include "pdf/writer.h"
 #include "pdf/object.h"
@@ -43,7 +44,8 @@ namespace pdf
 				auto res = tdefl_init(
 					reinterpret_cast<tdefl_compressor*>(this->compressor_state),
 					[](const void* buf, int len, void* user) -> int {
-						reinterpret_cast<Stream*>(user)->bytes.append(reinterpret_cast<const uint8_t*>(buf), len);
+						reinterpret_cast<Stream*>(user)->bytes.append(reinterpret_cast<const uint8_t*>(buf),
+							util::checked_cast<size_t>(len));
 						return 1;
 					},
 					this, COMPRESSION_LEVEL | TDEFL_WRITE_ZLIB_HEADER);
@@ -75,7 +77,7 @@ namespace pdf
 			if(res != TDEFL_STATUS_DONE)
 				pdf::error("failed to flush the stream: {}", res);
 		}
-		this->dict->addOrReplace(names::Length, Integer::create(this->bytes.size()));
+		this->dict->addOrReplace(names::Length, Integer::create(util::checked_cast<int64_t>(this->bytes.size())));
 
 		IndirHelper helper(w, this);
 
@@ -115,7 +117,7 @@ namespace pdf
 			this->bytes.append(arr, num);
 		}
 
-		this->dict->addOrReplace(names::Length, Integer::create(this->bytes.size()));
+		this->dict->addOrReplace(names::Length, Integer::create(util::checked_cast<int64_t>(this->bytes.size())));
 		this->uncompressed_length += num;
 	}
 
@@ -130,20 +132,20 @@ namespace pdf
 
 	Stream* Stream::create(Document* doc, zst::byte_buffer bytes)
 	{
-		auto dict = Dictionary::create({ { names::Length, Integer::create(bytes.size()) } });
+		auto dict = Dictionary::create({ { names::Length, Integer::create(util::checked_cast<int64_t>(bytes.size())) } });
 
 		return createIndirectObject<Stream>(doc, dict, std::move(bytes));
 	}
 
 	Stream* Stream::create(Document* doc, Dictionary* dict, zst::byte_buffer bytes)
 	{
-		dict->addOrReplace(names::Length, Integer::create(bytes.size()));
+		dict->addOrReplace(names::Length, Integer::create(util::checked_cast<int64_t>(bytes.size())));
 		return createIndirectObject<Stream>(doc, dict, std::move(bytes));
 	}
 
 	Stream* Stream::createDetached(Document* doc, Dictionary* dict, zst::byte_buffer bytes)
 	{
-		dict->addOrReplace(names::Length, Integer::create(bytes.size()));
+		dict->addOrReplace(names::Length, Integer::create(util::checked_cast<int64_t>(bytes.size())));
 		return createObject<Stream>(dict, std::move(bytes));
 	}
 

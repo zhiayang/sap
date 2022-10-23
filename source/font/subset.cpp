@@ -24,20 +24,20 @@ namespace font
 
 	static void write_num_tables_and_other_stuff(Stream* stream, size_t num_tables)
 	{
-		stream->append_bytes(util::convertBEU16(num_tables));
+		stream->append_bytes(util::convertBEU16(util::checked_cast<uint16_t>(num_tables)));
 
 		// searchRange = "(Maximum power of 2 <= numTables) x 16"
 		size_t max_pow2 = 0;
 		while(max_pow2 < num_tables)
 			max_pow2++;
 
-		stream->append_bytes(util::convertBEU16((1 << max_pow2) * 16));
+		stream->append_bytes(util::convertBEU16(util::checked_cast<uint16_t>(1 << max_pow2) * 16));
 
 		// entrySelector = "Log2(Maximum power of 2 <= numTables)"
-		stream->append_bytes(util::convertBEU16(max_pow2));
+		stream->append_bytes(util::convertBEU16(util::checked_cast<uint16_t>(max_pow2)));
 
 		// rangeShift = "NumTables x 16 - searchRange"
-		stream->append_bytes(util::convertBEU16(16 * (num_tables - (1 << max_pow2))));
+		stream->append_bytes(util::convertBEU16(util::checked_cast<uint16_t>(16 * (num_tables - (1 << max_pow2)))));
 	}
 
 	static uint32_t compute_checksum(zst::byte_span buf)
@@ -52,7 +52,7 @@ namespace font
 		assert(remaining.size() < sizeof(uint32_t));
 		uint32_t last_u32 = 0;
 		for(size_t i = 0; i < remaining.size(); i++)
-			last_u32 |= (remaining[i] << (24 - (i * 8)));
+			last_u32 |= ((uint32_t) remaining[i] << (24 - (i * 8)));
 
 		uint32_t checksum = 0;
 		for(auto u32 : u32s)
@@ -108,7 +108,7 @@ namespace font
 		auto write_table_record = [&stream, &current_table_offset](const Tag& tag, uint32_t checksum, uint32_t size) {
 			stream->append_bytes(util::convertBEU32(tag.value));
 			stream->append_bytes(util::convertBEU32(checksum));
-			stream->append_bytes(util::convertBEU32(current_table_offset));
+			stream->append_bytes(util::convertBEU32(util::checked_cast<uint32_t>(current_table_offset)));
 			stream->append_bytes(util::convertBEU32(size));
 
 			current_table_offset += size;
@@ -135,7 +135,7 @@ namespace font
 					checksum = compute_checksum(subset.loca_table.span());
 				}
 
-				write_table_record(table.tag, checksum, size);
+				write_table_record(table.tag, util::checked_cast<uint32_t>(checksum), util::checked_cast<uint32_t>(size));
 			}
 
 			for(auto& table : included_tables)
@@ -166,7 +166,7 @@ namespace font
 					size = cff_subset.cmap.size();
 					checksum = compute_checksum(cff_subset.cmap.span());
 				}
-				write_table_record(table.tag, checksum, size);
+				write_table_record(table.tag, util::checked_cast<uint32_t>(checksum), util::checked_cast<uint32_t>(size));
 			}
 
 			for(auto& table : included_tables)
@@ -189,14 +189,15 @@ namespace font
 		fclose(foo);
 #endif
 		if(stream->is_compressed)
-			stream->dict->add(pdf::names::Length1, pdf::Integer::create(stream->uncompressed_length));
+			stream->dict->add(pdf::names::Length1,
+				pdf::Integer::create(util::checked_cast<int64_t>(stream->uncompressed_length)));
 	}
 
 
 	std::string generateSubsetName(FontFile* font)
 	{
 		static auto foo = []() {
-			srand(time(nullptr));
+			srand(static_cast<unsigned int>(time(nullptr)));
 			return 69;
 		}();
 		(void) foo;

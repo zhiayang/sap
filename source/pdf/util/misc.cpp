@@ -41,8 +41,8 @@ namespace pdf
 		ret.reserve(sv.size() * 2 + 2);
 
 		ret += "<";
-		for(uint8_t c : sv)
-			ret += zpr::sprint("{02x}", c);
+		for(int8_t c : sv)
+			ret += zpr::sprint("{02x}", static_cast<uint8_t>(c));
 
 		ret += ">";
 		return ret;

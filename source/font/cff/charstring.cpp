@@ -2,6 +2,7 @@
 // Copyright (c) 2022, zhiayang
 // SPDX-License-Identifier: Apache-2.0
 
+#include "util.h"
 #include "error.h"
 #include "font/cff.h"
 #include "font/font.h"
@@ -140,7 +141,7 @@ namespace font::cff
 					interp.in_header = false;
 
 					// skip the mask bytes (`x` was already dropped)
-					instrs.remove_prefix(mask_bytes);
+					instrs.remove_prefix(util::checked_cast<size_t>(mask_bytes));
 					break;
 				}
 
@@ -163,8 +164,8 @@ namespace font::cff
 						if(subr_num >= (int32_t) local_subrs.size())
 							sap::error("font/cff", "local subr {} out of bounds (max {})", subr_num, local_subrs.size());
 
-						subr_cs = local_subrs[subr_num].charstring;
-						local_subrs[subr_num].used = true;
+						subr_cs = local_subrs[util::checked_cast<size_t>(subr_num)].charstring;
+						local_subrs[util::checked_cast<size_t>(subr_num)].used = true;
 					}
 					else
 					{
@@ -172,8 +173,8 @@ namespace font::cff
 						if(subr_num >= (int32_t) global_subrs.size())
 							sap::error("font/cff", "global subr {} out of bounds (max {})", subr_num, global_subrs.size());
 
-						subr_cs = global_subrs[subr_num].charstring;
-						global_subrs[subr_num].used = true;
+						subr_cs = global_subrs[util::checked_cast<size_t>(subr_num)].charstring;
+						global_subrs[util::checked_cast<size_t>(subr_num)].used = true;
 					}
 
 					auto finish = run_charstring(subr_cs, global_subrs, local_subrs, interp);
@@ -291,7 +292,7 @@ namespace font::cff
 							if(i <= 0)
 								interp.push(interp.peek());
 							else
-								interp.push(interp.stack[interp.stack.size() - i - 1]);
+								interp.push(interp.stack[interp.stack.size() - static_cast<size_t>(i + 1)]);
 
 							clear_stack = false;
 							break;

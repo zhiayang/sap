@@ -11,7 +11,7 @@
 
 namespace font::off
 {
-	int getGlyphClass(zst::byte_span table, GlyphId glyphId)
+	uint16_t getGlyphClass(zst::byte_span table, GlyphId glyphId)
 	{
 		auto format = consume_u16(table);
 

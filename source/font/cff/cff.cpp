@@ -3,6 +3,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #include "pool.h"
+#include "util.h"
 #include "font/cff.h"
 #include "font/font.h"
 
@@ -167,7 +168,7 @@ namespace font::cff
 
 			// specified from the beginning of the file
 			auto charstrings_offset = cff->top_dict.integer(DictKey::CharStrings);
-			cff->charstrings_table = readIndexTable(cff->bytes.drop(charstrings_offset));
+			cff->charstrings_table = readIndexTable(cff->bytes.drop(util::checked_cast<size_t>(charstrings_offset)));
 
 			if(cff->charstrings_table.count == 0)
 				sap::error("font/cff", "font contains no glyphs!");
@@ -223,7 +224,8 @@ namespace font::cff
 			if(charset_ofs == 0 || charset_ofs == 1 || charset_ofs == 2)
 				charset_mapping = getPredefinedCharset(charset_ofs);
 			else
-				charset_mapping = readCharsetTable(cff->charstrings_table.count, cff->bytes.drop(charset_ofs));
+				charset_mapping =
+					readCharsetTable(cff->charstrings_table.count, cff->bytes.drop(util::checked_cast<size_t>(charset_ofs)));
 
 			// charset-mapping maps from gid -> sid or cid, depending on whether this is a CID font or not
 			for(auto& [gid, sid] : charset_mapping)
@@ -252,7 +254,8 @@ namespace font::cff
 			auto offset = foo[1].integer();
 
 			// private dict offset is specified from the beginning of the file
-			auto private_dict = readDictionary(cff->bytes.drop(offset).take(size));
+			auto private_dict =
+				readDictionary(cff->bytes.drop(util::checked_cast<size_t>(offset)).take(util::checked_cast<size_t>(size)));
 			std::vector<Subroutine> local_subrs {};
 
 			// local subrs index is specified from the beginning of the private DICT data)
@@ -261,7 +264,7 @@ namespace font::cff
 				auto local_subr_offset = private_dict.integer(DictKey::Subrs);
 				local_subr_offset += offset;
 
-				auto index = readIndexTable(cff->bytes.drop(local_subr_offset));
+				auto index = readIndexTable(cff->bytes.drop(util::checked_cast<size_t>(local_subr_offset)));
 				local_subrs = read_subrs_from_index(index);
 			}
 
@@ -282,12 +285,12 @@ namespace font::cff
 		else
 		{
 			auto fdarray_ofs = cff->top_dict.integer(DictKey::FDArray);
-			auto fdarray_table = readIndexTable(cff->bytes.drop(fdarray_ofs));
+			auto fdarray_table = readIndexTable(cff->bytes.drop(util::checked_cast<size_t>(fdarray_ofs)));
 
 			for(auto i = 0; i < fdarray_table.count; i++)
 			{
 				FontDict fd {};
-				fd.dict = readDictionary(fdarray_table.get_item(i));
+				fd.dict = readDictionary(fdarray_table.get_item(util::checked_cast<size_t>(i)));
 
 				auto [private_dict, local_subrs] = read_private_dict_and_local_subrs_from_dict(fd.dict);
 				fd.private_dict = std::move(private_dict);
@@ -298,7 +301,7 @@ namespace font::cff
 
 
 			auto fdselect_ofs = cff->top_dict.integer(DictKey::FDSelect);
-			auto fdselect_data = cff->bytes.drop(fdselect_ofs);
+			auto fdselect_data = cff->bytes.drop(util::checked_cast<size_t>(fdselect_ofs));
 
 			auto format = fdselect_data[0];
 			fdselect_data.remove_prefix(1);

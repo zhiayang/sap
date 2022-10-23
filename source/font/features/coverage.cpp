@@ -20,7 +20,7 @@ namespace font::off
 			auto count = consume_u16(cov_table);
 
 			// the first glyphid in the array has index 0, then 1, and so on.
-			for(size_t i = 0; i < count; i++)
+			for(int i = 0; i < count; i++)
 				coverage_map[i] = GlyphId { consume_u16(cov_table) };
 		}
 		else if(format == 2)
@@ -44,7 +44,7 @@ namespace font::off
 		return coverage_map;
 	}
 
-	std::optional<int> getGlyphCoverageIndex(zst::byte_span cov_table, GlyphId glyphId)
+	std::optional<size_t> getGlyphCoverageIndex(zst::byte_span cov_table, GlyphId glyphId)
 	{
 		auto format = consume_u16(cov_table);
 
@@ -64,7 +64,7 @@ namespace font::off
 				auto val = util::convertBEU16(array[mid]);
 
 				if(val == gid16)
-					return static_cast<int32_t>(mid);
+					return mid;
 				else if(val < gid16)
 					low = mid + 1;
 				else
