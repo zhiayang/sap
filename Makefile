@@ -54,12 +54,12 @@ $(OUTPUT_BIN): $(CXXOBJ) $(UTF8PROC_OBJS) $(MINIZ_OBJS)
 	@$(CXX) $(CXXFLAGS) $(WARNINGS) $(DEFINES) -Iexternal -o $@ $^
 
 $(OUTPUT_DIR)/%.cpp.o: %.cpp Makefile $(PRECOMP_GCH)
-	@echo "  $(notdir $<)"
+	@echo "  $<"
 	@mkdir -p $(shell dirname $@)
 	@$(CXX) $(CXXFLAGS) $(WARNINGS) $(INCLUDES) $(DEFINES) -include $(PRECOMP_HDRS) -MMD -MP -c -o $@ $<
 
 $(OUTPUT_DIR)/%.c.o: %.c Makefile
-	@echo "  $(notdir $<)"
+	@echo "  $<"
 	@mkdir -p $(shell dirname $@)
 	@$(CC) $(CFLAGS) -MMD -MP -c -o $@ $<
 
