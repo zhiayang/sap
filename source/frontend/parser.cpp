@@ -206,7 +206,7 @@ namespace sap::frontend
 				continue;
 			}
 
-			auto op_loc = lexer.peek().loc;
+			// auto op_loc = lexer.peek().loc;
 			auto op = parseOperatorTokens(lexer);
 
 			auto rhs = parseUnary(lexer);
