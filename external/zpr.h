@@ -2068,6 +2068,20 @@ namespace zpr
 
 
 	// formatters lie here.
+	// when user has member zpr_print method, we make a formatter that calls their zpr_print for them.
+	template <typename _Type>
+	struct print_formatter<_Type,
+	                       // SFINAE for the concept { x.zpr_print(cb, args) };
+	                       tt::void_t<decltype(tt::declval<_Type>()
+	                                           .zpr_print(tt::declval<detail::string_appender>(),
+	                                                      tt::declval<format_args>()))>> {
+		template <typename __Type, typename _Cb>
+		ZPR_ALWAYS_INLINE void print(__Type&& x, _Cb&& cb, format_args args)
+		{
+			std::forward<__Type>(x).zpr_print(std::forward<_Cb>(cb), args);
+		}
+	};
+
 	// because we use explicit template args for the vprint stuff, it can only come after we
 	// specialise all the print_formatters for the builtin types.
 	template <typename _Type>
