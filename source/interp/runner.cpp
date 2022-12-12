@@ -4,19 +4,22 @@
 
 #include "sap.h"
 #include "interp/tree.h"
+#include "interp/state.h"
 
 #define dcast(T, E) dynamic_cast<T*>(E)
 #define cdcast(T, E) dynamic_cast<const T*>(E)
 
 namespace sap::interp
 {
-	std::optional<std::unique_ptr<tree::InlineObject>> runScriptExpression(Interpreter* cs, const Expr* expr)
+	std::unique_ptr<tree::InlineObject> Interpreter::run(const Stmt* stmt)
 	{
-		if(auto call = cdcast(FunctionCall, expr); call != nullptr)
+		if(auto res = stmt->typecheck(this); res.is_err())
+			error(stmt->location, "{}", res.take_error());
+
+		if(auto call = cdcast(FunctionCall, stmt); call != nullptr)
 		{
-			zpr::println("calling {}", dcast(Ident, call->callee.get())->name);
-			if(not call->callee->type->isFunction())
-				error(expr->location, "callee of function call must be a function type, got '{}'", call->callee->type);
+			zpr::println("calling function {}", dcast(Ident, call->callee.get())->name);
+			auto result = call->evaluate(this);
 		}
 		else
 		{
@@ -24,5 +27,19 @@ namespace sap::interp
 		}
 
 		return {};
+	}
+
+	ErrorOr<Value> Interpreter::evaluate(const Expr* expr)
+	{
+		return ErrFmt("aoeu");
+	}
+
+
+	const Type* Expr::type(Interpreter* cs) const
+	{
+		if(m_type != nullptr)
+			return m_type;
+
+		error(this->location, "cannot get type of expression that was not typechecked!");
 	}
 }

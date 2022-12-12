@@ -20,13 +20,25 @@ namespace sap::interp
 	{
 		bool isAny() const { return m_kind == KIND_ANY; }
 		bool isVoid() const { return m_kind == KIND_VOID; }
+		bool isBool() const { return m_kind == KIND_BOOL; }
+		bool isChar() const { return m_kind == KIND_CHAR; }
 		bool isArray() const { return m_kind == KIND_ARRAY; }
 		bool isNumber() const { return m_kind == KIND_NUMBER; }
 		bool isString() const { return m_kind == KIND_STRING; }
 		bool isFunction() const { return m_kind == KIND_FUNCTION; }
 		bool isTreeInlineObj() const { return m_kind == KIND_TREE_INLINE_OBJ; }
 
-		bool isBuiltin() const { return isAny() || isVoid() || isNumber() || isString() || isFunction() || isTreeInlineObj(); }
+		bool isBuiltin() const
+		{
+			return isAny()          //
+			       || isVoid()      //
+			       || isBool()      //
+			       || isChar()      //
+			       || isNumber()    //
+			       || isString()    //
+			       || isFunction()  //
+			       || isTreeInlineObj();
+		}
 
 		// the conversion functions can't be inline because dynamic_cast needs
 		// a complete type (and obviously derived types need the complete definition of Type)
@@ -38,6 +50,8 @@ namespace sap::interp
 
 		static const Type* makeAny();
 		static const Type* makeVoid();
+		static const Type* makeBool();
+		static const Type* makeChar();
 		static const Type* makeNumber();
 		static const Type* makeString();
 		static const Type* makeTreeInlineObj();
@@ -53,6 +67,8 @@ namespace sap::interp
 		static constexpr int KIND_FUNCTION = 4;
 		static constexpr int KIND_TREE_INLINE_OBJ = 5;
 		static constexpr int KIND_ARRAY = 6;
+		static constexpr int KIND_BOOL = 7;
+		static constexpr int KIND_CHAR = 7;
 
 		int m_kind;
 
@@ -64,6 +80,9 @@ namespace sap::interp
 	{
 		virtual std::string str() const override;
 		virtual bool sameAs(const Type* other) const override;
+
+		const Type* returnType() const { return m_return_type; }
+		const std::vector<const Type*>& parameterTypes() const { return m_params; }
 
 	private:
 		FunctionType(std::vector<const Type*> params, const Type* return_type);

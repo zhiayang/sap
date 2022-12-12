@@ -103,7 +103,10 @@ namespace font::cff
 		zst::byte_buffer buffer {};
 
 		// we only support subsetting CFF1 data for now.
-		if(cff->cff2)
+
+		// TODO: CFF subsetting doesn't display properly in all PDF viewers
+		// it breaks on firefox (and apparently adobe acrobat...?)
+		if(true || cff->cff2)
 		{
 			buffer.append(cff->bytes);
 

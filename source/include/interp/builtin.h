@@ -11,10 +11,11 @@
 namespace sap::interp
 {
 	struct Expr;
+	struct Value;
 	struct Interpreter;
 
 	namespace builtin
 	{
-		std::unique_ptr<Expr> bold1(Interpreter* cs, const std::vector<const Expr*>& args);
+		ErrorOr<std::optional<Value>> bold1(Interpreter* cs, const std::vector<Value>& args);
 	}
 }

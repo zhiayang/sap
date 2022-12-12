@@ -8,30 +8,24 @@
 
 namespace sap::interp::builtin
 {
-	std::unique_ptr<Expr> bold1(Interpreter* cs, const std::vector<const Expr*>& args)
+	ErrorOr<std::optional<Value>> bold1(Interpreter* cs, const std::vector<Value>& args)
 	{
 		// TODO: maybe don't assert?
 		assert(args.size() == 1);
 
-		auto arg = args[0];
-		auto tio_expr = std::make_unique<InlineTreeExpr>();
+		auto& value = args[0];
 
-		if(arg->type->isNumber())
+		if(value.isTreeInlineObj())
 		{
-			// tio_expr->object = std::make_unique<tree::Word>(std::to_string(arg));
-		}
-		else if(arg->type->isString())
-		{
-		}
-		else if(arg->type->isTreeInlineObj())
-		{
+			zpr::println("xxx");
 		}
 		else
 		{
-			assert(false && "unreachable!");
-			return nullptr;
+			zpr::println("aoeu");
+			return Ok(Value::treeInlineObject(std::make_unique<tree::Word>(value.toString())));
 		}
 
-		return nullptr;
+		return ErrFmt("aff");
+		// return tio_expr;
 	}
 }

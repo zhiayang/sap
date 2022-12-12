@@ -27,7 +27,6 @@ namespace sap::tree
 
 
 
-
 	DocumentObject::~DocumentObject()
 	{
 	}

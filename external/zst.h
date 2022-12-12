@@ -1,62 +1,66 @@
 /*
-	zst.h
-	Copyright 2020 - 2021, zhiayang
+    zst.h
+    Copyright 2020 - 2021, zhiayang
 
-	Licensed under the Apache License, Version 2.0 (the "License");
-	you may not use this file except in compliance with the License.
-	You may obtain a copy of the License at
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
 
-	http://www.apache.org/licenses/LICENSE-2.0
+    http://www.apache.org/licenses/LICENSE-2.0
 
-	Unless required by applicable law or agreed to in writing, software
-	distributed under the License is distributed on an "AS IS" BASIS,
-	WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-	See the License for the specific language governing permissions and
-	limitations under the License.
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
 */
 
 /*
-	Version 1.4.1
-	=============
+    Version 1.4.2
+    =============
 
 
 
-	Documentation
-	=============
+    Documentation
+    =============
 
-	Just a collection of various common utility classes/functions that aren't big enough
-	to justify their own header library.
+    Just a collection of various common utility classes/functions that aren't big enough
+    to justify their own header library.
 
-	Macros:
+    Macros:
 
-	- ZST_USE_STD
-		this is *TRUE* by default. controls whether or not STL type interfaces are used; with it,
-		str_view gains implicit constructors accepting std::string and std::string_view, as well
-		as methods to convert to them (sv() and str()).
+    - ZST_USE_STD
+        this is *TRUE* by default. controls whether or not STL type interfaces are used; with it,
+        str_view gains implicit constructors accepting std::string and std::string_view, as well
+        as methods to convert to them (sv() and str()).
 
-	- ZST_FREESTANDING
-		this is *FALSE by default; controls whether or not a standard library implementation is
-		available. if not, then memset(), memmove(), memcmp(), strlen(), and strncmp() are forward declared
-		according to the C library specifications, but not defined.
+    - ZST_FREESTANDING
+        this is *FALSE by default; controls whether or not a standard library implementation is
+        available. if not, then memset(), memmove(), memcmp(), strlen(), and strncmp() are forward declared
+        according to the C library specifications, but not defined.
 
-	- ZST_HAVE_BUFFER
-		this is *TRUE* by default. controls whether the zst::buffer<T> type is available. If you do not have
-		operator new[] and want to avoid link errors, then set this to false.
-
-
-	Note that ZST_FREESTANDING implies ZST_USE_STD = 0.
-
-	Also note that buffer<T>, while it is itself a RAII type, it does *NOT* correctly RAII its contents.
-	notably, no copy or move constructors will be called on any elements, only destructors. Thus, the
-	element type should be limited to POD types.
-
-	This may change in the future.
+    - ZST_HAVE_BUFFER
+        this is *TRUE* by default. controls whether the zst::buffer<T> type is available. If you do not have
+        operator new[] and want to avoid link errors, then set this to false.
 
 
-	Version history is at the bottom of the file.
+    Note that ZST_FREESTANDING implies ZST_USE_STD = 0.
+
+    Also note that buffer<T>, while it is itself a RAII type, it does *NOT* correctly RAII its contents.
+    notably, no copy or move constructors will be called on any elements, only destructors. Thus, the
+    element type should be limited to POD types.
+
+    This may change in the future.
+
+
+    Version history is at the bottom of the file.
 */
-
+// clang-format off
 #pragma once
+
+#include <stddef.h>
+#include <stdint.h>
+#include <type_traits>
 
 #define ZST_DO_EXPAND(VAL)  VAL ## 1
 #define ZST_EXPAND(VAL)     ZST_DO_EXPAND(VAL)
@@ -123,57 +127,6 @@ namespace zst
 	namespace detail
 	{
 		template <typename T> T min(T a, T b) { return a < b ? a : b;}
-
-		template <typename, typename>   struct is_same { static constexpr bool value = false; };
-		template <typename T>           struct is_same<T, T> { static constexpr bool value = true; };
-
-
-		template <bool B, typename T = void>    struct enable_if { };
-		template <typename T>                   struct enable_if<true, T> { using type = T; };
-
-		struct true_type  { static constexpr bool value = true; };
-		struct false_type { static constexpr bool value = false; };
-
-		template <typename T, T v>
-		struct integral_constant
-		{
-			static constexpr T value = v;
-			using value_type = T;
-			using type = integral_constant; // using injected-class-name
-			constexpr operator value_type() const noexcept { return value; }
-			constexpr value_type operator()() const noexcept { return value; }
-		};
-
-		template <typename B> true_type  test_pre_ptr_convertible(const volatile B*);
-		template <typename>   false_type test_pre_ptr_convertible(const volatile void*);
-
-		template <typename, typename>
-		auto test_pre_is_base_of(...) -> true_type;
-
-		template <typename B, typename D>
-		auto test_pre_is_base_of(int) -> decltype(test_pre_ptr_convertible<B>(static_cast<D*>(nullptr)));
-
-		template <typename Base, typename Derived>
-		struct is_base_of : integral_constant<bool, __is_class(Base) && __is_class(Derived)
-			&& decltype(test_pre_is_base_of<Base, Derived>(0))::value
-		>
-		{ };
-
-		template <typename T>
-		struct __stop_declval_eval { static constexpr bool __stop = false; };
-
-		template <typename T, typename U = T&&>
-		U __declval(int);
-
-		template <typename T>
-		T __declval(long);
-
-		template <typename T>
-		auto declval() -> decltype(__declval<T>(0))
-		{
-			static_assert(__stop_declval_eval<T>::__stop, "declval() must not be used!");
-			return __stop_declval_eval<T>::__unknown();
-		}
 	}
 }
 
@@ -193,10 +146,10 @@ namespace zst
 			template <size_t N>
 			constexpr str_view(const value_type (&s)[N]) : ptr(s), len(N - 1) { }
 
-			template <typename T, typename = typename detail::enable_if<
-				detail::is_same<char, value_type>::value &&
-				detail::is_same<const char*, T>::value
-			>::type>
+			template <typename T, typename = typename std::enable_if_t<
+				std::is_same_v<char, value_type> &&
+				std::is_same_v<const char*, T>
+			>>
 			constexpr str_view(T s) : ptr(s), len(strlen(s)) { }
 
 			constexpr str_view(str_view&&) = default;
@@ -362,7 +315,7 @@ namespace zst
 			// this must appear inside the class body... see the comment below about these leaky macros.
 		#if defined(ZPR_USE_STD) || defined(ZPR_FREESTANDING)
 
-			template <typename T = value_type, typename = typename detail::enable_if<detail::is_same<T, char>::value>::type>
+			template <typename T = value_type, typename = typename std::enable_if_t<std::is_same_v<T, char>>>
 			operator zpr::tt::str_view() const
 			{
 				return zpr::tt::str_view(this->ptr, this->len);
@@ -371,7 +324,7 @@ namespace zst
 		#endif
 
 			// a little hacky, but a useful feature.
-			template <typename A = value_type, typename = typename detail::enable_if<detail::is_same<A, uint8_t>::value>::type>
+			template <typename A = value_type, typename = typename std::enable_if_t<std::is_same_v<A, uint8_t>>>
 			str_view<char> chars() const
 			{
 				return str_view<char>(reinterpret_cast<const char*>(this->ptr), this->len);
@@ -557,7 +510,7 @@ namespace zst
 				return *this;
 			}
 
-			template <typename T, typename A = value_type, typename = typename detail::enable_if<detail::is_same<A, uint8_t>::value>::type>
+			template <typename T, typename A = value_type, typename = typename std::enable_if_t<std::is_same_v<A, uint8_t>>>
 			inline buffer& append_bytes(const T& value)
 			{
 				this->expand(sizeof(T));
@@ -619,10 +572,10 @@ namespace zst
 	namespace detail
 	{
 		template <typename T>
-		struct is_result : detail::false_type { };
+		struct is_result : std::false_type { };
 
 		template <typename T, typename U>
-		struct is_result<Result<T, U>> : detail::true_type { };
+		struct is_result<Result<T, U>> : std::true_type { };
 	}
 
 	template <typename T>
@@ -770,7 +723,7 @@ namespace zst
 		T& operator* () { this->assert_has_value(); return this->val; }
 		const T& operator* () const  { this->assert_has_value(); return this->val; }
 
-		operator bool() const { return this->state == STATE_VAL; }
+		explicit operator bool() const { return this->state == STATE_VAL; }
 		bool ok() const { return this->state == STATE_VAL; }
 		bool is_err() const { return this->state == STATE_ERR; }
 
@@ -807,7 +760,7 @@ namespace zst
 		}
 
 		template <typename Fn>
-		auto map(Fn&& fn) const -> Result<decltype(fn(detail::declval<T>())), E>
+		auto map(Fn&& fn) const -> Result<decltype(fn(std::declval<T>())), E>
 		{
 			using Res = Result<decltype(fn(this->val)), E>;
 			if constexpr (std::is_same_v<decltype(fn(this->val)), void>)
@@ -823,7 +776,7 @@ namespace zst
 		}
 
 		template <typename Fn>
-		auto flatmap(Fn&& fn) const -> decltype(fn(detail::declval<T>()))
+		auto flatmap(Fn&& fn) const -> decltype(fn(std::declval<T>()))
 		{
 			using Res = decltype(fn(this->val));
 
@@ -838,6 +791,10 @@ namespace zst
 			else            return Res(typename Res::tag_err{}, this->err);
 		}
 
+		Err<E> to_err() { this->assert_is_error(); this->state = STATE_NONE; return Err(static_cast<E&&>(this->err)); }
+
+		E take_error() { this->assert_is_error(); this->state = STATE_NONE; return static_cast<E&&>(this->err); }
+		T take_value() { this->assert_has_value(); this->state = STATE_NONE; return static_cast<T&&>(this->val); }
 
 	private:
 		inline void assert_has_value() const
@@ -889,8 +846,8 @@ namespace zst
 		template <typename E1 = E>
 		Result(Err<E1>&& err) : state(STATE_ERR), err(static_cast<E1&&>(err.m_error)) { }
 
-		Result(tag_ok _) : state(STATE_VAL) { }
-		Result(tag_err _, const E& err) : state(STATE_ERR), err(err) { }
+		Result([[maybe_unused]] tag_ok _) : state(STATE_VAL) { }
+		Result([[maybe_unused]] tag_err _, const E& err) : state(STATE_ERR), err(err) { }
 
 
 		Result(const Result& other)
@@ -933,12 +890,15 @@ namespace zst
 			return *this;
 		}
 
-		operator bool() const { return this->state == STATE_VAL; }
+		explicit operator bool() const { return this->state == STATE_VAL; }
 		bool ok() const { return this->state == STATE_VAL; }
 		bool is_err() const { return this->state == STATE_ERR; }
 
 		const E& error() const { this->assert_is_error(); return this->err; }
 		E& error() { this->assert_is_error(); return this->err; }
+
+		Err<E> to_err() { this->assert_is_error(); return Err(static_cast<E&&>(this->err)); }
+		E take_error() { this->assert_is_error(); this->state = STATE_NONE; return static_cast<E&&>(this->err); }
 
 		void expect(zst::str_view msg) const
 		{
@@ -1013,11 +973,13 @@ namespace zst
 
 namespace zst
 {
+	#if (ZST_USE_STD == 1) && (ZST_FREESTANDING == 0)
 	template <typename... Args>
 	Err<std::string> ErrFmt(const char* fmt, Args&&... args)
 	{
 		return Err<std::string>(zpr::sprint(fmt, static_cast<Args&&>(args)...));
 	}
+	#endif
 
 	namespace impl
 	{
@@ -1035,7 +997,7 @@ namespace zpr
 {
 	// make sure that these are only defined if print_formatter is a complete type.
 	template <typename T>
-	struct print_formatter<zst::Ok<T>, typename zst::detail::enable_if<detail::has_formatter_v<T>>::type>
+	struct print_formatter<zst::Ok<T>, typename std::enable_if_t<detail::has_formatter_v<T>>>
 	{
 		template <typename Cb>
 		void print(const zst::Ok<T>& ok, Cb&& cb, format_args args)
@@ -1047,7 +1009,7 @@ namespace zpr
 	};
 
 	template <typename E>
-	struct print_formatter<zst::Err<E>, typename zst::detail::enable_if<detail::has_formatter_v<E>>::type>
+	struct print_formatter<zst::Err<E>, typename std::enable_if_t<detail::has_formatter_v<E>>>
 	{
 		template <typename Cb>
 		void print(const zst::Err<E>& err, Cb&& cb, format_args args)
@@ -1060,7 +1022,7 @@ namespace zpr
 
 	template <typename E, typename T>
 	struct print_formatter<zst::Result<T, E>,
-		typename zst::detail::enable_if<detail::has_formatter_v<T> && detail::has_formatter_v<E>>::type
+		typename std::enable_if_t<detail::has_formatter_v<T> && detail::has_formatter_v<E>>
 	>
 	{
 		template <typename Cb>
@@ -1088,7 +1050,7 @@ namespace zpr
 namespace zst::impl
 {
 	template <typename... Args>
-	[[noreturn]] void error_wrapper(const char* fmt, Args&&... args)
+	[[noreturn]] void error_wrapper([[maybe_unused]] const char* fmt, [[maybe_unused]] Args&&... args)
 	{
 		constexpr const char msg[] = "internal error (no zpr, cannot elaborate)";
 		zst::error_and_exit(msg, sizeof(msg) - 1);
@@ -1103,12 +1065,13 @@ namespace zst::impl
 	Version History
 	===============
 
-	1.4.2 - 12/08/2022
+	1.4.2 - 26/09/2022
 	------------------
 	- fix wrong placement of const in `map` and `flatmap`
 	- add `add_value` function to Result<void>
 	- add `remove_value` function to Result<T>
 	- add Failable type alias
+	- fix missing includes, and only define `ErrFmt` in non-freestanding mode
 
 
 	1.4.1 - 10/08/2022

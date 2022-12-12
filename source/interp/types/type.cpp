@@ -20,6 +20,10 @@ namespace sap::interp
 			return "num";
 		else if(this->isString())
 			return "str";
+		else if(this->isBool())
+			return "bool";
+		else if(this->isChar())
+			return "char";
 		else if(this->isTreeInlineObj())
 			return "InlineObj";
 		else
@@ -85,6 +89,18 @@ namespace sap::interp
 	{
 		static Type* void_type = new Type(KIND_VOID);
 		return void_type;
+	}
+
+	const Type* Type::makeBool()
+	{
+		static Type* bool_type = new Type(KIND_BOOL);
+		return bool_type;
+	}
+
+	const Type* Type::makeChar()
+	{
+		static Type* char_type = new Type(KIND_CHAR);
+		return char_type;
 	}
 
 	const Type* Type::makeNumber()

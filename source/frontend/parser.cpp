@@ -137,6 +137,7 @@ namespace sap::frontend
 		call->callee = std::move(callee);
 
 		// parse arguments.
+		bool have_named_param = false;
 		while(lexer.peek() != TT::RParen)
 		{
 			bool flag = false;
@@ -151,6 +152,8 @@ namespace sap::frontend
 				{
 					arg.value = parseExpr(lexer);
 					arg.name = name.text.str();
+
+					have_named_param = true;
 					flag = true;
 				}
 				else
@@ -161,6 +164,9 @@ namespace sap::frontend
 
 			if(not flag)
 			{
+				if(have_named_param)
+					error(lexer.peek().loc, "positional arguments are not allowed after named arguments");
+
 				arg.name = {};
 				arg.value = parseExpr(lexer);
 			}

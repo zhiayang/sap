@@ -3,8 +3,11 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #include "error.h"
-#include "interp/tree.h"
+
 #include "sap/document.h"
+
+#include "interp/tree.h"
+#include "interp/state.h"
 
 // functions for converting tree::* structures into layout::* structures
 
@@ -30,11 +33,11 @@ namespace sap::layout
 			}
 			else if(auto iscr = std::dynamic_pointer_cast<tree::ScriptCall>(obj); iscr != nullptr)
 			{
-				auto uwu = interp::runScriptExpression(cs, iscr->call.get());
-				if(uwu.has_value())
+				auto uwu = cs->run(iscr->call.get());
+				if(uwu != nullptr)
 				{
 					// TODO: clean this up
-					if(auto word = dynamic_cast<tree::Word*>(uwu->get()); word)
+					if(auto word = dynamic_cast<tree::Word*>(uwu.get()); word)
 						ret->add(make_word(*word));
 
 					else

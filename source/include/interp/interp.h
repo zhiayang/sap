@@ -8,13 +8,14 @@
 #include <stddef.h>
 
 #include <vector>
-#include <functional>
 #include <memory>
 #include <string>
+#include <concepts>
+#include <functional>
 
-#include <zpr.h>
-
+#include "defs.h"
 #include "type.h"
+// #include "value.h"
 #include "location.h"
 
 namespace sap::tree
@@ -24,21 +25,39 @@ namespace sap::tree
 
 namespace sap::interp
 {
+	struct Value;
 	struct Interpreter;
+
 	struct Stmt
 	{
 		virtual ~Stmt();
+		virtual ErrorOr<const Type*> typecheck_impl(Interpreter* cs, const Type* infer = nullptr) const = 0;
+
+		virtual ErrorOr<std::optional<Value>> evaluate(Interpreter* cs) const = 0;
+		virtual ErrorOr<const Type*> typecheck(Interpreter* cs, const Type* infer = nullptr) const
+		{
+			if(m_type == nullptr)
+				m_type = TRY(this->typecheck_impl(cs, infer));
+
+			return Ok(m_type);
+		}
 
 		std::optional<Location> location;
+
+	protected:
+		mutable const Type* m_type = nullptr;
 	};
 
 	struct Expr : Stmt
 	{
-		const Type* type = nullptr;
+		const Type* type(Interpreter* cs) const;
 	};
 
 	struct InlineTreeExpr : Expr
 	{
+		virtual ErrorOr<std::optional<Value>> evaluate(Interpreter* cs) const override;
+		virtual ErrorOr<const Type*> typecheck_impl(Interpreter* cs, const Type* infer = nullptr) const override;
+
 		std::unique_ptr<tree::InlineObject> object;
 	};
 
@@ -49,13 +68,23 @@ namespace sap::interp
 		std::string name;
 	};
 
+	struct Declaration;
+	struct FunctionDecl;
+
 	struct Ident : Expr
 	{
-		QualifiedId name;
+		virtual ErrorOr<std::optional<Value>> evaluate(Interpreter* cs) const override;
+		virtual ErrorOr<const Type*> typecheck_impl(Interpreter* cs, const Type* infer = nullptr) const override;
+
+		QualifiedId name {};
+		mutable Declaration* m_resolved_decl = nullptr;
 	};
 
 	struct FunctionCall : Expr
 	{
+		virtual ErrorOr<std::optional<Value>> evaluate(Interpreter* cs) const override;
+		virtual ErrorOr<const Type*> typecheck_impl(Interpreter* cs, const Type* infer = nullptr) const override;
+
 		struct Arg
 		{
 			std::optional<std::string> name;
@@ -64,10 +93,16 @@ namespace sap::interp
 
 		std::unique_ptr<Expr> callee;
 		std::vector<Arg> arguments;
+
+	private:
+		mutable Declaration* m_resolved_func_decl = nullptr;
 	};
 
 	struct NumberLit : Expr
 	{
+		virtual ErrorOr<std::optional<Value>> evaluate(Interpreter* cs) const override;
+		virtual ErrorOr<const Type*> typecheck_impl(Interpreter* cs, const Type* infer = nullptr) const override;
+
 		bool is_floating = false;
 
 		int64_t int_value = 0;
@@ -94,6 +129,9 @@ namespace sap::interp
 
 	struct BinaryOp : Expr
 	{
+		virtual ErrorOr<std::optional<Value>> evaluate(Interpreter* cs) const override;
+		virtual ErrorOr<const Type*> typecheck_impl(Interpreter* cs, const Type* infer = nullptr) const override;
+
 		std::unique_ptr<Expr> lhs;
 		std::unique_ptr<Expr> rhs;
 		Op op;
@@ -112,28 +150,64 @@ namespace sap::interp
 		Definition* resolved_defn = nullptr;
 	};
 
-
 	struct Definition : Stmt
 	{
-		Definition(const std::string& name, const Type* type) : declaration(new Declaration(name, type))
+		Definition(Declaration* decl) : declaration(decl) { declaration->resolved_defn = this; }
+
+		// the definition owns its declaration
+		std::unique_ptr<Declaration> declaration {};
+	};
+
+	struct FunctionDecl : Declaration
+	{
+		struct Param
 		{
-			declaration->resolved_defn = this;
+			std::string name;
+			const Type* type;
+			std::unique_ptr<Expr> default_value;
+		};
+
+
+		FunctionDecl(const std::string& name, const Type* type, std::vector<Param>&& params)
+			: Declaration(name, type), m_params(std::move(params))
+		{
 		}
 
-		Declaration* declaration = nullptr;
+		virtual ErrorOr<std::optional<Value>> evaluate(Interpreter* cs) const override;
+		virtual ErrorOr<const Type*> typecheck_impl(Interpreter* cs, const Type* infer = nullptr) const override;
+
+		const std::vector<Param>& params() const { return m_params; }
+
+	private:
+		std::vector<Param> m_params;
 	};
+
+	template <std::same_as<FunctionDecl::Param>... P>
+	std::vector<FunctionDecl::Param> makeParamList(P&&... params)
+	{
+		std::vector<FunctionDecl::Param> ret {};
+		(ret.push_back(std::move(params)), ...);
+
+		return ret;
+	}
+
+
 
 	struct BuiltinFunctionDefn : Definition
 	{
-		using FuncTy = std::function<std::unique_ptr<Expr>(Interpreter*, const std::vector<const Expr*>&)>;
+		using FuncTy = std::function<ErrorOr<std::optional<Value>>(Interpreter*, const std::vector<Value>&)>;
 
-		BuiltinFunctionDefn(const std::string& name, const Type* type, const FuncTy& fn)
-			: Definition(name, type), function(fn) { }
+		BuiltinFunctionDefn(const std::string& name, const Type* type, std::vector<FunctionDecl::Param>&& params,
+			const FuncTy& fn)
+			: Definition(new FunctionDecl(name, type, std::move(params))), function(fn)
+		{
+		}
+
+		virtual ErrorOr<std::optional<Value>> evaluate(Interpreter* cs) const override;
+		virtual ErrorOr<const Type*> typecheck_impl(Interpreter* cs, const Type* infer = nullptr) const override;
 
 		FuncTy function;
 	};
-
-	std::optional<std::unique_ptr<tree::InlineObject>> runScriptExpression(Interpreter* cs, const Expr* expr);
 }
 
 

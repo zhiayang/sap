@@ -2,26 +2,34 @@
 // Copyright (c) 2022, zhiayang
 // SPDX-License-Identifier: Apache-2.0
 
+#include "interp/interp.h"
 #include "interp/state.h"
 #include "interp/builtin.h"
 
 namespace sap::interp
 {
-	Interpreter::Interpreter()
+	Interpreter::Interpreter() : m_top(new DefnTree("")), m_current(m_top.get())
 	{
-		/* auto ns_builtin = m_top->lookupOrDeclareNamespace("builtin"); */
+		auto ns_builtin = m_top->lookupOrDeclareNamespace("builtin");
 
-		/* using BFD = BuiltinFunctionDefn; */
-		/* auto tio = Type::makeTreeInlineObj(); */
-		/* auto num = Type::makeNumber(); */
-		/* auto str = Type::makeString(); */
+		using BFD = BuiltinFunctionDefn;
+		using Param = FunctionDecl::Param;
 
-		/* ns_builtin->define(std::make_unique<BFD>("__bold1", Type::makeFunction({ tio }, tio), &builtin::bold1)); */
-		/* ns_builtin->define(std::make_unique<BFD>("__bold1", Type::makeFunction({ num }, tio), &builtin::bold1)); */
-		/* ns_builtin->define(std::make_unique<BFD>("__bold1", Type::makeFunction({ str }, tio), &builtin::bold1)); */
+		auto tio = Type::makeTreeInlineObj();
+		auto num = Type::makeNumber();
+		auto str = Type::makeString();
+
+		ns_builtin->define(std::make_unique<BFD>("__bold1", Type::makeFunction({ tio }, tio),
+			makeParamList(Param { .name = "_", .type = tio }), &builtin::bold1));
+
+		ns_builtin->define(std::make_unique<BFD>("__bold1", Type::makeFunction({ num }, tio),
+			makeParamList(Param { .name = "_", .type = num }), &builtin::bold1));
+
+		ns_builtin->define(std::make_unique<BFD>("__bold1", Type::makeFunction({ str }, tio),
+			makeParamList(Param { .name = "_", .type = str }), &builtin::bold1));
 	}
 
-	ErrorOr<DefnTree*> DefnTree::lookupNamespace(std::string_view name)
+	ErrorOr<DefnTree*> DefnTree::lookupNamespace(std::string_view name) const
 	{
 		if(auto it = m_children.find(name); it != m_children.end())
 			return Ok(it->second.get());
@@ -38,22 +46,44 @@ namespace sap::interp
 		return m_children.insert_or_assign(std::string(name), std::move(ret)).first->second.get();
 	}
 
-
-	ErrorOr<void> DefnTree::declare(std::unique_ptr<Declaration> decl)
+	ErrorOr<std::vector<Declaration*>> DefnTree::lookup(QualifiedId id) const
 	{
-		auto& name = decl->name;
+		auto current = this;
+		for(auto& t : id.parents)
+		{
+			if(auto next = current->lookupNamespace(t); next.ok())
+				current = next.unwrap();
+			else
+				return next.to_err();
+		}
+
+		if(auto it = current->m_decls.find(id.name); it != current->m_decls.end())
+		{
+			std::vector<Declaration*> decls {};
+			for(auto& d : it->second)
+				decls.push_back(d);
+
+			return Ok(decls);
+		}
+
+		return ErrFmt("no declaration named '{}' in '{}'", id.name, current->name());
+	}
+
+	ErrorOr<void> DefnTree::declare(Declaration* new_decl)
+	{
+		auto& name = new_decl->name;
 		if(auto foo = m_decls.find(name); foo != m_decls.end())
 		{
 			auto& existing_decls = foo->second;
 			for(auto& decl : existing_decls)
 			{
 				// no error for re-*declaration*, just return ok (and throw away the duplicate decl)
-				if(decl->type == decl->type)
+				if(decl == new_decl)
 					return Ok();
 			}
 		}
 
-		m_decls[name].push_back(std::move(decl));
+		m_decls[name].push_back(new_decl);
 		return Ok();
 	}
 
@@ -71,12 +101,13 @@ namespace sap::interp
 			}
 		}
 
-		// somebody must own the definition (not the declaration), so we just own it.
-		m_definitions.push_back(std::move(defn));
-
 		// steal the ownership of declaration from the definition.
 		// the pointer itself is still the same, though; we don't need to re-point it.
-		m_decls[name].push_back(std::unique_ptr<Declaration>(defn->declaration));
+		auto decl = defn->declaration.get();
+
+		// somebody must own the definition (not the declaration), so we just own it.
+		m_definitions.push_back(std::move(defn));
+		m_decls[name].push_back(std::move(decl));
 		return Ok();
 	}
 }

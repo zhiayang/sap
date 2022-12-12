@@ -57,6 +57,32 @@ namespace sap
 
 	using zst::Result;
 	using zst::Failable;
+
+	namespace impl
+	{
+		template <typename T, typename E>
+		struct extract_value_or_return_void
+		{
+			T extract(Result<T, E>& result) { return std::move(result.unwrap()); }
+		};
+
+		template <typename E>
+		struct extract_value_or_return_void<void, E>
+		{
+			void extract([[maybe_unused]] Result<void, E>& result) { }
+		};
+	}
+
+#define TRY(x)                                                      \
+	__extension__({                                                 \
+		auto&& r = x;                                               \
+		using R = std::decay_t<decltype(r)>;                        \
+		using V = typename R::value_type;                           \
+		using E = typename R::error_type;                           \
+		if(r.is_err())                                              \
+			return Err(std::move(r.error()));                       \
+		sap::impl::extract_value_or_return_void<V, E>().extract(r); \
+	})
 }
 
 inline void zst::error_and_exit(const char* str, size_t len)

@@ -1,4 +1,6 @@
 PLAN.md
+fonts.zip
+.cache
 
 *.o
 *.c.d

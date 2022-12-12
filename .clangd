@@ -1,0 +1,5 @@
+Diagnostics:
+  ClangTidy:
+    Remove: misc-unused-using-decls
+CompileFlags:
+  Add: -ferror-limit=0
