@@ -45,7 +45,7 @@ namespace sap::interp
 			return v_integer;
 		}
 
-		using FnType = std::optional<Value> (*)(const std::vector<Value>&);
+		using FnType = std::optional<Value> (*)(Interpreter*, const std::vector<Value>&);
 		FnType getFunction() const
 		{
 			assert(m_kind == KIND_FUNCTION);
@@ -56,6 +56,12 @@ namespace sap::interp
 		{
 			assert(m_kind == KIND_TREE_INLINE_OBJ);
 			return v_inline_obj.get();
+		}
+
+		std::unique_ptr<tree::InlineObject> takeTreeInlineObj() &&
+		{
+			assert(m_kind == KIND_TREE_INLINE_OBJ);
+			return std::move(v_inline_obj);
 		}
 
 

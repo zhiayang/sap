@@ -19,7 +19,18 @@ namespace sap::interp
 		if(auto call = cdcast(FunctionCall, stmt); call != nullptr)
 		{
 			zpr::println("calling function {}", dcast(Ident, call->callee.get())->name);
-			auto result = call->evaluate(this);
+			auto result_or_err = call->evaluate(this);
+
+			if(result_or_err.is_err())
+				error(stmt->location, "TODO: handle error");
+			else if(not result_or_err->has_value())
+				return {};
+
+			auto value = std::move(**result_or_err);
+			if(not value.isTreeInlineObj())
+				error(stmt->location, "TODO: convert non-inline-obj to inline-obj");
+
+			return std::move(value).takeTreeInlineObj();
 		}
 		else
 		{
