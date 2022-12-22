@@ -17,6 +17,7 @@ namespace sap::interp
 	struct DefnTree
 	{
 		std::string_view name() const { return m_name; }
+		DefnTree* parent() const { return m_parent; }
 
 		ErrorOr<DefnTree*> lookupNamespace(std::string_view name) const;
 		DefnTree* lookupOrDeclareNamespace(std::string_view name);
@@ -27,13 +28,15 @@ namespace sap::interp
 		ErrorOr<void> define(std::unique_ptr<Definition> defn);
 
 	private:
-		DefnTree(std::string name) : m_name(std::move(name)) { }
+		explicit DefnTree(std::string name, DefnTree* parent) : m_name(std::move(name)), m_parent(parent) { }
 
 		std::string m_name;
 		util::hashmap<std::string, std::unique_ptr<DefnTree>> m_children;
 		util::hashmap<std::string, std::vector<Declaration*>> m_decls;
 
 		std::vector<std::unique_ptr<Definition>> m_definitions;
+
+		DefnTree* m_parent = nullptr;
 
 		friend struct Interpreter;
 	};

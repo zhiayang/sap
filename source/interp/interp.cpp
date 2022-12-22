@@ -8,7 +8,7 @@
 
 namespace sap::interp
 {
-	Interpreter::Interpreter() : m_top(new DefnTree("")), m_current(m_top.get())
+	Interpreter::Interpreter() : m_top(new DefnTree("", /* parent: */ nullptr)), m_current(m_top.get())
 	{
 		auto ns_builtin = m_top->lookupOrDeclareNamespace("builtin");
 
@@ -42,13 +42,28 @@ namespace sap::interp
 		if(auto it = m_children.find(name); it != m_children.end())
 			return it->second.get();
 
-		auto ret = std::unique_ptr<DefnTree>(new DefnTree(std::string(name)));
+		auto ret = std::unique_ptr<DefnTree>(new DefnTree(std::string(name), /* parent: */ this));
 		return m_children.insert_or_assign(std::string(name), std::move(ret)).first->second.get();
 	}
 
 	ErrorOr<std::vector<Declaration*>> DefnTree::lookup(QualifiedId id) const
 	{
 		auto current = this;
+
+		// look upwards at our parents to find something that matches the first thing
+		if(not id.parents.empty())
+		{
+			while(true)
+			{
+				if(current->lookupNamespace(id.parents[0]).ok())
+					break;
+
+				current = current->parent();
+				if(current == nullptr)
+					return ErrFmt("no such namespace '{}'", id.parents[0]);
+			}
+		}
+
 		for(auto& t : id.parents)
 		{
 			if(auto next = current->lookupNamespace(t); next.ok())

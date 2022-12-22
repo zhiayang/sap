@@ -43,7 +43,7 @@ namespace sap::tree
 		virtual ~DocumentObject();
 	};
 
-	struct InlineObject
+	struct InlineObject : Stylable
 	{
 		virtual ~InlineObject();
 	};
@@ -72,16 +72,12 @@ namespace sap::tree
 	struct Word : InlineObject
 	{
 		explicit Word(std::string text) : m_text(std::move(text)) { }
-		explicit Word(std::string text, const Style* style) : m_text(std::move(text)), m_style(style) { }
+		explicit Word(std::string text, const Style* style) : m_text(std::move(text)) { this->setStyle(style); }
 
 		const std::string& text() const { return m_text; }
-		const Style* style() const { return m_style; }
-
-		void setStyle(const Style* style) { m_style = style; }
 
 	private:
 		std::string m_text {};
-		const Style* m_style = nullptr;
 	};
 
 	struct Paragraph : BlockObject

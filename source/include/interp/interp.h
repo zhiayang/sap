@@ -195,7 +195,7 @@ namespace sap::interp
 
 	struct BuiltinFunctionDefn : Definition
 	{
-		using FuncTy = std::function<ErrorOr<std::optional<Value>>(Interpreter*, const std::vector<Value>&)>;
+		using FuncTy = std::function<ErrorOr<std::optional<Value>>(Interpreter*, std::vector<Value>&)>;
 
 		BuiltinFunctionDefn(const std::string& name, const Type* type, std::vector<FunctionDecl::Param>&& params,
 			const FuncTy& fn)

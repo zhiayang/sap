@@ -16,6 +16,6 @@ namespace sap::interp
 
 	namespace builtin
 	{
-		ErrorOr<std::optional<Value>> bold1(Interpreter* cs, const std::vector<Value>& args);
+		ErrorOr<std::optional<Value>> bold1(Interpreter* cs, std::vector<Value>& args);
 	}
 }

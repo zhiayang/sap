@@ -41,7 +41,6 @@ namespace sap::layout
 					// TODO: clean this up
 					if(auto word = dynamic_cast<tree::Word*>(tmp.get()); word)
 						ret->add(make_word(*word));
-
 					else
 						error("layout", "invalid object returned from script call");
 				}
