@@ -47,14 +47,32 @@ int main(int argc, char** argv)
 	auto interpreter = sap::interp::Interpreter();
 
 	auto layout_doc = sap::layout::createDocumentLayout(&interpreter, document);
-	auto font =
-		pdf::Font::fromFontFile(&layout_doc.pdfDocument(), font::FontFile::parseFromFile("fonts/SourceSerif4-Regular.otf"));
 
-	auto style = sap::Style {};
-	style.set_font(font).set_font_size(pdf::Scalar(12).into(sap::Scalar {}));
+	auto font_set = [&]() {
+		auto doc = &layout_doc.pdfDocument();
+		auto regular = pdf::Font::fromFontFile(doc, font::FontFile::parseFromFile("fonts/SourceSerif4-Regular.otf"));
+		auto italic = pdf::Font::fromFontFile(doc, font::FontFile::parseFromFile("fonts/SourceSerif4-It.otf"));
+		auto bold = pdf::Font::fromFontFile(doc, font::FontFile::parseFromFile("fonts/SourceSerif4-Bold.otf"));
+		auto boldit = pdf::Font::fromFontFile(doc, font::FontFile::parseFromFile("fonts/SourceSerif4-BoldIt.otf"));
+
+		return sap::FontSet(regular, italic, bold, boldit);
+	}();
+
+	auto default_font_set = sap::FontSet(  //
+		pdf::Font::fromBuiltin(&layout_doc.pdfDocument(), "Times-Roman"),
+		pdf::Font::fromBuiltin(&layout_doc.pdfDocument(), "Times-Italic"),
+		pdf::Font::fromBuiltin(&layout_doc.pdfDocument(), "Times-Bold"),
+		pdf::Font::fromBuiltin(&layout_doc.pdfDocument(), "Times-BoldItalic"));
+
+	auto main_style = sap::Style {};
+	main_style
+		.set_font_set(font_set)  //
+		.set_font_style(sap::FontStyle::Regular)
+		.set_font_size(pdf::Scalar(12).into(sap::Scalar {}));
 
 	auto default_style = sap::Style()
-	                         .set_font(pdf::Font::fromBuiltin(&layout_doc.pdfDocument(), "Times-Roman"))
+	                         .set_font_set(default_font_set)
+	                         .set_font_style(sap::FontStyle::Regular)
 	                         .set_font_size(pdf::Scalar(12.0).into(sap::Scalar {}))
 	                         .set_line_spacing(sap::Scalar(1.0))
 	                         .set_pre_paragraph_spacing(sap::Scalar(1.0))
@@ -62,7 +80,7 @@ int main(int argc, char** argv)
 
 	sap::setDefaultStyle(std::move(default_style));
 
-	layout_doc.setStyle(&style);
+	layout_doc.setStyle(&main_style);
 	layout_doc.layout(&interpreter);
 
 	auto writer = util::make<pdf::Writer>("test.pdf");

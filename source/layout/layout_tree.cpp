@@ -16,7 +16,10 @@ namespace sap::layout
 	static Word make_word(const tree::Word& word)
 	{
 		// TODO: determine whether this 'kind' thing is even useful
-		return Word(Word::KIND_LATIN, word.m_text);
+		auto ret = Word(Word::KIND_LATIN, word.text());
+		ret.setStyle(word.style());
+
+		return ret;
 	}
 
 
@@ -33,11 +36,10 @@ namespace sap::layout
 			}
 			else if(auto iscr = std::dynamic_pointer_cast<tree::ScriptCall>(obj); iscr != nullptr)
 			{
-				auto uwu = cs->run(iscr->call.get());
-				if(uwu != nullptr)
+				if(auto tmp = cs->run(iscr->call.get()); tmp != nullptr)
 				{
 					// TODO: clean this up
-					if(auto word = dynamic_cast<tree::Word*>(uwu.get()); word)
+					if(auto word = dynamic_cast<tree::Word*>(tmp.get()); word)
 						ret->add(make_word(*word));
 
 					else

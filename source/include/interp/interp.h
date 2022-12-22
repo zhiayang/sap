@@ -58,7 +58,7 @@ namespace sap::interp
 		virtual ErrorOr<std::optional<Value>> evaluate(Interpreter* cs) const override;
 		virtual ErrorOr<const Type*> typecheck_impl(Interpreter* cs, const Type* infer = nullptr) const override;
 
-		std::unique_ptr<tree::InlineObject> object;
+		mutable std::unique_ptr<tree::InlineObject> object;
 	};
 
 

@@ -22,7 +22,12 @@ namespace sap::interp::builtin
 		else
 		{
 			zpr::println("aoeu");
-			return Ok(Value::treeInlineObject(std::make_unique<tree::Word>(value.toString())));
+
+			auto word = std::make_unique<tree::Word>(value.toString());
+			auto style = &Style::combine(word->style(), nullptr)->clone()->set_font_style(FontStyle::Bold);
+			word->setStyle(style);
+
+			return Ok(Value::treeInlineObject(std::move(word)));
 		}
 
 		return ErrFmt("aff");

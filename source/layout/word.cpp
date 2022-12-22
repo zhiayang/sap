@@ -35,6 +35,8 @@ namespace sap::layout
 
 		using font::Tag;
 		font::off::FeatureSet features {};
+
+		// REMOVE: this is just for testing!
 		features.script = Tag("cyrl");
 		features.language = Tag("BGR ");
 		features.enabled_features = { Tag("kern"), Tag("liga"), Tag("locl") };
@@ -81,7 +83,7 @@ namespace sap::layout
 		auto style = Style::combine(m_style, parent_style);
 		this->setStyle(style);
 
-		auto font = style->font();
+		auto font = style->font_set().getFontForStyle(style->font_style());
 		auto font_size = style->font_size();
 
 		m_glyphs = convert_to_glyphs(font, this->text);
@@ -120,7 +122,7 @@ namespace sap::layout
 
 	void Word::render(pdf::Text* text) const
 	{
-		const auto font = m_style->font();
+		const auto font = m_style->font_set().getFontForStyle(m_style->font_style());
 		const auto font_size = m_style->font_size();
 		text->setFont(font, font_size.into(pdf::Scalar {}));
 

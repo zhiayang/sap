@@ -110,14 +110,14 @@ namespace font
 		std::string family_compat;
 		std::string subfamily_compat;
 
-		std::string unique_name; // name 3
+		std::string unique_name;  // name 3
 
-		std::string full_name;       // name 4
-		std::string postscript_name; // name 6
+		std::string full_name;        // name 4
+		std::string postscript_name;  // name 6
 
 		// when embedding this font, we are probably legally required to reproduce the license.
-		std::string copyright_info; // name 0
-		std::string license_info;   // name 13
+		std::string copyright_info;  // name 0
+		std::string license_info;    // name 13
 
 		// some stuff we need to save, internal use.
 		size_t num_hmetrics = 0;

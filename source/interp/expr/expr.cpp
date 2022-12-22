@@ -50,7 +50,11 @@ namespace sap::interp
 
 	ErrorOr<std::optional<Value>> InlineTreeExpr::evaluate(Interpreter* cs) const
 	{
-		return Ok(std::nullopt);
+		// i guess we have to assert that we cannot evaluate something twice, because
+		// otherwise this becomes untenable.
+		assert(this->object != nullptr);
+
+		return Ok(Value::treeInlineObject(std::move(this->object)));
 	}
 
 

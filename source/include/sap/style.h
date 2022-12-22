@@ -8,7 +8,9 @@
 
 #include "defs.h"
 #include "pool.h"
+
 #include "sap/units.h"
+#include "sap/fontset.h"
 
 namespace pdf
 {
@@ -42,23 +44,8 @@ namespace sap
 			return defaultStyle().method_name();                               \
 	}
 
-		// font is special because it is already a nullable pointer
-		inline const pdf::Font* font(const Style* default_parent = nullptr) const
-		{
-			if(default_parent == this)
-				default_parent = nullptr;
-			auto par = (m_parent == this) ? nullptr : m_parent;
-
-			if(m_font)
-				return m_font;
-			else if(m_parent)
-				return par->font(default_parent);
-			else if(default_parent)
-				return default_parent->font();
-			else
-				return defaultStyle().font();
-		}
-
+		DEFINE_ACCESSOR(FontSet, m_font_set, font_set);
+		DEFINE_ACCESSOR(FontStyle, m_font_style, font_style);
 		DEFINE_ACCESSOR(Scalar, m_font_size, font_size);
 		DEFINE_ACCESSOR(Scalar, m_line_spacing, line_spacing);
 		DEFINE_ACCESSOR(Scalar, m_pre_para_spacing, pre_paragraph_spacing);
@@ -72,7 +59,8 @@ namespace sap
 		return *this;                                      \
 	}
 
-		DEFINE_SETTER(const pdf::Font*, m_font, set_font);
+		DEFINE_SETTER(FontSet, m_font_set, set_font_set);
+		DEFINE_SETTER(FontStyle, m_font_style, set_font_style);
 		DEFINE_SETTER(Scalar, m_font_size, set_font_size);
 		DEFINE_SETTER(Scalar, m_line_spacing, set_line_spacing);
 		DEFINE_SETTER(Scalar, m_pre_para_spacing, set_pre_paragraph_spacing);
@@ -81,16 +69,9 @@ namespace sap
 #undef DEFINE_SETTER
 
 
-		const Style* parent() const
-		{
-			return m_parent;
-		}
+		const Style* parent() const { return m_parent; }
 
-
-		// static inline const Style* fallback(const Style* main, const Style* backup)
-		// {
-		// 	return main ? main : backup;
-		// }
+		Style* clone() const { return util::make<Style>(m_parent); }
 
 		/*
 		    basically, make a style that uses the fields from "main" if it exists (or any of its parents)
@@ -106,7 +87,8 @@ namespace sap
 				main = backup, backup = nullptr;
 
 			auto style = util::make<Style>();
-			style->set_font(main->font(backup))
+			style->set_font_set(main->font_set(backup))
+				.set_font_style(main->font_style(backup))
 				.set_font_size(main->font_size(backup))
 				.set_line_spacing(main->line_spacing(backup))
 				.set_pre_paragraph_spacing(main->pre_paragraph_spacing(backup))
@@ -117,7 +99,8 @@ namespace sap
 
 
 	private:
-		const pdf::Font* m_font = nullptr;
+		std::optional<FontSet> m_font_set;
+		std::optional<FontStyle> m_font_style;
 		std::optional<Scalar> m_font_size;
 		std::optional<Scalar> m_line_spacing;
 		std::optional<Scalar> m_pre_para_spacing;
