@@ -35,6 +35,7 @@ namespace sap
 
 	namespace tree
 	{
+		struct Word;
 		struct Document;
 	}
 
@@ -245,8 +246,18 @@ namespace sap::layout
 			font::GlyphAdjustment adjustments;
 		};
 
+		static Word fromTreeWord(const tree::Word& w);
+
 	private:
 		const Paragraph* m_paragraph = nullptr;
+
+		/*
+		    same as the one in tree -- control whether this word sticks to the left or right
+		    (or both) when laid out and rendered. doing this effectively means that they are
+		    treated as "one word", without any interword spacing.
+		*/
+		bool m_stick_left = false;
+		bool m_stick_right = false;
 
 		std::vector<GlyphInfo> m_glyphs {};
 

@@ -6,6 +6,10 @@
 #include "interp/interp.h"
 
 #include "sap/frontend.h"
+#include "util.h"
+#include "zst.h"
+#include <string>
+#include <string_view>
 
 namespace sap::frontend
 {
@@ -265,7 +269,87 @@ namespace sap::frontend
 	}
 
 
+	static std::u32string unescape_string(const Location& loc, zst::str_view sv)
+	{
+		std::u32string ret {};
+		ret.reserve(sv.size());
 
+		auto bs = sv.bytes();
+		while(bs.size() > 0)
+		{
+			auto cp = unicode::consumeCodepointFromUtf8(bs);
+			if(cp == U'\\')
+			{
+				auto is_hex = [](uint8_t c) -> bool {
+					return ('0' <= c && c <= '9') || ('a' <= c && c <= 'f') || ('A' <= c && c <= 'F');
+				};
+
+				auto convert_hex = [](uint8_t c) -> char32_t {
+					if('0' <= c && c <= '9')
+						return static_cast<char32_t>(c - '0');
+					else if('a' <= c && c <= 'f')
+						return static_cast<char32_t>(10 + c - 'a');
+					else if('A' <= c && c <= 'F')
+						return static_cast<char32_t>(10 + c - 'A');
+					else
+						return 0;
+				};
+
+				cp = unicode::consumeCodepointFromUtf8(bs);
+				switch(cp)
+				{
+					case U'\\':
+						ret += U'\\';
+						break;
+					case U'n':
+						ret += U'\n';
+						break;
+					case U't':
+						ret += U'\t';
+						break;
+					case U'b':
+						ret += U'\b';
+						break;
+					case U'x':
+						assert(bs.size() >= 2);
+						assert(is_hex(bs[0]) && is_hex(bs[1]));
+						ret += 16u * convert_hex(bs[0]) + convert_hex(bs[1]);
+						break;
+					case U'u':
+						assert(bs.size() >= 4);
+						assert(is_hex(bs[0]) && is_hex(bs[1]) && is_hex(bs[2]) && is_hex(bs[3]));
+						ret += 16u * 16u * 16u * convert_hex(bs[0])  //
+						       + 16u * 16u * convert_hex(bs[1])      //
+						       + 16u * convert_hex(bs[2])            //
+						       + convert_hex(bs[3]);
+						break;
+					case U'U':
+						assert(bs.size() >= 8);
+						assert(is_hex(bs[0]) && is_hex(bs[1]) && is_hex(bs[2]) && is_hex(bs[3]));
+						assert(is_hex(bs[4]) && is_hex(bs[5]) && is_hex(bs[6]) && is_hex(bs[7]));
+
+						ret += 16u * 16u * 16u * 16u * 16u * 16u * 16u * convert_hex(bs[0])  //
+						       + 16u * 16u * 16u * 16u * 16u * 16u * convert_hex(bs[1])      //
+						       + 16u * 16u * 16u * 16u * 16u * convert_hex(bs[2])            //
+						       + 16u * 16u * 16u * 16u * convert_hex(bs[3])                  //
+						       + 16u * 16u * 16u * convert_hex(bs[4])                        //
+						       + 16u * 16u * convert_hex(bs[5])                              //
+						       + 16u * convert_hex(bs[6])                                    //
+						       + convert_hex(bs[7]);
+						break;
+					default:
+						sap::error(loc, "invalid escape sequence starting with '{}'", cp);
+						break;
+				}
+			}
+			else
+			{
+				ret += cp;
+			}
+		}
+
+		return ret;
+	}
 
 	static std::unique_ptr<interp::Expr> parsePrimary(Lexer& lexer)
 	{
@@ -282,6 +366,13 @@ namespace sap::frontend
 			ret->is_floating = false;
 			ret->int_value = std::stoll(num->text.str());
 			ret->float_value = 0;
+
+			return ret;
+		}
+		else if(auto str = lexer.match(TT::String); str)
+		{
+			auto ret = std::make_unique<interp::StringLit>();
+			ret->string = unescape_string(str->loc, str->text);
 
 			return ret;
 		}
@@ -406,12 +497,28 @@ namespace sap::frontend
 	static std::unique_ptr<Paragraph> parseParagraph(Lexer& lexer)
 	{
 		auto para = std::make_unique<Paragraph>();
+
+		bool was_sticking_right = false;
 		while(true)
 		{
+			bool was_whitespace = lexer.isWhitespace();
+
 			auto tok = lexer.next();
+
 			if(tok == TT::Word)
 			{
-				para->addObject(std::make_shared<Word>(escape_word_text(tok.loc, tok.text)));
+				auto word = std::make_shared<Word>(escape_word_text(tok.loc, tok.text));
+
+				// if the next word sticks to the left, that means this word should stick to the right.
+				if(not lexer.isWhitespace())
+					word->stick_to_right = true;
+
+				// and vice-versa for left
+				if(was_sticking_right)
+					word->stick_to_left = true;
+
+				para->addObject(std::move(word));
+				was_sticking_right = false;
 			}
 			else if(tok == TT::ParagraphBreak || tok == TT::EndOfFile)
 			{
@@ -419,7 +526,18 @@ namespace sap::frontend
 			}
 			else if(tok == TT::Backslash)
 			{
-				para->addObject(parseScriptObject(lexer));
+				was_sticking_right = false;
+
+				auto obj = parseScriptObject(lexer);
+				if(auto inl = dynamic_cast<InlineObject*>(obj.get()); inl != nullptr)
+				{
+					inl->stick_to_left = not was_whitespace;
+					inl->stick_to_right = not lexer.isWhitespace();
+
+					was_sticking_right = inl->stick_to_right;
+				}
+
+				para->addObject(std::move(obj));
 			}
 			else
 			{

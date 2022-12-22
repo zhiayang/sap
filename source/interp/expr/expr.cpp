@@ -83,4 +83,14 @@ namespace sap::interp
 		else
 			return Ok(Value::integer(int_value));
 	}
+
+	ErrorOr<const Type*> StringLit::typecheck_impl(Interpreter* cs, const Type* infer) const
+	{
+		return Ok(Type::makeString());
+	}
+
+	ErrorOr<std::optional<Value>> StringLit::evaluate(Interpreter* cs) const
+	{
+		return Ok(Value::string(this->string));
+	}
 }

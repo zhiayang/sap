@@ -2,6 +2,7 @@
 // Copyright (c) 2022, zhiayang
 // SPDX-License-Identifier: Apache-2.0
 
+#include <algorithm>
 #include <ctype.h>
 
 #include "util.h"
@@ -267,6 +268,83 @@ namespace sap::frontend
 		{
 			return advance_and_return(stream, loc, Token { .loc = loc, .type = TT::ColonColon, .text = stream.take(2) }, 2);
 		}
+		else if(stream[0] == '"')
+		{
+			size_t n = 1;
+			while(true)
+			{
+				if(n == stream.size())
+					sap::error(loc, "unterminated string literal");
+
+				// while we don't unescape these escape sequences, we still need to accept them.
+				if(stream[n] == '\\')
+				{
+					if(n + 1 == stream.size())
+						sap::error(loc, "unterminated escape sequence");
+
+					auto is_hex = [](char c) -> bool {
+						return ('0' <= c && c <= '9') || ('a' <= c && c <= 'f') || ('A' <= c && c <= 'F');
+					};
+
+					// it doesn't actually matter what the next character is (since we're not
+					// actually unescaping them). just need to make sure that if it's '\\', we
+					// skip the next '\' as well
+					if(stream[n + 1] == '\\' || stream[n + 1] == '\n')
+					{
+						n++;
+					}
+					else if(stream[n + 1] == '\r')
+					{
+						n++;
+						// handle \r\n
+						if(n + 1 < stream.size() && stream[n + 1] == '\n')
+							n++;
+					}
+					else if(stream[n + 1] == 'x')
+					{
+						if(n + 3 <= stream.size())
+							sap::error(loc, "insufficient chars for \\x escape (need 2)");
+
+						if(not std::all_of(&stream.data()[n + 2], &stream.data()[n + 4], is_hex))
+							sap::error(loc, "invalid non-hex character in \\x escape");
+					}
+					else if(stream[n + 1] == 'u')
+					{
+						if(n + 5 <= stream.size())
+							sap::error(loc, "insufficient chars for \\u escape (need 4)");
+
+						if(not std::all_of(&stream.data()[n + 2], &stream.data()[n + 6], is_hex))
+							sap::error(loc, "invalid non-hex character in \\u escape");
+					}
+					else if(stream[n + 1] == 'U')
+					{
+						if(n + 9 <= stream.size())
+							sap::error(loc, "insufficient chars for \\U escape (need 8)");
+
+						if(not std::all_of(&stream.data()[n + 2], &stream.data()[n + 10], is_hex))
+							sap::error(loc, "invalid non-hex character in \\U escape");
+					}
+				}
+				else if(stream[n] == '\r' || stream[n] == '\n')
+				{
+					sap::error(loc, "unescaped newline in string literal");
+				}
+				else if(stream[n] == '"')
+				{
+					n++;
+					break;
+				}
+
+				n++;
+			}
+
+			return advance_and_return(stream, loc,
+				Token { //
+					.loc = loc,
+					.type = TT::String,
+					.text = stream.drop(1).take(n - 2) },
+				n);
+		}
 		else
 		{
 			auto tt = TT::Invalid;
@@ -421,6 +499,15 @@ namespace sap::frontend
 		}
 
 		return false;
+	}
+
+	bool Lexer::isWhitespace() const
+	{
+		if(m_stream.empty())
+			return false;
+
+		auto c = m_stream[0];
+		return c == ' ' || c == '\t' || c == '\r' || c == '\n';
 	}
 
 	std::optional<Token> Lexer::match(TokenType type)

@@ -87,8 +87,8 @@ namespace font
 
 	struct CharacterMapping
 	{
-		std::unordered_map<Codepoint, GlyphId> forward;
-		std::unordered_map<GlyphId, Codepoint> reverse;
+		std::unordered_map<char32_t, GlyphId> forward;
+		std::unordered_map<GlyphId, char32_t> reverse;
 	};
 
 	using KerningPair = std::pair<GlyphAdjustment, GlyphAdjustment>;
@@ -98,7 +98,7 @@ namespace font
 	{
 		static FontFile* parseFromFile(const std::string& path);
 
-		GlyphId getGlyphIndexForCodepoint(Codepoint codepoint) const;
+		GlyphId getGlyphIndexForCodepoint(char32_t codepoint) const;
 		GlyphMetrics getGlyphMetrics(GlyphId glyphId) const;
 
 		// corresponds to name IDs 16 and 17. if not present, they will have the same

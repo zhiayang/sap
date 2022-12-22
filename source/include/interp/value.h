@@ -5,10 +5,16 @@
 #pragma once
 
 #include <cassert>
+
+#include <string>
 #include <vector>
+#include <numeric>
+#include <sstream>
 
 #include "type.h"
 #include "tree.h"
+#include "util.h"
+#include "zpr.h"
 
 namespace sap::tree
 {
@@ -27,7 +33,7 @@ namespace sap::interp
 			return v_bool;
 		}
 
-		uint32_t getChar() const
+		char32_t getChar() const
 		{
 			assert(m_kind == KIND_CHAR);
 			return v_char;
@@ -64,13 +70,28 @@ namespace sap::interp
 			return std::move(v_inline_obj);
 		}
 
+		const std::vector<Value>& getArray() const
+		{
+			assert(m_kind == KIND_ARRAY);
+			return v_array;
+		}
+
+		std::vector<Value> takeArray() &&
+		{
+			assert(m_kind == KIND_ARRAY);
+			return std::move(v_array);
+		}
+
+
+
+
 
 		std::string toString() const
 		{
 			switch(m_kind)
 			{
 				case KIND_CHAR:
-					return "CHAR???";
+					return unicode::utf8FromCodepoint(v_char);
 				case KIND_BOOL:
 					return v_bool ? "true" : "false";
 				case KIND_INTEGER:
@@ -81,6 +102,32 @@ namespace sap::interp
 					return "function";
 				case KIND_TREE_INLINE_OBJ:
 					return "tree_inline_obj";
+				case KIND_ARRAY:
+					if(m_type == Type::makeString())
+					{
+						std::string ret {};
+						ret.reserve(v_array.size());
+
+						for(size_t i = 0; i < v_array.size(); i++)
+							ret += unicode::utf8FromCodepoint(v_array[i].getChar());
+
+						return ret;
+					}
+					else
+					{
+						std::stringstream ret {};
+						ret << "[";
+						for(size_t i = 0; i < v_array.size(); i++)
+						{
+							if(i != 0)
+								ret << ", ";
+							ret << v_array[i].toString();
+						}
+
+						ret << "]";
+						return ret.str();
+					}
+
 				default:
 					return "?????";
 			}
@@ -88,6 +135,7 @@ namespace sap::interp
 
 		bool isBool() const { return m_kind == KIND_BOOL; }
 		bool isChar() const { return m_kind == KIND_CHAR; }
+		bool isArray() const { return m_kind == KIND_ARRAY; }
 		bool isDouble() const { return m_kind == KIND_FLOATING; }
 		bool isInteger() const { return m_kind == KIND_INTEGER; }
 		bool isFunction() const { return m_kind == KIND_FUNCTION; }
@@ -126,6 +174,7 @@ namespace sap::interp
 			KIND_FUNCTION = 5,
 
 			KIND_TREE_INLINE_OBJ = 6,
+			KIND_ARRAY = 7,
 		};
 
 
@@ -150,7 +199,7 @@ namespace sap::interp
 			return ret;
 		}
 
-		static Value character(uint32_t ch)
+		static Value character(char32_t ch)
 		{
 			auto ret = Value(Type::makeChar(), KIND_CHAR);
 			ret.v_char = ch;
@@ -161,6 +210,18 @@ namespace sap::interp
 		{
 			auto ret = Value(fn_type, KIND_FUNCTION);
 			ret.v_function = fn;
+			return ret;
+		}
+
+		static Value string(const std::u32string& str)
+		{
+			auto ret = Value(Type::makeString(), KIND_ARRAY);
+			new(&ret.v_array) decltype(ret.v_array)();
+			ret.v_array.resize(str.size());
+
+			for(size_t i = 0; i < str.size(); i++)
+				ret.v_array[i] = Value::character(str[i]);
+
 			return ret;
 		}
 
@@ -204,6 +265,9 @@ namespace sap::interp
 				case KIND_TREE_INLINE_OBJ:
 					new(&v_inline_obj) decltype(v_inline_obj)(std::move(val.v_inline_obj));
 					break;
+				case KIND_ARRAY:
+					new(&v_array) decltype(v_array)(std::move(val.v_array));
+					break;
 			}
 
 			m_kind = val.m_kind;
@@ -217,13 +281,14 @@ namespace sap::interp
 		union
 		{
 			bool v_bool;
-			uint32_t v_char;
+			char32_t v_char;
 			int64_t v_integer;
 			double v_floating;
 
 			FnType v_function;
 
 			std::unique_ptr<tree::InlineObject> v_inline_obj;
+			std::vector<Value> v_array;
 		};
 	};
 }

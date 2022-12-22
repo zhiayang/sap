@@ -60,7 +60,7 @@ namespace pdf
 		return metrics;
 	}
 
-	GlyphId Font::getGlyphIdFromCodepoint(Codepoint codepoint) const
+	GlyphId Font::getGlyphIdFromCodepoint(char32_t codepoint) const
 	{
 		if(this->encoding_kind == ENCODING_WIN_ANSI)
 		{
@@ -85,7 +85,7 @@ namespace pdf
 		}
 	}
 
-	void Font::addGlyphUnicodeMapping(GlyphId glyph, std::vector<Codepoint> codepoints) const
+	void Font::addGlyphUnicodeMapping(GlyphId glyph, std::vector<char32_t> codepoints) const
 	{
 		if(auto it = m_extra_unicode_mappings.find(glyph); it != m_extra_unicode_mappings.end() && it->second != codepoints)
 		{
@@ -136,7 +136,7 @@ namespace pdf
 			}
 		}
 
-		auto find_codepoint_for_gid = [&cmap, this](GlyphId gid) -> std::vector<Codepoint> {
+		auto find_codepoint_for_gid = [&cmap, this](GlyphId gid) -> std::vector<char32_t> {
 			// if it is in the reverse cmap, all is well. if it is not, then we hope that
 			// it was a single-replacement (eg. a ligature of replaced glyphs). otherwise,
 			// that's a big oof.
@@ -151,14 +151,14 @@ namespace pdf
 			else
 			{
 				sap::warn("font", "could not find unicode codepoint for {}", gid);
-				return { Codepoint { '?' } };
+				return { U'?' };
 			}
 		};
 
 		for(auto& [out, ins] : subst.mapping.contractions)
 		{
 			this->markGlyphAsUsed(out);
-			std::vector<Codepoint> in_cps {};
+			std::vector<char32_t> in_cps {};
 			for(auto& in_gid : ins)
 			{
 				auto tmp = find_codepoint_for_gid(in_gid);

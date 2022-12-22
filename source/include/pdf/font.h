@@ -30,7 +30,7 @@ namespace pdf
 	{
 		Dictionary* serialise(Document* doc) const;
 
-		GlyphId getGlyphIdFromCodepoint(Codepoint codepoint) const;
+		GlyphId getGlyphIdFromCodepoint(char32_t codepoint) const;
 
 		void markGlyphAsUsed(GlyphId glyph) const;
 
@@ -38,7 +38,7 @@ namespace pdf
 
 		// add an explicit mapping from glyph id to a list of codepoints. This is useful for
 		// ligature substitutions (eg. 'ffi' -> 'f', 'f', 'i') and for single replacements.
-		void addGlyphUnicodeMapping(GlyphId glyph, std::vector<Codepoint> codepoints) const;
+		void addGlyphUnicodeMapping(GlyphId glyph, std::vector<char32_t> codepoints) const;
 
 		font::FontMetrics getFontMetrics() const;
 
@@ -86,7 +86,7 @@ namespace pdf
 
 		mutable std::unordered_set<GlyphId> m_used_glyphs {};
 		mutable std::map<GlyphId, font::GlyphMetrics> m_glyph_metrics {};
-		mutable std::map<GlyphId, std::vector<Codepoint>> m_extra_unicode_mappings {};
+		mutable std::map<GlyphId, std::vector<char32_t>> m_extra_unicode_mappings {};
 
 		// the name that goes into the Resource << >> dict in a page. This is a unique name
 		// that we get from the Document when the font is created.

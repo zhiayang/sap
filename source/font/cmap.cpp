@@ -20,11 +20,11 @@ namespace font
 		consume_u16(subtable);  // lang (ignored)
 
 		CharacterMapping mapping {};
-		for(uint32_t cp = 0; cp < 256; cp++)
+		for(char32_t cp = 0; cp < 256; cp++)
 		{
 			auto gid = GlyphId { subtable[cp] };
-			mapping.forward[Codepoint { cp }] = gid;
-			mapping.reverse[gid] = Codepoint { cp };
+			mapping.forward[cp] = gid;
+			mapping.reverse[gid] = cp;
 		}
 
 		return mapping;
@@ -60,20 +60,20 @@ namespace font
 			auto delta = util::convertBEU16(id_deltas[i]);
 			auto range_ofs = util::convertBEU16(id_range_offsets[i]);
 
-			for(uint32_t cp = start; cp <= end; cp++)
+			for(char32_t cp = start; cp <= end; cp++)
 			{
 				if(range_ofs != 0)
 				{
 					auto idx = util::convertBEU16(*(id_range_offsets.data() + i + range_ofs / 2 + (cp - start)));
 					auto gid = GlyphId { static_cast<uint32_t>((delta + idx) & 0xffff) };
-					mapping.forward[Codepoint { cp }] = gid;
-					mapping.reverse[gid] = Codepoint { cp };
+					mapping.forward[cp] = gid;
+					mapping.reverse[gid] = cp;
 				}
 				else
 				{
 					auto gid = GlyphId { static_cast<uint32_t>((delta + cp) & 0xffff) };
-					mapping.forward[Codepoint { cp }] = gid;
-					mapping.reverse[gid] = Codepoint { cp };
+					mapping.forward[cp] = gid;
+					mapping.reverse[gid] = cp;
 				}
 			}
 		}
@@ -95,7 +95,7 @@ namespace font
 		CharacterMapping mapping {};
 		for(size_t i = 0; i < count; i++)
 		{
-			auto cp = Codepoint { static_cast<uint32_t>(first + i) };
+			auto cp = static_cast<char32_t>(first + i);
 			auto gid = GlyphId { subtable.cast<uint16_t>()[i] };
 
 			mapping.forward[cp] = gid;
@@ -119,7 +119,7 @@ namespace font
 		CharacterMapping mapping {};
 		for(size_t i = 0; i < count; i++)
 		{
-			auto cp = Codepoint { static_cast<uint32_t>(first + i) };
+			auto cp = static_cast<char32_t>(first + i);
 			auto gid = GlyphId { subtable.cast<uint32_t>()[i] };
 
 			mapping.forward[cp] = gid;
@@ -149,7 +149,7 @@ namespace font
 
 			for(auto x = first; x <= last; x++)
 			{
-				auto cp = Codepoint { x };
+				auto cp = static_cast<char32_t>(x);
 
 				GlyphId gid {};
 				if(fmt == 12)
@@ -193,7 +193,7 @@ namespace font
 		}
 	}
 
-	GlyphId FontFile::getGlyphIndexForCodepoint(Codepoint codepoint) const
+	GlyphId FontFile::getGlyphIndexForCodepoint(char32_t codepoint) const
 	{
 		auto& fwd = this->character_mapping.forward;
 		if(auto it = fwd.find(codepoint); it != fwd.end())

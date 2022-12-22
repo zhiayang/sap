@@ -10,44 +10,44 @@
 
 namespace pdf::encoding
 {
-	static inline uint8_t WIN_ANSI(Codepoint cp)
+	static inline uint8_t WIN_ANSI(char32_t cp)
 	{
-		static std::map<Codepoint, uint8_t> cmap;
+		static std::map<char32_t, uint8_t> cmap;
 		if(cmap.empty())
 		{
-			for(uint8_t i = 0; i < 128; i++)
-				cmap[Codepoint { i }] = i;
+			for(char32_t i = 0; i < 128; i++)
+				cmap[i] = static_cast<uint8_t>(i);
 
-			cmap[0x20ac_codepoint] = 128;
-			cmap[0x201a_codepoint] = 130;
-			cmap[0x0192_codepoint] = 131;
-			cmap[0x201e_codepoint] = 132;
-			cmap[0x2026_codepoint] = 133;
-			cmap[0x2020_codepoint] = 134;
-			cmap[0x2021_codepoint] = 135;
-			cmap[0x02c6_codepoint] = 136;
-			cmap[0x2030_codepoint] = 137;
-			cmap[0x0160_codepoint] = 138;
-			cmap[0x2039_codepoint] = 139;
-			cmap[0x0152_codepoint] = 140;
-			cmap[0x017d_codepoint] = 142;
-			cmap[0x2018_codepoint] = 145;
-			cmap[0x2019_codepoint] = 146;
-			cmap[0x201c_codepoint] = 147;
-			cmap[0x201d_codepoint] = 148;
-			cmap[0x2022_codepoint] = 149;
-			cmap[0x2013_codepoint] = 150;
-			cmap[0x2014_codepoint] = 151;
-			cmap[0x02dc_codepoint] = 152;
-			cmap[0x2122_codepoint] = 153;
-			cmap[0x0161_codepoint] = 154;
-			cmap[0x203a_codepoint] = 155;
-			cmap[0x0153_codepoint] = 156;
-			cmap[0x017e_codepoint] = 158;
-			cmap[0x0178_codepoint] = 159;
+			cmap[U'\u20ac'] = 128;
+			cmap[U'\u201a'] = 130;
+			cmap[U'\u0192'] = 131;
+			cmap[U'\u201e'] = 132;
+			cmap[U'\u2026'] = 133;
+			cmap[U'\u2020'] = 134;
+			cmap[U'\u2021'] = 135;
+			cmap[U'\u02c6'] = 136;
+			cmap[U'\u2030'] = 137;
+			cmap[U'\u0160'] = 138;
+			cmap[U'\u2039'] = 139;
+			cmap[U'\u0152'] = 140;
+			cmap[U'\u017d'] = 142;
+			cmap[U'\u2018'] = 145;
+			cmap[U'\u2019'] = 146;
+			cmap[U'\u201c'] = 147;
+			cmap[U'\u201d'] = 148;
+			cmap[U'\u2022'] = 149;
+			cmap[U'\u2013'] = 150;
+			cmap[U'\u2014'] = 151;
+			cmap[U'\u02dc'] = 152;
+			cmap[U'\u2122'] = 153;
+			cmap[U'\u0161'] = 154;
+			cmap[U'\u203a'] = 155;
+			cmap[U'\u0153'] = 156;
+			cmap[U'\u017e'] = 158;
+			cmap[U'\u0178'] = 159;
 
-			for(uint8_t i = 0xa0; i <= 0xff; i++)
-				cmap[Codepoint { i }] = i;
+			for(char32_t i = 0xa0; i <= 0xff; i++)
+				cmap[i] = static_cast<uint8_t>(i);
 		}
 
 		return cmap[cp];

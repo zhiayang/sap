@@ -24,7 +24,6 @@ namespace sap::interp
 		bool isChar() const { return m_kind == KIND_CHAR; }
 		bool isArray() const { return m_kind == KIND_ARRAY; }
 		bool isNumber() const { return m_kind == KIND_NUMBER; }
-		bool isString() const { return m_kind == KIND_STRING; }
 		bool isFunction() const { return m_kind == KIND_FUNCTION; }
 		bool isTreeInlineObj() const { return m_kind == KIND_TREE_INLINE_OBJ; }
 
@@ -35,7 +34,6 @@ namespace sap::interp
 			       || isBool()      //
 			       || isChar()      //
 			       || isNumber()    //
-			       || isString()    //
 			       || isFunction()  //
 			       || isTreeInlineObj();
 		}
@@ -63,7 +61,6 @@ namespace sap::interp
 		static constexpr int KIND_ANY = 0;
 		static constexpr int KIND_VOID = 1;
 		static constexpr int KIND_NUMBER = 2;
-		static constexpr int KIND_STRING = 3;
 		static constexpr int KIND_FUNCTION = 4;
 		static constexpr int KIND_TREE_INLINE_OBJ = 5;
 		static constexpr int KIND_ARRAY = 6;

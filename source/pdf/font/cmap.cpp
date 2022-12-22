@@ -57,7 +57,7 @@ namespace pdf
 			cmap->append(zpr::sprint("<{04x}> <", gid));
 			for(auto cp : cps)
 			{
-				if(cp <= 0xFFFF_codepoint)
+				if(cp <= 0xFFFF)
 				{
 					cmap->append(zpr::sprint("{04x}", cp));
 				}

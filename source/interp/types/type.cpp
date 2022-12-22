@@ -18,8 +18,6 @@ namespace sap::interp
 			return "void";
 		else if(this->isNumber())
 			return "num";
-		else if(this->isString())
-			return "str";
 		else if(this->isBool())
 			return "bool";
 		else if(this->isChar())
@@ -38,11 +36,8 @@ namespace sap::interp
 		// note: if the kind is a "primitive", we know that we can just compare m_kind.
 		// otherwise, we should call the virtual function. However, we are a primitive; this means
 		// that the other guy must be the non-primitive, so call their sameAs() instead.
-		if(m_kind == KIND_VOID || m_kind == KIND_NUMBER || m_kind == KIND_STRING || m_kind == KIND_ANY ||
-			m_kind == KIND_TREE_INLINE_OBJ)
-		{
+		if(m_kind == KIND_VOID || m_kind == KIND_NUMBER || m_kind == KIND_ANY || m_kind == KIND_TREE_INLINE_OBJ)
 			return true;
-		}
 
 		// in theory, this should never end up in a cyclic call.
 		return other->sameAs(this);
@@ -111,8 +106,8 @@ namespace sap::interp
 
 	const Type* Type::makeString()
 	{
-		static Type* string_type = new Type(KIND_STRING);
-		return string_type;
+		static const Type* arr_type = Type::makeArray(makeChar());
+		return arr_type;
 	}
 
 	const Type* Type::makeTreeInlineObj()

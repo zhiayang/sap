@@ -34,6 +34,7 @@ namespace sap::frontend
 		// script mode tokens
 		Identifier,
 		Number,
+		String,
 
 		LParen,
 		RParen,
@@ -91,6 +92,8 @@ namespace sap::frontend
 		Token peek() const;
 		Token next();
 		bool eof() const;
+
+		bool isWhitespace() const;
 
 		bool expect(TokenType type);
 		std::optional<Token> match(TokenType type);

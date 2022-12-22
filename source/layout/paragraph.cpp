@@ -76,7 +76,15 @@ namespace sap::layout
 				auto& word = m_words[word_idx - words_in_line + i];
 				word.m_position = cursor;
 				word.m_post_space_ratio = ratio;
-				cursor.x() += word.size.x() + (ratio * word.spaceWidth());
+
+				cursor.x() += word.size.x();
+
+				bool add_space = i + 1 < words_in_line      //
+				                 && not word.m_stick_right  //
+				                 && not m_words[word_idx - words_in_line + i + 1].m_stick_left;
+
+				if(add_space)
+					cursor.x() += ratio * word.spaceWidth();
 
 				line_height = dim::max(line_height, word.size.y());
 
@@ -128,9 +136,17 @@ namespace sap::layout
 				// and `space_length` is how much "space character whitespace" we have.
 				auto current_ratio = (region_width - word_length) / space_length;
 
+				auto pre_space = word.m_stick_left ? Scalar(0) : m_words[word_idx - 1].spaceWidth();
+				auto post_space = word.m_stick_right ? Scalar(0) : word.spaceWidth();
+
 				// the space between words is, for now, the maximum of the prev -> cur, and cur -> next
 				// (if the current word is of a different font size, then the distinction becomes important)
-				auto space_between = dim::max(m_words[word_idx - 1].spaceWidth(), word.spaceWidth());
+				auto space_between = dim::max(pre_space, post_space);
+
+				// since each word is "responsible" for the space after it, if we are sticking to the right,
+				// don't add the space.
+				if(word.m_stick_right)
+					space_between = Scalar(0);
 
 				// check the ratio again with an additional word
 				auto new_ratio = (region_width - word_length - word.size.x()) / (space_length + space_between);

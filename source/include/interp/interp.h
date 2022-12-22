@@ -109,6 +109,14 @@ namespace sap::interp
 		double float_value = 0;
 	};
 
+	struct StringLit : Expr
+	{
+		virtual ErrorOr<std::optional<Value>> evaluate(Interpreter* cs) const override;
+		virtual ErrorOr<const Type*> typecheck_impl(Interpreter* cs, const Type* infer = nullptr) const override;
+
+		std::u32string string;
+	};
+
 	enum class Op
 	{
 		Add,

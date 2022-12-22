@@ -194,8 +194,10 @@ namespace unicode
 	std::string utf8FromUtf16(zst::span<uint16_t> utf16);
 	std::string utf8FromUtf16BigEndianBytes(zst::byte_span bytes);
 
-	Codepoint consumeCodepointFromUtf8(zst::byte_span& utf8);
+	std::string utf8FromCodepoint(char32_t cp);
+
+	char32_t consumeCodepointFromUtf8(zst::byte_span& utf8);
 
 	// high-order surrogate first.
-	std::pair<uint16_t, uint16_t> codepointToSurrogatePair(Codepoint codepoint);
+	std::pair<uint16_t, uint16_t> codepointToSurrogatePair(char32_t codepoint);
 }

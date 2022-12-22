@@ -12,6 +12,8 @@
 #include "pdf/misc.h"
 #include "pdf/font.h"
 
+#include "interp/tree.h"
+
 namespace sap::layout
 {
 	// TODO: this needs to handle unicode composing/decomposing also, which is a massive pain
@@ -75,7 +77,16 @@ namespace sap::layout
 
 
 
+	Word Word::fromTreeWord(const tree::Word& w)
+	{
+		// TODO: determine whether this 'kind' thing is even useful
+		auto ret = Word(Word::KIND_LATIN, w.text());
+		ret.setStyle(w.style());
+		ret.m_stick_left = w.stick_to_left;
+		ret.m_stick_right = w.stick_to_right;
 
+		return ret;
+	}
 
 
 	void Word::computeMetrics(const Style* parent_style)
@@ -88,15 +99,11 @@ namespace sap::layout
 
 		m_glyphs = convert_to_glyphs(font, this->text);
 
-		// we shouldn't have 0 glyphs in a word... right?
-		assert(m_glyphs.size() > 0);
-
 		// size is in sap units, which is in mm; metrics are in typographic units, so 72dpi;
 		// calculate the scale accordingly.
 		const auto font_metrics = font->getFontMetrics();
 		auto font_size_tpu = font_size.into(dim::units::pdf_typographic_unit {});
 
-		// TODO: what is this complicated formula???
 		this->size = { 0, 0 };
 		this->size.y() = font->scaleMetricForFontSize(font_metrics.default_line_spacing, font_size_tpu).into(sap::Scalar {});
 
@@ -106,12 +113,18 @@ namespace sap::layout
 			this->size.x() += font->scaleMetricForFontSize(width, font_size_tpu).into(sap::Scalar {});
 		}
 
+		// this space width is to the next word
+		if(not m_stick_right)
 		{
-			auto space_gid = font->getGlyphIdFromCodepoint(Codepoint { ' ' });
+			auto space_gid = font->getGlyphIdFromCodepoint(U' ');
 			auto space_adv = font->getMetricsForGlyph(space_gid).horz_advance;
 			auto space_width = font->scaleMetricForFontSize(space_adv, font_size_tpu);
 
 			m_space_width = space_width.into(sap::Scalar {});
+		}
+		else
+		{
+			m_space_width = Scalar(0);
 		}
 	}
 
@@ -141,9 +154,9 @@ namespace sap::layout
 			text->offset(font->scaleMetricForPDFTextSpace(glyph.adjustments.horz_advance));
 		}
 
-		if(!m_linebreak_after && m_next_word != nullptr)
+		if(!m_linebreak_after && m_next_word != nullptr && not m_stick_right && not m_next_word->m_stick_left)
 		{
-			auto space_gid = font->getGlyphIdFromCodepoint(Codepoint { ' ' });
+			auto space_gid = font->getGlyphIdFromCodepoint(U' ');
 			add_gid(space_gid);
 
 			if(m_post_space_ratio != 1.0)

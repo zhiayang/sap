@@ -12,17 +12,10 @@ enum class GlyphId : uint32_t
 {
 	notdef = 0
 };
-enum class Codepoint : uint32_t
-{
-};
 
 constexpr inline GlyphId operator""_gid(unsigned long long x)
 {
 	return static_cast<GlyphId>(x);
-}
-constexpr inline Codepoint operator""_codepoint(unsigned long long x)
-{
-	return static_cast<Codepoint>(x);
 }
 
 namespace zpr
@@ -38,12 +31,12 @@ namespace zpr
 	};
 
 	template <>
-	struct print_formatter<Codepoint>
+	struct print_formatter<char32_t>
 	{
 		template <typename Cb>
-		void print(Codepoint x, Cb&& cb, format_args args)
+		void print(char32_t x, Cb&& cb, format_args args)
 		{
-			detail::print(static_cast<Cb&&>(cb), "codepoint({})", static_cast<uint32_t>(x));
+			detail::print(static_cast<Cb&&>(cb), "char32({})", static_cast<uint32_t>(x));
 		}
 	};
 }
