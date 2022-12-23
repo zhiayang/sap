@@ -111,11 +111,12 @@ namespace pdf
 		auto cidfont_dict = Dictionary::createIndirect(doc, names::Font, {});
 
 		cidfont_dict->add(names::BaseFont, basefont_name);
-		cidfont_dict->add(names::CIDSystemInfo, Dictionary::create({
-													{ names::Registry, String::create("Adobe") },
-													{ names::Ordering, String::create("Identity") },
-													{ names::Supplement, Integer::create(0) },
-												}));
+		cidfont_dict->add(names::CIDSystemInfo,
+			Dictionary::create({
+				{ names::Registry, String::create("Adobe") },
+				{ names::Ordering, String::create("Identity") },
+				{ names::Supplement, Integer::create(0) },
+			}));
 
 		bool truetype_outlines = (font_file->outline_type == font::FontFile::OUTLINES_TRUETYPE);
 
