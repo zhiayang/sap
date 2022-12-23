@@ -60,6 +60,9 @@ build: $(OUTPUT_BIN)
 
 test: $(TESTS)
 
+%.pdf: %.sap build
+	@$(OUTPUT_BIN) $<
+
 check: test
 	@for test in $(TESTS); do \
 		echo Running test $$test; \
