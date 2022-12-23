@@ -6,7 +6,8 @@
 
 #include <functional>
 #include <ranges>
-#include <queue>
+#include <set>
+#include <unordered_map>
 
 #include "defs.h"
 
@@ -40,18 +41,53 @@ namespace util
 	template <DijkstraNode Node>
 	std::vector<Node> dijkstra_shortest_path(Node start, Node end)
 	{
+		std::vector<Node> path {};
 		using Distance = typename Node::Distance;
-		using DistanceNodePair = std::pair<Node, Distance>;
-		using DistanceComp = decltype([](const DistanceNodePair& lhs, const DistanceNodePair& rhs) {
-			return lhs.second > rhs.second;
+		// From, To, Distance from *start* to To, via From
+		using Edge = std::tuple<Node, Node, Distance>;
+		using EdgeComp = decltype([](const Edge& lhs, const Edge& rhs) {
+			return std::get<Distance>(lhs) < std::get<Distance>(rhs);
 		});
 
-		std::priority_queue<DistanceNodePair, std::vector<DistanceNodePair>, DistanceComp> queue;
-		std::unordered_map<Node, Distance, util::hasher> distances;
+		// Use set instead of priority_queue so that we can .extract it
+		std::multiset<Edge, EdgeComp> queue;
+		// Maps Tos to Froms
+		std::unordered_map<Node, Node, util::hasher> parents;
 
-		queue.push(DistanceNodePair { start, Distance {} });
+		queue.insert(Edge { start, start, Distance {} });
+		while(!queue.empty())
+		{
+			auto [from, to, distance] = std::move(queue.extract(queue.begin()).value());
+			if(!parents.try_emplace(to, from).second)
+			{
+				continue;
+			}
+			if(to == end)
+			{
+				path.push_back(to);
+				auto node = to;
+				while(true)
+				{
+					auto it = parents.find(node);
+					path.push_back(it->second);
+					node = it->second;
+					if(node == start)
+					{
+						break;
+					}
+				}
+				// Reverse path
+				std::reverse(path.begin(), path.end());
+				return path;
+			}
 
-		return {};
+			// Not at end yet
+			for(auto [neighbour, distance_to_neighbour] : to.neighbours())
+			{
+				queue.insert(Edge(to, neighbour, distance + distance_to_neighbour));
+			}
+		}
+		// Unreachable if dijkstra is correctly implemented
+		sap::internal_error("Fuck, dijkstra exploded");
 	}
-
 }
