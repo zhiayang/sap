@@ -21,6 +21,7 @@ namespace util
 	template <typename It>
 	struct subrange
 	{
+		using value_type = typename std::iterator_traits<It>::value_type;
 		It m_begin;
 		It m_end;
 		subrange(It begin, It end) : m_begin(begin), m_end(end) { }
