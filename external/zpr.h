@@ -592,14 +592,30 @@ namespace zpr
 
 
 
+		template <typename _Type, typename = void>
+		struct is_iterable_by_adl : tt::false_type { };
+
+		template <typename _Type>
+		struct is_iterable_by_adl<_Type, tt::void_t<
+			decltype(begin(tt::declval<_Type&>())), decltype(end(tt::declval<_Type&>()))
+		>> : tt::true_type { };
+
+		template <typename _Type, typename = void>
+		struct is_iterable_by_member : tt::false_type { };
+
+		template <typename _Type>
+		struct is_iterable_by_member<_Type, tt::void_t<
+			decltype(tt::declval<_Type&>().begin()), decltype(tt::declval<_Type&>().end())
+		>> : tt::true_type { };
 
 		template <typename _Type, typename = void>
 		struct is_iterable : tt::false_type { };
 
 		template <typename _Type>
-		struct is_iterable<_Type, tt::void_t<
-			decltype(begin(tt::declval<_Type&>())), decltype(end(tt::declval<_Type&>()))
-		>> : tt::true_type { };
+		struct is_iterable<_Type, typename tt::enable_if<
+			is_iterable_by_adl<_Type>::value ||
+			is_iterable_by_member<_Type>::value
+		>::type> : tt::true_type { };
 
 		// a bit hacky, but force this to be iterable.
 		template <>
