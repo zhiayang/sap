@@ -93,6 +93,9 @@ namespace font
 
 	using KerningPair = std::pair<GlyphAdjustment, GlyphAdjustment>;
 
+	std::optional<std::string> findFontPath(std::initializer_list<std::string> families, const std::string& style,
+		std::initializer_list<std::string> fontformats);
+
 	// TODO: clean up this entire struct
 	struct FontFile
 	{

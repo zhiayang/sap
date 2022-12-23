@@ -42,6 +42,12 @@ PRECOMP_GCH     := $(PRECOMP_HDRS:%.h=$(OUTPUT_DIR)/%.h.gch)
 DEFINES         :=
 INCLUDES        := -Isource/include -Iexternal
 
+ifeq ($(USE_FONTCONFIG), 1)
+DEFINES  += -DUSE_FONTCONFIG
+CXXFLAGS += $(shell pkg-config --cflags fontconfig)
+LDFLAGS  += $(shell pkg-config --libs fontconfig)
+endif
+
 OUTPUT_BIN      := $(OUTPUT_DIR)/sap
 
 .PHONY: all clean build test
@@ -63,12 +69,12 @@ check: test
 $(OUTPUT_BIN): $(CXXOBJ) $(UTF8PROC_OBJS) $(MINIZ_OBJS)
 	@echo "  $(notdir $@)"
 	@mkdir -p $(shell dirname $@)
-	@$(CXX) $(CXXFLAGS) $(WARNINGS) $(DEFINES) -Iexternal -o $@ $^
+	@$(CXX) $(CXXFLAGS) $(WARNINGS) $(DEFINES) $(LDFLAGS) -Iexternal -o $@ $^
 
 $(TEST_DIR)/%: $(OUTPUT_DIR)/test/%.cpp.o $(CXXLIBOBJ) $(UTF8PROC_OBJS) $(MINIZ_OBJS)
 	@echo "  $(notdir $@)"
 	@mkdir -p $(shell dirname $@)
-	@$(CXX) $(CXXFLAGS) $(WARNINGS) $(DEFINES) -Iexternal -o $@ $^
+	@$(CXX) $(CXXFLAGS) $(WARNINGS) $(DEFINES) $(LDFLAGS) -Iexternal -o $@ $^
 
 $(OUTPUT_DIR)/%.cpp.o: %.cpp Makefile $(PRECOMP_GCH)
 	@echo "  $<"

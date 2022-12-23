@@ -41,8 +41,14 @@ namespace sap
 
 int main(int argc, char** argv)
 {
-	auto [buf, size] = util::readEntireFile("test.sap");
-	auto document = sap::frontend::parse("test.sap", { (char*) buf, size });
+	if(argc != 2)
+	{
+		zpr::println("Usage: {} <input file>", argv[0]);
+		return 1;
+	}
+	std::string filename(argv[1]);
+	auto [buf, size] = util::readEntireFile(filename);
+	auto document = sap::frontend::parse(filename, { (char*) buf, size });
 
 	auto interpreter = sap::interp::Interpreter();
 
@@ -50,10 +56,42 @@ int main(int argc, char** argv)
 
 	auto font_set = [&]() {
 		auto doc = &layout_doc.pdfDocument();
-		auto regular = pdf::Font::fromFontFile(doc, font::FontFile::parseFromFile("fonts/SourceSerif4-Regular.otf"));
-		auto italic = pdf::Font::fromFontFile(doc, font::FontFile::parseFromFile("fonts/SourceSerif4-It.otf"));
-		auto bold = pdf::Font::fromFontFile(doc, font::FontFile::parseFromFile("fonts/SourceSerif4-Bold.otf"));
-		auto boldit = pdf::Font::fromFontFile(doc, font::FontFile::parseFromFile("fonts/SourceSerif4-BoldIt.otf"));
+
+		auto regular_path = font::findFontPath(         //
+			{ "Source Serif", "Noto Serif", "Serif" },  //
+			"Regular",                                  //
+			/* { "TrueType", "CFF" }                       // */
+			{ "CFF" }  //
+			)
+		                        .value_or("fonts/SourceSerif4-Regular.otf");
+		auto regular = pdf::Font::fromFontFile(doc, font::FontFile::parseFromFile(regular_path));
+
+		auto italic_path = font::findFontPath(          //
+			{ "Source Serif", "Noto Serif", "Serif" },  //
+			"Italic",                                   //
+			/* { "TrueType", "CFF" }                       // */
+			{ "CFF" }  //
+			)
+		                       .value_or("fonts/SourceSerif4-It.otf");
+		auto italic = pdf::Font::fromFontFile(doc, font::FontFile::parseFromFile(italic_path));
+
+		auto bold_path = font::findFontPath(            //
+			{ "Source Serif", "Noto Serif", "Serif" },  //
+			"Bold",                                     //
+			/* { "TrueType", "CFF" }                       // */
+			{ "CFF" }  //
+			)
+		                     .value_or("fonts/SourceSerif4-Bold.otf");
+		auto bold = pdf::Font::fromFontFile(doc, font::FontFile::parseFromFile(bold_path));
+
+		auto boldit_path = font::findFontPath(          //
+			{ "Source Serif", "Noto Serif", "Serif" },  //
+			"Bold Italic",                              //
+			/* { "TrueType", "CFF" }                       // */
+			{ "CFF" }  //
+			)
+		                       .value_or("fonts/SourceSerif4-BoldIt.otf");
+		auto boldit = pdf::Font::fromFontFile(doc, font::FontFile::parseFromFile(boldit_path));
 
 		return sap::FontSet(regular, italic, bold, boldit);
 	}();
