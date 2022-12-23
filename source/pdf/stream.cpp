@@ -106,8 +106,8 @@ namespace pdf
 	{
 		if(this->is_compressed)
 		{
-			auto res =
-				tdefl_compress_buffer(reinterpret_cast<tdefl_compressor*>(this->compressor_state), arr, num, TDEFL_SYNC_FLUSH);
+			auto res = tdefl_compress_buffer(reinterpret_cast<tdefl_compressor*>(this->compressor_state), arr, num,
+				TDEFL_SYNC_FLUSH);
 
 			if(res != TDEFL_STATUS_OKAY)
 				pdf::error("stream compression failed");

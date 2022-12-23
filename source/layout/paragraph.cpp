@@ -175,9 +175,9 @@ namespace sap::layout
 
 				cursor.x() += word.size.x();
 
-				bool add_space = i + 1 < words_in_line      //
-				                 && not word.m_stick_right  //
-				                 && not m_words[word_idx - words_in_line + i + 1].m_stick_left;
+				bool add_space = i + 1 < words_in_line   //
+				              && not word.m_stick_right  //
+				              && not m_words[word_idx - words_in_line + i + 1].m_stick_left;
 
 				if(add_space)
 					cursor.x() += ratio * word.spaceWidth();
@@ -249,8 +249,8 @@ namespace sap::layout
 
 				// if the new ratio is not worse than the current one,
 				// and it doesn't squeeze the space too much, add it.
-				if(MIN_RATIO <= new_ratio && std::abs(new_ratio - 1.0) <= std::abs(current_ratio - 1.0) &&
-					word_length + word.size.x() < region_width)
+				if(MIN_RATIO <= new_ratio && std::abs(new_ratio - 1.0) <= std::abs(current_ratio - 1.0)
+					&& word_length + word.size.x() < region_width)
 				{
 					word_length += word.size.x();
 					space_length += space_between;

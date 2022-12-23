@@ -141,10 +141,10 @@ namespace util
 		return _byteswap_uint64(value);
 #else
 		// Compiles to bswap since gcc 4.5.3 and clang 3.4.1
-		return ((value & 0xFF00000000000000u) >> 56u) | ((value & 0x00FF000000000000u) >> 40u) |
-		       ((value & 0x0000FF0000000000u) >> 24u) | ((value & 0x000000FF00000000u) >> 8u) |
-		       ((value & 0x00000000FF000000u) << 8u) | ((value & 0x0000000000FF0000u) << 24u) |
-		       ((value & 0x000000000000FF00u) << 40u) | ((value & 0x00000000000000FFu) << 56u);
+		return ((value & 0xFF00000000000000u) >> 56u) | ((value & 0x00FF000000000000u) >> 40u)
+		     | ((value & 0x0000FF0000000000u) >> 24u) | ((value & 0x000000FF00000000u) >> 8u)
+		     | ((value & 0x00000000FF000000u) << 8u) | ((value & 0x0000000000FF0000u) << 24u)
+		     | ((value & 0x000000000000FF00u) << 40u) | ((value & 0x00000000000000FFu) << 56u);
 #endif
 	}
 

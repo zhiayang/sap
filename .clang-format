@@ -6,6 +6,7 @@ AccessModifierOffset: -4
 AlignAfterOpenBracket: DontAlign
 AlignEscapedNewlinesLeft: true
 AlignTrailingComments: true
+AlignOperands: AlignAfterOperator
 AllowAllParametersOfDeclarationOnNextLine: false
 AllowAllArgumentsOnNextLine: false
 AllowShortBlocksOnASingleLine: Empty
@@ -18,7 +19,7 @@ AlwaysBreakBeforeMultilineStrings: false
 AlwaysBreakTemplateDeclarations: true
 BinPackArguments: true
 BinPackParameters: true
-BreakBeforeBinaryOperators: false
+BreakBeforeBinaryOperators: NonAssignment
 BreakBeforeBraces: Custom
 BraceWrapping:
   AfterClass: true
@@ -35,10 +36,9 @@ BraceWrapping:
   BeforeLambdaBody: false
   BeforeWhile: false
 BreakBeforeTernaryOperators: true
-BreakConstructorInitializersBeforeComma: false
+BreakConstructorInitializers: BeforeComma
 ColumnLimit: 130
 CommentPragmas:  '^ IWYU pragma:'
-ConstructorInitializerAllOnOneLineOrOnePerLine: false
 ConstructorInitializerIndentWidth: 4
 ContinuationIndentWidth: 4
 Cpp11BracedListStyle: false
@@ -53,12 +53,16 @@ IndentPPDirectives: None
 KeepEmptyLinesAtTheStartOfBlocks: true
 MaxEmptyLinesToKeep: 100
 NamespaceIndentation: All
-PenaltyBreakBeforeFirstCallParameter: 100
+PackConstructorInitializers: CurrentLine
+PenaltyBreakBeforeFirstCallParameter: 10000000
 PenaltyBreakComment: 300
 PenaltyBreakFirstLessLess: 120
 PenaltyBreakString: 1000
 PenaltyExcessCharacter: 10000000
-PenaltyReturnTypeOnItsOwnLine: 200
+PenaltyReturnTypeOnItsOwnLine: 2000000
+PenaltyIndentedWhitespace: 100000
+PenaltyBreakAssignment: 9000000
+PenaltyBreakOpenParenthesis: 1000000
 PPIndentWidth: -1
 PointerAlignment: Left
 SortIncludes: false

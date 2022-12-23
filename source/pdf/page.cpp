@@ -13,8 +13,8 @@
 namespace pdf
 {
 	// TODO: support custom paper sizes
-	static const auto a4paper =
-		Array::create(Integer::create(0), Integer::create(0), Decimal::create(595.276), Decimal::create(841.89));
+	static const auto a4paper = Array::create(Integer::create(0), Integer::create(0), Decimal::create(595.276),
+		Decimal::create(841.89));
 
 	Page::Page()
 	{

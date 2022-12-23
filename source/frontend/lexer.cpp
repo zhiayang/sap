@@ -170,8 +170,8 @@ namespace sap::frontend
 					.text = stream.take(1) },
 				1);
 		}
-		else if(stream[0] == '\\' &&
-				(stream.size() == 1 || (stream[1] != '\\' && stream[1] != '#' && stream[1] != '{' && stream[1] != '}')))
+		else if(stream[0] == '\\'
+				&& (stream.size() == 1 || (stream[1] != '\\' && stream[1] != '#' && stream[1] != '{' && stream[1] != '}')))
 		{
 			return advance_and_return(stream, loc,
 				Token { .loc = loc, .type = TT::Backslash, .whitespace_before = ws_before, .text = stream.take(1) }, 1);

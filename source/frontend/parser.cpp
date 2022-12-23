@@ -320,9 +320,9 @@ namespace sap::frontend
 						assert(bs.size() >= 4);
 						assert(is_hex(bs[0]) && is_hex(bs[1]) && is_hex(bs[2]) && is_hex(bs[3]));
 						ret += 16u * 16u * 16u * convert_hex(bs[0])  //
-						       + 16u * 16u * convert_hex(bs[1])      //
-						       + 16u * convert_hex(bs[2])            //
-						       + convert_hex(bs[3]);
+						     + 16u * 16u * convert_hex(bs[1])        //
+						     + 16u * convert_hex(bs[2])              //
+						     + convert_hex(bs[3]);
 						break;
 					case U'U':
 						assert(bs.size() >= 8);
@@ -330,13 +330,13 @@ namespace sap::frontend
 						assert(is_hex(bs[4]) && is_hex(bs[5]) && is_hex(bs[6]) && is_hex(bs[7]));
 
 						ret += 16u * 16u * 16u * 16u * 16u * 16u * 16u * convert_hex(bs[0])  //
-						       + 16u * 16u * 16u * 16u * 16u * 16u * convert_hex(bs[1])      //
-						       + 16u * 16u * 16u * 16u * 16u * convert_hex(bs[2])            //
-						       + 16u * 16u * 16u * 16u * convert_hex(bs[3])                  //
-						       + 16u * 16u * 16u * convert_hex(bs[4])                        //
-						       + 16u * 16u * convert_hex(bs[5])                              //
-						       + 16u * convert_hex(bs[6])                                    //
-						       + convert_hex(bs[7]);
+						     + 16u * 16u * 16u * 16u * 16u * 16u * convert_hex(bs[1])        //
+						     + 16u * 16u * 16u * 16u * 16u * convert_hex(bs[2])              //
+						     + 16u * 16u * 16u * 16u * convert_hex(bs[3])                    //
+						     + 16u * 16u * 16u * convert_hex(bs[4])                          //
+						     + 16u * 16u * convert_hex(bs[5])                                //
+						     + 16u * convert_hex(bs[6])                                      //
+						     + convert_hex(bs[7]);
 						break;
 					default:
 						sap::error(loc, "invalid escape sequence starting with '{}'", cp);
