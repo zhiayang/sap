@@ -202,6 +202,8 @@ namespace sap::layout
 	    paragraph. A paragraph can have as little as one (or in fact zero) words. To this end, the Word
 	    struct contains a bunch of information that is used to lay it out within the paragraph (eg. whether
 	    the line breaks immediately after).
+
+	    TODO: Make Word cheap to copy
 	*/
 	struct Word : Stylable
 	{
@@ -227,6 +229,8 @@ namespace sap::layout
 		Scalar spaceWidth() const;
 
 		int kind = 0;
+		// TODO: Make this InternString
+		//       This is to make Word cheaper to copy
 		std::string text {};
 
 		Size2d size {};
