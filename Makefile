@@ -12,6 +12,7 @@ WARNINGS += -Wno-unused-but-set-variable
 COMMON_CFLAGS   = -O0 -g
 
 OUTPUT_DIR      := build
+TEST_DIR        := $(OUTPUT_DIR)/test
 
 CC              := clang
 CXX             := clang++
@@ -21,7 +22,13 @@ CXXFLAGS        = $(COMMON_CFLAGS) -Wno-old-style-cast -std=c++20 -fno-exception
 
 CXXSRC          = $(shell find source -iname "*.cpp" -print)
 CXXOBJ          = $(CXXSRC:%.cpp=$(OUTPUT_DIR)/%.cpp.o)
+CXXLIBOBJ       = $(filter-out $(OUTPUT_DIR)/source/main.cpp.o,$(CXXOBJ))
 CXXDEPS         = $(CXXOBJ:.o=.d)
+
+TESTSRC          = $(shell find test -iname "*.cpp" -print)
+TESTOBJ          = $(TESTSRC:%.cpp=$(OUTPUT_DIR)/%.cpp.o)
+TESTDEPS         = $(TESTOBJ:.o=.d)
+TESTS            = $(TESTSRC:test/%.cpp=$(TEST_DIR)/%)
 
 UTF8PROC_SRCS   = external/utf8proc/utf8proc.c
 UTF8PROC_OBJS   = $(UTF8PROC_SRCS:%.c=$(OUTPUT_DIR)/%.c.o)
@@ -37,20 +44,30 @@ INCLUDES        := -Isource/include -Iexternal
 
 OUTPUT_BIN      := $(OUTPUT_DIR)/sap
 
-.PHONY: all clean build
-.PRECIOUS: $(PRECOMP_GCH)
+.PHONY: all clean build test
+.PRECIOUS: $(PRECOMP_GCH) $(OUTPUT_DIR)/%.cpp.o
 .DEFAULT_GOAL = all
 
-all: build
-
-test: build
-	@$(OUTPUT_BIN)
+all: build test
 
 build: $(OUTPUT_BIN)
 
+test: $(TESTS)
+
+check: test
+	@for test in $(TESTS); do \
+		echo Running test $$test; \
+		$$test; \
+	done
+
 $(OUTPUT_BIN): $(CXXOBJ) $(UTF8PROC_OBJS) $(MINIZ_OBJS)
 	@echo "  $(notdir $@)"
-	@mkdir -p build
+	@mkdir -p $(shell dirname $@)
+	@$(CXX) $(CXXFLAGS) $(WARNINGS) $(DEFINES) -Iexternal -o $@ $^
+
+$(TEST_DIR)/%: $(OUTPUT_DIR)/test/%.cpp.o $(CXXLIBOBJ) $(UTF8PROC_OBJS) $(MINIZ_OBJS)
+	@echo "  $(notdir $@)"
+	@mkdir -p $(shell dirname $@)
 	@$(CXX) $(CXXFLAGS) $(WARNINGS) $(DEFINES) -Iexternal -o $@ $^
 
 $(OUTPUT_DIR)/%.cpp.o: %.cpp Makefile $(PRECOMP_GCH)
@@ -76,6 +93,7 @@ format:
 	clang-format -i source/**/*.h
 
 -include $(CXXDEPS)
+-include $(TESTDEPS)
 -include $(CDEPS)
 -include $(PRECOMP_GCH:%.gch=%.d)
 
