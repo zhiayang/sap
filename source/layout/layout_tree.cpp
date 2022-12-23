@@ -10,14 +10,11 @@
 #include "interp/state.h"
 
 // functions for converting tree::* structures into layout::* structures
-
 namespace sap::layout
 {
 	static std::unique_ptr<Paragraph> layoutParagraph(interp::Interpreter* cs, const std::shared_ptr<tree::Paragraph>& para)
 	{
 		auto ret = std::make_unique<Paragraph>();
-
-		std::optional<Word> prev {};
 
 		for(auto& obj : para->m_contents)
 		{
@@ -57,7 +54,13 @@ namespace sap::layout
 		for(auto& obj : treedoc.m_objects)
 		{
 			if(auto para = std::dynamic_pointer_cast<tree::Paragraph>(obj); para != nullptr)
+			{
 				document.addObject(layoutParagraph(cs, para));
+			}
+			else if(auto scr = std::dynamic_pointer_cast<tree::ScriptObject>(obj); scr != nullptr)
+			{
+				// TODO
+			}
 		}
 
 		return document;

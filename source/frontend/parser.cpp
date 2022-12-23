@@ -7,6 +7,7 @@
 
 #include "sap/frontend.h"
 #include "util.h"
+#include "zpr.h"
 #include "zst.h"
 #include <string>
 #include <string_view>
@@ -417,10 +418,6 @@ namespace sap::frontend
 				}
 				break;
 
-			// TODO: everything else
-			case TT::Number:
-				break;
-
 			default:
 				stmt = parseExpr(lexer);
 				break;
@@ -444,7 +441,7 @@ namespace sap::frontend
 
 		auto openbrace = lexer.next();
 		if(openbrace != TT::LBrace)
-			error(openbrace.loc, "expected '{' after \\script");
+			error(openbrace.loc, "expected '{' after {}", KW_SCRIPT_BLOCK);
 
 		auto block = std::make_unique<ScriptBlock>();
 		while(lexer.peek() != TT::RBrace)
@@ -529,6 +526,7 @@ namespace sap::frontend
 				was_sticking_right = false;
 
 				auto obj = parseScriptObject(lexer);
+
 				if(auto inl = dynamic_cast<InlineObject*>(obj.get()); inl != nullptr)
 				{
 					inl->stick_to_left = not was_whitespace;

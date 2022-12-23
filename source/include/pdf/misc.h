@@ -19,7 +19,8 @@ namespace pdf
 	[[noreturn]] inline void error(zst::str_view fmt, Args&&... args)
 	{
 		zpr::fprintln(stderr, "internal error (pdf): {}", zpr::fwd(fmt, static_cast<Args&&>(args)...));
-		exit(1);
+		abort();
+		// exit(1);
 	}
 
 	std::string encodeStringLiteral(zst::str_view sv);

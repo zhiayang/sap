@@ -28,8 +28,10 @@ namespace font
 
 		// searchRange = "(Maximum power of 2 <= numTables) x 16"
 		size_t max_pow2 = 0;
-		while(max_pow2 < num_tables)
+		while((1 << (max_pow2 - 1)) < num_tables)
 			max_pow2++;
+
+		assert((1 << max_pow2) <= num_tables);
 
 		stream->append_bytes(util::convertBEU16(util::checked_cast<uint16_t>(1 << max_pow2) * 16));
 
@@ -189,8 +191,10 @@ namespace font
 		fclose(foo);
 #endif
 		if(stream->is_compressed)
-			stream->dict->add(pdf::names::Length1,
+		{
+			stream->dict->addOrReplace(pdf::names::Length1,
 				pdf::Integer::create(util::checked_cast<int64_t>(stream->uncompressed_length)));
+		}
 	}
 
 

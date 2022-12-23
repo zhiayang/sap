@@ -7,7 +7,8 @@ this     is     a    foooo
 fi fl Bсички хора се раждат свободни и равни по \{ \}
 
 \script {
-	# hello(69);
+	builtin::__bold1(69);
+	builtin::__bold1("420");
 }
 
 My name is Yoshikage Kira. I'm 33\builtin::__bold1("years old"). My house is in the northeast section of Morioh,

@@ -73,6 +73,7 @@ int main(int argc, char** argv)
 			{ "CFF" }  //
 			)
 		                       .value_or("fonts/SourceSerif4-It.otf");
+
 		auto italic = pdf::Font::fromFontFile(doc, font::FontFile::parseFromFile(italic_path));
 
 		auto bold_path = font::findFontPath(            //
