@@ -46,6 +46,8 @@ namespace sap
 		pdf::Font* bold() const { return m_bold_font; }
 		pdf::Font* boldItalic() const { return m_bold_italic_font; }
 
+		constexpr bool operator==(const FontSet&) const = default;
+
 	private:
 		pdf::Font* m_regular_font;
 		pdf::Font* m_italic_font;

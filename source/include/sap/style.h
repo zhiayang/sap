@@ -71,6 +71,8 @@ namespace sap
 		*/
 		static const Style* combine(const Style* main, const Style* backup);
 
+		constexpr bool operator==(const Style& other) const = default;
+
 	private:
 		std::optional<FontSet> m_font_set;
 		std::optional<FontStyle> m_font_style;

@@ -21,16 +21,24 @@ namespace sap
 		if(auto it = g_combined_styles.find({ main, backup }); it != g_combined_styles.end())
 			return it->second;
 
-		auto style = util::make<Style>();
-		style->set_font_set(main->font_set(backup))
+		auto style = Style();
+		style.set_font_set(main->font_set(backup))
 		    .set_font_style(main->font_style(backup))
 		    .set_font_size(main->font_size(backup))
 		    .set_line_spacing(main->line_spacing(backup))
 		    .set_pre_paragraph_spacing(main->pre_paragraph_spacing(backup))
 		    .set_post_paragraph_spacing(main->post_paragraph_spacing(backup));
 
-		g_combined_styles.insert({ { main, backup }, style });
+		if(style == *main)
+		{
+			g_combined_styles.insert({ { main, backup }, main });
+			return main;
+		}
 
-		return style;
+		auto style_ptr = util::make<Style>();
+		*style_ptr = std::move(style);
+
+		g_combined_styles.insert({ { main, backup }, style_ptr });
+		return style_ptr;
 	}
 }
