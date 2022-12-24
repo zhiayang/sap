@@ -22,7 +22,36 @@ namespace dim
 	    This allows (explicit) conversions between different measurement systems.
 	*/
 
-	template <typename _System, typename _Type = double>
+	template <typename, typename = double>
+	struct Scalar;
+
+	template <typename, typename = double>
+	struct Vector2;
+
+	namespace impl
+	{
+		template <typename>
+		struct is_scalar : std::false_type
+		{
+		};
+
+		template <typename _S, typename _T>
+		struct is_scalar<Scalar<_S, _T>> : std::true_type
+		{
+		};
+
+		template <typename>
+		struct is_vector2 : std::false_type
+		{
+		};
+
+		template <typename _S, typename _T>
+		struct is_vector2<Vector2<_S, _T>> : std::true_type
+		{
+		};
+	}
+
+	template <typename _System, typename _Type>
 	struct Scalar
 	{
 		using value_type = _Type;
@@ -84,6 +113,13 @@ namespace dim
 			return Scalar<_S, _T>((this->_x * scale_factor) / _S::scale_factor);
 		}
 
+		template <typename _Target>
+		constexpr auto into() const requires(impl::is_scalar<_Target>::value)
+		{
+			return this->into(_Target {});
+		}
+
+
 		template <>
 		constexpr self_type into<unit_system, value_type>(self_type foo) const
 		{
@@ -100,7 +136,7 @@ namespace dim
 		value_type _x;
 	};
 
-	template <typename _System, typename _Type = double>
+	template <typename _System, typename _Type>
 	struct Vector2
 	{
 		using value_type = _Type;
@@ -159,6 +195,12 @@ namespace dim
 		{
 			return Vector2<_S, _T>(((this->_x * scale_factor) / _S::scale_factor)._x,
 				((this->_y * scale_factor) / _S::scale_factor)._x);
+		}
+
+		template <typename _Target>
+		constexpr auto into() const requires(impl::is_vector2<_Target>::value)
+		{
+			return this->into(_Target {});
 		}
 
 		template <>

@@ -320,7 +320,7 @@ namespace sap::layout
 		    which means it's a simple addition to get the absolute position of the word.
 		*/
 		auto text = util::make<pdf::Text>();
-		text->moveAbs(page->convertVector2(abs_para_position.into(pdf::Position2d_YDown {})));
+		text->moveAbs(page->convertVector2(abs_para_position.into<pdf::Position2d_YDown>()));
 
 		/*
 		    not sure if this is legit, but words basically don't actually use their own `m_position` when
@@ -338,7 +338,7 @@ namespace sap::layout
 			if(m_words[i].m_linebreak_after && i + 1 < m_words.size())
 			{
 				auto skip = m_words[i + 1].m_position.y() - current_pos.y();
-				text->nextLine(pdf::Offset2d(0, -1.0 * skip.into(pdf::Scalar {}).value()));
+				text->nextLine(pdf::Offset2d(0, -1.0 * skip.into<pdf::Scalar>().value()));
 			}
 		}
 
