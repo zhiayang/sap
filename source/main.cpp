@@ -38,11 +38,15 @@ int main(int argc, char** argv)
 		zpr::println("Usage: {} <input file>", argv[0]);
 		return 1;
 	}
-	std::string filename(argv[1]);
+
+	auto filename = std::string(argv[1]);
 	auto [buf, size] = util::readEntireFile(filename);
-	auto document = sap::frontend::parse(filename, { (char*) buf, size });
 
 	auto interpreter = sap::interp::Interpreter();
+
+	auto document = sap::frontend::parse(filename, { (char*) buf, size });
+	document.evaluateScripts(&interpreter);
+	document.processWordSeparators();
 
 	auto layout_doc = sap::layout::createDocumentLayout(&interpreter, document);
 

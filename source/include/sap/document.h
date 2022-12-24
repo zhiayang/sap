@@ -281,9 +281,9 @@ namespace sap::layout
 		const std::string& text() const { return m_text; }
 		bool isSeparator() const { return m_is_separator; }
 
-		static Text fromText(zst::str_view text) { return Text(text); }
-		static Text fromText(std::string text) { return Text(std::move(text)); }
-		static Text fromTreeWord(const tree::Text& word);
+		// static Text fromText(zst::str_view text) { return Text(text); }
+		// static Text fromText(std::string text) { return Text(std::move(text)); }
+		static Text fromTreeText(const tree::Text& word);
 
 		static Text separator() { return Text(/* sep: */ true); }
 

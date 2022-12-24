@@ -9,6 +9,7 @@
 #include "interp/tree.h"
 #include "interp/state.h"
 
+
 // functions for converting tree::* structures into layout::* structures
 namespace sap::layout
 {
@@ -16,33 +17,16 @@ namespace sap::layout
 	{
 		auto ret = std::make_unique<Paragraph>();
 
-		for(auto& obj : para->m_contents)
+		for(auto& obj : para->contents())
 		{
-			if(auto word = std::dynamic_pointer_cast<tree::Text>(obj); word != nullptr)
-			{
-				ret->add(Word::fromTreeWord(*word));
-			}
-			else if(auto iscr = std::dynamic_pointer_cast<tree::ScriptCall>(obj); iscr != nullptr)
-			{
-				if(auto tmp = cs->run(iscr->call.get()); tmp != nullptr)
-				{
-					// TODO: clean this up
-					if(auto word = dynamic_cast<tree::Text*>(tmp.get()); word)
-					{
-						word->stick_to_left = iscr->stick_to_left;
-						word->stick_to_right = iscr->stick_to_right;
-						ret->add(Word::fromTreeWord(*word));
-					}
-					else
-					{
-						error("layout", "invalid object returned from script call");
-					}
-				}
-			}
-			else if(auto iscb = std::dynamic_pointer_cast<tree::ScriptBlock>(obj); iscb != nullptr)
-			{
-				error("interp", "unsupported");
-			}
+			if(auto txt = std::dynamic_pointer_cast<tree::Text>(obj); txt != nullptr)
+				ret->add(Text::fromTreeText(*txt));
+
+			else if(auto sep = std::dynamic_pointer_cast<tree::Separator>(obj); sep != nullptr)
+				ret->add(Text::separator());
+
+			else
+				sap::internal_error("coeu");
 		}
 
 		return ret;
@@ -51,7 +35,7 @@ namespace sap::layout
 	Document createDocumentLayout(interp::Interpreter* cs, tree::Document& treedoc)
 	{
 		Document document {};
-		for(auto& obj : treedoc.m_objects)
+		for(auto& obj : treedoc.objects())
 		{
 			if(auto para = std::dynamic_pointer_cast<tree::Paragraph>(obj); para != nullptr)
 			{
