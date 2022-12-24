@@ -20,7 +20,10 @@ namespace sap::layout
 		for(auto& obj : para->contents())
 		{
 			if(auto txt = std::dynamic_pointer_cast<tree::Text>(obj); txt != nullptr)
+			{
 				ret->add(Text::fromTreeText(*txt));
+				ret->add(Word::fromTreeText(*txt));
+			}
 
 			else if(auto sep = std::dynamic_pointer_cast<tree::Separator>(obj); sep != nullptr)
 				ret->add(Text::separator());

@@ -250,7 +250,7 @@ namespace sap::layout
 			font::GlyphAdjustment adjustments;
 		};
 
-		static Word fromTreeWord(const tree::Text& w);
+		static Word fromTreeText(const tree::Text& w);
 
 	private:
 		const Paragraph* m_paragraph = nullptr;
