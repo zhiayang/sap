@@ -73,6 +73,7 @@ namespace sap::tree
 							ret.push_back(std::make_shared<Separator>());
 
 							current_text = std::make_shared<Text>("");
+							current_text->setStyle(tree_text->style());
 						}
 
 						seen_whitespace = true;
@@ -88,6 +89,9 @@ namespace sap::tree
 					seen_whitespace = false;
 				}
 			}
+
+			if(not current_text->contents().empty())
+				ret.push_back(std::move(current_text));
 		}
 
 		m_contents.swap(ret);

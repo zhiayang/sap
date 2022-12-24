@@ -23,6 +23,7 @@ namespace sap::layout
 			{
 				ret->add(Text::fromTreeText(*txt));
 				ret->add(Word::fromTreeText(*txt));
+				zpr::println("{}", txt->contents());
 			}
 
 			else if(auto sep = std::dynamic_pointer_cast<tree::Separator>(obj); sep != nullptr)
