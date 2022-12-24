@@ -121,7 +121,7 @@ int main(int argc, char** argv)
 	layout_doc.setStyle(&main_style);
 	layout_doc.layout(&interpreter);
 
-	auto writer = util::make<pdf::Writer>("test.pdf");
+	auto writer = util::make<pdf::Writer>(zst::str_view(filename).drop_last(4).str() + ".pdf");
 	auto& pdf_doc = layout_doc.render(&interpreter);
 
 	pdf_doc.write(writer);
