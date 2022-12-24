@@ -20,16 +20,6 @@
 #include "interp/state.h"
 #include "interp/tree.h"
 
-namespace sap
-{
-	pdf::Document compile()
-	{
-		auto document = sap::layout::Document();
-
-		auto cs = interp::Interpreter();
-		return std::move(document.render(&cs));
-	}
-}
 
 int main(int argc, char** argv)
 {
@@ -45,14 +35,11 @@ int main(int argc, char** argv)
 	auto interpreter = sap::interp::Interpreter();
 
 	auto document = sap::frontend::parse(filename, { (char*) buf, size });
-	document.evaluateScripts(&interpreter);
-	document.processWordSeparators();
 
-	auto layout_doc = sap::layout::createDocumentLayout(&interpreter, document);
+	auto layout_doc = sap::layout::Document();
+	/* auto layout_doc = sap::layout::createDocumentLayout(&interpreter, document); */
 
 	auto font_set = [&]() {
-		auto doc = &layout_doc.pdfDocument();
-
 		// clang-format off
 		// fuck you idiots at llvm who have never written a single line of code in your entire sad lives
 		auto regular_path = font::findFontPath(         //
@@ -61,8 +48,7 @@ int main(int argc, char** argv)
 			/* { "TrueType", "CFF" }                       // */
 			{ "CFF" }  //
 		).value_or("fonts/SourceSerif4-Regular.otf");
-
-		auto regular = pdf::Font::fromFontFile(doc, font::FontFile::parseFromFile(regular_path));
+		auto regular = layout_doc.addFont(font::FontFile::parseFromFile(regular_path));
 
 		auto italic_path = font::findFontPath(          //
 			{ "Source Serif", "Noto Serif", "Serif" },  //
@@ -70,8 +56,7 @@ int main(int argc, char** argv)
 			/* { "TrueType", "CFF" }                       // */
 			{ "CFF" }  //
 		).value_or("fonts/SourceSerif4-It.otf");
-
-		auto italic = pdf::Font::fromFontFile(doc, font::FontFile::parseFromFile(italic_path));
+		auto italic = layout_doc.addFont(font::FontFile::parseFromFile(italic_path));
 
 		auto bold_path = font::findFontPath(            //
 			{ "Source Serif", "Noto Serif", "Serif" },  //
@@ -79,8 +64,7 @@ int main(int argc, char** argv)
 			/* { "TrueType", "CFF" }                       // */
 			{ "CFF" }
 		).value_or("fonts/SourceSerif4-Bold.otf");
-
-		auto bold = pdf::Font::fromFontFile(doc, font::FontFile::parseFromFile(bold_path));
+		auto bold = layout_doc.addFont(font::FontFile::parseFromFile(bold_path));
 
 		auto boldit_path = font::findFontPath(          //
 			{ "Source Serif", "Noto Serif", "Serif" },  //
@@ -88,18 +72,11 @@ int main(int argc, char** argv)
 			/* { "TrueType", "CFF" }                       // */
 			{ "CFF" }  //
 		).value_or("fonts/SourceSerif4-BoldIt.otf");
-
-		auto boldit = pdf::Font::fromFontFile(doc, font::FontFile::parseFromFile(boldit_path));
+		auto boldit = layout_doc.addFont(font::FontFile::parseFromFile(boldit_path));
 
 		return sap::FontSet(regular, italic, bold, boldit);
 		// clang-format on
 	}();
-
-	auto default_font_set = sap::FontSet( //
-	    pdf::Font::fromBuiltin(&layout_doc.pdfDocument(), "Times-Roman"),
-	    pdf::Font::fromBuiltin(&layout_doc.pdfDocument(), "Times-Italic"),
-	    pdf::Font::fromBuiltin(&layout_doc.pdfDocument(), "Times-Bold"),
-	    pdf::Font::fromBuiltin(&layout_doc.pdfDocument(), "Times-BoldItalic"));
 
 	auto main_style = sap::Style {};
 	main_style //
@@ -107,23 +84,15 @@ int main(int argc, char** argv)
 	    .set_font_style(sap::FontStyle::Regular)
 	    .set_font_size(pdf::Scalar(12).into(sap::Scalar {}));
 
-	auto default_style =
-	    sap::Style()
-	        .set_font_set(default_font_set)
-	        .set_font_style(sap::FontStyle::Regular)
-	        .set_font_size(pdf::Scalar(12.0).into(sap::Scalar {}))
-	        .set_line_spacing(sap::Scalar(1.0))
-	        .set_pre_paragraph_spacing(sap::Scalar(1.0))
-	        .set_post_paragraph_spacing(sap::Scalar(1.0));
-
-	auto actual_style = sap::Style::combine(&main_style, &default_style);
+	auto actual_style = sap::Style::combine(&main_style, layout_doc.style());
 
 	layout_doc.setStyle(actual_style);
-	layout_doc.layout(&interpreter);
 
-	auto writer = util::make<pdf::Writer>(zst::str_view(filename).drop_last(4).str() + ".pdf");
-	auto& pdf_doc = layout_doc.render(&interpreter);
+	document.evaluateScripts(&interpreter);
+	document.processWordSeparators();
+	layout_doc.layout(&interpreter, document);
 
-	pdf_doc.write(writer);
-	writer->close();
+	auto writer = pdf::Writer(zst::str_view(filename).drop_last(4).str() + ".pdf");
+	layout_doc.write(&writer);
+	writer.close();
 }

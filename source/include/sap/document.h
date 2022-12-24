@@ -129,7 +129,7 @@ namespace sap::layout
 		    the PDF page (by construcitng and emitting PageObjects), instead of returning a pageobject -- some
 		    layout objects might require multiple pdf page objects, so this is a more flexible design.
 		*/
-		virtual void render(interp::Interpreter* cs, const LayoutRegion* region, Position position, pdf::Page* page) const = 0;
+		virtual void render(const LayoutRegion* region, Position position, pdf::Page* page) const = 0;
 
 	private:
 		LayoutObject* m_parent = nullptr;
@@ -171,7 +171,7 @@ namespace sap::layout
 		    Here, `position` is the (absolute) position of the region in the page (since regions cannot nest). This
 		    position is then added to the relative positions of each object.
 		*/
-		void render(interp::Interpreter* cs, Position position, pdf::Page* page) const;
+		void render(Position position, pdf::Page* page) const;
 
 	private:
 		Size2d m_size {};
@@ -305,8 +305,7 @@ namespace sap::layout
 
 		virtual zst::Result<std::optional<LayoutObject*>, int> layout(interp::Interpreter* cs, LayoutRegion* region,
 		    const Style* parent_style) override;
-		virtual void render(interp::Interpreter* cs, const LayoutRegion* region, Position position,
-		    pdf::Page* page) const override;
+		virtual void render(const LayoutRegion* region, Position position, pdf::Page* page) const override;
 
 	private:
 		std::vector<Word> m_words {};
@@ -327,7 +326,7 @@ namespace sap::layout
 		inline LayoutRegion* layoutRegion() { return &m_layout_region; }
 		inline const LayoutRegion* layoutRegion() const { return &m_layout_region; }
 
-		pdf::Page* render(interp::Interpreter* cs);
+		pdf::Page* render();
 
 	private:
 		LayoutRegion m_layout_region;
@@ -346,20 +345,25 @@ namespace sap::layout
 		Document(Document&&) = default;
 		Document& operator=(Document&&) = default;
 
+		void addObject(std::unique_ptr<LayoutObject> obj);
+
+		void layout(interp::Interpreter* cs, const tree::Document& document);
+		pdf::Font* addFont(font::FontFile* font) { return pdf::Font::fromFontFile(&m_pdf_document, font); }
+		void write(pdf::Writer* stream)
+		{
+			this->render();
+			m_pdf_document.write(stream);
+		}
+
+	private:
 		pdf::Document& pdfDocument();
 		const pdf::Document& pdfDocument() const;
 
-		void addObject(std::unique_ptr<LayoutObject> obj);
+		void render();
 
-		void layout(interp::Interpreter* cs);
-		pdf::Document& render(interp::Interpreter* cs);
-
-	private:
 		pdf::Document m_pdf_document {};
 		std::vector<Page> m_pages {};
 
 		std::vector<std::unique_ptr<LayoutObject>> m_objects {};
 	};
-
-	Document createDocumentLayout(interp::Interpreter* cs, tree::Document& document);
 }

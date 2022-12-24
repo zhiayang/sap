@@ -10,10 +10,10 @@ namespace sap::layout
 	{
 	}
 
-	void LayoutRegion::render(interp::Interpreter* cs, Position position, pdf::Page* page) const
+	void LayoutRegion::render(Position position, pdf::Page* page) const
 	{
 		for(auto& [pos, obj] : m_objects)
-			obj->render(cs, this, pos + position, page);
+			obj->render(this, pos + position, page);
 	}
 
 	Position LayoutRegion::cursor() const

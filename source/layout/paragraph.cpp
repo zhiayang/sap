@@ -310,7 +310,7 @@ namespace sap::layout
 	}
 
 
-	void Paragraph::render(interp::Interpreter* cs, const LayoutRegion* region, Position abs_para_position, pdf::Page* page) const
+	void Paragraph::render(const LayoutRegion* region, Position abs_para_position, pdf::Page* page) const
 	{
 		(void) region;
 

@@ -5,11 +5,26 @@
 #include "sap.h"
 #include "pdf/page.h"
 #include "pdf/document.h"
+#include "interp/tree.h"
 
 namespace sap::layout
 {
 	Document::Document()
 	{
+		static auto default_font_set = sap::FontSet( //
+		    pdf::Font::fromBuiltin(&pdfDocument(), "Times-Roman"), pdf::Font::fromBuiltin(&pdfDocument(), "Times-Italic"),
+		    pdf::Font::fromBuiltin(&pdfDocument(), "Times-Bold"), pdf::Font::fromBuiltin(&pdfDocument(), "Times-BoldItalic"));
+
+		static auto default_style =
+		    sap::Style()
+		        .set_font_set(default_font_set)
+		        .set_font_style(sap::FontStyle::Regular)
+		        .set_font_size(pdf::Scalar(12.0).into(sap::Scalar {}))
+		        .set_line_spacing(sap::Scalar(1.0))
+		        .set_pre_paragraph_spacing(sap::Scalar(1.0))
+		        .set_post_paragraph_spacing(sap::Scalar(1.0));
+
+		setStyle(&default_style);
 	}
 
 	pdf::Document& Document::pdfDocument()
@@ -27,8 +42,44 @@ namespace sap::layout
 		m_objects.push_back(std::move(obj));
 	}
 
-	void Document::layout(interp::Interpreter* cs)
+	static std::unique_ptr<Paragraph> layoutParagraph(interp::Interpreter* cs, const std::shared_ptr<tree::Paragraph>& para)
 	{
+		auto ret = std::make_unique<Paragraph>();
+
+		for(auto& obj : para->contents())
+		{
+			if(auto txt = std::dynamic_pointer_cast<tree::Text>(obj); txt != nullptr)
+			{
+				ret->add(Text::fromTreeText(*txt));
+				ret->add(Word::fromTreeText(*txt));
+				zpr::println("{}", txt->contents());
+			}
+
+			else if(auto sep = std::dynamic_pointer_cast<tree::Separator>(obj); sep != nullptr)
+				ret->add(Text::separator());
+
+			else
+				sap::internal_error("coeu");
+		}
+
+		return ret;
+	}
+
+	void Document::layout(interp::Interpreter* cs, const tree::Document& treedoc)
+	{
+		for(const auto& obj : treedoc.objects())
+		{
+			if(auto para = std::dynamic_pointer_cast<tree::Paragraph>(obj); para != nullptr)
+			{
+				addObject(layoutParagraph(cs, para));
+			}
+			else if(auto scr = std::dynamic_pointer_cast<tree::ScriptObject>(obj); scr != nullptr)
+			{
+				// TODO
+			}
+		}
+
+
 		if(m_objects.empty())
 			return;
 
@@ -58,12 +109,10 @@ namespace sap::layout
 		}
 	}
 
-	pdf::Document& Document::render(interp::Interpreter* cs)
+	void Document::render()
 	{
 		for(auto& page : m_pages)
-			m_pdf_document.addPage(page.render(cs));
-
-		return m_pdf_document;
+			m_pdf_document.addPage(page.render());
 	}
 
 }

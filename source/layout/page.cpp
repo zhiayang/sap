@@ -18,10 +18,10 @@ namespace sap::layout
 	{
 	}
 
-	pdf::Page* Page::render(interp::Interpreter* cs)
+	pdf::Page* Page::render()
 	{
 		auto page = util::make<pdf::Page>();
-		m_layout_region.render(cs, Position(LEFT_MARGIN, TOP_MARGIN), page);
+		m_layout_region.render(Position(LEFT_MARGIN, TOP_MARGIN), page);
 
 		return page;
 	}
