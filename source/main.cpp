@@ -116,9 +116,9 @@ int main(int argc, char** argv)
 	        .set_pre_paragraph_spacing(sap::Scalar(1.0))
 	        .set_post_paragraph_spacing(sap::Scalar(1.0));
 
-	sap::setDefaultStyle(std::move(default_style));
+	auto actual_style = sap::Style::combine(&main_style, &default_style);
 
-	layout_doc.setStyle(&main_style);
+	layout_doc.setStyle(actual_style);
 	layout_doc.layout(&interpreter);
 
 	auto writer = util::make<pdf::Writer>(zst::str_view(filename).drop_last(4).str() + ".pdf");

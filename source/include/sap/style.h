@@ -5,6 +5,7 @@
 #pragma once
 
 #include <cassert>
+#include <unordered_map>
 
 #include "defs.h"
 #include "pool.h"
@@ -19,10 +20,6 @@ namespace pdf
 
 namespace sap
 {
-	struct Style;
-	const Style& defaultStyle();
-	void setDefaultStyle(Style s);
-
 	struct Style
 	{
 		inline Style() : m_parent(nullptr) { }
@@ -40,8 +37,7 @@ namespace sap
 			return par->method_name(default_parent);                           \
 		else if(default_parent)                                                \
 			return default_parent->method_name();                              \
-		else                                                                   \
-			return defaultStyle().method_name();                               \
+		sap::internal_error("Accessed unset style field");                     \
 	}
 
 		DEFINE_ACCESSOR(FontSet, m_font_set, font_set);
@@ -78,25 +74,7 @@ namespace sap
 		    or from the backup style (or any of its parents). if both input styles are null, then the
 		    default style is used.
 		*/
-		static inline const Style* combine(const Style* main, const Style* backup)
-		{
-			if(main == nullptr && backup == nullptr)
-				return &defaultStyle();
-
-			else if(main == nullptr)
-				main = backup, backup = nullptr;
-
-			auto style = util::make<Style>();
-			style->set_font_set(main->font_set(backup))
-			    .set_font_style(main->font_style(backup))
-			    .set_font_size(main->font_size(backup))
-			    .set_line_spacing(main->line_spacing(backup))
-			    .set_pre_paragraph_spacing(main->pre_paragraph_spacing(backup))
-			    .set_post_paragraph_spacing(main->post_paragraph_spacing(backup));
-
-			return style;
-		}
-
+		static const Style* combine(const Style* main, const Style* backup);
 
 	private:
 		std::optional<FontSet> m_font_set;

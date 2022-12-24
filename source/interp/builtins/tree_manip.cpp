@@ -8,8 +8,15 @@
 
 namespace sap::interp::builtin
 {
+	static const Style bold_style = []() {
+		Style style;
+		style.set_font_style(FontStyle::Bold);
+		return style;
+	}();
+
 	ErrorOr<std::optional<Value>> bold1(Interpreter* cs, std::vector<Value>& args)
 	{
+
 		// TODO: maybe don't assert?
 		assert(args.size() == 1);
 
@@ -18,7 +25,7 @@ namespace sap::interp::builtin
 		if(value.isTreeInlineObj())
 		{
 			auto tio = value.getTreeInlineObj();
-			auto style = &Style::combine(tio->style(), nullptr)->clone()->set_font_style(FontStyle::Bold);
+			auto style = Style::combine(tio->style(), &bold_style);
 			value.getTreeInlineObj()->setStyle(style);
 
 			return Ok(std::move(value));
@@ -26,8 +33,7 @@ namespace sap::interp::builtin
 		else
 		{
 			auto word = std::make_unique<tree::Text>(value.toString());
-			auto style = &defaultStyle().clone()->set_font_style(FontStyle::Bold);
-			word->setStyle(style);
+			word->setStyle(&bold_style);
 
 			return Ok(Value::treeInlineObject(std::move(word)));
 		}
