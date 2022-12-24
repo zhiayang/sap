@@ -4,13 +4,14 @@
 
 #pragma once
 
-#include <string>
-#include <utility>
-#include <concepts>
 #include <assert.h>
-#include <numeric>
 #include <bit>
+#include <concepts>
+#include <memory>
+#include <numeric>
+#include <string>
 #include <type_traits>
+#include <utility>
 
 #include <zst.h>
 
@@ -185,6 +186,19 @@ namespace util
 		{
 			return byteswap(x);
 		}
+	}
+
+
+
+	// Convert type of `shared_ptr`, via `dynamic_cast`
+	// This exists because libstdc++ is a dum dum
+	template <typename To, typename From>
+	inline std::shared_ptr<To> dynamic_pointer_cast(const std::shared_ptr<From>& from) //
+		noexcept requires std::derived_from<To, From>
+	{
+		if(auto* to = dynamic_cast<typename std::shared_ptr<To>::element_type*>(from.get()))
+			return std::shared_ptr<To>(from, to);
+		return std::shared_ptr<To>();
 	}
 
 }
