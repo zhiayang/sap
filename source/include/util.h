@@ -194,7 +194,7 @@ namespace util
 	// This exists because libstdc++ is a dum dum
 	template <typename To, typename From>
 	inline std::shared_ptr<To> dynamic_pointer_cast(const std::shared_ptr<From>& from) //
-		noexcept requires std::derived_from<To, From>
+	    noexcept requires std::derived_from<To, From>
 	{
 		if(auto* to = dynamic_cast<typename std::shared_ptr<To>::element_type*>(from.get()))
 			return std::shared_ptr<To>(from, to);
