@@ -30,7 +30,7 @@ namespace sap
 		if(backup == nullptr)
 			return main;
 
-		if(auto it = g_combined_styles.find({ main, backup }); it != nullptr)
+		if(auto it = g_combined_styles.find({ main, backup }); it != g_combined_styles.end())
 			return it->second;
 
 		auto style = util::make<Style>();
