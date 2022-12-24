@@ -122,7 +122,7 @@ namespace sap::layout
 		    subsequent page.
 		*/
 		virtual zst::Result<std::optional<LayoutObject*>, int> layout(interp::Interpreter* cs, LayoutRegion* region,
-			const Style* parent_style) = 0;
+		    const Style* parent_style) = 0;
 
 		/*
 		    Render (emit PDF commands) the object. Must be called after layout(). For now, we render directly to
@@ -304,9 +304,9 @@ namespace sap::layout
 		void add(Text text);
 
 		virtual zst::Result<std::optional<LayoutObject*>, int> layout(interp::Interpreter* cs, LayoutRegion* region,
-			const Style* parent_style) override;
+		    const Style* parent_style) override;
 		virtual void render(interp::Interpreter* cs, const LayoutRegion* region, Position position,
-			pdf::Page* page) const override;
+		    pdf::Page* page) const override;
 
 	private:
 		std::vector<Word> m_words {};

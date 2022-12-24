@@ -19,7 +19,9 @@ namespace sap::interp
 	}
 
 	FunctionType::FunctionType(std::vector<const Type*> params, const Type* return_type)
-		: Type(Type::KIND_FUNCTION), m_params(std::move(params)), m_return_type(return_type)
+	    : Type(Type::KIND_FUNCTION)
+	    , m_params(std::move(params))
+	    , m_return_type(return_type)
 	{
 	}
 

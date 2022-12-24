@@ -19,7 +19,10 @@ namespace sap
 	struct FontSet
 	{
 		FontSet(pdf::Font* regular, pdf::Font* italic, pdf::Font* bold, pdf::Font* bold_italic)
-			: m_regular_font(regular), m_italic_font(italic), m_bold_font(bold), m_bold_italic_font(bold_italic)
+		    : m_regular_font(regular)
+		    , m_italic_font(italic)
+		    , m_bold_font(bold)
+		    , m_bold_italic_font(bold_italic)
 		{
 		}
 

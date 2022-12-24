@@ -26,7 +26,7 @@ namespace font::off
 	}
 
 	std::optional<std::pair<std::vector<ContextualLookupRecord>, size_t>> performContextualLookup(zst::byte_span subtable,
-		zst::span<GlyphId> glyphs)
+	    zst::span<GlyphId> glyphs)
 	{
 		auto subtable_start = subtable;
 		auto format = consume_u16(subtable);
@@ -135,8 +135,8 @@ namespace font::off
 				auto first_class_id = getGlyphClass(classdef_table, glyphs[0]);
 				assert(first_class_id < num_class_sets);
 
-				auto classset =
-					subtable_start.drop(peek_u16(subtable.drop(util::checked_cast<size_t>(first_class_id) * sizeof(uint16_t))));
+				auto classset = subtable_start.drop(
+				    peek_u16(subtable.drop(util::checked_cast<size_t>(first_class_id) * sizeof(uint16_t))));
 				auto classset_start = classset;
 
 				auto num_rules = consume_u16(classset);
@@ -158,7 +158,7 @@ namespace font::off
 
 
 	std::optional<std::pair<std::vector<ContextualLookupRecord>, size_t>> performChainedContextLookup(zst::byte_span subtable,
-		zst::span<GlyphId> glyphs, size_t position)
+	    zst::span<GlyphId> glyphs, size_t position)
 	{
 		auto subtable_start = subtable;
 		auto format = consume_u16(subtable);
@@ -191,7 +191,7 @@ namespace font::off
 					return std::nullopt;
 			}
 
-			consume_u16(subtable);  // num_glyphs, which we already read
+			consume_u16(subtable); // num_glyphs, which we already read
 			for(size_t k = 0; k < num_glyphs; k++)
 			{
 				auto coverage = subtable_start.drop(consume_u16(subtable));
@@ -199,7 +199,7 @@ namespace font::off
 					return std::nullopt;
 			}
 
-			consume_u16(subtable);  // num_lookahead, which we already read
+			consume_u16(subtable); // num_lookahead, which we already read
 			for(size_t k = 0; k < num_lookahead; k++)
 			{
 				auto coverage = subtable_start.drop(consume_u16(subtable));
@@ -222,8 +222,9 @@ namespace font::off
 			if(!cov_idx.has_value())
 				return std::nullopt;
 
-			auto try_match_rule = [&glyphs, position](zst::byte_span& rule, auto&& lookbehind_trf, auto&& gid_trf,
-									  auto&& lookahead_trf) -> std::pair<bool, uint16_t> {
+			auto try_match_rule =
+			    [&glyphs, position](zst::byte_span& rule, auto&& lookbehind_trf, auto&& gid_trf, auto&& lookahead_trf)
+			    -> std::pair<bool, uint16_t> {
 				auto num_lookbehind = consume_u16(rule);
 				auto num_glyphs = peek_u16(rule.drop(num_lookbehind * sizeof(uint16_t)));
 
@@ -245,14 +246,14 @@ namespace font::off
 						return { false, 0 };
 				}
 
-				consume_u16(rule);  // num_glyphs, which we already read
+				consume_u16(rule); // num_glyphs, which we already read
 				for(size_t k = 1; k < num_glyphs; k++)
 				{
 					if(static_cast<uint16_t>(gid_trf(glyphs[position + k])) != consume_u16(rule))
 						return { false, 0 };
 				}
 
-				consume_u16(rule);  // num_lookahead, which we already read
+				consume_u16(rule); // num_lookahead, which we already read
 				for(size_t k = 0; k < num_lookahead; k++)
 				{
 					if(static_cast<uint16_t>(lookahead_trf(glyphs[position + num_glyphs + k])) != consume_u16(rule))
@@ -302,8 +303,8 @@ namespace font::off
 				auto first_class_id = getGlyphClass(input_classdefs, glyphs[position]);
 				assert(first_class_id < num_class_sets);
 
-				auto classset =
-					subtable_start.drop(peek_u16(subtable.drop(util::checked_cast<size_t>(first_class_id) * sizeof(uint16_t))));
+				auto classset = subtable_start.drop(
+				    peek_u16(subtable.drop(util::checked_cast<size_t>(first_class_id) * sizeof(uint16_t))));
 				auto classset_start = classset;
 
 				auto num_rules = consume_u16(classset);

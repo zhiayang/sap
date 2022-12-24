@@ -45,7 +45,7 @@ namespace pdf
 				{
 				foo:
 					widths2.emplace_back(Integer::create(static_cast<uint32_t>(widths[i].first)),
-						std::vector<Object*> { Integer::create(static_cast<uint32_t>(widths[i].second)) });
+					    std::vector<Object*> { Integer::create(static_cast<uint32_t>(widths[i].second)) });
 				}
 				else
 				{
@@ -112,11 +112,11 @@ namespace pdf
 
 		cidfont_dict->add(names::BaseFont, basefont_name);
 		cidfont_dict->add(names::CIDSystemInfo,
-			Dictionary::create({
-				{ names::Registry, String::create("Adobe") },
-				{ names::Ordering, String::create("Identity") },
-				{ names::Supplement, Integer::create(0) },
-			}));
+		    Dictionary::create({
+		        { names::Registry, String::create("Adobe") },
+		        { names::Ordering, String::create("Identity") },
+		        { names::Supplement, Integer::create(0) },
+		    }));
 
 		bool truetype_outlines = (font_file->outline_type == font::FontFile::OUTLINES_TRUETYPE);
 
@@ -145,7 +145,7 @@ namespace pdf
 		*/
 
 		auto font_bbox = Array::create({ Integer::create(font_file->metrics.xmin), Integer::create(font_file->metrics.ymin),
-			Integer::create(font_file->metrics.xmax), Integer::create(font_file->metrics.ymax) });
+		    Integer::create(font_file->metrics.xmax), Integer::create(font_file->metrics.ymax) });
 
 		int cap_height = 0;
 		if(font_file->metrics.cap_height != 0)
@@ -173,12 +173,12 @@ namespace pdf
 
 		// TODO: scale the metrics correctly!
 		auto font_desc = Dictionary::createIndirect(doc, names::FontDescriptor,
-			{ { names::FontName, basefont_name }, { names::Flags, Integer::create(4) }, { names::FontBBox, font_bbox },
-				{ names::ItalicAngle, Integer::create(static_cast<uint32_t>(font_file->metrics.italic_angle)) },
-				{ names::Ascent, Integer::create(font_file->metrics.hhea_ascent) },
-				{ names::Descent, Integer::create(font_file->metrics.hhea_descent) },
-				{ names::CapHeight, Integer::create(cap_height) }, { names::XHeight, Integer::create(69) },
-				{ names::StemV, Integer::create(STEMV_CONSTANT) }, { names::CIDSet, IndirectRef::create(ret->cidset) } });
+		    { { names::FontName, basefont_name }, { names::Flags, Integer::create(4) }, { names::FontBBox, font_bbox },
+		        { names::ItalicAngle, Integer::create(static_cast<uint32_t>(font_file->metrics.italic_angle)) },
+		        { names::Ascent, Integer::create(font_file->metrics.hhea_ascent) },
+		        { names::Descent, Integer::create(font_file->metrics.hhea_descent) },
+		        { names::CapHeight, Integer::create(cap_height) }, { names::XHeight, Integer::create(69) },
+		        { names::StemV, Integer::create(STEMV_CONSTANT) }, { names::CIDSet, IndirectRef::create(ret->cidset) } });
 
 		cidfont_dict->add(names::FontDescriptor, IndirectRef::create(font_desc));
 

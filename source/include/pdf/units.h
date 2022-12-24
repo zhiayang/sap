@@ -24,7 +24,7 @@
 DEFINE_UNIT_IN_NAMESPACE(pdf_typographic_unit, (25.4 / 72.0) * dim::units::millimetre::scale_factor, pdf, typographic_unit)
 
 DEFINE_UNIT_IN_NAMESPACE(pdf_typographic_unit_y_down, (25.4 / 72.0) * dim::units::millimetre::scale_factor, pdf,
-	typographic_unit_y_down)
+    typographic_unit_y_down)
 
 namespace pdf
 {

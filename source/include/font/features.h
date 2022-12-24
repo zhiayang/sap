@@ -111,7 +111,7 @@ namespace font::off
 	    will be part of the map.
 	*/
 	std::map<size_t, GlyphAdjustment> getPositioningAdjustmentsForGlyphSequence(FontFile* font, zst::span<GlyphId> glyphs,
-		const FeatureSet& features);
+	    const FeatureSet& features);
 
 	/*
 	    The result of performing (all required) glyph substitutions on a glyph string; contains
@@ -155,7 +155,7 @@ namespace font::off
 	    input glyph sequence -- even if no substitutions took place.
 	*/
 	SubstitutedGlyphString performSubstitutionsForGlyphSequence(FontFile* font, zst::span<GlyphId> glyphs,
-		const FeatureSet& features);
+	    const FeatureSet& features);
 
 
 	/*
@@ -268,14 +268,14 @@ namespace font::off
 	    and GSUB type 5.
 	*/
 	std::optional<std::pair<std::vector<ContextualLookupRecord>, size_t>> performContextualLookup(zst::byte_span subtable,
-		zst::span<GlyphId> glyphs);
+	    zst::span<GlyphId> glyphs);
 
 	/*
 	    Parse and match the input glyphstring (where the current glyph is at glyphs[position], using the provided *subtable*.
 	    The same caveats apply as for `performContextualLookup`. Use for GPOS type 8 and GSUB type 6.
 	*/
 	std::optional<std::pair<std::vector<ContextualLookupRecord>, size_t>> performChainedContextLookup(zst::byte_span subtable,
-		zst::span<GlyphId> glyphs, size_t position);
+	    zst::span<GlyphId> glyphs, size_t position);
 }
 
 
@@ -327,7 +327,7 @@ namespace font::off::gpos
 	    from the index in the given sequence to the adjustment.
 	*/
 	std::optional<AdjustmentResult> lookupContextualPositioning(const GPosTable& gpos, const LookupTable& lookup,
-		zst::span<GlyphId> glyphs);
+	    zst::span<GlyphId> glyphs);
 
 	/*
 	    Lookup chained-context glyph adjustments (type 8, LOOKUP_CHAINING_CONTEXT).
@@ -340,7 +340,7 @@ namespace font::off::gpos
 	    return[0] adjusts glyphs[position], return[1] adjsts glyphs[position + 1], etc.
 	*/
 	std::optional<AdjustmentResult> lookupChainedContextPositioning(const GPosTable& gpos, const LookupTable& lookup,
-		zst::span<GlyphId> glyphs, size_t position);
+	    zst::span<GlyphId> glyphs, size_t position);
 }
 
 // declares GSUB-specific lookup functions
@@ -395,7 +395,7 @@ namespace font::off::gsub
 	    inclusive, with `result.glyphs`.
 	*/
 	std::optional<GlyphReplacement> lookupContextualSubstitution(const GSubTable& gsub, const LookupTable& lookup,
-		zst::span<GlyphId> glyphs);
+	    zst::span<GlyphId> glyphs);
 
 	/*
 	    Lookup a chaining context substitution (type 6, LOOKUP_CHAINING_CONTEXT). Same semantics as GPOS chaining-context
@@ -407,7 +407,7 @@ namespace font::off::gsub
 	    inclusive, with `result.glyphs`.
 	*/
 	std::optional<GlyphReplacement> lookupChainedContextSubstitution(const GSubTable& gsub, const LookupTable& lookup,
-		zst::span<GlyphId> glyphs, size_t position);
+	    zst::span<GlyphId> glyphs, size_t position);
 }
 
 

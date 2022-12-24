@@ -152,10 +152,10 @@ namespace font::cff
 
 
 		// write the header
-		buffer.append(1);  // major
-		buffer.append(0);  // minor
-		buffer.append(4);  // hdrSize
-		buffer.append(4);  // offSize (for now, always 4. I don't even know what this field is used for)
+		buffer.append(1); // major
+		buffer.append(0); // minor
+		buffer.append(4); // hdrSize
+		buffer.append(4); // offSize (for now, always 4. I don't even know what this field is used for)
 
 		// Name INDEX (there is only 1)
 		IndexTableBuilder().add(subset_name.bytes()).writeInto(buffer);
@@ -180,9 +180,9 @@ namespace font::cff
 		auto top_dict = DictBuilder(cff->top_dict);
 		top_dict.set(DictKey::ROS,
 		    {
-		        Operand().string_id(cff->get_or_add_string("Adobe")),     // registry
-		        Operand().string_id(cff->get_or_add_string("Identity")),  // ordering
-		        Operand().integer(0)                                      // supplement
+		        Operand().string_id(cff->get_or_add_string("Adobe")),    // registry
+		        Operand().string_id(cff->get_or_add_string("Identity")), // ordering
+		        Operand().integer(0)                                     // supplement
 		    });
 
 		// pre-set these to reserve space for them

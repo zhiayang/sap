@@ -98,8 +98,7 @@ clean:
 	-@rm -rf $(OUTPUT_DIR)
 
 format:
-	clang-format -i source/**/*.cpp
-	clang-format -i source/**/*.h
+	clang-format -i $(shell find source -iname "*.cpp" -or -iname "*.h")
 
 -include $(CXXDEPS)
 -include $(TESTDEPS)

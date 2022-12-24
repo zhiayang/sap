@@ -95,26 +95,26 @@ int main(int argc, char** argv)
 		// clang-format on
 	}();
 
-	auto default_font_set = sap::FontSet(  //
-		pdf::Font::fromBuiltin(&layout_doc.pdfDocument(), "Times-Roman"),
-		pdf::Font::fromBuiltin(&layout_doc.pdfDocument(), "Times-Italic"),
-		pdf::Font::fromBuiltin(&layout_doc.pdfDocument(), "Times-Bold"),
-		pdf::Font::fromBuiltin(&layout_doc.pdfDocument(), "Times-BoldItalic"));
+	auto default_font_set = sap::FontSet( //
+	    pdf::Font::fromBuiltin(&layout_doc.pdfDocument(), "Times-Roman"),
+	    pdf::Font::fromBuiltin(&layout_doc.pdfDocument(), "Times-Italic"),
+	    pdf::Font::fromBuiltin(&layout_doc.pdfDocument(), "Times-Bold"),
+	    pdf::Font::fromBuiltin(&layout_doc.pdfDocument(), "Times-BoldItalic"));
 
 	auto main_style = sap::Style {};
-	main_style  //
-		.set_font_set(font_set)
-		.set_font_style(sap::FontStyle::Regular)
-		.set_font_size(pdf::Scalar(12).into(sap::Scalar {}));
+	main_style //
+	    .set_font_set(font_set)
+	    .set_font_style(sap::FontStyle::Regular)
+	    .set_font_size(pdf::Scalar(12).into(sap::Scalar {}));
 
 	auto default_style =
-		sap::Style()
-			.set_font_set(default_font_set)
-			.set_font_style(sap::FontStyle::Regular)
-			.set_font_size(pdf::Scalar(12.0).into(sap::Scalar {}))
-			.set_line_spacing(sap::Scalar(1.0))
-			.set_pre_paragraph_spacing(sap::Scalar(1.0))
-			.set_post_paragraph_spacing(sap::Scalar(1.0));
+	    sap::Style()
+	        .set_font_set(default_font_set)
+	        .set_font_style(sap::FontStyle::Regular)
+	        .set_font_size(pdf::Scalar(12.0).into(sap::Scalar {}))
+	        .set_line_spacing(sap::Scalar(1.0))
+	        .set_pre_paragraph_spacing(sap::Scalar(1.0))
+	        .set_post_paragraph_spacing(sap::Scalar(1.0));
 
 	sap::setDefaultStyle(std::move(default_style));
 

@@ -177,7 +177,8 @@ namespace sap::interp
 
 
 		FunctionDecl(const std::string& name, const Type* type, std::vector<Param>&& params)
-			: Declaration(name, type), m_params(std::move(params))
+		    : Declaration(name, type)
+		    , m_params(std::move(params))
 		{
 		}
 
@@ -206,8 +207,9 @@ namespace sap::interp
 		using FuncTy = std::function<ErrorOr<std::optional<Value>>(Interpreter*, std::vector<Value>&)>;
 
 		BuiltinFunctionDefn(const std::string& name, const Type* type, std::vector<FunctionDecl::Param>&& params,
-			const FuncTy& fn)
-			: Definition(new FunctionDecl(name, type, std::move(params))), function(fn)
+		    const FuncTy& fn)
+		    : Definition(new FunctionDecl(name, type, std::move(params)))
+		    , function(fn)
 		{
 		}
 

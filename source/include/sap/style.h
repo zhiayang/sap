@@ -88,11 +88,11 @@ namespace sap
 
 			auto style = util::make<Style>();
 			style->set_font_set(main->font_set(backup))
-				.set_font_style(main->font_style(backup))
-				.set_font_size(main->font_size(backup))
-				.set_line_spacing(main->line_spacing(backup))
-				.set_pre_paragraph_spacing(main->pre_paragraph_spacing(backup))
-				.set_post_paragraph_spacing(main->post_paragraph_spacing(backup));
+			    .set_font_style(main->font_style(backup))
+			    .set_font_size(main->font_size(backup))
+			    .set_line_spacing(main->line_spacing(backup))
+			    .set_pre_paragraph_spacing(main->pre_paragraph_spacing(backup))
+			    .set_post_paragraph_spacing(main->post_paragraph_spacing(backup));
 
 			return style;
 		}

@@ -19,7 +19,7 @@ namespace font::off::gsub
 	}
 
 	static std::optional<GlyphReplacement> lookupForGlyphSequence(const GSubTable& gsub_table, const LookupTable& lookup,
-		zst::span<GlyphId> glyphs, size_t position)
+	    zst::span<GlyphId> glyphs, size_t position)
 	{
 		/*
 		    cf. the comment in `lookupForGlyphSequence` in gpos
@@ -87,7 +87,7 @@ namespace font::off::gsub
 					auto foo = glyphs.drop(i).take(subst->second);
 					result->mapping.contractions.insert({ subst->first, std::vector(foo.begin(), foo.end()) });
 
-					i += subst->second - 1;  // skip over the processed glyphs
+					i += subst->second - 1; // skip over the processed glyphs
 				}
 			}
 			else if(lookup.type == LOOKUP_CONTEXTUAL || lookup.type == LOOKUP_CHAINING_CONTEXT)
@@ -269,7 +269,7 @@ namespace font::off::gsub
 
 	using SubstLookupRecord = ContextualLookupRecord;
 	static GlyphReplacement apply_lookup_records(const GSubTable& gsub_table,
-		const std::pair<std::vector<SubstLookupRecord>, size_t>& records, zst::span<GlyphId> glyphs, size_t position)
+	    const std::pair<std::vector<SubstLookupRecord>, size_t>& records, zst::span<GlyphId> glyphs, size_t position)
 	{
 		/*
 		    so the idea is, instead of copying around the entire glyphstring like a fool,  when we
@@ -293,15 +293,16 @@ namespace font::off::gsub
 			if(result.has_value())
 			{
 				// erase out the replaced glyphs, leaving the untouched glyphs and the lookahead.
-				glyphstring.erase(glyphstring.begin() + util::checked_cast<ssize_t>(position) +
-									  util::checked_cast<ssize_t>(result->input_start),
-					glyphstring.begin() + util::checked_cast<ssize_t>(position) +
-						util::checked_cast<ssize_t>(result->input_consumed));
+				glyphstring.erase(glyphstring.begin() + util::checked_cast<ssize_t>(position)
+				                      + util::checked_cast<ssize_t>(result->input_start),
+				    glyphstring.begin() + util::checked_cast<ssize_t>(position)
+				        + util::checked_cast<ssize_t>(result->input_consumed));
 
 				// copy over the new glyphs to the correct location
-				glyphstring.insert(glyphstring.begin() + util::checked_cast<ssize_t>(position) +
-									   util::checked_cast<ssize_t>(result->input_start),
-					std::move_iterator(result->glyphs.begin()), std::move_iterator(result->glyphs.end()));
+				glyphstring.insert(
+				    glyphstring.begin() + util::checked_cast<ssize_t>(position)
+				        + util::checked_cast<ssize_t>(result->input_start),
+				    std::move_iterator(result->glyphs.begin()), std::move_iterator(result->glyphs.end()));
 
 				combine_subst_mapping(sub_mapping, std::move(result->mapping));
 			}
@@ -315,12 +316,12 @@ namespace font::off::gsub
 		// finally, the glyphs we return should only include the input sequence.
 		assert(glyphstring.size() > position + lookahead.size());
 		result.glyphs = std::vector<GlyphId>(glyphstring.begin() + util::checked_cast<ssize_t>(position),
-			glyphstring.end() - util::checked_cast<ssize_t>(lookahead.size()));
+		    glyphstring.end() - util::checked_cast<ssize_t>(lookahead.size()));
 		return result;
 	}
 
 	std::optional<GlyphReplacement> lookupContextualSubstitution(const GSubTable& gsub, const LookupTable& lookup,
-		zst::span<GlyphId> glyphs)
+	    zst::span<GlyphId> glyphs)
 	{
 		assert(lookup.type == LOOKUP_CONTEXTUAL);
 		for(auto subtable : lookup.subtables)
@@ -333,7 +334,7 @@ namespace font::off::gsub
 	}
 
 	std::optional<GlyphReplacement> lookupChainedContextSubstitution(const GSubTable& gsub, const LookupTable& lookup,
-		zst::span<GlyphId> glyphs, size_t position)
+	    zst::span<GlyphId> glyphs, size_t position)
 	{
 		assert(position < glyphs.size());
 		assert(lookup.type == LOOKUP_CHAINING_CONTEXT);
@@ -353,7 +354,7 @@ namespace font::off::gsub
 namespace font::off
 {
 	SubstitutedGlyphString performSubstitutionsForGlyphSequence(FontFile* font, zst::span<GlyphId> input,
-		const FeatureSet& features)
+	    const FeatureSet& features)
 	{
 		auto gsub_table = font->gsub_table;
 		auto lookups = getLookupTablesForFeatures(font->gsub_table, features);
@@ -377,11 +378,11 @@ namespace font::off
 			if(subst.has_value())
 			{
 				glyphs.erase(glyphs.begin() + util::checked_cast<ssize_t>(subst->input_start),
-					glyphs.begin() + util::checked_cast<ssize_t>(subst->input_start) +
-						util::checked_cast<ssize_t>(subst->input_consumed));
+				    glyphs.begin() + util::checked_cast<ssize_t>(subst->input_start)
+				        + util::checked_cast<ssize_t>(subst->input_consumed));
 				// copy over the new glyphs to the correct location
 				glyphs.insert(glyphs.begin() + util::checked_cast<ssize_t>(subst->input_start),
-					std::move_iterator(subst->glyphs.begin()), std::move_iterator(subst->glyphs.end()));
+				    std::move_iterator(subst->glyphs.begin()), std::move_iterator(subst->glyphs.end()));
 
 				gsub::combine_subst_mapping(result.mapping, std::move(subst->mapping));
 			}

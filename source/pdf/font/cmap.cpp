@@ -20,9 +20,9 @@ namespace pdf
 		write_cmap_header(cmap, this->pdf_font_name);
 
 		cmap->append(
-			"1 begincodespacerange\n"
-			"<0000> <FFFF>\n"
-			"endcodespacerange\n");
+		    "1 begincodespacerange\n"
+		    "<0000> <FFFF>\n"
+		    "endcodespacerange\n");
 
 		assert(this->source_file != nullptr);
 		auto& mapping = this->source_file->character_mapping.forward;
@@ -92,25 +92,25 @@ namespace pdf
 		auto supplement = 0;
 
 		auto header = zpr::sprint(
-			"%!PS-Adobe-3.0 Resource-CMap\n"
-			"%%DocumentNeededResources: ProcSet (CIDInit)\n"
-			"%%IncludeResource: ProcSet (CIDInit)\n"
-			"%%BeginResource: CMap ({})\n"
-			"%%Title: ({} {} {} {})\n"
-			"%%Version: 1\n"
-			"%%EndComments\n"
-			"/CIDInit /ProcSet findresource begin\n"
-			"12 dict begin\n"
-			"begincmap\n"
-			"/CIDSystemInfo <<\n"
-			"  /Registry ({})\n"
-			"  /Ordering ({})\n"
-			"  /Supplement {}\n"
-			">> def\n"
-			"/CMapName /{} def\n"
-			"/CMapType 2 def\n",
+		    "%!PS-Adobe-3.0 Resource-CMap\n"
+		    "%%DocumentNeededResources: ProcSet (CIDInit)\n"
+		    "%%IncludeResource: ProcSet (CIDInit)\n"
+		    "%%BeginResource: CMap ({})\n"
+		    "%%Title: ({} {} {} {})\n"
+		    "%%Version: 1\n"
+		    "%%EndComments\n"
+		    "/CIDInit /ProcSet findresource begin\n"
+		    "12 dict begin\n"
+		    "begincmap\n"
+		    "/CIDSystemInfo <<\n"
+		    "  /Registry ({})\n"
+		    "  /Ordering ({})\n"
+		    "  /Supplement {}\n"
+		    ">> def\n"
+		    "/CMapName /{} def\n"
+		    "/CMapType 2 def\n",
 
-			cmap_name, cmap_name, registry, ordering, supplement, registry, ordering, supplement, cmap_name);
+		    cmap_name, cmap_name, registry, ordering, supplement, registry, ordering, supplement, cmap_name);
 
 		s->append(header);
 	}
@@ -118,11 +118,11 @@ namespace pdf
 	static void write_cmap_footer(Stream* s)
 	{
 		s->append(zst::str_view(
-			"endcmap\n"
-			"CMapName currentdict /CMap defineresource pop\n"
-			"end\n"
-			"end\n"
-			"%%EndResource"
-			"%%EOF"));
+		    "endcmap\n"
+		    "CMapName currentdict /CMap defineresource pop\n"
+		    "end\n"
+		    "end\n"
+		    "%%EndResource"
+		    "%%EOF"));
 	}
 }

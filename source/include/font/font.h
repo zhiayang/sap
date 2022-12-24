@@ -94,7 +94,7 @@ namespace font
 	using KerningPair = std::pair<GlyphAdjustment, GlyphAdjustment>;
 
 	std::optional<std::string> findFontPath(std::initializer_list<std::string> families, const std::string& style,
-		std::initializer_list<std::string> fontformats);
+	    std::initializer_list<std::string> fontformats);
 
 	// TODO: clean up this entire struct
 	struct FontFile
@@ -113,14 +113,14 @@ namespace font
 		std::string family_compat;
 		std::string subfamily_compat;
 
-		std::string unique_name;  // name 3
+		std::string unique_name; // name 3
 
-		std::string full_name;        // name 4
-		std::string postscript_name;  // name 6
+		std::string full_name;       // name 4
+		std::string postscript_name; // name 6
 
 		// when embedding this font, we are probably legally required to reproduce the license.
-		std::string copyright_info;  // name 0
-		std::string license_info;    // name 13
+		std::string copyright_info; // name 0
+		std::string license_info;   // name 13
 
 		// some stuff we need to save, internal use.
 		size_t num_hmetrics = 0;
@@ -159,7 +159,7 @@ namespace font
 	};
 
 	void writeFontSubset(FontFile* font, zst::str_view subset_name, pdf::Stream* stream,
-		const std::unordered_set<GlyphId>& used_glyphs);
+	    const std::unordered_set<GlyphId>& used_glyphs);
 
 	CharacterMapping readCMapTable(zst::byte_span table);
 

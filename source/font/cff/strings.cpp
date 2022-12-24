@@ -61,7 +61,7 @@ namespace font::cff
 		if(sid >= this->string_ids.size())
 		{
 			sap::error("font/cff", "invalid string with index '{}' (max is {})", sid + NUM_STANDARD_STRINGS,
-				this->string_ids.size());
+			    this->string_ids.size());
 		}
 
 		return zst::str_view(this->string_ids[sid].data(), this->string_ids[sid].size());

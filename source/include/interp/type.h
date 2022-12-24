@@ -29,13 +29,13 @@ namespace sap::interp
 
 		bool isBuiltin() const
 		{
-			return isAny()          //
-			       || isVoid()      //
-			       || isBool()      //
-			       || isChar()      //
-			       || isNumber()    //
-			       || isFunction()  //
-			       || isTreeInlineObj();
+			return isAny()      //
+			    || isVoid()     //
+			    || isBool()     //
+			    || isChar()     //
+			    || isNumber()   //
+			    || isFunction() //
+			    || isTreeInlineObj();
 		}
 
 		// the conversion functions can't be inline because dynamic_cast needs

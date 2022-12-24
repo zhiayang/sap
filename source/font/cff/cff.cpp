@@ -224,8 +224,8 @@ namespace font::cff
 			if(charset_ofs == 0 || charset_ofs == 1 || charset_ofs == 2)
 				charset_mapping = getPredefinedCharset(charset_ofs);
 			else
-				charset_mapping =
-					readCharsetTable(cff->charstrings_table.count, cff->bytes.drop(util::checked_cast<size_t>(charset_ofs)));
+				charset_mapping = readCharsetTable(cff->charstrings_table.count,
+				    cff->bytes.drop(util::checked_cast<size_t>(charset_ofs)));
 
 			// charset-mapping maps from gid -> sid or cid, depending on whether this is a CID font or not
 			for(auto& [gid, sid] : charset_mapping)
@@ -254,8 +254,8 @@ namespace font::cff
 			auto offset = foo[1].integer();
 
 			// private dict offset is specified from the beginning of the file
-			auto private_dict =
-				readDictionary(cff->bytes.drop(util::checked_cast<size_t>(offset)).take(util::checked_cast<size_t>(size)));
+			auto private_dict = readDictionary(
+			    cff->bytes.drop(util::checked_cast<size_t>(offset)).take(util::checked_cast<size_t>(size)));
 			std::vector<Subroutine> local_subrs {};
 
 			// local subrs index is specified from the beginning of the private DICT data)

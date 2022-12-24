@@ -14,7 +14,7 @@ namespace sap::interp
 {
 	template <typename T, typename ArgProcessor>
 	ErrorOr<std::pair<std::unordered_map<size_t, T>, std::vector<const Type*>>> resolve_argument_order(Interpreter* cs,
-		Declaration* decl, const std::vector<FunctionCall::Arg>& args, ArgProcessor&& ap)
+	    Declaration* decl, const std::vector<FunctionCall::Arg>& args, ArgProcessor&& ap)
 	{
 		// TODO: check for variables.
 		if(auto fdecl = dynamic_cast<FunctionDecl*>(decl); fdecl != nullptr)
@@ -102,8 +102,8 @@ namespace sap::interp
 
 			if(auto param_type = decl_params_types[i]; arg_type != param_type)
 			{
-				return ErrFmt("mismatched types for argument {}: got '{}', expected '{}'",  //
-					1 + i, arg_type, param_type);
+				return ErrFmt("mismatched types for argument {}: got '{}', expected '{}'", //
+				    1 + i, arg_type, param_type);
 			}
 
 			cost += 1;
@@ -114,7 +114,7 @@ namespace sap::interp
 
 
 	static ErrorOr<Declaration*> resolve_overload_set(Interpreter* cs, const std::vector<Declaration*>& decls,
-		const std::vector<FunctionCall::Arg>& arguments)
+	    const std::vector<FunctionCall::Arg>& arguments)
 	{
 		std::vector<Declaration*> best_decls {};
 		int best_cost = INT_MAX;
@@ -193,13 +193,13 @@ namespace sap::interp
 			assert(m_resolved_func_decl != nullptr);
 
 			auto decl = m_resolved_func_decl;
-			auto [ordered_args, _] = TRY(resolve_argument_order<Value>(cs, decl, this->arguments,  //
-				[cs](auto& arg) -> ErrorOr<Value> {
-					if(auto value = TRY(arg.value->evaluate(cs)); value.has_value())
-						return Ok(std::move(*value));
+			auto [ordered_args, _] = TRY(resolve_argument_order<Value>(cs, decl, this->arguments, //
+			    [cs](auto& arg) -> ErrorOr<Value> {
+				    if(auto value = TRY(arg.value->evaluate(cs)); value.has_value())
+					    return Ok(std::move(*value));
 
-					return ErrFmt("expression did not yield a value");
-				}));
+				    return ErrFmt("expression did not yield a value");
+			    }));
 
 			for(size_t i = 0; i < ordered_args.size(); i++)
 			{

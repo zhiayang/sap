@@ -90,7 +90,7 @@ namespace pdf
 		if(auto it = m_extra_unicode_mappings.find(glyph); it != m_extra_unicode_mappings.end() && it->second != codepoints)
 		{
 			sap::warn("font", "conflicting unicode mapping for glyph '{}' (existing: {}, new: {})", glyph, it->second,
-				codepoints);
+			    codepoints);
 		}
 
 		m_extra_unicode_mappings[glyph] = std::move(codepoints);
@@ -98,7 +98,7 @@ namespace pdf
 
 
 	std::map<size_t, font::GlyphAdjustment> Font::getPositioningAdjustmentsForGlyphSequence(zst::span<GlyphId> glyphs,
-		const font::off::FeatureSet& features) const
+	    const font::off::FeatureSet& features) const
 	{
 		if(!this->source_file)
 			return {};
@@ -107,7 +107,7 @@ namespace pdf
 	}
 
 	std::vector<GlyphId> Font::performSubstitutionsForGlyphSequence(zst::span<GlyphId> glyphs,
-		const font::off::FeatureSet& features) const
+	    const font::off::FeatureSet& features) const
 	{
 		if(!this->source_file)
 			return std::vector<GlyphId>(glyphs.begin(), glyphs.end());

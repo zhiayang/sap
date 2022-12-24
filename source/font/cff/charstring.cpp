@@ -92,7 +92,7 @@ namespace font::cff
 	};
 
 	static bool run_charstring(zst::byte_span instrs, std::vector<Subroutine>& global_subrs, std::vector<Subroutine>& local_subrs,
-		InterpState& interp)
+	    InterpState& interp)
 	{
 		auto calculate_bias = [](const std::vector<Subroutine>& subrs) {
 			if(subrs.size() < 1240)
@@ -382,7 +382,7 @@ namespace font::cff
 	}
 
 	void interpretCharStringAndMarkSubrs(zst::byte_span instrs, std::vector<Subroutine>& global_subrs,
-		std::vector<Subroutine>& local_subrs)
+	    std::vector<Subroutine>& local_subrs)
 	{
 		InterpState interp {};
 		run_charstring(instrs, global_subrs, local_subrs, interp);

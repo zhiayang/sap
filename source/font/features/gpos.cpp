@@ -37,7 +37,7 @@ namespace font::off::gpos
 	    and so on. it does *not* apply to glyphs[0], glyphs[1], etc., unless position == 0.
 	*/
 	std::map<size_t, GlyphAdjustment> lookupForGlyphSequence(const GPosTable& gpos_table, const LookupTable& lookup,
-		zst::span<GlyphId> glyphs, size_t position)
+	    zst::span<GlyphId> glyphs, size_t position)
 	{
 		/*
 		    OFF 1.9, page 217 (part 2)
@@ -126,13 +126,13 @@ namespace font::off::gpos
 		if(format & 0x08)
 			ret.vert_advance = consume_i16(buf);
 		if(format & 0x10)
-			consume_u16(buf);  // X_PLACEMENT_DEVICE
+			consume_u16(buf); // X_PLACEMENT_DEVICE
 		if(format & 0x20)
-			consume_u16(buf);  // Y_PLACEMENT_DEVICE
+			consume_u16(buf); // Y_PLACEMENT_DEVICE
 		if(format & 0x40)
-			consume_u16(buf);  // X_ADVANCE_DEVICE
+			consume_u16(buf); // X_ADVANCE_DEVICE
 		if(format & 0x80)
-			consume_u16(buf);  // Y_ADVANCE_DEVICE
+			consume_u16(buf); // Y_ADVANCE_DEVICE
 
 		return ret;
 	}
@@ -224,8 +224,8 @@ namespace font::off::gpos
 					auto num_pair_sets = consume_u16(subtable);
 					assert(*cov_idx < num_pair_sets);
 
-					const auto PairRecordSize =
-						sizeof(uint16_t) + get_value_record_size(value_fmt1) + get_value_record_size(value_fmt2);
+					const auto
+					    PairRecordSize = sizeof(uint16_t) + get_value_record_size(value_fmt1) + get_value_record_size(value_fmt2);
 
 					auto pairset_offset = peek_u16(subtable.drop(*cov_idx * sizeof(uint16_t)));
 					auto pairset_table = subtable_start.drop(pairset_offset);
@@ -300,7 +300,7 @@ namespace font::off::gpos
 
 	using PosLookupRecord = ContextualLookupRecord;
 	static std::optional<AdjustmentResult> apply_lookup_records(const GPosTable& gpos,
-		const std::pair<std::vector<PosLookupRecord>, size_t>& records, zst::span<GlyphId> glyphs, size_t position)
+	    const std::pair<std::vector<PosLookupRecord>, size_t>& records, zst::span<GlyphId> glyphs, size_t position)
 	{
 		// ok, we matched this one.
 		std::map<size_t, GlyphAdjustment> adjustments {};
@@ -322,7 +322,7 @@ namespace font::off::gpos
 	}
 
 	std::optional<AdjustmentResult> lookupContextualPositioning(const GPosTable& gpos, const LookupTable& lookup,
-		zst::span<GlyphId> glyphs)
+	    zst::span<GlyphId> glyphs)
 	{
 		assert(lookup.type == LOOKUP_CONTEXTUAL);
 		for(auto subtable : lookup.subtables)
@@ -335,7 +335,7 @@ namespace font::off::gpos
 	}
 
 	std::optional<AdjustmentResult> lookupChainedContextPositioning(const GPosTable& gpos, const LookupTable& lookup,
-		zst::span<GlyphId> glyphs, size_t position)
+	    zst::span<GlyphId> glyphs, size_t position)
 	{
 		assert(position < glyphs.size());
 		assert(lookup.type == LOOKUP_CHAINING_CONTEXT);
@@ -354,7 +354,7 @@ namespace font::off::gpos
 namespace font::off
 {
 	std::map<size_t, GlyphAdjustment> getPositioningAdjustmentsForGlyphSequence(FontFile* font, zst::span<GlyphId> glyphs,
-		const FeatureSet& features)
+	    const FeatureSet& features)
 	{
 		auto gpos = font->gpos_table;
 

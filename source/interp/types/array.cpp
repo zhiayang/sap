@@ -15,7 +15,9 @@ namespace sap::interp
 	}
 
 	ArrayType::ArrayType(const Type* element_type, bool is_variadic)
-		: Type(Type::KIND_ARRAY), m_element_type(element_type), m_is_variadic(is_variadic)
+	    : Type(Type::KIND_ARRAY)
+	    , m_element_type(element_type)
+	    , m_is_variadic(is_variadic)
 	{
 	}
 
