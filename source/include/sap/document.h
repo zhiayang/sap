@@ -276,10 +276,32 @@ namespace sap::layout
 	};
 
 
+	struct Text : Stylable
+	{
+		const std::string& text() const { return m_text; }
+		bool isSeparator() const { return m_is_separator; }
+
+		static Text fromText(zst::str_view text) { return Text(text); }
+		static Text fromText(std::string text) { return Text(std::move(text)); }
+		static Text fromTreeWord(const tree::Word& word);
+
+		static Text separator() { return Text(/* sep: */ true); }
+
+	private:
+		explicit Text(zst::str_view text) : m_text(text.str()), m_is_separator(false) { }
+		explicit Text(std::string text) : m_text(std::move(text)), m_is_separator(false) { }
+		explicit Text(bool sep) : m_text(""), m_is_separator(sep) { }
+
+		std::string m_text;
+		bool m_is_separator;
+	};
+
+
 	// for now we are not concerned with lines.
 	struct Paragraph : LayoutObject
 	{
 		void add(Word word);
+		void add(Text text);
 
 		virtual zst::Result<std::optional<LayoutObject*>, int> layout(interp::Interpreter* cs, LayoutRegion* region,
 			const Style* parent_style) override;
@@ -288,6 +310,7 @@ namespace sap::layout
 
 	private:
 		std::vector<Word> m_words {};
+		std::vector<Text> m_texts {};
 	};
 
 

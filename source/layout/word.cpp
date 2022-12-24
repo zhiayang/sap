@@ -75,6 +75,13 @@ namespace sap::layout
 	}
 
 
+	Text Text::fromTreeWord(const tree::Word& word)
+	{
+		auto ret = Text(word.text());
+		ret.setStyle(word.style());
+		return ret;
+	}
+
 
 
 	Word Word::fromTreeWord(const tree::Word& w)

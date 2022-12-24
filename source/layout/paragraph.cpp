@@ -114,6 +114,11 @@ namespace sap::layout
 		m_words.push_back(std::move(word));
 	}
 
+	void Paragraph::add(Text text)
+	{
+		m_texts.push_back(std::move(text));
+	}
+
 	zst::Result<std::optional<LayoutObject*>, int> Paragraph::layout(interp::Interpreter* cs, LayoutRegion* region,
 		const Style* parent_style)
 	{
