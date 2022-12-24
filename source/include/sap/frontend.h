@@ -28,7 +28,7 @@ namespace sap::frontend
 		RBrace,
 
 		// text mode tokens
-		Word,
+		Text,
 		ParagraphBreak,
 
 		// script mode tokens

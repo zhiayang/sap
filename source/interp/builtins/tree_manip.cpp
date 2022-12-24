@@ -25,7 +25,7 @@ namespace sap::interp::builtin
 		}
 		else
 		{
-			auto word = std::make_unique<tree::Word>(value.toString());
+			auto word = std::make_unique<tree::Text>(value.toString());
 			auto style = &defaultStyle().clone()->set_font_style(FontStyle::Bold);
 			word->setStyle(style);
 

@@ -102,38 +102,17 @@ namespace sap::frontend
 
 	static Token consume_text_token(zst::str_view& stream, Location& loc)
 	{
-		bool ws_before = false;
-		// drop all leading horizontal whitespaces
-		{
-			while(stream.size() > 0)
-			{
-				if(stream[0] == ' ' || stream[0] == '\t')
-					ws_before = true, loc.column++, stream.remove_prefix(1);
-
-				else if(stream[0] == '\n' && not stream.starts_with("\n\n"))
-					ws_before = true, loc.column = 0, loc.line++, stream.remove_prefix(1);
-
-				else if(stream.starts_with("\r\n") && not stream.starts_with("\r\n\r\n"))
-					ws_before = true, loc.column = 0, loc.line++, stream.remove_prefix(2);
-
-				else
-					break;
-			}
-		}
-
 		if(stream.empty())
 		{
 			return Token {
 				.loc = loc,
 				.type = TT::EndOfFile,
-				.whitespace_before = ws_before,
 				.text = "",
 			};
 		}
 		else if(stream.starts_with("#"))
 		{
 			auto tok = parse_comment(stream, loc);
-			tok.whitespace_before = ws_before;
 			return tok;
 		}
 		else if(stream.starts_with(":#"))
@@ -155,7 +134,11 @@ namespace sap::frontend
 			}
 
 			auto ret = advance_and_return(stream, loc,
-				Token { .loc = loc, .type = TT::ParagraphBreak, .whitespace_before = ws_before, .text = stream.take(num) }, num);
+				Token { //
+					.loc = loc,
+					.type = TT::ParagraphBreak,
+					.text = stream.take(num) },
+				num);
 
 			loc.column = 0;
 			loc.line += lines;
@@ -164,17 +147,23 @@ namespace sap::frontend
 		else if(stream[0] == '{' || stream[0] == '}')
 		{
 			return advance_and_return(stream, loc,
-				Token { .loc = loc,
+				Token { //
+					.loc = loc,
 					.type = (stream[0] == '{' ? TT::LBrace : TT::RBrace),
-					.whitespace_before = ws_before,
 					.text = stream.take(1) },
 				1);
 		}
 		else if(stream[0] == '\\'
-				&& (stream.size() == 1 || (stream[1] != '\\' && stream[1] != '#' && stream[1] != '{' && stream[1] != '}')))
+				&& (stream.size() == 1
+					|| (stream[1] != '\\' &&  //
+						stream[1] != '#' && stream[1] != '{' && stream[1] != '}')))
 		{
 			return advance_and_return(stream, loc,
-				Token { .loc = loc, .type = TT::Backslash, .whitespace_before = ws_before, .text = stream.take(1) }, 1);
+				Token { //
+					.loc = loc,
+					.type = TT::Backslash,
+					.text = stream.take(1) },
+				1);
 		}
 		else
 		{
@@ -204,10 +193,14 @@ namespace sap::frontend
 						break;
 					}
 				}
-				else if(stream[n] == ' ' || stream[n] == '\t' || stream[n] == '\n' || stream[n] == '\r')
+				else if(auto tmp = stream.drop(n).take(4); tmp.starts_with("\n\n") || tmp.starts_with("\r\n\r\n"))
 				{
 					return advance_and_return(stream, loc,
-						Token { .loc = loc, .type = TT::Word, .whitespace_before = ws_before, .text = stream.take(n) }, n);
+						Token { //
+							.loc = loc,
+							.type = TT::Text,
+							.text = stream.take(n) },
+						n);
 				}
 				else
 				{
@@ -218,7 +211,11 @@ namespace sap::frontend
 			// note: this does imply that the parser needs to "re-parse" any escape sequences, but that's fine
 			// because we don't want to deal with lifetime issues regarding a constructed string in the Token.
 			return advance_and_return(stream, loc,
-				Token { .loc = loc, .type = TT::Word, .whitespace_before = ws_before, .text = stream.take(n) }, n);
+				Token { //
+					.loc = loc,
+					.type = TT::Text,
+					.text = stream.take(n) },
+				n);
 		}
 	}
 

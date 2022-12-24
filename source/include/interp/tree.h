@@ -79,10 +79,10 @@ namespace sap::tree
 
 
 
-	struct Word : InlineObject
+	struct Text : InlineObject
 	{
-		explicit Word(std::string text) : m_text(std::move(text)) { }
-		explicit Word(std::string text, const Style* style) : m_text(std::move(text)) { this->setStyle(style); }
+		explicit Text(std::string text) : m_text(std::move(text)) { }
+		explicit Text(std::string text, const Style* style) : m_text(std::move(text)) { this->setStyle(style); }
 
 		const std::string& text() const { return m_text; }
 

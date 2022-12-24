@@ -80,7 +80,7 @@ namespace sap::frontend
 		return lexer.peek() == TT::LParen || lexer.peek() == TT::LSquare;
 	}
 
-	static interp::Op parseOperatorTokens(Lexer& lexer)
+	static interp::Op parse_operator_tokens(Lexer& lexer)
 	{
 		switch(lexer.peek())
 		{
@@ -105,12 +105,12 @@ namespace sap::frontend
 	constexpr auto KW_LET = "let";
 	constexpr auto KW_SCRIPT_BLOCK = "script";
 
-	static std::unique_ptr<interp::Expr> parseExpr(Lexer& lexer);
-	static std::unique_ptr<interp::Expr> parseUnary(Lexer& lexer);
+	static std::unique_ptr<interp::Expr> parse_expr(Lexer& lexer);
+	static std::unique_ptr<interp::Expr> parse_unary(Lexer& lexer);
 
 
 
-	static interp::QualifiedId parseQualifiedId(Lexer& lexer)
+	static interp::QualifiedId parse_qualified_id(Lexer& lexer)
 	{
 		interp::QualifiedId qid {};
 		while(not lexer.eof())
@@ -133,7 +133,7 @@ namespace sap::frontend
 		return qid;
 	}
 
-	static std::unique_ptr<interp::FunctionCall> parseFunctionCall(Lexer& lexer, std::unique_ptr<interp::Expr> callee)
+	static std::unique_ptr<interp::FunctionCall> parse_function_call(Lexer& lexer, std::unique_ptr<interp::Expr> callee)
 	{
 		if(not lexer.expect(TT::LParen))
 			error(lexer.peek().loc, "expected '(' to begin function call");
@@ -155,7 +155,7 @@ namespace sap::frontend
 
 				if(lexer.expect(TT::Colon))
 				{
-					arg.value = parseExpr(lexer);
+					arg.value = parse_expr(lexer);
 					arg.name = name.text.str();
 
 					have_named_param = true;
@@ -173,7 +173,7 @@ namespace sap::frontend
 					error(lexer.peek().loc, "positional arguments are not allowed after named arguments");
 
 				arg.name = {};
-				arg.value = parseExpr(lexer);
+				arg.value = parse_expr(lexer);
 			}
 
 			call->arguments.push_back(std::move(arg));
@@ -190,16 +190,16 @@ namespace sap::frontend
 		return call;
 	}
 
-	static std::unique_ptr<interp::Expr> parsePostfixUnary(Lexer& lexer, std::unique_ptr<interp::Expr> lhs)
+	static std::unique_ptr<interp::Expr> parse_postfix_unary(Lexer& lexer, std::unique_ptr<interp::Expr> lhs)
 	{
 		if(lexer.peek() == TT::LParen)
-			return parseFunctionCall(lexer, std::move(lhs));
+			return parse_function_call(lexer, std::move(lhs));
 
 		error(lexer.peek().loc, "expected '(' or '[' after expression, found '{}'", lexer.peek().text);
 	}
 
 
-	static std::unique_ptr<interp::Expr> parseRhs(Lexer& lexer, std::unique_ptr<interp::Expr> lhs, int prio)
+	static std::unique_ptr<interp::Expr> parse_rhs(Lexer& lexer, std::unique_ptr<interp::Expr> lhs, int prio)
 	{
 		if(lexer.eof())
 			return lhs;
@@ -213,18 +213,18 @@ namespace sap::frontend
 			// we don't really need to check, because if it's botched we'll have returned due to -1 < everything
 			if(is_postfix_unary(lexer))
 			{
-				lhs = parsePostfixUnary(lexer, std::move(lhs));
+				lhs = parse_postfix_unary(lexer, std::move(lhs));
 				continue;
 			}
 
 			// auto op_loc = lexer.peek().loc;
-			auto op = parseOperatorTokens(lexer);
+			auto op = parse_operator_tokens(lexer);
 
-			auto rhs = parseUnary(lexer);
+			auto rhs = parse_unary(lexer);
 			int next = get_front_token_precedence(lexer);
 
 			if(next > prec || is_right_associative(lexer))
-				rhs = parseRhs(lexer, std::move(rhs), prec + 1);
+				rhs = parse_rhs(lexer, std::move(rhs), prec + 1);
 
 			if(interp::isAssignmentOp(op))
 			{
@@ -352,11 +352,11 @@ namespace sap::frontend
 		return ret;
 	}
 
-	static std::unique_ptr<interp::Expr> parsePrimary(Lexer& lexer)
+	static std::unique_ptr<interp::Expr> parse_primary(Lexer& lexer)
 	{
 		if(lexer.peek() == TT::Identifier)
 		{
-			auto qid = parseQualifiedId(lexer);
+			auto qid = parse_qualified_id(lexer);
 			auto ident = std::make_unique<interp::Ident>();
 			ident->name = std::move(qid);
 			return ident;
@@ -383,22 +383,22 @@ namespace sap::frontend
 		}
 	}
 
-	static std::unique_ptr<interp::Expr> parseUnary(Lexer& lexer)
+	static std::unique_ptr<interp::Expr> parse_unary(Lexer& lexer)
 	{
-		return parsePrimary(lexer);
+		return parse_primary(lexer);
 	}
 
-	static std::unique_ptr<interp::Expr> parseExpr(Lexer& lexer)
+	static std::unique_ptr<interp::Expr> parse_expr(Lexer& lexer)
 	{
 		auto lm = LexerModer(lexer, Lexer::Mode::Script);
-		auto lhs = parseUnary(lexer);
+		auto lhs = parse_unary(lexer);
 
-		return parseRhs(lexer, std::move(lhs), 0);
+		return parse_rhs(lexer, std::move(lhs), 0);
 	}
 
 
 
-	static std::unique_ptr<interp::Stmt> parseStmt(Lexer& lexer)
+	static std::unique_ptr<interp::Stmt> parse_stmt(Lexer& lexer)
 	{
 		auto lm = LexerModer(lexer, Lexer::Mode::Script);
 
@@ -414,12 +414,12 @@ namespace sap::frontend
 				}
 				else
 				{
-					stmt = parseExpr(lexer);
+					stmt = parse_expr(lexer);
 				}
 				break;
 
 			default:
-				stmt = parseExpr(lexer);
+				stmt = parse_expr(lexer);
 				break;
 		}
 
@@ -433,7 +433,7 @@ namespace sap::frontend
 	}
 
 
-	static std::unique_ptr<ScriptBlock> parseScriptBlock(Lexer& lexer)
+	static std::unique_ptr<ScriptBlock> parse_script_block(Lexer& lexer)
 	{
 		auto lm = LexerModer(lexer, Lexer::Mode::Script);
 		if(auto x = lexer.match(TT::Identifier); not x || x->text != KW_SCRIPT_BLOCK)
@@ -445,7 +445,7 @@ namespace sap::frontend
 
 		auto block = std::make_unique<ScriptBlock>();
 		while(lexer.peek() != TT::RBrace)
-			block->statements.push_back(parseStmt(lexer));
+			block->statements.push_back(parse_stmt(lexer));
 
 		if(lexer.eof())
 			error(openbrace.loc, "unexpected end of file; unclosed '{' here");
@@ -456,11 +456,11 @@ namespace sap::frontend
 		return block;
 	}
 
-	static std::unique_ptr<ScriptCall> parseInlineScript(Lexer& lexer)
+	static std::unique_ptr<ScriptCall> parse_inline_script(Lexer& lexer)
 	{
 		auto lm = LexerModer(lexer, Lexer::Mode::Script);
 
-		auto qid = parseQualifiedId(lexer);
+		auto qid = parse_qualified_id(lexer);
 		auto lhs = std::make_unique<interp::Ident>();
 		lhs->name = std::move(qid);
 
@@ -469,20 +469,20 @@ namespace sap::frontend
 			error(open_paren.loc, "expected '(' after qualified-id in inline script call");
 
 		auto sc = std::make_unique<ScriptCall>();
-		sc->call = parseFunctionCall(lexer, std::move(lhs));
+		sc->call = parse_function_call(lexer, std::move(lhs));
 
 		return sc;
 	}
 
-	static std::unique_ptr<ScriptObject> parseScriptObject(Lexer& lexer)
+	static std::unique_ptr<ScriptObject> parse_script_object(Lexer& lexer)
 	{
 		auto next = lexer.peekWithMode(Lexer::Mode::Script);
 		if(next == TT::Identifier)
 		{
 			if(next.text == KW_SCRIPT_BLOCK)
-				return parseScriptBlock(lexer);
+				return parse_script_block(lexer);
 			else
-				return parseInlineScript(lexer);
+				return parse_inline_script(lexer);
 		}
 		else
 		{
@@ -491,31 +491,18 @@ namespace sap::frontend
 	}
 
 
-	static std::unique_ptr<Paragraph> parseParagraph(Lexer& lexer)
+	static std::unique_ptr<Paragraph> parse_paragraph(Lexer& lexer)
 	{
 		auto para = std::make_unique<Paragraph>();
 
-		bool was_sticking_right = false;
 		while(true)
 		{
-			bool was_whitespace = lexer.isWhitespace();
-
 			auto tok = lexer.next();
 
-			if(tok == TT::Word)
+			if(tok == TT::Text)
 			{
-				auto word = std::make_shared<Word>(escape_word_text(tok.loc, tok.text));
-
-				// if the next word sticks to the left, that means this word should stick to the right.
-				if(not lexer.isWhitespace())
-					word->stick_to_right = true;
-
-				// and vice-versa for left
-				if(was_sticking_right)
-					word->stick_to_left = true;
-
+				auto word = std::make_shared<Text>(escape_word_text(tok.loc, tok.text));
 				para->addObject(std::move(word));
-				was_sticking_right = false;
 			}
 			else if(tok == TT::ParagraphBreak || tok == TT::EndOfFile)
 			{
@@ -523,18 +510,7 @@ namespace sap::frontend
 			}
 			else if(tok == TT::Backslash)
 			{
-				was_sticking_right = false;
-
-				auto obj = parseScriptObject(lexer);
-
-				if(auto inl = dynamic_cast<InlineObject*>(obj.get()); inl != nullptr)
-				{
-					inl->stick_to_left = not was_whitespace;
-					inl->stick_to_right = not lexer.isWhitespace();
-
-					was_sticking_right = inl->stick_to_right;
-				}
-
+				auto obj = parse_script_object(lexer);
 				para->addObject(std::move(obj));
 			}
 			else
@@ -547,13 +523,13 @@ namespace sap::frontend
 	}
 
 
-	static std::unique_ptr<DocumentObject> parseTopLevel(Lexer& lexer)
+	static std::unique_ptr<DocumentObject> parse_top_level(Lexer& lexer)
 	{
 		while(true)
 		{
-			if(auto tok = lexer.peek(); tok == TT::Word)
+			if(auto tok = lexer.peek(); tok == TT::Text)
 			{
-				return parseParagraph(lexer);
+				return parse_paragraph(lexer);
 			}
 			else if(tok == TT::ParagraphBreak)
 			{
@@ -563,7 +539,7 @@ namespace sap::frontend
 			else if(tok == TT::Backslash)
 			{
 				lexer.next();
-				return parseScriptObject(lexer);
+				return parse_script_object(lexer);
 			}
 			else if(tok == TT::EndOfFile)
 			{
@@ -589,7 +565,7 @@ namespace sap::frontend
 			if(tok == TT::EndOfFile)
 				break;
 
-			document.addObject(parseTopLevel(lexer));
+			document.addObject(parse_top_level(lexer));
 		}
 
 		return document;

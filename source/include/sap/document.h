@@ -35,7 +35,7 @@ namespace sap
 
 	namespace tree
 	{
-		struct Word;
+		struct Text;
 		struct Document;
 	}
 
@@ -250,7 +250,7 @@ namespace sap::layout
 			font::GlyphAdjustment adjustments;
 		};
 
-		static Word fromTreeWord(const tree::Word& w);
+		static Word fromTreeWord(const tree::Text& w);
 
 	private:
 		const Paragraph* m_paragraph = nullptr;
@@ -283,7 +283,7 @@ namespace sap::layout
 
 		static Text fromText(zst::str_view text) { return Text(text); }
 		static Text fromText(std::string text) { return Text(std::move(text)); }
-		static Text fromTreeWord(const tree::Word& word);
+		static Text fromTreeWord(const tree::Text& word);
 
 		static Text separator() { return Text(/* sep: */ true); }
 

@@ -75,7 +75,7 @@ namespace sap::layout
 	}
 
 
-	Text Text::fromTreeWord(const tree::Word& word)
+	Text Text::fromTreeWord(const tree::Text& word)
 	{
 		auto ret = Text(word.text());
 		ret.setStyle(word.style());
@@ -84,7 +84,7 @@ namespace sap::layout
 
 
 
-	Word Word::fromTreeWord(const tree::Word& w)
+	Word Word::fromTreeWord(const tree::Text& w)
 	{
 		// TODO: determine whether this 'kind' thing is even useful
 		auto ret = Word(Word::KIND_LATIN, w.text());

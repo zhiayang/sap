@@ -18,7 +18,7 @@ namespace sap::layout
 
 		for(auto& obj : para->m_contents)
 		{
-			if(auto word = std::dynamic_pointer_cast<tree::Word>(obj); word != nullptr)
+			if(auto word = std::dynamic_pointer_cast<tree::Text>(obj); word != nullptr)
 			{
 				ret->add(Word::fromTreeWord(*word));
 			}
@@ -27,7 +27,7 @@ namespace sap::layout
 				if(auto tmp = cs->run(iscr->call.get()); tmp != nullptr)
 				{
 					// TODO: clean this up
-					if(auto word = dynamic_cast<tree::Word*>(tmp.get()); word)
+					if(auto word = dynamic_cast<tree::Text*>(tmp.get()); word)
 					{
 						word->stick_to_left = iscr->stick_to_left;
 						word->stick_to_right = iscr->stick_to_right;
