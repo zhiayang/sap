@@ -13,11 +13,6 @@
 #include "sap/units.h"
 #include "sap/fontset.h"
 
-namespace pdf
-{
-	struct Font;
-}
-
 namespace sap
 {
 	struct Style

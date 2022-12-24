@@ -6,18 +6,6 @@
 
 namespace sap
 {
-	static Style g_defaultStyle {};
-
-	const Style& defaultStyle()
-	{
-		return g_defaultStyle;
-	}
-
-	void setDefaultStyle(Style s)
-	{
-		g_defaultStyle = s;
-	}
-
 	using CombinedStylesHasher = decltype([](auto p) {
 		return (std::uintptr_t) p.first ^ ((std::uintptr_t) p.second << 32) ^ ((std::uintptr_t) p.second >> 32);
 	});
