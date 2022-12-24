@@ -61,7 +61,7 @@ namespace unicode
 			uint16_t fst = (uint16_t) (((uint16_t) bytes[i + 0] << 8) | ((uint16_t) bytes[i + 1] << 0));
 
 			uint16_t
-				snd = i + 3 < bytes.size() ? (uint16_t) (((uint16_t) bytes[i + 2] << 8) | ((uint16_t) bytes[i + 3] << 0)) : 0;
+			    snd = i + 3 < bytes.size() ? (uint16_t) (((uint16_t) bytes[i + 2] << 8) | ((uint16_t) bytes[i + 3] << 0)) : 0;
 
 			bool surrogate = convert_one_utf16(ret, fst, snd);
 			if(surrogate)

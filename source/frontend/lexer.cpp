@@ -134,11 +134,11 @@ namespace sap::frontend
 			}
 
 			auto ret = advance_and_return(stream, loc,
-				Token { //
-					.loc = loc,
-					.type = TT::ParagraphBreak,
-					.text = stream.take(num) },
-				num);
+			    Token { //
+			        .loc = loc,
+			        .type = TT::ParagraphBreak,
+			        .text = stream.take(num) },
+			    num);
 
 			loc.column = 0;
 			loc.line += lines;
@@ -147,23 +147,23 @@ namespace sap::frontend
 		else if(stream[0] == '{' || stream[0] == '}')
 		{
 			return advance_and_return(stream, loc,
-				Token { //
-					.loc = loc,
-					.type = (stream[0] == '{' ? TT::LBrace : TT::RBrace),
-					.text = stream.take(1) },
-				1);
+			    Token { //
+			        .loc = loc,
+			        .type = (stream[0] == '{' ? TT::LBrace : TT::RBrace),
+			        .text = stream.take(1) },
+			    1);
 		}
 		else if(stream[0] == '\\'
-				&& (stream.size() == 1
-					|| (stream[1] != '\\' &&  //
-						stream[1] != '#' && stream[1] != '{' && stream[1] != '}')))
+		        && (stream.size() == 1
+		            || (stream[1] != '\\' &&  //
+		                stream[1] != '#' && stream[1] != '{' && stream[1] != '}')))
 		{
 			return advance_and_return(stream, loc,
-				Token { //
-					.loc = loc,
-					.type = TT::Backslash,
-					.text = stream.take(1) },
-				1);
+			    Token { //
+			        .loc = loc,
+			        .type = TT::Backslash,
+			        .text = stream.take(1) },
+			    1);
 		}
 		else
 		{
@@ -196,11 +196,11 @@ namespace sap::frontend
 				else if(auto tmp = stream.drop(n).take(4); tmp.starts_with("\n\n") || tmp.starts_with("\r\n\r\n"))
 				{
 					return advance_and_return(stream, loc,
-						Token { //
-							.loc = loc,
-							.type = TT::Text,
-							.text = stream.take(n) },
-						n);
+					    Token { //
+					        .loc = loc,
+					        .type = TT::Text,
+					        .text = stream.take(n) },
+					    n);
 				}
 				else
 				{
@@ -211,11 +211,11 @@ namespace sap::frontend
 			// note: this does imply that the parser needs to "re-parse" any escape sequences, but that's fine
 			// because we don't want to deal with lifetime issues regarding a constructed string in the Token.
 			return advance_and_return(stream, loc,
-				Token { //
-					.loc = loc,
-					.type = TT::Text,
-					.text = stream.take(n) },
-				n);
+			    Token { //
+			        .loc = loc,
+			        .type = TT::Text,
+			        .text = stream.take(n) },
+			    n);
 		}
 	}
 
@@ -336,11 +336,11 @@ namespace sap::frontend
 			}
 
 			return advance_and_return(stream, loc,
-				Token { //
-					.loc = loc,
-					.type = TT::String,
-					.text = stream.drop(1).take(n - 2) },
-				n);
+			    Token { //
+			        .loc = loc,
+			        .type = TT::String,
+			        .text = stream.drop(1).take(n - 2) },
+			    n);
 		}
 		else
 		{

@@ -120,7 +120,7 @@ namespace sap::layout
 	}
 
 	zst::Result<std::optional<LayoutObject*>, int> Paragraph::layout(interp::Interpreter* cs, LayoutRegion* region,
-		const Style* parent_style)
+	    const Style* parent_style)
 	{
 		// first, all words need their metrics computed. forward the default style down to them.
 		auto combined = Style::combine(m_style, parent_style);
@@ -216,8 +216,8 @@ namespace sap::layout
 					// no space -- break the rest of the words, and quit.
 					overflow = util::make<Paragraph>();
 					overflow->m_words.insert(overflow->m_words.end(),
-						std::move_iterator(m_words.begin() + util::checked_cast<ssize_t>(word_idx)),
-						std::move_iterator(m_words.end()));
+					    std::move_iterator(m_words.begin() + util::checked_cast<ssize_t>(word_idx)),
+					    std::move_iterator(m_words.end()));
 
 					m_words.erase(m_words.begin() + util::checked_cast<ssize_t>(word_idx), m_words.end());
 					for(auto& w : overflow->m_words)
@@ -255,7 +255,7 @@ namespace sap::layout
 				// if the new ratio is not worse than the current one,
 				// and it doesn't squeeze the space too much, add it.
 				if(MIN_RATIO <= new_ratio && std::abs(new_ratio - 1.0) <= std::abs(current_ratio - 1.0)
-					&& word_length + word.size.x() < region_width)
+				    && word_length + word.size.x() < region_width)
 				{
 					word_length += word.size.x();
 					space_length += space_between;

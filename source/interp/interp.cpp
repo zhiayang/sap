@@ -20,13 +20,13 @@ namespace sap::interp
 		auto str = Type::makeString();
 
 		ns_builtin->define(std::make_unique<BFD>("__bold1", Type::makeFunction({ tio }, tio),
-			makeParamList(Param { .name = "_", .type = tio }), &builtin::bold1));
+		    makeParamList(Param { .name = "_", .type = tio }), &builtin::bold1));
 
 		ns_builtin->define(std::make_unique<BFD>("__bold1", Type::makeFunction({ num }, tio),
-			makeParamList(Param { .name = "_", .type = num }), &builtin::bold1));
+		    makeParamList(Param { .name = "_", .type = num }), &builtin::bold1));
 
 		ns_builtin->define(std::make_unique<BFD>("__bold1", Type::makeFunction({ str }, tio),
-			makeParamList(Param { .name = "_", .type = str }), &builtin::bold1));
+		    makeParamList(Param { .name = "_", .type = str }), &builtin::bold1));
 	}
 
 	ErrorOr<DefnTree*> DefnTree::lookupNamespace(std::string_view name) const

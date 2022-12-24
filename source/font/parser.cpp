@@ -519,7 +519,7 @@ namespace font
 
 
 	std::optional<std::string> findFontPath(std::initializer_list<std::string> families, const std::string& style,
-		std::initializer_list<std::string> fontformats)
+	    std::initializer_list<std::string> fontformats)
 	{
 
 #ifdef USE_FONTCONFIG

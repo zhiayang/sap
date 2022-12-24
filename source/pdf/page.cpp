@@ -14,7 +14,7 @@ namespace pdf
 {
 	// TODO: support custom paper sizes
 	static const auto a4paper = Array::create(Integer::create(0), Integer::create(0), Decimal::create(595.276),
-		Decimal::create(841.89));
+	    Decimal::create(841.89));
 
 	Page::Page()
 	{
@@ -67,7 +67,7 @@ namespace pdf
 
 
 		return Dictionary::createIndirect(doc, names::Page,
-			{ { names::Resources, resources }, { names::MediaBox, a4paper }, { names::Contents, contents } });
+		    { { names::Resources, resources }, { names::MediaBox, a4paper }, { names::Contents, contents } });
 	}
 
 	void Page::useFont(const Font* font) const

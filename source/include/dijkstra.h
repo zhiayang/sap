@@ -15,7 +15,7 @@ namespace util
 {
 	template <typename Node>
 	concept DijkstraNode =
-		// clang-format off
+	    // clang-format off
 	requires(Node node)
 	{
 		typename Node::Distance;

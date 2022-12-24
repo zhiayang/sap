@@ -42,13 +42,13 @@ namespace pdf
 				this->compressor_state = tdefl_compressor_alloc();
 
 				auto res = tdefl_init(
-					reinterpret_cast<tdefl_compressor*>(this->compressor_state),
-					[](const void* buf, int len, void* user) -> int {
-						reinterpret_cast<Stream*>(user)->bytes.append(reinterpret_cast<const uint8_t*>(buf),
-							util::checked_cast<size_t>(len));
-						return 1;
-					},
-					this, COMPRESSION_LEVEL | TDEFL_WRITE_ZLIB_HEADER);
+				    reinterpret_cast<tdefl_compressor*>(this->compressor_state),
+				    [](const void* buf, int len, void* user) -> int {
+					    reinterpret_cast<Stream*>(user)->bytes.append(reinterpret_cast<const uint8_t*>(buf),
+					        util::checked_cast<size_t>(len));
+					    return 1;
+				    },
+				    this, COMPRESSION_LEVEL | TDEFL_WRITE_ZLIB_HEADER);
 
 				if(res != TDEFL_STATUS_OKAY)
 					pdf::error("failed to initialise deflate state");
@@ -107,7 +107,7 @@ namespace pdf
 		if(this->is_compressed)
 		{
 			auto res = tdefl_compress_buffer(reinterpret_cast<tdefl_compressor*>(this->compressor_state), arr, num,
-				TDEFL_SYNC_FLUSH);
+			    TDEFL_SYNC_FLUSH);
 
 			if(res != TDEFL_STATUS_OKAY)
 				pdf::error("stream compression failed");

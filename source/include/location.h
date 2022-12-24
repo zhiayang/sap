@@ -30,7 +30,7 @@ namespace sap
 	[[noreturn]] void error(const Location& loc, const char* fmt, Args&&... args)
 	{
 		zpr::fprintln(stderr, "{}:{}:{}: error: {}", loc.file, loc.line + 1, loc.column + 1,
-			zpr::fwd(fmt, static_cast<Args&&>(args)...));
+		    zpr::fwd(fmt, static_cast<Args&&>(args)...));
 		exit(1);
 	}
 

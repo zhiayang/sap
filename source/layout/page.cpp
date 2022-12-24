@@ -14,7 +14,7 @@ namespace sap::layout
 	constexpr Scalar BOTTOM_MARGIN = Scalar(25.0);
 
 	Page::Page(Size2d paper_size)
-		: m_layout_region(paper_size - Size2d(LEFT_MARGIN, TOP_MARGIN) - Size2d(RIGHT_MARGIN, BOTTOM_MARGIN))
+	    : m_layout_region(paper_size - Size2d(LEFT_MARGIN, TOP_MARGIN) - Size2d(RIGHT_MARGIN, BOTTOM_MARGIN))
 	{
 	}
 

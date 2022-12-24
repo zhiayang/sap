@@ -90,7 +90,7 @@ namespace font::cff
 		for(auto& glyph : cff->glyphs)
 		{
 			interpretCharStringAndMarkSubrs(glyph.charstring, cff->global_subrs,
-				cff->font_dicts[glyph.font_dict_idx].local_subrs);
+			    cff->font_dicts[glyph.font_dict_idx].local_subrs);
 		}
 	}
 
@@ -115,7 +115,7 @@ namespace font::cff
 
 			auto orig_cmap_table = font->tables[Tag("cmap")];
 			ret.cmap.append(
-				zst::byte_span(font->file_bytes, font->file_size).drop(orig_cmap_table.offset).take(orig_cmap_table.length));
+			    zst::byte_span(font->file_bytes, font->file_size).drop(orig_cmap_table.offset).take(orig_cmap_table.length));
 
 			return ret;
 		}
@@ -178,11 +178,12 @@ namespace font::cff
 		    The Private DICT only has relative offsets, so that's fine.
 		*/
 		auto top_dict = DictBuilder(cff->top_dict);
-		top_dict.set(DictKey::ROS, {
-									   Operand().string_id(cff->get_or_add_string("Adobe")),     // registry
-									   Operand().string_id(cff->get_or_add_string("Identity")),  // ordering
-									   Operand().integer(0)                                      // supplement
-								   });
+		top_dict.set(DictKey::ROS,
+		    {
+		        Operand().string_id(cff->get_or_add_string("Adobe")),     // registry
+		        Operand().string_id(cff->get_or_add_string("Identity")),  // ordering
+		        Operand().integer(0)                                      // supplement
+		    });
 
 		// pre-set these to reserve space for them
 		top_dict.setInteger(DictKey::FDArray, 0);
@@ -254,7 +255,7 @@ namespace font::cff
 				// Private needs special treatment (since it needs both a size and offset)
 				if(key == DictKey::Private)
 					top_dict.setIntegerPair(key, util::checked_cast<int32_t>(size),
-						util::checked_cast<int32_t>(current_abs_ofs()));
+					    util::checked_cast<int32_t>(current_abs_ofs()));
 				else
 					top_dict.setInteger(key, util::checked_cast<int32_t>(current_abs_ofs()));
 			};
@@ -311,7 +312,7 @@ namespace font::cff
 					auto builder = DictBuilder()
 					                   .setStringId(DictKey::FontName, subset_name_sid)
 					                   .setIntegerPair(DictKey::Private, util::checked_cast<int32_t>(priv_size),
-										   util::checked_cast<int32_t>(priv_ofs));
+					                       util::checked_cast<int32_t>(priv_ofs));
 
 					fdarray_builder.add(builder.serialise().span());
 				}

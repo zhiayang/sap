@@ -194,7 +194,7 @@ namespace dim
 		constexpr Vector2<_S, _T> into(Vector2<_S, _T> foo) const
 		{
 			return Vector2<_S, _T>(((this->_x * scale_factor) / _S::scale_factor)._x,
-				((this->_y * scale_factor) / _S::scale_factor)._x);
+			    ((this->_y * scale_factor) / _S::scale_factor)._x);
 		}
 
 		template <typename _Target>
@@ -214,7 +214,7 @@ namespace dim
 		constexpr Vector2<_Target> into(_Target foo) const
 		{
 			return Vector2<_Target>((this->_x * scale_factor) / _Target::scale_factor,
-				(this->_y * scale_factor) / _Target::scale_factor);
+			    (this->_y * scale_factor) / _Target::scale_factor);
 		}
 
 		constexpr const scalar_type& x() const { return this->_x; }

@@ -66,7 +66,7 @@ namespace font
 
 
 	void writeFontSubset(FontFile* font, zst::str_view subset_name, Stream* stream,
-		const std::unordered_set<GlyphId>& used_glyphs)
+	    const std::unordered_set<GlyphId>& used_glyphs)
 	{
 		auto file_contents = zst::byte_span(font->file_bytes, font->file_size);
 		if(font->outline_type == FontFile::OUTLINES_CFF)
@@ -193,7 +193,7 @@ namespace font
 		if(stream->is_compressed)
 		{
 			stream->dict->addOrReplace(pdf::names::Length1,
-				pdf::Integer::create(util::checked_cast<int64_t>(stream->uncompressed_length)));
+			    pdf::Integer::create(util::checked_cast<int64_t>(stream->uncompressed_length)));
 		}
 	}
 
@@ -210,6 +210,6 @@ namespace font
 		const char* letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
 
 		return zpr::sprint("{}{}{}{}{}{}+{}", letters[rand() % 26], letters[rand() % 26], letters[rand() % 26],
-			letters[rand() % 26], letters[rand() % 26], letters[rand() % 26], font->postscript_name);
+		    letters[rand() % 26], letters[rand() % 26], letters[rand() % 26], font->postscript_name);
 	}
 }

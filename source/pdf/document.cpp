@@ -47,7 +47,7 @@ namespace pdf
 		w->writeln();
 
 		auto trailer = Dictionary::create({ { names::Size, Integer::create(util::checked_cast<int64_t>(num_objects)) },
-			{ names::Root, IndirectRef::create(root) } });
+		    { names::Root, IndirectRef::create(root) } });
 
 		w->writeln("trailer");
 		w->write(trailer);
@@ -69,7 +69,7 @@ namespace pdf
 		// TODO: make this more efficient -- make some kind of balanced tree.
 
 		auto pagetree = Dictionary::createIndirect(this, names::Pages,
-			{ { names::Count, Integer::create(util::checked_cast<int64_t>(this->pages.size())) } });
+		    { { names::Count, Integer::create(util::checked_cast<int64_t>(this->pages.size())) } });
 
 		auto array = Array::create({});
 		for(auto page : this->pages)
