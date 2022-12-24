@@ -155,7 +155,7 @@ namespace sap::frontend
 		}
 		else if(stream[0] == '\\'
 		        && (stream.size() == 1
-		            || (stream[1] != '\\' &&  //
+		            || (stream[1] != '\\' && //
 		                stream[1] != '#' && stream[1] != '{' && stream[1] != '}')))
 		{
 			return advance_and_return(stream, loc,

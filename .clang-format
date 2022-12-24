@@ -73,7 +73,7 @@ SpaceBeforeAssignmentOperators: true
 SpaceBeforeParens: Never
 SpaceInEmptyParentheses: false
 SpaceBeforeCpp11BracedList: true
-SpacesBeforeTrailingComments: 2
+SpacesBeforeTrailingComments: 1
 SpacesInAngles: false
 SpaceInEmptyBlock: true
 SpacesInContainerLiterals: true
