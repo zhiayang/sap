@@ -75,72 +75,40 @@ namespace sap::layout
 	}
 
 
-	Text Text::fromTreeText(const tree::Text& txt)
+	Word::Word(zst::str_view text, const Style* style) : m_text(text)
 	{
-		auto ret = Text(txt.contents());
-		ret.setStyle(txt.style());
-		return ret;
-	}
-
-
-
-	Word Word::fromTreeText(const tree::Text& w)
-	{
-		// TODO: determine whether this 'kind' thing is even useful
-		auto ret = Word(Word::KIND_LATIN, w.contents());
-		ret.setStyle(w.style());
-		ret.m_stick_left = w.stick_to_left;
-		ret.m_stick_right = w.stick_to_right;
-
-		return ret;
-	}
-
-
-	void Word::computeMetrics(const Style* parent_style)
-	{
-		auto style = Style::combine(m_style, parent_style);
 		this->setStyle(style);
 
 		auto font = style->font_set().getFontForStyle(style->font_style());
 		auto font_size = style->font_size();
 
-		m_glyphs = convert_to_glyphs(font, this->text);
+		m_glyphs = convert_to_glyphs(font, m_text);
 
 		// size is in sap units, which is in mm; metrics are in typographic units, so 72dpi;
 		// calculate the scale accordingly.
 		const auto font_metrics = font->getFontMetrics();
 		auto font_size_tpu = font_size.into(dim::units::pdf_typographic_unit {});
 
-		this->size = { 0, 0 };
-		this->size.y() = font->scaleMetricForFontSize(font_metrics.default_line_spacing, font_size_tpu).into(sap::Scalar {});
+		m_size = { 0, 0 };
+		m_size.y() = font->scaleMetricForFontSize(font_metrics.default_line_spacing, font_size_tpu).into(sap::Scalar {});
 
 		for(auto& glyph : m_glyphs)
 		{
 			auto width = glyph.metrics.horz_advance + glyph.adjustments.horz_advance;
-			this->size.x() += font->scaleMetricForFontSize(width, font_size_tpu).into(sap::Scalar {});
+			m_size.x() += font->scaleMetricForFontSize(width, font_size_tpu).into(sap::Scalar {});
 		}
 
 		// this space width is to the next word
-		if(not m_stick_right)
-		{
-			auto space_gid = font->getGlyphIdFromCodepoint(U' ');
-			auto space_adv = font->getMetricsForGlyph(space_gid).horz_advance;
-			auto space_width = font->scaleMetricForFontSize(space_adv, font_size_tpu);
+		auto space_gid = font->getGlyphIdFromCodepoint(U' ');
+		auto space_adv = font->getMetricsForGlyph(space_gid).horz_advance;
+		auto space_width = font->scaleMetricForFontSize(space_adv, font_size_tpu);
 
-			m_space_width = space_width.into(sap::Scalar {});
-		}
-		else
-		{
-			m_space_width = Scalar(0);
-		}
+		m_space_width = space_width.into(sap::Scalar {});
+
+		assert(m_style != nullptr);
 	}
 
-	Scalar Word::spaceWidth() const
-	{
-		return m_space_width;
-	}
-
-	void Word::render(pdf::Text* text) const
+	void Word::render(pdf::Text* text, Scalar space) const
 	{
 		const auto font = m_style->font_set().getFontForStyle(m_style->font_style());
 		const auto font_size = m_style->font_size();
@@ -153,6 +121,23 @@ namespace sap::layout
 				text->addEncoded(1, static_cast<uint32_t>(gid));
 		};
 
+		if(space.nonzero())
+		{
+			// TODO: render spaces in space::render
+			auto space_gid = font->getGlyphIdFromCodepoint(U' ');
+			add_gid(space_gid);
+
+			auto emitted_space_adv = font->getMetricsForGlyph(space_gid).horz_advance;
+			auto font_size_tpu = font_size.into(dim::units::pdf_typographic_unit {});
+			auto emitted_space_size = font->scaleMetricForFontSize(emitted_space_adv, font_size_tpu);
+			auto desired_space_size = space.into(pdf::Scalar());
+			if(emitted_space_size != desired_space_size)
+			{
+				auto extra = -emitted_space_size + desired_space_size;
+				text->offset(pdf::Font::pdfScalarToTextScalarForFontSize(extra, font_size_tpu));
+			}
+		}
+
 		for(auto& glyph : m_glyphs)
 		{
 			add_gid(glyph.gid);
@@ -161,24 +146,10 @@ namespace sap::layout
 			text->offset(font->scaleMetricForPDFTextSpace(glyph.adjustments.horz_advance));
 		}
 
-		if(!m_linebreak_after && m_next_word != nullptr && not m_stick_right && not m_next_word->m_stick_left)
-		{
-			auto space_gid = font->getGlyphIdFromCodepoint(U' ');
-			add_gid(space_gid);
 
-			if(m_post_space_ratio != 1.0)
-			{
-				auto space_adv = font->getMetricsForGlyph(space_gid).horz_advance;
-
-				// ratio > 1 = expand, < 1 = shrink
-				auto extra = font->scaleMetricForPDFTextSpace(space_adv) * (m_post_space_ratio - 1.0);
-				text->offset(extra);
-			}
-
-			/*
-			    TODO: here, we also want to handle kerning between the space and the start of the next word
-			    (see the longer explanation in layout/paragraph.cpp)
-			*/
-		}
+		/*
+		    TODO: here, we also want to handle kerning between the space and the start of the next word
+		    (see the longer explanation in layout/paragraph.cpp)
+		*/
 	}
 }

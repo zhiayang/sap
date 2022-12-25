@@ -42,6 +42,11 @@ PRECOMP_GCH     := $(PRECOMP_HDRS:%.h=$(OUTPUT_DIR)/%.h.gch)
 DEFINES         :=
 INCLUDES        := -Isource/include -Iexternal
 
+UNAME_IDENT := $(shell uname)
+ifeq ("$(UNAME_IDENT)", "Linux")
+USE_FONTCONFIG := 1
+endif
+
 ifeq ($(USE_FONTCONFIG), 1)
 DEFINES  += -DUSE_FONTCONFIG
 CXXFLAGS += $(shell pkg-config --cflags fontconfig)

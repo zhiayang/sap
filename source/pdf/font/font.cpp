@@ -29,6 +29,11 @@ namespace pdf
 		return Scalar((metric * GLYPH_SPACE_UNITS) / this->getFontMetrics().units_per_em);
 	}
 
+	Scalar Font::pdfScalarToTextScalarForFontSize(Scalar scalar, Scalar font_size)
+	{
+		return scalar / font_size.value() * GLYPH_SPACE_UNITS;
+	}
+
 	font::FontMetrics Font::getFontMetrics() const
 	{
 		// TODO: metrics for the 14 built-in fonts

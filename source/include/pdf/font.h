@@ -53,6 +53,8 @@ namespace pdf
 		// drawing text, the /Tf directive already specifies the font scale!
 		Scalar scaleMetricForPDFTextSpace(double metric) const;
 
+		static Scalar pdfScalarToTextScalarForFontSize(Scalar scalar, Scalar font_size);
+
 		/*
 		    A very thin wrapper around the identically-named methods taking a FontFile
 		*/

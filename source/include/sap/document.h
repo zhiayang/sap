@@ -36,6 +36,7 @@ namespace sap
 	namespace tree
 	{
 		struct Text;
+		struct Paragraph;
 		struct Document;
 	}
 
@@ -96,15 +97,10 @@ namespace sap::layout
 	*/
 	struct LayoutObject : Stylable
 	{
-		virtual ~LayoutObject() { }
-
-		explicit inline LayoutObject() : m_parent(nullptr) { }
-		explicit inline LayoutObject(LayoutObject* parent) : m_parent(parent) { }
-
-		inline LayoutObject* parent() { return m_parent; }
-		inline const LayoutObject* parent() const { return m_parent; }
-
-		inline void setParent(LayoutObject* parent) { m_parent = parent; }
+		LayoutObject() = default;
+		LayoutObject& operator=(LayoutObject&&) = default;
+		LayoutObject(LayoutObject&&) = default;
+		virtual ~LayoutObject() = default;
 
 		/*
 		    Place (lay out) the object into the given region, using the `parent_style` as a fallback style
@@ -121,8 +117,10 @@ namespace sap::layout
 		    it could not be split (eg. images, graphics). In this case, placement should continue on the
 		    subsequent page.
 		*/
-		virtual zst::Result<std::optional<LayoutObject*>, int> layout(interp::Interpreter* cs, LayoutRegion* region,
-		    const Style* parent_style) = 0;
+
+		// LayoutObjects should implement this
+		// static zst::Result<std::optional<LayoutObject*>, int> layout(interp::Interpreter* cs, LayoutRegion* region,
+		//     const Style* parent_style);
 
 		/*
 		    Render (emit PDF commands) the object. Must be called after layout(). For now, we render directly to
@@ -132,7 +130,6 @@ namespace sap::layout
 		virtual void render(const LayoutRegion* region, Position position, pdf::Page* page) const = 0;
 
 	private:
-		LayoutObject* m_parent = nullptr;
 		std::vector<std::unique_ptr<LayoutObject>> m_children {};
 	};
 
@@ -207,41 +204,21 @@ namespace sap::layout
 	*/
 	struct Word : Stylable
 	{
-		explicit inline Word(int kind) : kind(kind) { }
-
-		inline Word(int kind, zst::str_view sv) : Word(kind, sv.str()) { }
-		inline Word(int kind, std::string str) : kind(kind), text(std::move(str)) { }
-
-		// this fills in the `size` and the `glyphs`
-		void computeMetrics(const Style* parent_style);
+		Word(zst::str_view text, const Style* style);
 
 		/*
 		    this assumes that the container (typically a paragraph) has already moved the PDF cursor (ie. wrote
 		    some offset commands with TJ or Td), such that this method just needs to output the encoded glyph ids,
 		    and any styling effects.
 		*/
-		void render(pdf::Text* text) const;
+		void render(pdf::Text* text, Scalar space) const;
 
 		/*
 		    returns the width of a space in the font used by this word. This information is only available
 		    after `computeMetrics()` is called. Otherwise, it returns 0.
 		*/
-		Scalar spaceWidth() const;
-
-		int kind = 0;
-		// TODO: Make this InternString
-		//       This is to make Word cheaper to copy
-		std::string text {};
-
-		Size2d size {};
-
-		// the kind of word. this affects automatic handling of certain things during paragraph
-		// layout, eg. whether or not to insert a space (or how large of a space).
-		static constexpr int KIND_LATIN = 0;
-		static constexpr int KIND_CJK = 1;
-		static constexpr int KIND_PUNCT = 2;
-
-		friend struct Paragraph;
+		Scalar spaceWidth() const { return m_space_width; }
+		Size2d size() const { return m_size; }
 
 		struct GlyphInfo
 		{
@@ -253,63 +230,31 @@ namespace sap::layout
 		static Word fromTreeText(const tree::Text& w);
 
 	private:
-		const Paragraph* m_paragraph = nullptr;
-
-		/*
-		    same as the one in tree -- control whether this word sticks to the left or right
-		    (or both) when laid out and rendered. doing this effectively means that they are
-		    treated as "one word", without any interword spacing.
-		*/
-		bool m_stick_left = false;
-		bool m_stick_right = false;
+		zst::str_view m_text {};
+		Size2d m_size {};
 
 		std::vector<GlyphInfo> m_glyphs {};
-
 		// stuff set by the containing Paragraph during layout and used during rendering.
 		Position m_position {};
-		Word* m_next_word = nullptr;
-		bool m_linebreak_after = false;
-		double m_post_space_ratio {};
 
 		// set by computeMetrics;
 		Scalar m_space_width {};
 	};
 
 
-	struct Text : Stylable
-	{
-		const std::string& text() const { return m_text; }
-		bool isSeparator() const { return m_is_separator; }
-
-		// static Text fromText(zst::str_view text) { return Text(text); }
-		// static Text fromText(std::string text) { return Text(std::move(text)); }
-		static Text fromTreeText(const tree::Text& word);
-
-		static Text separator() { return Text(/* sep: */ true); }
-
-	private:
-		explicit Text(zst::str_view text) : m_text(text.str()), m_is_separator(false) { }
-		explicit Text(std::string text) : m_text(std::move(text)), m_is_separator(false) { }
-		explicit Text(bool sep) : m_text(""), m_is_separator(sep) { }
-
-		std::string m_text;
-		bool m_is_separator;
-	};
-
 
 	// for now we are not concerned with lines.
 	struct Paragraph : LayoutObject
 	{
-		void add(Word word);
-		void add(Text text);
+		using LayoutObject::LayoutObject;
+		void add(Word word, Position position);
 
-		virtual zst::Result<std::optional<LayoutObject*>, int> layout(interp::Interpreter* cs, LayoutRegion* region,
-		    const Style* parent_style) override;
+		static std::optional<const tree::Paragraph*> layout(interp::Interpreter* cs, LayoutRegion* region,
+		    const Style* parent_style, const tree::Paragraph* treepara);
 		virtual void render(const LayoutRegion* region, Position position, pdf::Page* page) const override;
 
 	private:
-		std::vector<Word> m_words {};
-		std::vector<Text> m_texts {};
+		std::vector<std::pair<Word, Position>> m_words {};
 	};
 
 

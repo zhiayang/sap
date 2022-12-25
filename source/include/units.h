@@ -70,6 +70,7 @@ namespace dim
 		constexpr self_type& operator=(const self_type&) = default;
 
 		constexpr bool zero() const { return this->_x == 0; }
+		constexpr bool nonzero() const { return this->_x != 0; }
 
 		constexpr value_type& value() { return this->_x; }
 		constexpr value_type value() const { return this->_x; }

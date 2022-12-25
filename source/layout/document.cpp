@@ -3,6 +3,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #include "sap.h"
+#include "util.h"
 #include "pdf/page.h"
 #include "pdf/document.h"
 #include "interp/tree.h"
@@ -42,30 +43,55 @@ namespace sap::layout
 		m_objects.push_back(std::move(obj));
 	}
 
-	static std::unique_ptr<Paragraph> layoutParagraph(interp::Interpreter* cs, const std::shared_ptr<tree::Paragraph>& para)
-	{
-		auto ret = std::make_unique<Paragraph>();
+	/* static std::unique_ptr<Paragraph> layoutParagraph(interp::Interpreter* cs, const std::shared_ptr<tree::Paragraph>& para) */
+	/* { */
+	/* 	auto ret = std::make_unique<Paragraph>(); */
 
-		for(auto& obj : para->contents())
-		{
-			if(auto txt = std::dynamic_pointer_cast<tree::Text>(obj); txt != nullptr)
-			{
-				ret->add(Text::fromTreeText(*txt));
-				ret->add(Word::fromTreeText(*txt));
-			}
+	/* 	for(auto& obj : para->contents()) */
+	/* 	{ */
+	/* 		if(auto txt = std::dynamic_pointer_cast<tree::Text>(obj); txt != nullptr) */
+	/* 		{ */
+	/* 			ret->add(Text::fromTreeText(*txt)); */
+	/* 			ret->add(Word::fromTreeText(*txt)); */
+	/* 		} */
 
-			else if(auto sep = std::dynamic_pointer_cast<tree::Separator>(obj); sep != nullptr)
-				ret->add(Text::separator());
+	/* 		else if(auto sep = std::dynamic_pointer_cast<tree::Separator>(obj); sep != nullptr) */
+	/* 			ret->add(Text::separator()); */
 
-			else
-				sap::internal_error("coeu");
-		}
+	/* 		else */
+	/* 			sap::internal_error("coeu"); */
+	/* 	} */
 
-		return ret;
-	}
+	/* 	return ret; */
+	/* } */
 
 	void Document::layout(interp::Interpreter* cs, const tree::Document& treedoc)
 	{
+		m_pages.emplace_back(dim::Vector2(dim::mm(210), dim::mm(297)).into(Size2d {}));
+
+		for(const auto& obj : treedoc.objects())
+		{
+			if(auto treepara = util::dynamic_pointer_cast<tree::Paragraph>(obj); treepara != nullptr)
+			{
+				std::optional<const tree::Paragraph*> overflow = treepara.get();
+				while(true)
+				{
+					overflow = Paragraph::layout(cs, m_pages.back().layoutRegion(), m_style, *overflow);
+					if(overflow)
+					{
+						m_pages.emplace_back(dim::Vector2(dim::mm(210), dim::mm(297)).into(Size2d {}));
+					}
+					else
+					{
+						break;
+					}
+				}
+			}
+			else
+				sap::internal_error("lol");
+		}
+
+#if 0
 		for(const auto& obj : treedoc.objects())
 		{
 			if(auto para = std::dynamic_pointer_cast<tree::Paragraph>(obj); para != nullptr)
@@ -106,6 +132,7 @@ namespace sap::layout
 				i++;
 			}
 		}
+#endif
 	}
 
 	void Document::render()
