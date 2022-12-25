@@ -2,6 +2,7 @@
 // Copyright (c) 2022, zhiayang
 // SPDX-License-Identifier: Apache-2.0
 
+#include "util.h"
 #include "interp/tree.h"
 #include "interp/state.h"
 #include "interp/interp.h"
@@ -14,11 +15,11 @@ namespace sap::tree
 	{
 		for(auto& obj : m_contents)
 		{
-			if(auto word = std::dynamic_pointer_cast<tree::Text>(obj); word != nullptr)
+			if(auto word = util::dynamic_pointer_cast<tree::Text>(obj); word != nullptr)
 			{
 				// do nothing
 			}
-			else if(auto iscr = std::dynamic_pointer_cast<tree::ScriptCall>(obj); iscr != nullptr)
+			else if(auto iscr = util::dynamic_pointer_cast<tree::ScriptCall>(obj); iscr != nullptr)
 			{
 				if(auto tmp = cs->run(iscr->call.get()); tmp != nullptr)
 				{
@@ -37,7 +38,7 @@ namespace sap::tree
 					error("interp", "unsupported");
 				}
 			}
-			else if(auto iscb = std::dynamic_pointer_cast<tree::ScriptBlock>(obj); iscb != nullptr)
+			else if(auto iscb = util::dynamic_pointer_cast<tree::ScriptBlock>(obj); iscb != nullptr)
 			{
 				error("interp", "unsupported");
 			}
@@ -55,7 +56,7 @@ namespace sap::tree
 		bool seen_whitespace = false;
 		for(auto& uwu : m_contents)
 		{
-			auto tree_text = std::dynamic_pointer_cast<tree::Text>(uwu);
+			auto tree_text = util::dynamic_pointer_cast<tree::Text>(uwu);
 			assert(tree_text != nullptr);
 
 			auto current_text = std::make_shared<Text>("");
