@@ -111,15 +111,14 @@ namespace sap::layout
 		return path_as_iters;
 	}
 
-	void Paragraph::add(Word word, Position position)
-	{
-		m_words.emplace_back(std::move(word), std::move(position));
-	}
 
-	std::optional<const tree::Paragraph*> Paragraph::layout(interp::Interpreter* cs, LayoutRegion* region,
-	    const Style* parent_style, const tree::Paragraph* treepara)
+	std::pair<std::optional<const tree::Paragraph*>, Cursor> Paragraph::layout(interp::Interpreter* cs, RectPageLayout* layout,
+	    Cursor cursor, const Style* parent_style, const tree::Paragraph* treepara)
 	{
-		std::vector<std::variant<Word>> words_and_seps;
+		cursor = layout->newLineFrom(cursor, Scalar());
+
+		using WordSepVec = std::vector<std::variant<Word>>;
+		WordSepVec words_and_seps;
 		for(auto wordorsep : treepara->contents())
 		{
 			if(auto word = util::dynamic_pointer_cast<tree::Text>(wordorsep); word != nullptr)
@@ -129,30 +128,27 @@ namespace sap::layout
 		}
 
 		auto para = util::make<Paragraph>();
-		Position cursor = region->cursor();
-		std::vector<std::variant<Word>> cur_line;
+		WordSepVec cur_line;
 		Scalar prev_space;
 		Scalar cur_line_length;
 		Scalar cur_line_spacing;
 
-		Position past_final_line_cursor;
-
 		// Break lines
-		std::vector<std::tuple<std::vector<std::variant<Word>>, Scalar, Scalar>> lines;
+		std::vector<std::tuple<std::vector<std::variant<Word>>, Cursor, Scalar>> lines;
 		for(auto wordorsep : words_and_seps)
 		{
 			std::visit(
 			    [&](Word word) {
 				    cur_line_length += prev_space;
 				    cur_line_length += word.size().x();
-				    if(cur_line_length >= region->spaceAtCursor().x())
+				    if(cur_line_length >= layout->getWidthAt(cursor))
 				    {
 					    cur_line_length -= prev_space;
 					    cur_line_length -= word.size().x();
-					    lines.emplace_back(std::move(cur_line), cursor.y(), cur_line_length);
+					    cursor = layout->newLineFrom(cursor, cur_line_spacing);
+					    lines.emplace_back(std::move(cur_line), cursor, cur_line_length);
 					    cur_line.clear();
-					    cursor.x() = Scalar();
-					    cursor.y() += cur_line_spacing;
+					    cursor = layout->newLineFrom(cursor, Scalar());
 					    cur_line_length = word.size().x();
 				    }
 				    prev_space = word.spaceWidth();
@@ -162,19 +158,18 @@ namespace sap::layout
 			    },
 			    wordorsep);
 		}
-		lines.emplace_back(std::move(cur_line), cursor.y(), cur_line_length);
+		cursor = layout->newLineFrom(cursor, cur_line_spacing);
+		lines.emplace_back(std::move(cur_line), cursor, cur_line_length);
 		cur_line.clear();
-		cursor.x() = Scalar();
-		cursor.y() += cur_line_spacing;
-		past_final_line_cursor = cursor;
+		cursor = layout->newLineFrom(cursor, Scalar());
 
 		// Justify and add words to region
 		for(auto it = lines.begin(); it != lines.end(); ++it)
 		{
-			const auto& [line, line_y_pos, line_length] = *it;
+			const auto& [line, line_cursor, line_length] = *it;
 
-			auto cursor = Position(Scalar(), line_y_pos);
-			auto total_extra_space_width = region->spaceAtCursor().x() - line_length;
+			cursor = line_cursor;
+			auto total_extra_space_width = layout->getWidthAt(cursor) - line_length;
 			auto num_spaces = line.size() - 1; // TODO: this should be = the # of separators
 			auto extra_space_width = num_spaces == 0 ? Scalar() : total_extra_space_width / (double) num_spaces;
 			if(it + 1 == lines.end())
@@ -185,58 +180,62 @@ namespace sap::layout
 			{
 				std::visit(
 				    [&](Word word) {
-					    para->add(word, cursor);
+					    para->m_words.emplace_back(word, cursor);
 					    // TODO: add space in separate case but for now every word is followed by a space
-					    cursor.x() += word.size().x();
-					    cursor.x() += word.spaceWidth();
-					    cursor.x() += extra_space_width;
+					    cursor = layout->moveRightFrom(cursor, word.size().x());
+					    cursor = layout->moveRightFrom(cursor, word.spaceWidth());
+					    cursor = layout->moveRightFrom(cursor, extra_space_width);
 				    },
 				    wordorsep);
 			}
 		}
-		region->addObjectAtCursor(para);
-		region->moveCursorTo(past_final_line_cursor);
-		return std::nullopt;
+		layout->addObject(para);
+		return { std::nullopt, cursor };
 	}
 
 
-	void Paragraph::render(const LayoutRegion* region, Position abs_para_position, pdf::Page* page) const
+	void Paragraph::render(const RectPageLayout* layout, std::vector<pdf::Page*>& pages) const
 	{
-		(void) region;
+		if(m_words.empty())
+		{
+			return;
+		}
 
-		/*
-		    here, `abs_para_position` (as the name suggests) is the absolute position of the paragraph
-		    within the page. The word positions are stored relative to the start of the paragraph,
-		    which means it's a simple addition to get the absolute position of the word.
-		*/
-		auto text = util::make<pdf::Text>();
-		text->moveAbs(page->convertVector2(abs_para_position.into<pdf::Position2d_YDown>()));
-
-		/*
-		    not sure if this is legit, but words basically don't actually use their own `m_position` when
-		    rendering; we just pass the words to the PDF, and the viewer uses the font metrics to adjust.
-
-		    we do use the computed position when advancing to the next line, to account for line spacing
-		    differences if there's more than one font-size on a line.
-		*/
-		Position current_pos {};
+		Cursor current_curs = m_words.front().second;
+		pdf::Text* cur_text = util::make<pdf::Text>();
+		cur_text->moveAbs(pages[m_words.front().second.page_num]->convertVector2(
+		    m_words.front().second.pos_on_page.into<pdf::Position2d_YDown>()));
 		for(size_t i = 0; i < m_words.size(); i++)
 		{
-			auto space = m_words[i].second.x() - current_pos.x();
+			/*
+			    not sure if this is legit, but words basically don't actually use their own `m_position` when
+			    rendering; we just pass the words to the PDF, and the viewer uses the font metrics to adjust.
 
-			if(i != 0 && current_pos.y() != m_words[i].second.y())
+			    we do use the computed position when advancing to the next line, to account for line spacing
+			    differences if there's more than one font-size on a line.
+			*/
+			auto space = m_words[i].second.pos_on_page.x() - current_curs.pos_on_page.x();
+
+			if(current_curs.page_num != m_words[i].second.page_num)
 			{
-				auto skip = m_words[i].second.y() - current_pos.y();
-				text->nextLine(pdf::Offset2d(0, -1.0 * skip.into<pdf::Scalar>().value()));
+				pages[m_words[i - 1].second.page_num]->addObject(cur_text);
+				cur_text = util::make<pdf::Text>();
+				cur_text->moveAbs(pages[m_words[i].second.page_num]->convertVector2(
+				    m_words[i].second.pos_on_page.into<pdf::Position2d_YDown>()));
+				space = Scalar();
+			}
+			else if(current_curs.pos_on_page.y() != m_words[i].second.pos_on_page.y())
+			{
+				auto skip = m_words[i].second.pos_on_page.y() - current_curs.pos_on_page.y();
+				cur_text->nextLine(pdf::Offset2d(0, -1.0 * skip.into<pdf::Scalar>().value()));
 				space = Scalar();
 			}
 
-			m_words[i].first.render(text, space);
+			m_words[i].first.render(cur_text, space);
 
-			current_pos = m_words[i].second;
-			current_pos.x() += m_words[i].first.size().x();
+			current_curs = m_words[i].second;
+			current_curs.pos_on_page.x() += m_words[i].first.size().x();
 		}
-
-		page->addObject(text);
+		pages[m_words.back().second.page_num]->addObject(cur_text);
 	}
 }

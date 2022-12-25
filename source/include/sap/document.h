@@ -16,6 +16,7 @@
 #include "defs.h"
 #include "font/font.h"
 #include "sap/style.h"
+#include "pdf/page.h"
 #include "pdf/document.h"
 
 namespace pdf
@@ -89,7 +90,7 @@ namespace sap::layout
 
 	struct Page;
 	struct Paragraph;
-	struct LayoutRegion;
+	struct RectPageLayout;
 
 	/*
 	    As mentioned in the overview above, a LayoutObject is some object that can be laid out and
@@ -127,7 +128,7 @@ namespace sap::layout
 		    the PDF page (by construcitng and emitting PageObjects), instead of returning a pageobject -- some
 		    layout objects might require multiple pdf page objects, so this is a more flexible design.
 		*/
-		virtual void render(const LayoutRegion* region, Position position, pdf::Page* page) const = 0;
+		virtual void render(const RectPageLayout* layout, std::vector<pdf::Page*>& pages) const = 0;
 
 	private:
 		std::vector<std::unique_ptr<LayoutObject>> m_children {};
@@ -150,32 +151,113 @@ namespace sap::layout
 	    During the rendering phase, the layout region simply calls the render method on the objects it contains,
 	    sequentially. Since layout has been completed, objects are expected to render directly to the PDF page.
 	*/
-	struct LayoutRegion
+	struct Cursor
 	{
-		explicit LayoutRegion(Size2d size);
+		size_t page_num;
+		Position pos_on_page;
+	};
 
-		void moveCursorTo(Position pos);
-		void advanceCursorBy(Offset2d offset);
+	struct RectPageLayout
+	{
+		explicit RectPageLayout(Size2d size, Scalar margin) : m_size(size), m_margin(margin) { }
 
-		void addObjectAtCursor(LayoutObject* obj);
-		void addObjectAtPosition(LayoutObject* obj, Position pos);
-
-		Position cursor() const;
-		Size2d spaceAtCursor() const;
-		bool haveSpaceAtCursor(Size2d size) const;
+		Cursor newCursor() const { return { SIZE_MAX, m_size }; }
+		Scalar getWidthAt(Cursor curs) const
+		{
+			return curs.page_num == SIZE_MAX ? Scalar() : m_size.x() - m_margin - curs.pos_on_page.x();
+		}
+		Cursor newLineFrom(Cursor curs, Scalar line_height)
+		{
+			if(curs.pos_on_page.y() + line_height >= m_size.y() - m_margin)
+			{
+				m_num_pages = std::max(m_num_pages, curs.page_num + 1 + 1);
+				return { curs.page_num + 1, Position(m_margin, m_margin + line_height) };
+			}
+			else
+				return { curs.page_num, Position(m_margin, curs.pos_on_page.y() + line_height) };
+		}
+		Cursor moveRightFrom(Cursor curs, Scalar width) const
+		{
+			return { curs.page_num, curs.pos_on_page + Offset2d(width, Scalar()) };
+		}
 
 		/*
 		    Here, `position` is the (absolute) position of the region in the page (since regions cannot nest). This
 		    position is then added to the relative positions of each object.
 		*/
-		void render(Position position, pdf::Page* page) const;
+		std::vector<pdf::Page*> render() const
+		{
+			std::vector<pdf::Page*> ret;
+			for(size_t i = 0; i < m_num_pages; ++i)
+			{
+				// TODO: Pages should have the size determined by page size
+				ret.emplace_back(util::make<pdf::Page>());
+			}
+			for(auto obj : m_objects)
+			{
+				obj->render(this, ret);
+			}
+			return ret;
+		}
+
+		void addObject(LayoutObject* obj) { m_objects.push_back(obj); }
 
 	private:
-		Size2d m_size {};
-
-		Position m_cursor {};
-		std::vector<std::pair<Position, LayoutObject*>> m_objects {};
+		Size2d m_size;
+		Scalar m_margin;
+		size_t m_num_pages = 1;
+		std::vector<LayoutObject*> m_objects {};
 	};
+
+	// Theoretical fully generic layout idea?
+#if 0
+	struct LineCursor;
+
+	struct Layout
+	{
+		// Up to derived classes to static_cast and use
+		struct Payload
+		{
+			char payload[32];
+		};
+
+		virtual LineCursor newCursor() = 0;
+		virtual Payload copyCursor(Payload) = 0;
+		virtual void deleteCursor(Payload) = 0;
+
+		// cursor getters
+		virtual Scalar getWidth(Payload) const = 0;
+
+		// cursor mutators
+		virtual LineCursor newLine(Payload, Scalar line_height) = 0;
+		virtual LineCursor moveRight(Payload, Scalar shift) = 0;
+	};
+
+	// A cursor is a line + its position in the line
+	// Use .newLine to get a new cursor that corresponds to the new line
+	// Use .getWidth to get the width of the line
+	// These methods are all forwarded to the underlying Layout, this class exists so we have a copyable handle
+	struct LineCursor
+	{
+		Layout* layout;
+		Layout::Payload payload;
+
+		// Make it look copyable but actually it's not that trivial
+		LineCursor(const LineCursor& other) : layout(other.layout) { payload = layout->copyCursor(other.payload); }
+		LineCursor& operator=(const LineCursor& other)
+		{
+			auto copy = other;
+			std::swap(payload, copy.payload);
+			return *this;
+		}
+		~LineCursor() { layout->deleteCursor(payload); }
+
+		// Actually cursor things
+		Scalar getWidth() const { return layout->getWidth(payload); }
+		LineCursor newLine(Scalar line_height) const { return layout->newLine(payload, line_height); }
+		LineCursor moveRight(Scalar shift) const { return layout->moveRight(payload, shift); }
+	};
+#endif
 
 
 
@@ -247,34 +329,13 @@ namespace sap::layout
 	struct Paragraph : LayoutObject
 	{
 		using LayoutObject::LayoutObject;
-		void add(Word word, Position position);
 
-		static std::optional<const tree::Paragraph*> layout(interp::Interpreter* cs, LayoutRegion* region,
-		    const Style* parent_style, const tree::Paragraph* treepara);
-		virtual void render(const LayoutRegion* region, Position position, pdf::Page* page) const override;
-
-	private:
-		std::vector<std::pair<Word, Position>> m_words {};
-	};
-
-
-	struct Page : Stylable
-	{
-		explicit Page(Size2d paper_size);
-
-		Page(const Page&) = delete;
-		Page& operator=(const Page&) = delete;
-
-		Page(Page&&) = default;
-		Page& operator=(Page&&) = default;
-
-		inline LayoutRegion* layoutRegion() { return &m_layout_region; }
-		inline const LayoutRegion* layoutRegion() const { return &m_layout_region; }
-
-		pdf::Page* render();
+		static std::pair<std::optional<const tree::Paragraph*>, Cursor> layout(interp::Interpreter* cs, RectPageLayout* layout,
+		    Cursor cursor, const Style* parent_style, const tree::Paragraph* treepara);
+		virtual void render(const RectPageLayout* layout, std::vector<pdf::Page*>& pages) const override;
 
 	private:
-		LayoutRegion m_layout_region;
+		std::vector<std::pair<Word, Cursor>> m_words {};
 	};
 
 
@@ -296,7 +357,11 @@ namespace sap::layout
 		pdf::Font* addFont(font::FontFile* font) { return pdf::Font::fromFontFile(&m_pdf_document, font); }
 		void write(pdf::Writer* stream)
 		{
-			this->render();
+			auto pages = m_page_layout.render();
+			for(auto& page : pages)
+			{
+				m_pdf_document.addPage(page);
+			}
 			m_pdf_document.write(stream);
 		}
 
@@ -304,10 +369,8 @@ namespace sap::layout
 		pdf::Document& pdfDocument();
 		const pdf::Document& pdfDocument() const;
 
-		void render();
-
 		pdf::Document m_pdf_document {};
-		std::vector<Page> m_pages {};
+		RectPageLayout m_page_layout = RectPageLayout(dim::Vector2(dim::mm(210), dim::mm(297)).into<Size2d>(), dim::mm(25));
 
 		std::vector<std::unique_ptr<LayoutObject>> m_objects {};
 	};

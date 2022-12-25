@@ -45,35 +45,18 @@ namespace sap::layout
 
 	void Document::layout(interp::Interpreter* cs, const tree::Document& treedoc)
 	{
-		m_pages.emplace_back(dim::Vector2(dim::mm(210), dim::mm(297)).into<Size2d>());
-
+		Cursor cursor = m_page_layout.newCursor();
 		for(const auto& obj : treedoc.objects())
 		{
 			if(auto treepara = util::dynamic_pointer_cast<tree::Paragraph>(obj); treepara != nullptr)
 			{
 				std::optional<const tree::Paragraph*> overflow = treepara.get();
-				while(true)
-				{
-					overflow = Paragraph::layout(cs, m_pages.back().layoutRegion(), m_style, *overflow);
-					if(overflow)
-					{
-						m_pages.emplace_back(dim::Vector2(dim::mm(210), dim::mm(297)).into<Size2d>());
-					}
-					else
-					{
-						break;
-					}
-				}
+				while(overflow)
+					std::tie(overflow, cursor) = Paragraph::layout(cs, &m_page_layout, cursor, m_style, *overflow);
 			}
 			else
 				sap::internal_error("lol");
 		}
-	}
-
-	void Document::render()
-	{
-		for(auto& page : m_pages)
-			m_pdf_document.addPage(page.render());
 	}
 
 }
