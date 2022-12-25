@@ -2,10 +2,16 @@
 // Copyright (c) 2022, zhiayang
 // SPDX-License-Identifier: Apache-2.0
 
-#include "sap.h"
-#include "interp/tree.h"
-#include "interp/state.h"
-#include "interp/interp.h"
+#include <memory> // for operator==, default_delete, unique_ptr
+
+#include "defs.h"     // for ErrorOr, Ok, ErrFmt, TRY
+#include "location.h" // for error
+
+#include "interp/tree.h"   // for InlineObject
+#include "interp/type.h"   // for Type
+#include "interp/state.h"  // for Interpreter, DefnTree
+#include "interp/value.h"  // for Value
+#include "interp/interp.h" // for Ident, NumberLit, InlineTreeExpr, Declara...
 
 namespace sap::interp
 {

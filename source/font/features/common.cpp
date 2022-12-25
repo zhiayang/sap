@@ -2,10 +2,11 @@
 // Copyright (c) 2021, zhiayang
 // SPDX-License-Identifier: Apache-2.0
 
-#include "util.h"
-#include "error.h"
-#include "font/font.h"
-#include "font/features.h"
+#include "error.h" // for warn
+
+#include "font/tag.h"      // for Tag
+#include "font/font.h"     // for consume_u16, FontFile, consume_u32, Table
+#include "font/features.h" // for LookupTable, TaggedTable, Feature, Script
 
 namespace font::off
 {

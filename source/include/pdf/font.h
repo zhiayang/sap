@@ -4,8 +4,8 @@
 
 #pragma once
 
-#include <set>
 #include <map>
+#include <set>
 #include <unordered_set>
 
 #include <zst.h>
@@ -13,6 +13,7 @@
 #include "pool.h"
 
 #include "pdf/units.h"
+
 #include "font/font.h"
 
 namespace pdf

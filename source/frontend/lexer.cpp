@@ -2,12 +2,13 @@
 // Copyright (c) 2022, zhiayang
 // SPDX-License-Identifier: Apache-2.0
 
-#include <algorithm>
-#include <ctype.h>
+#include <algorithm> // for all_of
 
-#include "util.h"
-#include "error.h"
-#include "sap/frontend.h"
+#include "util.h"     // for checked_cast
+#include "error.h"    // for internal_error
+#include "location.h" // for Location, error
+
+#include "sap/frontend.h" // for Token, Lexer, Lexer::Mode, Lexer::SaveState
 
 namespace sap::frontend
 {

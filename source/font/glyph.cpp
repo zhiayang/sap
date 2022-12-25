@@ -2,12 +2,12 @@
 // Copyright (c) 2021, zhiayang
 // SPDX-License-Identifier: Apache-2.0
 
-#include "util.h"
-#include "error.h"
+#include "util.h"  // for convertBEU16
+#include "error.h" // for internal_error
+#include "types.h" // for GlyphId
 
-#include "font/cff.h"
-#include "font/font.h"
-#include "font/truetype.h"
+#include "font/font.h"     // for GlyphMetrics, FontFile, FontMetrics, Font...
+#include "font/truetype.h" // for BoundingBox, getGlyphBoundingBox
 
 namespace font
 {

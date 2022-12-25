@@ -2,11 +2,12 @@
 // Copyright (c) 2022, zhiayang
 // SPDX-License-Identifier: Apache-2.0
 
-#include "util.h"
-#include "error.h"
+#include "util.h"  // for checked_cast
+#include "error.h" // for warn
+#include "types.h" // for GlyphId
 
-#include "font/font.h"
-#include "font/features.h"
+#include "font/font.h"     // for consume_u16, peek_u16
+#include "font/features.h" // for ContextualLookupRecord, getGlyphCoverageI...
 
 namespace font::off
 {

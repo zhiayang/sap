@@ -2,15 +2,12 @@
 // Copyright (c) 2021, zhiayang
 // SPDX-License-Identifier: Apache-2.0
 
-#include <fcntl.h>
-#include <unistd.h>
-#include <sys/stat.h>
-#include <sys/mman.h>
+#include <fcntl.h>    // for open, O_RDONLY
+#include <sys/mman.h> // for size_t, mmap, MAP_PRIVATE, PROT_READ
+#include <sys/stat.h> // for fstat, stat
 
-#include <cerrno>
-
-#include "util.h"
-#include "error.h"
+#include "util.h"  // for readEntireFile
+#include "error.h" // for internal_error
 
 namespace util
 {

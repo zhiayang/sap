@@ -2,12 +2,14 @@
 // Copyright (c) 2022, zhiayang
 // SPDX-License-Identifier: Apache-2.0
 
-#include "util.h"
-#include "interp/tree.h"
-#include "interp/state.h"
-#include "interp/interp.h"
-#include "zpr.h"
-#include <memory>
+#include <memory> // for shared_ptr, operator==, __shared_ptr_access
+
+#include "util.h"  // for dynamic_pointer_cast
+#include "error.h" // for error
+
+#include "interp/tree.h"   // for Text, Separator, InlineObject, Paragraph
+#include "interp/state.h"  // for Interpreter
+#include "interp/interp.h" // for FunctionCall
 
 namespace sap::tree
 {

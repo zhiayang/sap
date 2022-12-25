@@ -2,15 +2,18 @@
 // Copyright (c) 2022, zhiayang
 // SPDX-License-Identifier: Apache-2.0
 
-#include <algorithm>
+#include <algorithm> // for find_if, sort
 
-#include "pdf/font.h"
-#include "pdf/misc.h"
-#include "pdf/object.h"
-#include "pdf/document.h"
-#include "pdf/win_ansi_encoding.h"
+#include "pool.h"  // for make
+#include "types.h" // for GlyphId
 
-#include "font/font.h"
+#include "pdf/font.h"     // for Font, Font::ENCODING_CID, Font::ENCODING_W...
+#include "pdf/misc.h"     // for error
+#include "pdf/units.h"    // for Scalar
+#include "pdf/object.h"   // for Integer, Name, Dictionary, Object, Indirec...
+#include "pdf/document.h" // for Document
+
+#include "font/font.h" // for FontFile, FontMetrics, generateSubsetName
 
 namespace pdf
 {

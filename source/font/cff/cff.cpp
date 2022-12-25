@@ -2,10 +2,12 @@
 // Copyright (c) 2022, zhiayang
 // SPDX-License-Identifier: Apache-2.0
 
-#include "pool.h"
-#include "util.h"
-#include "font/cff.h"
-#include "font/font.h"
+#include "pool.h"  // for make
+#include "util.h"  // for checked_cast
+#include "error.h" // for error, warn
+
+#include "font/cff.h"  // for Subroutine, CFFData, IndexTable, FontDict, Glyph
+#include "font/font.h" // for consume_u8, consume_u16, peek_u16, FontFile
 
 namespace font::cff
 {

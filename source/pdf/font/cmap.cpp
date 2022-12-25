@@ -5,9 +5,13 @@
 // i know it's bad form to keep having two font.hs and two cmap.cpps and whatever
 // but they are literally called cmaps
 
-#include "util.h"
-#include "pdf/font.h"
-#include "pdf/object.h"
+#include "util.h"  // for codepointToSurrogatePair
+#include "types.h" // for GlyphId
+
+#include "pdf/font.h"   // for Font, Document
+#include "pdf/object.h" // for Stream
+
+#include "font/font.h" // for CharacterMapping, FontFile
 
 namespace pdf
 {

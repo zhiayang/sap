@@ -2,13 +2,14 @@
 // Copyright (c) 2022, zhiayang
 // SPDX-License-Identifier: Apache-2.0
 
-#include <algorithm>
+#include <algorithm> // for remove_if
 
-#include "util.h"
-#include "error.h"
+#include "util.h"  // for checked_cast, convertBEU16
+#include "types.h" // for GlyphId
 
-#include "font/cff.h"
-#include "font/font.h"
+#include "font/cff.h"  // for FontDict, Operand, CFFData, Glyph, DictBuilder
+#include "font/tag.h"  // for Tag
+#include "font/font.h" // for FontFile, Table
 
 namespace font::cff
 {

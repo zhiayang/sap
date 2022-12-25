@@ -2,11 +2,12 @@
 // Copyright (c) 2022, zhiayang
 // SPDX-License-Identifier: Apache-2.0
 
-#include "util.h"
-#include "error.h"
+#include "util.h"  // for convertBEU16
+#include "error.h" // for error
+#include "types.h" // for GlyphId
 
-#include "font/font.h"
-#include "font/truetype.h"
+#include "font/font.h"     // for consume_u16, consume_u8, FontFile, consum...
+#include "font/truetype.h" // for Glyph, TTData, BoundingBox, getGlyphBound...
 
 namespace font::truetype
 {

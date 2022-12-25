@@ -2,10 +2,11 @@
 // Copyright (c) 2021, zhiayang
 // SPDX-License-Identifier: Apache-2.0
 
-#include "util.h"
-#include "error.h"
+#include "util.h"  // for convertBEU16
+#include "error.h" // for warn
+#include "types.h" // for GlyphId, GlyphId::notdef
 
-#include "font/font.h"
+#include "font/font.h" // for consume_u16, consume_u32, CharacterMapping
 
 namespace font
 {

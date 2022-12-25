@@ -4,11 +4,10 @@
 
 #pragma once
 
+#include <zpr.h>
+#include <zst.h>
 #include <cstdio>
 #include <cstdlib>
-
-#include <zst.h>
-#include <zpr.h>
 
 namespace pdf
 {

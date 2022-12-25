@@ -11,10 +11,10 @@
 #include <numeric>
 #include <sstream>
 
-#include "type.h"
-#include "tree.h"
-#include "util.h"
 #include "zpr.h"
+#include "tree.h"
+#include "type.h"
+#include "util.h"
 
 namespace sap::tree
 {

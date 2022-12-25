@@ -2,7 +2,7 @@
 // Copyright (c) 2022, zhiayang
 // SPDX-License-Identifier: Apache-2.0
 
-#include "interp/type.h"
+#include "interp/type.h" // for ArrayType, Type, Type::KIND_ARRAY
 
 namespace sap::interp
 {

@@ -2,17 +2,12 @@
 // Copyright (c) 2021, zhiayang
 // SPDX-License-Identifier: Apache-2.0
 
-#include <fcntl.h>
-#include <unistd.h>
+#include <fcntl.h>  // for open, O_CREAT, O_TRUNC, O_WRONLY
+#include <unistd.h> // for size_t, close, write
 
-#include <cerrno>
-#include <cassert>
-#include <cstring>
-#include <cstdlib>
-
-#include "pdf/misc.h"
-#include "pdf/writer.h"
-#include "pdf/object.h"
+#include "pdf/misc.h"   // for error
+#include "pdf/object.h" // for Object
+#include "pdf/writer.h" // for Writer
 
 namespace pdf
 {

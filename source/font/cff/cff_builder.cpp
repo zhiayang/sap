@@ -2,10 +2,10 @@
 // Copyright (c) 2022, zhiayang
 // SPDX-License-Identifier: Apache-2.0
 
-#include "util.h"
-#include "error.h"
-#include "font/cff.h"
-#include "font/font.h"
+#include "util.h"  // for checked_cast, convertBEU16, convertBEU32
+#include "error.h" // for error
+
+#include "font/cff.h" // for Operand, DictKey, DictBuilder, IndexTableBuilder
 
 namespace font::cff
 {

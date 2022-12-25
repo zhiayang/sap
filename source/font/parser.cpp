@@ -2,20 +2,18 @@
 // Copyright (c) 2021, zhiayang
 // SPDX-License-Identifier: Apache-2.0
 
-#include <zpr.h>
-#include <cstring>
-#include <cassert>
+#include "pool.h"  // for make
+#include "util.h"  // for readEntireFile, utf8FromUtf16BigE...
+#include "error.h" // for internal_error, error
 
-#include "pool.h"
-#include "util.h"
-#include "error.h"
-
-#include "font/cff.h"
-#include "font/font.h"
-#include "font/truetype.h"
+#include "font/cff.h"      // for parseCFFData
+#include "font/tag.h"      // for Tag
+#include "font/font.h"     // for FontFile, Table, FontMetrics, Fon...
+#include "font/features.h" // for parseGPos, parseGSub
+#include "font/truetype.h" // for TTData, parseGlyfTable, parseLoca...
 
 #ifdef USE_FONTCONFIG
-#include <fontconfig/fontconfig.h>
+#include <fontconfig/fontconfig.h> // for FcChar8, FcPatternDestroy, FcConf...
 #endif
 
 namespace font

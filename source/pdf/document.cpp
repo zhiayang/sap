@@ -2,12 +2,13 @@
 // Copyright (c) 2021, zhiayang
 // SPDX-License-Identifier: Apache-2.0
 
-#include "util.h"
-#include "pdf/page.h"
-#include "pdf/misc.h"
-#include "pdf/writer.h"
-#include "pdf/object.h"
-#include "pdf/document.h"
+#include "util.h" // for checked_cast
+
+#include "pdf/misc.h"     // for error
+#include "pdf/page.h"     // for Page
+#include "pdf/object.h"   // for Object, Dictionary, Name, IndirectRef, Int...
+#include "pdf/writer.h"   // for Writer
+#include "pdf/document.h" // for Document
 
 namespace pdf
 {

@@ -2,13 +2,13 @@
 // Copyright (c) 2021, zhiayang
 // SPDX-License-Identifier: Apache-2.0
 
-#include <cassert>
+#include "units.h" // for Scalar
 
-#include "util.h"
-#include "pdf/font.h"
-#include "pdf/text.h"
-#include "pdf/page.h"
-#include "pdf/misc.h"
+#include "pdf/font.h"  // for Font
+#include "pdf/misc.h"  // for error
+#include "pdf/page.h"  // for Page
+#include "pdf/text.h"  // for Text::Group, Text, Text::(anonymous)
+#include "pdf/units.h" // for Scalar, Offset2d, Position2d
 
 namespace pdf
 {

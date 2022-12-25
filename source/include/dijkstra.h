@@ -4,9 +4,9 @@
 
 #pragma once
 
-#include <functional>
-#include <ranges>
 #include <set>
+#include <ranges>
+#include <functional>
 #include <unordered_map>
 
 #include "defs.h"

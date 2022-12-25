@@ -3,8 +3,10 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #include "interp/interp.h"
-#include "interp/state.h"
-#include "interp/builtin.h"
+
+#include "interp/type.h"    // for Type
+#include "interp/state.h"   // for DefnTree, Interpreter
+#include "interp/builtin.h" // for bold1
 
 namespace sap::interp
 {

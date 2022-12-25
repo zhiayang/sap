@@ -4,11 +4,11 @@
 
 #pragma once
 
-#include <cstdint>
 #include <cstddef>
+#include <cstdint>
 
-#include "pdf/page.h"
 #include "pdf/misc.h"
+#include "pdf/page.h"
 #include "pdf/units.h"
 #include "pdf/object.h"
 #include "pdf/writer.h"

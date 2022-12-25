@@ -2,8 +2,12 @@
 // Copyright (c) 2022, zhiayang
 // SPDX-License-Identifier: Apache-2.0
 
-#include "pdf/font.h"
-#include "pdf/object.h"
+#include "types.h" // for GlyphId
+
+#include "pdf/font.h"   // for Font, Document
+#include "pdf/object.h" // for Stream
+
+#include "font/font.h" // for FontFile
 
 namespace pdf
 {

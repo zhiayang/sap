@@ -55,7 +55,7 @@ endif
 
 OUTPUT_BIN      := $(OUTPUT_DIR)/sap
 
-.PHONY: all clean build test
+.PHONY: all clean build test format iwyu
 .PRECIOUS: $(PRECOMP_GCH) $(OUTPUT_DIR)/%.cpp.o
 .DEFAULT_GOAL = all
 
@@ -103,6 +103,12 @@ clean:
 	-@rm -rf $(OUTPUT_DIR)
 
 format:
+	find source -iname '*.cpp' -or -iname '*.h' | xargs -I{} -- ./sort_includes.py -i {}
+	clang-format -i $(shell find source -iname "*.cpp" -or -iname "*.h")
+
+iwyu:
+	iwyu-tool -j 8 -p . source -- -Xiwyu --update_comments -Xiwyu --no_fwd_decls -Xiwyu --prefix_header_includes=remove | iwyu-fix-includes --comments --update_comments
+	find source -iname '*.cpp' -or -iname '*.h' | xargs -I{} -- ./sort_includes.py -i {}
 	clang-format -i $(shell find source -iname "*.cpp" -or -iname "*.h")
 
 -include $(CXXDEPS)

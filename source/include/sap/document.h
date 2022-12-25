@@ -7,17 +7,20 @@
 #include <cstddef>
 #include <cstdint>
 
-#include <vector>
 #include <memory>
+#include <vector>
 #include <utility>
 
 #include <zst.h>
 
 #include "defs.h"
-#include "font/font.h"
-#include "sap/style.h"
+
 #include "pdf/page.h"
 #include "pdf/document.h"
+
+#include "sap/style.h"
+
+#include "font/font.h"
 
 namespace pdf
 {

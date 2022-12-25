@@ -2,23 +2,21 @@
 // Copyright (c) 2021, zhiayang
 // SPDX-License-Identifier: Apache-2.0
 
-#include <cstdlib>
+#include "util.h" // for readEntireFile
 
-#include <zpr.h>
+#include "pdf/units.h"  // for Scalar
+#include "pdf/writer.h" // for Writer
 
-#include "sap.h"
-#include "util.h"
+#include "sap/style.h"    // for Style
+#include "sap/units.h"    // for Scalar
+#include "sap/fontset.h"  // for FontSet, FontStyle, FontStyle::Regular
+#include "sap/document.h" // for Document
+#include "sap/frontend.h" // for parse
 
-#include "pdf/font.h"
-#include "pdf/pdf.h"
-#include "pdf/text.h"
+#include "font/font.h" // for findFontPath, FontFile
 
-#include "font/font.h"
-
-#include "sap/frontend.h"
-
-#include "interp/state.h"
-#include "interp/tree.h"
+#include "interp/tree.h"  // for Document
+#include "interp/state.h" // for Interpreter
 
 
 int main(int argc, char** argv)

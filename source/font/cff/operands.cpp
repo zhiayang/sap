@@ -2,11 +2,10 @@
 // Copyright (c) 2022, zhiayang
 // SPDX-License-Identifier: Apache-2.0
 
-#include <optional>
+#include "error.h" // for error
 
-#include "error.h"
-#include "font/cff.h"
-#include "font/font.h"
+#include "font/cff.h"  // for Operand, readNumberFromCharString, readNumber...
+#include "font/font.h" // for consume_u32, consume_u16
 
 namespace font::cff
 {

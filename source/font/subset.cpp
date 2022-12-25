@@ -2,16 +2,18 @@
 // Copyright (c) 2021, zhiayang
 // SPDX-License-Identifier: Apache-2.0
 
-#include <cstdlib>
-#include <ctime>
+#include <ctime> // for size_t, time
 
-#include "util.h"
-#include "error.h"
-#include "pdf/object.h"
+#include "util.h"  // for checked_cast, convertBEU32, convertBEU16
+#include "error.h" // for internal_error
+#include "types.h" // for GlyphId
 
-#include "font/cff.h"
-#include "font/font.h"
-#include "font/truetype.h"
+#include "pdf/object.h" // for Stream, Integer, Dictionary, Length1
+
+#include "font/cff.h"      // for CFFSubset, createCFFSubset
+#include "font/tag.h"      // for Tag
+#include "font/font.h"     // for Table, FontFile, FontFile::OUTLINES_CFF
+#include "font/truetype.h" // for TTSubset, createTTSubset
 
 namespace font
 {

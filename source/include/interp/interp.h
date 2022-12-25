@@ -4,19 +4,18 @@
 
 #pragma once
 
-#include <stdint.h>
-#include <stddef.h>
-
-#include <vector>
-#include <memory>
 #include <string>
+#include <vector>
+#include <memory> // for unique_ptr
 #include <concepts>
-#include <functional>
+#include <stddef.h>
+#include <stdint.h>
+#include <functional> // for function
 
-#include "defs.h"
-#include "type.h"
+#include "defs.h" // for ErrorOr, Ok, TRY
+#include "type.h" // for Type
 // #include "value.h"
-#include "location.h"
+#include "location.h" // for Location
 
 namespace sap::tree
 {
@@ -148,6 +147,7 @@ namespace sap::interp
 
 
 	struct Definition;
+
 	struct Declaration : Stmt
 	{
 		Declaration(const std::string& name, const Type* ty) : name(name), type(ty) { }

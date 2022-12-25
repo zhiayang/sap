@@ -2,13 +2,16 @@
 // Copyright (c) 2022, zhiayang
 // SPDX-License-Identifier: Apache-2.0
 
-#include <climits>
+#include <climits>    // for INT_MAX
+#include <functional> // for function
 
-#include "sap.h"
+#include "defs.h"     // for ErrorOr, ErrFmt, TRY, Ok
+#include "location.h" // for error
 
-#include "interp/tree.h"
-#include "interp/state.h"
-#include "interp/interp.h"
+#include "interp/type.h"   // for Type, FunctionType
+#include "interp/state.h"  // for Interpreter, DefnTree
+#include "interp/value.h"  // for Value
+#include "interp/interp.h" // for Declaration, FunctionCall, FunctionDecl
 
 namespace sap::interp
 {

@@ -8,10 +8,12 @@
 #include <unordered_map>
 
 #include "defs.h"
-#include "pool.h"
+#include "pool.h"  // for make
+#include "error.h" // for internal_error
+#include "units.h" // for Scalar
 
-#include "sap/units.h"
-#include "sap/fontset.h"
+#include "sap/units.h"   // for Scalar
+#include "sap/fontset.h" // for FontSet, FontStyle
 
 namespace sap
 {

@@ -5,8 +5,8 @@
 #pragma once
 
 #include <cassert>
-#include <cstdlib>
 #include <cstddef>
+#include <cstdlib>
 
 #include "error.h"
 

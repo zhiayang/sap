@@ -2,12 +2,12 @@
 // Copyright (c) 2022, zhiayang
 // SPDX-License-Identifier: Apache-2.0
 
-#include <cmath>
+#include <cmath> // for log2
 
-#include "util.h"
+#include "util.h" // for checked_cast, convertBEU32, convertBEU16, to_...
 
-#include "font/cff.h"
-#include "font/font.h"
+#include "font/cff.h"  // for CFFData, Glyph, createCMapForCFFSubset
+#include "font/font.h" // for FontFile
 
 namespace font::cff
 {

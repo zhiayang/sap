@@ -2,8 +2,9 @@
 // Copyright (c) 2022, zhiayang
 // SPDX-License-Identifier: Apache-2.0
 
-#include "error.h"
-#include "font/cff.h"
+#include "error.h" // for error
+
+#include "font/cff.h" // for Operand, DictKey, Dictionary, DictKey::CIDCount
 
 namespace font::cff
 {

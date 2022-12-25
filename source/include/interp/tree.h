@@ -4,13 +4,13 @@
 
 #pragma once
 
-#include <stdint.h>
+#include <memory> // for shared_ptr, unique_ptr
 #include <stddef.h>
+#include <stdint.h>
 
-#include <memory>
+#include "sap/style.h" // for Stylable, Style
 
-#include "sap/style.h"
-#include "interp/interp.h"
+#include "interp/interp.h" // for Stmt, FunctionCall, Interpreter
 
 
 // pun not intended

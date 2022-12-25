@@ -2,18 +2,22 @@
 // Copyright (c) 2021, zhiayang
 // SPDX-License-Identifier: Apache-2.0
 
-#include "pdf/units.h"
-#include "sap.h"
-#include "util.h"
+#include "util.h"  // for consumeCodepointFromUtf8
+#include "types.h" // for GlyphId
+#include "units.h" // for Scalar, operator+, Vector2<>::scalar_type
 
-#include "font/font.h"
+#include "pdf/font.h"  // for Font, Font::ENCODING_CID
+#include "pdf/text.h"  // for Text
+#include "pdf/units.h" // for Scalar, pdf_typographic_unit_1d
 
-#include "pdf/pdf.h"
-#include "pdf/text.h"
-#include "pdf/misc.h"
-#include "pdf/font.h"
+#include "sap/style.h"    // for Style
+#include "sap/units.h"    // for Scalar
+#include "sap/fontset.h"  // for FontSet
+#include "sap/document.h" // for Word::GlyphInfo, Word, Size2d
 
-#include "interp/tree.h"
+#include "font/tag.h"      // for Tag
+#include "font/font.h"     // for GlyphMetrics, FontMetrics
+#include "font/features.h" // for GlyphAdjustment, FeatureSet
 
 namespace sap::layout
 {
