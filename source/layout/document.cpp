@@ -43,28 +43,6 @@ namespace sap::layout
 		m_objects.push_back(std::move(obj));
 	}
 
-	/* static std::unique_ptr<Paragraph> layoutParagraph(interp::Interpreter* cs, const std::shared_ptr<tree::Paragraph>& para) */
-	/* { */
-	/* 	auto ret = std::make_unique<Paragraph>(); */
-
-	/* 	for(auto& obj : para->contents()) */
-	/* 	{ */
-	/* 		if(auto txt = std::dynamic_pointer_cast<tree::Text>(obj); txt != nullptr) */
-	/* 		{ */
-	/* 			ret->add(Text::fromTreeText(*txt)); */
-	/* 			ret->add(Word::fromTreeText(*txt)); */
-	/* 		} */
-
-	/* 		else if(auto sep = std::dynamic_pointer_cast<tree::Separator>(obj); sep != nullptr) */
-	/* 			ret->add(Text::separator()); */
-
-	/* 		else */
-	/* 			sap::internal_error("coeu"); */
-	/* 	} */
-
-	/* 	return ret; */
-	/* } */
-
 	void Document::layout(interp::Interpreter* cs, const tree::Document& treedoc)
 	{
 		m_pages.emplace_back(dim::Vector2(dim::mm(210), dim::mm(297)).into(Size2d {}));
@@ -90,49 +68,6 @@ namespace sap::layout
 			else
 				sap::internal_error("lol");
 		}
-
-#if 0
-		for(const auto& obj : treedoc.objects())
-		{
-			if(auto para = std::dynamic_pointer_cast<tree::Paragraph>(obj); para != nullptr)
-			{
-				addObject(layoutParagraph(cs, para));
-			}
-			else if(auto scr = std::dynamic_pointer_cast<tree::ScriptObject>(obj); scr != nullptr)
-			{
-				// TODO
-			}
-		}
-
-
-		if(m_objects.empty())
-			return;
-
-		LayoutObject* overflow = nullptr;
-		for(size_t i = 0; i < m_objects.size();)
-		{
-			if(m_pages.empty() || overflow != nullptr)
-				m_pages.emplace_back(dim::Vector2(dim::mm(210), dim::mm(297)).into(Size2d {}));
-
-			auto page = &m_pages.back();
-			auto obj = (overflow == nullptr ? m_objects[i].get() : overflow);
-
-			// TODO: handle this more elegantly (we should try to move this to the next page)
-			if(auto result = obj->layout(cs, page->layoutRegion(), m_style); !result.ok())
-			{
-				sap::error("layout/page", "page layout failed");
-			}
-			else if(result->has_value())
-			{
-				overflow = result->value();
-			}
-			else
-			{
-				overflow = nullptr;
-				i++;
-			}
-		}
-#endif
 	}
 
 	void Document::render()

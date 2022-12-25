@@ -8,35 +8,6 @@ namespace pdf
 {
 	std::string encodeStringLiteral(zst::str_view sv)
 	{
-#if 0
-		std::string ret; ret.reserve(sv.size());
-		ret += "(";
-		for(char c : sv)
-		{
-			if(32 <= c && c <= 126)
-			{
-				switch(c)
-				{
-					case '(':
-					case ')':
-					case '\\':
-						ret += "\\";
-						ret += c;
-						break;
-
-					default:
-						ret += c;
-						break;
-				}
-			}
-			else
-			{
-				ret += zpr::sprint("#{02x}", (uint8_t) c);
-			}
-		}
-
-		return ret + ")";
-#else
 		std::string ret;
 		ret.reserve(sv.size() * 2 + 2);
 
@@ -46,6 +17,5 @@ namespace pdf
 
 		ret += ">";
 		return ret;
-#endif
 	}
 }
