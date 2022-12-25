@@ -5,6 +5,7 @@
 #pragma once
 
 #include "defs.h"
+#include "units.h"
 
 /*
     72 units is 1 inch, 1 inch is 25.4mm. we don't want to assume
@@ -21,14 +22,36 @@
     However, we can't delete every combination (due to C++ limitations), so care must still be taken to
     convert between the y-up and y-down coordinate systems at the sap-pdf interface.
 */
-DEFINE_UNIT_IN_NAMESPACE(pdf_typographic_unit, (25.4 / 72.0) * dim::units::millimetre::scale_factor, pdf, typographic_unit)
 
-DEFINE_UNIT_IN_NAMESPACE(pdf_typographic_unit_y_down, (25.4 / 72.0) * dim::units::millimetre::scale_factor, pdf,
+struct PDF_TAG_Y_UP;
+struct PDF_TAG_Y_DOWN;
+struct PDF_TAG_1D;
+
+// allow converting sap <-> pdf_up and sap <-> pdf_down,
+// but *NOT* pdf_up <-> pdf_down
+MAKE_UNITS_COMPATIBLE(dim::units::base_unit::Tag, PDF_TAG_Y_DOWN)
+MAKE_UNITS_COMPATIBLE(PDF_TAG_Y_DOWN, dim::units::base_unit::Tag)
+
+MAKE_UNITS_COMPATIBLE(dim::units::base_unit::Tag, PDF_TAG_1D)
+MAKE_UNITS_COMPATIBLE(PDF_TAG_Y_UP, PDF_TAG_1D)
+MAKE_UNITS_COMPATIBLE(PDF_TAG_Y_DOWN, PDF_TAG_1D)
+
+MAKE_UNITS_COMPATIBLE(PDF_TAG_1D, dim::units::base_unit::Tag)
+MAKE_UNITS_COMPATIBLE(PDF_TAG_1D, PDF_TAG_Y_UP)
+MAKE_UNITS_COMPATIBLE(PDF_TAG_1D, PDF_TAG_Y_DOWN)
+
+DEFINE_UNIT_IN_NAMESPACE(pdf_typographic_unit_1d, (25.4 / 72.0) * dim::units::millimetre::scale_factor, PDF_TAG_1D, pdf,
+    typographic_unit_1d)
+
+DEFINE_UNIT_IN_NAMESPACE(pdf_typographic_unit, (25.4 / 72.0) * dim::units::millimetre::scale_factor, PDF_TAG_Y_UP, pdf,
+    typographic_unit)
+
+DEFINE_UNIT_IN_NAMESPACE(pdf_typographic_unit_y_down, (25.4 / 72.0) * dim::units::millimetre::scale_factor, PDF_TAG_Y_DOWN, pdf,
     typographic_unit_y_down)
 
 namespace pdf
 {
-	using Scalar = dim::Scalar<dim::units::pdf_typographic_unit>;
+	using Scalar = dim::Scalar<dim::units::pdf_typographic_unit_1d>;
 
 	using Vector2_YUp = dim::Vector2<dim::units::pdf_typographic_unit>;
 	using Vector2_YDown = dim::Vector2<dim::units::pdf_typographic_unit_y_down>;
@@ -41,10 +64,3 @@ namespace pdf
 	using Offset2d_YDown = Vector2_YDown;
 	using Position2d_YDown = Vector2_YDown;
 }
-
-/*
-    this mess simply prevents converting to/from the y-up and y-down coordinate systems,
-    because we need the page size to correctly perform such conversions.
-*/
-DELETE_CONVERSION_VECTOR2(pdf_typographic_unit, pdf_typographic_unit_y_down)
-DELETE_CONVERSION_VECTOR2(pdf_typographic_unit_y_down, pdf_typographic_unit)

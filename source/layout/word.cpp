@@ -2,6 +2,7 @@
 // Copyright (c) 2021, zhiayang
 // SPDX-License-Identifier: Apache-2.0
 
+#include "pdf/units.h"
 #include "sap.h"
 #include "util.h"
 
@@ -87,7 +88,7 @@ namespace sap::layout
 		// size is in sap units, which is in mm; metrics are in typographic units, so 72dpi;
 		// calculate the scale accordingly.
 		const auto font_metrics = font->getFontMetrics();
-		auto font_size_tpu = font_size.into<dim::units::pdf_typographic_unit>();
+		auto font_size_tpu = font_size.into<pdf::Scalar>();
 
 		m_size = { 0, 0 };
 		m_size.y() = font->scaleMetricForFontSize(font_metrics.default_line_spacing, font_size_tpu).into<sap::Scalar>();
@@ -128,7 +129,7 @@ namespace sap::layout
 			add_gid(space_gid);
 
 			auto emitted_space_adv = font->getMetricsForGlyph(space_gid).horz_advance;
-			auto font_size_tpu = font_size.into<dim::units::pdf_typographic_unit>();
+			auto font_size_tpu = font_size.into<pdf::Scalar>();
 			auto emitted_space_size = font->scaleMetricForFontSize(emitted_space_adv, font_size_tpu);
 			auto desired_space_size = space.into<pdf::Scalar>();
 

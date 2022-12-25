@@ -6,8 +6,6 @@
 
 #include <zpr.h>
 
-
-
 namespace dim
 {
 	/*
@@ -49,6 +47,16 @@ namespace dim
 		struct is_vector2<Vector2<_S, _T>> : std::true_type
 		{
 		};
+
+		template <typename _FromUnit, typename _ToUnit>
+		struct can_convert_units : std::false_type
+		{
+		};
+
+		template <typename _U>
+		struct can_convert_units<_U, _U> : std::true_type
+		{
+		};
 	}
 
 	template <typename _System, typename _Type>
@@ -57,6 +65,7 @@ namespace dim
 		using value_type = _Type;
 		using unit_system = _System;
 		using self_type = Scalar<_System, _Type>;
+		using unit_tag_type = typename _System::Tag;
 
 		static constexpr auto scale_factor = _System::scale_factor;
 		static_assert(scale_factor != 0);
@@ -110,45 +119,18 @@ namespace dim
 
 
 		template <typename _Scalar>
-		constexpr auto into() const requires(impl::is_scalar<_Scalar>::value)
+		constexpr auto into() const requires(
+		    (impl::is_scalar<_Scalar>::value) && (impl::can_convert_units<unit_tag_type, typename _Scalar::unit_tag_type>::value))
 		{
 			using Ret = Scalar<typename _Scalar::unit_system, typename _Scalar::value_type>;
 			return Ret((this->_x * scale_factor) / _Scalar::unit_system::scale_factor);
 		}
 
-		template <>
-		constexpr auto into<self_type>() const
-		{
-			return *this;
-		}
-
 		template <typename _Target>
-		constexpr auto into() const
+		constexpr Scalar<_Target> into() const requires(impl::can_convert_units<unit_tag_type, typename _Target::Tag>::value)
 		{
 			return Scalar<_Target>((this->_x * scale_factor) / _Target::scale_factor);
 		}
-
-
-#if 0
-		template <typename _S, typename _T>
-		constexpr Scalar<_S, _T> into(Scalar<_S, _T> foo) const
-		{
-			return Scalar<_S, _T>((this->_x * scale_factor) / _S::scale_factor);
-		}
-
-		template <>
-		constexpr self_type into<unit_system, value_type>(self_type foo) const
-		{
-			return *this;
-		}
-
-
-		template <typename _Target>
-		constexpr Scalar<_Target> into(_Target foo) const
-		{
-			return Scalar<_Target>((this->_x * scale_factor) / _Target::scale_factor);
-		}
-#endif
 
 		value_type _x;
 	};
@@ -160,6 +142,7 @@ namespace dim
 		using unit_system = _System;
 		using scalar_type = Scalar<_System, _Type>;
 		using self_type = Vector2<_System, _Type>;
+		using unit_tag_type = typename _System::Tag;
 
 		static constexpr auto scale_factor = _System::scale_factor;
 		static_assert(scale_factor != 0);
@@ -207,28 +190,20 @@ namespace dim
 		constexpr bool operator==(const self_type& other) const { return this->_x == other._x && this->_y == other._y; }
 		constexpr bool operator!=(const self_type& other) const { return !(*this == other); }
 
-		template <typename _S, typename _T>
-		constexpr Vector2<_S, _T> into(Vector2<_S, _T> foo) const
+
+		template <typename _Vector>
+		constexpr _Vector into() const requires(
+		    (impl::is_vector2<_Vector>::value) && impl::can_convert_units<unit_tag_type, typename _Vector::unit_tag_type>::value)
 		{
+			using _S = typename _Vector::unit_system;
+			using _T = typename _Vector::value_type;
+
 			return Vector2<_S, _T>(((this->_x * scale_factor) / _S::scale_factor)._x,
 			    ((this->_y * scale_factor) / _S::scale_factor)._x);
 		}
 
 		template <typename _Target>
-		constexpr auto into() const requires(impl::is_vector2<_Target>::value)
-		{
-			return this->into(_Target {});
-		}
-
-		template <>
-		constexpr self_type into<unit_system, value_type>(self_type foo) const
-		{
-			return *this;
-		}
-
-
-		template <typename _Target>
-		constexpr Vector2<_Target> into(_Target foo) const
+		constexpr Vector2<_Target> into() const requires(impl::can_convert_units<unit_tag_type, typename _Target::Tag>::value)
 		{
 			return Vector2<_Target>((this->_x * scale_factor) / _Target::scale_factor,
 			    (this->_y * scale_factor) / _Target::scale_factor);
@@ -252,6 +227,7 @@ namespace dim
 		struct base_unit
 		{
 			static constexpr double scale_factor = 1.0;
+			using Tag = void;
 		};
 	}
 }
@@ -261,12 +237,13 @@ namespace dim
     type aliases to bring them into an inner namespace. this also means that the names
     cannot collide.
 */
-#define DEFINE_UNIT(_unit_name, _SF)                                               \
+#define DEFINE_UNIT(_unit_name, _SF, _Tag)                                         \
 	namespace dim::units                                                           \
 	{                                                                              \
 		struct _unit_name                                                          \
 		{                                                                          \
 			static constexpr double scale_factor = _SF;                            \
+			using Tag = _Tag;                                                      \
 		};                                                                         \
 	}                                                                              \
 	namespace dim                                                                  \
@@ -281,12 +258,12 @@ namespace dim
 		}                                                                          \
 	}
 
-#define DEFINE_UNIT_AND_ALIAS(_unit_name, _SF, _alias_name) \
-	DEFINE_UNIT(_unit_name, _SF)                            \
-	DEFINE_UNIT(_alias_name, _SF)
+#define DEFINE_UNIT_AND_ALIAS(_unit_name, _SF, _alias_name, _Tag) \
+	DEFINE_UNIT(_unit_name, _SF, _Tag)                            \
+	DEFINE_UNIT(_alias_name, _SF, _Tag)
 
-#define DEFINE_UNIT_IN_NAMESPACE(_unit_name, _SF, _namespace, _name_in_namespace)                    \
-	DEFINE_UNIT(_unit_name, _SF)                                                                     \
+#define DEFINE_UNIT_IN_NAMESPACE(_unit_name, _SF, _Tag, _namespace, _name_in_namespace)              \
+	DEFINE_UNIT(_unit_name, _SF, _Tag)                                                               \
 	namespace _namespace                                                                             \
 	{                                                                                                \
 		constexpr inline dim::Scalar<dim::units::_unit_name> _name_in_namespace(double x)            \
@@ -303,24 +280,19 @@ namespace dim
     all other units should be in terms of the base unit; so we have
     1mm = 1bu, 1cm = 10bu, etc.
 */
-DEFINE_UNIT_AND_ALIAS(millimetre, 1.0, mm);
-DEFINE_UNIT_AND_ALIAS(centimetre, 10.0, cm);
+DEFINE_UNIT_AND_ALIAS(millimetre, 1.0, mm, void);
+DEFINE_UNIT_AND_ALIAS(centimetre, 10.0, cm, void);
 
 
 
-#define DELETE_CONVERSION_VECTOR2(_FromUnit, _ToUnit)                                                                      \
-	namespace dim                                                                                                          \
-	{                                                                                                                      \
-		template <>                                                                                                        \
-		template <>                                                                                                        \
-		Vector2<units::_ToUnit> Vector2<units::_FromUnit>::into<units::_ToUnit>(Vector2<units::_ToUnit> _) const = delete; \
-		template <>                                                                                                        \
-		template <>                                                                                                        \
-		Vector2<units::_ToUnit> Vector2<units::_FromUnit>::into(units::_ToUnit _) const = delete;                          \
+#define MAKE_UNITS_COMPATIBLE(_FromUnit, _ToUnit)                     \
+	namespace dim::impl                                               \
+	{                                                                 \
+		template <>                                                   \
+		struct can_convert_units<_FromUnit, _ToUnit> : std::true_type \
+		{                                                             \
+		};                                                            \
 	}
-
-
-
 
 
 

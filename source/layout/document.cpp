@@ -45,7 +45,7 @@ namespace sap::layout
 
 	void Document::layout(interp::Interpreter* cs, const tree::Document& treedoc)
 	{
-		m_pages.emplace_back(dim::Vector2(dim::mm(210), dim::mm(297)).into(Size2d {}));
+		m_pages.emplace_back(dim::Vector2(dim::mm(210), dim::mm(297)).into<Size2d>());
 
 		for(const auto& obj : treedoc.objects())
 		{
@@ -57,7 +57,7 @@ namespace sap::layout
 					overflow = Paragraph::layout(cs, m_pages.back().layoutRegion(), m_style, *overflow);
 					if(overflow)
 					{
-						m_pages.emplace_back(dim::Vector2(dim::mm(210), dim::mm(297)).into(Size2d {}));
+						m_pages.emplace_back(dim::Vector2(dim::mm(210), dim::mm(297)).into<Size2d>());
 					}
 					else
 					{
