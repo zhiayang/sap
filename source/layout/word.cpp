@@ -87,15 +87,15 @@ namespace sap::layout
 		// size is in sap units, which is in mm; metrics are in typographic units, so 72dpi;
 		// calculate the scale accordingly.
 		const auto font_metrics = font->getFontMetrics();
-		auto font_size_tpu = font_size.into(dim::units::pdf_typographic_unit {});
+		auto font_size_tpu = font_size.into<dim::units::pdf_typographic_unit>();
 
 		m_size = { 0, 0 };
-		m_size.y() = font->scaleMetricForFontSize(font_metrics.default_line_spacing, font_size_tpu).into(sap::Scalar {});
+		m_size.y() = font->scaleMetricForFontSize(font_metrics.default_line_spacing, font_size_tpu).into<sap::Scalar>();
 
 		for(auto& glyph : m_glyphs)
 		{
 			auto width = glyph.metrics.horz_advance + glyph.adjustments.horz_advance;
-			m_size.x() += font->scaleMetricForFontSize(width, font_size_tpu).into(sap::Scalar {});
+			m_size.x() += font->scaleMetricForFontSize(width, font_size_tpu).into<sap::Scalar>();
 		}
 
 		// this space width is to the next word
@@ -103,7 +103,7 @@ namespace sap::layout
 		auto space_adv = font->getMetricsForGlyph(space_gid).horz_advance;
 		auto space_width = font->scaleMetricForFontSize(space_adv, font_size_tpu);
 
-		m_space_width = space_width.into(sap::Scalar {});
+		m_space_width = space_width.into<sap::Scalar>();
 
 		assert(m_style != nullptr);
 	}
@@ -112,7 +112,7 @@ namespace sap::layout
 	{
 		const auto font = m_style->font_set().getFontForStyle(m_style->font_style());
 		const auto font_size = m_style->font_size();
-		text->setFont(font, font_size.into(pdf::Scalar {}));
+		text->setFont(font, font_size.into<pdf::Scalar>());
 
 		auto add_gid = [&font, text](GlyphId gid) {
 			if(font->encoding_kind == pdf::Font::ENCODING_CID)
@@ -128,9 +128,10 @@ namespace sap::layout
 			add_gid(space_gid);
 
 			auto emitted_space_adv = font->getMetricsForGlyph(space_gid).horz_advance;
-			auto font_size_tpu = font_size.into(dim::units::pdf_typographic_unit {});
+			auto font_size_tpu = font_size.into<dim::units::pdf_typographic_unit>();
 			auto emitted_space_size = font->scaleMetricForFontSize(emitted_space_adv, font_size_tpu);
-			auto desired_space_size = space.into(pdf::Scalar());
+			auto desired_space_size = space.into<pdf::Scalar>();
+
 			if(emitted_space_size != desired_space_size)
 			{
 				auto extra = -emitted_space_size + desired_space_size;

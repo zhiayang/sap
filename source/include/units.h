@@ -108,18 +108,33 @@ namespace dim
 		constexpr bool operator<(const self_type& other) const { return this->_x < other._x; }
 		constexpr bool operator>(const self_type& other) const { return this->_x > other._x; }
 
+
+		template <typename _Scalar>
+		constexpr auto into() const requires(impl::is_scalar<_Scalar>::value)
+		{
+			using Ret = Scalar<typename _Scalar::unit_system, typename _Scalar::value_type>;
+			return Ret((this->_x * scale_factor) / _Scalar::unit_system::scale_factor);
+		}
+
+		template <>
+		constexpr auto into<self_type>() const
+		{
+			return *this;
+		}
+
+		template <typename _Target>
+		constexpr auto into() const
+		{
+			return Scalar<_Target>((this->_x * scale_factor) / _Target::scale_factor);
+		}
+
+
+#if 0
 		template <typename _S, typename _T>
 		constexpr Scalar<_S, _T> into(Scalar<_S, _T> foo) const
 		{
 			return Scalar<_S, _T>((this->_x * scale_factor) / _S::scale_factor);
 		}
-
-		template <typename _Target>
-		constexpr auto into() const requires(impl::is_scalar<_Target>::value)
-		{
-			return this->into(_Target {});
-		}
-
 
 		template <>
 		constexpr self_type into<unit_system, value_type>(self_type foo) const
@@ -133,6 +148,7 @@ namespace dim
 		{
 			return Scalar<_Target>((this->_x * scale_factor) / _Target::scale_factor);
 		}
+#endif
 
 		value_type _x;
 	};

@@ -20,7 +20,7 @@ namespace sap::layout
 		    sap::Style()
 		        .set_font_set(default_font_set)
 		        .set_font_style(sap::FontStyle::Regular)
-		        .set_font_size(pdf::Scalar(12.0).into(sap::Scalar {}))
+		        .set_font_size(pdf::Scalar(12.0).into<sap::Scalar>())
 		        .set_line_spacing(sap::Scalar(1.0))
 		        .set_pre_paragraph_spacing(sap::Scalar(1.0))
 		        .set_post_paragraph_spacing(sap::Scalar(1.0));
