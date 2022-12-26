@@ -16,7 +16,7 @@ namespace sap::interp
 	{
 		auto tree = cs->current();
 
-		std::vector<Declaration*> decls {};
+		std::vector<const Declaration*> decls {};
 		if(auto result = tree->lookup(this->name); result.ok())
 			decls = result.take_value();
 		else

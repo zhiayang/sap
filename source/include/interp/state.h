@@ -20,19 +20,19 @@ namespace sap::interp
 		ErrorOr<DefnTree*> lookupNamespace(std::string_view name) const;
 		DefnTree* lookupOrDeclareNamespace(std::string_view name);
 
-		ErrorOr<std::vector<Declaration*>> lookup(QualifiedId id) const;
+		ErrorOr<std::vector<const Declaration*>> lookup(QualifiedId id) const;
 
-		ErrorOr<void> declare(Declaration* decl);
-		ErrorOr<void> define(std::unique_ptr<Definition> defn);
+		ErrorOr<void> declare(const Declaration* decl);
+		ErrorOr<void> define(Definition* defn);
 
 	private:
 		explicit DefnTree(std::string name, DefnTree* parent) : m_name(std::move(name)), m_parent(parent) { }
 
 		std::string m_name;
 		util::hashmap<std::string, std::unique_ptr<DefnTree>> m_children;
-		util::hashmap<std::string, std::vector<Declaration*>> m_decls;
+		util::hashmap<std::string, std::vector<const Declaration*>> m_decls;
 
-		std::vector<std::unique_ptr<Definition>> m_definitions;
+		std::vector<Definition*> m_definitions;
 
 		DefnTree* m_parent = nullptr;
 
@@ -54,8 +54,12 @@ namespace sap::interp
 		std::unique_ptr<tree::InlineObject> run(const Stmt* stmt);
 		ErrorOr<Value> evaluate(const Expr* expr);
 
+		Definition* addBuiltinDefinition(std::unique_ptr<Definition> defn);
+
 	private:
 		std::unique_ptr<DefnTree> m_top;
 		DefnTree* m_current;
+
+		std::vector<std::unique_ptr<Definition>> m_builtin_defns;
 	};
 }

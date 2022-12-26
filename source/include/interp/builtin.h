@@ -15,5 +15,5 @@ namespace sap::interp
 	struct DefnTree;
 	struct Interpreter;
 
-	void defineBuiltins(DefnTree* builtin_namespace);
+	void defineBuiltins(Interpreter* cs, DefnTree* builtin_namespace);
 }

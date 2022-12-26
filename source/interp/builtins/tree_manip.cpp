@@ -78,7 +78,7 @@ namespace sap::interp::builtin
 
 namespace sap::interp
 {
-	void defineBuiltins(DefnTree* builtin_ns)
+	void defineBuiltins(Interpreter* cs, DefnTree* builtin_ns)
 	{
 		using BFD = BuiltinFunctionDefn;
 		using Param = FunctionDecl::Param;
@@ -86,11 +86,13 @@ namespace sap::interp
 		auto any = Type::makeAny();
 		auto tio = Type::makeTreeInlineObj();
 
-		builtin_ns->define(std::make_unique<BFD>("__bold1", Type::makeFunction({ any }, tio),
-		    makeParamList(Param { .name = "_", .type = any }), &builtin::bold1));
-		builtin_ns->define(std::make_unique<BFD>("__italic1", Type::makeFunction({ any }, tio),
-		    makeParamList(Param { .name = "_", .type = any }), &builtin::italic1));
-		builtin_ns->define(std::make_unique<BFD>("__bold_italic1", Type::makeFunction({ any }, tio),
-		    makeParamList(Param { .name = "_", .type = any }), &builtin::bold_italic1));
+		auto define_builtin = [&](auto&&... xs) {
+			auto ret = std::make_unique<BFD>(std::forward<decltype(xs)>(xs)...);
+			builtin_ns->define(cs->addBuiltinDefinition(std::move(ret)));
+		};
+
+		define_builtin("__bold1", makeParamList(Param { .name = "_", .type = any }), tio, &builtin::bold1);
+		define_builtin("__italic1", makeParamList(Param { .name = "_", .type = any }), tio, &builtin::italic1);
+		define_builtin("__bold_italic1", makeParamList(Param { .name = "_", .type = any }), tio, &builtin::bold_italic1);
 	}
 }

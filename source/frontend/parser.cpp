@@ -131,6 +131,7 @@ namespace sap::frontend
 
 
 	constexpr auto KW_LET = "let";
+	constexpr auto KW_VAR = "var";
 	constexpr auto KW_SCRIPT_BLOCK = "script";
 
 	static std::unique_ptr<interp::Expr> parse_expr(Lexer& lexer);
@@ -411,6 +412,7 @@ namespace sap::frontend
 		return parse_rhs(lexer, std::move(lhs), 0);
 	}
 
+	// static std::unique
 
 
 	static std::unique_ptr<interp::Stmt> parse_stmt(Lexer& lexer)
@@ -423,7 +425,7 @@ namespace sap::frontend
 		switch(tok.type)
 		{
 			case TT::Identifier:
-				if(tok.text == KW_LET)
+				if(tok.text == KW_LET || tok.text == KW_VAR)
 				{
 					error(tok.loc, "TODO: 'let' not implemented");
 				}

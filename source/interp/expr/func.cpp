@@ -11,8 +11,14 @@ namespace sap::interp
 {
 	ErrorOr<const Type*> FunctionDecl::typecheck_impl(Interpreter* cs, const Type* infer) const
 	{
-		assert(this->type != nullptr);
-		return Ok(this->type);
+		// assert(this->type != nullptr);
+		// return Ok(this->type);
+
+		std::vector<const Type*> param_types {};
+		for(auto& param : m_params)
+			param_types.push_back(param.type);
+
+		return Ok(Type::makeFunction(std::move(param_types), m_return_type));
 	}
 
 	ErrorOr<const Type*> BuiltinFunctionDefn::typecheck_impl(Interpreter* cs, const Type* infer) const

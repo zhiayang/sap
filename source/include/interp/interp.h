@@ -35,6 +35,12 @@ namespace sap::interp
 
 		std::optional<Location> location;
 
+		const Type* get_type() const
+		{
+			assert(m_type != nullptr);
+			return m_type;
+		}
+
 	protected:
 		mutable const Type* m_type = nullptr;
 	};
@@ -68,7 +74,7 @@ namespace sap::interp
 		virtual ErrorOr<const Type*> typecheck_impl(Interpreter* cs, const Type* infer = nullptr) const override;
 
 		QualifiedId name {};
-		mutable Declaration* m_resolved_decl = nullptr;
+		mutable const Declaration* m_resolved_decl = nullptr;
 	};
 
 	struct FunctionCall : Expr
@@ -86,7 +92,7 @@ namespace sap::interp
 		std::vector<Arg> arguments;
 
 	private:
-		mutable Declaration* m_resolved_func_decl = nullptr;
+		mutable const Declaration* m_resolved_func_decl = nullptr;
 	};
 
 	struct NumberLit : Expr
@@ -150,11 +156,9 @@ namespace sap::interp
 
 	struct Declaration : Stmt
 	{
-		Declaration(const std::string& name, const Type* ty) : name(name), type(ty) { }
+		Declaration(const std::string& name) : name(name) { }
 
 		std::string name;
-		const Type* type;
-
 		Definition* resolved_defn = nullptr;
 	};
 
@@ -166,6 +170,30 @@ namespace sap::interp
 		std::unique_ptr<Declaration> declaration {};
 	};
 
+	struct VariableDecl : Declaration
+	{
+		VariableDecl(const std::string& name) : Declaration(name) { }
+
+		virtual ErrorOr<std::optional<Value>> evaluate(Interpreter* cs) const override;
+		virtual ErrorOr<const Type*> typecheck_impl(Interpreter* cs, const Type* infer = nullptr) const override;
+	};
+
+	struct VariableDefn : Definition
+	{
+		VariableDefn(const std::string& name, std::unique_ptr<Expr> init, const Type* given_type)
+		    : Definition(new VariableDecl(name))
+		    , initialiser(std::move(init))
+		    , given_type(given_type)
+		{
+		}
+
+		virtual ErrorOr<std::optional<Value>> evaluate(Interpreter* cs) const override;
+		virtual ErrorOr<const Type*> typecheck_impl(Interpreter* cs, const Type* infer = nullptr) const override;
+
+		std::unique_ptr<Expr> initialiser;
+		const Type* given_type;
+	};
+
 	struct FunctionDecl : Declaration
 	{
 		struct Param
@@ -175,10 +203,10 @@ namespace sap::interp
 			std::unique_ptr<Expr> default_value;
 		};
 
-
-		FunctionDecl(const std::string& name, const Type* type, std::vector<Param>&& params)
-		    : Declaration(name, type)
+		FunctionDecl(const std::string& name, std::vector<Param>&& params, const Type* return_type)
+		    : Declaration(name)
 		    , m_params(std::move(params))
+		    , m_return_type(return_type)
 		{
 		}
 
@@ -189,6 +217,7 @@ namespace sap::interp
 
 	private:
 		std::vector<Param> m_params;
+		const Type* m_return_type;
 	};
 
 	template <std::same_as<FunctionDecl::Param>... P>
@@ -206,9 +235,9 @@ namespace sap::interp
 	{
 		using FuncTy = std::function<ErrorOr<std::optional<Value>>(Interpreter*, std::vector<Value>&)>;
 
-		BuiltinFunctionDefn(const std::string& name, const Type* type, std::vector<FunctionDecl::Param>&& params,
+		BuiltinFunctionDefn(const std::string& name, std::vector<FunctionDecl::Param>&& params, const Type* return_type,
 		    const FuncTy& fn)
-		    : Definition(new FunctionDecl(name, type, std::move(params)))
+		    : Definition(new FunctionDecl(name, std::move(params), return_type))
 		    , function(fn)
 		{
 		}

@@ -15,10 +15,10 @@ namespace sap::interp
 {
 	template <typename T, typename ArgProcessor>
 	ErrorOr<std::pair<std::unordered_map<size_t, T>, std::vector<const Type*>>> resolve_argument_order(Interpreter* cs,
-	    Declaration* decl, const std::vector<FunctionCall::Arg>& args, ArgProcessor&& ap)
+	    const Declaration* decl, const std::vector<FunctionCall::Arg>& args, ArgProcessor&& ap)
 	{
 		// TODO: check for variables.
-		if(auto fdecl = dynamic_cast<FunctionDecl*>(decl); fdecl != nullptr)
+		if(auto fdecl = dynamic_cast<const FunctionDecl*>(decl); fdecl != nullptr)
 		{
 			auto& decl_params = fdecl->params();
 
@@ -74,7 +74,8 @@ namespace sap::interp
 		}
 	}
 
-	static ErrorOr<int> get_calling_cost(Interpreter* cs, Declaration* decl, const std::vector<FunctionCall::Arg>& arguments)
+	static ErrorOr<int> get_calling_cost(Interpreter* cs, const Declaration* decl,
+	    const std::vector<FunctionCall::Arg>& arguments)
 	{
 		auto [ordered_args, decl_params_types] = TRY(resolve_argument_order<const Type*>(cs, decl, arguments, [cs](auto& arg) {
 			return arg.value->typecheck(cs);
@@ -88,7 +89,7 @@ namespace sap::interp
 
 			if(arg_type == nullptr)
 			{
-				if(auto fdecl = dynamic_cast<FunctionDecl*>(decl); fdecl != nullptr)
+				if(auto fdecl = dynamic_cast<const FunctionDecl*>(decl); fdecl != nullptr)
 				{
 					auto& params = fdecl->params();
 					if(params[i].default_value == nullptr)
@@ -102,24 +103,33 @@ namespace sap::interp
 				}
 			}
 
-			// if the param is an any, we can just do it.
-			if(auto param_type = decl_params_types[i]; arg_type != param_type && not param_type->isAny())
+			// if the param is an any, we can just do it, but with extra cost.
+			if(auto param_type = decl_params_types[i]; arg_type != param_type)
 			{
-				return ErrFmt("mismatched types for argument {}: got '{}', expected '{}'", //
-				    1 + i, arg_type, param_type);
+				if(param_type->isAny())
+				{
+					cost += 2;
+				}
+				else
+				{
+					return ErrFmt("mismatched types for argument {}: got '{}', expected '{}'", //
+					    1 + i, arg_type, param_type);
+				}
 			}
-
-			cost += 1;
+			else
+			{
+				cost += 1;
+			}
 		}
 
 		return Ok(cost);
 	}
 
 
-	static ErrorOr<Declaration*> resolve_overload_set(Interpreter* cs, const std::vector<Declaration*>& decls,
+	static ErrorOr<const Declaration*> resolve_overload_set(Interpreter* cs, const std::vector<const Declaration*>& decls,
 	    const std::vector<FunctionCall::Arg>& arguments)
 	{
-		std::vector<Declaration*> best_decls {};
+		std::vector<const Declaration*> best_decls {};
 		int best_cost = INT_MAX;
 
 		for(auto decl : decls)
@@ -160,14 +170,13 @@ namespace sap::interp
 		for(auto& arg : this->arguments)
 			TRY(arg.value->typecheck(cs));
 
-
 		// if the lhs is an identifier, we resolve it manually to handle overloading.
 		if(auto ident = dynamic_cast<const Ident*>(this->callee.get()); ident != nullptr)
 		{
 			auto decls = TRY(cs->current()->lookup(ident->name));
 			assert(decls.size() > 0);
 
-			Declaration* best_decl = TRY(resolve_overload_set(cs, decls, this->arguments));
+			const Declaration* best_decl = TRY(resolve_overload_set(cs, decls, this->arguments));
 			assert(best_decl != nullptr);
 
 			fn_type = TRY(best_decl->typecheck(cs));
@@ -211,7 +220,7 @@ namespace sap::interp
 			{
 				if(auto it = ordered_args.find(i); it == ordered_args.end())
 				{
-					if(auto fdecl = dynamic_cast<FunctionDecl*>(decl); fdecl != nullptr)
+					if(auto fdecl = dynamic_cast<const FunctionDecl*>(decl); fdecl != nullptr)
 					{
 						auto& params = fdecl->params();
 						if(params[i].default_value == nullptr)
@@ -237,7 +246,7 @@ namespace sap::interp
 			auto func_defn = m_resolved_func_decl->resolved_defn;
 
 			// check what kind of defn it is
-			if(auto builtin = dynamic_cast<BuiltinFunctionDefn*>(func_defn); builtin != nullptr)
+			if(auto builtin = dynamic_cast<const BuiltinFunctionDefn*>(func_defn); builtin != nullptr)
 			{
 				return builtin->function(cs, args);
 			}

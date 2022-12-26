@@ -14,7 +14,7 @@ namespace sap::interp
 	Interpreter::Interpreter() : m_top(new DefnTree("", /* parent: */ nullptr)), m_current(m_top.get())
 	{
 		auto ns_builtin = m_top->lookupOrDeclareNamespace("builtin");
-		defineBuiltins(ns_builtin);
+		defineBuiltins(this, ns_builtin);
 	}
 
 	ErrorOr<DefnTree*> DefnTree::lookupNamespace(std::string_view name) const
@@ -34,7 +34,7 @@ namespace sap::interp
 		return m_children.insert_or_assign(std::string(name), std::move(ret)).first->second.get();
 	}
 
-	ErrorOr<std::vector<Declaration*>> DefnTree::lookup(QualifiedId id) const
+	ErrorOr<std::vector<const Declaration*>> DefnTree::lookup(QualifiedId id) const
 	{
 		auto current = this;
 
@@ -62,7 +62,7 @@ namespace sap::interp
 
 		if(auto it = current->m_decls.find(id.name); it != current->m_decls.end())
 		{
-			std::vector<Declaration*> decls {};
+			std::vector<const Declaration*> decls {};
 			for(auto& d : it->second)
 				decls.push_back(d);
 
@@ -72,7 +72,7 @@ namespace sap::interp
 		return ErrFmt("no declaration named '{}' in '{}'", id.name, current->name());
 	}
 
-	ErrorOr<void> DefnTree::declare(Declaration* new_decl)
+	ErrorOr<void> DefnTree::declare(const Declaration* new_decl)
 	{
 		auto& name = new_decl->name;
 		if(auto foo = m_decls.find(name); foo != m_decls.end())
@@ -90,7 +90,7 @@ namespace sap::interp
 		return Ok();
 	}
 
-	ErrorOr<void> DefnTree::define(std::unique_ptr<Definition> defn)
+	ErrorOr<void> DefnTree::define(Definition* defn)
 	{
 		auto& name = defn->declaration->name;
 		if(auto foo = m_decls.find(name); foo != m_decls.end())
@@ -99,7 +99,7 @@ namespace sap::interp
 			for(auto& decl : existing_decls)
 			{
 				// definitions *can* conflict, if they have the same type.
-				if(decl->type == defn->declaration->type)
+				if(decl->get_type() == defn->declaration->get_type())
 					return ErrFmt("conflicting definition of '{}'", name);
 			}
 		}
@@ -109,8 +109,15 @@ namespace sap::interp
 		auto decl = defn->declaration.get();
 
 		// somebody must own the definition (not the declaration), so we just own it.
-		m_definitions.push_back(std::move(defn));
+		m_definitions.push_back(defn);
 		m_decls[name].push_back(std::move(decl));
+
 		return Ok();
+	}
+
+	Definition* Interpreter::addBuiltinDefinition(std::unique_ptr<Definition> defn)
+	{
+		m_builtin_defns.push_back(std::move(defn));
+		return m_builtin_defns.back().get();
 	}
 }
