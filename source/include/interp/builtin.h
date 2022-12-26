@@ -22,5 +22,6 @@ namespace sap::interp
 		ErrorOr<std::optional<Value>> bold_italic1(Interpreter* cs, std::vector<Value>& args);
 
 		ErrorOr<std::optional<Value>> print(Interpreter* cs, std::vector<Value>& args);
+		ErrorOr<std::optional<Value>> println(Interpreter* cs, std::vector<Value>& args);
 	}
 }

@@ -28,8 +28,9 @@ namespace sap::interp
 		define_builtin("__italic1", makeParamList(Param { .name = "_", .type = any }), tio, &builtin::italic1);
 		define_builtin("__bold_italic1", makeParamList(Param { .name = "_", .type = any }), tio, &builtin::bold_italic1);
 
-		// TODO: make this variadic
+		// TODO: make these variadic
 		define_builtin("print", makeParamList(Param { .name = "_", .type = any }), tio, &builtin::print);
+		define_builtin("println", makeParamList(Param { .name = "_", .type = any }), tio, &builtin::println);
 	}
 
 	Interpreter::Interpreter() : m_top(new DefnTree("__top_level", /* parent: */ nullptr)), m_current(m_top.get())

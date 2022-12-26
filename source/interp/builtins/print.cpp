@@ -7,12 +7,23 @@
 
 namespace sap::interp::builtin
 {
+	static void print_values(std::vector<Value>& values)
+	{
+		for(size_t i = 0; i < values.size(); i++)
+			zpr::print("{}{}", i == 0 ? "" : " ", unicode::stringFromU32String(values[i].toString()));
+	}
+
 	ErrorOr<std::optional<Value>> print(Interpreter* cs, std::vector<Value>& args)
 	{
-		for(size_t i = 0; i < args.size(); i++)
-			zpr::print("{}{}", i == 0 ? "" : " ", unicode::stringFromU32String(args[i].toString()));
+		print_values(args);
+		return Ok(std::nullopt);
+	}
 
+	ErrorOr<std::optional<Value>> println(Interpreter* cs, std::vector<Value>& args)
+	{
+		print_values(args);
 		zpr::println("");
+
 		return Ok(std::nullopt);
 	}
 }
