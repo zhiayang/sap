@@ -85,6 +85,7 @@ namespace sap::interp
 		for(size_t i = 0; i < ordered_args.size(); i++)
 		{
 			auto arg_type = ordered_args[i];
+
 			if(arg_type == nullptr)
 			{
 				if(auto fdecl = dynamic_cast<FunctionDecl*>(decl); fdecl != nullptr)
@@ -101,7 +102,8 @@ namespace sap::interp
 				}
 			}
 
-			if(auto param_type = decl_params_types[i]; arg_type != param_type)
+			// if the param is an any, we can just do it.
+			if(auto param_type = decl_params_types[i]; arg_type != param_type && not param_type->isAny())
 			{
 				return ErrFmt("mismatched types for argument {}: got '{}', expected '{}'", //
 				    1 + i, arg_type, param_type);
@@ -165,12 +167,7 @@ namespace sap::interp
 			auto decls = TRY(cs->current()->lookup(ident->name));
 			assert(decls.size() > 0);
 
-			Declaration* best_decl = nullptr;
-			if(decls.size() == 1)
-				best_decl = decls[0];
-			else
-				best_decl = TRY(resolve_overload_set(cs, decls, this->arguments));
-
+			Declaration* best_decl = TRY(resolve_overload_set(cs, decls, this->arguments));
 			assert(best_decl != nullptr);
 
 			fn_type = TRY(best_decl->typecheck(cs));
@@ -178,6 +175,8 @@ namespace sap::interp
 		}
 		else
 		{
+			zpr::println("warning: expr call");
+
 			fn_type = TRY(this->callee->typecheck(cs));
 			m_resolved_func_decl = nullptr;
 		}

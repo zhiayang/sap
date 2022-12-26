@@ -83,37 +83,14 @@ namespace sap::interp
 		using BFD = BuiltinFunctionDefn;
 		using Param = FunctionDecl::Param;
 
+		auto any = Type::makeAny();
 		auto tio = Type::makeTreeInlineObj();
-		auto num_int = Type::makeInteger();
-		auto str = Type::makeString();
 
-		builtin_ns->define(std::make_unique<BFD>("__bold1", Type::makeFunction({ tio }, tio),
-		    makeParamList(Param { .name = "_", .type = tio }), &builtin::bold1));
-
-		builtin_ns->define(std::make_unique<BFD>("__bold1", Type::makeFunction({ num_int }, tio),
-		    makeParamList(Param { .name = "_", .type = num_int }), &builtin::bold1));
-
-		builtin_ns->define(std::make_unique<BFD>("__bold1", Type::makeFunction({ str }, tio),
-		    makeParamList(Param { .name = "_", .type = str }), &builtin::bold1));
-
-
-		builtin_ns->define(std::make_unique<BFD>("__italic1", Type::makeFunction({ tio }, tio),
-		    makeParamList(Param { .name = "_", .type = tio }), &builtin::italic1));
-
-		builtin_ns->define(std::make_unique<BFD>("__italic1", Type::makeFunction({ num_int }, tio),
-		    makeParamList(Param { .name = "_", .type = num_int }), &builtin::italic1));
-
-		builtin_ns->define(std::make_unique<BFD>("__italic1", Type::makeFunction({ str }, tio),
-		    makeParamList(Param { .name = "_", .type = str }), &builtin::italic1));
-
-
-		builtin_ns->define(std::make_unique<BFD>("__bold_italic1", Type::makeFunction({ tio }, tio),
-		    makeParamList(Param { .name = "_", .type = tio }), &builtin::bold_italic1));
-
-		builtin_ns->define(std::make_unique<BFD>("__bold_italic1", Type::makeFunction({ num_int }, tio),
-		    makeParamList(Param { .name = "_", .type = num_int }), &builtin::bold_italic1));
-
-		builtin_ns->define(std::make_unique<BFD>("__bold_italic1", Type::makeFunction({ str }, tio),
-		    makeParamList(Param { .name = "_", .type = str }), &builtin::bold_italic1));
+		builtin_ns->define(std::make_unique<BFD>("__bold1", Type::makeFunction({ any }, tio),
+		    makeParamList(Param { .name = "_", .type = any }), &builtin::bold1));
+		builtin_ns->define(std::make_unique<BFD>("__italic1", Type::makeFunction({ any }, tio),
+		    makeParamList(Param { .name = "_", .type = any }), &builtin::italic1));
+		builtin_ns->define(std::make_unique<BFD>("__bold_italic1", Type::makeFunction({ any }, tio),
+		    makeParamList(Param { .name = "_", .type = any }), &builtin::bold_italic1));
 	}
 }
