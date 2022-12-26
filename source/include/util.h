@@ -4,12 +4,12 @@
 
 #pragma once
 
-#include <bit>
+#include <bit> // for endian, endian::big, endian::native
 #include <numeric>
 #include <concepts>
-#include <string_view>
+#include <string_view> // for hash, string_view, u32string_view
 
-#include "zst.h"
+#include "zst.h" // for byte_span, wstr_view, Result, span, str_view
 #include "types.h"
 
 namespace util

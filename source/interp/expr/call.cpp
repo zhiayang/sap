@@ -2,14 +2,12 @@
 // Copyright (c) 2022, zhiayang
 // SPDX-License-Identifier: Apache-2.0
 
-#include <functional> // for function
-
 #include "location.h" // for error
 
 #include "interp/type.h"   // for Type, FunctionType
 #include "interp/state.h"  // for Interpreter, DefnTree
 #include "interp/value.h"  // for Value
-#include "interp/interp.h" // for Declaration, FunctionCall, FunctionDecl
+#include "interp/interp.h" // for Declaration, FunctionCall, Expr, Function...
 
 namespace sap::interp
 {

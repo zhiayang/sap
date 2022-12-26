@@ -4,7 +4,7 @@
 
 #pragma once
 
-#include <cstdio>
+#include <cstdio> // for stderr
 
 namespace pdf
 {

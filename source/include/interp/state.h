@@ -8,6 +8,7 @@
 #include "value.h"  // for Value
 #include "interp.h" // for Definition, Declaration, Expr, QualifiedId
 
+#include "interp/type.h"     // for Type
 #include "interp/basedefs.h" // for InlineObject
 
 namespace sap::interp

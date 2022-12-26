@@ -2,7 +2,6 @@
 // Copyright (c) 2021, zhiayang
 // SPDX-License-Identifier: Apache-2.0
 
-#include "util.h"  // for consumeCodepointFromUtf8
 #include "types.h" // for GlyphId
 
 #include "pdf/font.h"  // for Font, Font::ENCODING_CID

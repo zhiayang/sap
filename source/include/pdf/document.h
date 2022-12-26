@@ -4,7 +4,7 @@
 
 #pragma once
 
-#include <vector>
+#include <vector> // for vector
 
 #include "pdf/object.h" // for Object, Dictionary, Writer
 

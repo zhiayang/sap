@@ -6,11 +6,9 @@
 #include "sap/fontset.h" // for FontStyle, FontStyle::Bold, FontStyle::...
 
 #include "interp/tree.h"     // for Text
-#include "interp/type.h"     // for Type
-#include "interp/state.h"    // for DefnTree, Interpreter
+#include "interp/state.h"    // for Interpreter
 #include "interp/value.h"    // for Value
-#include "interp/interp.h"   // for makeParamList, BuiltinFunctionDefn, Def...
-#include "interp/builtin.h"  // for defineBuiltins
+#include "interp/builtin.h"  // for bold1, bold_italic1, italic1
 #include "interp/basedefs.h" // for InlineObject
 
 namespace sap::interp::builtin

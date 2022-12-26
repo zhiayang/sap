@@ -4,9 +4,8 @@
 
 #include "util.h" // for dynamic_pointer_cast
 
-#include "interp/tree.h" // for Document, Paragraph, ScriptBlock
-#include "interp/state.h"
-#include "interp/interp.h" // for Interpreter
+#include "interp/tree.h"  // for Document, Paragraph, ScriptBlock
+#include "interp/state.h" // for Interpreter
 
 namespace sap::tree
 {

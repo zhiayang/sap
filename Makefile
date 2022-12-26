@@ -121,7 +121,7 @@ format:
 	clang-format -i $(shell find source -iname "*.cpp" -or -iname "*.h")
 
 iwyu:
-	iwyu-tool -j 8 -p . source -- -Xiwyu --update_comments -Xiwyu --no_fwd_decls -Xiwyu --prefix_header_includes=remove | iwyu-fix-includes --comments --update_comments
+	iwyu-tool -j 8 -p . source -- -Xiwyu --update_comments -Xiwyu --no_fwd_decls -Xiwyu --prefix_header_includes=keep | iwyu-fix-includes --comments --update_comments
 	find source -iname '*.cpp' -or -iname '*.h' | xargs -I{} -- ./sort_includes.py -i {}
 	clang-format -i $(shell find source -iname "*.cpp" -or -iname "*.h")
 

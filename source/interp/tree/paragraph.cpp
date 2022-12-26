@@ -6,6 +6,7 @@
 
 #include "interp/tree.h"     // for Text, Separator, Paragraph, ScriptCall
 #include "interp/state.h"    // for Interpreter
+#include "interp/value.h"    // for Value
 #include "interp/interp.h"   // for FunctionCall
 #include "interp/basedefs.h" // for InlineObject
 

@@ -2,23 +2,27 @@
 // Copyright (c) 2021, zhiayang
 // SPDX-License-Identifier: Apache-2.0
 
-#include <numbers>
-#include <variant> // for variant, visit
+#include <variant> // for variant, visit, holds_alternative
 
-#include "util.h" // for dynamic_pointer_cast
+#include "util.h"     // for dynamic_pointer_cast, hashmap, overloaded
+#include "dijkstra.h" // for dijkstra_shortest_path
 
+#include "pdf/font.h"  // for Font
 #include "pdf/page.h"  // for Page
 #include "pdf/text.h"  // for Text
-#include "pdf/units.h" // for Position2d_YDown, Scalar, Offset2d
+#include "pdf/units.h" // for Scalar, Position2d_YDown, Offset2d
 
-#include "sap/style.h"    // for Style
+#include "sap/style.h"    // for Style, Stylable
 #include "sap/units.h"    // for Scalar
+#include "sap/fontset.h"  // for FontSet
 #include "sap/document.h" // for Word, Cursor, Paragraph, RectPageLayout
-#include "dijkstra.h"
 
-#include "zst.h"
+#include "font/font.h"     // for GlyphMetrics
+#include "font/scalar.h"   // for font_design_space
+#include "font/features.h" // for GlyphAdjustment
 
-#include "interp/tree.h" // for Paragraph, Text
+#include "interp/tree.h"     // for Separator, Paragraph, Separator::SPACE
+#include "interp/basedefs.h" // for InlineObject
 
 namespace sap::layout
 {

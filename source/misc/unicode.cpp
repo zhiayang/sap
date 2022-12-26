@@ -2,10 +2,9 @@
 // Copyright (c) 2021, zhiayang
 // SPDX-License-Identifier: Apache-2.0
 
-#include <string>
 #include <utf8proc/utf8proc.h> // for utf8proc_encode_char, utf8proc_iterate
 
-#include "util.h" // for checked_cast, codepointToSurrogatePair
+#include "util.h" // for checked_cast, u32StringFromUtf8, code...
 
 namespace unicode
 {

@@ -4,10 +4,10 @@
 
 #include "interp/interp.h"
 
-#include "util.h" // for hashmap
-
-#include "interp/state.h"   // for DefnTree, Interpreter
-#include "interp/builtin.h" // for defineBuiltins
+#include "interp/type.h"    // for Type
+#include "interp/state.h"   // for StackFrame, Interpreter, DefnTree
+#include "interp/value.h"   // for Value
+#include "interp/builtin.h" // for bold1, bold_italic1, italic1, print, pri...
 
 namespace sap::interp
 {

@@ -8,8 +8,8 @@
 #include <sstream> // for operator<<, stringstream, basic_ostream
 
 #include "tree.h"
-#include "type.h" // for Type, FunctionType
-#include "util.h" // for utf8FromCodepoint
+#include "type.h" // for Type, FunctionType, ArrayType
+#include "util.h" // for u32StringFromUtf8
 
 #include "interp/interp.h"   // for Interpreter
 #include "interp/basedefs.h" // for InlineObject
