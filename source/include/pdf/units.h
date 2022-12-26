@@ -27,6 +27,9 @@ struct PDF_TAG_Y_UP;
 struct PDF_TAG_Y_DOWN;
 struct PDF_TAG_1D;
 
+struct PDF_TAG_GLYPH_SPACE;
+struct PDF_TAG_TEXT_SPACE;
+
 // allow converting sap <-> pdf_up and sap <-> pdf_down,
 // but *NOT* pdf_up <-> pdf_down
 MAKE_UNITS_COMPATIBLE(dim::units::base_unit::Tag, PDF_TAG_Y_DOWN)
@@ -49,6 +52,14 @@ DEFINE_UNIT_IN_NAMESPACE(pdf_typographic_unit, (25.4 / 72.0) * dim::units::milli
 DEFINE_UNIT_IN_NAMESPACE(pdf_typographic_unit_y_down, (25.4 / 72.0) * dim::units::millimetre::scale_factor, PDF_TAG_Y_DOWN, pdf,
     typographic_unit_y_down)
 
+
+DEFINE_UNIT_IN_NAMESPACE(pdf_glyph_space, (25.4 / 72.0) * dim::units::millimetre::scale_factor, PDF_TAG_GLYPH_SPACE, pdf,
+    glyph_space)
+
+DEFINE_UNIT_IN_NAMESPACE(pdf_text_space, (25.4 / 72.0) * dim::units::millimetre::scale_factor, PDF_TAG_TEXT_SPACE, pdf,
+    text_space)
+
+
 namespace pdf
 {
 	using Scalar = dim::Scalar<dim::units::pdf_typographic_unit_1d>;
@@ -63,4 +74,10 @@ namespace pdf
 	using Size2d_YDown = Vector2_YDown;
 	using Offset2d_YDown = Vector2_YDown;
 	using Position2d_YDown = Vector2_YDown;
+
+	using GlyphSpace1d = dim::Scalar<dim::units::pdf_glyph_space>;
+	using GlyphSpace2d = dim::Vector2<dim::units::pdf_glyph_space>;
+
+	using TextSpace1d = dim::Scalar<dim::units::pdf_text_space>;
+	using TextSpace2d = dim::Vector2<dim::units::pdf_text_space>;
 }
