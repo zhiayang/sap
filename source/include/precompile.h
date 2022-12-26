@@ -18,3 +18,5 @@
 
 #include "zpr.h"
 #include "zst.h"
+
+#include "pool.h"

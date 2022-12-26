@@ -167,7 +167,7 @@ namespace sap::layout
 		Cursor newCursor() const { return { SIZE_MAX, m_size }; }
 		Scalar getWidthAt(Cursor curs) const
 		{
-			return curs.page_num == SIZE_MAX ? Scalar() : m_size.x() - m_margin - curs.pos_on_page.x();
+			return curs.page_num == SIZE_MAX ? 0 : m_size.x() - m_margin - curs.pos_on_page.x();
 		}
 		Cursor newLineFrom(Cursor curs, Scalar line_height)
 		{
@@ -177,12 +177,11 @@ namespace sap::layout
 				return { curs.page_num + 1, Position(m_margin, m_margin + line_height) };
 			}
 			else
+			{
 				return { curs.page_num, Position(m_margin, curs.pos_on_page.y() + line_height) };
+			}
 		}
-		Cursor moveRightFrom(Cursor curs, Scalar width) const
-		{
-			return { curs.page_num, curs.pos_on_page + Offset2d(width, Scalar()) };
-		}
+		Cursor moveRightFrom(Cursor curs, Scalar width) const { return { curs.page_num, curs.pos_on_page + Offset2d(width, 0) }; }
 
 		/*
 		    Here, `position` is the (absolute) position of the region in the page (since regions cannot nest). This

@@ -121,7 +121,7 @@ namespace sap::layout
 	std::pair<std::optional<const tree::Paragraph*>, Cursor> Paragraph::layout(interp::Interpreter* cs, RectPageLayout* layout,
 	    Cursor cursor, const Style* parent_style, const tree::Paragraph* treepara)
 	{
-		cursor = layout->newLineFrom(cursor, Scalar());
+		cursor = layout->newLineFrom(cursor, 0);
 
 		using WordSepVec = std::vector<std::variant<Word>>;
 		WordSepVec words_and_seps;
@@ -154,7 +154,7 @@ namespace sap::layout
 					    cursor = layout->newLineFrom(cursor, cur_line_spacing);
 					    lines.emplace_back(std::move(cur_line), cursor, cur_line_length);
 					    cur_line.clear();
-					    cursor = layout->newLineFrom(cursor, Scalar());
+					    cursor = layout->newLineFrom(cursor, 0);
 					    cur_line_length = word.size().x();
 				    }
 				    prev_space = word.spaceWidth();
@@ -167,7 +167,7 @@ namespace sap::layout
 		cursor = layout->newLineFrom(cursor, cur_line_spacing);
 		lines.emplace_back(std::move(cur_line), cursor, cur_line_length);
 		cur_line.clear();
-		cursor = layout->newLineFrom(cursor, Scalar());
+		cursor = layout->newLineFrom(cursor, 0);
 
 		// Justify and add words to region
 		for(auto it = lines.begin(); it != lines.end(); ++it)
@@ -177,10 +177,10 @@ namespace sap::layout
 			cursor = line_cursor;
 			auto total_extra_space_width = layout->getWidthAt(cursor) - line_length;
 			auto num_spaces = line.size() - 1; // TODO: this should be = the # of separators
-			auto extra_space_width = num_spaces == 0 ? Scalar() : total_extra_space_width / (double) num_spaces;
+			auto extra_space_width = num_spaces == 0 ? 0 : total_extra_space_width / (double) num_spaces;
 			if(it + 1 == lines.end())
 			{
-				extra_space_width = Scalar();
+				extra_space_width = 0;
 			}
 			for(auto wordorsep : line)
 			{
@@ -228,13 +228,13 @@ namespace sap::layout
 				cur_text = util::make<pdf::Text>();
 				cur_text->moveAbs(pages[m_words[i].second.page_num]->convertVector2(
 				    m_words[i].second.pos_on_page.into<pdf::Position2d_YDown>()));
-				space = Scalar();
+				space = 0;
 			}
 			else if(current_curs.pos_on_page.y() != m_words[i].second.pos_on_page.y())
 			{
 				auto skip = m_words[i].second.pos_on_page.y() - current_curs.pos_on_page.y();
 				cur_text->nextLine(pdf::Offset2d(0, -1.0 * skip.into<pdf::Scalar>().value()));
-				space = Scalar();
+				space = 0;
 			}
 
 			m_words[i].first.render(cur_text, space);

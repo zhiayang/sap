@@ -78,6 +78,14 @@ namespace dim
 		constexpr self_type& operator=(self_type&&) = default;
 		constexpr self_type& operator=(const self_type&) = default;
 
+		constexpr Scalar(std::nullptr_t) : _x(0) { }
+		constexpr Scalar& operator=(std::nullptr_t)
+		{
+			_x = 0;
+			return *this;
+		}
+
+
 		constexpr bool zero() const { return this->_x == 0; }
 		constexpr bool nonzero() const { return this->_x != 0; }
 
@@ -147,7 +155,7 @@ namespace dim
 		static constexpr auto scale_factor = _System::scale_factor;
 		static_assert(scale_factor != 0);
 
-		constexpr Vector2() : _x(0), _y(0) { }
+		constexpr Vector2() : _x(static_cast<_Type>(0)), _y(static_cast<_Type>(0)) { }
 		constexpr Vector2(value_type x, value_type y) : _x(scalar_type(x)), _y(scalar_type(y)) { }
 		constexpr Vector2(scalar_type x, scalar_type y) : _x(x), _y(y) { }
 
