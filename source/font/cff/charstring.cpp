@@ -119,14 +119,10 @@ namespace font::cff
 			switch(x)
 			{
 				case CMD_HSTEM:
-				case CMD_HSTEMHM:
-					interp.num_hstems += interp.stack.size() / 2;
-					break;
+				case CMD_HSTEMHM: interp.num_hstems += interp.stack.size() / 2; break;
 
 				case CMD_VSTEM:
-				case CMD_VSTEMHM:
-					interp.num_vstems += interp.stack.size() / 2;
-					break;
+				case CMD_VSTEMHM: interp.num_vstems += interp.stack.size() / 2; break;
 
 				case CMD_HINTMASK:
 				case CMD_CNTRMASK: {
@@ -144,11 +140,9 @@ namespace font::cff
 					break;
 				}
 
-				case CMD_RETURN:
-					return false;
+				case CMD_RETURN: return false;
 
-				case CMD_ENDCHAR:
-					return true;
+				case CMD_ENDCHAR: return true;
 
 				case CMD_CALLSUBR:
 				case CMD_CALLGSUBR: {
@@ -196,36 +190,16 @@ namespace font::cff
 					interp.ensure(1);
 					interp.in_header = false;
 					break;
-				case CMD_RLINETO:
-					interp.ensure(2);
-					break;
-				case CMD_HLINETO:
-					interp.ensure(1);
-					break;
-				case CMD_VLINETO:
-					interp.ensure(1);
-					break;
-				case CMD_VHCURVETO:
-					interp.ensure(4);
-					break;
-				case CMD_HVCURVETO:
-					interp.ensure(4);
-					break;
-				case CMD_RRCURVETO:
-					interp.ensure(6);
-					break;
-				case CMD_RCURVELINE:
-					interp.ensure(8);
-					break;
-				case CMD_RLINECURVE:
-					interp.ensure(8);
-					break;
-				case CMD_VVCURVETO:
-					interp.ensure(4);
-					break;
-				case CMD_HHCURVETO:
-					interp.ensure(4);
-					break;
+				case CMD_RLINETO: interp.ensure(2); break;
+				case CMD_HLINETO: interp.ensure(1); break;
+				case CMD_VLINETO: interp.ensure(1); break;
+				case CMD_VHCURVETO: interp.ensure(4); break;
+				case CMD_HVCURVETO: interp.ensure(4); break;
+				case CMD_RRCURVETO: interp.ensure(6); break;
+				case CMD_RCURVELINE: interp.ensure(8); break;
+				case CMD_RLINECURVE: interp.ensure(8); break;
+				case CMD_VVCURVETO: interp.ensure(4); break;
+				case CMD_HHCURVETO: interp.ensure(4); break;
 
 				case CMD_ESCAPE: {
 					auto x = instrs[0];
@@ -233,19 +207,11 @@ namespace font::cff
 
 					switch(x)
 					{
-						case CMD_ESC_HFLEX:
-							interp.ensure(7);
-							break;
-						case CMD_ESC_HFLEX1:
-							interp.ensure(9);
-							break;
+						case CMD_ESC_HFLEX: interp.ensure(7); break;
+						case CMD_ESC_HFLEX1: interp.ensure(9); break;
 
-						case CMD_ESC_FLEX:
-							interp.ensure(13);
-							break;
-						case CMD_ESC_FLEX1:
-							interp.ensure(11);
-							break;
+						case CMD_ESC_FLEX: interp.ensure(13); break;
+						case CMD_ESC_FLEX1: interp.ensure(11); break;
 
 
 						case CMD_ESC_ADD:
@@ -360,16 +326,12 @@ namespace font::cff
 							interp.pop();
 							clear_stack = false;
 
-						default:
-							sap::error("font/cff", "invalid opcode '0c {x}'", x);
-							break;
+						default: sap::error("font/cff", "invalid opcode '0c {x}'", x); break;
 					}
 					break;
 				}
 
-				default:
-					sap::error("font/cff", "invalid opcode '{x}'", x);
-					break;
+				default: sap::error("font/cff", "invalid opcode '{x}'", x); break;
 			}
 
 			if(clear_stack)

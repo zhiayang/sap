@@ -14,8 +14,9 @@
 #include "sap/units.h"    // for Scalar
 #include "sap/document.h" // for Word, Cursor, Paragraph, RectPageLayout
 
-#include "interp/tree.h" // for Paragraph, Text
 #include "zst.h"
+
+#include "interp/tree.h" // for Paragraph, Text
 
 namespace sap::layout
 {

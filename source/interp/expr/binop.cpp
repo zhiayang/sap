@@ -10,27 +10,16 @@
 
 namespace sap::interp
 {
-	static const char* op_to_string(Op op)
+	static const char* op_to_string(BinaryOp::Op op)
 	{
 		switch(op)
 		{
-			case Op::Add:
-				return "+";
-			case Op::Subtract:
-				return "-";
-			case Op::Multiply:
-				return "*";
-			case Op::Divide:
-				return "/";
+			case BinaryOp::Op::Add: return "+";
+			case BinaryOp::Op::Subtract: return "-";
+			case BinaryOp::Op::Multiply: return "*";
+			case BinaryOp::Op::Divide: return "/";
 		}
 	}
-
-	template <typename T, std::same_as<T>... Ts>
-	static constexpr bool one_of(T foo, Ts... foos)
-	{
-		return (false || ... || (foo == foos));
-	}
-
 
 	ErrorOr<const Type*> BinaryOp::typecheck_impl(Interpreter* cs, const Type* infer) const
 	{
@@ -39,7 +28,7 @@ namespace sap::interp
 
 		if((ltype->isInteger() && rtype->isInteger()) || (ltype->isFloating() && rtype->isFloating()))
 		{
-			if(one_of(this->op, Op::Add, Op::Subtract, Op::Multiply, Op::Divide))
+			if(util::is_one_of(this->op, Op::Add, Op::Subtract, Op::Multiply, Op::Divide))
 				return Ok(ltype);
 		}
 		else if(ltype->isArray() && rtype->isArray() && ltype->toArray()->elementType() == rtype->toArray()->elementType())
@@ -68,20 +57,16 @@ namespace sap::interp
 		auto do_op = [](Op op, auto a, auto b) {
 			switch(op)
 			{
-				case Op::Add:
-					return a + b;
-				case Op::Subtract:
-					return a - b;
-				case Op::Multiply:
-					return a * b;
-				case Op::Divide:
-					return a / b;
+				case Op::Add: return a + b;
+				case Op::Subtract: return a - b;
+				case Op::Multiply: return a * b;
+				case Op::Divide: return a / b;
 			}
 		};
 
 		if((ltype->isInteger() && rtype->isInteger()) || (ltype->isFloating() && rtype->isFloating()))
 		{
-			if(one_of(this->op, Op::Add, Op::Subtract, Op::Multiply, Op::Divide))
+			if(util::is_one_of(this->op, Op::Add, Op::Subtract, Op::Multiply, Op::Divide))
 			{
 				// TODO: this might be bad because implicit conversions
 				if(ltype->isInteger())

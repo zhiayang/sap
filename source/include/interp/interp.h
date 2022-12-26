@@ -108,24 +108,6 @@ namespace sap::interp
 		std::u32string string;
 	};
 
-	enum class Op
-	{
-		Add,
-		Subtract,
-		Multiply,
-		Divide,
-	};
-
-	constexpr inline bool isComparisonOp(Op op)
-	{
-		return false;
-	}
-
-	constexpr inline bool isAssignmentOp(Op op)
-	{
-		return false;
-	}
-
 	struct BinaryOp : Expr
 	{
 		virtual ErrorOr<std::optional<Value>> evaluate(Interpreter* cs) const override;
@@ -133,9 +115,35 @@ namespace sap::interp
 
 		std::unique_ptr<Expr> lhs;
 		std::unique_ptr<Expr> rhs;
+
+		enum Op
+		{
+			Add,
+			Subtract,
+			Multiply,
+			Divide,
+		};
 		Op op;
 	};
 
+	struct ComparisonOp : Expr
+	{
+		virtual ErrorOr<std::optional<Value>> evaluate(Interpreter* cs) const override;
+		virtual ErrorOr<const Type*> typecheck_impl(Interpreter* cs, const Type* infer = nullptr) const override;
+
+		enum Op
+		{
+			EQ,
+			NE,
+			LT,
+			GT,
+			LE,
+			GE,
+		};
+
+		std::unique_ptr<Expr> first;
+		std::vector<std::pair<Op, std::unique_ptr<Expr>>> rest;
+	};
 
 
 	struct Definition;

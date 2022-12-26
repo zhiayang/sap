@@ -30,14 +30,10 @@ namespace sap
 		{
 			switch(style)
 			{
-				case FontStyle::Regular:
-					return m_regular_font;
-				case FontStyle::Italic:
-					return m_italic_font;
-				case FontStyle::Bold:
-					return m_bold_font;
-				case FontStyle::BoldItalic:
-					return m_bold_italic_font;
+				case FontStyle::Regular: return m_regular_font;
+				case FontStyle::Italic: return m_italic_font;
+				case FontStyle::Bold: return m_bold_font;
+				case FontStyle::BoldItalic: return m_bold_italic_font;
 			}
 		}
 

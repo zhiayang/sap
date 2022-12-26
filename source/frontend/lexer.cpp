@@ -265,6 +265,22 @@ namespace sap::frontend
 		{
 			return advance_and_return(stream, loc, Token { .loc = loc, .type = TT::ColonColon, .text = stream.take(2) }, 2);
 		}
+		else if(stream.starts_with("<="))
+		{
+			return advance_and_return(stream, loc, Token { .loc = loc, .type = TT::LAngleEqual, .text = stream.take(2) }, 2);
+		}
+		else if(stream.starts_with(">="))
+		{
+			return advance_and_return(stream, loc, Token { .loc = loc, .type = TT::RAngleEqual, .text = stream.take(2) }, 2);
+		}
+		else if(stream.starts_with("=="))
+		{
+			return advance_and_return(stream, loc, Token { .loc = loc, .type = TT::EqualEqual, .text = stream.take(2) }, 2);
+		}
+		else if(stream.starts_with("!="))
+		{
+			return advance_and_return(stream, loc, Token { .loc = loc, .type = TT::ExclamationEqual, .text = stream.take(2) }, 2);
+		}
 		else if(stream[0] == '"')
 		{
 			size_t n = 1;
@@ -347,46 +363,22 @@ namespace sap::frontend
 			auto tt = TT::Invalid;
 			switch(stream[0])
 			{
-				case '(':
-					tt = TT::LParen;
-					break;
-				case ')':
-					tt = TT::RParen;
-					break;
-				case ',':
-					tt = TT::Comma;
-					break;
-				case ':':
-					tt = TT::Colon;
-					break;
-				case '{':
-					tt = TT::LBrace;
-					break;
-				case '}':
-					tt = TT::RBrace;
-					break;
-				case '+':
-					tt = TT::Plus;
-					break;
-				case '-':
-					tt = TT::Minus;
-					break;
-				case '*':
-					tt = TT::Asterisk;
-					break;
-				case '/':
-					tt = TT::Slash;
-					break;
-				case '=':
-					tt = TT::Equal;
-					break;
-				case ';':
-					tt = TT::Semicolon;
-					break;
+				case '(': tt = TT::LParen; break;
+				case ')': tt = TT::RParen; break;
+				case ',': tt = TT::Comma; break;
+				case ':': tt = TT::Colon; break;
+				case '{': tt = TT::LBrace; break;
+				case '}': tt = TT::RBrace; break;
+				case '+': tt = TT::Plus; break;
+				case '-': tt = TT::Minus; break;
+				case '*': tt = TT::Asterisk; break;
+				case '/': tt = TT::Slash; break;
+				case '=': tt = TT::Equal; break;
+				case ';': tt = TT::Semicolon; break;
+				case '<': tt = TT::LAngle; break;
+				case '>': tt = TT::RAngle; break;
 
-				default:
-					sap::error(loc, "unknown token '{}'", stream[0]);
-					break;
+				default: sap::error(loc, "unknown token '{}'", stream[0]); break;
 			}
 
 			return advance_and_return(stream, loc, Token { .loc = loc, .type = tt, .text = stream.take(1) }, 1);

@@ -9,8 +9,8 @@
 #include <concepts>
 #include <string_view>
 
-#include "types.h"
 #include "zst.h"
+#include "types.h"
 
 namespace util
 {
@@ -33,6 +33,12 @@ namespace util
 
 	template <typename... Xs>
 	overloaded(Xs...) -> overloaded<Xs...>;
+
+	template <typename T, std::same_as<T>... Ts>
+	static constexpr bool is_one_of(T foo, Ts... foos)
+	{
+		return (false || ... || (foo == foos));
+	}
 
 	std::pair<uint8_t*, size_t> readEntireFile(const std::string& path);
 

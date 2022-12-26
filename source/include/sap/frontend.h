@@ -37,6 +37,8 @@ namespace sap::frontend
 		RParen,
 		LSquare,
 		RSquare,
+		LAngle,
+		RAngle,
 		Colon,
 		Comma,
 
@@ -48,6 +50,10 @@ namespace sap::frontend
 		Equal,
 
 		ColonColon,
+		LAngleEqual,
+		RAngleEqual,
+		EqualEqual,
+		ExclamationEqual,
 	};
 
 	struct Token

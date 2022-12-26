@@ -175,21 +175,13 @@ namespace font
 		auto format = peek_u16(table);
 		switch(format)
 		{
-			case 0:
-				return read_subtable_0(table);
-			case 4:
-				return read_subtable_4(table);
-			case 6:
-				return read_subtable_6(table);
-			case 10:
-				return read_subtable_10(table);
-			case 12:
-				return read_subtable_12_or_13(table);
-			case 13:
-				return read_subtable_12_or_13(table);
-			default:
-				sap::warn("font/off", "no supported cmap table! no glyphs will be available");
-				return {};
+			case 0: return read_subtable_0(table);
+			case 4: return read_subtable_4(table);
+			case 6: return read_subtable_6(table);
+			case 10: return read_subtable_10(table);
+			case 12: return read_subtable_12_or_13(table);
+			case 13: return read_subtable_12_or_13(table);
+			default: sap::warn("font/off", "no supported cmap table! no glyphs will be available"); return {};
 		}
 	}
 

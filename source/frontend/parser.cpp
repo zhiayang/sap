@@ -57,19 +57,22 @@ namespace sap::frontend
 	{
 		switch(lexer.peek())
 		{
-			case TT::LParen:
-				return 1000;
+			case TT::LParen: return 1000;
 
 			case TT::Asterisk:
-			case TT::Slash:
-				return 400;
+			case TT::Slash: return 400;
 
 			case TT::Plus:
-			case TT::Minus:
-				return 300;
+			case TT::Minus: return 300;
 
-			default:
-				return -1;
+			case TT::LAngle:
+			case TT::RAngle:
+			case TT::EqualEqual:
+			case TT::LAngleEqual:
+			case TT::RAngleEqual:
+			case TT::ExclamationEqual: return 200;
+
+			default: return -1;
 		}
 	}
 
@@ -83,26 +86,48 @@ namespace sap::frontend
 		return lexer.peek() == TT::LParen || lexer.peek() == TT::LSquare;
 	}
 
-	static interp::Op parse_operator_tokens(Lexer& lexer)
+	static bool is_assignment_op(TokenType tok)
 	{
-		switch(lexer.peek())
+		return util::is_one_of(tok, TT::Equal);
+	}
+
+	static bool is_regular_binary_op(TokenType tok)
+	{
+		return util::is_one_of(tok, TT::Plus, TT::Minus, TT::Asterisk, TT::Slash);
+	}
+
+	static bool is_comparison_op(TokenType tok)
+	{
+		return util::is_one_of(tok, TT::LAngle, TT::RAngle, TT::LAngleEqual, TT::RAngleEqual, TT::EqualEqual,
+		    TT::ExclamationEqual);
+	}
+
+	static interp::BinaryOp::Op convert_binop(TokenType tok)
+	{
+		switch(tok)
 		{
-			case TT::Plus:
-				lexer.next();
-				return interp::Op::Add;
-			case TT::Minus:
-				lexer.next();
-				return interp::Op::Subtract;
-			case TT::Asterisk:
-				lexer.next();
-				return interp::Op::Multiply;
-			case TT::Slash:
-				lexer.next();
-				return interp::Op::Divide;
-			default:
-				error(lexer.peek().loc, "unknown operator token '{}'", lexer.peek().text);
+			case TT::Plus: return interp::BinaryOp::Add;
+			case TT::Minus: return interp::BinaryOp::Subtract;
+			case TT::Asterisk: return interp::BinaryOp::Multiply;
+			case TT::Slash: return interp::BinaryOp::Divide;
+			default: assert(false && "unreachable!");
 		}
 	}
+
+	static interp::ComparisonOp::Op convert_comparison_op(TokenType tok)
+	{
+		switch(tok)
+		{
+			case TT::LAngle: return interp::ComparisonOp::LT;
+			case TT::RAngle: return interp::ComparisonOp::GT;
+			case TT::LAngleEqual: return interp::ComparisonOp::LE;
+			case TT::RAngleEqual: return interp::ComparisonOp::GE;
+			case TT::EqualEqual: return interp::ComparisonOp::EQ;
+			case TT::ExclamationEqual: return interp::ComparisonOp::NE;
+			default: assert(false && "unreachable!");
+		}
+	}
+
 
 
 	constexpr auto KW_LET = "let";
@@ -220,16 +245,14 @@ namespace sap::frontend
 				continue;
 			}
 
-			// auto op_loc = lexer.peek().loc;
-			auto op = parse_operator_tokens(lexer);
-
+			auto op_tok = lexer.next();
 			auto rhs = parse_unary(lexer);
 			int next = get_front_token_precedence(lexer);
 
 			if(next > prec || is_right_associative(lexer))
 				rhs = parse_rhs(lexer, std::move(rhs), prec + 1);
 
-			if(interp::isAssignmentOp(op))
+			if(is_assignment_op(op_tok))
 			{
 				error(lexer.peek().loc, "asdf");
 				// auto newlhs = util::pool<AssignOp>(loc);
@@ -240,34 +263,33 @@ namespace sap::frontend
 
 				// lhs = newlhs;
 			}
-			else if(interp::isComparisonOp(op))
+			else if(is_comparison_op(op_tok))
 			{
-				error(lexer.peek().loc, "aoeu");
-				// if(auto cmp = dcast(ComparisonOp, lhs))
-				// {
-				// 	cmp->ops.push_back({ op, loc });
-				// 	cmp->exprs.push_back(rhs);
-				// 	lhs = cmp;
-				// }
-				// else
-				// {
-				// 	iceAssert(lhs);
-				// 	auto newlhs = util::pool<ComparisonOp>(loc);
-				// 	newlhs->exprs.push_back(lhs);
-				// 	newlhs->exprs.push_back(rhs);
-				// 	newlhs->ops.push_back({ op, loc });
+				if(auto cmp = dynamic_cast<interp::ComparisonOp*>(lhs.get()))
+				{
+					cmp->rest.push_back({ convert_comparison_op(op_tok), std::move(rhs) });
+				}
+				else
+				{
+					auto newlhs = std::make_unique<interp::ComparisonOp>();
+					newlhs->first = std::move(lhs);
+					newlhs->rest.push_back({ convert_comparison_op(op_tok), std::move(rhs) });
 
-				// 	lhs = newlhs;
-				// }
+					lhs = std::move(newlhs);
+				}
 			}
-			else
+			else if(is_regular_binary_op(op_tok))
 			{
 				auto tmp = std::make_unique<interp::BinaryOp>();
 				tmp->lhs = std::move(lhs);
 				tmp->rhs = std::move(rhs);
-				tmp->op = op;
+				tmp->op = convert_binop(op_tok);
 
 				lhs = std::move(tmp);
+			}
+			else
+			{
+				error(lexer.peek().loc, "unknown operator token '{}'", lexer.peek().text);
 			}
 		}
 	}
@@ -302,18 +324,10 @@ namespace sap::frontend
 				cp = unicode::consumeCodepointFromUtf8(bs);
 				switch(cp)
 				{
-					case U'\\':
-						ret += U'\\';
-						break;
-					case U'n':
-						ret += U'\n';
-						break;
-					case U't':
-						ret += U'\t';
-						break;
-					case U'b':
-						ret += U'\b';
-						break;
+					case U'\\': ret += U'\\'; break;
+					case U'n': ret += U'\n'; break;
+					case U't': ret += U'\t'; break;
+					case U'b': ret += U'\b'; break;
 					case U'x':
 						assert(bs.size() >= 2);
 						assert(is_hex(bs[0]) && is_hex(bs[1]));
@@ -341,9 +355,7 @@ namespace sap::frontend
 						     + 16u * convert_hex(bs[6])                                     //
 						     + convert_hex(bs[7]);
 						break;
-					default:
-						sap::error(loc, "invalid escape sequence starting with '{}'", cp);
-						break;
+					default: sap::error(loc, "invalid escape sequence starting with '{}'", cp); break;
 				}
 			}
 			else
@@ -421,9 +433,7 @@ namespace sap::frontend
 				}
 				break;
 
-			default:
-				stmt = parse_expr(lexer);
-				break;
+			default: stmt = parse_expr(lexer); break;
 		}
 
 		if(not stmt)
