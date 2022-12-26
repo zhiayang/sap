@@ -150,6 +150,8 @@ namespace sap::interp
 		bool isFunction() const { return m_type->isFunction(); }
 		bool isTreeInlineObj() const { return m_type->isTreeInlineObj(); }
 
+		bool isPrintable() const { return isBool() || isChar() || isArray() || isInteger() || isFloating(); }
+
 		Value() : m_type(Type::makeVoid()) { }
 		~Value() { this->destroy(); }
 

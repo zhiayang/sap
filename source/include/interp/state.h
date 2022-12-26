@@ -39,6 +39,28 @@ namespace sap::interp
 		friend struct Interpreter;
 	};
 
+	struct StackFrame
+	{
+		StackFrame* parent() const { return m_parent; }
+
+		Value* valueOf(const Definition* defn)
+		{
+			if(auto it = m_values.find(defn); it == m_values.end())
+				return nullptr;
+			else
+				return &it->second;
+		}
+
+		void setValue(const Definition* defn, Value value) { m_values[defn] = std::move(value); }
+
+	private:
+		explicit StackFrame(StackFrame* parent) : m_parent(parent) { }
+
+		friend struct Interpreter;
+
+		StackFrame* m_parent = nullptr;
+		std::unordered_map<const Definition*, Value> m_values;
+	};
 
 	struct Interpreter
 	{
@@ -50,16 +72,22 @@ namespace sap::interp
 		DefnTree* current() { return m_current; }
 		const DefnTree* current() const { return m_current; }
 
-		// note: might potentially return null
-		std::unique_ptr<tree::InlineObject> run(const Stmt* stmt);
-		ErrorOr<Value> evaluate(const Expr* expr);
+		ErrorOr<void> run(const Stmt* stmt);
+		ErrorOr<std::optional<Value>> evaluate(const Expr* expr);
 
 		Definition* addBuiltinDefinition(std::unique_ptr<Definition> defn);
+
+		StackFrame& frame();
+		StackFrame& pushFrame();
+		void popFrame();
+
+		bool canImplicitlyConvert(const Type* from, const Type* to) const;
 
 	private:
 		std::unique_ptr<DefnTree> m_top;
 		DefnTree* m_current;
 
 		std::vector<std::unique_ptr<Definition>> m_builtin_defns;
+		std::vector<std::unique_ptr<StackFrame>> m_stack_frames;
 	};
 }

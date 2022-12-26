@@ -62,7 +62,9 @@ namespace sap::layout
 					std::tie(overflow, cursor) = Paragraph::layout(cs, &m_page_layout, cursor, m_style, *overflow);
 			}
 			else
+			{
 				sap::internal_error("lol");
+			}
 		}
 	}
 

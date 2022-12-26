@@ -21,22 +21,24 @@ namespace sap::tree
 			}
 			else if(auto iscr = util::dynamic_pointer_cast<tree::ScriptCall>(obj); iscr != nullptr)
 			{
-				if(auto tmp = cs->run(iscr->call.get()); tmp != nullptr)
+				auto value_or_err = cs->evaluate(iscr->call.get());
+				if(value_or_err.is_err())
+					error("interp", "evaluation failed: {}", value_or_err.error());
+
+				auto value_or_empty = value_or_err.take_value();
+				if(not value_or_empty.has_value())
 				{
-					// TODO: clean this up
-					if(auto text = dynamic_cast<tree::Text*>(tmp.get()); text)
-					{
-						obj.reset(tmp.release());
-					}
-					else
-					{
-						error("layout", "invalid object returned from script call");
-					}
+					obj.reset(new tree::Text(U"", obj->style()));
+					continue;
 				}
+
+				auto value = std::move(*value_or_empty);
+				if(value.isTreeInlineObj())
+					obj.reset(std::move(value).takeTreeInlineObj().release());
+				else if(value.isPrintable())
+					obj.reset(new tree::Text(value.toString(), obj->style()));
 				else
-				{
-					error("interp", "unsupported");
-				}
+					error("layout", "cannot insert value of type '{}' into paragraph", value.type());
 			}
 			else if(auto iscb = util::dynamic_pointer_cast<tree::ScriptBlock>(obj); iscb != nullptr)
 			{
@@ -44,7 +46,7 @@ namespace sap::tree
 			}
 			else
 			{
-				error("interp", "??????");
+				error("interp", "unsupported");
 			}
 		}
 	}

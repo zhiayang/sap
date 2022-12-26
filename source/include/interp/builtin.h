@@ -15,5 +15,12 @@ namespace sap::interp
 	struct DefnTree;
 	struct Interpreter;
 
-	void defineBuiltins(Interpreter* cs, DefnTree* builtin_namespace);
+	namespace builtin
+	{
+		ErrorOr<std::optional<Value>> bold1(Interpreter* cs, std::vector<Value>& args);
+		ErrorOr<std::optional<Value>> italic1(Interpreter* cs, std::vector<Value>& args);
+		ErrorOr<std::optional<Value>> bold_italic1(Interpreter* cs, std::vector<Value>& args);
+
+		ErrorOr<std::optional<Value>> print(Interpreter* cs, std::vector<Value>& args);
+	}
 }

@@ -159,7 +159,7 @@ namespace sap::interp
 		Declaration(const std::string& name) : name(name) { }
 
 		std::string name;
-		Definition* resolved_defn = nullptr;
+		const Definition* resolved_defn = nullptr;
 	};
 
 	struct Definition : Stmt
@@ -180,11 +180,12 @@ namespace sap::interp
 
 	struct VariableDefn : Definition
 	{
-		VariableDefn(const std::string& name, bool is_mutable, std::unique_ptr<Expr> init, std::optional<const Type*> given_type)
+		VariableDefn(const std::string& name, bool is_mutable, std::unique_ptr<Expr> init,
+		    std::optional<const Type*> explicit_type)
 		    : Definition(new VariableDecl(name))
 		    , is_mutable(is_mutable)
 		    , initialiser(std::move(init))
-		    , given_type(given_type)
+		    , explicit_type(explicit_type)
 		{
 		}
 
@@ -193,7 +194,7 @@ namespace sap::interp
 
 		bool is_mutable;
 		std::unique_ptr<Expr> initialiser;
-		std::optional<const Type*> given_type;
+		std::optional<const Type*> explicit_type;
 	};
 
 	struct FunctionDecl : Declaration

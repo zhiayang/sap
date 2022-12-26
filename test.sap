@@ -7,6 +7,10 @@ this     is     a    aoeu bsdf
 fi fl Bсички хора се раждат свободни и равни по \{ \}
 
 \script {
+	let foo = 10;
+	builtin::print("foo = ");
+	builtin::print(foo);
+
 	builtin::__bold1(69);
 	builtin::__bold1("420");
 }

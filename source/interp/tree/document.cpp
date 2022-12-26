@@ -4,11 +4,21 @@
 
 #include "util.h" // for dynamic_pointer_cast
 
-#include "interp/tree.h"   // for Document, Paragraph, ScriptBlock
+#include "interp/tree.h" // for Document, Paragraph, ScriptBlock
+#include "interp/state.h"
 #include "interp/interp.h" // for Interpreter
 
 namespace sap::tree
 {
+	static void run_script_block(interp::Interpreter* cs, ScriptBlock* script_block)
+	{
+		for(auto& stmt : script_block->statements)
+		{
+			if(auto r = cs->run(stmt.get()); r.is_err())
+				error("interp", "evaluation failed: {}", r.error());
+		}
+	}
+
 	void Document::evaluateScripts(interp::Interpreter* cs)
 	{
 		// for(auto& obj : m_objects)
@@ -16,8 +26,7 @@ namespace sap::tree
 		{
 			if(auto blk = util::dynamic_pointer_cast<ScriptBlock>(*it); blk != nullptr)
 			{
-				// TODO:
-				zpr::println("not implemented: script block");
+				run_script_block(cs, blk.get());
 				it = m_objects.erase(it);
 			}
 			else if(auto para = util::dynamic_pointer_cast<Paragraph>(*it); para != nullptr)

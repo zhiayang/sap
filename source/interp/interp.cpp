@@ -11,113 +11,91 @@
 
 namespace sap::interp
 {
-	Interpreter::Interpreter() : m_top(new DefnTree("", /* parent: */ nullptr)), m_current(m_top.get())
+	static void define_builtins(Interpreter* cs, DefnTree* builtin_ns)
 	{
-		auto ns_builtin = m_top->lookupOrDeclareNamespace("builtin");
-		defineBuiltins(this, ns_builtin);
+		using BFD = BuiltinFunctionDefn;
+		using Param = FunctionDecl::Param;
+
+		auto any = Type::makeAny();
+		auto tio = Type::makeTreeInlineObj();
+
+		auto define_builtin = [&](auto&&... xs) {
+			auto ret = std::make_unique<BFD>(std::forward<decltype(xs)>(xs)...);
+			builtin_ns->define(cs->addBuiltinDefinition(std::move(ret)));
+		};
+
+		define_builtin("__bold1", makeParamList(Param { .name = "_", .type = any }), tio, &builtin::bold1);
+		define_builtin("__italic1", makeParamList(Param { .name = "_", .type = any }), tio, &builtin::italic1);
+		define_builtin("__bold_italic1", makeParamList(Param { .name = "_", .type = any }), tio, &builtin::bold_italic1);
+
+		// TODO: make this variadic
+		define_builtin("print", makeParamList(Param { .name = "_", .type = any }), tio, &builtin::print);
 	}
 
-	ErrorOr<DefnTree*> DefnTree::lookupNamespace(std::string_view name) const
+	Interpreter::Interpreter() : m_top(new DefnTree("__top_level", /* parent: */ nullptr)), m_current(m_top.get())
 	{
-		if(auto it = m_children.find(name); it != m_children.end())
-			return Ok(it->second.get());
+		define_builtins(this, m_top->lookupOrDeclareNamespace("builtin"));
 
-		return ErrFmt("namespace '{}' was not found in {}", name, m_name);
+		// always start with a top level frame.
+		this->m_stack_frames.push_back(std::unique_ptr<StackFrame>(new StackFrame(nullptr)));
 	}
 
-	DefnTree* DefnTree::lookupOrDeclareNamespace(std::string_view name)
+	bool Interpreter::canImplicitlyConvert(const Type* from, const Type* to) const
 	{
-		if(auto it = m_children.find(name); it != m_children.end())
-			return it->second.get();
+		if(from == to || to->isAny())
+			return true;
 
-		auto ret = std::unique_ptr<DefnTree>(new DefnTree(std::string(name), /* parent: */ this));
-		return m_children.insert_or_assign(std::string(name), std::move(ret)).first->second.get();
+		// TODO: not if these are all the cases
+		return false;
 	}
 
-	ErrorOr<std::vector<const Declaration*>> DefnTree::lookup(QualifiedId id) const
+	StackFrame& Interpreter::frame()
 	{
-		auto current = this;
-
-		// look upwards at our parents to find something that matches the first thing
-		if(not id.parents.empty())
-		{
-			while(true)
-			{
-				if(current->lookupNamespace(id.parents[0]).ok())
-					break;
-
-				current = current->parent();
-				if(current == nullptr)
-					return ErrFmt("no such namespace '{}'", id.parents[0]);
-			}
-		}
-
-		for(auto& t : id.parents)
-		{
-			if(auto next = current->lookupNamespace(t); next.ok())
-				current = next.unwrap();
-			else
-				return next.to_err();
-		}
-
-		if(auto it = current->m_decls.find(id.name); it != current->m_decls.end())
-		{
-			std::vector<const Declaration*> decls {};
-			for(auto& d : it->second)
-				decls.push_back(d);
-
-			return Ok(decls);
-		}
-
-		return ErrFmt("no declaration named '{}' in '{}'", id.name, current->name());
+		return *m_stack_frames.back();
 	}
 
-	ErrorOr<void> DefnTree::declare(const Declaration* new_decl)
+	StackFrame& Interpreter::pushFrame()
 	{
-		auto& name = new_decl->name;
-		if(auto foo = m_decls.find(name); foo != m_decls.end())
-		{
-			auto& existing_decls = foo->second;
-			for(auto& decl : existing_decls)
-			{
-				// no error for re-*declaration*, just return ok (and throw away the duplicate decl)
-				if(decl == new_decl)
-					return Ok();
-			}
-		}
+		auto cur = m_stack_frames.back().get();
+		m_stack_frames.push_back(std::unique_ptr<StackFrame>(new StackFrame(cur)));
 
-		m_decls[name].push_back(new_decl);
-		return Ok();
+		return *m_stack_frames.back();
 	}
 
-	ErrorOr<void> DefnTree::define(Definition* defn)
+	void Interpreter::popFrame()
 	{
-		auto& name = defn->declaration->name;
-		if(auto foo = m_decls.find(name); foo != m_decls.end())
-		{
-			auto& existing_decls = foo->second;
-			for(auto& decl : existing_decls)
-			{
-				// definitions *can* conflict, if they have the same type.
-				if(decl->get_type() == defn->declaration->get_type())
-					return ErrFmt("conflicting definition of '{}'", name);
-			}
-		}
-
-		// steal the ownership of declaration from the definition.
-		// the pointer itself is still the same, though; we don't need to re-point it.
-		auto decl = defn->declaration.get();
-
-		// somebody must own the definition (not the declaration), so we just own it.
-		m_definitions.push_back(defn);
-		m_decls[name].push_back(std::move(decl));
-
-		return Ok();
+		assert(not m_stack_frames.empty());
+		m_stack_frames.pop_back();
 	}
 
 	Definition* Interpreter::addBuiltinDefinition(std::unique_ptr<Definition> defn)
 	{
 		m_builtin_defns.push_back(std::move(defn));
 		return m_builtin_defns.back().get();
+	}
+
+
+	ErrorOr<void> Interpreter::run(const Stmt* stmt)
+	{
+		TRY(stmt->typecheck(this));
+		TRY(stmt->evaluate(this));
+
+		return Ok();
+	}
+
+	ErrorOr<std::optional<Value>> Interpreter::evaluate(const Expr* expr)
+	{
+		if(auto res = expr->typecheck(this); res.is_err())
+			error(expr->location, "{}", res.take_error());
+
+		return expr->evaluate(this);
+	}
+
+	const Type* Expr::type(Interpreter* cs) const
+	{
+		if(m_type != nullptr)
+			return m_type;
+
+		error(this->location, "cannot get type of expression that was not typechecked!");
 	}
 }

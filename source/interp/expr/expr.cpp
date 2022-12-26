@@ -32,16 +32,28 @@ namespace sap::interp
 		}
 		else
 		{
-			// note: function calls should not call typecheck() on an ident directly,
-			// since we do not (and don't want to) provide a mechanism to return multiple
-			// "overloaded" types for a single identifier.
+			// TODO: use 'infer' to disambiguate references to functions
 			return ErrFmt("ambiguous '{}'", this->name);
 		}
 	}
 
 	ErrorOr<std::optional<Value>> Ident::evaluate(Interpreter* cs) const
 	{
-		return Ok(std::nullopt);
+		// this should have been set by typechecking!
+		assert(m_resolved_decl != nullptr);
+		assert(m_resolved_decl->resolved_defn);
+
+		auto* frame = &cs->frame();
+		while(true)
+		{
+			if(auto value = frame->valueOf(m_resolved_decl->resolved_defn); value != nullptr)
+				return Ok(std::move(*value));
+
+			if(frame->parent())
+				frame = frame->parent();
+			else
+				return ErrFmt("use of uninitialised variable '{}'", this->name);
+		}
 	}
 
 
