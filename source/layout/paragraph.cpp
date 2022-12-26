@@ -134,67 +134,90 @@ namespace sap::layout
 		}
 
 		auto para = util::make<Paragraph>();
+
 		WordSepVec cur_line;
 		Scalar prev_space;
 		Scalar cur_line_length;
 		Scalar cur_line_spacing;
 
+		struct Line
+		{
+			std::vector<std::variant<Word>> words;
+			Cursor cursor;
+			Scalar line_length;
+		};
+
 		// Break lines
-		std::vector<std::tuple<std::vector<std::variant<Word>>, Cursor, Scalar>> lines;
+		std::vector<Line> lines;
 		for(auto wordorsep : words_and_seps)
 		{
-			std::visit(
-			    [&](Word word) {
-				    cur_line_length += prev_space;
-				    cur_line_length += word.size().x();
-				    if(cur_line_length >= layout->getWidthAt(cursor))
-				    {
-					    cur_line_length -= prev_space;
-					    cur_line_length -= word.size().x();
-					    cursor = layout->newLineFrom(cursor, cur_line_spacing);
-					    lines.emplace_back(std::move(cur_line), cursor, cur_line_length);
-					    cur_line.clear();
-					    cursor = layout->newLineFrom(cursor, 0);
-					    cur_line_length = word.size().x();
-				    }
-				    prev_space = word.spaceWidth();
-				    cur_line_spacing = std::max(cur_line_spacing, word.size().y() + word.style()->line_spacing());
+			auto visitor = [&](Word word) {
+				cur_line_length += prev_space;
+				cur_line_length += word.size().x();
+				if(cur_line_length >= layout->getWidthAt(cursor))
+				{
+					cur_line_length -= prev_space;
+					cur_line_length -= word.size().x();
 
-				    cur_line.push_back(word);
-			    },
-			    wordorsep);
+					cursor = layout->newLineFrom(cursor, cur_line_spacing);
+					lines.push_back(Line {
+					    .words = std::move(cur_line),
+					    .cursor = cursor,
+					    .line_length = cur_line_length,
+					});
+					cur_line.clear();
+
+					cursor = layout->newLineFrom(cursor, 0);
+					cur_line_length = word.size().x();
+				}
+
+				prev_space = word.spaceWidth();
+				cur_line_spacing = std::max(cur_line_spacing, word.size().y() + word.style()->line_spacing());
+
+				cur_line.push_back(word);
+			};
+
+			std::visit(visitor, wordorsep);
 		}
+
 		cursor = layout->newLineFrom(cursor, cur_line_spacing);
-		lines.emplace_back(std::move(cur_line), cursor, cur_line_length);
+		lines.push_back(Line {
+		    .words = std::move(cur_line),
+		    .cursor = cursor,
+		    .line_length = cur_line_length,
+		});
 		cur_line.clear();
+
 		cursor = layout->newLineFrom(cursor, 0);
 
 		// Justify and add words to region
 		for(auto it = lines.begin(); it != lines.end(); ++it)
 		{
-			const auto& [line, line_cursor, line_length] = *it;
+			auto& line = *it;
 
-			cursor = line_cursor;
-			auto total_extra_space_width = layout->getWidthAt(cursor) - line_length;
-			auto num_spaces = line.size() - 1; // TODO: this should be = the # of separators
+			cursor = line.cursor;
+			auto total_extra_space_width = layout->getWidthAt(cursor) - line.line_length;
+			auto num_spaces = line.words.size() - 1; // TODO: this should be = the # of separators
 			auto extra_space_width = num_spaces == 0 ? 0 : total_extra_space_width / (double) num_spaces;
+
 			if(it + 1 == lines.end())
-			{
 				extra_space_width = 0;
-			}
-			for(auto wordorsep : line)
+
+			for(auto& wordorsep : line.words)
 			{
-				std::visit(
-				    [&](Word word) {
-					    para->m_words.emplace_back(word, cursor);
-					    // TODO: add space in separate case but for now every word is followed by a space
-					    cursor = layout->moveRightFrom(cursor, word.size().x());
-					    cursor = layout->moveRightFrom(cursor, word.spaceWidth());
-					    cursor = layout->moveRightFrom(cursor, extra_space_width);
-				    },
-				    wordorsep);
+				auto visitor = [&](Word word) {
+					para->m_words.emplace_back(word, cursor);
+
+					// TODO: add space in separate case but for now every word is followed by a space
+					cursor = layout->moveRightFrom(cursor, word.size().x());
+					cursor = layout->moveRightFrom(cursor, word.spaceWidth());
+					cursor = layout->moveRightFrom(cursor, extra_space_width);
+				};
+
+				std::visit(visitor, wordorsep);
 			}
 		}
+
 		layout->addObject(para);
 		return { std::nullopt, cursor };
 	}
@@ -211,6 +234,7 @@ namespace sap::layout
 		pdf::Text* cur_text = util::make<pdf::Text>();
 		cur_text->moveAbs(pages[m_words.front().second.page_num]->convertVector2(
 		    m_words.front().second.pos_on_page.into<pdf::Position2d_YDown>()));
+
 		for(size_t i = 0; i < m_words.size(); i++)
 		{
 			/*

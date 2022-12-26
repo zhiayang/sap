@@ -13,22 +13,7 @@ namespace sap::interp
 	Interpreter::Interpreter() : m_top(new DefnTree("", /* parent: */ nullptr)), m_current(m_top.get())
 	{
 		auto ns_builtin = m_top->lookupOrDeclareNamespace("builtin");
-
-		using BFD = BuiltinFunctionDefn;
-		using Param = FunctionDecl::Param;
-
-		auto tio = Type::makeTreeInlineObj();
-		auto num = Type::makeNumber();
-		auto str = Type::makeString();
-
-		ns_builtin->define(std::make_unique<BFD>("__bold1", Type::makeFunction({ tio }, tio),
-		    makeParamList(Param { .name = "_", .type = tio }), &builtin::bold1));
-
-		ns_builtin->define(std::make_unique<BFD>("__bold1", Type::makeFunction({ num }, tio),
-		    makeParamList(Param { .name = "_", .type = num }), &builtin::bold1));
-
-		ns_builtin->define(std::make_unique<BFD>("__bold1", Type::makeFunction({ str }, tio),
-		    makeParamList(Param { .name = "_", .type = str }), &builtin::bold1));
+		defineBuiltins(ns_builtin);
 	}
 
 	ErrorOr<DefnTree*> DefnTree::lookupNamespace(std::string_view name) const
