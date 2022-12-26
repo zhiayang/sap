@@ -79,13 +79,6 @@ namespace sap::layout
 		return width;
 	}
 
-
-
-
-
-
-
-
 	using WordVecIter = std::vector<Word>::const_iterator;
 
 	[[maybe_unused]] static std::vector<WordVecIter> break_lines(const std::vector<Word>& words, Scalar preferred_line_length)
@@ -110,11 +103,10 @@ namespace sap::layout
 				//       This involves tweaking the cost computation
 				// TODO: Handle splitting a singular very long word into multiple words forcefully
 				if(std::distance(it, end) < 2)
-				{
 					sap::internal_error("Kill die me now because not yet implemented");
-				}
 
-				// Consume 2 words because there are more than 2 words remaining
+
+				// Consume 2 words because there are at least 2 words remaining
 				cur_line_length += it->size().x();
 				++it;
 				auto prev_space = it->spaceWidth();
@@ -127,8 +119,8 @@ namespace sap::layout
 
 					// Cost calculation:
 					// for now, we just do square of the diff between
-					//   preferred space length (cur_line_length / (words - 1))
-					//   and actual space length (preferred_line_length / (words - 1)
+					//   preferred space length: cur_line_length / (words - 1)
+					//   and actual space length: preferred_line_length / (words - 1)
 					//
 					// special case for last line: no cost!
 					if(it == end)
@@ -136,9 +128,11 @@ namespace sap::layout
 						ret.emplace_back(node, Distance {});
 						break;
 					}
+
 					auto pref_space_len = cur_line_length.value() / static_cast<double>(it - broken_until - 1);
 					auto actual_space_len = preferred_line_length.value() / static_cast<double>(it - broken_until - 1);
-					ret.emplace_back(node, (pref_space_len - actual_space_len) * (pref_space_len - actual_space_len));
+					auto diff = pref_space_len - actual_space_len;
+					ret.emplace_back(node, diff * diff);
 
 					// Consume a word
 					cur_line_length += it->size().x();
