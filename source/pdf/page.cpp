@@ -4,8 +4,6 @@
 
 #include <algorithm> // for find
 
-#include "units.h" // for Scalar, operator-
-
 #include "pdf/font.h"       // for Font, Document
 #include "pdf/page.h"       // for Page
 #include "pdf/units.h"      // for Size2d, Vector2_YDown, Vector2_YUp, pdf_...

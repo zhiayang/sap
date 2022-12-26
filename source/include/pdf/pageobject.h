@@ -4,8 +4,6 @@
 
 #pragma once
 
-#include <string>
-
 namespace pdf
 {
 	struct Page;

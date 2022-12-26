@@ -4,10 +4,7 @@
 
 #pragma once
 
-#include <stddef.h>
-#include <stdint.h>
-
-#include "location.h"
+#include "location.h" // for Location
 
 namespace sap::tree
 {

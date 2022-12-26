@@ -2,10 +2,7 @@
 // Copyright (c) 2022, zhiayang
 // SPDX-License-Identifier: Apache-2.0
 
-#include <memory> // for unique_ptr, operator==, shared_ptr
-
-#include "util.h"  // for dynamic_pointer_cast
-#include "error.h" // for internal_error
+#include "util.h" // for dynamic_pointer_cast
 
 #include "pdf/font.h"     // for Font
 #include "pdf/units.h"    // for Scalar
@@ -14,10 +11,9 @@
 #include "sap/style.h"    // for Style
 #include "sap/units.h"    // for Scalar
 #include "sap/fontset.h"  // for FontSet, FontStyle, FontStyle::Regular
-#include "sap/document.h" // for Document, Cursor, LayoutObject, Paragraph
+#include "sap/document.h" // for Document, Cursor, LayoutObject, Interpreter
 
-#include "interp/tree.h"   // for Document, Paragraph
-#include "interp/interp.h" // for Interpreter
+#include "interp/tree.h" // for Document, Paragraph
 
 namespace sap::layout
 {

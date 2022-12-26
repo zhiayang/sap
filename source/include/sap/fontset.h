@@ -4,7 +4,7 @@
 
 #pragma once
 
-#include "pdf/font.h"
+#include "pdf/font.h" // for Font
 
 namespace sap
 {

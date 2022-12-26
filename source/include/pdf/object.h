@@ -4,18 +4,6 @@
 
 #pragma once
 
-#include <cstddef>
-#include <cstdint>
-
-#include <map>
-#include <string>
-#include <vector>
-#include <utility>
-#include <type_traits>
-
-#include <zst.h>
-#include "pool.h"
-
 namespace pdf
 {
 	struct Writer;

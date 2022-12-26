@@ -5,14 +5,13 @@
 #include <ctime> // for size_t, time
 
 #include "util.h"  // for checked_cast, convertBEU32, convertBEU16
-#include "error.h" // for internal_error
 #include "types.h" // for GlyphId
 
 #include "pdf/object.h" // for Stream, Integer, Dictionary, Length1
 
 #include "font/cff.h"      // for CFFSubset, createCFFSubset
 #include "font/tag.h"      // for Tag
-#include "font/font.h"     // for Table, FontFile, FontFile::OUTLINES_CFF
+#include "font/font.h"     // for Table, FontFile, Stream, FontFile::OUTLIN...
 #include "font/truetype.h" // for TTSubset, createTTSubset
 
 namespace font

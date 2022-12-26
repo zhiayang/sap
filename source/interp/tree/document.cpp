@@ -2,10 +2,7 @@
 // Copyright (c) 2022, zhiayang
 // SPDX-License-Identifier: Apache-2.0
 
-#include <memory> // for shared_ptr, operator==, __shared_ptr_access
-
-#include "util.h"  // for dynamic_pointer_cast
-#include "error.h" // for internal_error
+#include "util.h" // for dynamic_pointer_cast
 
 #include "interp/tree.h"   // for Document, Paragraph, ScriptBlock
 #include "interp/interp.h" // for Interpreter

@@ -4,23 +4,15 @@
 
 #pragma once
 
-#include <string>
-#include <vector>
-#include <memory> // for unique_ptr
 #include <concepts>
-#include <stddef.h>
-#include <stdint.h>
 #include <functional> // for function
 
-#include "defs.h" // for ErrorOr, Ok, TRY
 #include "type.h" // for Type
+#include "util.h" // for ErrorOr, Ok, TRY
 // #include "value.h"
 #include "location.h" // for Location
 
-namespace sap::tree
-{
-	struct InlineObject;
-}
+#include "interp/basedefs.h" // for InlineObject
 
 namespace sap::interp
 {

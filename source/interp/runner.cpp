@@ -2,17 +2,13 @@
 // Copyright (c) 2022, zhiayang
 // SPDX-License-Identifier: Apache-2.0
 
-#include <memory> // for unique_ptr
-
-#include "defs.h"     // for ErrorOr, ErrFmt
-#include "error.h"    // for error
 #include "location.h" // for error
 
-#include "interp/tree.h"   // for InlineObject
-#include "interp/type.h"   // for Type
-#include "interp/state.h"  // for Interpreter
-#include "interp/value.h"  // for Value
-#include "interp/interp.h" // for Expr, Stmt, FunctionCall, Ident
+#include "interp/type.h"     // for Type
+#include "interp/state.h"    // for Interpreter
+#include "interp/value.h"    // for Value
+#include "interp/interp.h"   // for Expr, Stmt, FunctionCall, Ident
+#include "interp/basedefs.h" // for InlineObject
 
 #define dcast(T, E) dynamic_cast<T*>(E)
 #define cdcast(T, E) dynamic_cast<const T*>(E)

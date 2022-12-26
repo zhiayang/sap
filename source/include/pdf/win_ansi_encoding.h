@@ -4,8 +4,6 @@
 
 #pragma once
 
-#include <map>
-
 #include "types.h"
 
 namespace pdf::encoding

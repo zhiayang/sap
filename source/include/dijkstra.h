@@ -4,12 +4,11 @@
 
 #pragma once
 
-#include <set>
 #include <ranges>
+#include <algorithm> // for reverse
 #include <functional>
-#include <unordered_map>
 
-#include "defs.h"
+#include "util.h" // for hasher
 
 namespace util
 {

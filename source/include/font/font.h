@@ -4,22 +4,12 @@
 
 #pragma once
 
-#include <map>
-#include <string>
-#include <vector>
-#include <optional>
-#include <unordered_set>
-
-#include <cstddef>
-#include <cstdint>
-
-#include <zst.h>
-
 #include "units.h"
+#include "types.h" // for GlyphId
 
-#include "font/tag.h"
-#include "font/scalar.h"
-#include "font/features.h"
+#include "font/tag.h"      // for Tag
+#include "font/scalar.h"   // for FontScalar
+#include "font/features.h" // for Feature, LookupTable, GlyphAdjustment
 
 namespace pdf
 {

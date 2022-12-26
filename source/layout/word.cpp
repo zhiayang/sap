@@ -4,7 +4,6 @@
 
 #include "util.h"  // for consumeCodepointFromUtf8
 #include "types.h" // for GlyphId
-#include "units.h" // for Scalar, operator+, Vector2<>::scalar_type
 
 #include "pdf/font.h"  // for Font, Font::ENCODING_CID
 #include "pdf/text.h"  // for Text
@@ -17,6 +16,7 @@
 
 #include "font/tag.h"      // for Tag
 #include "font/font.h"     // for GlyphMetrics, FontMetrics
+#include "font/scalar.h"   // for font_design_space, FontScalar
 #include "font/features.h" // for GlyphAdjustment, FeatureSet
 
 namespace sap::layout

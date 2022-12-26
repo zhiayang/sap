@@ -4,13 +4,11 @@
 
 #pragma once
 
-#include <memory>
-#include <string_view>
-#include <unordered_map>
+#include "util.h"   // for hashmap
+#include "value.h"  // for Value
+#include "interp.h" // for Definition, Declaration, Expr, QualifiedId
 
-#include "defs.h"
-#include "value.h"
-#include "interp.h"
+#include "interp/basedefs.h" // for InlineObject
 
 namespace sap::interp
 {

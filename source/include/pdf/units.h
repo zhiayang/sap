@@ -4,8 +4,10 @@
 
 #pragma once
 
-#include "defs.h"
-#include "units.h"
+#include "util.h"
+#include "units.h" // for Scalar, MAKE_UNITS_COMPATIBLE, DEFINE_UNIT_IN_NAM...
+
+#include "pdf/units.h"
 
 /*
     72 units is 1 inch, 1 inch is 25.4mm. we don't want to assume
@@ -26,7 +28,6 @@
 struct PDF_TAG_Y_UP;
 struct PDF_TAG_Y_DOWN;
 struct PDF_TAG_1D;
-
 struct PDF_TAG_GLYPH_SPACE;
 struct PDF_TAG_TEXT_SPACE;
 

@@ -4,9 +4,10 @@
 
 #include "interp/interp.h"
 
-#include "interp/type.h"    // for Type
+#include "util.h" // for hashmap
+
 #include "interp/state.h"   // for DefnTree, Interpreter
-#include "interp/builtin.h" // for bold1
+#include "interp/builtin.h" // for defineBuiltins
 
 namespace sap::interp
 {

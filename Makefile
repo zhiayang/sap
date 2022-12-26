@@ -20,10 +20,17 @@ CXX             := clang++
 CFLAGS          = $(COMMON_CFLAGS) -std=c99 -fPIC -O3
 CXXFLAGS        = $(COMMON_CFLAGS) -Wno-old-style-cast -std=c++20 -fno-exceptions
 
-CXXSRC          = $(shell find source -iname "*.cpp" -print)
-CXXOBJ          = $(CXXSRC:%.cpp=$(OUTPUT_DIR)/%.cpp.o)
-CXXLIBOBJ       = $(filter-out $(OUTPUT_DIR)/source/main.cpp.o,$(CXXOBJ))
-CXXDEPS         = $(CXXOBJ:.o=.d)
+CXXSRC          := $(shell find source -iname "*.cpp" -print)
+CXXOBJ          := $(CXXSRC:%.cpp=$(OUTPUT_DIR)/%.cpp.o)
+CXXLIBOBJ       := $(filter-out $(OUTPUT_DIR)/source/main.cpp.o,$(CXXOBJ))
+CXXDEPS         := $(CXXOBJ:.o=.d)
+
+CXXHDRS         := $(shell find source -iname "*.h" -print)
+CXXGCHS         := $(CXXHDRS:%.h=$(OUTPUT_DIR)/%.h.gch)
+CXXGCHS         := $(filter-out $(OUTPUT_DIR)/source/include/defs.h.gch,$(CXXGCHS))
+CXXGCHS         := $(filter-out $(OUTPUT_DIR)/source/include/pool.h.gch,$(CXXGCHS))
+CXXGCHS         := $(filter-out $(OUTPUT_DIR)/source/include/units.h.gch,$(CXXGCHS))
+CXXGCHS         := $(filter-out $(OUTPUT_DIR)/source/include/error.h.gch,$(CXXGCHS))
 
 TESTSRC          = $(shell find test -iname "*.cpp" -print)
 TESTOBJ          = $(TESTSRC:%.cpp=$(OUTPUT_DIR)/%.cpp.o)
@@ -36,8 +43,8 @@ UTF8PROC_OBJS   = $(UTF8PROC_SRCS:%.c=$(OUTPUT_DIR)/%.c.o)
 MINIZ_SRCS      = external/miniz/miniz.c
 MINIZ_OBJS      = $(MINIZ_SRCS:%.c=$(OUTPUT_DIR)/%.c.o)
 
-PRECOMP_HDRS    := source/include/precompile.h
-PRECOMP_GCH     := $(PRECOMP_HDRS:%.h=$(OUTPUT_DIR)/%.h.gch)
+PRECOMP_HDR     := source/include/precompile.h
+PRECOMP_GCH     := $(PRECOMP_HDR:%.h=$(OUTPUT_DIR)/%.h.gch)
 
 DEFINES         :=
 INCLUDES        := -Isource/include -Iexternal
@@ -63,6 +70,8 @@ all: build test
 
 build: $(OUTPUT_BIN)
 
+build-headers: $(CXXGCHS)
+
 test: $(TESTS)
 
 %.pdf: %.sap build
@@ -87,17 +96,22 @@ $(TEST_DIR)/%: $(OUTPUT_DIR)/test/%.cpp.o $(CXXLIBOBJ) $(UTF8PROC_OBJS) $(MINIZ_
 $(OUTPUT_DIR)/%.cpp.o: %.cpp Makefile $(PRECOMP_GCH)
 	@echo "  $<"
 	@mkdir -p $(shell dirname $@)
-	@$(CXX) $(CXXFLAGS) $(WARNINGS) $(INCLUDES) $(DEFINES) -include $(PRECOMP_HDRS) -MMD -MP -c -o $@ $<
+	@$(CXX) $(CXXFLAGS) $(WARNINGS) $(INCLUDES) $(DEFINES) -include $(PRECOMP_HDR) -MMD -MP -c -o $@ $<
 
 $(OUTPUT_DIR)/%.c.o: %.c Makefile
 	@echo "  $<"
 	@mkdir -p $(shell dirname $@)
 	@$(CC) $(CFLAGS) -MMD -MP -c -o $@ $<
 
-$(OUTPUT_DIR)/%.h.gch: %.h Makefile
+$(PRECOMP_GCH): $(PRECOMP_HDR) Makefile
 	@printf "# precompiling header $<\n"
 	@mkdir -p $(shell dirname $@)
 	@$(CXX) $(CXXFLAGS) $(WARNINGS) $(INCLUDES) -MMD -MP -x c++-header -o $@ $<
+
+$(OUTPUT_DIR)/%.h.gch: %.h $(PRECOMP_GCH) Makefile
+	@printf "# precompiling header $<\n"
+	@mkdir -p $(shell dirname $@)
+	@$(CXX) $(CXXFLAGS) $(WARNINGS) $(INCLUDES) -include $(PRECOMP_HDR) -MMD -MP -x c++-header -o $@ $<
 
 clean:
 	-@rm -rf $(OUTPUT_DIR)

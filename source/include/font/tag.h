@@ -4,9 +4,6 @@
 
 #pragma once
 
-#include <cstddef>
-#include <cstdint>
-
 namespace font
 {
 	struct Tag

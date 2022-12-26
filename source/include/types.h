@@ -4,10 +4,6 @@
 
 #pragma once
 
-#include <cstdint>
-
-#include <zpr.h>
-
 enum class GlyphId : uint32_t
 {
 	notdef = 0

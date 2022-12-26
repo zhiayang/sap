@@ -4,10 +4,6 @@
 
 #pragma once
 
-#include <zpr.h>
-#include <zst.h>
-#include <cstddef>
-
 namespace pdf
 {
 	struct Object;

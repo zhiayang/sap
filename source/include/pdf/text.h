@@ -4,10 +4,8 @@
 
 #pragma once
 
-#include <set>
-
-#include "pdf/units.h"
-#include "pdf/pageobject.h"
+#include "pdf/units.h"      // for Scalar, Offset2d, Position2d, TextSpace1d
+#include "pdf/pageobject.h" // for Page, PageObject
 
 namespace pdf
 {

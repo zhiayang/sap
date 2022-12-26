@@ -4,23 +4,19 @@
 
 #pragma once
 
-#include <cstddef>
-#include <cstdint>
+#include "util.h"
+#include "types.h" // for GlyphId
 
-#include <memory>
-#include <vector>
-#include <utility>
+#include "pdf/font.h"     // for Font
+#include "pdf/page.h"     // for Page
+#include "pdf/object.h"   // for Writer
+#include "pdf/document.h" // for Document
 
-#include <zst.h>
+#include "sap/style.h" // for Stylable, Style
+#include "sap/units.h" // for Scalar, Vector2
 
-#include "defs.h"
-
-#include "pdf/page.h"
-#include "pdf/document.h"
-
-#include "sap/style.h"
-
-#include "font/font.h"
+#include "font/font.h"     // for FontFile, GlyphMetrics
+#include "font/features.h" // for GlyphAdjustment
 
 namespace pdf
 {

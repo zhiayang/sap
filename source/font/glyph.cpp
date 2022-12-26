@@ -3,10 +3,10 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #include "util.h"  // for convertBEU16
-#include "error.h" // for internal_error
 #include "types.h" // for GlyphId
 
 #include "font/font.h"     // for GlyphMetrics, FontFile, FontMetrics, Font...
+#include "font/scalar.h"   // for FontScalar, font_design_space
 #include "font/truetype.h" // for BoundingBox, getGlyphBoundingBox
 
 namespace font

@@ -5,7 +5,6 @@
 #include <algorithm> // for all_of
 
 #include "util.h"     // for checked_cast
-#include "error.h"    // for internal_error
 #include "location.h" // for Location, error
 
 #include "sap/frontend.h" // for Token, Lexer, Lexer::Mode, Lexer::SaveState

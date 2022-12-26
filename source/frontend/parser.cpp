@@ -2,15 +2,14 @@
 // Copyright (c) 2022, zhiayang
 // SPDX-License-Identifier: Apache-2.0
 
-#include <memory> // for unique_ptr, make_unique, make_shared
-
 #include "util.h"     // for consumeCodepointFromUtf8
 #include "location.h" // for error, Location
 
-#include "sap/frontend.h" // for Token, Lexer, Lexer::Mode, Lexer::Mode::S...
+#include "sap/frontend.h" // for Token, Lexer, Lexer::Mode, Lexer::Mode:...
 
-#include "interp/tree.h"   // for Paragraph, ScriptBlock, ScriptCall, Text
-#include "interp/interp.h" // for Expr, FunctionCall::Arg, FunctionCall, Ident
+#include "interp/tree.h"     // for Paragraph, ScriptBlock, ScriptCall, Text
+#include "interp/interp.h"   // for Expr, FunctionCall::Arg, FunctionCall
+#include "interp/basedefs.h" // for DocumentObject
 
 namespace sap::frontend
 {

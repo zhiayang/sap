@@ -4,12 +4,11 @@
 
 #include <algorithm> // for find_if, sort
 
-#include "pool.h"  // for make
 #include "types.h" // for GlyphId
 
 #include "pdf/font.h"     // for Font, Font::ENCODING_CID, Font::ENCODING_W...
 #include "pdf/misc.h"     // for error
-#include "pdf/units.h"    // for Scalar
+#include "pdf/units.h"    // for TextSpace1d
 #include "pdf/object.h"   // for Integer, Name, Dictionary, Object, Indirec...
 #include "pdf/document.h" // for Document
 

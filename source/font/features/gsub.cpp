@@ -3,7 +3,6 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #include "util.h"  // for checked_cast
-#include "error.h" // for warn
 #include "types.h" // for GlyphId
 
 #include "font/font.h"     // for consume_u16, peek_u16, FontFile

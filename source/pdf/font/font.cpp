@@ -2,13 +2,10 @@
 // Copyright (c) 2021, zhiayang
 // SPDX-License-Identifier: Apache-2.0
 
-#include "error.h" // for warn
 #include "types.h" // for GlyphId, GlyphId::notdef
-#include "units.h" // for operator*, operator/, Scalar
 
-#include "pdf/font.h"              // for Font, GLYPH_SPACE_UNITS, Font::EN...
+#include "pdf/font.h"              // for Font, Font::ENCODING_CID, Font::E...
 #include "pdf/misc.h"              // for error
-#include "pdf/units.h"             // for Scalar, pdf_typographic_unit_1d
 #include "pdf/win_ansi_encoding.h" // for WIN_ANSI
 
 #include "font/font.h"     // for CharacterMapping, GlyphMetrics

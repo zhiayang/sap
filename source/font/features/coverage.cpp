@@ -3,7 +3,6 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #include "util.h"  // for convertBEU16
-#include "error.h" // for internal_error
 #include "types.h" // for GlyphId
 
 #include "font/font.h"     // for consume_u16

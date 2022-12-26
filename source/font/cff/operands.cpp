@@ -2,8 +2,6 @@
 // Copyright (c) 2022, zhiayang
 // SPDX-License-Identifier: Apache-2.0
 
-#include "error.h" // for error
-
 #include "font/cff.h"  // for Operand, readNumberFromCharString, readNumber...
 #include "font/font.h" // for consume_u32, consume_u16
 

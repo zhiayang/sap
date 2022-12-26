@@ -4,11 +4,6 @@
 
 #pragma once
 
-#include <zpr.h>
-#include <string>
-#include <vector>
-#include <cassert>
-
 namespace sap::interp
 {
 	struct ArrayType;

@@ -4,12 +4,7 @@
 
 #pragma once
 
-#include <cassert>
-#include <unordered_map>
-
-#include "defs.h"
-#include "pool.h"  // for make
-#include "error.h" // for internal_error
+#include "util.h"
 #include "units.h" // for Scalar
 
 #include "sap/units.h"   // for Scalar

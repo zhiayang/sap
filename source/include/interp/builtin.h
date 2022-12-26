@@ -4,9 +4,9 @@
 
 #pragma once
 
-#include "defs.h"
-
 #include <memory>
+
+#include "util.h"
 
 namespace sap::interp
 {

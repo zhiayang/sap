@@ -2,10 +2,8 @@
 // Copyright (c) 2022, zhiayang
 // SPDX-License-Identifier: Apache-2.0
 
-#include <climits>    // for INT_MAX
 #include <functional> // for function
 
-#include "defs.h"     // for ErrorOr, ErrFmt, TRY, Ok
 #include "location.h" // for error
 
 #include "interp/type.h"   // for Type, FunctionType

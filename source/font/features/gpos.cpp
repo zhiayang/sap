@@ -2,10 +2,10 @@
 // Copyright (c) 2021, zhiayang
 // SPDX-License-Identifier: Apache-2.0
 
-#include "error.h" // for warn
 #include "types.h" // for GlyphId
 
 #include "font/font.h"     // for consume_u16, consume_i16, peek_u16, FontFile
+#include "font/scalar.h"   // for FontScalar
 #include "font/features.h" // for AdjustmentResult, GlyphAdjustment, Lookup...
 
 namespace font::off::gpos

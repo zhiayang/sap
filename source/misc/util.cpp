@@ -6,8 +6,7 @@
 #include <sys/mman.h> // for size_t, mmap, MAP_PRIVATE, PROT_READ
 #include <sys/stat.h> // for fstat, stat
 
-#include "util.h"  // for readEntireFile
-#include "error.h" // for internal_error
+#include "util.h" // for readEntireFile
 
 namespace util
 {

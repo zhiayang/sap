@@ -4,13 +4,10 @@
 
 #pragma once
 
-#include <map>
-#include <utility>
+#include "types.h" // for GlyphId
 
-#include "types.h"
-
-#include "font/tag.h"
-#include "font/scalar.h"
+#include "font/tag.h"    // for Tag
+#include "font/scalar.h" // for FontScalar
 
 namespace font
 {

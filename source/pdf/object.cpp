@@ -2,7 +2,6 @@
 // Copyright (c) 2021, zhiayang
 // SPDX-License-Identifier: Apache-2.0
 
-#include "pool.h" // for make
 #include "util.h" // for checked_cast
 
 #include "pdf/misc.h"     // for IndirHelper, error

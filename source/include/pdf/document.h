@@ -6,12 +6,11 @@
 
 #include <vector>
 
-#include "pdf/object.h"
+#include "pdf/object.h" // for Object, Dictionary, Writer
 
 namespace pdf
 {
 	struct Page;
-
 	struct Writer;
 	struct Object;
 

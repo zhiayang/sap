@@ -4,11 +4,9 @@
 
 #pragma once
 
-#include <set>
-
-#include "pdf/units.h"
-#include "pdf/object.h"
-#include "pdf/pageobject.h"
+#include "pdf/units.h"      // for Size2d, Vector2_YDown, Vector2_YUp
+#include "pdf/object.h"     // for Dictionary, Document
+#include "pdf/pageobject.h" // for PageObject
 
 namespace pdf
 {

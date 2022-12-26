@@ -2,13 +2,12 @@
 // Copyright (c) 2021, zhiayang
 // SPDX-License-Identifier: Apache-2.0
 
-#include "pool.h"  // for make
-#include "util.h"  // for readEntireFile, utf8FromUtf16BigE...
-#include "error.h" // for internal_error, error
+#include "util.h" // for readEntireFile, utf8FromUtf16BigE...
 
 #include "font/cff.h"      // for parseCFFData
 #include "font/tag.h"      // for Tag
 #include "font/font.h"     // for FontFile, Table, FontMetrics, Fon...
+#include "font/scalar.h"   // for FontScalar
 #include "font/features.h" // for parseGPos, parseGSub
 #include "font/truetype.h" // for TTData, parseGlyfTable, parseLoca...
 

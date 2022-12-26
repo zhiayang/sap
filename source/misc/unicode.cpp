@@ -4,8 +4,7 @@
 
 #include <utf8proc/utf8proc.h> // for utf8proc_encode_char, utf8proc_iterate
 
-#include "util.h"  // for checked_cast, codepointToSurrogatePair
-#include "error.h" // for internal_error
+#include "util.h" // for checked_cast, codepointToSurrogatePair
 
 namespace unicode
 {

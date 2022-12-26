@@ -2,13 +2,9 @@
 // Copyright (c) 2021, zhiayang
 // SPDX-License-Identifier: Apache-2.0
 
-#include <memory>  // for allocator_traits<>::value_type, operator==
 #include <variant> // for variant, visit
 
-#include "pool.h"  // for make
-#include "util.h"  // for dynamic_pointer_cast
-#include "error.h" // for internal_error
-#include "units.h" // for mm, Scalar, operator-, max, operator+
+#include "util.h" // for dynamic_pointer_cast
 
 #include "pdf/page.h"  // for Page
 #include "pdf/text.h"  // for Text
@@ -18,8 +14,7 @@
 #include "sap/units.h"    // for Scalar
 #include "sap/document.h" // for Word, Cursor, Paragraph, RectPageLayout
 
-#include "interp/tree.h"   // for Paragraph, Text
-#include "interp/interp.h" // for Interpreter
+#include "interp/tree.h" // for Paragraph, Text
 
 namespace sap::layout
 {

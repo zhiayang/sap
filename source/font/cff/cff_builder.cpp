@@ -2,8 +2,7 @@
 // Copyright (c) 2022, zhiayang
 // SPDX-License-Identifier: Apache-2.0
 
-#include "util.h"  // for checked_cast, convertBEU16, convertBEU32
-#include "error.h" // for error
+#include "util.h" // for checked_cast, convertBEU16, convertBEU32
 
 #include "font/cff.h" // for Operand, DictKey, DictBuilder, IndexTableBuilder
 

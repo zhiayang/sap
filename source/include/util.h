@@ -5,15 +5,8 @@
 #pragma once
 
 #include <bit>
-#include <memory>
-#include <string>
 #include <numeric>
-#include <utility>
-#include <assert.h>
 #include <concepts>
-#include <type_traits>
-
-#include <zst.h>
 
 #include "types.h"
 
@@ -201,6 +194,49 @@ namespace util
 		return std::shared_ptr<To>();
 	}
 
+
+	// clang-format off
+	template <typename A>
+	concept has_hash_method = requires(A a)
+	{
+		{ a.hash() } -> std::same_as<size_t>;
+	};
+	// clang-format on
+
+	// https://en.cppreference.com/w/cpp/container/unordered_map/find
+	// stupid language
+	struct hasher
+	{
+		using is_transparent = void;
+		using H = std::hash<std::string_view>;
+
+		size_t operator()(const char* str) const { return H {}(str); }
+		size_t operator()(std::string_view str) const { return H {}(str); }
+		size_t operator()(const std::string& str) const { return H {}(str); }
+
+		size_t operator()(const has_hash_method auto& a) const { return a.hash(); }
+	};
+
+	template <typename K, typename V, typename H = hasher>
+	using hashmap = std::unordered_map<K, V, H, std::equal_to<>>;
+
+	template <typename T>
+	using hashset = std::unordered_set<T, hasher, std::equal_to<>>;
+
+	namespace impl
+	{
+		template <typename T, typename E>
+		struct extract_value_or_return_void
+		{
+			T extract(zst::Result<T, E>& result) { return std::move(result.unwrap()); }
+		};
+
+		template <typename E>
+		struct extract_value_or_return_void<void, E>
+		{
+			void extract([[maybe_unused]] zst::Result<void, E>& result) { }
+		};
+	}
 }
 
 

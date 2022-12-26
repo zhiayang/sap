@@ -4,17 +4,7 @@
 
 #pragma once
 
-#include <stddef.h>
-#include <stdint.h>
-
-#include <zpr.h>
-#include <zst.h>
-
-#include <vector>
-#include <optional>
-#include <unordered_set>
-
-#include "types.h"
+#include "types.h" // for GlyphId
 
 namespace font
 {

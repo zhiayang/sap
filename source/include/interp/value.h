@@ -4,17 +4,15 @@
 
 #pragma once
 
-#include <cassert>
-
-#include <string>
-#include <vector>
 #include <numeric>
-#include <sstream>
+#include <sstream> // for operator<<, stringstream, basic_ostream
 
-#include "zpr.h"
 #include "tree.h"
-#include "type.h"
-#include "util.h"
+#include "type.h" // for Type, FunctionType
+#include "util.h" // for utf8FromCodepoint
+
+#include "interp/interp.h"   // for Interpreter
+#include "interp/basedefs.h" // for InlineObject
 
 namespace sap::tree
 {
