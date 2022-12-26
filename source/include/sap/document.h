@@ -298,6 +298,7 @@ namespace sap::layout
 		    after `computeMetrics()` is called. Otherwise, it returns 0.
 		*/
 		Scalar spaceWidth() const { return m_space_width; }
+		zst::wstr_view text() const { return m_text; }
 
 		Size2d size() const { return m_size; }
 

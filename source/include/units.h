@@ -8,6 +8,10 @@
 
 namespace dim
 {
+	namespace units
+	{
+		struct mm; // common units are integrated into Scalar
+	}
 	/*
 	    Both `Scalar` and `Vector` operate on the same principle. The first template parameter
 	    is simply a tag, so that we do not (and cannot) confuse / interoperate values using
@@ -91,6 +95,8 @@ namespace dim
 
 		constexpr value_type& value() { return this->_x; }
 		constexpr value_type value() const { return this->_x; }
+
+		constexpr value_type mm() const { return this->into<dim::units::mm>().value(); }
 
 		constexpr value_type& x() { return this->_x; }
 		constexpr value_type x() const { return this->_x; }

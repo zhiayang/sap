@@ -276,6 +276,8 @@ namespace unicode
 	std::u32string u32StringFromUtf8(zst::byte_span sv);
 	std::u32string u32StringFromUtf8(zst::str_view sv);
 
+	std::string stringFromU32String(zst::wstr_view sv);
+
 	// high-order surrogate first.
 	std::pair<uint16_t, uint16_t> codepointToSurrogatePair(char32_t codepoint);
 }

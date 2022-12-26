@@ -67,13 +67,12 @@ namespace util
 				auto node = to;
 				while(true)
 				{
-					auto it = parents.find(node);
-					path.push_back(it->second);
-					node = it->second;
+					node = parents.find(node)->second;
 					if(node == start)
 					{
 						break;
 					}
+					path.push_back(node);
 				}
 				// Reverse path
 				std::reverse(path.begin(), path.end());

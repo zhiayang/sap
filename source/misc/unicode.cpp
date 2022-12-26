@@ -114,4 +114,14 @@ namespace unicode
 	{
 		return u32StringFromUtf8(sv.bytes());
 	}
+
+	std::string stringFromU32String(zst::wstr_view sv)
+	{
+		std::string s;
+		for(auto c : sv)
+		{
+			s += utf8FromCodepoint(c);
+		}
+		return s;
+	}
 }
