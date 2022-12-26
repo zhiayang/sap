@@ -32,7 +32,7 @@ namespace sap::layout
 		bool is_hyphenated = false;
 	};
 
-	static std::vector<WordVecIter> break_lines(const std::vector<Word>& words, Scalar preferred_line_length)
+	[[maybe_unused]] static std::vector<WordVecIter> break_lines(const std::vector<Word>& words, Scalar preferred_line_length)
 	{
 		struct LineBreakNode
 		{
