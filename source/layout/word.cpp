@@ -21,24 +21,14 @@
 
 namespace sap::layout
 {
-	// TODO: this needs to handle unicode composing/decomposing also, which is a massive pain
-	static GlyphId read_one_glyphid(const pdf::Font* font, zst::byte_span& utf8)
+	std::vector<Word::GlyphInfo> Word::getGlyphInfosForString(zst::wstr_view text, const Style* style)
 	{
-		assert(utf8.size() > 0);
-
-		auto cp = unicode::consumeCodepointFromUtf8(utf8);
-		return font->getGlyphIdFromCodepoint(cp);
-	}
-
-
-	static std::vector<Word::GlyphInfo> convert_to_glyphs(const pdf::Font* font, zst::str_view text)
-	{
-		auto utf8 = text.bytes();
+		auto font = style->font_set().getFontForStyle(style->font_style());
 
 		// first, convert all codepoints to glyphs
 		std::vector<GlyphId> glyphs {};
-		while(utf8.size() > 0)
-			glyphs.push_back(read_one_glyphid(font, utf8));
+		for(char32_t cp : text)
+			glyphs.push_back(font->getGlyphIdFromCodepoint(cp));
 
 		using font::Tag;
 		font::off::FeatureSet features {};
@@ -79,15 +69,14 @@ namespace sap::layout
 		return glyph_infos;
 	}
 
-
-	Word::Word(zst::str_view text, const Style* style) : m_text(text)
+	Word::Word(zst::wstr_view text, const Style* style) : m_text(text)
 	{
 		this->setStyle(style);
 
 		auto font = style->font_set().getFontForStyle(style->font_style());
 		auto font_size = style->font_size();
 
-		m_glyphs = convert_to_glyphs(font, m_text);
+		m_glyphs = getGlyphInfosForString(m_text, style);
 
 		// size is in sap units, which is in mm; metrics are in typographic units, so 72dpi;
 		// calculate the scale accordingly.

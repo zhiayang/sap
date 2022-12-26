@@ -34,14 +34,14 @@ namespace sap::tree
 
 	struct Text : InlineObject
 	{
-		explicit Text(std::string text) : m_contents(std::move(text)) { }
-		explicit Text(std::string text, const Style* style) : m_contents(std::move(text)) { this->setStyle(style); }
+		explicit Text(std::u32string text) : m_contents(std::move(text)) { }
+		explicit Text(std::u32string text, const Style* style) : m_contents(std::move(text)) { this->setStyle(style); }
 
-		const std::string& contents() const { return m_contents; }
-		std::string& contents() { return m_contents; }
+		const std::u32string& contents() const { return m_contents; }
+		std::u32string& contents() { return m_contents; }
 
 	private:
-		std::string m_contents {};
+		std::u32string m_contents {};
 	};
 
 	struct Separator : InlineObject

@@ -16,33 +16,37 @@ namespace sap::frontend
 	using TT = TokenType;
 	using namespace sap::tree;
 
-	static std::string escape_word_text(const Location& loc, zst::str_view text)
+	static std::u32string escape_word_text(const Location& loc, zst::str_view text_)
 	{
-		std::string ret {};
+		std::u32string ret {};
+		auto text = text_.bytes();
+
 		ret.reserve(text.size());
 
-		for(size_t i = 0; i < text.size(); i++)
+
+		while(text.size() > 0)
 		{
-			if(text[i] == '\\')
+			if(text[0] == '\\')
 			{
 				// lexer should've caught this
-				assert(i + 1 < text.size());
+				assert(text.size() > 1);
 
-				i += 1;
-				if(text[i] == '\\')
-					ret.push_back('\\');
-				else if(text[i] == '{')
-					ret.push_back('{');
-				else if(text[i] == '}')
-					ret.push_back('}');
-				else if(text[i] == '#')
-					ret.push_back('#');
+				if(text[1] == '\\')
+					ret.push_back(U'\\');
+				else if(text[1] == '{')
+					ret.push_back(U'{');
+				else if(text[1] == '}')
+					ret.push_back(U'}');
+				else if(text[1] == '#')
+					ret.push_back(U'#');
 				else
-					error(loc, "unrecognised escape sequence '\\{}'", text[i]);
+					error(loc, "unrecognised escape sequence '\\{}'", text[1]);
+
+				text.remove_prefix(2);
 			}
 			else
 			{
-				ret.push_back(text[i]);
+				ret += unicode::consumeCodepointFromUtf8(text);
 			}
 		}
 

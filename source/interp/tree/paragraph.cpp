@@ -59,12 +59,12 @@ namespace sap::tree
 			auto tree_text = util::dynamic_pointer_cast<tree::Text>(uwu);
 			assert(tree_text != nullptr);
 
-			auto current_text = std::make_shared<Text>("");
+			auto current_text = std::make_shared<Text>(U"");
 			current_text->setStyle(tree_text->style());
 
-			for(char c : tree_text->contents())
+			for(char32_t c : tree_text->contents())
 			{
-				if(c == ' ' || c == '\t' || c == '\n' || c == '\r')
+				if(c == U' ' || c == U'\t' || c == U'\n' || c == U'\r')
 				{
 					if(not seen_whitespace)
 					{
@@ -73,7 +73,7 @@ namespace sap::tree
 							ret.push_back(std::move(current_text));
 							ret.push_back(std::make_shared<Separator>(Separator::SPACE));
 
-							current_text = std::make_shared<Text>("");
+							current_text = std::make_shared<Text>(U"");
 							current_text->setStyle(tree_text->style());
 						}
 

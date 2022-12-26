@@ -284,7 +284,7 @@ namespace sap::layout
 	*/
 	struct Word : Stylable
 	{
-		Word(zst::str_view text, const Style* style);
+		Word(zst::wstr_view text, const Style* style);
 
 		/*
 		    this assumes that the container (typically a paragraph) has already moved the PDF cursor (ie. wrote
@@ -298,6 +298,7 @@ namespace sap::layout
 		    after `computeMetrics()` is called. Otherwise, it returns 0.
 		*/
 		Scalar spaceWidth() const { return m_space_width; }
+
 		Size2d size() const { return m_size; }
 
 		struct GlyphInfo
@@ -307,10 +308,10 @@ namespace sap::layout
 			font::GlyphAdjustment adjustments;
 		};
 
-		static Word fromTreeText(const tree::Text& w);
+		static std::vector<GlyphInfo> getGlyphInfosForString(zst::wstr_view text, const Style* style);
 
 	private:
-		zst::str_view m_text {};
+		zst::wstr_view m_text {};
 		Size2d m_size {};
 
 		std::vector<GlyphInfo> m_glyphs {};

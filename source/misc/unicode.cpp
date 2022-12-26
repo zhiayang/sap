@@ -2,6 +2,7 @@
 // Copyright (c) 2021, zhiayang
 // SPDX-License-Identifier: Apache-2.0
 
+#include <string>
 #include <utf8proc/utf8proc.h> // for utf8proc_encode_char, utf8proc_iterate
 
 #include "util.h" // for checked_cast, codepointToSurrogatePair
@@ -96,5 +97,21 @@ namespace unicode
 		auto low = ((cp - 0x10'0000) & 0x0003FF) >> 0;
 
 		return { static_cast<uint16_t>(high + 0xD800), static_cast<uint16_t>(low + 0xDC00) };
+	}
+
+	std::u32string u32StringFromUtf8(zst::byte_span sv)
+	{
+		std::u32string str {};
+		str.reserve(sv.size());
+
+		while(sv.size() > 0)
+			str += consumeCodepointFromUtf8(sv);
+
+		return str;
+	}
+
+	std::u32string u32StringFromUtf8(zst::str_view sv)
+	{
+		return u32StringFromUtf8(sv.bytes());
 	}
 }

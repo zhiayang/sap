@@ -19,6 +19,48 @@
 
 namespace sap::layout
 {
+	struct Separator : Stylable
+	{
+		Separator(tree::Separator::SeparatorKind kind, const Style* style)
+		{
+			this->setStyle(style);
+			switch(kind)
+			{
+				case decltype(kind)::SPACE:
+					m_end_of_line_char = 0;
+					m_middle_of_line_char = U' ';
+					break;
+
+				case decltype(kind)::BREAK_POINT:
+					m_end_of_line_char = 0;
+					m_middle_of_line_char = 0;
+					break;
+
+				case decltype(kind)::HYPHENATION_POINT:
+					m_end_of_line_char = U'-';
+					m_middle_of_line_char = 0;
+					break;
+			}
+		}
+
+		zst::wstr_view endOfLine() const
+		{
+			return m_end_of_line_char == 0 ? zst::wstr_view() : zst::wstr_view(&m_end_of_line_char, 1);
+		}
+
+		zst::wstr_view middleOfLine() const
+		{
+			return m_middle_of_line_char == 0 ? zst::wstr_view() : zst::wstr_view(&m_middle_of_line_char, 1);
+		}
+
+	private:
+		char32_t m_end_of_line_char;
+		char32_t m_middle_of_line_char;
+	};
+
+
+
+
 	using WordVecIter = std::vector<Word>::const_iterator;
 
 	[[maybe_unused]] static std::vector<WordVecIter> break_lines(const std::vector<Word>& words, Scalar preferred_line_length)
@@ -105,47 +147,6 @@ namespace sap::layout
 		}
 		return path_as_iters;
 	}
-
-	struct Separator : Stylable
-	{
-		Separator(tree::Separator::SeparatorKind kind, const Style* style)
-		{
-			this->setStyle(style);
-			switch(kind)
-			{
-				case decltype(kind)::SPACE:
-					m_end_of_line_char = 0;
-					m_middle_of_line_char = U' ';
-					break;
-
-				case decltype(kind)::BREAK_POINT:
-					m_end_of_line_char = 0;
-					m_middle_of_line_char = 0;
-					break;
-
-				case decltype(kind)::HYPHENATION_POINT:
-					m_end_of_line_char = U'-';
-					m_middle_of_line_char = 0;
-					break;
-			}
-		}
-
-		zst::wstr_view endOfLine() const
-		{
-			return m_end_of_line_char == 0 ? zst::wstr_view() : zst::wstr_view(&m_end_of_line_char, 1);
-		}
-
-		zst::wstr_view middleOfLine() const
-		{
-			return m_middle_of_line_char == 0 ? zst::wstr_view() : zst::wstr_view(&m_middle_of_line_char, 1);
-		}
-
-	private:
-		char32_t m_end_of_line_char;
-		char32_t m_middle_of_line_char;
-	};
-
-
 
 	std::pair<std::optional<const tree::Paragraph*>, Cursor> Paragraph::layout(interp::Interpreter* cs, RectPageLayout* layout,
 	    Cursor cursor, const Style* parent_style, const tree::Paragraph* treepara)

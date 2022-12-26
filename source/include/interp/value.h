@@ -84,50 +84,49 @@ namespace sap::interp
 
 
 
-		std::string toString() const
+		std::u32string toString() const
 		{
 			switch(m_kind)
 			{
 				case KIND_CHAR:
-					return unicode::utf8FromCodepoint(v_char);
+					return &v_char;
 				case KIND_BOOL:
-					return v_bool ? "true" : "false";
+					return v_bool ? U"true" : U"false";
 				case KIND_INTEGER:
-					return std::to_string(v_integer);
+					return unicode::u32StringFromUtf8(std::to_string(v_integer));
 				case KIND_FLOATING:
-					return std::to_string(v_floating);
+					return unicode::u32StringFromUtf8(std::to_string(v_floating));
 				case KIND_FUNCTION:
-					return "function";
+					return U"function";
 				case KIND_TREE_INLINE_OBJ:
-					return "tree_inline_obj";
+					return U"tree_inline_obj";
 				case KIND_ARRAY:
 					if(m_type == Type::makeString())
 					{
-						std::string ret {};
+						std::u32string ret {};
 						ret.reserve(v_array.size());
 
 						for(size_t i = 0; i < v_array.size(); i++)
-							ret += unicode::utf8FromCodepoint(v_array[i].getChar());
+							ret += v_array[i].getChar();
 
 						return ret;
 					}
 					else
 					{
-						std::stringstream ret {};
-						ret << "[";
+						std::u32string ret {};
 						for(size_t i = 0; i < v_array.size(); i++)
 						{
 							if(i != 0)
-								ret << ", ";
-							ret << v_array[i].toString();
+								ret += U", ";
+							ret += v_array[i].toString();
 						}
 
-						ret << "]";
-						return ret.str();
+						ret += U"]";
+						return ret;
 					}
 
 				default:
-					return "?????";
+					return U"?????";
 			}
 		}
 
