@@ -26,7 +26,7 @@ namespace sap::interp
 			auto result_or_err = call->evaluate(this);
 
 			if(result_or_err.is_err())
-				error(stmt->location, "TODO: handle error");
+				error(stmt->location, "TODO: handle error: {}", result_or_err.error());
 			else if(not result_or_err->has_value())
 				return {};
 

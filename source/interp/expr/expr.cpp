@@ -60,29 +60,18 @@ namespace sap::interp
 		return Ok(Value::treeInlineObject(std::move(this->object)));
 	}
 
-
-
-	ErrorOr<const Type*> BinaryOp::typecheck_impl(Interpreter* cs, const Type* infer) const
-	{
-		return Ok(nullptr);
-	}
-
-	ErrorOr<std::optional<Value>> BinaryOp::evaluate(Interpreter* cs) const
-	{
-		return Ok(std::nullopt);
-	}
-
-
-
 	ErrorOr<const Type*> NumberLit::typecheck_impl(Interpreter* cs, const Type* infer) const
 	{
-		return Ok(Type::makeNumber());
+		if(this->is_floating)
+			return Ok(Type::makeFloating());
+		else
+			return Ok(Type::makeInteger());
 	}
 
 	ErrorOr<std::optional<Value>> NumberLit::evaluate(Interpreter* cs) const
 	{
 		if(this->is_floating)
-			return Ok(Value::decimal(float_value));
+			return Ok(Value::floating(float_value));
 		else
 			return Ok(Value::integer(int_value));
 	}

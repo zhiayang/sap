@@ -34,16 +34,6 @@ namespace sap::tree
 	struct InlineObject : Stylable
 	{
 		virtual ~InlineObject();
-
-		/*
-		    these two control whether there should be a space before/after the
-		    result of the object. for example:
-
-		    foo\bold("bar")aoeu should give us 'foobaraoeu',
-		    foo\bold("bar") aoeu should give 'foobar aoeu', etc.
-		*/
-		bool stick_to_left = false;
-		bool stick_to_right = false;
 	};
 
 	struct BlockObject : DocumentObject

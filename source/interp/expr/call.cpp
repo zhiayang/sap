@@ -153,6 +153,12 @@ namespace sap::interp
 	{
 		const Type* fn_type = nullptr;
 
+		// TODO: this might be problematic if we want to have bidirectional type inference
+		// either way, we must ensure that all the arguments typecheck to begin with
+		for(auto& arg : this->arguments)
+			TRY(arg.value->typecheck(cs));
+
+
 		// if the lhs is an identifier, we resolve it manually to handle overloading.
 		if(auto ident = dynamic_cast<const Ident*>(this->callee.get()); ident != nullptr)
 		{

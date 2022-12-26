@@ -16,7 +16,8 @@ namespace sap::interp
 		bool isBool() const { return m_kind == KIND_BOOL; }
 		bool isChar() const { return m_kind == KIND_CHAR; }
 		bool isArray() const { return m_kind == KIND_ARRAY; }
-		bool isNumber() const { return m_kind == KIND_NUMBER; }
+		bool isInteger() const { return m_kind == KIND_INTEGER; }
+		bool isFloating() const { return m_kind == KIND_FLOATING; }
 		bool isFunction() const { return m_kind == KIND_FUNCTION; }
 		bool isTreeInlineObj() const { return m_kind == KIND_TREE_INLINE_OBJ; }
 
@@ -26,7 +27,8 @@ namespace sap::interp
 			    || isVoid()     //
 			    || isBool()     //
 			    || isChar()     //
-			    || isNumber()   //
+			    || isInteger()  //
+			    || isFloating() //
 			    || isFunction() //
 			    || isTreeInlineObj();
 		}
@@ -43,26 +45,32 @@ namespace sap::interp
 		static const Type* makeVoid();
 		static const Type* makeBool();
 		static const Type* makeChar();
-		static const Type* makeNumber();
 		static const Type* makeString();
+		static const Type* makeInteger();
+		static const Type* makeFloating();
 		static const Type* makeTreeInlineObj();
 
 		static const FunctionType* makeFunction(std::vector<const Type*> param_types, const Type* return_type);
 		static const ArrayType* makeArray(const Type* element_type, bool is_variadic = false);
 
 	protected:
-		static constexpr int KIND_ANY = 0;
-		static constexpr int KIND_VOID = 1;
-		static constexpr int KIND_NUMBER = 2;
-		static constexpr int KIND_FUNCTION = 4;
-		static constexpr int KIND_TREE_INLINE_OBJ = 5;
-		static constexpr int KIND_ARRAY = 6;
-		static constexpr int KIND_BOOL = 7;
-		static constexpr int KIND_CHAR = 7;
+		enum Kind
+		{
+			KIND_VOID = 0,
+			KIND_ANY = 1,
+			KIND_BOOL = 2,
+			KIND_CHAR = 3,
+			KIND_INTEGER = 4,
+			KIND_FLOATING = 5,
+			KIND_FUNCTION = 6,
 
-		int m_kind;
+			KIND_TREE_INLINE_OBJ = 7,
+			KIND_ARRAY = 8,
+		};
 
-		Type(int kind) : m_kind(kind) { }
+		Kind m_kind;
+
+		Type(Kind kind) : m_kind(kind) { }
 		virtual ~Type();
 	};
 
