@@ -337,7 +337,8 @@ namespace font
 		// as a value for default line spacing for this font."
 		// (note: we do this regardless of whether fsSelection & USE_TYPO_METRICS is true)
 		// TODO: check if these values are 0 or something -- though they shouldn't be
-		font->metrics.default_line_spacing = font->metrics.typo_ascent - font->metrics.typo_descent + font->metrics.typo_linegap;
+		font->metrics.default_line_spacing = FontScalar(
+		    font->metrics.typo_ascent - font->metrics.typo_descent + font->metrics.typo_linegap);
 
 		if(version >= 2)
 		{

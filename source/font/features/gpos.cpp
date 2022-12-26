@@ -116,13 +116,13 @@ namespace font::off::gpos
 		GlyphAdjustment ret {};
 
 		if(format & 0x01)
-			ret.horz_placement = consume_i16(buf);
+			ret.horz_placement = FontScalar(consume_i16(buf));
 		if(format & 0x02)
-			ret.vert_placement = consume_i16(buf);
+			ret.vert_placement = FontScalar(consume_i16(buf));
 		if(format & 0x04)
-			ret.horz_advance = consume_i16(buf);
+			ret.horz_advance = FontScalar(consume_i16(buf));
 		if(format & 0x08)
-			ret.vert_advance = consume_i16(buf);
+			ret.vert_advance = FontScalar(consume_i16(buf));
 		if(format & 0x10)
 			consume_u16(buf); // X_PLACEMENT_DEVICE
 		if(format & 0x20)

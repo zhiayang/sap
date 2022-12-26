@@ -30,35 +30,38 @@ struct PDF_TAG_1D;
 struct PDF_TAG_GLYPH_SPACE;
 struct PDF_TAG_TEXT_SPACE;
 
+
 // allow converting sap <-> pdf_up and sap <-> pdf_down,
 // but *NOT* pdf_up <-> pdf_down
-MAKE_UNITS_COMPATIBLE(dim::units::base_unit::Tag, PDF_TAG_Y_DOWN)
-MAKE_UNITS_COMPATIBLE(PDF_TAG_Y_DOWN, dim::units::base_unit::Tag)
+MAKE_UNITS_COMPATIBLE(dim::units::base_unit::Tag, PDF_TAG_Y_DOWN);
+MAKE_UNITS_COMPATIBLE(PDF_TAG_Y_DOWN, dim::units::base_unit::Tag);
 
-MAKE_UNITS_COMPATIBLE(dim::units::base_unit::Tag, PDF_TAG_1D)
-MAKE_UNITS_COMPATIBLE(PDF_TAG_Y_UP, PDF_TAG_1D)
-MAKE_UNITS_COMPATIBLE(PDF_TAG_Y_DOWN, PDF_TAG_1D)
+MAKE_UNITS_COMPATIBLE(dim::units::base_unit::Tag, PDF_TAG_1D);
+MAKE_UNITS_COMPATIBLE(PDF_TAG_Y_UP, PDF_TAG_1D);
+MAKE_UNITS_COMPATIBLE(PDF_TAG_Y_DOWN, PDF_TAG_1D);
 
-MAKE_UNITS_COMPATIBLE(PDF_TAG_1D, dim::units::base_unit::Tag)
-MAKE_UNITS_COMPATIBLE(PDF_TAG_1D, PDF_TAG_Y_UP)
-MAKE_UNITS_COMPATIBLE(PDF_TAG_1D, PDF_TAG_Y_DOWN)
+MAKE_UNITS_COMPATIBLE(PDF_TAG_1D, dim::units::base_unit::Tag);
+MAKE_UNITS_COMPATIBLE(PDF_TAG_1D, PDF_TAG_Y_UP);
+MAKE_UNITS_COMPATIBLE(PDF_TAG_1D, PDF_TAG_Y_DOWN);
 
 DEFINE_UNIT_IN_NAMESPACE(pdf_typographic_unit_1d, (25.4 / 72.0) * dim::units::millimetre::scale_factor, PDF_TAG_1D, pdf,
-    typographic_unit_1d)
+    typographic_unit_1d);
 
 DEFINE_UNIT_IN_NAMESPACE(pdf_typographic_unit, (25.4 / 72.0) * dim::units::millimetre::scale_factor, PDF_TAG_Y_UP, pdf,
-    typographic_unit)
+    typographic_unit);
 
 DEFINE_UNIT_IN_NAMESPACE(pdf_typographic_unit_y_down, (25.4 / 72.0) * dim::units::millimetre::scale_factor, PDF_TAG_Y_DOWN, pdf,
-    typographic_unit_y_down)
+    typographic_unit_y_down);
 
+MAKE_UNITS_COMPATIBLE(PDF_TAG_GLYPH_SPACE, PDF_TAG_TEXT_SPACE);
+MAKE_UNITS_COMPATIBLE(PDF_TAG_TEXT_SPACE, PDF_TAG_GLYPH_SPACE);
 
-DEFINE_UNIT_IN_NAMESPACE(pdf_glyph_space, (25.4 / 72.0) * dim::units::millimetre::scale_factor, PDF_TAG_GLYPH_SPACE, pdf,
-    glyph_space)
+// PDF 1.7: 9.2.4 Glyph Positioning and Metrics
+// ... the units of glyph space are one-thousandth of a unit of text space ...
+static constexpr double PDF_GLYPH_SPACE_UNITS = 1000.0;
 
-DEFINE_UNIT_IN_NAMESPACE(pdf_text_space, (25.4 / 72.0) * dim::units::millimetre::scale_factor, PDF_TAG_TEXT_SPACE, pdf,
-    text_space)
-
+DEFINE_UNIT_IN_NAMESPACE(pdf_glyph_space, PDF_GLYPH_SPACE_UNITS, PDF_TAG_GLYPH_SPACE, pdf, glyph_space);
+DEFINE_UNIT_IN_NAMESPACE(pdf_text_space, 1, PDF_TAG_TEXT_SPACE, pdf, text_space);
 
 namespace pdf
 {

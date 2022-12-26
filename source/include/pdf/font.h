@@ -23,10 +23,6 @@ namespace pdf
 	struct Document;
 	struct Dictionary;
 
-	// PDF 1.7: 9.2.4 Glyph Positioning and Metrics
-	// ... the units of glyph space are one-thousandth of a unit of text space ...
-	static constexpr double GLYPH_SPACE_UNITS = 1000.0;
-
 	struct Font
 	{
 		Dictionary* serialise(Document* doc) const;
@@ -46,15 +42,31 @@ namespace pdf
 		// get the name that we should put in the Resource dictionary of a page that uses this font.
 		std::string getFontResourceName() const;
 
+		GlyphSpace1d scaleFontMetricForPDFGlyphSpace(font::FontScalar metric) const
+		{
+			return GlyphSpace1d((metric / this->getFontMetrics().units_per_em).value());
+		}
+
 		// abstracts away the scaling by units_per_em, to go from font units to pdf units
 		// this converts the metric to a **concrete size** (in pdf units, aka 1/72 inches)
-		Scalar scaleMetricForFontSize(double metric, Scalar font_size) const;
+		Scalar scaleMetricForFontSize(font::FontScalar metric, Scalar font_size) const
+		{
+			auto gs = this->scaleFontMetricForPDFGlyphSpace(metric);
+			return Scalar((gs * font_size.value()).value());
+		}
 
 		// this converts the metric to an **abstract size**, which is the text space. when
 		// drawing text, the /Tf directive already specifies the font scale!
-		Scalar scaleMetricForPDFTextSpace(double metric) const;
+		TextSpace1d scaleMetricForPDFTextSpace(font::FontScalar metric) const
+		{
+			auto gs = this->scaleFontMetricForPDFGlyphSpace(metric);
+			return gs.into<TextSpace1d>();
+		}
 
-		static Scalar pdfScalarToTextScalarForFontSize(Scalar scalar, Scalar font_size);
+		TextSpace1d convertPDFScalarToTextSpaceForFontSize(Scalar scalar, Scalar font_size)
+		{
+			return GlyphSpace1d(scalar / font_size).into<TextSpace1d>();
+		}
 
 		/*
 		    A very thin wrapper around the identically-named methods taking a FontFile

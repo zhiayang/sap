@@ -49,7 +49,7 @@ namespace pdf
 		    moves the next glyph TO THE RIGHT. in vertical writing mode, a positive
 		    value moves the next glyph DOWNWARDS.
 		*/
-		void offset(Scalar ofs);
+		void offset(TextSpace1d ofs);
 
 		/*
 		    add an encoded value to the text stream. for now, this is a glyph ID, but

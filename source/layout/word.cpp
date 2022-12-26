@@ -140,7 +140,7 @@ namespace sap::layout
 			if(emitted_space_size != desired_space_size)
 			{
 				auto extra = -emitted_space_size + desired_space_size;
-				text->offset(pdf::Font::pdfScalarToTextScalarForFontSize(extra, font_size_tpu));
+				text->offset(font->convertPDFScalarToTextSpaceForFontSize(extra, font_size_tpu));
 			}
 		}
 

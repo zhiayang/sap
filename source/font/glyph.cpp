@@ -22,28 +22,28 @@ namespace font
 		if(gid32 >= this->num_hmetrics)
 		{
 			// the remaining glyphs not in the array use the last value.
-			ret.horz_advance = util::convertBEU16(u16_array[(this->num_hmetrics - 1) * 2]);
+			ret.horz_advance = FontScalar(util::convertBEU16(u16_array[(this->num_hmetrics - 1) * 2]));
 
 			// there is an array of lsbs for glyph_ids > num_hmetrics
 			auto lsb_array = this->hmtx_table.drop(2 * this->num_hmetrics);
 			auto tmp = lsb_array[gid32 - this->num_hmetrics];
 
-			ret.left_side_bearing = (int16_t) util::convertBEU16(tmp);
+			ret.left_side_bearing = FontScalar((int16_t) util::convertBEU16(tmp));
 		}
 		else
 		{
-			ret.horz_advance = util::convertBEU16(u16_array[gid32 * 2]);
-			ret.left_side_bearing = (int16_t) util::convertBEU16(u16_array[gid32 * 2 + 1]);
+			ret.horz_advance = FontScalar(util::convertBEU16(u16_array[gid32 * 2]));
+			ret.left_side_bearing = FontScalar((int16_t) util::convertBEU16(u16_array[gid32 * 2 + 1]));
 		}
 
 		// now, figure out xmin and xmax
 		if(this->outline_type == OUTLINES_TRUETYPE)
 		{
 			auto bb = truetype::getGlyphBoundingBox(this->truetype_data, glyph_id);
-			ret.xmin = bb.xmin;
-			ret.ymin = bb.ymin;
-			ret.xmax = bb.xmax;
-			ret.ymax = bb.ymax;
+			ret.xmin = FontScalar(bb.xmin);
+			ret.ymin = FontScalar(bb.ymin);
+			ret.xmax = FontScalar(bb.xmax);
+			ret.ymax = FontScalar(bb.ymax);
 
 			// calculate RSB
 			ret.right_side_bearing = ret.horz_advance - ret.left_side_bearing - (ret.xmax - ret.xmin);
@@ -56,10 +56,10 @@ namespace font
 			// best effort, i guess?
 			auto metrics = this->metrics;
 
-			ret.xmin = metrics.xmin;
-			ret.xmax = metrics.xmax;
-			ret.ymin = metrics.ymin;
-			ret.ymax = metrics.ymax;
+			ret.xmin = FontScalar(metrics.xmin);
+			ret.xmax = FontScalar(metrics.xmax);
+			ret.ymin = FontScalar(metrics.ymin);
+			ret.ymax = FontScalar(metrics.ymax);
 		}
 		else
 		{

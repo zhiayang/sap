@@ -65,7 +65,7 @@ namespace pdf
 		this->insertPDFCommand(zpr::sprint(" {} {} Td\n", offset.x(), offset.y()));
 	}
 
-	void Text::offset(Scalar ofs)
+	void Text::offset(TextSpace1d ofs)
 	{
 		if(ofs.zero())
 			return;
@@ -74,7 +74,7 @@ namespace pdf
 			m_groups.emplace_back();
 
 		// note that we specify that a positive offset moves the glyph to the right
-		m_groups.back().text += zpr::sprint(" {} ", -1 * ofs.x());
+		m_groups.back().text += zpr::sprint(" {} ", -1 * ofs.value());
 	}
 
 	void Text::addEncoded(size_t bytes, uint32_t encodedValue)

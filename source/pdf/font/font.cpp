@@ -21,20 +21,6 @@ namespace pdf
 		return this->font_resource_name;
 	}
 
-	Scalar Font::scaleMetricForFontSize(double metric, Scalar font_size) const
-	{
-		return Scalar((metric * font_size.value()) / this->getFontMetrics().units_per_em);
-	}
-
-	Scalar Font::scaleMetricForPDFTextSpace(double metric) const
-	{
-		return Scalar((metric * GLYPH_SPACE_UNITS) / this->getFontMetrics().units_per_em);
-	}
-
-	Scalar Font::pdfScalarToTextScalarForFontSize(Scalar scalar, Scalar font_size)
-	{
-		return scalar / font_size.value() * GLYPH_SPACE_UNITS;
-	}
 
 	font::FontMetrics Font::getFontMetrics() const
 	{

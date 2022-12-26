@@ -10,6 +10,7 @@
 #include "types.h"
 
 #include "font/tag.h"
+#include "font/scalar.h"
 
 namespace font
 {
@@ -18,10 +19,10 @@ namespace font
 
 	struct GlyphAdjustment
 	{
-		int16_t horz_placement;
-		int16_t vert_placement;
-		int16_t horz_advance;
-		int16_t vert_advance;
+		FontScalar horz_placement;
+		FontScalar vert_placement;
+		FontScalar horz_advance;
+		FontScalar vert_advance;
 	};
 }
 

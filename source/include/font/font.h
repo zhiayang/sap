@@ -15,7 +15,10 @@
 
 #include <zst.h>
 
+#include "units.h"
+
 #include "font/tag.h"
+#include "font/scalar.h"
 #include "font/features.h"
 
 namespace pdf
@@ -54,7 +57,7 @@ namespace font
 		int typo_descent;
 		int typo_linegap;
 
-		int default_line_spacing;
+		FontScalar default_line_spacing;
 
 		bool is_monospaced;
 		double italic_angle;
@@ -62,19 +65,19 @@ namespace font
 
 	struct GlyphMetrics
 	{
-		double horz_advance;
-		double vert_advance;
+		FontScalar horz_advance;
+		FontScalar vert_advance;
 
-		double horz_placement;
-		double vert_placement;
+		FontScalar horz_placement;
+		FontScalar vert_placement;
 
-		double xmin;
-		double xmax;
-		double ymin;
-		double ymax;
+		FontScalar xmin;
+		FontScalar xmax;
+		FontScalar ymin;
+		FontScalar ymax;
 
-		double left_side_bearing;
-		double right_side_bearing;
+		FontScalar left_side_bearing;
+		FontScalar right_side_bearing;
 	};
 
 	struct Table
