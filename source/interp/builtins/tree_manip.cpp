@@ -6,8 +6,8 @@
 #include "sap/fontset.h" // for FontStyle, FontStyle::Bold, FontStyle::...
 
 #include "interp/tree.h"     // for Text
-#include "interp/state.h"    // for Interpreter
 #include "interp/value.h"    // for Value
+#include "interp/interp.h"   // for Interpreter
 #include "interp/builtin.h"  // for bold1, bold_italic1, italic1
 #include "interp/basedefs.h" // for InlineObject
 

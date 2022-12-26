@@ -15,8 +15,8 @@
 
 #include "font/font.h" // for findFontPath, FontFile
 
-#include "interp/tree.h"  // for Document
-#include "interp/state.h" // for Interpreter
+#include "interp/tree.h"   // for Document
+#include "interp/interp.h" // for Interpreter
 
 
 int main(int argc, char** argv)

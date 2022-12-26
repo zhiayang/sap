@@ -4,268 +4,91 @@
 
 #pragma once
 
-#include <concepts>
-#include <functional> // for function
+#include "ast.h"   // for Definition, Declaration, Expr, QualifiedId
+#include "util.h"  // for hashmap
+#include "value.h" // for Value
 
-#include "type.h" // for Type
-#include "util.h" // for ErrorOr, Ok, TRY
-// #include "value.h"
-#include "location.h" // for Location
-
+#include "interp/type.h"     // for Type
 #include "interp/basedefs.h" // for InlineObject
 
 namespace sap::interp
 {
-	struct Value;
-	struct Interpreter;
-
-	struct Stmt
+	struct DefnTree
 	{
-		virtual ~Stmt();
-		virtual ErrorOr<const Type*> typecheck_impl(Interpreter* cs, const Type* infer = nullptr) const = 0;
+		std::string_view name() const { return m_name; }
+		DefnTree* parent() const { return m_parent; }
 
-		virtual ErrorOr<std::optional<Value>> evaluate(Interpreter* cs) const = 0;
-		virtual ErrorOr<const Type*> typecheck(Interpreter* cs, const Type* infer = nullptr) const
-		{
-			if(m_type == nullptr)
-				m_type = TRY(this->typecheck_impl(cs, infer));
+		ErrorOr<DefnTree*> lookupNamespace(std::string_view name) const;
+		DefnTree* lookupOrDeclareNamespace(std::string_view name);
 
-			return Ok(m_type);
-		}
+		ErrorOr<std::vector<const Declaration*>> lookup(QualifiedId id) const;
 
-		std::optional<Location> location;
-
-		const Type* get_type() const
-		{
-			assert(m_type != nullptr);
-			return m_type;
-		}
-
-	protected:
-		mutable const Type* m_type = nullptr;
-	};
-
-	struct Expr : Stmt
-	{
-		const Type* type(Interpreter* cs) const;
-	};
-
-	struct InlineTreeExpr : Expr
-	{
-		virtual ErrorOr<std::optional<Value>> evaluate(Interpreter* cs) const override;
-		virtual ErrorOr<const Type*> typecheck_impl(Interpreter* cs, const Type* infer = nullptr) const override;
-
-		mutable std::unique_ptr<tree::InlineObject> object;
-	};
-
-
-	struct QualifiedId
-	{
-		std::vector<std::string> parents;
-		std::string name;
-	};
-
-	struct Declaration;
-	struct FunctionDecl;
-
-	struct Ident : Expr
-	{
-		virtual ErrorOr<std::optional<Value>> evaluate(Interpreter* cs) const override;
-		virtual ErrorOr<const Type*> typecheck_impl(Interpreter* cs, const Type* infer = nullptr) const override;
-
-		QualifiedId name {};
-		mutable const Declaration* m_resolved_decl = nullptr;
-	};
-
-	struct FunctionCall : Expr
-	{
-		virtual ErrorOr<std::optional<Value>> evaluate(Interpreter* cs) const override;
-		virtual ErrorOr<const Type*> typecheck_impl(Interpreter* cs, const Type* infer = nullptr) const override;
-
-		struct Arg
-		{
-			std::optional<std::string> name;
-			std::unique_ptr<Expr> value;
-		};
-
-		std::unique_ptr<Expr> callee;
-		std::vector<Arg> arguments;
+		ErrorOr<void> declare(const Declaration* decl);
+		ErrorOr<void> define(Definition* defn);
 
 	private:
-		mutable const Declaration* m_resolved_func_decl = nullptr;
+		explicit DefnTree(std::string name, DefnTree* parent) : m_name(std::move(name)), m_parent(parent) { }
+
+		std::string m_name;
+		util::hashmap<std::string, std::unique_ptr<DefnTree>> m_children;
+		util::hashmap<std::string, std::vector<const Declaration*>> m_decls;
+
+		std::vector<Definition*> m_definitions;
+
+		DefnTree* m_parent = nullptr;
+
+		friend struct Interpreter;
 	};
 
-	struct NumberLit : Expr
+	struct StackFrame
 	{
-		virtual ErrorOr<std::optional<Value>> evaluate(Interpreter* cs) const override;
-		virtual ErrorOr<const Type*> typecheck_impl(Interpreter* cs, const Type* infer = nullptr) const override;
+		StackFrame* parent() const { return m_parent; }
 
-		bool is_floating = false;
-
-		int64_t int_value = 0;
-		double float_value = 0;
-	};
-
-	struct StringLit : Expr
-	{
-		virtual ErrorOr<std::optional<Value>> evaluate(Interpreter* cs) const override;
-		virtual ErrorOr<const Type*> typecheck_impl(Interpreter* cs, const Type* infer = nullptr) const override;
-
-		std::u32string string;
-	};
-
-	struct BinaryOp : Expr
-	{
-		virtual ErrorOr<std::optional<Value>> evaluate(Interpreter* cs) const override;
-		virtual ErrorOr<const Type*> typecheck_impl(Interpreter* cs, const Type* infer = nullptr) const override;
-
-		std::unique_ptr<Expr> lhs;
-		std::unique_ptr<Expr> rhs;
-
-		enum Op
+		Value* valueOf(const Definition* defn)
 		{
-			Add,
-			Subtract,
-			Multiply,
-			Divide,
-		};
-		Op op;
-	};
-
-	struct ComparisonOp : Expr
-	{
-		virtual ErrorOr<std::optional<Value>> evaluate(Interpreter* cs) const override;
-		virtual ErrorOr<const Type*> typecheck_impl(Interpreter* cs, const Type* infer = nullptr) const override;
-
-		enum Op
-		{
-			EQ,
-			NE,
-			LT,
-			GT,
-			LE,
-			GE,
-		};
-
-		std::unique_ptr<Expr> first;
-		std::vector<std::pair<Op, std::unique_ptr<Expr>>> rest;
-	};
-
-
-	struct Definition;
-
-	struct Declaration : Stmt
-	{
-		Declaration(const std::string& name) : name(name) { }
-
-		std::string name;
-		const Definition* resolved_defn = nullptr;
-	};
-
-	struct Definition : Stmt
-	{
-		Definition(Declaration* decl) : declaration(decl) { declaration->resolved_defn = this; }
-
-		// the definition owns its declaration
-		std::unique_ptr<Declaration> declaration {};
-	};
-
-	struct VariableDecl : Declaration
-	{
-		VariableDecl(const std::string& name) : Declaration(name) { }
-
-		virtual ErrorOr<std::optional<Value>> evaluate(Interpreter* cs) const override;
-		virtual ErrorOr<const Type*> typecheck_impl(Interpreter* cs, const Type* infer = nullptr) const override;
-	};
-
-	struct VariableDefn : Definition
-	{
-		VariableDefn(const std::string& name, bool is_mutable, std::unique_ptr<Expr> init,
-		    std::optional<const Type*> explicit_type)
-		    : Definition(new VariableDecl(name))
-		    , is_mutable(is_mutable)
-		    , initialiser(std::move(init))
-		    , explicit_type(explicit_type)
-		{
+			if(auto it = m_values.find(defn); it == m_values.end())
+				return nullptr;
+			else
+				return &it->second;
 		}
 
-		virtual ErrorOr<std::optional<Value>> evaluate(Interpreter* cs) const override;
-		virtual ErrorOr<const Type*> typecheck_impl(Interpreter* cs, const Type* infer = nullptr) const override;
-
-		bool is_mutable;
-		std::unique_ptr<Expr> initialiser;
-		std::optional<const Type*> explicit_type;
-	};
-
-	struct FunctionDecl : Declaration
-	{
-		struct Param
-		{
-			std::string name;
-			const Type* type;
-			std::unique_ptr<Expr> default_value;
-		};
-
-		FunctionDecl(const std::string& name, std::vector<Param>&& params, const Type* return_type)
-		    : Declaration(name)
-		    , m_params(std::move(params))
-		    , m_return_type(return_type)
-		{
-		}
-
-		virtual ErrorOr<std::optional<Value>> evaluate(Interpreter* cs) const override;
-		virtual ErrorOr<const Type*> typecheck_impl(Interpreter* cs, const Type* infer = nullptr) const override;
-
-		const std::vector<Param>& params() const { return m_params; }
+		void setValue(const Definition* defn, Value value) { m_values[defn] = std::move(value); }
 
 	private:
-		std::vector<Param> m_params;
-		const Type* m_return_type;
+		explicit StackFrame(StackFrame* parent) : m_parent(parent) { }
+
+		friend struct Interpreter;
+
+		StackFrame* m_parent = nullptr;
+		std::unordered_map<const Definition*, Value> m_values;
 	};
 
-	template <std::same_as<FunctionDecl::Param>... P>
-	std::vector<FunctionDecl::Param> makeParamList(P&&... params)
+	struct Interpreter
 	{
-		std::vector<FunctionDecl::Param> ret {};
-		(ret.push_back(std::move(params)), ...);
+		Interpreter();
 
-		return ret;
-	}
+		DefnTree* top() { return m_top.get(); }
+		const DefnTree* top() const { return m_top.get(); }
 
+		DefnTree* current() { return m_current; }
+		const DefnTree* current() const { return m_current; }
 
+		ErrorOr<void> run(const Stmt* stmt);
+		ErrorOr<std::optional<Value>> evaluate(const Expr* expr);
 
-	struct BuiltinFunctionDefn : Definition
-	{
-		using FuncTy = std::function<ErrorOr<std::optional<Value>>(Interpreter*, std::vector<Value>&)>;
+		Definition* addBuiltinDefinition(std::unique_ptr<Definition> defn);
 
-		BuiltinFunctionDefn(const std::string& name, std::vector<FunctionDecl::Param>&& params, const Type* return_type,
-		    const FuncTy& fn)
-		    : Definition(new FunctionDecl(name, std::move(params), return_type))
-		    , function(fn)
-		{
-		}
+		StackFrame& frame();
+		StackFrame& pushFrame();
+		void popFrame();
 
-		virtual ErrorOr<std::optional<Value>> evaluate(Interpreter* cs) const override;
-		virtual ErrorOr<const Type*> typecheck_impl(Interpreter* cs, const Type* infer = nullptr) const override;
+		bool canImplicitlyConvert(const Type* from, const Type* to) const;
 
-		FuncTy function;
+	private:
+		std::unique_ptr<DefnTree> m_top;
+		DefnTree* m_current;
+
+		std::vector<std::unique_ptr<Definition>> m_builtin_defns;
+		std::vector<std::unique_ptr<StackFrame>> m_stack_frames;
 	};
 }
-
-
-
-template <>
-struct zpr::print_formatter<sap::interp::QualifiedId>
-{
-	template <typename Cb>
-	void print(const sap::interp::QualifiedId& qid, Cb&& cb, format_args fmt)
-	{
-		for(auto& p : qid.parents)
-		{
-			cb(p.c_str(), p.size());
-			cb("::", 2);
-		}
-
-		cb(qid.name.c_str(), qid.name.size());
-	}
-};

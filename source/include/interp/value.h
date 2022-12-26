@@ -11,7 +11,7 @@
 #include "type.h" // for Type, FunctionType, ArrayType
 #include "util.h" // for u32StringFromUtf8
 
-#include "interp/interp.h"   // for Interpreter
+#include "interp/ast.h"      // for Interpreter
 #include "interp/basedefs.h" // for InlineObject
 
 namespace sap::tree

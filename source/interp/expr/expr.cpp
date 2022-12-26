@@ -4,10 +4,10 @@
 
 #include "location.h" // for error
 
+#include "interp/ast.h"      // for Ident, NumberLit, Declaration, InlineTr...
 #include "interp/type.h"     // for Type
-#include "interp/state.h"    // for Interpreter, StackFrame, DefnTree
 #include "interp/value.h"    // for Value
-#include "interp/interp.h"   // for Ident, NumberLit, Declaration, InlineTr...
+#include "interp/interp.h"   // for Interpreter, StackFrame, DefnTree
 #include "interp/basedefs.h" // for InlineObject
 
 namespace sap::interp

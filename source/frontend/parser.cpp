@@ -7,9 +7,9 @@
 
 #include "sap/frontend.h" // for Token, Lexer, TokenType, Lexer::Mode
 
+#include "interp/ast.h"      // for Expr, FunctionCall::Arg, ComparisonOp
 #include "interp/tree.h"     // for Paragraph, ScriptBlock, ScriptCall, Text
 #include "interp/type.h"     // for Type
-#include "interp/interp.h"   // for Expr, FunctionCall::Arg, ComparisonOp
 #include "interp/basedefs.h" // for DocumentObject
 
 namespace sap::frontend

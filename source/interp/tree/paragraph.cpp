@@ -4,10 +4,10 @@
 
 #include "util.h" // for dynamic_pointer_cast
 
+#include "interp/ast.h"      // for FunctionCall
 #include "interp/tree.h"     // for Text, Separator, Paragraph, ScriptCall
-#include "interp/state.h"    // for Interpreter
 #include "interp/value.h"    // for Value
-#include "interp/interp.h"   // for FunctionCall
+#include "interp/interp.h"   // for Interpreter
 #include "interp/basedefs.h" // for InlineObject
 
 namespace sap::tree

@@ -4,10 +4,10 @@
 
 #include "location.h" // for error
 
+#include "interp/ast.h"    // for Declaration, FunctionCall, Expr, Function...
 #include "interp/type.h"   // for Type, FunctionType
-#include "interp/state.h"  // for Interpreter, DefnTree
 #include "interp/value.h"  // for Value
-#include "interp/interp.h" // for Declaration, FunctionCall, Expr, Function...
+#include "interp/interp.h" // for Interpreter, DefnTree
 
 namespace sap::interp
 {
