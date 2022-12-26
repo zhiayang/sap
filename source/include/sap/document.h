@@ -314,10 +314,6 @@ namespace sap::layout
 		Size2d m_size {};
 
 		std::vector<GlyphInfo> m_glyphs {};
-		// stuff set by the containing Paragraph during layout and used during rendering.
-		Position m_position {};
-
-		// set by computeMetrics;
 		Scalar m_space_width {};
 	};
 

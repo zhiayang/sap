@@ -15,17 +15,11 @@
 #include "sap/document.h" // for Word, Cursor, Paragraph, RectPageLayout
 
 #include "interp/tree.h" // for Paragraph, Text
+#include "zst.h"
 
 namespace sap::layout
 {
-
 	using WordVecIter = std::vector<Word>::const_iterator;
-
-	struct Line
-	{
-		std::vector<Word> words;
-		bool is_hyphenated = false;
-	};
 
 	[[maybe_unused]] static std::vector<WordVecIter> break_lines(const std::vector<Word>& words, Scalar preferred_line_length)
 	{
@@ -112,20 +106,63 @@ namespace sap::layout
 		return path_as_iters;
 	}
 
+	struct Separator : Stylable
+	{
+		Separator(tree::Separator::SeparatorKind kind, const Style* style)
+		{
+			this->setStyle(style);
+			switch(kind)
+			{
+				case decltype(kind)::SPACE:
+					m_end_of_line_char = 0;
+					m_middle_of_line_char = U' ';
+					break;
+
+				case decltype(kind)::BREAK_POINT:
+					m_end_of_line_char = 0;
+					m_middle_of_line_char = 0;
+					break;
+
+				case decltype(kind)::HYPHENATION_POINT:
+					m_end_of_line_char = U'-';
+					m_middle_of_line_char = 0;
+					break;
+			}
+		}
+
+		zst::wstr_view endOfLine() const
+		{
+			return m_end_of_line_char == 0 ? zst::wstr_view() : zst::wstr_view(&m_end_of_line_char, 1);
+		}
+
+		zst::wstr_view middleOfLine() const
+		{
+			return m_middle_of_line_char == 0 ? zst::wstr_view() : zst::wstr_view(&m_middle_of_line_char, 1);
+		}
+
+	private:
+		char32_t m_end_of_line_char;
+		char32_t m_middle_of_line_char;
+	};
+
+
 
 	std::pair<std::optional<const tree::Paragraph*>, Cursor> Paragraph::layout(interp::Interpreter* cs, RectPageLayout* layout,
 	    Cursor cursor, const Style* parent_style, const tree::Paragraph* treepara)
 	{
 		cursor = layout->newLineFrom(cursor, 0);
 
-		using WordSepVec = std::vector<std::variant<Word>>;
+		using WordSepVec = std::vector<std::variant<Word, Separator>>;
 		WordSepVec words_and_seps;
-		for(auto wordorsep : treepara->contents())
+
+		for(auto& wordorsep : treepara->contents())
 		{
+			auto style = Style::combine(wordorsep->style(), parent_style);
 			if(auto word = util::dynamic_pointer_cast<tree::Text>(wordorsep); word != nullptr)
-			{
-				words_and_seps.push_back(Word(word->contents(), Style::combine(word->style(), parent_style)));
-			}
+				words_and_seps.push_back(Word(word->contents(), style));
+
+			else if(auto sep = util::dynamic_pointer_cast<tree::Separator>(wordorsep); sep != nullptr)
+				words_and_seps.push_back(Separator(sep->kind(), sep->style()));
 		}
 
 		auto para = util::make<Paragraph>();
@@ -137,23 +174,19 @@ namespace sap::layout
 
 		struct Line
 		{
-			std::vector<std::variant<Word>> words;
+			std::vector<std::variant<Word, Separator>> words;
 			Cursor cursor;
 			Scalar line_length;
 		};
 
 		// Break lines
 		std::vector<Line> lines;
-		for(auto wordorsep : words_and_seps)
+		for(auto& wordorsep : words_and_seps)
 		{
-			auto visitor = [&](Word word) {
-				cur_line_length += prev_space;
-				cur_line_length += word.size().x();
-				if(cur_line_length >= layout->getWidthAt(cursor))
+			auto word_visitor = [&](const Word& word) {
+				auto new_line_length = cur_line_length + prev_space + word.size().x();
+				if(new_line_length >= layout->getWidthAt(cursor))
 				{
-					cur_line_length -= prev_space;
-					cur_line_length -= word.size().x();
-
 					cursor = layout->newLineFrom(cursor, cur_line_spacing);
 					lines.push_back(Line {
 					    .words = std::move(cur_line),
@@ -165,6 +198,10 @@ namespace sap::layout
 					cursor = layout->newLineFrom(cursor, 0);
 					cur_line_length = word.size().x();
 				}
+				else
+				{
+					cur_line_length = new_line_length;
+				}
 
 				prev_space = word.spaceWidth();
 				cur_line_spacing = std::max(cur_line_spacing, word.size().y() + word.style()->line_spacing());
@@ -172,7 +209,11 @@ namespace sap::layout
 				cur_line.push_back(word);
 			};
 
-			std::visit(visitor, wordorsep);
+			auto sep_visitor = [&](const Separator& sep) {
+
+			};
+
+			std::visit(util::overloaded { word_visitor, sep_visitor }, wordorsep);
 		}
 
 		cursor = layout->newLineFrom(cursor, cur_line_spacing);
@@ -200,7 +241,7 @@ namespace sap::layout
 
 			for(auto& wordorsep : line.words)
 			{
-				auto visitor = [&](Word word) {
+				auto word_visitor = [&](const Word& word) {
 					para->m_words.emplace_back(word, cursor);
 
 					// TODO: add space in separate case but for now every word is followed by a space
@@ -209,7 +250,9 @@ namespace sap::layout
 					cursor = layout->moveRightFrom(cursor, extra_space_width);
 				};
 
-				std::visit(visitor, wordorsep);
+				auto sep_visitor = [&](const Separator& sep) {};
+
+				std::visit(util::overloaded { word_visitor, sep_visitor }, wordorsep);
 			}
 		}
 

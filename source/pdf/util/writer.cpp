@@ -3,6 +3,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #include <fcntl.h> // for open, O_CREAT, O_TRUNC, O_WRONLY
+#include <unistd.h>
 
 #include "pdf/misc.h"   // for error
 #include "pdf/object.h" // for Object

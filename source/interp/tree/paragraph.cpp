@@ -71,7 +71,7 @@ namespace sap::tree
 						if(not current_text->contents().empty())
 						{
 							ret.push_back(std::move(current_text));
-							ret.push_back(std::make_shared<Separator>());
+							ret.push_back(std::make_shared<Separator>(Separator::SPACE));
 
 							current_text = std::make_shared<Text>("");
 							current_text->setStyle(tree_text->style());
@@ -81,7 +81,7 @@ namespace sap::tree
 					}
 					else
 					{
-						// do nothing
+						// do nothing (consume more whitespace)
 					}
 				}
 				else

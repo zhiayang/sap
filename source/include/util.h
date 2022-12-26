@@ -23,6 +23,15 @@ namespace util
 		It end() const { return m_end; }
 	};
 
+	template <typename... Xs>
+	struct overloaded : Xs...
+	{
+		using Xs::operator()...;
+	};
+
+	template <typename... Xs>
+	overloaded(Xs...) -> overloaded<Xs...>;
+
 	std::pair<uint8_t*, size_t> readEntireFile(const std::string& path);
 
 	uint16_t convertBEU16(uint16_t x);

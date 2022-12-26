@@ -46,6 +46,19 @@ namespace sap::tree
 
 	struct Separator : InlineObject
 	{
+		enum SeparatorKind
+		{
+			SPACE,
+			BREAK_POINT,
+			HYPHENATION_POINT,
+		};
+
+		explicit Separator(SeparatorKind kind) : m_kind(kind) { }
+
+		SeparatorKind kind() const { return m_kind; }
+
+	private:
+		SeparatorKind m_kind;
 	};
 
 	struct Paragraph : BlockObject
@@ -84,6 +97,4 @@ namespace sap::tree
 	{
 		std::unique_ptr<interp::FunctionCall> call;
 	};
-
-
 }
