@@ -112,6 +112,8 @@ namespace sap::frontend
 		void pushMode(Mode mode);
 		void popMode(Mode mode);
 
+		Location location() const { return m_location; }
+
 	private:
 		std::vector<Mode> m_mode_stack {};
 		zst::str_view m_stream {};

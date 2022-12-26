@@ -180,8 +180,9 @@ namespace sap::interp
 
 	struct VariableDefn : Definition
 	{
-		VariableDefn(const std::string& name, std::unique_ptr<Expr> init, const Type* given_type)
+		VariableDefn(const std::string& name, bool is_mutable, std::unique_ptr<Expr> init, std::optional<const Type*> given_type)
 		    : Definition(new VariableDecl(name))
+		    , is_mutable(is_mutable)
 		    , initialiser(std::move(init))
 		    , given_type(given_type)
 		{
@@ -190,8 +191,9 @@ namespace sap::interp
 		virtual ErrorOr<std::optional<Value>> evaluate(Interpreter* cs) const override;
 		virtual ErrorOr<const Type*> typecheck_impl(Interpreter* cs, const Type* infer = nullptr) const override;
 
+		bool is_mutable;
 		std::unique_ptr<Expr> initialiser;
-		const Type* given_type;
+		std::optional<const Type*> given_type;
 	};
 
 	struct FunctionDecl : Declaration

@@ -412,7 +412,34 @@ namespace sap::frontend
 		return parse_rhs(lexer, std::move(lhs), 0);
 	}
 
-	// static std::unique
+	static const interp::Type* parse_type(Lexer& lexer)
+	{
+		return nullptr;
+	}
+
+	static std::unique_ptr<interp::VariableDefn> parse_var_defn(Lexer& lexer)
+	{
+		auto kw = lexer.next();
+		assert(kw == TT::Identifier);
+		assert(kw.text == KW_LET || kw.text == KW_VAR);
+
+		// expect a name
+		auto maybe_name = lexer.match(TT::Identifier);
+		if(not maybe_name.has_value())
+			error(lexer.location(), "expected identifier after '{}'", kw.text);
+
+		std::unique_ptr<interp::Expr> initialiser {};
+		std::optional<const interp::Type*> explicit_type {};
+
+		if(lexer.match(TT::Colon))
+			explicit_type = parse_type(lexer);
+
+		if(lexer.match(TT::Equal))
+			initialiser = parse_expr(lexer);
+
+		return std::make_unique<interp::VariableDefn>(maybe_name->str(), /* is_mutable: */ kw.text == KW_VAR,
+		    std::move(initialiser), std::move(explicit_type));
+	}
 
 
 	static std::unique_ptr<interp::Stmt> parse_stmt(Lexer& lexer)
@@ -426,13 +453,9 @@ namespace sap::frontend
 		{
 			case TT::Identifier:
 				if(tok.text == KW_LET || tok.text == KW_VAR)
-				{
-					error(tok.loc, "TODO: 'let' not implemented");
-				}
+					stmt = parse_var_defn(lexer);
 				else
-				{
 					stmt = parse_expr(lexer);
-				}
 				break;
 
 			default: stmt = parse_expr(lexer); break;
