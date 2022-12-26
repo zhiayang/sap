@@ -86,7 +86,7 @@ namespace dim
 		}
 
 
-		constexpr bool zero() const { return this->_x == 0; }
+		constexpr bool iszero() const { return this->_x == 0; }
 		constexpr bool nonzero() const { return this->_x != 0; }
 
 		constexpr value_type& value() { return this->_x; }
@@ -164,7 +164,8 @@ namespace dim
 		constexpr self_type& operator=(self_type&&) = default;
 		constexpr self_type& operator=(const self_type&) = default;
 
-		constexpr bool zero() const { return this->_x == 0 && this->_y == 0; }
+		constexpr bool iszero() const { return this->_x == 0 && this->_y == 0; }
+		constexpr bool nonzero() const { return not this->iszero(); }
 
 		constexpr self_type operator-() const { return self_type(-this->_x, -this->_y); }
 

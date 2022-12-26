@@ -67,7 +67,7 @@ namespace pdf
 
 	void Text::offset(TextSpace1d ofs)
 	{
-		if(ofs.zero())
+		if(ofs.iszero())
 			return;
 
 		if(m_groups.empty())
