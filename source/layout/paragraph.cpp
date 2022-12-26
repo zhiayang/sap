@@ -58,6 +58,31 @@ namespace sap::layout
 		char32_t m_middle_of_line_char;
 	};
 
+	static Scalar get_word_width(zst::wstr_view string, const Style* style)
+	{
+		static util::hashmap<std::u32string, Scalar> s_cache {};
+		if(auto it = s_cache.find(string); it != s_cache.end())
+			return it->second;
+
+		auto font = style->font_set().getFontForStyle(style->font_style());
+		auto font_size = style->font_size();
+
+		Scalar width = 0;
+		auto glyphs = Word::getGlyphInfosForString(string, style);
+		for(auto& g : glyphs)
+		{
+			auto tmp = g.metrics.horz_advance + g.adjustments.horz_advance;
+			width += font->scaleMetricForFontSize(tmp, font_size.into<pdf::Scalar>()).into<sap::Scalar>();
+		}
+
+		s_cache[string.str()] = width;
+		return width;
+	}
+
+
+
+
+
 
 
 

@@ -7,8 +7,10 @@
 #include <bit>
 #include <numeric>
 #include <concepts>
+#include <string_view>
 
 #include "types.h"
+#include "zst.h"
 
 namespace util
 {
@@ -218,10 +220,15 @@ namespace util
 	{
 		using is_transparent = void;
 		using H = std::hash<std::string_view>;
+		using WH = std::hash<std::u32string_view>;
 
 		size_t operator()(const char* str) const { return H {}(str); }
 		size_t operator()(std::string_view str) const { return H {}(str); }
 		size_t operator()(const std::string& str) const { return H {}(str); }
+
+		size_t operator()(zst::wstr_view str) const { return WH {}(str.sv()); }
+		size_t operator()(std::u32string_view str) const { return WH {}(str); }
+		size_t operator()(const std::u32string& str) const { return WH {}(str); }
 
 		size_t operator()(const has_hash_method auto& a) const { return a.hash(); }
 	};
@@ -246,6 +253,8 @@ namespace util
 			void extract([[maybe_unused]] zst::Result<void, E>& result) { }
 		};
 	}
+
+
 }
 
 
