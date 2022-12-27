@@ -113,13 +113,12 @@ namespace sap::layout
 			{
 				last_word += last_sep->endOfLine().sv();
 				auto ret = line_width_excluding_last_word + calculateWordSize(last_word, last_word_style).x();
-				last_word.substr(0, last_word.size() - last_sep->endOfLine().size());
+				last_word.erase(last_word.size() - last_sep->endOfLine().size());
 				return ret;
 			}
 			else
 			{
-				auto ret = line_width_excluding_last_word + calculateWordSize(last_word, last_word_style).x();
-				return ret;
+				return line_width_excluding_last_word + calculateWordSize(last_word, last_word_style).x();
 			}
 		}
 
@@ -312,11 +311,11 @@ namespace sap::layout
 		        .line = Line(layout, parent_style, cursor),
 		    },
 		    LineBreakNode::make_end(words.end()));
+
 		std::vector<Line> ret;
 		for(const LineBreakNode& node : path)
-		{
 			ret.push_back(node.line);
-		}
+
 		return ret;
 	}
 
@@ -359,37 +358,40 @@ namespace sap::layout
 
 			if(it + 1 == lines.end())
 				desired_space_width = total_space_width;
+
 			double space_width_factor = desired_space_width / total_space_width;
 
-			const Style* prev_word_style;
+			const Style* prev_word_style = nullptr;
 
 			for(size_t i = 0; i < line.words().size(); ++i)
 			{
 				auto word_width = line.wordWidths()[i];
 				auto& wordorsep = line.words()[i];
 				auto word_visitor = [&](const Word& word) {
-					Cursor new_cursor = layout->moveRightFrom(cursor, word_width);
+					auto new_cursor = layout->moveRightFrom(cursor, word_width);
 					para->m_words.push_back(PositionedWord {
-					    word,
-					    word.style()->font(),
-					    word.style()->font_size().into<pdf::Scalar>(),
-					    cursor,
-					    new_cursor,
+					    .word = word,
+					    .font = word.style()->font(),
+					    .font_size = word.style()->font_size().into<pdf::Scalar>(),
+					    .start = cursor,
+					    .end = new_cursor,
 					});
+
 					cursor = new_cursor;
 					prev_word_style = word.style();
 				};
 
 				auto sep_visitor = [&](const Separator& sep) {
-					Cursor end_of_space_cursor = layout->moveRightFrom(cursor, word_width);
+					auto end_of_space_cursor = layout->moveRightFrom(cursor, word_width);
 					para->m_words.push_back(PositionedWord {
-					    Word(U" ", prev_word_style),
-					    prev_word_style->font(),
-					    prev_word_style->font_size().into<pdf::Scalar>(),
-					    cursor,
-					    end_of_space_cursor,
+					    .word = Word(U" ", prev_word_style),
+					    .font = prev_word_style->font(),
+					    .font_size = prev_word_style->font_size().into<pdf::Scalar>(),
+					    .start = cursor,
+					    .end = end_of_space_cursor,
 					});
-					Cursor new_cursor = layout->moveRightFrom(cursor, word_width * space_width_factor);
+
+					auto new_cursor = layout->moveRightFrom(cursor, word_width * space_width_factor);
 					cursor = new_cursor;
 				};
 
@@ -405,9 +407,7 @@ namespace sap::layout
 	void Paragraph::render(const RectPageLayout* layout, std::vector<pdf::Page*>& pages) const
 	{
 		if(m_words.empty())
-		{
 			return;
-		}
 
 		Cursor current_curs = m_words.front().start;
 		pdf::Text* cur_text = util::make<pdf::Text>();
@@ -417,13 +417,7 @@ namespace sap::layout
 		for(size_t i = 0; i < m_words.size(); i++)
 		{
 			cur_text->setFont(m_words[i].font, m_words[i].font_size);
-			/*
-			    not sure if this is legit, but words basically don't actually use their own `m_position` when
-			    rendering; we just pass the words to the PDF, and the viewer uses the font metrics to adjust.
 
-			    we do use the computed position when advancing to the next line, to account for line spacing
-			    differences if there's more than one font-size on a line.
-			*/
 			auto space = m_words[i].start.pos_on_page.x() - current_curs.pos_on_page.x();
 
 			if(current_curs.page_num != m_words[i].start.page_num)
