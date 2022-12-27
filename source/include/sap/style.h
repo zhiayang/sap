@@ -14,19 +14,15 @@ namespace sap
 {
 	struct Style
 	{
-		inline Style() : m_parent(nullptr) { }
-		explicit inline Style(const Style* parent) : m_parent(parent) { }
+		inline Style() { }
 
 #define DEFINE_ACCESSOR(field_type, field_name, method_name)                   \
 	inline field_type method_name(const Style* default_parent = nullptr) const \
 	{                                                                          \
 		if(default_parent == this)                                             \
 			default_parent = nullptr;                                          \
-		auto par = (m_parent == this) ? nullptr : m_parent;                    \
 		if(field_name.has_value())                                             \
 			return *field_name;                                                \
-		else if(m_parent)                                                      \
-			return par->method_name(default_parent);                           \
 		else if(default_parent)                                                \
 			return default_parent->method_name();                              \
 		sap::internal_error("Accessed unset style field");                     \
@@ -56,11 +52,6 @@ namespace sap
 
 #undef DEFINE_SETTER
 
-
-		const Style* parent() const { return m_parent; }
-
-		Style* clone() const { return util::make<Style>(m_parent); }
-
 		/*
 		    basically, make a style that uses the fields from "main" if it exists (or any of its parents)
 		    or from the backup style (or any of its parents). if both input styles are null, then the
@@ -70,6 +61,10 @@ namespace sap
 
 		constexpr bool operator==(const Style& other) const = default;
 
+		static const pdf::Font* getFont(const Style* style) { return style->font_set().getFontForStyle(style->font_style()); }
+
+		static const Style* empty() { return &s_empty_style; }
+
 	private:
 		std::optional<FontSet> m_font_set;
 		std::optional<FontStyle> m_font_style;
@@ -78,13 +73,13 @@ namespace sap
 		std::optional<Scalar> m_pre_para_spacing;
 		std::optional<Scalar> m_post_para_spacing;
 
-		const Style* m_parent = nullptr;
+		static Style s_empty_style;
 	};
 
 
 	struct Stylable
 	{
-		explicit inline Stylable(const Style* style = nullptr) : m_style(style) { }
+		explicit inline Stylable(const Style* style = Style::empty()) : m_style(style) { }
 
 		const Style* style() const { return m_style; }
 		void setStyle(const Style* s) { m_style = s; }
@@ -92,4 +87,6 @@ namespace sap
 	protected:
 		const Style* m_style;
 	};
+
+
 }

@@ -9,14 +9,16 @@ namespace sap
 	using CombinedStylesHasher = decltype([](auto p) {
 		return (std::uintptr_t) p.first ^ ((std::uintptr_t) p.second << 32) ^ ((std::uintptr_t) p.second >> 32);
 	});
+	Style Style::s_empty_style;
+
 	static std::unordered_map<std::pair<const Style*, const Style*>, const Style*, CombinedStylesHasher> g_combined_styles;
 
 	const Style* Style::combine(const Style* main, const Style* backup)
 	{
-		if(main == nullptr)
-			return backup;
-		if(backup == nullptr)
-			return main;
+		if(main == nullptr || backup == nullptr)
+		{
+			sap::internal_error("kill die me");
+		}
 
 		if(auto it = g_combined_styles.find({ main, backup }); it != g_combined_styles.end())
 			return it->second;

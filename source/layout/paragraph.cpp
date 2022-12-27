@@ -92,7 +92,7 @@ namespace sap::layout
 		std::optional<Separator> last_sep {};
 		std::u32string last_word {};
 		size_t num_spaces = 0;
-		const Style* style = nullptr;
+		const Style* style = Style::empty();
 		WordVec m_words;
 		std::vector<Scalar> m_word_widths;
 		Scalar m_total_word_width;
