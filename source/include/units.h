@@ -416,24 +416,6 @@ namespace dim
 	{
 		return Vector2<_S, _C, _T>(value._x / scale, value._y / scale);
 	}
-
-	template <typename _S, typename _T>
-	constexpr inline Scalar<_S, _T> min(Scalar<_S, _T> a, Scalar<_S, _T> b)
-	{
-		if(a._x < b._x)
-			return a;
-		else
-			return b;
-	}
-
-	template <typename _S, typename _T>
-	constexpr inline Scalar<_S, _T> max(Scalar<_S, _T> a, Scalar<_S, _T> b)
-	{
-		if(a._x > b._x)
-			return a;
-		else
-			return b;
-	}
 }
 
 
