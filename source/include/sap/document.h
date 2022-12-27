@@ -9,13 +9,14 @@
 
 #include "pdf/font.h"     // for Font
 #include "pdf/page.h"     // for Page
+#include "pdf/units.h"    // for Scalar
 #include "pdf/object.h"   // for Writer
 #include "pdf/document.h" // for Document
 
 #include "sap/style.h" // for Stylable, Style
 #include "sap/units.h" // for Scalar, Vector2
 
-#include "font/font.h"     // for FontFile, GlyphMetrics
+#include "font/font.h"     // for FontFile
 #include "font/features.h" // for GlyphAdjustment
 
 namespace pdf

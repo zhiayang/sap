@@ -2,14 +2,18 @@
 // Copyright (c) 2021, zhiayang
 // SPDX-License-Identifier: Apache-2.0
 
+#include "util.h"  // for hashmap
 #include "types.h" // for GlyphId, GlyphId::notdef
 
 #include "pdf/font.h"              // for Font, Font::ENCODING_CID, Font::E...
 #include "pdf/misc.h"              // for error
+#include "pdf/units.h"             // for Scalar, pdf_typographic_unit_y_down
 #include "pdf/win_ansi_encoding.h" // for WIN_ANSI
 
-#include "font/font.h"     // for CharacterMapping, GlyphMetrics
-#include "font/features.h" // for SubstitutedGlyphString, GlyphAdju...
+#include "font/tag.h"      // for Tag
+#include "font/font.h"     // for GlyphInfo, CharacterMapping, Glyp...
+#include "font/scalar.h"   // for font_design_space, FontScalar
+#include "font/features.h" // for GlyphAdjustment, FeatureSet, Subs...
 
 namespace pdf
 {

@@ -4,13 +4,13 @@
 
 #pragma once
 
-#include "util.h"
-#include "units.h"
+#include "util.h"  // for hashmap
 #include "types.h" // for GlyphId
+#include "units.h" // for Scalar, operator+, Vector2<>::scalar_type
 
 #include "font/tag.h"      // for Tag
-#include "font/scalar.h"   // for FontScalar
-#include "font/features.h" // for Feature, LookupTable, GlyphAdjustment
+#include "font/scalar.h"   // for FontScalar, FontVector2d, font_design_space
+#include "font/features.h" // for GlyphAdjustment, Feature, LookupTable
 
 namespace pdf
 {

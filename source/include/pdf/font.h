@@ -4,6 +4,7 @@
 
 #pragma once
 
+#include "util.h"  // for hashmap
 #include "types.h" // for GlyphId
 
 #include "pdf/units.h" // for TextSpace1d, Scalar, GlyphSpace1d, pdf_ty...

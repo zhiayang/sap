@@ -2,8 +2,9 @@
 // Copyright (c) 2022, zhiayang
 // SPDX-License-Identifier: Apache-2.0
 
-#include "interp/ast.h"
+#include "location.h" // for error
 
+#include "interp/ast.h"     // for Expr, Definition, makeParamList, Stmt
 #include "interp/type.h"    // for Type
 #include "interp/value.h"   // for Value
 #include "interp/interp.h"  // for StackFrame, Interpreter, DefnTree
