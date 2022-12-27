@@ -5,7 +5,7 @@
 #pragma once
 
 #include "ast.h"   // for Definition, Declaration, Expr, QualifiedId
-#include "util.h"  // for hashmap
+#include "util.h"  // for Defer, hashmap
 #include "value.h" // for Value
 
 #include "interp/type.h"     // for Type
