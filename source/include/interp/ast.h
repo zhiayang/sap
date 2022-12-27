@@ -151,6 +151,16 @@ namespace sap::interp
 		std::vector<std::pair<Op, std::unique_ptr<Expr>>> rest;
 	};
 
+	struct Block : Stmt
+	{
+		Block() { }
+
+		virtual ErrorOr<std::optional<Value>> evaluate(Interpreter* cs) const override;
+		virtual ErrorOr<const Type*> typecheck_impl(Interpreter* cs, const Type* infer = nullptr) const override;
+
+		std::vector<std::unique_ptr<Stmt>> body;
+	};
+
 
 	struct Definition;
 
@@ -232,6 +242,23 @@ namespace sap::interp
 		return ret;
 	}
 
+	struct FunctionDefn : Definition
+	{
+		FunctionDefn(const std::string& name, std::vector<FunctionDecl::Param> params, const Type* return_type)
+		    : Definition(new FunctionDecl(name, std::move(params), return_type))
+		{
+		}
+
+		virtual ErrorOr<std::optional<Value>> evaluate(Interpreter* cs) const override;
+		virtual ErrorOr<const Type*> typecheck_impl(Interpreter* cs, const Type* infer = nullptr) const override;
+
+		// TODO: do this
+		ErrorOr<std::optional<Value>> call(Interpreter* cs, std::vector<Value>& args) const;
+
+		std::vector<std::unique_ptr<Stmt>> body;
+
+		mutable std::vector<std::unique_ptr<VariableDefn>> param_defns;
+	};
 
 
 	struct BuiltinFunctionDefn : Definition

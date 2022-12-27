@@ -261,7 +261,25 @@ namespace util
 		};
 	}
 
+	template <typename Callback>
+	struct Defer
+	{
+		Defer(Callback cb) : m_cb(std::move(cb)), m_cancel(false) { }
+		~Defer()
+		{
+			if(not m_cancel)
+				m_cb();
+		}
 
+		void cancel() { m_cancel = true; }
+
+		Defer(const Defer&) = delete;
+		Defer& operator=(const Defer&) = delete;
+
+	private:
+		Callback m_cb;
+		bool m_cancel;
+	};
 }
 
 

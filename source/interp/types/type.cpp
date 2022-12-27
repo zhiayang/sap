@@ -13,21 +13,47 @@ namespace sap::interp
 	std::string Type::str() const
 	{
 		if(this->isAny())
+		{
 			return "any";
+		}
 		else if(this->isVoid())
+		{
 			return "void";
+		}
 		else if(this->isInteger())
+		{
 			return "int";
+		}
 		else if(this->isFloating())
+		{
 			return "float";
+		}
 		else if(this->isBool())
+		{
 			return "bool";
+		}
 		else if(this->isChar())
+		{
 			return "char";
+		}
 		else if(this->isTreeInlineObj())
+		{
 			return "InlineObj";
+		}
+		else if(this->isFunction())
+		{
+			std::string ret {};
+
+			auto& params = this->toFunction()->parameterTypes();
+			for(size_t i = 0; i < params.size(); i++)
+				ret += zpr::sprint("{}{}", i == 0 ? "" : ", ", params[i]);
+
+			return zpr::sprint("({}) -> {}", ret, this->toFunction()->returnType());
+		}
 		else
-			return "??";
+		{
+			return "?????";
+		}
 	}
 
 	bool Type::sameAs(const Type* other) const

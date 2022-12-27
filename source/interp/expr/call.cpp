@@ -241,12 +241,16 @@ namespace sap::interp
 				}
 			}
 
-			auto func_defn = m_resolved_func_decl->resolved_defn;
+			auto the_defn = m_resolved_func_decl->resolved_defn;
 
 			// check what kind of defn it is
-			if(auto builtin = dynamic_cast<const BuiltinFunctionDefn*>(func_defn); builtin != nullptr)
+			if(auto builtin_defn = dynamic_cast<const BuiltinFunctionDefn*>(the_defn); builtin_defn != nullptr)
 			{
-				return builtin->function(cs, args);
+				return builtin_defn->function(cs, args);
+			}
+			else if(auto func_defn = dynamic_cast<const FunctionDefn*>(the_defn); func_defn != nullptr)
+			{
+				return ErrFmt("not implemented");
 			}
 			else
 			{

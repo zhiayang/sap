@@ -41,6 +41,7 @@ namespace sap::frontend
 		RAngle,
 		Colon,
 		Comma,
+		Ampersand,
 
 		Semicolon,
 		Plus,
@@ -49,11 +50,14 @@ namespace sap::frontend
 		Slash,
 		Equal,
 
+		RArrow,
 		ColonColon,
 		LAngleEqual,
 		RAngleEqual,
 		EqualEqual,
 		ExclamationEqual,
+
+		Ellipsis,
 	};
 
 	struct Token

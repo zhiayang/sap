@@ -21,6 +21,8 @@ namespace sap::interp
 		ErrorOr<DefnTree*> lookupNamespace(std::string_view name) const;
 		DefnTree* lookupOrDeclareNamespace(std::string_view name);
 
+		DefnTree* declareAnonymousNamespace();
+
 		ErrorOr<std::vector<const Declaration*>> lookup(QualifiedId id) const;
 
 		ErrorOr<void> declare(const Declaration* decl);
@@ -28,6 +30,8 @@ namespace sap::interp
 
 	private:
 		explicit DefnTree(std::string name, DefnTree* parent) : m_name(std::move(name)), m_parent(parent) { }
+
+		size_t m_anon_namespace_count = 0;
 
 		std::string m_name;
 		util::hashmap<std::string, std::unique_ptr<DefnTree>> m_children;
@@ -73,14 +77,43 @@ namespace sap::interp
 		DefnTree* current() { return m_current; }
 		const DefnTree* current() const { return m_current; }
 
+		[[nodiscard]] auto pushTree(DefnTree* tree)
+		{
+			m_current = tree;
+			return util::Defer([this]() {
+				this->popTree();
+			});
+		}
+
+		void popTree()
+		{
+			assert(m_current->parent() != nullptr);
+			m_current = m_current->parent();
+		}
+
+
 		ErrorOr<void> run(const Stmt* stmt);
 		ErrorOr<std::optional<Value>> evaluate(const Expr* expr);
 
 		Definition* addBuiltinDefinition(std::unique_ptr<Definition> defn);
 
-		StackFrame& frame();
-		StackFrame& pushFrame();
-		void popFrame();
+		// TODO: make this safer
+		StackFrame& frame() { return *m_stack_frames.back(); }
+		[[nodiscard]] auto pushFrame()
+		{
+			auto cur = m_stack_frames.back().get();
+			m_stack_frames.push_back(std::unique_ptr<StackFrame>(new StackFrame(cur)));
+			return util::Defer([this]() {
+				this->popFrame();
+			});
+		}
+
+		void popFrame()
+		{
+			assert(not m_stack_frames.empty());
+			m_stack_frames.pop_back();
+		}
+
 
 		bool canImplicitlyConvert(const Type* from, const Type* to) const;
 

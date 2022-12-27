@@ -40,6 +40,9 @@ namespace sap::interp
 		const Type* the_type = TRY([&]() -> ErrorOr<const Type*> {
 			if(this->explicit_type.has_value())
 			{
+				if((*this->explicit_type)->isVoid())
+					return ErrFmt("cannot declare variable of type 'void'");
+
 				if(this->initialiser != nullptr)
 				{
 					auto initialiser_type = TRY(this->initialiser->typecheck(cs, /* infer: */ *this->explicit_type));

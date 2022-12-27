@@ -281,6 +281,14 @@ namespace sap::frontend
 		{
 			return advance_and_return(stream, loc, Token { .loc = loc, .type = TT::ExclamationEqual, .text = stream.take(2) }, 2);
 		}
+		else if(stream.starts_with("->"))
+		{
+			return advance_and_return(stream, loc, Token { .loc = loc, .type = TT::RArrow, .text = stream.take(2) }, 2);
+		}
+		else if(stream.starts_with("..."))
+		{
+			return advance_and_return(stream, loc, Token { .loc = loc, .type = TT::Ellipsis, .text = stream.take(3) }, 3);
+		}
 		else if(stream[0] == '"')
 		{
 			size_t n = 1;
@@ -377,6 +385,7 @@ namespace sap::frontend
 				case ';': tt = TT::Semicolon; break;
 				case '<': tt = TT::LAngle; break;
 				case '>': tt = TT::RAngle; break;
+				case '&': tt = TT::Ampersand; break;
 
 				default: sap::error(loc, "unknown token '{}'", stream[0]); break;
 			}

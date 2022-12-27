@@ -14,6 +14,19 @@
 
 namespace sap::frontend
 {
+	constexpr auto KW_LET = "let";
+	constexpr auto KW_VAR = "var";
+	constexpr auto KW_FUNC = "fn";
+	constexpr auto KW_SCRIPT_BLOCK = "script";
+
+	constexpr auto TYPE_ANY = "any";
+	constexpr auto TYPE_INT = "int";
+	constexpr auto TYPE_BOOL = "bool";
+	constexpr auto TYPE_CHAR = "char";
+	constexpr auto TYPE_VOID = "void";
+	constexpr auto TYPE_FLOAT = "float";
+
+
 	using TT = TokenType;
 	using namespace sap::tree;
 
@@ -130,11 +143,7 @@ namespace sap::frontend
 	}
 
 
-
-	constexpr auto KW_LET = "let";
-	constexpr auto KW_VAR = "var";
-	constexpr auto KW_SCRIPT_BLOCK = "script";
-
+	static std::unique_ptr<interp::Stmt> parse_stmt(Lexer& lexer);
 	static std::unique_ptr<interp::Expr> parse_expr(Lexer& lexer);
 	static std::unique_ptr<interp::Expr> parse_unary(Lexer& lexer);
 
@@ -415,7 +424,53 @@ namespace sap::frontend
 
 	static const interp::Type* parse_type(Lexer& lexer)
 	{
-		return nullptr;
+		if(lexer.eof())
+			error(lexer.location(), "unexpected end of file");
+
+		using namespace interp;
+
+		auto fst = lexer.next();
+		if(fst.text == TYPE_INT)
+			return Type::makeInteger();
+		else if(fst.text == TYPE_ANY)
+			return Type::makeAny();
+		else if(fst.text == TYPE_BOOL)
+			return Type::makeBool();
+		else if(fst.text == TYPE_CHAR)
+			return Type::makeChar();
+		else if(fst.text == TYPE_VOID)
+			return Type::makeVoid();
+		else if(fst.text == TYPE_FLOAT)
+			return Type::makeFloating();
+
+		if(fst == TT::Ampersand)
+		{
+			error(lexer.location(), "TODO: pointer type");
+		}
+		else if(fst == TT::LSquare)
+		{
+			auto elm = parse_type(lexer);
+			return Type::makeArray(elm, /* is_variadic: */ lexer.match(TT::Ellipsis).has_value());
+		}
+		else if(fst == TT::LParen)
+		{
+			std::vector<const Type*> types {};
+			while(not lexer.expect(TT::RParen))
+			{
+				types.push_back(parse_type(lexer));
+				if(not lexer.match(TT::Comma) && lexer.peek() != TT::RParen)
+					error(lexer.location(), "expected ',' or ')' in type specifier");
+			}
+
+			// TODO: support tuples
+			if(not lexer.expect(TT::RArrow))
+				error(lexer.location(), "TODO: tuples not implemented");
+
+			auto return_type = parse_type(lexer);
+			return Type::makeFunction(std::move(types), return_type);
+		}
+
+		error(lexer.location(), "invalid start of type specifier '{}'", lexer.peek().text);
 	}
 
 	static std::unique_ptr<interp::VariableDefn> parse_var_defn(Lexer& lexer)
@@ -442,30 +497,109 @@ namespace sap::frontend
 		    std::move(initialiser), std::move(explicit_type));
 	}
 
+	static interp::FunctionDecl::Param parse_param(Lexer& lexer)
+	{
+		auto name = lexer.match(TT::Identifier);
+		if(not name.has_value())
+			error(lexer.location(), "expected parameter name");
+
+		if(not lexer.expect(TT::Colon))
+			error(lexer.location(), "expected ':' after parameter name");
+
+		auto type = parse_type(lexer);
+		std::unique_ptr<interp::Expr> default_value = nullptr;
+
+		if(lexer.expect(TT::Equal))
+			default_value = parse_expr(lexer);
+
+		return interp::FunctionDecl::Param {
+			.name = name->text.str(),
+			.type = type,
+			.default_value = std::move(default_value),
+		};
+	}
+
+	static std::unique_ptr<interp::FunctionDefn> parse_function_defn(Lexer& lexer)
+	{
+		using namespace interp;
+
+		auto x = lexer.match(TT::Identifier);
+		assert(x.has_value() && x->text == KW_FUNC);
+
+		std::string name;
+		if(auto name_tok = lexer.match(TT::Identifier); not name_tok.has_value())
+			error(lexer.location(), "expected identifier after '{}'", KW_FUNC);
+		else
+			name = name_tok->text.str();
+
+		if(not lexer.expect(TT::LParen))
+			error(lexer.location(), "expected '(' in function definition");
+
+		std::vector<FunctionDecl::Param> params {};
+		while(not lexer.expect(TT::RParen))
+		{
+			params.push_back(parse_param(lexer));
+			if(not lexer.match(TT::Comma) && lexer.peek() != TT::RParen)
+				error(lexer.location(), "expected ',' or ')' in function parameter list");
+		}
+
+		auto return_type = Type::makeVoid();
+		if(lexer.expect(TT::RArrow))
+			return_type = parse_type(lexer);
+
+		auto defn = std::make_unique<interp::FunctionDefn>(name, std::move(params), return_type);
+
+		if(not lexer.expect(TT::LBrace))
+			error(lexer.location(), "expected '{' to begin function body");
+
+		while(not lexer.expect(TT::RBrace))
+			defn->body.push_back(parse_stmt(lexer));
+
+		return defn;
+	}
+
 
 	static std::unique_ptr<interp::Stmt> parse_stmt(Lexer& lexer)
 	{
 		auto lm = LexerModer(lexer, Lexer::Mode::Script);
 
+		if(lexer.eof())
+			error(lexer.location(), "unexpected end of file");
+
+		// just consume empty statements
+		while(lexer.expect(TT::Semicolon))
+			;
+
 		auto tok = lexer.peek();
 		std::unique_ptr<interp::Stmt> stmt {};
 
-		switch(tok.type)
-		{
-			case TT::Identifier:
-				if(tok.text == KW_LET || tok.text == KW_VAR)
-					stmt = parse_var_defn(lexer);
-				else
-					stmt = parse_expr(lexer);
-				break;
+		bool optional_semicolon = false;
 
-			default: stmt = parse_expr(lexer); break;
+		if(tok.type == TT::Identifier)
+		{
+			if(tok.text == KW_LET || tok.text == KW_VAR)
+			{
+				stmt = parse_var_defn(lexer);
+			}
+			else if(tok.text == KW_FUNC)
+			{
+				stmt = parse_function_defn(lexer);
+				optional_semicolon = true;
+			}
+			else
+			{
+				stmt = parse_expr(lexer);
+			}
+		}
+		else
+		{
+			stmt = parse_expr(lexer);
 		}
 
 		if(not stmt)
 			error(tok.loc, "invalid start of statement");
 
-		else if(not lexer.expect(TT::Semicolon))
+		else if(not lexer.expect(TT::Semicolon) && not optional_semicolon)
 			error(lexer.peek().loc, "expected ';' after statement, found '{}'", lexer.peek().text);
 
 		return stmt;

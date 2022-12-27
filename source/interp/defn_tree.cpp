@@ -24,6 +24,11 @@ namespace sap::interp
 		return m_children.insert_or_assign(std::string(name), std::move(ret)).first->second.get();
 	}
 
+	DefnTree* DefnTree::declareAnonymousNamespace()
+	{
+		return this->lookupOrDeclareNamespace(zpr::sprint("__$anon{}", m_anon_namespace_count++));
+	}
+
 	ErrorOr<std::vector<const Declaration*>> DefnTree::lookup(QualifiedId id) const
 	{
 		auto current = this;
@@ -62,6 +67,24 @@ namespace sap::interp
 		return ErrFmt("no declaration named '{}' in '{}'", id.name, current->name());
 	}
 
+	static bool function_decls_conflict(const FunctionDecl* a, const FunctionDecl* b)
+	{
+		if(a->name != b->name || a->params().size() != b->params().size())
+			return false;
+
+		for(size_t i = 0; i < a->params().size(); i++)
+		{
+			auto& ap = a->params()[i];
+			auto& bp = b->params()[i];
+
+			if(ap.type != bp.type)
+				return false;
+		}
+
+		return true;
+	}
+
+
 	ErrorOr<void> DefnTree::declare(const Declaration* new_decl)
 	{
 		auto& name = new_decl->name;
@@ -70,9 +93,25 @@ namespace sap::interp
 			auto& existing_decls = foo->second;
 			for(auto& decl : existing_decls)
 			{
-				// no error for re-*declaration*, just return ok (and throw away the duplicate decl)
 				if(decl == new_decl)
+				{
+					// no error for re-*declaration*, just return ok (and throw away the duplicate decl)
 					return Ok();
+				}
+				else if(auto af = dynamic_cast<const FunctionDecl*>(decl), bf = dynamic_cast<const FunctionDecl*>(new_decl);
+				        (not af || not bf))
+				{
+					// otherwise, if at least one of them is not a function, they conflict
+					return ErrFmt("redeclaration of '{}' as a different symbol", name);
+				}
+				else if(function_decls_conflict(af, bf))
+				{
+					// otherwise, they are both functions, but we must make sure they are not redefinitions
+					// TODO: print the previous one
+					return ErrFmt("conflicting declarations of '{}'", name);
+				}
+
+				// otherwise, we're ok
 			}
 		}
 
@@ -82,26 +121,8 @@ namespace sap::interp
 
 	ErrorOr<void> DefnTree::define(Definition* defn)
 	{
-		auto& name = defn->declaration->name;
-		if(auto foo = m_decls.find(name); foo != m_decls.end())
-		{
-			auto& existing_decls = foo->second;
-			for(auto& decl : existing_decls)
-			{
-				// definitions *can* conflict, if they have the same type.
-				if(decl->get_type() == defn->declaration->get_type())
-					return ErrFmt("conflicting definition of '{}'", name);
-			}
-		}
-
-		// steal the ownership of declaration from the definition.
-		// the pointer itself is still the same, though; we don't need to re-point it.
-		auto decl = defn->declaration.get();
-
-		// somebody must own the definition (not the declaration), so we just own it.
+		TRY(this->declare(defn->declaration.get()));
 		m_definitions.push_back(defn);
-		m_decls[name].push_back(std::move(decl));
-
 		return Ok();
 	}
 }

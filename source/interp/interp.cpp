@@ -51,24 +51,6 @@ namespace sap::interp
 		return false;
 	}
 
-	StackFrame& Interpreter::frame()
-	{
-		return *m_stack_frames.back();
-	}
-
-	StackFrame& Interpreter::pushFrame()
-	{
-		auto cur = m_stack_frames.back().get();
-		m_stack_frames.push_back(std::unique_ptr<StackFrame>(new StackFrame(cur)));
-
-		return *m_stack_frames.back();
-	}
-
-	void Interpreter::popFrame()
-	{
-		assert(not m_stack_frames.empty());
-		m_stack_frames.pop_back();
-	}
 
 	Definition* Interpreter::addBuiltinDefinition(std::unique_ptr<Definition> defn)
 	{
