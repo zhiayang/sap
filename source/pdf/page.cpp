@@ -30,12 +30,12 @@ namespace pdf
 
 	Vector2_YUp Page::convertVector2(Vector2_YDown v2) const
 	{
-		return Vector2_YUp(v2.x().value(), (m_page_size.y().value() - v2.y().into<dim::units::pdf_typographic_unit>().value()));
+		return Vector2_YUp(v2.x(), m_page_size.y() - v2.y());
 	}
 
 	Vector2_YDown Page::convertVector2(Vector2_YUp v2) const
 	{
-		return Vector2_YDown(v2.x().value(), (m_page_size.y() - v2.y()).value());
+		return Vector2_YDown(v2.x(), m_page_size.y() - v2.y());
 	}
 
 
