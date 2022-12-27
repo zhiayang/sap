@@ -20,86 +20,13 @@
 
 namespace sap::layout
 {
-	std::vector<Word::GlyphInfo> Word::getGlyphInfosForString(zst::wstr_view text, const Style* style)
-	{
-		auto font = style->font_set().getFontForStyle(style->font_style());
-
-		// first, convert all codepoints to glyphs
-		std::vector<GlyphId> glyphs {};
-		for(char32_t cp : text)
-			glyphs.push_back(font->getGlyphIdFromCodepoint(cp));
-
-		using font::Tag;
-		font::off::FeatureSet features {};
-
-		// REMOVE: this is just for testing!
-		features.script = Tag("cyrl");
-		features.language = Tag("BGR ");
-		features.enabled_features = { Tag("kern"), Tag("liga"), Tag("locl") };
-
-		auto span = [](auto& foo) {
-			return zst::span<GlyphId>(foo.data(), foo.size());
-		};
-
-		// next, use GSUB to perform substitutions.
-		glyphs = font->performSubstitutionsForGlyphSequence(span(glyphs), features);
-
-		// next, get base metrics for each glyph.
-		std::vector<Word::GlyphInfo> glyph_infos {};
-		for(auto g : glyphs)
-		{
-			Word::GlyphInfo info {};
-			info.gid = g;
-			info.metrics = font->getMetricsForGlyph(g);
-			glyph_infos.push_back(std::move(info));
-		}
-
-		// finally, use GPOS
-		auto adjustment_map = font->getPositioningAdjustmentsForGlyphSequence(span(glyphs), features);
-		for(auto& [i, adj] : adjustment_map)
-		{
-			auto& info = glyph_infos[i];
-			info.adjustments.horz_advance += adj.horz_advance;
-			info.adjustments.vert_advance += adj.vert_advance;
-			info.adjustments.horz_placement += adj.horz_placement;
-			info.adjustments.vert_placement += adj.vert_placement;
-		}
-
-		return glyph_infos;
-	}
-
 	Word::Word(zst::wstr_view text, const Style* style) : m_text(text)
 	{
 		this->setStyle(style);
 
-		auto font = style->font_set().getFontForStyle(style->font_style());
-		auto font_size = style->font_size();
-
-		m_glyphs = getGlyphInfosForString(m_text, style);
-
-		// size is in sap units, which is in mm; metrics are in typographic units, so 72dpi;
-		// calculate the scale accordingly.
-		const auto font_metrics = font->getFontMetrics();
-		auto font_size_tpu = font_size.into<pdf::Scalar>();
-
-		m_size = { 0, 0 };
-		m_size.y() = font->scaleMetricForFontSize(font_metrics.default_line_spacing, font_size_tpu).into<sap::Scalar>();
-
-		for(auto& glyph : m_glyphs)
-		{
-			auto width = glyph.metrics.horz_advance + glyph.adjustments.horz_advance;
-			m_size.x() += font->scaleMetricForFontSize(width, font_size_tpu).into<sap::Scalar>();
-		}
-
-		// this space width is to the next word
-		auto space_gid = font->getGlyphIdFromCodepoint(U' ');
-		auto space_adv = font->getMetricsForGlyph(space_gid).horz_advance;
-		auto space_width = font->scaleMetricForFontSize(space_adv, font_size_tpu);
-
-		m_space_width = space_width.into<sap::Scalar>();
-
 		assert(m_style != nullptr);
 	}
+
 
 	void Word::render(pdf::Text* text, Scalar space) const
 	{
@@ -113,26 +40,7 @@ namespace sap::layout
 			else
 				text->addEncoded(1, static_cast<uint32_t>(gid));
 		};
-
-		if(space.nonzero())
-		{
-			// TODO: render spaces in space::render
-			auto space_gid = font->getGlyphIdFromCodepoint(U' ');
-			add_gid(space_gid);
-
-			auto emitted_space_adv = font->getMetricsForGlyph(space_gid).horz_advance;
-			auto font_size_tpu = font_size.into<pdf::Scalar>();
-			auto emitted_space_size = font->scaleMetricForFontSize(emitted_space_adv, font_size_tpu);
-			auto desired_space_size = space.into<pdf::Scalar>();
-
-			if(emitted_space_size != desired_space_size)
-			{
-				auto extra = -emitted_space_size + desired_space_size;
-				text->offset(font->convertPDFScalarToTextSpaceForFontSize(extra, font_size_tpu));
-			}
-		}
-
-		for(auto& glyph : m_glyphs)
+		for(auto& glyph : font->getGlyphInfosForString(m_text))
 		{
 			add_gid(glyph.gid);
 

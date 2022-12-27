@@ -56,6 +56,7 @@ namespace sap::tree
 	{
 		std::vector<std::shared_ptr<InlineObject>> ret {};
 
+		bool first_obj = true;
 		bool seen_whitespace = false;
 		for(auto& uwu : m_contents)
 		{
@@ -79,6 +80,10 @@ namespace sap::tree
 							current_text = std::make_shared<Text>(U"");
 							current_text->setStyle(tree_text->style());
 						}
+						else if(not first_obj)
+						{
+							ret.push_back(std::make_shared<Separator>(Separator::SPACE));
+						}
 
 						seen_whitespace = true;
 					}
@@ -96,6 +101,7 @@ namespace sap::tree
 
 			if(not current_text->contents().empty())
 				ret.push_back(std::move(current_text));
+			first_obj = false;
 		}
 
 		m_contents.swap(ret);

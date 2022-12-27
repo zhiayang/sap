@@ -4,6 +4,7 @@
 
 #pragma once
 
+#include "util.h"
 #include "units.h"
 #include "types.h" // for GlyphId
 
@@ -70,6 +71,13 @@ namespace font
 		FontScalar right_side_bearing;
 	};
 
+	struct GlyphInfo
+	{
+		GlyphId gid;
+		GlyphMetrics metrics;
+		GlyphAdjustment adjustments;
+	};
+
 	struct Table
 	{
 		Tag tag;
@@ -96,6 +104,71 @@ namespace font
 
 		GlyphId getGlyphIndexForCodepoint(char32_t codepoint) const;
 		GlyphMetrics getGlyphMetrics(GlyphId glyphId) const;
+
+		std::vector<GlyphInfo> getGlyphInfosForString(zst::wstr_view text)
+		{
+			// first, convert all codepoints to glyphs
+			std::vector<GlyphId> glyphs {};
+			for(char32_t cp : text)
+				glyphs.push_back(this->getGlyphIndexForCodepoint(cp));
+
+			using font::Tag;
+			font::off::FeatureSet features {};
+
+			// REMOVE: this is just for testing!
+			features.script = Tag("cyrl");
+			features.language = Tag("BGR ");
+			features.enabled_features = { Tag("kern"), Tag("liga"), Tag("locl") };
+
+			auto span = [](auto& foo) {
+				return zst::span<GlyphId>(foo.data(), foo.size());
+			};
+
+			// next, use GSUB to perform substitutions.
+			// ignore glyph mappings because we only care about the final result
+			glyphs = font::off::performSubstitutionsForGlyphSequence(this, span(glyphs), features).glyphs;
+
+			// next, get base metrics for each glyph.
+			std::vector<GlyphInfo> glyph_infos {};
+			for(auto g : glyphs)
+			{
+				GlyphInfo info {};
+				info.gid = g;
+				info.metrics = this->getGlyphMetrics(g);
+				glyph_infos.push_back(std::move(info));
+			}
+
+			// finally, use GPOS
+			auto adjustment_map = font::off::getPositioningAdjustmentsForGlyphSequence(this, span(glyphs), features);
+			for(auto& [i, adj] : adjustment_map)
+			{
+				auto& info = glyph_infos[i];
+				info.adjustments.horz_advance += adj.horz_advance;
+				info.adjustments.vert_advance += adj.vert_advance;
+				info.adjustments.horz_placement += adj.horz_placement;
+				info.adjustments.vert_placement += adj.vert_placement;
+			}
+
+			return glyph_infos;
+		}
+
+		static inline util::hashmap<std::u32string, FontVector2d> s_word_size_cache {};
+		FontVector2d get_word_size(zst::wstr_view string)
+		{
+			if(auto it = s_word_size_cache.find(string); it != s_word_size_cache.end())
+				return it->second;
+
+			FontVector2d size;
+			size.y() = this->metrics.default_line_spacing;
+			auto glyphs = this->getGlyphInfosForString(string);
+			for(auto& g : glyphs)
+			{
+				size.x() += g.metrics.horz_advance + g.adjustments.horz_advance;
+			}
+
+			s_word_size_cache[string.str()] = size;
+			return size;
+		}
 
 		// corresponds to name IDs 16 and 17. if not present, they will have the same
 		// value as their *_compat counterparts.

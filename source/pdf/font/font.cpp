@@ -28,6 +28,21 @@ namespace pdf
 		return this->source_file->metrics;
 	}
 
+	Size2d_YDown Font::getWordSize(zst::wstr_view text, Scalar font_size) const
+	{
+		Size2d_YDown size;
+		size.y() = this->scaleMetricForFontSize(source_file->metrics.default_line_spacing, font_size)
+		               .into<dim::units::pdf_typographic_unit_y_down>();
+		auto glyphs = this->getGlyphInfosForString(text);
+		for(auto& g : glyphs)
+		{
+			auto tmp = g.metrics.horz_advance + g.adjustments.horz_advance;
+			size.x() += this->scaleMetricForFontSize(tmp, font_size.into<pdf::Scalar>())
+			                .into<dim::units::pdf_typographic_unit_y_down>();
+		}
+		return size;
+	}
+
 	void Font::markGlyphAsUsed(GlyphId glyph) const
 	{
 		m_used_glyphs.insert(glyph);
@@ -73,6 +88,59 @@ namespace pdf
 		{
 			pdf::error("unsupported encoding");
 		}
+	}
+
+	const std::vector<font::GlyphInfo>& Font::getGlyphInfosForString(zst::wstr_view text) const
+	{
+		if(auto it = m_glyph_infos_cache.find(text); it != m_glyph_infos_cache.end())
+		{
+			return it->second;
+		}
+
+		// first, convert all codepoints to glyphs
+		std::vector<GlyphId> glyphs {};
+		for(char32_t cp : text)
+			glyphs.push_back(this->getGlyphIdFromCodepoint(cp));
+
+		using font::Tag;
+		font::off::FeatureSet features {};
+
+		// REMOVE: this is just for testing!
+		features.script = Tag("cyrl");
+		features.language = Tag("BGR ");
+		features.enabled_features = { Tag("kern"), Tag("liga"), Tag("locl") };
+
+		auto span = [](auto& foo) {
+			return zst::span<GlyphId>(foo.data(), foo.size());
+		};
+
+		// next, use GSUB to perform substitutions.
+		glyphs = this->performSubstitutionsForGlyphSequence(span(glyphs), features);
+
+		// next, get base metrics for each glyph.
+		std::vector<font::GlyphInfo> glyph_infos {};
+		for(auto g : glyphs)
+		{
+			font::GlyphInfo info {};
+			info.gid = g;
+			info.metrics = this->getMetricsForGlyph(g);
+			glyph_infos.push_back(std::move(info));
+		}
+
+		// finally, use GPOS
+		auto adjustment_map = this->getPositioningAdjustmentsForGlyphSequence(span(glyphs), features);
+		for(auto& [i, adj] : adjustment_map)
+		{
+			auto& info = glyph_infos[i];
+			info.adjustments.horz_advance += adj.horz_advance;
+			info.adjustments.vert_advance += adj.vert_advance;
+			info.adjustments.horz_placement += adj.horz_placement;
+			info.adjustments.vert_placement += adj.vert_placement;
+		}
+
+		auto res = m_glyph_infos_cache.emplace(text.str(), std::move(glyph_infos));
+
+		return res.first->second;
 	}
 
 	void Font::addGlyphUnicodeMapping(GlyphId glyph, std::vector<char32_t> codepoints) const

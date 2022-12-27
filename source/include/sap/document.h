@@ -293,33 +293,22 @@ namespace sap::layout
 		*/
 		void render(pdf::Text* text, Scalar space) const;
 
-		/*
-		    returns the width of a space in the font used by this word. This information is only available
-		    after `computeMetrics()` is called. Otherwise, it returns 0.
-		*/
-		Scalar spaceWidth() const { return m_space_width; }
 		zst::wstr_view text() const { return m_text; }
-
-		Size2d size() const { return m_size; }
-
-		struct GlyphInfo
-		{
-			GlyphId gid;
-			font::GlyphMetrics metrics;
-			font::GlyphAdjustment adjustments;
-		};
-
-		static std::vector<GlyphInfo> getGlyphInfosForString(zst::wstr_view text, const Style* style);
 
 	private:
 		zst::wstr_view m_text {};
-		Size2d m_size {};
-
-		std::vector<GlyphInfo> m_glyphs {};
-		Scalar m_space_width {};
 	};
 
 
+
+	struct PositionedWord
+	{
+		Word word;
+		const pdf::Font* font;
+		pdf::Scalar font_size;
+		Cursor start;
+		Cursor end;
+	};
 
 	// for now we are not concerned with lines.
 	struct Paragraph : LayoutObject
@@ -331,7 +320,7 @@ namespace sap::layout
 		virtual void render(const RectPageLayout* layout, std::vector<pdf::Page*>& pages) const override;
 
 	private:
-		std::vector<std::pair<Word, Cursor>> m_words {};
+		std::vector<PositionedWord> m_words {};
 	};
 
 

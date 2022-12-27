@@ -62,7 +62,7 @@ endif
 
 OUTPUT_BIN      := $(OUTPUT_DIR)/sap
 
-.PHONY: all clean build test format iwyu
+.PHONY: all clean build test format iwyu %.pdf.gdb %.pdf.lldb
 .PRECIOUS: $(PRECOMP_GCH) $(OUTPUT_DIR)/%.cpp.o
 .DEFAULT_GOAL = all
 
@@ -76,6 +76,12 @@ test: $(TESTS)
 
 %.pdf: %.sap build
 	@$(OUTPUT_BIN) $<
+
+%.pdf.gdb: %.sap build
+	@gdb --args $(OUTPUT_BIN) $<
+
+%.pdf.lldb: %.sap build
+	@lldb --args $(OUTPUT_BIN) $<
 
 check: test
 	@for test in $(TESTS); do \

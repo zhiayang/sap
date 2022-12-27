@@ -6,6 +6,7 @@
 
 #include <bit> // for endian, endian::big, endian::native
 #include <numeric>
+#include <variant>
 #include <concepts>
 #include <string_view> // for hash, string_view, u32string_view
 

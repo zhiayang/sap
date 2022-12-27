@@ -24,6 +24,7 @@ namespace pdf
 		Dictionary* serialise(Document* doc) const;
 
 		GlyphId getGlyphIdFromCodepoint(char32_t codepoint) const;
+		const std::vector<font::GlyphInfo>& getGlyphInfosForString(zst::wstr_view text) const;
 
 		void markGlyphAsUsed(GlyphId glyph) const;
 
@@ -43,6 +44,8 @@ namespace pdf
 			return GlyphSpace1d((metric / this->getFontMetrics().units_per_em).value());
 		}
 
+		Size2d_YDown getWordSize(zst::wstr_view text, Scalar font_size) const;
+
 		// abstracts away the scaling by units_per_em, to go from font units to pdf units
 		// this converts the metric to a **concrete size** (in pdf units, aka 1/72 inches)
 		Scalar scaleMetricForFontSize(font::FontScalar metric, Scalar font_size) const
@@ -59,7 +62,7 @@ namespace pdf
 			return gs.into<TextSpace1d>();
 		}
 
-		TextSpace1d convertPDFScalarToTextSpaceForFontSize(Scalar scalar, Scalar font_size)
+		static TextSpace1d convertPDFScalarToTextSpaceForFontSize(Scalar scalar, Scalar font_size)
 		{
 			return GlyphSpace1d(scalar / font_size).into<TextSpace1d>();
 		}
@@ -72,7 +75,6 @@ namespace pdf
 
 		std::vector<GlyphId> performSubstitutionsForGlyphSequence(zst::span<GlyphId> glyphs,
 		    const font::off::FeatureSet& features) const;
-
 
 		int font_type = 0;
 		int encoding_kind = 0;
@@ -98,6 +100,7 @@ namespace pdf
 		mutable std::unordered_set<GlyphId> m_used_glyphs {};
 		mutable std::map<GlyphId, font::GlyphMetrics> m_glyph_metrics {};
 		mutable std::map<GlyphId, std::vector<char32_t>> m_extra_unicode_mappings {};
+		mutable util::hashmap<std::u32string, std::vector<font::GlyphInfo>> m_glyph_infos_cache;
 
 		// the name that goes into the Resource << >> dict in a page. This is a unique name
 		// that we get from the Document when the font is created.
