@@ -16,11 +16,11 @@ namespace sap::tree
 	{
 		for(auto& obj : m_contents)
 		{
-			if(auto word = util::dynamic_pointer_cast<tree::Text>(obj); word != nullptr)
+			if(auto word = dynamic_cast<tree::Text*>(obj.get()); word != nullptr)
 			{
 				// do nothing
 			}
-			else if(auto iscr = util::dynamic_pointer_cast<tree::ScriptCall>(obj); iscr != nullptr)
+			else if(auto iscr = dynamic_cast<tree::ScriptCall*>(obj.get()); iscr != nullptr)
 			{
 				auto value_or_err = cs->run(iscr->call.get());
 				if(value_or_err.is_err())
@@ -42,7 +42,7 @@ namespace sap::tree
 				else
 					error("layout", "cannot insert value of type '{}' into paragraph", value.type());
 			}
-			else if(auto iscb = util::dynamic_pointer_cast<tree::ScriptBlock>(obj); iscb != nullptr)
+			else if(auto iscb = dynamic_cast<tree::ScriptBlock*>(obj.get()); iscb != nullptr)
 			{
 				error("interp", "unsupported");
 			}
@@ -55,16 +55,16 @@ namespace sap::tree
 
 	void Paragraph::processWordSeparators()
 	{
-		std::vector<std::shared_ptr<InlineObject>> ret {};
+		std::vector<std::unique_ptr<InlineObject>> ret {};
 
 		bool first_obj = true;
 		bool seen_whitespace = false;
 		for(auto& uwu : m_contents)
 		{
-			auto tree_text = util::dynamic_pointer_cast<tree::Text>(uwu);
+			auto tree_text = dynamic_cast<tree::Text*>(uwu.get());
 			assert(tree_text != nullptr);
 
-			auto current_text = std::make_shared<Text>(U"");
+			auto current_text = std::make_unique<Text>(U"");
 			current_text->setStyle(tree_text->style());
 
 			for(char32_t c : tree_text->contents())
@@ -76,14 +76,14 @@ namespace sap::tree
 						if(not current_text->contents().empty())
 						{
 							ret.push_back(std::move(current_text));
-							ret.push_back(std::make_shared<Separator>(Separator::SPACE));
+							ret.push_back(std::make_unique<Separator>(Separator::SPACE));
 
-							current_text = std::make_shared<Text>(U"");
+							current_text = std::make_unique<Text>(U"");
 							current_text->setStyle(tree_text->style());
 						}
 						else if(not first_obj)
 						{
-							ret.push_back(std::make_shared<Separator>(Separator::SPACE));
+							ret.push_back(std::make_unique<Separator>(Separator::SPACE));
 						}
 
 						seen_whitespace = true;
@@ -106,5 +106,10 @@ namespace sap::tree
 		}
 
 		m_contents.swap(ret);
+	}
+
+	void Paragraph::addObject(std::unique_ptr<InlineObject> obj)
+	{
+		m_contents.push_back(std::move(obj));
 	}
 }

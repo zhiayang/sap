@@ -6,27 +6,6 @@
 
 namespace sap::tree
 {
-	void Document::addObject(std::shared_ptr<DocumentObject> obj)
-	{
-		m_objects.push_back(std::move(obj));
-	}
-
-	void Paragraph::addObject(std::shared_ptr<InlineObject> obj)
-	{
-		m_contents.push_back(std::move(obj));
-	}
-
-
-
-
-
-
-
-
-
-
-
-
 	DocumentObject::~DocumentObject()
 	{
 	}

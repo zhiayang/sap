@@ -67,7 +67,6 @@ namespace sap::interp
 
 	ErrorOr<EvalResult> VariableDefn::evaluate(Interpreter* cs) const
 	{
-		// TODO: handle empty optional
 		if(this->initialiser != nullptr)
 			cs->frame().setValue(this, TRY_VALUE(this->initialiser->evaluate(cs)));
 

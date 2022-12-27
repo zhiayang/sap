@@ -15,6 +15,8 @@
 
 #include "interp/tree.h" // for Document, Paragraph
 
+#include "layout/paragraph.h"
+
 namespace sap::layout
 {
 	Document::Document()
@@ -55,9 +57,9 @@ namespace sap::layout
 		Cursor cursor = m_page_layout.newCursor();
 		for(const auto& obj : treedoc.objects())
 		{
-			if(auto treepara = util::dynamic_pointer_cast<tree::Paragraph>(obj); treepara != nullptr)
+			if(auto treepara = dynamic_cast<const tree::Paragraph*>(obj); treepara != nullptr)
 			{
-				std::optional<const tree::Paragraph*> overflow = treepara.get();
+				std::optional<const tree::Paragraph*> overflow = treepara;
 				while(overflow)
 					std::tie(overflow, cursor) = Paragraph::layout(cs, &m_page_layout, cursor, m_style, *overflow);
 			}

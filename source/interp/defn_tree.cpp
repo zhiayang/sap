@@ -88,18 +88,27 @@ namespace sap::interp
 	ErrorOr<void> DefnTree::declare(const Declaration* new_decl)
 	{
 		auto& name = new_decl->name;
+		zpr::println("declaring {}: {}", name, (void*) new_decl);
+
 		if(auto foo = m_decls.find(name); foo != m_decls.end())
 		{
+			zpr::println("finding '{}' {} dupes", name, foo->second.size());
+
 			auto& existing_decls = foo->second;
 			for(auto& decl : existing_decls)
 			{
+				zpr::println(">> {}", (void*) decl);
+
 				if(decl == new_decl)
 				{
 					// no error for re-*declaration*, just return ok (and throw away the duplicate decl)
 					return Ok();
 				}
-				else if(auto af = dynamic_cast<const FunctionDecl*>(decl), bf = dynamic_cast<const FunctionDecl*>(new_decl);
-				        (not af || not bf))
+
+				auto af = dynamic_cast<const FunctionDecl*>(decl);
+				auto bf = dynamic_cast<const FunctionDecl*>(new_decl);
+
+				if(af == nullptr || bf == nullptr)
 				{
 					// otherwise, if at least one of them is not a function, they conflict
 					return ErrFmt("redeclaration of '{}' as a different symbol", name);

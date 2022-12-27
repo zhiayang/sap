@@ -674,7 +674,7 @@ namespace sap::frontend
 
 			if(tok == TT::Text)
 			{
-				auto word = std::make_shared<Text>(escape_word_text(tok.loc, tok.text));
+				auto word = std::make_unique<Text>(escape_word_text(tok.loc, tok.text));
 				para->addObject(std::move(word));
 			}
 			else if(tok == TT::ParagraphBreak || tok == TT::EndOfFile)

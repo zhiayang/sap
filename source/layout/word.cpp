@@ -8,13 +8,14 @@
 #include "pdf/text.h"  // for Text
 #include "pdf/units.h" // for Scalar
 
-#include "sap/style.h"    // for Style
-#include "sap/units.h"    // for Scalar
-#include "sap/fontset.h"  // for FontSet
-#include "sap/document.h" // for Word
+#include "sap/style.h"   // for Style
+#include "sap/units.h"   // for Scalar
+#include "sap/fontset.h" // for FontSet
 
 #include "font/font.h"     // for GlyphInfo
 #include "font/features.h" // for GlyphAdjustment
+
+#include "layout/word.h"
 
 namespace sap::layout
 {

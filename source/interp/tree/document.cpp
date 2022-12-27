@@ -35,12 +35,12 @@ namespace sap::tree
 	{
 		for(auto it = m_objects.begin(); it != m_objects.end();)
 		{
-			if(auto blk = util::dynamic_pointer_cast<ScriptBlock>(*it); blk != nullptr)
+			if(auto blk = dynamic_cast<ScriptBlock*>(*it); blk != nullptr)
 			{
-				run_script_block(cs, blk.get());
+				run_script_block(cs, blk);
 				it = m_objects.erase(it);
 			}
-			else if(auto para = util::dynamic_pointer_cast<Paragraph>(*it); para != nullptr)
+			else if(auto para = dynamic_cast<Paragraph*>(*it); para != nullptr)
 			{
 				para->evaluateScripts(cs);
 				++it;
@@ -56,14 +56,16 @@ namespace sap::tree
 	{
 		for(auto& obj : m_objects)
 		{
-			if(auto para = util::dynamic_pointer_cast<Paragraph>(obj); para != nullptr)
-			{
+			if(auto para = dynamic_cast<Paragraph*>(obj); para != nullptr)
 				para->processWordSeparators();
-			}
 			else
-			{
 				sap::internal_error("boeu");
-			}
 		}
+	}
+
+	void Document::addObject(std::unique_ptr<DocumentObject> obj)
+	{
+		m_objects.push_back(obj.get());
+		m_all_objects.push_back(std::move(obj));
 	}
 }

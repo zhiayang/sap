@@ -15,16 +15,17 @@ namespace sap::tree
 {
 	struct Document
 	{
-		void addObject(std::shared_ptr<DocumentObject> obj);
+		void addObject(std::unique_ptr<DocumentObject> obj);
 
-		std::vector<std::shared_ptr<DocumentObject>>& objects() { return m_objects; }
-		const std::vector<std::shared_ptr<DocumentObject>>& objects() const { return m_objects; }
+		std::vector<DocumentObject*>& objects() { return m_objects; }
+		const std::vector<DocumentObject*>& objects() const { return m_objects; }
 
 		void evaluateScripts(interp::Interpreter* cs);
 		void processWordSeparators();
 
 	private:
-		std::vector<std::shared_ptr<DocumentObject>> m_objects {};
+		std::vector<DocumentObject*> m_objects {};
+		std::vector<std::unique_ptr<DocumentObject>> m_all_objects {};
 	};
 
 
@@ -63,13 +64,13 @@ namespace sap::tree
 
 	struct Paragraph : BlockObject
 	{
-		void addObject(std::shared_ptr<InlineObject> obj);
+		void addObject(std::unique_ptr<InlineObject> obj);
 
-		std::vector<std::shared_ptr<InlineObject>>& contents() { return m_contents; }
-		const std::vector<std::shared_ptr<InlineObject>>& contents() const { return m_contents; }
+		std::vector<std::unique_ptr<InlineObject>>& contents() { return m_contents; }
+		const std::vector<std::unique_ptr<InlineObject>>& contents() const { return m_contents; }
 
 	private:
-		std::vector<std::shared_ptr<InlineObject>> m_contents {};
+		std::vector<std::unique_ptr<InlineObject>> m_contents {};
 
 		friend Document;
 		void evaluateScripts(interp::Interpreter* cs);

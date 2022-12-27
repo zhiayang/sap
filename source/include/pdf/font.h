@@ -101,7 +101,8 @@ namespace pdf
 		mutable std::unordered_set<GlyphId> m_used_glyphs {};
 		mutable std::map<GlyphId, font::GlyphMetrics> m_glyph_metrics {};
 		mutable std::map<GlyphId, std::vector<char32_t>> m_extra_unicode_mappings {};
-		mutable util::hashmap<std::u32string, std::vector<font::GlyphInfo>> m_glyph_infos_cache;
+		mutable util::hashmap<std::u32string, std::vector<font::GlyphInfo>> m_glyph_infos_cache {};
+		mutable util::hashmap<std::u32string, Size2d_YDown> m_word_size_cache {};
 
 		// the name that goes into the Resource << >> dict in a page. This is a unique name
 		// that we get from the Document when the font is created.

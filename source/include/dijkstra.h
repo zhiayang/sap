@@ -4,6 +4,7 @@
 
 #pragma once
 
+#include <queue>
 #include <ranges>
 #include <algorithm> // for reverse
 #include <functional>
@@ -45,22 +46,24 @@ namespace util
 		// From, To, Distance from *start* to To, via From
 		using Edge = std::tuple<Node, Node, Distance>;
 		using EdgeComp = decltype([](const Edge& lhs, const Edge& rhs) {
-			return std::get<Distance>(lhs) < std::get<Distance>(rhs);
+			return std::get<Distance>(lhs) > std::get<Distance>(rhs);
 		});
 
 		// Use set instead of priority_queue so that we can .extract it
-		std::multiset<Edge, EdgeComp> queue;
+		std::priority_queue<Edge, std::vector<Edge>, EdgeComp> queue;
+
 		// Maps Tos to Froms
 		std::unordered_map<Node, Node, util::hasher> parents;
 
-		queue.insert(Edge { start, start, Distance {} });
+		queue.emplace(start, start, Distance {});
 		while(!queue.empty())
 		{
-			auto [from, to, distance] = std::move(queue.extract(queue.begin()).value());
+			auto [from, to, distance] = std::move(queue.top());
+			queue.pop();
+
 			if(!parents.try_emplace(to, from).second)
-			{
 				continue;
-			}
+
 			if(to == end)
 			{
 				path.push_back(to);
@@ -69,22 +72,21 @@ namespace util
 				{
 					node = parents.find(node)->second;
 					if(node == start)
-					{
 						break;
-					}
+
 					path.push_back(node);
 				}
+
 				// Reverse path
 				std::reverse(path.begin(), path.end());
 				return path;
 			}
 
 			// Not at end yet
-			for(auto [neighbour, distance_to_neighbour] : to.neighbours())
-			{
-				queue.insert(Edge(to, neighbour, distance + distance_to_neighbour));
-			}
+			for(auto& [neighbour, distance_to_neighbour] : to.neighbours())
+				queue.emplace(to, neighbour, distance + distance_to_neighbour);
 		}
+
 		// Unreachable if dijkstra is correctly implemented
 		sap::internal_error("Fuck, dijkstra exploded");
 	}

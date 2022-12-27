@@ -9,7 +9,7 @@ WARNINGS += -Wno-error=unused-variable
 WARNINGS += -Wno-error=unused-function
 WARNINGS += -Wno-unused-but-set-variable
 
-COMMON_CFLAGS   = -O0 -g
+COMMON_CFLAGS   = -O3 -g
 
 OUTPUT_DIR      := build
 TEST_DIR        := $(OUTPUT_DIR)/test
