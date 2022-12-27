@@ -182,6 +182,7 @@ namespace sap::layout
 		size_t current_idx = 0;
 
 		// Justify and add words to region
+		double prev_space_width_factor = 1;
 		for(auto it = lines.begin(); it != lines.end(); ++it)
 		{
 			auto& line1 = *it;
@@ -200,10 +201,9 @@ namespace sap::layout
 			auto desired_space_width = layout->getWidthAt(cursor) - line2.totalWordWidth();
 			auto total_space_width = line2.totalSpaceWidth();
 
-			if(it + 1 == lines.end())
-				desired_space_width = total_space_width;
-
 			double space_width_factor = desired_space_width / total_space_width;
+			if(it + 1 == lines.end())
+				space_width_factor = std::min(prev_space_width_factor, space_width_factor);
 
 			const Style* prev_word_style = nullptr;
 
@@ -242,8 +242,12 @@ namespace sap::layout
 
 				std::visit(util::overloaded { word_visitor, sep_visitor }, words_and_seps[i + current_idx]);
 			}
+<<<<<<< HEAD
 
 			current_idx += line1.numParts();
+=======
+			prev_space_width_factor = space_width_factor;
+>>>>>>> 384c23c (last line copy second last line's space width factor)
 		}
 
 		layout->addObject(para);
