@@ -13,17 +13,17 @@ namespace sap::interp::builtin
 			zpr::print("{}{}", i == 0 ? "" : " ", unicode::stringFromU32String(values[i].toString()));
 	}
 
-	ErrorOr<std::optional<Value>> print(Interpreter* cs, std::vector<Value>& args)
+	ErrorOr<EvalResult> print(Interpreter* cs, std::vector<Value>& args)
 	{
 		print_values(args);
-		return Ok(std::nullopt);
+		return Ok(EvalResult::of_void());
 	}
 
-	ErrorOr<std::optional<Value>> println(Interpreter* cs, std::vector<Value>& args)
+	ErrorOr<EvalResult> println(Interpreter* cs, std::vector<Value>& args)
 	{
 		print_values(args);
 		zpr::println("");
 
-		return Ok(std::nullopt);
+		return Ok(EvalResult::of_void());
 	}
 }

@@ -32,7 +32,7 @@ namespace sap::interp::builtin
 	}();
 
 
-	static ErrorOr<std::optional<Value>> apply_style1(Interpreter* cs, std::vector<Value>& args, const Style* style)
+	static ErrorOr<EvalResult> apply_style1(Interpreter* cs, std::vector<Value>& args, const Style* style)
 	{
 		// TODO: maybe don't assert?
 		assert(args.size() == 1);
@@ -45,29 +45,29 @@ namespace sap::interp::builtin
 			auto new_style = style->extend(tio->style());
 			value.getTreeInlineObj()->setStyle(new_style);
 
-			return Ok(std::move(value));
+			return Ok(EvalResult::of_value(std::move(value)));
 		}
 		else
 		{
 			auto word = std::make_unique<tree::Text>(value.toString());
 			word->setStyle(style);
 
-			return Ok(Value::treeInlineObject(std::move(word)));
+			return Ok(EvalResult::of_value(Value::treeInlineObject(std::move(word))));
 		}
 	}
 
 
-	ErrorOr<std::optional<Value>> bold1(Interpreter* cs, std::vector<Value>& args)
+	ErrorOr<EvalResult> bold1(Interpreter* cs, std::vector<Value>& args)
 	{
 		return apply_style1(cs, args, &g_bold_style);
 	}
 
-	ErrorOr<std::optional<Value>> italic1(Interpreter* cs, std::vector<Value>& args)
+	ErrorOr<EvalResult> italic1(Interpreter* cs, std::vector<Value>& args)
 	{
 		return apply_style1(cs, args, &g_italic_style);
 	}
 
-	ErrorOr<std::optional<Value>> bold_italic1(Interpreter* cs, std::vector<Value>& args)
+	ErrorOr<EvalResult> bold_italic1(Interpreter* cs, std::vector<Value>& args)
 	{
 		return apply_style1(cs, args, &g_bold_italic_style);
 	}

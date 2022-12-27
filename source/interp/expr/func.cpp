@@ -69,20 +69,50 @@ namespace sap::interp
 		return Ok(decl_type);
 	}
 
+	ErrorOr<EvalResult> FunctionDefn::call(Interpreter* cs, std::vector<Value>& args) const
+	{
+		auto _ = cs->pushFrame();
+		auto& frame = cs->frame();
+
+		if(args.size() != this->param_defns.size())
+			return ErrFmt("function call arity mismatch");
+
+		for(size_t i = 0; i < args.size(); i++)
+			frame.setValue(this->param_defns[i].get(), std::move(args[i]));
+
+		for(auto& stmt : this->body)
+		{
+			auto result = TRY(stmt->evaluate(cs));
+
+			if(result.is_return())
+				return Ok(std::move(result));
+
+			else if(not result.is_normal())
+				return ErrFmt("unexpected statement in function body: {}", result.kind);
+		}
+
+		return Ok(EvalResult::of_void());
+	}
+
+
+
+
+
+
 
 	// evaluating these don't do anything
-	ErrorOr<std::optional<Value>> FunctionDefn::evaluate(Interpreter* cs) const
+	ErrorOr<EvalResult> FunctionDefn::evaluate(Interpreter* cs) const
 	{
-		return Ok(std::nullopt);
+		return Ok(EvalResult::of_void());
 	}
 
-	ErrorOr<std::optional<Value>> FunctionDecl::evaluate(Interpreter* cs) const
+	ErrorOr<EvalResult> FunctionDecl::evaluate(Interpreter* cs) const
 	{
-		return Ok(std::nullopt);
+		return Ok(EvalResult::of_void());
 	}
 
-	ErrorOr<std::optional<Value>> BuiltinFunctionDefn::evaluate(Interpreter* cs) const
+	ErrorOr<EvalResult> BuiltinFunctionDefn::evaluate(Interpreter* cs) const
 	{
-		return Ok(std::nullopt);
+		return Ok(EvalResult::of_void());
 	}
 }

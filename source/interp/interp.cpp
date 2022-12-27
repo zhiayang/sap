@@ -59,20 +59,12 @@ namespace sap::interp
 	}
 
 
-	ErrorOr<void> Interpreter::run(const Stmt* stmt)
+	ErrorOr<EvalResult> Interpreter::run(const Stmt* stmt)
 	{
-		TRY(stmt->typecheck(this));
-		TRY(stmt->evaluate(this));
+		if(auto res = stmt->typecheck(this); res.is_err())
+			error(stmt->location, "{}", res.take_error());
 
-		return Ok();
-	}
-
-	ErrorOr<std::optional<Value>> Interpreter::evaluate(const Expr* expr)
-	{
-		if(auto res = expr->typecheck(this); res.is_err())
-			error(expr->location, "{}", res.take_error());
-
-		return expr->evaluate(this);
+		return stmt->evaluate(this);
 	}
 
 	const Type* Expr::type(Interpreter* cs) const

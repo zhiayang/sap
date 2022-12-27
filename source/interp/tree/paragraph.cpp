@@ -22,7 +22,7 @@ namespace sap::tree
 			}
 			else if(auto iscr = util::dynamic_pointer_cast<tree::ScriptCall>(obj); iscr != nullptr)
 			{
-				auto value_or_err = cs->evaluate(iscr->call.get());
+				auto value_or_err = cs->run(iscr->call.get());
 				if(value_or_err.is_err())
 					error("interp", "evaluation failed: {}", value_or_err.error());
 
@@ -33,7 +33,8 @@ namespace sap::tree
 					continue;
 				}
 
-				auto value = std::move(*value_or_empty);
+				auto value = std::move(value_or_empty).take_value();
+
 				if(value.isTreeInlineObj())
 					obj.reset(std::move(value).takeTreeInlineObj().release());
 				else if(value.isPrintable())

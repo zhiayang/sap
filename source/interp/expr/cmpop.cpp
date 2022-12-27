@@ -130,22 +130,21 @@ namespace sap::interp
 		return Ok(Type::makeBool());
 	}
 
-	ErrorOr<std::optional<Value>> ComparisonOp::evaluate(Interpreter* cs) const
+	ErrorOr<EvalResult> ComparisonOp::evaluate(Interpreter* cs) const
 	{
 		assert(not this->rest.empty());
 
-		// TODO: handle empty optionals
-		auto lhs = *TRY(this->first->evaluate(cs));
+		auto lhs = TRY_VALUE(this->first->evaluate(cs));
 
 		auto op = this->rest[0].first;
-		auto rhs = *TRY(this->rest[0].second->evaluate(cs));
+		auto rhs = TRY_VALUE(this->rest[0].second->evaluate(cs));
 
 		for(size_t i = 0;;)
 		{
 			assert(can_compare(op, lhs.type(), rhs.type()));
 
 			if(not do_compare(op, lhs, rhs))
-				return Ok(Value::boolean(false));
+				return Ok(EvalResult::of_value(Value::boolean(false)));
 
 			if(i + 1 == this->rest.size())
 				break;
@@ -153,9 +152,9 @@ namespace sap::interp
 			i += 1;
 			lhs = std::move(rhs);
 			op = this->rest[i].first;
-			rhs = *TRY(this->rest[i].second->evaluate(cs));
+			rhs = TRY_VALUE(this->rest[i].second->evaluate(cs));
 		}
 
-		return Ok(Value::boolean(true));
+		return Ok(EvalResult::of_value(Value::boolean(true)));
 	}
 }

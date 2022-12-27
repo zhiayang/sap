@@ -7,11 +7,9 @@
 #include <numeric>
 #include <sstream> // for operator<<, stringstream, basic_ostream
 
-#include "tree.h"
 #include "type.h" // for Type, FunctionType, ArrayType
 #include "util.h" // for u32StringFromUtf8
 
-#include "interp/ast.h"      // for Interpreter
 #include "interp/basedefs.h" // for InlineObject
 
 namespace sap::tree
@@ -21,6 +19,7 @@ namespace sap::tree
 
 namespace sap::interp
 {
+	struct Interpreter;
 	struct Value
 	{
 		const Type* type() const { return m_type; }

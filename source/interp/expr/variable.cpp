@@ -20,10 +20,10 @@ namespace sap::interp
 		return Ok(infer);
 	}
 
-	ErrorOr<std::optional<Value>> VariableDecl::evaluate(Interpreter* cs) const
+	ErrorOr<EvalResult> VariableDecl::evaluate(Interpreter* cs) const
 	{
 		// this does nothing
-		return Ok(std::nullopt);
+		return Ok(EvalResult::of_void());
 	}
 
 
@@ -65,12 +65,12 @@ namespace sap::interp
 		return this->declaration->typecheck(cs, the_type);
 	}
 
-	ErrorOr<std::optional<Value>> VariableDefn::evaluate(Interpreter* cs) const
+	ErrorOr<EvalResult> VariableDefn::evaluate(Interpreter* cs) const
 	{
 		// TODO: handle empty optional
 		if(this->initialiser != nullptr)
-			cs->frame().setValue(this, *TRY(this->initialiser->evaluate(cs)));
+			cs->frame().setValue(this, TRY_VALUE(this->initialiser->evaluate(cs)));
 
-		return Ok(std::nullopt);
+		return Ok(EvalResult::of_void());
 	}
 }

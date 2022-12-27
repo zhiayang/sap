@@ -45,13 +45,12 @@ namespace sap::interp
 		return ErrFmt("unsupported operation '{}' between types '{}' and '{}'", op_to_string(this->op), ltype, rtype);
 	}
 
-	ErrorOr<std::optional<Value>> BinaryOp::evaluate(Interpreter* cs) const
+	ErrorOr<EvalResult> BinaryOp::evaluate(Interpreter* cs) const
 	{
-		// TODO: maybe check for empty optional here
-		auto lval = *TRY(this->lhs->evaluate(cs));
+		auto lval = TRY_VALUE(this->lhs->evaluate(cs));
 		auto ltype = lval.type();
 
-		auto rval = *TRY(this->rhs->evaluate(cs));
+		auto rval = TRY_VALUE(this->rhs->evaluate(cs));
 		auto rtype = rval.type();
 
 		auto do_op = [](Op op, auto a, auto b) {
@@ -70,9 +69,9 @@ namespace sap::interp
 			{
 				// TODO: this might be bad because implicit conversions
 				if(ltype->isInteger())
-					return Ok(Value::integer(do_op(this->op, lval.getInteger(), rval.getInteger())));
+					return Ok(EvalResult::of_value(Value::integer(do_op(this->op, lval.getInteger(), rval.getInteger()))));
 				else
-					return Ok(Value::floating(do_op(this->op, lval.getFloating(), rval.getFloating())));
+					return Ok(EvalResult::of_value(Value::floating(do_op(this->op, lval.getFloating(), rval.getFloating()))));
 			}
 		}
 		else if(ltype->isArray() && rtype->isArray() && ltype->toArray()->elementType() == rtype->toArray()->elementType())
@@ -85,7 +84,7 @@ namespace sap::interp
 				for(auto& x : rhs)
 					lhs.push_back(std::move(x));
 
-				return Ok(Value::array(ltype->toArray()->elementType(), std::move(lhs)));
+				return Ok(EvalResult::of_value(Value::array(ltype->toArray()->elementType(), std::move(lhs))));
 			}
 		}
 		else if((ltype->isArray() && rtype->isInteger()) || (ltype->isInteger() && rtype->isArray()))
@@ -97,7 +96,7 @@ namespace sap::interp
 				auto num = (ltype->isArray() ? std::move(rval) : std::move(lval)).getInteger();
 
 				if(num <= 0)
-					return Ok(Value::array(elm, {}));
+					return Ok(EvalResult::of_value(Value::array(elm, {})));
 
 				std::vector<Value> ret = std::move(arr.clone()).takeArray();
 
@@ -108,7 +107,7 @@ namespace sap::interp
 						ret.push_back(std::move(c));
 				}
 
-				return Ok(Value::array(elm, std::move(ret)));
+				return Ok(EvalResult::of_value(Value::array(elm, std::move(ret))));
 			}
 		}
 

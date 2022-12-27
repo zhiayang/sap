@@ -10,6 +10,7 @@
 
 #include "interp/type.h"     // for Type
 #include "interp/basedefs.h" // for InlineObject
+#include "interp/eval_result.h"
 
 namespace sap::interp
 {
@@ -91,9 +92,7 @@ namespace sap::interp
 			m_current = m_current->parent();
 		}
 
-
-		ErrorOr<void> run(const Stmt* stmt);
-		ErrorOr<std::optional<Value>> evaluate(const Expr* expr);
+		ErrorOr<EvalResult> run(const Stmt* stmt);
 
 		Definition* addBuiltinDefinition(std::unique_ptr<Definition> defn);
 

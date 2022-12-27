@@ -13,14 +13,26 @@ namespace sap::tree
 	{
 		for(auto& stmt : script_block->statements)
 		{
-			if(auto r = cs->run(stmt.get()); r.is_err())
-				error("interp", "evaluation failed: {}", r.error());
+			auto result_or_err = cs->run(stmt.get());
+			if(result_or_err.is_err())
+				error("interp", "evaluation failed: {}", result_or_err.error());
+
+			auto result = result_or_err.take_value();
+			if(result.is_return())
+			{
+				// TODO: handle returning values here
+				if(result.has_value())
+					error("interp", "TODO: returning values from \\script{} is unimplemented");
+			}
+			else if(not result.is_normal())
+			{
+				error("interp", "unexpected statement in function body");
+			}
 		}
 	}
 
 	void Document::evaluateScripts(interp::Interpreter* cs)
 	{
-		// for(auto& obj : m_objects)
 		for(auto it = m_objects.begin(); it != m_objects.end();)
 		{
 			if(auto blk = util::dynamic_pointer_cast<ScriptBlock>(*it); blk != nullptr)

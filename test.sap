@@ -15,10 +15,13 @@ fi fl Bсички хора се раждат свободни и равни по
 	builtin::__bold1("420");
 
 
-	fn foozle(a: int, b: char) -> void
+	fn foozle(a: int) -> void
 	{
-		b;
+		builtin::print("a = ");
+		builtin::println(a);
 	}
+
+	foozle(10);
 }
 
 My name is Yoshikage Kira. I'm \builtin::__bold_italic1(1 < 2 < 5 > 7) years old. My house is in the northeast section of Morioh,

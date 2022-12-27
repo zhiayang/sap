@@ -7,6 +7,7 @@
 #include <memory>
 
 #include "util.h"
+#include "interp/eval_result.h"
 
 namespace sap::interp
 {
@@ -17,11 +18,11 @@ namespace sap::interp
 
 	namespace builtin
 	{
-		ErrorOr<std::optional<Value>> bold1(Interpreter* cs, std::vector<Value>& args);
-		ErrorOr<std::optional<Value>> italic1(Interpreter* cs, std::vector<Value>& args);
-		ErrorOr<std::optional<Value>> bold_italic1(Interpreter* cs, std::vector<Value>& args);
+		ErrorOr<EvalResult> bold1(Interpreter* cs, std::vector<Value>& args);
+		ErrorOr<EvalResult> italic1(Interpreter* cs, std::vector<Value>& args);
+		ErrorOr<EvalResult> bold_italic1(Interpreter* cs, std::vector<Value>& args);
 
-		ErrorOr<std::optional<Value>> print(Interpreter* cs, std::vector<Value>& args);
-		ErrorOr<std::optional<Value>> println(Interpreter* cs, std::vector<Value>& args);
+		ErrorOr<EvalResult> print(Interpreter* cs, std::vector<Value>& args);
+		ErrorOr<EvalResult> println(Interpreter* cs, std::vector<Value>& args);
 	}
 }

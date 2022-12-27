@@ -194,7 +194,7 @@ namespace sap::interp
 		return Ok(fn_type->toFunction()->returnType());
 	}
 
-	ErrorOr<std::optional<Value>> FunctionCall::evaluate(Interpreter* cs) const
+	ErrorOr<EvalResult> FunctionCall::evaluate(Interpreter* cs) const
 	{
 		// TODO: maybe do this only once (instead of twice, once while typechecking and one for eval)
 		// again, if this is an identifier, we do the separate thing.
@@ -208,10 +208,7 @@ namespace sap::interp
 			auto decl = m_resolved_func_decl;
 			auto [ordered_args, _] = TRY(resolve_argument_order<Value>(cs, decl, this->arguments, //
 			    [cs](auto& arg) -> ErrorOr<Value> {
-				    if(auto value = TRY(arg.value->evaluate(cs)); value.has_value())
-					    return Ok(std::move(*value));
-
-				    return ErrFmt("expression did not yield a value");
+				    return Ok(std::move(TRY_VALUE(arg.value->evaluate(cs))));
 			    }));
 
 			for(size_t i = 0; i < ordered_args.size(); i++)
@@ -224,11 +221,8 @@ namespace sap::interp
 						if(params[i].default_value == nullptr)
 							return ErrFmt("missing argument for parameter '{}'", params[i].name);
 
-						auto tmp = TRY(params[i].default_value->evaluate(cs));
-						if(not tmp.has_value())
-							return ErrFmt("expression did not yield a value");
-
-						args.push_back(std::move(*tmp));
+						auto tmp = TRY_VALUE(params[i].default_value->evaluate(cs));
+						args.push_back(std::move(tmp));
 					}
 					else
 					{
@@ -250,7 +244,7 @@ namespace sap::interp
 			}
 			else if(auto func_defn = dynamic_cast<const FunctionDefn*>(the_defn); func_defn != nullptr)
 			{
-				return ErrFmt("not implemented");
+				return func_defn->call(cs, args);
 			}
 			else
 			{
