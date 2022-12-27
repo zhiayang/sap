@@ -24,7 +24,7 @@ namespace dim
 	    This allows (explicit) conversions between different measurement systems.
 	*/
 
-	template <typename, typename = double>
+	template <typename, typename = double, bool = false>
 	struct Scalar;
 
 	template <typename, typename _CoordSystem, typename = double>
@@ -73,24 +73,34 @@ namespace dim
 		};
 	}
 
-	template <typename _System, typename _Type>
+	template <typename _System, typename _Type, bool _Converting>
 	struct Scalar
 	{
 		using value_type = _Type;
 		using unit_system = _System;
-		using self_type = Scalar<_System, _Type>;
+		using self_type = Scalar<_System, _Type, _Converting>;
 		using unit_tag_type = typename _System::Tag;
 
 		static constexpr auto scale_factor = _System::scale_factor;
 		static_assert(scale_factor != 0);
 
-		constexpr Scalar() : _x(0) { }
-		constexpr explicit Scalar(value_type x) : _x(x) { }
+		constexpr Scalar() requires(not _Converting) : _x(0) { }
+		constexpr explicit Scalar(value_type x) requires(not _Converting) : _x(x) { }
 
 		constexpr Scalar(self_type&&) = default;
 		constexpr Scalar(const self_type&) = default;
 		constexpr self_type& operator=(self_type&&) = default;
 		constexpr self_type& operator=(const self_type&) = default;
+
+		template <typename OtherSystem, typename OtherType>
+		constexpr Scalar(Scalar<OtherSystem, OtherType, true> other) : Scalar(other.template into<self_type>())
+		{
+		}
+		template <typename OtherSystem, typename OtherType>
+		constexpr self_type& operator=(Scalar<OtherSystem, OtherType, true> other)
+		{
+			*this = Scalar(other.template into<self_type>());
+		}
 
 		constexpr Scalar(std::nullptr_t) : _x(0) { }
 		constexpr Scalar& operator=(std::nullptr_t)
@@ -150,6 +160,14 @@ namespace dim
 			return Ret((this->_x * scale_factor) / _Scalar::unit_system::scale_factor);
 		}
 
+		constexpr auto into() const { return Scalar<_System, _Type, true>(_x); }
+
+	private:
+		// only allowed for into() to call
+		constexpr explicit Scalar(value_type x) requires(_Converting) : _x(x) { }
+		friend Scalar<_System, _Type, not _Converting>;
+
+	public:
 		template <typename _Target>
 		constexpr Scalar<_Target> into() const requires(impl::can_convert_units<unit_tag_type, typename _Target::Tag>::value)
 		{
