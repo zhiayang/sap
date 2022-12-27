@@ -356,7 +356,7 @@ namespace sap::layout
 		const pdf::Document& pdfDocument() const;
 
 		pdf::Document m_pdf_document {};
-		RectPageLayout m_page_layout = RectPageLayout(dim::Vector2(dim::mm(210), dim::mm(297)).into<Size2d>(), dim::mm(25));
+		RectPageLayout m_page_layout = RectPageLayout(dim::mm(210, 297).into<Size2d>(), dim::mm(25));
 
 		std::vector<std::unique_ptr<LayoutObject>> m_objects {};
 	};

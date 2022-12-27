@@ -10,6 +10,7 @@
 
 namespace sap::interp
 {
+	// TODO: make this something that we don't have to keep throwing Ok() around
 	struct EvalResult
 	{
 		bool has_value() const { return result.has_value(); }

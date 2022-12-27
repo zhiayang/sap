@@ -372,7 +372,7 @@ namespace sap::layout
 					para->m_words.push_back(PositionedWord {
 					    word,
 					    word.style()->font(),
-					    word.style()->font_size().into<dim::units::pdf_typographic_unit_1d>(),
+					    word.style()->font_size().into<dim::units::pdf_typographic_unit>(),
 					    cursor,
 					    new_cursor,
 					});
@@ -385,7 +385,7 @@ namespace sap::layout
 					para->m_words.push_back(PositionedWord {
 					    Word(U" ", prev_word_style),
 					    prev_word_style->font(),
-					    prev_word_style->font_size().into<dim::units::pdf_typographic_unit_1d>(),
+					    prev_word_style->font_size().into<dim::units::pdf_typographic_unit>(),
 					    cursor,
 					    end_of_space_cursor,
 					});

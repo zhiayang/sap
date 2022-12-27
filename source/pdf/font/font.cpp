@@ -35,14 +35,12 @@ namespace pdf
 	Size2d_YDown Font::getWordSize(zst::wstr_view text, Scalar font_size) const
 	{
 		Size2d_YDown size;
-		size.y() = this->scaleMetricForFontSize(source_file->metrics.default_line_spacing, font_size)
-		               .into<dim::units::pdf_typographic_unit_y_down>();
+		size.y() = this->scaleMetricForFontSize(source_file->metrics.default_line_spacing, font_size);
 		auto glyphs = this->getGlyphInfosForString(text);
 		for(auto& g : glyphs)
 		{
 			auto tmp = g.metrics.horz_advance + g.adjustments.horz_advance;
-			size.x() += this->scaleMetricForFontSize(tmp, font_size.into<pdf::Scalar>())
-			                .into<dim::units::pdf_typographic_unit_y_down>();
+			size.x() += this->scaleMetricForFontSize(tmp, font_size.into<pdf::Scalar>());
 		}
 		return size;
 	}

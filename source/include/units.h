@@ -10,7 +10,7 @@ namespace dim
 {
 	namespace units
 	{
-		struct mm; // common units are integrated into Scalar
+		struct millimetre; // common units are integrated into Scalar
 	}
 	/*
 	    Both `Scalar` and `Vector` operate on the same principle. The first template parameter
@@ -27,7 +27,7 @@ namespace dim
 	template <typename, typename = double>
 	struct Scalar;
 
-	template <typename, typename = double>
+	template <typename, typename _CoordSystem, typename = double>
 	struct Vector2;
 
 	namespace impl
@@ -47,8 +47,8 @@ namespace dim
 		{
 		};
 
-		template <typename _S, typename _T>
-		struct is_vector2<Vector2<_S, _T>> : std::true_type
+		template <typename _S, typename _C, typename _T>
+		struct is_vector2<Vector2<_S, _C, _T>> : std::true_type
 		{
 		};
 
@@ -59,6 +59,16 @@ namespace dim
 
 		template <typename _U>
 		struct can_convert_units<_U, _U> : std::true_type
+		{
+		};
+
+		template <typename _FromCoordSys, typename _ToCoordSys>
+		struct can_convert_coord_systems : std::false_type
+		{
+		};
+
+		template <typename _U>
+		struct can_convert_coord_systems<_U, _U> : std::true_type
 		{
 		};
 	}
@@ -96,7 +106,7 @@ namespace dim
 		constexpr value_type& value() { return this->_x; }
 		constexpr value_type value() const { return this->_x; }
 
-		constexpr value_type mm() const { return this->into<dim::units::mm>().value(); }
+		constexpr value_type mm() const { return this->into<dim::units::millimetre>().value(); }
 
 		constexpr value_type& x() { return this->_x; }
 		constexpr value_type x() const { return this->_x; }
@@ -149,13 +159,14 @@ namespace dim
 		value_type _x;
 	};
 
-	template <typename _System, typename _Type>
+	template <typename _System, typename _CoordSystem, typename _Type>
 	struct Vector2
 	{
 		using value_type = _Type;
 		using unit_system = _System;
 		using scalar_type = Scalar<_System, _Type>;
-		using self_type = Vector2<_System, _Type>;
+		using self_type = Vector2<_System, _CoordSystem, _Type>;
+		using coord_system = _CoordSystem;
 		using unit_tag_type = typename _System::Tag;
 
 		static constexpr auto scale_factor = _System::scale_factor;
@@ -207,20 +218,25 @@ namespace dim
 
 
 		template <typename _Vector>
-		constexpr _Vector into() const requires(
-		    (impl::is_vector2<_Vector>::value) && impl::can_convert_units<unit_tag_type, typename _Vector::unit_tag_type>::value)
+		constexpr _Vector into() const requires(                                                    //
+		    (impl::is_vector2<_Vector>::value)                                                      //
+		    && impl::can_convert_coord_systems<coord_system, typename _Vector::coord_system>::value //
+		    && impl::can_convert_units<unit_tag_type, typename _Vector::unit_tag_type>::value       //
+		)
 		{
 			using _S = typename _Vector::unit_system;
+			using _C = typename _Vector::coord_system;
 			using _T = typename _Vector::value_type;
 
-			return Vector2<_S, _T>(((this->_x * scale_factor) / _S::scale_factor)._x,
+			return Vector2<_S, _C, _T>(((this->_x * scale_factor) / _S::scale_factor)._x,
 			    ((this->_y * scale_factor) / _S::scale_factor)._x);
 		}
 
 		template <typename _Target>
-		constexpr Vector2<_Target> into() const requires(impl::can_convert_units<unit_tag_type, typename _Target::Tag>::value)
+		constexpr Vector2<_Target, coord_system> into() const
+		    requires(impl::can_convert_units<unit_tag_type, typename _Target::Tag>::value)
 		{
-			return Vector2<_Target>((this->_x * scale_factor) / _Target::scale_factor,
+			return Vector2<_Target, coord_system>((this->_x * scale_factor) / _Target::scale_factor,
 			    (this->_y * scale_factor) / _Target::scale_factor);
 		}
 
@@ -252,53 +268,60 @@ namespace dim
     type aliases to bring them into an inner namespace. this also means that the names
     cannot collide.
 */
-#define DEFINE_UNIT(_unit_name, _SF, _Tag)                                         \
-	namespace dim::units                                                           \
-	{                                                                              \
-		struct _unit_name                                                          \
-		{                                                                          \
-			static constexpr double scale_factor = _SF;                            \
-			using Tag = _Tag;                                                      \
-		};                                                                         \
-	}                                                                              \
-	namespace dim                                                                  \
-	{                                                                              \
-		constexpr inline Scalar<units::_unit_name> _unit_name(double x)            \
-		{                                                                          \
-			return Scalar<units::_unit_name>(x);                                   \
-		}                                                                          \
-		constexpr inline Vector2<units::_unit_name> _unit_name(double x, double y) \
-		{                                                                          \
-			return Vector2<units::_unit_name>(x, y);                               \
-		}                                                                          \
+#define DEFINE_UNIT(_unit_name, _SF, _Tag)              \
+	namespace dim::units                                \
+	{                                                   \
+		struct _unit_name                               \
+		{                                               \
+			static constexpr double scale_factor = _SF; \
+			using Tag = _Tag;                           \
+		};                                              \
 	}
 
-#define DEFINE_UNIT_AND_ALIAS(_unit_name, _SF, _alias_name, _Tag) \
-	DEFINE_UNIT(_unit_name, _SF, _Tag)                            \
-	DEFINE_UNIT(_alias_name, _SF, _Tag)
-
-#define DEFINE_UNIT_IN_NAMESPACE(_unit_name, _SF, _Tag, _namespace, _name_in_namespace)              \
-	DEFINE_UNIT(_unit_name, _SF, _Tag)                                                               \
-	namespace _namespace                                                                             \
-	{                                                                                                \
-		constexpr inline dim::Scalar<dim::units::_unit_name> _name_in_namespace(double x)            \
-		{                                                                                            \
-			return dim::Scalar<dim::units::_unit_name>(x);                                           \
-		}                                                                                            \
-		constexpr inline dim::Vector2<dim::units::_unit_name> _name_in_namespace(double x, double y) \
-		{                                                                                            \
-			return dim::Vector2<dim::units::_unit_name>(x, y);                                       \
-		}                                                                                            \
+#define DEFINE_UNIT_IN_NAMESPACE(_unit_name, _SF, _Tag, _Namespace, _Name_in_namespace) \
+	DEFINE_UNIT(_unit_name, _SF, _Tag)                                                  \
+	namespace _Namespace                                                                \
+	{                                                                                   \
+		using _Name_in_namespace = ::dim::units::_unit_name;                            \
 	}
 
 /*
     all other units should be in terms of the base unit; so we have
     1mm = 1bu, 1cm = 10bu, etc.
 */
-DEFINE_UNIT_AND_ALIAS(millimetre, 1.0, mm, void);
-DEFINE_UNIT_AND_ALIAS(centimetre, 10.0, cm, void);
+struct BASE_COORD_SYSTEM;
+DEFINE_UNIT(millimetre, 1.0, void);
+DEFINE_UNIT(centimetre, 10.0, void);
+
+namespace dim::units
+{
+	using mm = millimetre;
+	using cm = centimetre;
+}
+
+namespace dim
+{
+	constexpr inline auto mm(double x)
+	{
+		return Scalar<dim::units::mm>(x);
+	}
+
+	constexpr inline auto mm(double x, double y)
+	{
+		return Vector2<dim::units::mm, BASE_COORD_SYSTEM>(x, y);
+	}
 
 
+	constexpr inline auto cm(double x)
+	{
+		return Scalar<dim::units::cm>(x);
+	}
+
+	constexpr inline auto cm(double x, double y)
+	{
+		return Vector2<dim::units::cm, BASE_COORD_SYSTEM>(x, y);
+	}
+}
 
 #define MAKE_UNITS_COMPATIBLE(_FromUnit, _ToUnit)                     \
 	namespace dim::impl                                               \
@@ -309,6 +332,14 @@ DEFINE_UNIT_AND_ALIAS(centimetre, 10.0, cm, void);
 		};                                                            \
 	}
 
+#define MAKE_COORD_SYSTEMS_COMPATIBLE(_FromCS, _ToCS)                     \
+	namespace dim::impl                                                   \
+	{                                                                     \
+		template <>                                                       \
+		struct can_convert_coord_systems<_FromCS, _ToCS> : std::true_type \
+		{                                                                 \
+		};                                                                \
+	}
 
 
 
@@ -356,34 +387,34 @@ namespace dim
 
 
 
-	template <typename _S, typename _T>
-	constexpr inline Vector2<_S, _T> operator+(Vector2<_S, _T> a, Vector2<_S, _T> b)
+	template <typename _S, typename _C, typename _T>
+	constexpr inline Vector2<_S, _C, _T> operator+(Vector2<_S, _C, _T> a, Vector2<_S, _C, _T> b)
 	{
-		return Vector2<_S, _T>(a._x + b._x, a._y + b._y);
+		return Vector2<_S, _C, _T>(a._x + b._x, a._y + b._y);
 	}
 
-	template <typename _S, typename _T>
-	constexpr inline Vector2<_S, _T> operator-(Vector2<_S, _T> a, Vector2<_S, _T> b)
+	template <typename _S, typename _C, typename _T>
+	constexpr inline Vector2<_S, _C, _T> operator-(Vector2<_S, _C, _T> a, Vector2<_S, _C, _T> b)
 	{
-		return Vector2<_S, _T>(a._x - b._x, a._y - b._y);
+		return Vector2<_S, _C, _T>(a._x - b._x, a._y - b._y);
 	}
 
-	template <typename _S, typename _T, typename _ScaleT>
-	constexpr inline Vector2<_S, _T> operator*(Vector2<_S, _T> value, _ScaleT scale)
+	template <typename _S, typename _C, typename _T, typename _ScaleT>
+	constexpr inline Vector2<_S, _C, _T> operator*(Vector2<_S, _C, _T> value, _ScaleT scale)
 	{
-		return Vector2<_S, _T>(value._x * scale, value._y * scale);
+		return Vector2<_S, _C, _T>(value._x * scale, value._y * scale);
 	}
 
-	template <typename _S, typename _T>
-	constexpr inline Vector2<_S, _T> operator*(_T scale, Vector2<_S, _T> value)
+	template <typename _S, typename _C, typename _T>
+	constexpr inline Vector2<_S, _C, _T> operator*(_T scale, Vector2<_S, _C, _T> value)
 	{
-		return Vector2<_S, _T>(value._x * scale, value._y * scale);
+		return Vector2<_S, _C, _T>(value._x * scale, value._y * scale);
 	}
 
-	template <typename _S, typename _T, typename _ScaleT>
-	constexpr inline Vector2<_S, _T> operator/(Vector2<_S, _T> value, _ScaleT scale)
+	template <typename _S, typename _C, typename _T, typename _ScaleT>
+	constexpr inline Vector2<_S, _C, _T> operator/(Vector2<_S, _C, _T> value, _ScaleT scale)
 	{
-		return Vector2<_S, _T>(value._x / scale, value._y / scale);
+		return Vector2<_S, _C, _T>(value._x / scale, value._y / scale);
 	}
 
 	template <typename _S, typename _T>
