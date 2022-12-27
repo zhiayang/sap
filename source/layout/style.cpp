@@ -13,34 +13,34 @@ namespace sap
 
 	static std::unordered_map<std::pair<const Style*, const Style*>, const Style*, CombinedStylesHasher> g_combined_styles;
 
-	const Style* Style::combine(const Style* main, const Style* backup)
+	const Style* Style::extend(const Style* main) const
 	{
-		if(main == nullptr || backup == nullptr)
+		if(main == nullptr)
 		{
-			sap::internal_error("kill die me");
+			sap::internal_error("null style pointer bad");
 		}
 
-		if(auto it = g_combined_styles.find({ main, backup }); it != g_combined_styles.end())
+		if(auto it = g_combined_styles.find({ main, this }); it != g_combined_styles.end())
 			return it->second;
 
 		auto style = Style();
-		style.set_font_set(main->font_set(backup))
-		    .set_font_style(main->font_style(backup))
-		    .set_font_size(main->font_size(backup))
-		    .set_line_spacing(main->line_spacing(backup))
-		    .set_pre_paragraph_spacing(main->pre_paragraph_spacing(backup))
-		    .set_post_paragraph_spacing(main->post_paragraph_spacing(backup));
+		style.set_font_set(main->font_set(this))
+		    .set_font_style(main->font_style(this))
+		    .set_font_size(main->font_size(this))
+		    .set_line_spacing(main->line_spacing(this))
+		    .set_pre_paragraph_spacing(main->pre_paragraph_spacing(this))
+		    .set_post_paragraph_spacing(main->post_paragraph_spacing(this));
 
 		if(style == *main)
 		{
-			g_combined_styles.insert({ { main, backup }, main });
+			g_combined_styles.insert({ { main, this }, main });
 			return main;
 		}
 
 		auto style_ptr = util::make<Style>();
 		*style_ptr = std::move(style);
 
-		g_combined_styles.insert({ { main, backup }, style_ptr });
+		g_combined_styles.insert({ { main, this }, style_ptr });
 		return style_ptr;
 	}
 }

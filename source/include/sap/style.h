@@ -59,7 +59,7 @@ namespace sap
 		    or from the backup style (or any of its parents). if both input styles are null, then the
 		    default style is used.
 		*/
-		static const Style* combine(const Style* main, const Style* backup);
+		const Style* extend(const Style* main) const;
 
 		constexpr bool operator==(const Style& other) const = default;
 

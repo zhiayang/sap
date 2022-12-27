@@ -109,7 +109,7 @@ namespace sap::layout
 		// Getters
 		Scalar width()
 		{
-			auto last_word_style = Style::combine(style, parent_style);
+			auto last_word_style = parent_style->extend(style);
 			if(last_sep)
 			{
 				last_word += last_sep->endOfLine().sv();
@@ -135,8 +135,8 @@ namespace sap::layout
 		// Modifiers
 		void add(Word w)
 		{
-			auto prev_word_style = Style::combine(style, parent_style);
-			auto word_style = Style::combine(w.style(), parent_style);
+			auto prev_word_style = parent_style->extend(style);
+			auto word_style = parent_style->extend(w.style());
 			line_height = std::max(line_height,
 			    calculateWordSize(last_word, word_style).y() * word_style->line_spacing().value());
 			if(last_sep)
@@ -331,7 +331,7 @@ namespace sap::layout
 
 		for(auto& wordorsep : treepara->contents())
 		{
-			auto style = Style::combine(wordorsep->style(), parent_style);
+			auto style = parent_style->extend(wordorsep->style());
 			if(auto word = util::dynamic_pointer_cast<tree::Text>(wordorsep); word != nullptr)
 			{
 				words_and_seps.push_back(Word(word->contents(), style));

@@ -82,7 +82,7 @@ int main(int argc, char** argv)
 	    .set_font_style(sap::FontStyle::Regular)
 	    .set_font_size(pdf::Scalar(12).into<sap::Scalar>());
 
-	auto actual_style = sap::Style::combine(&main_style, layout_doc.style());
+	auto actual_style = layout_doc.style()->extend(&main_style);
 
 	layout_doc.setStyle(actual_style);
 
