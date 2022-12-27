@@ -28,7 +28,7 @@ namespace sap::layout
 
 	void Word::render(pdf::Text* text, Scalar space) const
 	{
-		const auto font = m_style->font_set().getFontForStyle(m_style->font_style());
+		const auto font = m_style->font();
 		const auto font_size = m_style->font_size();
 		text->setFont(font, font_size.into<pdf::Scalar>());
 

@@ -101,8 +101,7 @@ namespace sap::layout
 		// Helper functions
 		static Size2d calculateWordSize(zst::wstr_view text, const Style* style)
 		{
-			auto font = style->font_set().getFontForStyle(style->font_style());
-			return font->getWordSize(text, style->font_size().into<pdf::Scalar>()).into<Size2d>();
+			return style->font()->getWordSize(text, style->font_size().into<pdf::Scalar>()).into<Size2d>();
 		}
 
 	public:
@@ -370,18 +369,26 @@ namespace sap::layout
 				auto& wordorsep = line.words()[i];
 				auto word_visitor = [&](const Word& word) {
 					Cursor new_cursor = layout->moveRightFrom(cursor, word_width);
-					para->m_words.push_back(PositionedWord { word,
-					    word.style()->font_set().getFontForStyle(word.style()->font_style()),
-					    word.style()->font_size().into<dim::units::pdf_typographic_unit_1d>(), cursor, new_cursor });
+					para->m_words.push_back(PositionedWord {
+					    word,
+					    word.style()->font(),
+					    word.style()->font_size().into<dim::units::pdf_typographic_unit_1d>(),
+					    cursor,
+					    new_cursor,
+					});
 					cursor = new_cursor;
 					prev_word_style = word.style();
 				};
 
 				auto sep_visitor = [&](const Separator& sep) {
 					Cursor end_of_space_cursor = layout->moveRightFrom(cursor, word_width);
-					para->m_words.push_back(PositionedWord { Word(U" ", prev_word_style),
-					    prev_word_style->font_set().getFontForStyle(prev_word_style->font_style()),
-					    prev_word_style->font_size().into<dim::units::pdf_typographic_unit_1d>(), cursor, end_of_space_cursor });
+					para->m_words.push_back(PositionedWord {
+					    Word(U" ", prev_word_style),
+					    prev_word_style->font(),
+					    prev_word_style->font_size().into<dim::units::pdf_typographic_unit_1d>(),
+					    cursor,
+					    end_of_space_cursor,
+					});
 					Cursor new_cursor = layout->moveRightFrom(cursor, word_width * space_width_factor);
 					cursor = new_cursor;
 				};
