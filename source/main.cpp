@@ -87,7 +87,7 @@ int main(int argc, char** argv)
 
 	auto main_style = sap::Style {};
 	main_style //
-	    .set_font_set(font_set)
+	    .set_fontset(font_set)
 	    .set_font_style(sap::FontStyle::Regular)
 	    .set_font_size(pdf::PdfScalar(12).into());
 

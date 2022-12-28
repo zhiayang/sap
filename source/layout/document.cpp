@@ -27,7 +27,7 @@ namespace sap::layout
 
 		static auto default_style =
 		    sap::Style()
-		        .set_font_set(default_font_set)
+		        .set_fontset(default_font_set)
 		        .set_font_style(sap::FontStyle::Regular)
 		        .set_font_size(pdf::PdfScalar(12.0).into<sap::Length>())
 		        .set_line_spacing(sap::Length(1.0))
