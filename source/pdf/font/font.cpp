@@ -10,10 +10,10 @@
 #include "pdf/units.h"             // for Scalar, pdf_typographic_unit_y_down
 #include "pdf/win_ansi_encoding.h" // for WIN_ANSI
 
-#include "font/tag.h"      // for Tag
-#include "font/font.h"     // for GlyphInfo, CharacterMapping, Glyp...
-#include "font/scalar.h"   // for font_design_space, FontScalar
-#include "font/features.h" // for GlyphAdjustment, FeatureSet, Subs...
+#include "font/tag.h"         // for Tag
+#include "font/font.h"        // for GlyphInfo, CharacterMapping, Glyp...
+#include "font/features.h"    // for GlyphAdjustment, FeatureSet, Subs...
+#include "font/font_scalar.h" // for font_design_space, FontScalar
 
 namespace pdf
 {

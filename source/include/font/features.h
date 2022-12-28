@@ -6,8 +6,8 @@
 
 #include "types.h" // for GlyphId
 
-#include "font/tag.h"    // for Tag
-#include "font/scalar.h" // for FontScalar
+#include "font/tag.h"         // for Tag
+#include "font/font_scalar.h" // for FontScalar
 
 namespace font
 {

@@ -8,9 +8,9 @@
 #include "types.h" // for GlyphId
 #include "units.h" // for Scalar, operator+, Vector2<>::scalar_type
 
-#include "font/tag.h"      // for Tag
-#include "font/scalar.h"   // for FontScalar, FontVector2d, font_design_space
-#include "font/features.h" // for GlyphAdjustment, Feature, LookupTable
+#include "font/tag.h"         // for Tag
+#include "font/features.h"    // for GlyphAdjustment, Feature, LookupTable
+#include "font/font_scalar.h" // for FontScalar, FontVector2d, font_design_space
 
 namespace pdf
 {

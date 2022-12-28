@@ -4,11 +4,11 @@
 
 #include <algorithm> // for find
 
-#include "pdf/font.h"       // for Font, Document
-#include "pdf/page.h"       // for Page
-#include "pdf/units.h"      // for Size2d, Vector2_YDown, Vector2_YUp, pdf_...
-#include "pdf/object.h"     // for Name, Dictionary, Object, IndirectRef
-#include "pdf/pageobject.h" // for PageObject
+#include "pdf/font.h"        // for Font, Document
+#include "pdf/page.h"        // for Page
+#include "pdf/units.h"       // for Size2d, Vector2_YDown, Vector2_YUp, pdf_...
+#include "pdf/object.h"      // for Name, Dictionary, Object, IndirectRef
+#include "pdf/page_object.h" // for PageObject
 
 namespace pdf
 {

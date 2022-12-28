@@ -5,9 +5,9 @@
 #include "util.h"  // for convertBEU16
 #include "types.h" // for GlyphId
 
-#include "font/font.h"     // for GlyphMetrics, FontFile, FontMetrics, Font...
-#include "font/scalar.h"   // for FontScalar, font_design_space
-#include "font/truetype.h" // for BoundingBox, getGlyphBoundingBox
+#include "font/font.h"        // for GlyphMetrics, FontFile, FontMetrics, Font...
+#include "font/truetype.h"    // for BoundingBox, getGlyphBoundingBox
+#include "font/font_scalar.h" // for FontScalar, font_design_space
 
 namespace font
 {
