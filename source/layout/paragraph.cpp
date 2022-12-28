@@ -242,12 +242,9 @@ namespace sap::layout
 
 				std::visit(util::overloaded { word_visitor, sep_visitor }, words_and_seps[i + current_idx]);
 			}
-<<<<<<< HEAD
 
 			current_idx += line1.numParts();
-=======
 			prev_space_width_factor = space_width_factor;
->>>>>>> 384c23c (last line copy second last line's space width factor)
 		}
 
 		layout->addObject(para);
