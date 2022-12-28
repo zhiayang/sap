@@ -8,6 +8,6 @@
 
 namespace sap
 {
-	using Scalar = dim::Scalar<dim::units::mm>;
+	using Length = dim::Scalar<dim::units::mm>;
 	using Vector2 = dim::Vector2<dim::units::mm, BASE_COORD_SYSTEM>;
 }

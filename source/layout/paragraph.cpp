@@ -44,26 +44,26 @@ namespace sap::layout
 
 	private:
 		// "state" / "output"
-		Scalar line_height {};
-		Scalar line_width_excluding_last_word {};
+		Length line_height {};
+		Length line_width_excluding_last_word {};
 		std::optional<Separator> last_sep {};
 		std::u32string last_word {};
 
 		size_t num_spaces = 0;
 		const Style* style = Style::empty();
-		Scalar m_total_word_width;
-		Scalar m_total_space_width;
-		std::vector<Scalar> m_word_widths;
+		Length m_total_word_width;
+		Length m_total_space_width;
+		std::vector<Length> m_word_widths;
 
 		// Helper functions
 		static Size2d calculateWordSize(zst::wstr_view text, const Style* style)
 		{
-			return style->font()->getWordSize(text, style->font_size().into<pdf::Scalar>()).into<Size2d>();
+			return style->font()->getWordSize(text, style->font_size().into<pdf::PdfScalar>()).into<Size2d>();
 		}
 
 	public:
 		// Getters
-		Scalar width()
+		Length width()
 		{
 			auto last_word_style = parent_style->extend(style);
 			if(last_sep)
@@ -80,13 +80,13 @@ namespace sap::layout
 		}
 
 		// const std::vector<Scalar>& wordWidths() const { return m_word_widths; }
-		Scalar totalWordWidth() const { return m_total_word_width; }
-		Scalar totalSpaceWidth() const { return m_total_space_width; }
+		Length totalWordWidth() const { return m_total_word_width; }
+		Length totalSpaceWidth() const { return m_total_space_width; }
 
 		Cursor lineCursor() const { return layout->newLineFrom(prev_cursor, line_height); }
 		size_t numParts() const { return m_word_widths.size(); }
 
-		Scalar wordWidthForIndex(size_t idx) const { return m_word_widths[idx]; }
+		Length wordWidthForIndex(size_t idx) const { return m_word_widths[idx]; }
 
 		// Modifiers
 		void add(const Word& w)
@@ -103,7 +103,7 @@ namespace sap::layout
 					line_width_excluding_last_word += calculateWordSize(last_word, prev_word_style).x();
 					last_word.clear();
 
-					Scalar space_width = std::max( //
+					Length space_width = std::max( //
 					    calculateWordSize(last_sep->middleOfLine(), prev_word_style).x(),
 					    calculateWordSize(last_sep->middleOfLine(), word_style).x());
 					line_width_excluding_last_word += space_width;
@@ -120,7 +120,7 @@ namespace sap::layout
 
 				style = w.style();
 				last_word = w.text().sv();
-				Scalar word_width = calculateWordSize(last_word, word_style).x();
+				Length word_width = calculateWordSize(last_word, word_style).x();
 				m_total_word_width += word_width;
 				m_word_widths.push_back(word_width);
 			}
@@ -130,16 +130,16 @@ namespace sap::layout
 				last_word.clear();
 				style = w.style();
 				last_word = w.text().sv();
-				Scalar word_width = calculateWordSize(last_word, word_style).x();
+				Length word_width = calculateWordSize(last_word, word_style).x();
 				m_total_word_width += word_width;
 				m_word_widths.push_back(word_width);
 			}
 			else
 			{
 				style = w.style();
-				Scalar prev_word_width = calculateWordSize(last_word, word_style).x();
+				Length prev_word_width = calculateWordSize(last_word, word_style).x();
 				last_word += w.text().sv();
-				Scalar new_word_width = calculateWordSize(last_word, word_style).x();
+				Length new_word_width = calculateWordSize(last_word, word_style).x();
 				m_total_word_width += new_word_width - prev_word_width;
 				m_word_widths.push_back(new_word_width - prev_word_width);
 			}
@@ -217,7 +217,7 @@ namespace sap::layout
 					para->m_words.push_back(PositionedWord {
 					    .word = word,
 					    .font = word.style()->font(),
-					    .font_size = word.style()->font_size().into<pdf::Scalar>(),
+					    .font_size = word.style()->font_size().into<pdf::PdfScalar>(),
 					    .start = cursor,
 					    .end = new_cursor,
 					});
@@ -231,7 +231,7 @@ namespace sap::layout
 					para->m_words.push_back(PositionedWord {
 					    .word = Word(U" ", prev_word_style),
 					    .font = prev_word_style->font(),
-					    .font_size = prev_word_style->font_size().into<pdf::Scalar>(),
+					    .font_size = prev_word_style->font_size().into<pdf::PdfScalar>(),
 					    .start = cursor,
 					    .end = end_of_space_cursor,
 					});
@@ -279,14 +279,14 @@ namespace sap::layout
 			else if(current_curs.pos_on_page.y() != m_words[i].start.pos_on_page.y())
 			{
 				auto skip = m_words[i].start.pos_on_page.y() - current_curs.pos_on_page.y();
-				cur_text->nextLine(pdf::Offset2d(0, -1.0 * skip.into<pdf::Scalar>().value()));
+				cur_text->nextLine(pdf::Offset2d(0, -1.0 * skip.into<pdf::PdfScalar>().value()));
 				space = 0;
 			}
 			else if(m_words[i].start.pos_on_page.x() != current_curs.pos_on_page.x())
 			{
 				// Make sure pdf cursor agrees with our cursor
 				cur_text->offset(pdf::Font::convertPDFScalarToTextSpaceForFontSize(
-				    (m_words[i].start.pos_on_page.x() - current_curs.pos_on_page.x()).into<pdf::Scalar>(), m_words[i].font_size));
+				    (m_words[i].start.pos_on_page.x() - current_curs.pos_on_page.x()).into<pdf::PdfScalar>(), m_words[i].font_size));
 			}
 
 			m_words[i].word.render(cur_text, space);

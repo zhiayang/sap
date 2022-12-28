@@ -32,7 +32,7 @@ namespace pdf
 		return this->source_file->metrics;
 	}
 
-	Size2d_YDown Font::getWordSize(zst::wstr_view text, Scalar font_size) const
+	Size2d_YDown Font::getWordSize(zst::wstr_view text, PdfScalar font_size) const
 	{
 		if(auto it = m_word_size_cache.find(text); it != m_word_size_cache.end())
 			return it->second;
@@ -43,7 +43,7 @@ namespace pdf
 		for(auto& g : glyphs)
 		{
 			auto tmp = g.metrics.horz_advance + g.adjustments.horz_advance;
-			size.x() += this->scaleMetricForFontSize(tmp, font_size.into<pdf::Scalar>());
+			size.x() += this->scaleMetricForFontSize(tmp, font_size.into<pdf::PdfScalar>());
 		}
 
 		m_word_size_cache.emplace(text.str(), size);

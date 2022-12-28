@@ -28,8 +28,8 @@ namespace sap::layout
 
 	private:
 		// "state" / "output"
-		Scalar line_height {};
-		Scalar line_width_excluding_last_word {};
+		Length line_height {};
+		Length line_width_excluding_last_word {};
 		std::optional<Separator> last_sep {};
 		std::u32string last_word {};
 
@@ -41,12 +41,12 @@ namespace sap::layout
 		// Helper functions
 		static Size2d calculateWordSize(zst::wstr_view text, const Style* style)
 		{
-			return style->font()->getWordSize(text, style->font_size().into<pdf::Scalar>()).into<Size2d>();
+			return style->font()->getWordSize(text, style->font_size().into<pdf::PdfScalar>()).into<Size2d>();
 		}
 
 	public:
 		// Getters
-		Scalar width()
+		Length width()
 		{
 			auto last_word_style = parent_style->extend(style);
 			if(last_sep)
@@ -83,7 +83,7 @@ namespace sap::layout
 					line_width_excluding_last_word += calculateWordSize(last_word, prev_word_style).x();
 					last_word.clear();
 
-					Scalar space_width = std::max( //
+					Length space_width = std::max( //
 					    calculateWordSize(last_sep->middleOfLine(), prev_word_style).x(),
 					    calculateWordSize(last_sep->middleOfLine(), word_style).x());
 					line_width_excluding_last_word += space_width;
@@ -128,5 +128,5 @@ namespace sap::layout
 	};
 
 	std::vector<Line> breakLines(RectPageLayout* layout, Cursor cursor, const Style* parent_style,
-	    const std::vector<std::variant<Word, Separator>>& words, Scalar preferred_line_length);
+	    const std::vector<std::variant<Word, Separator>>& words, Length preferred_line_length);
 }

@@ -20,7 +20,7 @@ namespace sap::layout
 		const Style* parent_style;
 
 		// TODO: we should get the preferred line length from the layout and not fix it here
-		Scalar preferred_line_length;
+		Length preferred_line_length;
 		WordVecIter broken_until;
 		WordVecIter end;
 		Line line;
@@ -108,7 +108,7 @@ namespace sap::layout
 	};
 
 	std::vector<Line> breakLines(RectPageLayout* layout, Cursor cursor, const Style* parent_style, const WordVec& words,
-	    Scalar preferred_line_length)
+	    Length preferred_line_length)
 	{
 		auto path = util::dijkstra_shortest_path(
 		    LineBreakNode {

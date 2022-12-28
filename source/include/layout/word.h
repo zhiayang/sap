@@ -64,7 +64,7 @@ namespace sap::layout
 		    some offset commands with TJ or Td), such that this method just needs to output the encoded glyph ids,
 		    and any styling effects.
 		*/
-		void render(pdf::Text* text, Scalar space) const;
+		void render(pdf::Text* text, Length space) const;
 
 		zst::wstr_view text() const { return m_text; }
 

@@ -13,7 +13,7 @@ namespace sap::layout
 	{
 		Word word;
 		const pdf::Font* font;
-		pdf::Scalar font_size;
+		pdf::PdfScalar font_size;
 		Cursor start;
 		Cursor end;
 	};

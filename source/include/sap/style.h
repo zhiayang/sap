@@ -32,10 +32,10 @@ namespace sap
 
 		DEFINE_ACCESSOR(FontSet, m_font_set, font_set);
 		DEFINE_ACCESSOR(FontStyle, m_font_style, font_style);
-		DEFINE_ACCESSOR(Scalar, m_font_size, font_size);
-		DEFINE_ACCESSOR(Scalar, m_line_spacing, line_spacing);
-		DEFINE_ACCESSOR(Scalar, m_pre_para_spacing, pre_paragraph_spacing);
-		DEFINE_ACCESSOR(Scalar, m_post_para_spacing, post_paragraph_spacing);
+		DEFINE_ACCESSOR(Length, m_font_size, font_size);
+		DEFINE_ACCESSOR(Length, m_line_spacing, line_spacing);
+		DEFINE_ACCESSOR(Length, m_pre_para_spacing, pre_paragraph_spacing);
+		DEFINE_ACCESSOR(Length, m_post_para_spacing, post_paragraph_spacing);
 #undef DEFINE_ACCESSOR
 
 #define DEFINE_SETTER(field_type, field_name, method_name) \
@@ -47,10 +47,10 @@ namespace sap
 
 		DEFINE_SETTER(FontSet, m_font_set, set_font_set);
 		DEFINE_SETTER(FontStyle, m_font_style, set_font_style);
-		DEFINE_SETTER(Scalar, m_font_size, set_font_size);
-		DEFINE_SETTER(Scalar, m_line_spacing, set_line_spacing);
-		DEFINE_SETTER(Scalar, m_pre_para_spacing, set_pre_paragraph_spacing);
-		DEFINE_SETTER(Scalar, m_post_para_spacing, set_post_paragraph_spacing);
+		DEFINE_SETTER(Length, m_font_size, set_font_size);
+		DEFINE_SETTER(Length, m_line_spacing, set_line_spacing);
+		DEFINE_SETTER(Length, m_pre_para_spacing, set_pre_paragraph_spacing);
+		DEFINE_SETTER(Length, m_post_para_spacing, set_post_paragraph_spacing);
 
 #undef DEFINE_SETTER
 
@@ -70,10 +70,10 @@ namespace sap
 	private:
 		std::optional<FontSet> m_font_set;
 		std::optional<FontStyle> m_font_style;
-		std::optional<Scalar> m_font_size;
-		std::optional<Scalar> m_line_spacing;
-		std::optional<Scalar> m_pre_para_spacing;
-		std::optional<Scalar> m_post_para_spacing;
+		std::optional<Length> m_font_size;
+		std::optional<Length> m_line_spacing;
+		std::optional<Length> m_pre_para_spacing;
+		std::optional<Length> m_post_para_spacing;
 
 		static Style s_empty_style;
 	};

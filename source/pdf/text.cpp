@@ -27,7 +27,7 @@ namespace pdf
 		return ret + "ET Q\n";
 	}
 
-	void Text::setFont(const Font* font, Scalar height)
+	void Text::setFont(const Font* font, PdfScalar height)
 	{
 		assert(font != nullptr);
 

@@ -101,14 +101,14 @@ namespace sap::layout
 
 	struct RectPageLayout
 	{
-		explicit RectPageLayout(Size2d size, Scalar margin) : m_size(size), m_margin(margin) { }
+		explicit RectPageLayout(Size2d size, Length margin) : m_size(size), m_margin(margin) { }
 
 		Cursor newCursor() const { return { SIZE_MAX, m_size }; }
-		Scalar getWidthAt(Cursor curs) const
+		Length getWidthAt(Cursor curs) const
 		{
 			return curs.page_num == SIZE_MAX ? 0 : m_size.x() - m_margin - curs.pos_on_page.x();
 		}
-		Cursor newLineFrom(Cursor curs, Scalar line_height)
+		Cursor newLineFrom(Cursor curs, Length line_height)
 		{
 			if(curs.pos_on_page.y() + line_height >= m_size.y() - m_margin)
 			{
@@ -121,7 +121,7 @@ namespace sap::layout
 			}
 		}
 
-		Cursor moveRightFrom(Cursor curs, Scalar width) const { return { curs.page_num, curs.pos_on_page + Offset2d(width, 0) }; }
+		Cursor moveRightFrom(Cursor curs, Length width) const { return { curs.page_num, curs.pos_on_page + Offset2d(width, 0) }; }
 
 		std::vector<pdf::Page*> render() const;
 
@@ -129,7 +129,7 @@ namespace sap::layout
 
 	private:
 		Size2d m_size;
-		Scalar m_margin;
+		Length m_margin;
 		size_t m_num_pages = 1;
 		std::vector<LayoutObject*> m_objects {};
 	};

@@ -18,6 +18,15 @@
 #include "interp/tree.h"   // for Document
 #include "interp/interp.h" // for Interpreter
 
+#if 0
+CLEANUPS:
+
+- use magic .into() for units
+- cleanup the pdf::Font / font::FontFile nonsense
+- "fontconfig" for macos
+- maybe wrapper around (const Style*)
+
+#endif
 
 int main(int argc, char** argv)
 {
@@ -80,7 +89,7 @@ int main(int argc, char** argv)
 	main_style //
 	    .set_font_set(font_set)
 	    .set_font_style(sap::FontStyle::Regular)
-	    .set_font_size(pdf::Scalar(12).into());
+	    .set_font_size(pdf::PdfScalar(12).into());
 
 	auto actual_style = layout_doc.style()->extend(&main_style);
 

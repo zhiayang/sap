@@ -27,11 +27,11 @@ namespace sap::layout
 	}
 
 
-	void Word::render(pdf::Text* text, Scalar space) const
+	void Word::render(pdf::Text* text, Length space) const
 	{
 		const auto font = m_style->font();
 		const auto font_size = m_style->font_size();
-		text->setFont(font, font_size.into<pdf::Scalar>());
+		text->setFont(font, font_size.into<pdf::PdfScalar>());
 
 		auto add_gid = [&font, text](GlyphId gid) {
 			if(font->encoding_kind == pdf::Font::ENCODING_CID)

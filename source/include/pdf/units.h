@@ -60,7 +60,7 @@ MAKE_COORD_SYSTEMS_COMPATIBLE(BASE_COORD_SYSTEM, PDF_COORD_Y_DOWN);
 
 namespace pdf
 {
-	using Scalar = dim::Scalar<dim::units::pdf_typographic_unit>;
+	using PdfScalar = dim::Scalar<dim::units::pdf_typographic_unit>;
 
 	using Vector2_YUp = dim::Vector2<dim::units::pdf_typographic_unit, PDF_COORD_Y_UP>;
 	using Vector2_YDown = dim::Vector2<dim::units::pdf_typographic_unit, PDF_COORD_Y_DOWN>;

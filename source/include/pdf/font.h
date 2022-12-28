@@ -42,7 +42,7 @@ namespace pdf
 		// get the name that we should put in the Resource dictionary of a page that uses this font.
 		std::string getFontResourceName() const;
 
-		Size2d_YDown getWordSize(zst::wstr_view text, Scalar font_size) const;
+		Size2d_YDown getWordSize(zst::wstr_view text, PdfScalar font_size) const;
 
 		// A very thin wrapper around the identically-named methods taking a FontFile
 		std::map<size_t, font::GlyphAdjustment> getPositioningAdjustmentsForGlyphSequence(zst::span<GlyphId> glyphs,
@@ -58,10 +58,10 @@ namespace pdf
 
 		// abstracts away the scaling by units_per_em, to go from font units to pdf units
 		// this converts the metric to a **concrete size** (in pdf units, aka 1/72 inches)
-		Scalar scaleMetricForFontSize(font::FontScalar metric, Scalar font_size) const
+		PdfScalar scaleMetricForFontSize(font::FontScalar metric, PdfScalar font_size) const
 		{
 			auto gs = this->scaleFontMetricForPDFGlyphSpace(metric);
-			return Scalar((gs * font_size.value()).value());
+			return PdfScalar((gs * font_size.value()).value());
 		}
 
 		// this converts the metric to an **abstract size**, which is the text space. when
@@ -86,7 +86,7 @@ namespace pdf
 		static constexpr int ENCODING_WIN_ANSI = 1;
 		static constexpr int ENCODING_CID = 2;
 
-		static TextSpace1d convertPDFScalarToTextSpaceForFontSize(Scalar scalar, Scalar font_size)
+		static TextSpace1d convertPDFScalarToTextSpaceForFontSize(PdfScalar scalar, PdfScalar font_size)
 		{
 			return GlyphSpace1d(scalar / font_size).into<TextSpace1d>();
 		}
