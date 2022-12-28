@@ -43,6 +43,8 @@ namespace pdf
 		size_t id() const { return m_id; }
 		size_t gen() const { return m_gen; }
 
+		void refer();
+		bool isReferenced() const;
 
 		template <typename T, typename... Args, typename = std::enable_if_t<std::is_base_of_v<Object, T>>>
 		static T* createIndirect(Document* doc, size_t id, Args&&... args)
@@ -59,6 +61,8 @@ namespace pdf
 		size_t m_gen = 0;
 		bool m_is_indirect = false;
 		mutable size_t m_byte_offset = 0;
+
+		size_t m_reference_count = 0;
 
 		friend struct IndirHelper;
 	};
@@ -231,7 +235,6 @@ namespace pdf
 		virtual void writeFull(Writer* w) const override;
 
 		static IndirectRef* create(Object* ref);
-		static IndirectRef* create(int64_t id, int64_t gen);
 
 		int64_t id = 0;
 		int64_t generation = 0;

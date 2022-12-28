@@ -46,6 +46,20 @@ namespace pdf
 		doc->addObject(this);
 	}
 
+	void Object::refer()
+	{
+		if(not m_is_indirect)
+			pdf::error("cannot refer to non-indirect object");
+		m_reference_count++;
+	}
+
+	bool Object::isReferenced() const
+	{
+		return (not m_is_indirect) || m_reference_count > 0;
+	}
+
+
+
 	void Boolean::writeFull(Writer* w) const
 	{
 		auto helper = IndirHelper(w, this);
@@ -265,15 +279,9 @@ namespace pdf
 		if(not ref->isIndirect())
 			pdf::error("cannot make indirect reference to non-indirect object");
 
+		ref->refer();
 		return createObject<IndirectRef>(util::checked_cast<int64_t>(ref->id()), util::checked_cast<int64_t>(ref->gen()));
 	}
-
-	IndirectRef* IndirectRef::create(int64_t id, int64_t gen)
-	{
-		return createObject<IndirectRef>(id, gen);
-	}
-
-
 
 	Object::~Object()
 	{

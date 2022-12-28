@@ -24,10 +24,16 @@ namespace pdf
 
 		auto pagetree = this->createPageTree();
 		auto root = Dictionary::createIndirect(this, names::Catalog, { { names::Pages, IndirectRef::create(pagetree) } });
+		root->refer();
 
 		// write all the objects.
 		for(auto [_, obj] : m_objects)
-			obj->writeFull(w);
+		{
+			// but don't write objects that nobody refers to.
+			// TODO: more advanced reachability detection.
+			if(obj->isReferenced())
+				obj->writeFull(w);
+		}
 
 		// write the xref table
 		auto xref_position = w->position();
@@ -82,6 +88,7 @@ namespace pdf
 		}
 
 		pagetree->addOrReplace(names::Kids, array);
+		pagetree->refer();
 
 		// figure out which fonts were used.
 		std::unordered_set<const Font*> used_fonts {};
