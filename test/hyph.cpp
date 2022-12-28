@@ -2,7 +2,7 @@
 
 int main(int argc, char* argv[])
 {
-	std::string hyph_path = "hyph-en-gb.pat.txt";
+	std::string hyph_path = "hyph-en-gb.tex";
 	if(argc == 3)
 	{
 		hyph_path = argv[2];
@@ -69,5 +69,7 @@ int main(int argc, char* argv[])
 		test("respectively");
 		test("irregardless");
 		test("creativity");
+		test("university");
+		test("universities");
 	}
 }
