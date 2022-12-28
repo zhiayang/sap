@@ -23,7 +23,7 @@ namespace pdf
 
 	Dictionary* Font::serialise(Document* doc) const
 	{
-		assert(this->font_dictionary->is_indirect);
+		assert(this->font_dictionary->isIndirect());
 
 		if(m_did_serialise)
 			sap::internal_error("trying to re-serialise font!");
@@ -56,18 +56,18 @@ namespace pdf
 				else
 				{
 					auto& prev = widths2.back();
-					if(static_cast<uint64_t>(prev.first->value) + prev.second.size() == static_cast<uint64_t>(widths[i].first))
+					if(static_cast<uint64_t>(prev.first->value()) + prev.second.size() == static_cast<uint64_t>(widths[i].first))
 						prev.second.push_back(Integer::create(static_cast<uint32_t>(widths[i].second)));
 					else
 						goto foo;
 				}
 			}
 
-			this->glyph_widths_array->values.clear();
+			this->glyph_widths_array->clear();
 			for(auto& [gid, ws] : widths2)
 			{
-				this->glyph_widths_array->values.push_back(gid);
-				this->glyph_widths_array->values.push_back(Array::create(std::move(ws)));
+				this->glyph_widths_array->append(gid);
+				this->glyph_widths_array->append(Array::create(std::move(ws)));
 			}
 		}
 

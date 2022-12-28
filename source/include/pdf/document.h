@@ -34,12 +34,12 @@ namespace pdf
 		size_t getNextFontResourceNumber();
 
 	private:
-		size_t current_id = 0;
-		std::map<size_t, Object*> objects;
+		size_t m_current_id = 0;
+		std::map<size_t, Object*> m_objects;
 
-		std::vector<Page*> pages;
+		std::vector<Page*> m_pages;
 
-		size_t current_font_number = 0;
+		size_t m_current_font_number = 0;
 		Dictionary* createPageTree();
 	};
 
@@ -53,11 +53,7 @@ namespace pdf
 	template <typename T, typename... Args, typename = std::enable_if_t<std::is_base_of_v<Object, T>>>
 	inline T* createIndirectObject(Document* doc, Args&&... args)
 	{
-		auto obj = util::make<T>(static_cast<Args&&>(args)...);
-		obj->is_indirect = true;
-		obj->id = doc->getNewObjectId();
-		obj->gen = 0;
-
+		auto obj = Object::createIndirect<T>(doc, doc->getNewObjectId(), static_cast<Args&&>(args)...);
 		doc->addObject(obj);
 		return obj;
 	}

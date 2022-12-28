@@ -11,12 +11,12 @@
 
 namespace pdf
 {
-	IndirHelper::IndirHelper(Writer* w, const Object* obj) : w(w), indirect(obj->is_indirect)
+	IndirHelper::IndirHelper(Writer* w, const Object* obj) : w(w), indirect(obj->isIndirect())
 	{
 		if(indirect)
 		{
-			obj->byte_offset = w->position();
-			w->writeln("{} {} obj", obj->id, obj->gen);
+			obj->m_byte_offset = w->position();
+			w->writeln("{} {} obj", obj->id(), obj->gen());
 		}
 	}
 
@@ -28,8 +28,8 @@ namespace pdf
 
 	void Object::write(Writer* w) const
 	{
-		if(this->is_indirect)
-			w->write("{} {} R", this->id, this->gen);
+		if(m_is_indirect)
+			w->write("{} {} R", m_id, m_gen);
 		else
 			this->writeFull(w);
 	}
@@ -37,40 +37,40 @@ namespace pdf
 	void Object::makeIndirect(Document* doc)
 	{
 		// TODO: should this be an error?
-		if(this->is_indirect)
+		if(m_is_indirect)
 			return;
 
-		this->is_indirect = true;
-		this->id = doc->getNewObjectId();
-		this->gen = 0;
+		m_is_indirect = true;
+		m_id = doc->getNewObjectId();
+		m_gen = 0;
 		doc->addObject(this);
 	}
 
 	void Boolean::writeFull(Writer* w) const
 	{
-		IndirHelper helper(w, this);
-		w->write(this->value ? "true" : "false");
+		auto helper = IndirHelper(w, this);
+		w->write(m_value ? "true" : "false");
 	}
 
 	void Integer::writeFull(Writer* w) const
 	{
-		IndirHelper helper(w, this);
-		w->write("{}", this->value);
+		auto helper = IndirHelper(w, this);
+		w->write("{}", m_value);
 	}
 
 	void Decimal::writeFull(Writer* w) const
 	{
-		IndirHelper helper(w, this);
-		w->write("{}", this->value);
+		auto helper = IndirHelper(w, this);
+		w->write("{}", m_value);
 	}
 
 	void String::writeFull(Writer* w) const
 	{
-		IndirHelper helper(w, this);
+		auto helper = IndirHelper(w, this);
 
 		// for now, always write strings as their hexadecimal encoding...
 		w->write("<");
-		for(char c : this->value)
+		for(char c : m_value)
 			w->write("{02x}", static_cast<uint8_t>(c));
 
 		w->write(">");
@@ -78,7 +78,7 @@ namespace pdf
 
 	void Name::writeFull(Writer* w) const
 	{
-		IndirHelper helper(w, this);
+		auto helper = IndirHelper(w, this);
 
 		auto encode_name = [](zst::str_view sv) -> std::string {
 			std::string ret;
@@ -95,14 +95,14 @@ namespace pdf
 			return ret;
 		};
 
-		w->write("/{}", encode_name(this->name));
+		w->write("/{}", encode_name(m_name));
 	}
 
 	void Array::writeFull(Writer* w) const
 	{
-		IndirHelper helper(w, this);
+		auto helper = IndirHelper(w, this);
 		w->write("[ ");
-		for(auto obj : this->values)
+		for(auto obj : m_values)
 		{
 			obj->write(w);
 			w->write(" ");
@@ -112,9 +112,9 @@ namespace pdf
 
 	void Dictionary::writeFull(Writer* w) const
 	{
-		IndirHelper helper(w, this);
+		auto helper = IndirHelper(w, this);
 
-		if(this->values.empty())
+		if(m_values.empty())
 		{
 			w->write("<< >>");
 			return;
@@ -122,7 +122,7 @@ namespace pdf
 
 		w->writeln("<<");
 		w->nesting++;
-		for(auto& [name, value] : this->values)
+		for(auto& [name, value] : m_values)
 		{
 			w->write("{}", zpr::w(w->nesting * 2)(""));
 			name.write(w);
@@ -138,31 +138,31 @@ namespace pdf
 
 	void IndirectRef::writeFull(Writer* w) const
 	{
-		IndirHelper helper(w, this);
+		auto helper = IndirHelper(w, this);
 		w->write("{} {} R", this->id, this->generation);
 	}
 
 	void Dictionary::add(const Name& n, Object* obj)
 	{
-		if(auto it = this->values.find(n); it != this->values.end())
-			pdf::error("key '{}' already exists in dictionary", n.name);
+		if(auto it = m_values.find(n); it != m_values.end())
+			pdf::error("key '{}' already exists in dictionary", n.name());
 
-		this->values.emplace(n, obj);
+		m_values.emplace(n, obj);
 	}
 
 	void Dictionary::addOrReplace(const Name& n, Object* obj)
 	{
-		this->values.insert_or_assign(n, obj);
+		m_values.insert_or_assign(n, obj);
 	}
 
 	void Dictionary::remove(const Name& n)
 	{
-		this->values.erase(n);
+		m_values.erase(n);
 	}
 
 	Object* Dictionary::valueForKey(const Name& name) const
 	{
-		if(auto it = this->values.find(name); it != this->values.end())
+		if(auto it = m_values.find(name); it != m_values.end())
 			return it->second;
 
 		else
@@ -262,10 +262,10 @@ namespace pdf
 
 	IndirectRef* IndirectRef::create(Object* ref)
 	{
-		if(!ref->is_indirect)
+		if(not ref->isIndirect())
 			pdf::error("cannot make indirect reference to non-indirect object");
 
-		return createObject<IndirectRef>(util::checked_cast<int64_t>(ref->id), util::checked_cast<int64_t>(ref->gen));
+		return createObject<IndirectRef>(util::checked_cast<int64_t>(ref->id()), util::checked_cast<int64_t>(ref->gen()));
 	}
 
 	IndirectRef* IndirectRef::create(int64_t id, int64_t gen)

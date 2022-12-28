@@ -38,7 +38,7 @@ namespace pdf
 
 	void Stream::writeFull(Writer* w) const
 	{
-		if(not this->is_indirect)
+		if(not this->isIndirect())
 			pdf::error("cannot write non-materialised stream (not bound to a document)");
 
 		auto helper = IndirHelper(w, this);
@@ -115,7 +115,7 @@ namespace pdf
 
 	void Stream::attach(Document* document)
 	{
-		if(this->is_indirect)
+		if(this->isIndirect())
 			pdf::error("stream has already been attached to a document");
 
 		this->makeIndirect(document);

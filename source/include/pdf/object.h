@@ -37,58 +37,83 @@ namespace pdf
 		// dictionaries and streams.
 		virtual void writeFull(Writer* w) const = 0;
 
-		size_t id = 0;
-		size_t gen = 0;
-		bool is_indirect = false;
+		bool isIndirect() const { return m_is_indirect; }
+		size_t byteOffset() const { return m_byte_offset; }
 
-		mutable size_t byte_offset = 0;
+		size_t id() const { return m_id; }
+		size_t gen() const { return m_gen; }
+
+
+		template <typename T, typename... Args, typename = std::enable_if_t<std::is_base_of_v<Object, T>>>
+		static T* createIndirect(Document* doc, size_t id, Args&&... args)
+		{
+			auto obj = util::make<T>(static_cast<Args&&>(args)...);
+			obj->m_is_indirect = true;
+			obj->m_id = id;
+			obj->m_gen = 0;
+			return obj;
+		}
+
+	protected:
+		size_t m_id = 0;
+		size_t m_gen = 0;
+		bool m_is_indirect = false;
+		mutable size_t m_byte_offset = 0;
+
+		friend struct IndirHelper;
 	};
 
 	struct Boolean : Object
 	{
-		explicit Boolean(bool value) : value(value) { }
+		explicit Boolean(bool value) : m_value(value) { }
 		virtual void writeFull(Writer* w) const override;
+		bool value() const { return m_value; }
 
 		static Boolean* create(bool value);
 
-		bool value = false;
+	private:
+		bool m_value = false;
 	};
 
 	struct Integer : Object
 	{
-		explicit Integer(int64_t value) : value(value) { }
+		explicit Integer(int64_t value) : m_value(value) { }
 		virtual void writeFull(Writer* w) const override;
+		int64_t value() const { return m_value; }
 
 		static Integer* create(int64_t value);
 
-		int64_t value = 0;
+	private:
+		int64_t m_value = 0;
 	};
 
 	struct Decimal : Object
 	{
-		explicit Decimal(double value) : value(value) { }
+		explicit Decimal(double value) : m_value(value) { }
 		virtual void writeFull(Writer* w) const override;
+		double value() const { return m_value; }
 
 		static Decimal* create(double value);
 
-		double value = 0;
+	private:
+		double m_value = 0;
 	};
 
 	struct String : Object
 	{
-		// explicit String(std::string value) : value(std::move(value)) { }
-		explicit String(zst::str_view value) : value(value.str()) { }
+		explicit String(zst::str_view value) : m_value(value.str()) { }
 		virtual void writeFull(Writer* w) const override;
+		const std::string& value() const { return m_value; }
 
 		static String* create(zst::str_view value);
 
-
-		std::string value {};
+	private:
+		std::string m_value {};
 	};
 
 	struct Name : Object
 	{
-		explicit Name(zst::str_view name) : name(name.str()) { }
+		explicit Name(zst::str_view name) : m_name(name.str()) { }
 		virtual void writeFull(Writer* w) const override;
 
 		static Name* create(zst::str_view name);
@@ -96,12 +121,15 @@ namespace pdf
 		// special because our builtin names are values and not pointers
 		Name* ptr() const { return const_cast<Name*>(this); }
 
-		std::string name {};
+		const std::string& name() const { return m_name; }
+
+	private:
+		std::string m_name {};
 	};
 
 	struct Array : Object
 	{
-		explicit Array(std::vector<Object*> values) : values(std::move(values)) { }
+		explicit Array(std::vector<Object*> values) : m_values(std::move(values)) { }
 
 		virtual void writeFull(Writer* w) const override;
 
@@ -120,17 +148,25 @@ namespace pdf
 			return Array::createIndirect(doc, std::vector<Object*> { objs... });
 		}
 
-		std::vector<Object*> values;
+		const std::vector<Object*>& values() const { return m_values; }
+		std::vector<Object*>& values() { return m_values; }
+
+		void append(Object* obj) { m_values.push_back(obj); }
+		void clear() { m_values.clear(); }
+
+	private:
+		std::vector<Object*> m_values;
 	};
 
 	struct Dictionary : Object
 	{
 		Dictionary() { }
-		explicit Dictionary(std::map<Name, Object*> values) : values(std::move(values)) { }
+		explicit Dictionary(std::map<Name, Object*> values) : m_values(std::move(values)) { }
 
 		void add(const Name& n, Object* obj);
 		void addOrReplace(const Name& n, Object* obj);
 		void remove(const Name& n);
+		bool empty() const { return m_values.empty(); }
 
 		virtual void writeFull(Writer* w) const override;
 
@@ -141,8 +177,8 @@ namespace pdf
 
 		Object* valueForKey(const Name& name) const;
 
-
-		std::map<Name, Object*> values;
+	private:
+		std::map<Name, Object*> m_values;
 	};
 
 	// owns the memory.
@@ -210,16 +246,10 @@ namespace pdf
 	};
 
 
-
-
-
-
-
-	static inline bool operator<(const Name& a, const Name& b)
+	inline bool operator<(const Name& a, const Name& b)
 	{
-		return a.name < b.name;
+		return a.name() < b.name();
 	}
-
 
 	// list of names
 	namespace names

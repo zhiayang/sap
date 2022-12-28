@@ -19,8 +19,6 @@ namespace pdf
 	Page::Page()
 	{
 		m_page_size = pdf::Size2d(595.276, 841.89);
-
-		// pdf::Vector2_YUp().into<pdf::Vector2_YDown>();
 	}
 
 	Size2d Page::size() const
@@ -42,10 +40,10 @@ namespace pdf
 	Dictionary* Page::serialise(Document* doc) const
 	{
 		Object* contents = Null::get();
-		if(!this->objects.empty())
+		if(not m_objects.empty())
 		{
 			auto strm = Stream::create(doc, {});
-			for(auto obj : this->objects)
+			for(auto obj : m_objects)
 			{
 				auto ser = obj->serialise(this);
 				strm->append(reinterpret_cast<const uint8_t*>(ser.data()), ser.size());
@@ -57,11 +55,11 @@ namespace pdf
 		// need to do the fonts only after the objects, because serialising objects
 		// can use fonts.
 		auto font_dict = Dictionary::create({});
-		for(auto font : this->fonts)
+		for(auto font : m_used_fonts)
 			font_dict->add(Name(font->getFontResourceName()), IndirectRef::create(font->dictionary()));
 
 		auto resources = Dictionary::create({});
-		if(!font_dict->values.empty())
+		if(not font_dict->empty())
 			resources->add(names::Font, font_dict);
 
 		return Dictionary::createIndirect(doc, names::Page,
@@ -70,15 +68,15 @@ namespace pdf
 
 	void Page::useFont(const Font* font) const
 	{
-		if(std::find(this->fonts.begin(), this->fonts.end(), font) != this->fonts.end())
+		if(std::find(m_used_fonts.begin(), m_used_fonts.end(), font) != m_used_fonts.end())
 			return;
 
-		this->fonts.push_back(font);
+		m_used_fonts.push_back(font);
 	}
 
 	void Page::addObject(PageObject* pobj)
 	{
-		this->objects.push_back(pobj);
+		m_objects.push_back(pobj);
 	}
 
 	PageObject::~PageObject()

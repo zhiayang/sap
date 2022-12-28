@@ -26,13 +26,13 @@ namespace pdf
 		auto root = Dictionary::createIndirect(this, names::Catalog, { { names::Pages, IndirectRef::create(pagetree) } });
 
 		// write all the objects.
-		for(auto [_, obj] : this->objects)
+		for(auto [_, obj] : m_objects)
 			obj->writeFull(w);
 
 		// write the xref table
 		auto xref_position = w->position();
 
-		auto num_objects = this->current_id + 1;
+		auto num_objects = m_current_id + 1;
 
 		// note: use \r\n line endings here so we can trim trailing whitespace
 		// (ie. hand-edit the pdf) and not completely break it.
@@ -42,8 +42,8 @@ namespace pdf
 
 		for(size_t i = 0; i < num_objects; i++)
 		{
-			if(auto it = this->objects.find(i); it != this->objects.end())
-				w->writeln("{010} {05} n\r", it->second->byte_offset, it->second->gen);
+			if(auto it = m_objects.find(i); it != m_objects.end())
+				w->writeln("{010} {05} n\r", it->second->byteOffset(), it->second->gen());
 		}
 
 		w->writeln();
@@ -63,7 +63,7 @@ namespace pdf
 
 	void Document::addPage(Page* page)
 	{
-		this->pages.push_back(page);
+		m_pages.push_back(page);
 	}
 
 	Dictionary* Document::createPageTree()
@@ -71,20 +71,20 @@ namespace pdf
 		// TODO: make this more efficient -- make some kind of balanced tree.
 
 		auto pagetree = Dictionary::createIndirect(this, names::Pages,
-		    { { names::Count, Integer::create(util::checked_cast<int64_t>(this->pages.size())) } });
+		    { { names::Count, Integer::create(util::checked_cast<int64_t>(m_pages.size())) } });
 
 		auto array = Array::create({});
-		for(auto page : this->pages)
+		for(auto page : m_pages)
 		{
 			auto obj = page->serialise(this);
 			obj->addOrReplace(names::Parent, pagetree);
-			array->values.push_back(IndirectRef::create(obj));
+			array->append(IndirectRef::create(obj));
 		}
 
 		pagetree->addOrReplace(names::Kids, array);
 
 		// serialise the fonts
-		for(auto page : this->pages)
+		for(auto page : m_pages)
 		{
 			for(auto font : page->usedFonts())
 			{
@@ -104,27 +104,27 @@ namespace pdf
 
 	Document::Document()
 	{
-		this->current_id = 0;
+		m_current_id = 0;
 	}
 
 	void Document::addObject(Object* obj)
 	{
-		if(!obj->is_indirect)
+		if(not obj->isIndirect())
 			pdf::error("cannot add non-indirect objects directly to Document");
 
-		if(this->objects.find(obj->id) != this->objects.end())
-			pdf::error("object id '{}' already exists (generations not supported)", obj->id);
+		if(m_objects.find(obj->id()) != m_objects.end())
+			pdf::error("object id '{}' already exists (generations not supported)", obj->id());
 
-		this->objects.emplace(obj->id, obj);
+		m_objects.emplace(obj->id(), obj);
 	}
 
 	size_t Document::getNewObjectId()
 	{
-		return ++this->current_id;
+		return ++m_current_id;
 	}
 
 	size_t Document::getNextFontResourceNumber()
 	{
-		return ++this->current_font_number;
+		return ++m_current_font_number;
 	}
 }
