@@ -11,6 +11,8 @@
 
 namespace pdf
 {
+	static constexpr bool PRETTY_PRINT = false;
+
 	IndirHelper::IndirHelper(Writer* w, const Object* obj) : w(w), indirect(obj->isIndirect())
 	{
 		if(indirect)
@@ -138,14 +140,20 @@ namespace pdf
 		w->nesting++;
 		for(auto& [name, value] : m_values)
 		{
-			w->write("{}", zpr::w(w->nesting * 2)(""));
+			if(PRETTY_PRINT)
+				w->write("{}", zpr::w(w->nesting * 2)(""));
+
 			name.write(w);
 			w->write(" ");
 			value->write(w);
 			w->writeln();
 		}
 		w->nesting--;
-		w->write("{}>>", zpr::w(w->nesting * 2)(""));
+
+		if(PRETTY_PRINT)
+			w->write("{}", zpr::w(w->nesting * 2)(""));
+
+		w->write(">>");
 	}
 
 
