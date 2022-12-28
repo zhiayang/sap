@@ -18,7 +18,7 @@ namespace pdf
 	static void write_cmap_header(Stream* stream, zst::str_view font_name);
 	static void write_cmap_footer(Stream* stream);
 
-	void Font::writeUnicodeCMap(Document* doc) const
+	void Font::writeUnicodeCMap(File* doc) const
 	{
 		auto cmap = this->unicode_cmap;
 		cmap->clear();

@@ -13,7 +13,7 @@
 
 namespace pdf
 {
-	void Document::write(Writer* w)
+	void File::write(Writer* w)
 	{
 		w->writeln("%PDF-1.7");
 
@@ -67,12 +67,12 @@ namespace pdf
 	}
 
 
-	void Document::addPage(Page* page)
+	void File::addPage(Page* page)
 	{
 		m_pages.push_back(page);
 	}
 
-	Dictionary* Document::createPageTree()
+	Dictionary* File::createPageTree()
 	{
 		// TODO: make this more efficient -- make some kind of balanced tree.
 
@@ -107,12 +107,12 @@ namespace pdf
 
 
 
-	Document::Document()
+	File::File()
 	{
 		m_current_id = 0;
 	}
 
-	void Document::addObject(Object* obj)
+	void File::addObject(Object* obj)
 	{
 		if(not obj->isIndirect())
 			pdf::error("cannot add non-indirect objects directly to Document");
@@ -123,12 +123,12 @@ namespace pdf
 		m_objects.emplace(obj->id(), obj);
 	}
 
-	size_t Document::getNewObjectId()
+	size_t File::getNewObjectId()
 	{
 		return ++m_current_id;
 	}
 
-	size_t Document::getNextFontResourceNumber()
+	size_t File::getNextFontResourceNumber()
 	{
 		return ++m_current_font_number;
 	}

@@ -17,12 +17,12 @@ namespace pdf
 {
 	struct Array;
 	struct Stream;
-	struct Document;
+	struct File;
 	struct Dictionary;
 
 	struct Font
 	{
-		Dictionary* serialise(Document* doc) const;
+		Dictionary* serialise(File* doc) const;
 		bool didSerialise() const { return m_did_serialise; }
 		Dictionary* dictionary() const { return this->font_dictionary; }
 
@@ -75,8 +75,8 @@ namespace pdf
 		int font_type = 0;
 		int encoding_kind = 0;
 
-		static Font* fromBuiltin(Document* doc, zst::str_view name);
-		static Font* fromFontFile(Document* doc, font::FontFile* font);
+		static Font* fromBuiltin(File* doc, zst::str_view name);
+		static Font* fromFontFile(File* doc, font::FontFile* font);
 
 		static constexpr int FONT_TYPE1 = 1;
 		static constexpr int FONT_TRUETYPE = 2;
@@ -95,8 +95,8 @@ namespace pdf
 		Font();
 		Dictionary* font_dictionary = 0;
 
-		void writeUnicodeCMap(Document* doc) const;
-		void writeCIDSet(Document* doc) const;
+		void writeUnicodeCMap(File* doc) const;
+		void writeCIDSet(File* doc) const;
 
 		mutable std::unordered_set<GlyphId> m_used_glyphs {};
 		mutable std::map<GlyphId, font::GlyphMetrics> m_glyph_metrics {};

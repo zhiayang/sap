@@ -21,7 +21,7 @@ namespace pdf
 		this->font_dictionary = Dictionary::create(names::Font, {});
 	}
 
-	Dictionary* Font::serialise(Document* doc) const
+	Dictionary* Font::serialise(File* doc) const
 	{
 		assert(this->font_dictionary->isIndirect());
 
@@ -86,7 +86,7 @@ namespace pdf
 		return this->font_dictionary;
 	}
 
-	Font* Font::fromFontFile(Document* doc, font::FontFile* font_file)
+	Font* Font::fromFontFile(File* doc, font::FontFile* font_file)
 	{
 		auto ret = util::make<Font>();
 		ret->source_file = font_file;
@@ -233,7 +233,7 @@ namespace pdf
 		return ret;
 	}
 
-	Font* Font::fromBuiltin(Document* doc, zst::str_view name)
+	Font* Font::fromBuiltin(File* doc, zst::str_view name)
 	{
 		const char* known_fonts[] = {
 			"Times-Roman",

@@ -14,6 +14,7 @@
 #include <cstdint>
 #include <utility>
 #include <optional>
+#include <filesystem>
 #include <string_view>
 #include <type_traits>
 #include <unordered_map>

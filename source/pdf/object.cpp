@@ -36,7 +36,7 @@ namespace pdf
 			this->writeFull(w);
 	}
 
-	void Object::makeIndirect(Document* doc)
+	void Object::makeIndirect(File* doc)
 	{
 		// TODO: should this be an error?
 		if(m_is_indirect)
@@ -253,7 +253,7 @@ namespace pdf
 		return createObject<Array>(std::move(objs));
 	}
 
-	Array* Array::createIndirect(Document* doc, std::vector<Object*> objs)
+	Array* Array::createIndirect(File* doc, std::vector<Object*> objs)
 	{
 		return createIndirectObject<Array>(doc, std::move(objs));
 	}
@@ -263,7 +263,7 @@ namespace pdf
 		return createObject<Dictionary>(std::move(values));
 	}
 
-	Dictionary* Dictionary::createIndirect(Document* doc, std::map<Name, Object*> values)
+	Dictionary* Dictionary::createIndirect(File* doc, std::map<Name, Object*> values)
 	{
 		return createIndirectObject<Dictionary>(doc, std::move(values));
 	}
@@ -275,7 +275,7 @@ namespace pdf
 		return ret;
 	}
 
-	Dictionary* Dictionary::createIndirect(Document* doc, const Name& type, std::map<Name, Object*> values)
+	Dictionary* Dictionary::createIndirect(File* doc, const Name& type, std::map<Name, Object*> values)
 	{
 		auto ret = createIndirectObject<Dictionary>(doc, std::move(values));
 		ret->add(names::Type, const_cast<Name*>(&type));

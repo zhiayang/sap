@@ -37,7 +37,7 @@ namespace pdf
 	}
 
 
-	Dictionary* Page::serialise(Document* doc) const
+	Dictionary* Page::serialise(File* doc) const
 	{
 		Object* contents = Null::get();
 		if(not m_objects.empty())

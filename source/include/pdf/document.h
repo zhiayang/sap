@@ -14,15 +14,15 @@ namespace pdf
 	struct Writer;
 	struct Object;
 
-	struct Document
+	struct File
 	{
-		Document();
+		File();
 
-		Document(const Document&) = delete;
-		Document& operator=(const Document&) = delete;
+		File(const File&) = delete;
+		File& operator=(const File&) = delete;
 
-		Document(Document&&) = default;
-		Document& operator=(Document&&) = default;
+		File(File&&) = default;
+		File& operator=(File&&) = default;
 
 		void write(Writer* stream);
 		void addObject(Object* obj);
@@ -51,7 +51,7 @@ namespace pdf
 	}
 
 	template <typename T, typename... Args, typename = std::enable_if_t<std::is_base_of_v<Object, T>>>
-	inline T* createIndirectObject(Document* doc, Args&&... args)
+	inline T* createIndirectObject(File* doc, Args&&... args)
 	{
 		auto obj = Object::createIndirect<T>(doc, doc->getNewObjectId(), static_cast<Args&&>(args)...);
 		doc->addObject(obj);

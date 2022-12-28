@@ -113,7 +113,7 @@ namespace pdf
 		this->append(bytes);
 	}
 
-	void Stream::attach(Document* document)
+	void Stream::attach(File* document)
 	{
 		if(this->isIndirect())
 			pdf::error("stream has already been attached to a document");
@@ -122,20 +122,20 @@ namespace pdf
 	}
 
 
-	Stream* Stream::create(Document* doc, zst::byte_buffer bytes)
+	Stream* Stream::create(File* doc, zst::byte_buffer bytes)
 	{
 		auto dict = Dictionary::create({ { names::Length, Integer::create(util::checked_cast<int64_t>(bytes.size())) } });
 
 		return createIndirectObject<Stream>(doc, dict, std::move(bytes));
 	}
 
-	Stream* Stream::create(Document* doc, Dictionary* dict, zst::byte_buffer bytes)
+	Stream* Stream::create(File* doc, Dictionary* dict, zst::byte_buffer bytes)
 	{
 		dict->addOrReplace(names::Length, Integer::create(util::checked_cast<int64_t>(bytes.size())));
 		return createIndirectObject<Stream>(doc, dict, std::move(bytes));
 	}
 
-	Stream* Stream::createDetached(Document* doc, Dictionary* dict, zst::byte_buffer bytes)
+	Stream* Stream::createDetached(File* doc, Dictionary* dict, zst::byte_buffer bytes)
 	{
 		dict->addOrReplace(names::Length, Integer::create(util::checked_cast<int64_t>(bytes.size())));
 		return createObject<Stream>(dict, std::move(bytes));

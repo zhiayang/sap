@@ -22,8 +22,8 @@ namespace sap::layout
 	Document::Document()
 	{
 		static auto default_font_set = sap::FontSet( //
-		    pdf::Font::fromBuiltin(&pdfDocument(), "Times-Roman"), pdf::Font::fromBuiltin(&pdfDocument(), "Times-Italic"),
-		    pdf::Font::fromBuiltin(&pdfDocument(), "Times-Bold"), pdf::Font::fromBuiltin(&pdfDocument(), "Times-BoldItalic"));
+		    pdf::Font::fromBuiltin(&pdf(), "Times-Roman"), pdf::Font::fromBuiltin(&pdf(), "Times-Italic"),
+		    pdf::Font::fromBuiltin(&pdf(), "Times-Bold"), pdf::Font::fromBuiltin(&pdf(), "Times-BoldItalic"));
 
 		static auto default_style =
 		    sap::Style()
@@ -37,12 +37,12 @@ namespace sap::layout
 		setStyle(&default_style);
 	}
 
-	pdf::Document& Document::pdfDocument()
+	pdf::File& Document::pdf()
 	{
 		return m_pdf_document;
 	}
 
-	const pdf::Document& Document::pdfDocument() const
+	const pdf::File& Document::pdf() const
 	{
 		return m_pdf_document;
 	}

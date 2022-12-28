@@ -23,6 +23,7 @@ CLEANUPS:
 
 - use magic .into() for units
 - cleanup the pdf::Font / font::FontFile nonsense
+- pdf::Document -> pdf::File
 - "fontconfig" for macos
 - maybe wrapper around (const Style*)
 
@@ -99,7 +100,8 @@ int main(int argc, char** argv)
 	document.processWordSeparators();
 	layout_doc.layout(&interpreter, document);
 
-	auto writer = pdf::Writer(zst::str_view(filename).drop_last(4).str() + ".pdf");
+	auto out_path = std::filesystem::path(filename).replace_extension(".pdf");
+	auto writer = pdf::Writer(out_path.string());
 	layout_doc.write(&writer);
 	writer.close();
 }

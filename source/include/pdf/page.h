@@ -11,13 +11,13 @@
 namespace pdf
 {
 	struct Font;
-	struct Document;
+	struct File;
 
 	struct Page
 	{
 		Page();
 
-		Dictionary* serialise(Document* doc) const;
+		Dictionary* serialise(File* doc) const;
 
 		void useFont(const Font* font) const;
 		void addObject(PageObject* obj);

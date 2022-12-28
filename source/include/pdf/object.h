@@ -21,7 +21,7 @@ namespace pdf
 	*/
 
 	struct Stream;
-	struct Document;
+	struct File;
 	struct Dictionary;
 
 	struct Object
@@ -31,7 +31,7 @@ namespace pdf
 		// write with the default behaviour
 		void write(Writer* w) const;
 
-		void makeIndirect(Document* doc);
+		void makeIndirect(File* doc);
 
 		// write the full definition (without the indirect definition), even for
 		// dictionaries and streams.
@@ -47,7 +47,7 @@ namespace pdf
 		bool isReferenced() const;
 
 		template <typename T, typename... Args, typename = std::enable_if_t<std::is_base_of_v<Object, T>>>
-		static T* createIndirect(Document* doc, size_t id, Args&&... args)
+		static T* createIndirect(File* doc, size_t id, Args&&... args)
 		{
 			auto obj = util::make<T>(static_cast<Args&&>(args)...);
 			obj->m_is_indirect = true;
@@ -138,7 +138,7 @@ namespace pdf
 		virtual void writeFull(Writer* w) const override;
 
 		static Array* create(std::vector<Object*> objs);
-		static Array* createIndirect(Document* doc, std::vector<Object*> objs);
+		static Array* createIndirect(File* doc, std::vector<Object*> objs);
 
 		template <typename... Objs>
 		static Array* create(Objs&&... objs)
@@ -147,7 +147,7 @@ namespace pdf
 		}
 
 		template <typename... Objs>
-		static Array* createIndirect(Document* doc, Objs&&... objs)
+		static Array* createIndirect(File* doc, Objs&&... objs)
 		{
 			return Array::createIndirect(doc, std::vector<Object*> { objs... });
 		}
@@ -176,8 +176,8 @@ namespace pdf
 
 		static Dictionary* create(std::map<Name, Object*> values);
 		static Dictionary* create(const Name& type, std::map<Name, Object*> values);
-		static Dictionary* createIndirect(Document* doc, std::map<Name, Object*> values);
-		static Dictionary* createIndirect(Document* doc, const Name& type, std::map<Name, Object*> values);
+		static Dictionary* createIndirect(File* doc, std::map<Name, Object*> values);
+		static Dictionary* createIndirect(File* doc, const Name& type, std::map<Name, Object*> values);
 
 		Object* valueForKey(const Name& name) const;
 
@@ -212,12 +212,12 @@ namespace pdf
 			this->append(reinterpret_cast<const uint8_t*>(&value), sizeof(T));
 		}
 
-		void attach(Document* doc);
+		void attach(File* doc);
 
-		static Stream* create(Document* doc, zst::byte_buffer bytes);
-		static Stream* create(Document* doc, Dictionary* dict, zst::byte_buffer bytes);
+		static Stream* create(File* doc, zst::byte_buffer bytes);
+		static Stream* create(File* doc, Dictionary* dict, zst::byte_buffer bytes);
 
-		static Stream* createDetached(Document* doc, Dictionary* dict, zst::byte_buffer bytes);
+		static Stream* createDetached(File* doc, Dictionary* dict, zst::byte_buffer bytes);
 
 		// TODO: FOR DEBUGGING
 		void write_to_file(void* f) const;

@@ -26,7 +26,7 @@ namespace pdf
 	struct Font;
 	struct Page;
 	struct Text;
-	struct Document;
+	struct File;
 	struct Writer;
 }
 
@@ -120,10 +120,10 @@ namespace sap::layout
 		}
 
 	private:
-		pdf::Document& pdfDocument();
-		const pdf::Document& pdfDocument() const;
+		pdf::File& pdf();
+		const pdf::File& pdf() const;
 
-		pdf::Document m_pdf_document {};
+		pdf::File m_pdf_document {};
 		RectPageLayout m_page_layout = RectPageLayout(dim::mm(210, 297).into<Size2d>(), dim::mm(25));
 
 		std::vector<std::unique_ptr<LayoutObject>> m_objects {};

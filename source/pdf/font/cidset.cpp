@@ -11,7 +11,7 @@
 
 namespace pdf
 {
-	void Font::writeCIDSet(Document* doc) const
+	void Font::writeCIDSet(File* doc) const
 	{
 		auto stream = this->cidset;
 		stream->clear();
