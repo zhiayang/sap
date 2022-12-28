@@ -83,15 +83,13 @@ namespace pdf
 
 		pagetree->addOrReplace(names::Kids, array);
 
-		// serialise the fonts
+		// figure out which fonts were used.
+		std::unordered_set<const Font*> used_fonts {};
 		for(auto page : m_pages)
-		{
-			for(auto font : page->usedFonts())
-			{
-				if(not font->didSerialise())
-					font->serialise(this);
-			}
-		}
+			used_fonts.insert(page->usedFonts().begin(), page->usedFonts().end());
+
+		for(auto font : used_fonts)
+			font->serialise(this);
 
 		return pagetree;
 	}
