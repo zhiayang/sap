@@ -120,8 +120,6 @@ namespace pdf
 			return Array::createIndirect(doc, std::vector<Object*> { objs... });
 		}
 
-
-
 		std::vector<Object*> values;
 	};
 
@@ -160,6 +158,9 @@ namespace pdf
 		void append(zst::str_view xs);
 		void append(zst::byte_span xs);
 		void append(const uint8_t* arr, size_t num);
+
+		void clear();
+		void setContents(zst::byte_span bytes);
 
 		template <typename T>
 		void append_bytes(const T& value)

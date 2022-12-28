@@ -27,6 +27,8 @@ namespace pdf
 		Vector2_YUp convertVector2(Vector2_YDown v2) const;
 		Vector2_YDown convertVector2(Vector2_YUp v2) const;
 
+		const std::vector<const Font*>& usedFonts() const { return this->fonts; }
+
 	private:
 		mutable std::vector<const Font*> fonts;
 		std::vector<PageObject*> objects;

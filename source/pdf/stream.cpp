@@ -29,6 +29,25 @@ namespace pdf
 			tdefl_compressor_free(reinterpret_cast<tdefl_compressor*>(this->compressor_state));
 	}
 
+	void Stream::clear()
+	{
+		this->bytes.clear();
+		if(this->is_compressed)
+		{
+			auto res = tdefl_init(
+			    reinterpret_cast<tdefl_compressor*>(this->compressor_state),
+			    [](const void* buf, int len, void* user) -> int {
+				    reinterpret_cast<Stream*>(user)->bytes.append(reinterpret_cast<const uint8_t*>(buf),
+				        util::checked_cast<size_t>(len));
+				    return 1;
+			    },
+			    this, COMPRESSION_LEVEL | TDEFL_WRITE_ZLIB_HEADER);
+
+			if(res != TDEFL_STATUS_OKAY)
+				pdf::error("failed to initialise deflate state");
+		}
+	}
+
 	void Stream::setCompressed(bool compressed)
 	{
 		if(compressed != this->is_compressed)
@@ -42,17 +61,7 @@ namespace pdf
 				this->dict->addOrReplace(names::Filter, names::FlateDecode.ptr());
 				this->compressor_state = tdefl_compressor_alloc();
 
-				auto res = tdefl_init(
-				    reinterpret_cast<tdefl_compressor*>(this->compressor_state),
-				    [](const void* buf, int len, void* user) -> int {
-					    reinterpret_cast<Stream*>(user)->bytes.append(reinterpret_cast<const uint8_t*>(buf),
-					        util::checked_cast<size_t>(len));
-					    return 1;
-				    },
-				    this, COMPRESSION_LEVEL | TDEFL_WRITE_ZLIB_HEADER);
-
-				if(res != TDEFL_STATUS_OKAY)
-					pdf::error("failed to initialise deflate state");
+				this->clear();
 			}
 			else
 			{
@@ -120,6 +129,12 @@ namespace pdf
 
 		this->dict->addOrReplace(names::Length, Integer::create(util::checked_cast<int64_t>(this->bytes.size())));
 		this->uncompressed_length += num;
+	}
+
+	void Stream::setContents(zst::byte_span bytes)
+	{
+		this->clear();
+		this->append(bytes);
 	}
 
 	void Stream::attach(Document* document)

@@ -73,7 +73,7 @@ namespace font
 		if(font->outline_type == FontFile::OUTLINES_CFF)
 		{
 			auto subset = cff::createCFFSubset(font, subset_name, used_glyphs);
-			stream->append(subset.cff.span());
+			stream->setContents(subset.cff.span());
 			return;
 		}
 

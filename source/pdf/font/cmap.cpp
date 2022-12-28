@@ -21,6 +21,9 @@ namespace pdf
 	void Font::writeUnicodeCMap(Document* doc) const
 	{
 		auto cmap = this->unicode_cmap;
+		cmap->clear();
+
+
 		write_cmap_header(cmap, this->pdf_font_name);
 
 		cmap->append(

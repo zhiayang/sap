@@ -14,6 +14,8 @@ namespace pdf
 	void Font::writeCIDSet(Document* doc) const
 	{
 		auto stream = this->cidset;
+		stream->clear();
+
 		assert(this->source_file != nullptr);
 
 		int num_bits = 0;

@@ -23,8 +23,12 @@ namespace pdf
 
 	Dictionary* Font::serialise(Document* doc) const
 	{
-		if(!this->font_dictionary->is_indirect)
-			this->font_dictionary->makeIndirect(doc);
+		assert(this->font_dictionary->is_indirect);
+
+		if(m_did_serialise)
+			sap::internal_error("trying to re-serialise font!");
+
+		m_did_serialise = true;
 
 		// we need to write out the widths.
 		if(this->source_file && this->glyph_widths_array)
@@ -59,6 +63,7 @@ namespace pdf
 				}
 			}
 
+			this->glyph_widths_array->values.clear();
 			for(auto& [gid, ws] : widths2)
 			{
 				this->glyph_widths_array->values.push_back(gid);
@@ -176,7 +181,7 @@ namespace pdf
 		// TODO: scale the metrics correctly!
 		auto font_desc = Dictionary::createIndirect(doc, names::FontDescriptor,
 		    { { names::FontName, basefont_name }, { names::Flags, Integer::create(4) }, { names::FontBBox, font_bbox },
-		        { names::ItalicAngle, Integer::create(static_cast<uint32_t>(font_file->metrics.italic_angle)) },
+		        { names::ItalicAngle, Integer::create(static_cast<int32_t>(font_file->metrics.italic_angle)) },
 		        { names::Ascent, Integer::create(font_file->metrics.hhea_ascent) },
 		        { names::Descent, Integer::create(font_file->metrics.hhea_descent) },
 		        { names::CapHeight, Integer::create(cap_height) }, { names::XHeight, Integer::create(69) },
@@ -209,6 +214,8 @@ namespace pdf
 
 		// finally, construct the top-level Type0 font.
 		auto type0 = ret->font_dictionary;
+		type0->makeIndirect(doc);
+
 		type0->add(names::Subtype, names::Type0.ptr());
 		type0->add(names::BaseFont, basefont_name);
 
@@ -256,6 +263,8 @@ namespace pdf
 		font->font_type = FONT_TYPE1;
 
 		auto dict = font->font_dictionary;
+		dict->makeIndirect(doc);
+
 		dict->add(names::Subtype, names::Type1.ptr());
 		dict->add(names::BaseFont, Name::create(name));
 		dict->add(names::Encoding, Name::create("WinAnsiEncoding"));

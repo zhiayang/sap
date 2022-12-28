@@ -23,6 +23,8 @@ namespace pdf
 	struct Font
 	{
 		Dictionary* serialise(Document* doc) const;
+		bool didSerialise() const { return m_did_serialise; }
+		Dictionary* dictionary() const { return this->font_dictionary; }
 
 		GlyphId getGlyphIdFromCodepoint(char32_t codepoint) const;
 		const std::vector<font::GlyphInfo>& getGlyphInfosForString(zst::wstr_view text) const;
@@ -40,12 +42,19 @@ namespace pdf
 		// get the name that we should put in the Resource dictionary of a page that uses this font.
 		std::string getFontResourceName() const;
 
+		Size2d_YDown getWordSize(zst::wstr_view text, Scalar font_size) const;
+
+		// A very thin wrapper around the identically-named methods taking a FontFile
+		std::map<size_t, font::GlyphAdjustment> getPositioningAdjustmentsForGlyphSequence(zst::span<GlyphId> glyphs,
+		    const font::off::FeatureSet& features) const;
+
+		std::vector<GlyphId> performSubstitutionsForGlyphSequence(zst::span<GlyphId> glyphs,
+		    const font::off::FeatureSet& features) const;
+
 		GlyphSpace1d scaleFontMetricForPDFGlyphSpace(font::FontScalar metric) const
 		{
 			return GlyphSpace1d((metric / this->getFontMetrics().units_per_em).value());
 		}
-
-		Size2d_YDown getWordSize(zst::wstr_view text, Scalar font_size) const;
 
 		// abstracts away the scaling by units_per_em, to go from font units to pdf units
 		// this converts the metric to a **concrete size** (in pdf units, aka 1/72 inches)
@@ -63,20 +72,6 @@ namespace pdf
 			return gs.into<TextSpace1d>();
 		}
 
-		static TextSpace1d convertPDFScalarToTextSpaceForFontSize(Scalar scalar, Scalar font_size)
-		{
-			return GlyphSpace1d(scalar / font_size).into<TextSpace1d>();
-		}
-
-		/*
-		    A very thin wrapper around the identically-named methods taking a FontFile
-		*/
-		std::map<size_t, font::GlyphAdjustment> getPositioningAdjustmentsForGlyphSequence(zst::span<GlyphId> glyphs,
-		    const font::off::FeatureSet& features) const;
-
-		std::vector<GlyphId> performSubstitutionsForGlyphSequence(zst::span<GlyphId> glyphs,
-		    const font::off::FeatureSet& features) const;
-
 		int font_type = 0;
 		int encoding_kind = 0;
 
@@ -91,6 +86,11 @@ namespace pdf
 		static constexpr int ENCODING_WIN_ANSI = 1;
 		static constexpr int ENCODING_CID = 2;
 
+		static TextSpace1d convertPDFScalarToTextSpaceForFontSize(Scalar scalar, Scalar font_size)
+		{
+			return GlyphSpace1d(scalar / font_size).into<TextSpace1d>();
+		}
+
 	private:
 		Font();
 		Dictionary* font_dictionary = 0;
@@ -103,6 +103,8 @@ namespace pdf
 		mutable std::map<GlyphId, std::vector<char32_t>> m_extra_unicode_mappings {};
 		mutable util::hashmap<std::u32string, std::vector<font::GlyphInfo>> m_glyph_infos_cache {};
 		mutable util::hashmap<std::u32string, Size2d_YDown> m_word_size_cache {};
+
+		mutable bool m_did_serialise = false;
 
 		// the name that goes into the Resource << >> dict in a page. This is a unique name
 		// that we get from the Document when the font is created.

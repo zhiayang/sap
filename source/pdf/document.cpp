@@ -6,6 +6,7 @@
 
 #include "pdf/misc.h"     // for error
 #include "pdf/page.h"     // for Page
+#include "pdf/font.h"     // for Font
 #include "pdf/object.h"   // for Object, Dictionary, Name, IndirectRef, Int...
 #include "pdf/writer.h"   // for Writer
 #include "pdf/document.h" // for Document
@@ -81,6 +82,16 @@ namespace pdf
 		}
 
 		pagetree->addOrReplace(names::Kids, array);
+
+		// serialise the fonts
+		for(auto page : this->pages)
+		{
+			for(auto font : page->usedFonts())
+			{
+				if(not font->didSerialise())
+					font->serialise(this);
+			}
+		}
 
 		return pagetree;
 	}

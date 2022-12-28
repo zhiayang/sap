@@ -58,15 +58,11 @@ namespace pdf
 		// can use fonts.
 		auto font_dict = Dictionary::create({});
 		for(auto font : this->fonts)
-		{
-			auto fser = font->serialise(doc);
-			font_dict->add(Name(font->getFontResourceName()), IndirectRef::create(fser));
-		}
+			font_dict->add(Name(font->getFontResourceName()), IndirectRef::create(font->dictionary()));
 
 		auto resources = Dictionary::create({});
 		if(!font_dict->values.empty())
 			resources->add(names::Font, font_dict);
-
 
 		return Dictionary::createIndirect(doc, names::Page,
 		    { { names::Resources, resources }, { names::MediaBox, a4paper }, { names::Contents, contents } });
