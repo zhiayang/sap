@@ -19,87 +19,77 @@ namespace pdf
 	void Stream::write_to_file(void* f) const
 	{
 		auto file = (FILE*) f;
-		fwrite(this->bytes.data(), 1, this->bytes.size(), file);
+		fwrite(m_bytes.data(), 1, m_bytes.size(), file);
 	}
 
 	Stream::~Stream()
 	{
-		// since we made the compressor state, we need to free it.
-		if(this->is_compressed && this->compressor_state != nullptr)
-			tdefl_compressor_free(reinterpret_cast<tdefl_compressor*>(this->compressor_state));
 	}
 
 	void Stream::clear()
 	{
-		this->bytes.clear();
-		if(this->is_compressed)
-		{
-			auto res = tdefl_init(
-			    reinterpret_cast<tdefl_compressor*>(this->compressor_state),
-			    [](const void* buf, int len, void* user) -> int {
-				    reinterpret_cast<Stream*>(user)->bytes.append(reinterpret_cast<const uint8_t*>(buf),
-				        util::checked_cast<size_t>(len));
-				    return 1;
-			    },
-			    this, COMPRESSION_LEVEL | TDEFL_WRITE_ZLIB_HEADER);
-
-			if(res != TDEFL_STATUS_OKAY)
-				pdf::error("failed to initialise deflate state");
-		}
+		m_bytes.clear();
 	}
 
 	void Stream::setCompressed(bool compressed)
 	{
-		if(compressed != this->is_compressed)
-		{
-			if(this->bytes.size() > 0)
-				pdf::error("cannot change stream compression when it has data");
-
-			this->is_compressed = compressed;
-			if(this->is_compressed)
-			{
-				this->dict->addOrReplace(names::Filter, names::FlateDecode.ptr());
-				this->compressor_state = tdefl_compressor_alloc();
-
-				this->clear();
-			}
-			else
-			{
-				this->dict->remove(names::Filter);
-				if(this->compressor_state != nullptr)
-				{
-					tdefl_compressor_free(reinterpret_cast<tdefl_compressor*>(this->compressor_state));
-					this->compressor_state = nullptr;
-				}
-			}
-		}
+		m_compressed = compressed;
 	}
 
 	void Stream::writeFull(Writer* w) const
 	{
-		if(!this->is_indirect)
+		if(not this->is_indirect)
 			pdf::error("cannot write non-materialised stream (not bound to a document)");
 
-		if(this->is_compressed)
+		auto helper = IndirHelper(w, this);
+
+		auto write_the_thing = [](Writer* w, Dictionary* dict, const zst::byte_buffer& buf) {
+			dict->writeFull(w);
+
+			w->writeln();
+			w->writeln("stream\r");
+
+			w->writeBytes(buf.data(), buf.size());
+
+			w->writeln("\r");
+			w->write("endstream");
+		};
+
+
+		if(m_compressed)
 		{
-			// if we are compressed, flush the stream.
-			auto res = tdefl_compress_buffer(reinterpret_cast<tdefl_compressor*>(this->compressor_state), 0, 0, TDEFL_FINISH);
+			tdefl_compressor compressor {};
+			zst::byte_buffer compressed_bytes {};
+
+			tdefl_init(
+			    &compressor,
+			    [](const void* buf, int len, void* user) -> int {
+				    static_cast<zst::byte_buffer*>(user)->append(static_cast<const uint8_t*>(buf),
+				        util::checked_cast<size_t>(len));
+				    return 1;
+			    },
+			    (void*) &compressed_bytes, COMPRESSION_LEVEL | TDEFL_WRITE_ZLIB_HEADER);
+
+
+			auto res = tdefl_compress_buffer(&compressor, m_bytes.data(), m_bytes.size(), TDEFL_SYNC_FLUSH);
+			if(res != TDEFL_STATUS_OKAY)
+				pdf::error("stream compression failed");
+
+			res = tdefl_compress_buffer(&compressor, 0, 0, TDEFL_FINISH);
 			if(res != TDEFL_STATUS_DONE)
 				pdf::error("failed to flush the stream: {}", res);
+
+			m_dict->addOrReplace(names::Length1, Integer::create(util::checked_cast<int64_t>(m_bytes.size())));
+			m_dict->addOrReplace(names::Length, Integer::create(util::checked_cast<int64_t>(compressed_bytes.size())));
+			m_dict->addOrReplace(names::Filter, names::FlateDecode.ptr());
+
+			write_the_thing(w, m_dict, compressed_bytes);
 		}
-		this->dict->addOrReplace(names::Length, Integer::create(util::checked_cast<int64_t>(this->bytes.size())));
-
-		IndirHelper helper(w, this);
-
-		this->dict->writeFull(w);
-
-		w->writeln();
-		w->writeln("stream\r");
-
-		w->writeBytes(this->bytes.data(), this->bytes.size());
-
-		w->writeln("\r");
-		w->write("endstream");
+		else
+		{
+			m_dict->addOrReplace(names::Length, Integer::create(util::checked_cast<int64_t>(m_bytes.size())));
+			write_the_thing(w, m_dict, m_bytes);
+		}
 	}
 
 	void Stream::append(zst::str_view xs)
@@ -114,21 +104,7 @@ namespace pdf
 
 	void Stream::append(const uint8_t* arr, size_t num)
 	{
-		if(this->is_compressed)
-		{
-			auto res = tdefl_compress_buffer(reinterpret_cast<tdefl_compressor*>(this->compressor_state), arr, num,
-			    TDEFL_SYNC_FLUSH);
-
-			if(res != TDEFL_STATUS_OKAY)
-				pdf::error("stream compression failed");
-		}
-		else
-		{
-			this->bytes.append(arr, num);
-		}
-
-		this->dict->addOrReplace(names::Length, Integer::create(util::checked_cast<int64_t>(this->bytes.size())));
-		this->uncompressed_length += num;
+		m_bytes.append(arr, num);
 	}
 
 	void Stream::setContents(zst::byte_span bytes)

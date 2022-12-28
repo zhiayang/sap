@@ -202,7 +202,7 @@ namespace pdf
 			// the spec is very very poorly worded on this, BUT from what I can gather, for CFF fonts we can
 			// just always use FontFile3 and CIDFontType0C.
 
-			ret->embedded_contents->dict->add(names::Subtype, names::CIDFontType0C.ptr());
+			ret->embedded_contents->dictionary()->add(names::Subtype, names::CIDFontType0C.ptr());
 
 			font_desc->add(names::FontFile3, IndirectRef::create(ret->embedded_contents));
 			ret->font_type = FONT_CFF_CID;

@@ -191,11 +191,12 @@ namespace font
 		stream->write_to_file(foo);
 		fclose(foo);
 #endif
-		if(stream->is_compressed)
-		{
-			stream->dict->addOrReplace(pdf::names::Length1,
-			    pdf::Integer::create(util::checked_cast<int64_t>(stream->uncompressed_length)));
-		}
+
+		// if(stream->is_compressed)
+		// {
+		// 	stream->dict->addOrReplace(pdf::names::Length1,
+		// 	    pdf::Integer::create(util::checked_cast<int64_t>(stream->uncompressed_length)));
+		// }
 	}
 
 

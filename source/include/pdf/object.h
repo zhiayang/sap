@@ -148,11 +148,15 @@ namespace pdf
 	// owns the memory.
 	struct Stream : Object
 	{
-		explicit Stream(Dictionary* dict, zst::byte_buffer bytes) : dict(dict), bytes(std::move(bytes)) { }
+		explicit Stream(Dictionary* dict, zst::byte_buffer bytes) : m_bytes(std::move(bytes)), m_dict(dict) { }
 		~Stream();
 
 		virtual void writeFull(Writer* w) const override;
 
+		Dictionary* dictionary() { return m_dict; }
+		const Dictionary* dictionary() const { return m_dict; }
+
+		bool isCompressed() const { return m_compressed; }
 		void setCompressed(bool compressed);
 
 		void append(zst::str_view xs);
@@ -175,16 +179,13 @@ namespace pdf
 
 		static Stream* createDetached(Document* doc, Dictionary* dict, zst::byte_buffer bytes);
 
-		size_t uncompressed_length = 0;
-		bool is_compressed = false;
-		Dictionary* dict = 0;
-
 		// TODO: FOR DEBUGGING
 		void write_to_file(void* f) const;
 
 	private:
-		void* compressor_state = 0;
-		zst::byte_buffer bytes;
+		zst::byte_buffer m_bytes;
+		bool m_compressed = false;
+		Dictionary* m_dict = nullptr;
 	};
 
 	struct IndirectRef : Object
