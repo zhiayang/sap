@@ -167,6 +167,15 @@ namespace sap::frontend
 		}
 		else
 		{
+			auto finish_and_return = [&](size_t n) -> Token {
+				return advance_and_return(stream, loc,
+				    Token { //
+				        .loc = loc,
+				        .type = TT::Text,
+				        .text = stream.take(n) },
+				    n);
+			};
+
 			// normal tokens, and parse escape sequences.
 			size_t n = 0;
 			while(n < stream.size())
@@ -193,14 +202,13 @@ namespace sap::frontend
 						break;
 					}
 				}
+				else if(stream[n] == '#')
+				{
+					return finish_and_return(n);
+				}
 				else if(auto tmp = stream.drop(n).take(4); tmp.starts_with("\n\n") || tmp.starts_with("\r\n\r\n"))
 				{
-					return advance_and_return(stream, loc,
-					    Token { //
-					        .loc = loc,
-					        .type = TT::Text,
-					        .text = stream.take(n) },
-					    n);
+					return finish_and_return(n);
 				}
 				else
 				{
@@ -210,12 +218,7 @@ namespace sap::frontend
 
 			// note: this does imply that the parser needs to "re-parse" any escape sequences, but that's fine
 			// because we don't want to deal with lifetime issues regarding a constructed string in the Token.
-			return advance_and_return(stream, loc,
-			    Token { //
-			        .loc = loc,
-			        .type = TT::Text,
-			        .text = stream.take(n) },
-			    n);
+			return finish_and_return(n);
 		}
 	}
 
