@@ -11,6 +11,11 @@
 #include "font/truetype.h"    // for TTData, parseGlyfTable, parseLoca...
 #include "font/font_scalar.h" // for FontScalar
 
+namespace misc
+{
+	extern std::string convert_mac_roman_to_utf8(zst::byte_span str);
+}
+
 namespace font
 {
 	// these are all BIG ENDIAN, because FUCK YOU.
@@ -59,9 +64,29 @@ namespace font
 		return ret;
 	}
 
-	static void parse_name_table(FontFile* font, const Table& name_table)
+	std::optional<std::string> convert_name_to_utf8(uint16_t platform_id, uint16_t encoding_id, zst::byte_span str)
 	{
-		auto buf = zst::byte_span(font->file_bytes, font->file_size);
+		// windows and unicode both use UTF-16BE
+		if(platform_id == 0 || platform_id == 3)
+		{
+			return unicode::utf8FromUtf16BigEndianBytes(str);
+		}
+		else if(platform_id == 1)
+		{
+			// mac roman encoding
+			if(encoding_id == 0)
+				return misc::convert_mac_roman_to_utf8(str);
+		}
+
+		return std::nullopt;
+	}
+
+
+
+
+	static FontNames parse_name_table(zst::byte_span buf, const Table& name_table)
+	{
+		FontNames names {};
 		buf.remove_prefix(name_table.offset);
 
 		// make a copy since we'll be consuming buf
@@ -125,48 +150,51 @@ namespace font
 			// (which includes surrogate pairs, i think -- since the OTF spec explicitly
 			// mentions "UTF-16BE")
 
-			// I **think** most fonts will have at least the standard names in plat=3 + enc=1;
-			// some ttf files have two copies -- one MacRoman (plat=1, enc=0) and one
-			// windows utf16 (plat=3, enc=1) -- so we **should** be fine for now.
-			if(nr.platform_id == 3 && nr.encoding_id != 1)
+			auto text = convert_name_to_utf8(nr.platform_id, nr.encoding_id, storage.drop(nr.offset).take(nr.length));
+			if(not text.has_value())
 				continue;
 
-			auto u16 = storage.drop(nr.offset).take(nr.length);
-			auto text = unicode::utf8FromUtf16BigEndianBytes(u16);
-
 			if(nr.name_id == 0)
-				font->copyright_info = text;
+				names.copyright_info = *text;
 			else if(nr.name_id == 1)
-				font->family_compat = text;
+				names.family_compat = *text;
 			else if(nr.name_id == 2)
-				font->subfamily_compat = text;
+				names.subfamily_compat = *text;
 			else if(nr.name_id == 3)
-				font->unique_name = text;
+				names.unique_name = *text;
 			else if(nr.name_id == 4)
-				font->full_name = text;
+				names.full_name = *text;
 			else if(nr.name_id == 6)
-				font->postscript_name = text;
+				names.postscript_name = *text;
 			else if(nr.name_id == 13)
-				font->license_info = text;
+				names.license_info = *text;
 			else if(nr.name_id == 16)
-				font->family = text;
+				names.family = *text;
 			else if(nr.name_id == 17)
-				font->subfamily = text;
+				names.subfamily = *text;
 		}
 
-		if(font->family.empty())
-			font->family = font->family_compat;
+		if(names.family.empty())
+			names.family = names.family_compat;
 
-		if(font->subfamily.empty())
-			font->subfamily = font->subfamily_compat;
+		if(names.subfamily.empty())
+			names.subfamily = names.subfamily_compat;
 
-		if(font->postscript_name.empty())
+		if(names.postscript_name.empty())
 		{
 			// TODO: need to remove spaces here
-			zpr::fprintln(stderr, "warning: making up a postscript name, using '{}'", font->unique_name);
-			font->postscript_name = font->unique_name;
+			zpr::fprintln(stderr, "warning: making up a postscript name, using '{}'", names.unique_name);
+			names.postscript_name = names.unique_name;
 		}
+
+		return names;
 	}
+
+	static void parse_name_table(FontFile* font, const Table& name_table)
+	{
+		font->m_names = parse_name_table(zst::byte_span(font->file_bytes, font->file_size), name_table);
+	}
+
 
 	static void parse_cmap_table(FontFile* font, const Table& cmap_table)
 	{
@@ -289,7 +317,6 @@ namespace font
 			font->metrics.italic_angle = static_cast<double>(whole) + (static_cast<double>(frac) / 65536.0);
 		}
 
-
 		consume_u32(buf); // skip the two underline-related metrics
 
 		font->metrics.is_monospaced = consume_u32(buf) != 0;
@@ -321,19 +348,22 @@ namespace font
 		auto buf = zst::byte_span(font->file_bytes, font->file_size);
 		buf.remove_prefix(os2_table.offset);
 
-		auto version = consume_u16(buf);
+		auto version = peek_u16(buf);
 
 		// the sTypo things are always available, even at version 0
-		font->metrics.typo_ascent = peek_i16(buf.drop(66));
-		font->metrics.typo_descent = peek_i16(buf.drop(68));
-		font->metrics.typo_linegap = peek_i16(buf.drop(70));
+		font->metrics.typo_ascent = peek_i16(buf.drop(68));
+		font->metrics.typo_descent = peek_i16(buf.drop(70));
+		font->metrics.typo_linegap = peek_i16(buf.drop(72));
 
 		// "it is strongly recommended to use OS/2.sTypoAscender - OS/2.sTypoDescender+ OS/2.sTypoLineGap
 		// as a value for default line spacing for this font."
-		// (note: we do this regardless of whether fsSelection & USE_TYPO_METRICS is true)
-		// TODO: check if these values are 0 or something -- though they shouldn't be
-		font->metrics.default_line_spacing = FontScalar(
-		    font->metrics.typo_ascent - font->metrics.typo_descent + font->metrics.typo_linegap);
+
+		// note that FreeType also does this x1.2 "magic factor", and it seems to line up with
+		// what other programs (eg. word, pages) use.
+		font->metrics.default_line_spacing = FontScalar(std::max( //
+		    (font->metrics.units_per_em * 12) / 10,
+		    font->metrics.typo_ascent - font->metrics.typo_descent + font->metrics.typo_linegap //
+		    ));
 
 		if(version >= 2)
 		{
@@ -424,44 +454,52 @@ namespace font
 		return table;
 	}
 
-	static FontFile* parseOTF(zst::byte_span buf)
+
+	static std::map<Tag, Table> get_table_offsets(zst::byte_span buf)
 	{
-		// this is perfectly fine, because we own the data referred to by 'buf'.
-		auto font = util::make<FontFile>();
-		font->file_bytes = const_cast<uint8_t*>(buf.data());
-		font->file_size = buf.size();
+		std::map<Tag, Table> tables {};
 
 		// first get the version.
 		auto sfnt_version = Tag(consume_u32(buf));
-
-		if(sfnt_version == Tag("OTTO"))
-			font->outline_type = FontFile::OUTLINES_CFF;
-
-		else if(sfnt_version == Tag(0, 1, 0, 0) || sfnt_version == Tag("true"))
-			font->outline_type = FontFile::OUTLINES_TRUETYPE;
-
-		else
-			sap::internal_error("unsupported ttf/otf file; unknown header bytes '{}'", sfnt_version.str());
-
+		(void) sfnt_version;
 
 		auto num_tables = consume_u16(buf);
 		auto search_range = consume_u16(buf);
 		auto entry_selector = consume_u16(buf);
 		auto range_shift = consume_u16(buf);
 
-		// zpr::println("{} tables", num_tables);
-
 		(void) search_range;
 		(void) entry_selector;
 		(void) range_shift;
 
-		std::map<Tag, Table> parsed_tables {};
 		for(size_t i = 0; i < num_tables; i++)
 		{
 			auto tbl = parse_table(buf);
-			parsed_tables[tbl.tag] = std::move(tbl);
-			font->tables.emplace(tbl.tag, tbl);
+			tables.emplace(tbl.tag, tbl);
 		}
+
+		return tables;
+	}
+
+
+	static FontFile* parse_offset_table(zst::byte_span file_buf_, size_t offset)
+	{
+		// this is perfectly fine, because we own the data referred to by 'buf'.
+		auto font = util::make<FontFile>();
+		font->file_bytes = const_cast<uint8_t*>(file_buf_.data());
+		font->file_size = file_buf_.size();
+		font->tables = get_table_offsets(file_buf_.drop(offset));
+
+		// first get the version.
+		auto sfnt_version = Tag(peek_u32(file_buf_.drop(offset)));
+
+		if(sfnt_version == Tag("OTTO"))
+			font->outline_type = FontFile::OUTLINES_CFF;
+		else if(sfnt_version == Tag(0, 1, 0, 0) || sfnt_version == Tag("true"))
+			font->outline_type = FontFile::OUTLINES_TRUETYPE;
+		else
+			sap::internal_error("unsupported ttf/otf file; unknown header bytes '{}'", sfnt_version.str());
+
 
 		// there is an order that we want to use:
 		constexpr Tag table_processing_order[] = { Tag("head"), Tag("name"), Tag("hhea"), Tag("hmtx"), Tag("maxp"), Tag("post"),
@@ -474,7 +512,7 @@ namespace font
 
 		for(auto tag : table_processing_order)
 		{
-			if(auto it = parsed_tables.find(tag); it != parsed_tables.end())
+			if(auto it = font->tables.find(tag); it != font->tables.end())
 			{
 				auto& tbl = it->second;
 				if(tag == Tag("CFF "))
@@ -510,30 +548,72 @@ namespace font
 		return font;
 	}
 
+	static std::optional<FontFile*> search_for_font_in_collection_with_postscript_name(zst::byte_span bytes,
+	    zst::str_view postscript_name)
+	{
+		assert(memcmp(bytes.data(), "ttcf", 4) == 0);
+
+		// copy the thing
+		auto file = bytes;
+
+		// tag + major version + minor version
+		bytes.remove_prefix(4 + 2 + 2);
+
+		auto num_fonts = consume_u32(bytes);
+		for(uint32_t i = 0; i < num_fonts; i++)
+		{
+			auto offset = consume_u32(bytes);
+			auto tables = get_table_offsets(file.drop(offset));
+
+			const auto& name_table = tables[Tag("name")];
+			auto font_names = parse_name_table(file, name_table);
+
+			zpr::println("{} vs {} ({}/{}), {x}", postscript_name, font_names.postscript_name, i, num_fonts, name_table.offset);
+
+			if(font_names.postscript_name == postscript_name)
+				return parse_offset_table(file, offset);
+		}
+
+		zpr::println("o no: {}", postscript_name);
+		return std::nullopt;
+	}
+
+
+
+
+
 	FontFile* FontFile::parseFromFile(const std::string& path)
 	{
-		// zpr::println("read {}", path);
 		auto [buf, len] = util::readEntireFile(path);
 		if(len < 4)
 			sap::internal_error("font file too short");
 
 		if(memcmp(buf, "OTTO", 4) == 0 || memcmp(buf, "true", 4) == 0 || memcmp(buf, "\x00\x01\x00\x00", 4) == 0)
-			return parseOTF(zst::byte_span(buf, len));
+			return parse_offset_table(zst::byte_span(buf, len), /* offset: */ 0);
 
 		else
 			sap::internal_error("unsupported font file; unknown header bytes '{}'", zst::str_view((char*) buf, 4));
 	}
 
-	extern std::optional<std::string> find_font_with_fontconfig(std::vector<std::string> families, //
-	    const std::string& style, std::vector<std::string> fontformats);
 
-	std::optional<std::string> findFontPath(std::initializer_list<std::string> families, //
-	    const std::string& style, std::initializer_list<std::string> fontformats)
+
+
+	std::optional<FontFile*> FontFile::fromHandle(FontHandle handle)
 	{
-#ifdef USE_FONTCONFIG
-		if(auto ret = find_font_with_fontconfig(families, style, fontformats); ret.has_value())
-			return ret;
-#endif
+		auto [buf, len] = util::readEntireFile(handle.path);
+		if(len < 4)
+			sap::internal_error("font file too short");
+
+		auto span = zst::byte_span(buf, len);
+
+		if(memcmp(buf, "OTTO", 4) == 0 || memcmp(buf, "true", 4) == 0 || memcmp(buf, "\x00\x01\x00\x00", 4) == 0)
+			return parse_offset_table(span, /* offset: */ 0);
+
+		else if(memcmp(buf, "ttcf", 4) == 0)
+			return search_for_font_in_collection_with_postscript_name(span, handle.postscript_name);
+
+		else
+			sap::internal_error("unsupported font file; unknown header bytes '{}'", zst::str_view((char*) buf, 4));
 
 		return std::nullopt;
 	}

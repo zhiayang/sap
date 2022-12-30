@@ -8,7 +8,7 @@
 
 namespace font
 {
-	std::optional<std::string> find_font_with_fontconfig(std::vector<std::string> families, const std::string& style,
+	std::optional<std::string> findFontWithFontConfig(std::vector<std::string> families, const std::string& style,
 	    std::vector<std::string> fontformats)
 	{
 		FcConfig* config = FcInitLoadConfigAndFonts();

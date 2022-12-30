@@ -9,6 +9,7 @@
 #include "units.h" // for Scalar, operator+, Vector2<>::scalar_type
 
 #include "font/tag.h"         // for Tag
+#include "font/handle.h"      // for FontHandle
 #include "font/features.h"    // for GlyphAdjustment, Feature, LookupTable
 #include "font/font_scalar.h" // for FontScalar, FontVector2d, font_design_space
 
@@ -94,16 +95,39 @@ namespace font
 
 	using KerningPair = std::pair<GlyphAdjustment, GlyphAdjustment>;
 
-	std::optional<std::string> findFontPath(std::initializer_list<std::string> families, const std::string& style,
-	    std::initializer_list<std::string> fontformats);
+
+	struct FontNames
+	{
+		// corresponds to name IDs 16 and 17. if not present, they will have the same
+		// value as their *_compat counterparts.
+		std::string family;
+		std::string subfamily;
+
+		// corresponds to name IDs 1 and 2.
+		std::string family_compat;
+		std::string subfamily_compat;
+
+		std::string unique_name; // name 3
+
+		std::string full_name;       // name 4
+		std::string postscript_name; // name 6
+
+		// when embedding this font, we are probably legally required to reproduce the license.
+		std::string copyright_info; // name 0
+		std::string license_info;   // name 13
+	};
 
 	// TODO: clean up this entire struct
 	struct FontFile
 	{
 		static FontFile* parseFromFile(const std::string& path);
 
-		GlyphId getGlyphIndexForCodepoint(char32_t codepoint) const;
+		static std::optional<FontFile*> fromHandle(FontHandle handle);
+
+		const FontNames& names() const { return m_names; }
+
 		GlyphMetrics getGlyphMetrics(GlyphId glyphId) const;
+		GlyphId getGlyphIndexForCodepoint(char32_t codepoint) const;
 
 		std::vector<GlyphInfo> getGlyphInfosForString(zst::wstr_view text)
 		{
@@ -170,23 +194,7 @@ namespace font
 			return size;
 		}
 
-		// corresponds to name IDs 16 and 17. if not present, they will have the same
-		// value as their *_compat counterparts.
-		std::string family;
-		std::string subfamily;
-
-		// corresponds to name IDs 1 and 2.
-		std::string family_compat;
-		std::string subfamily_compat;
-
-		std::string unique_name; // name 3
-
-		std::string full_name;       // name 4
-		std::string postscript_name; // name 6
-
-		// when embedding this font, we are probably legally required to reproduce the license.
-		std::string copyright_info; // name 0
-		std::string license_info;   // name 13
+		FontNames m_names;
 
 		// some stuff we need to save, internal use.
 		size_t num_hmetrics = 0;

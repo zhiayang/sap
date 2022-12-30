@@ -184,19 +184,6 @@ namespace font
 					stream->append(file_contents.drop(table.offset).take(table.length));
 			}
 		}
-
-
-#if 0
-		auto foo = fopen("test.otf", "wb");
-		stream->write_to_file(foo);
-		fclose(foo);
-#endif
-
-		// if(stream->is_compressed)
-		// {
-		// 	stream->dict->addOrReplace(pdf::names::Length1,
-		// 	    pdf::Integer::create(util::checked_cast<int64_t>(stream->uncompressed_length)));
-		// }
 	}
 
 
@@ -212,6 +199,6 @@ namespace font
 		const char* letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
 
 		return zpr::sprint("{}{}{}{}{}{}+{}", letters[rand() % 26], letters[rand() % 26], letters[rand() % 26],
-		    letters[rand() % 26], letters[rand() % 26], letters[rand() % 26], font->postscript_name);
+		    letters[rand() % 26], letters[rand() % 26], letters[rand() % 26], font->names().postscript_name);
 	}
 }

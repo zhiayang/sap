@@ -151,8 +151,17 @@ namespace pdf
 		        monstrous in size.
 		*/
 
-		auto font_bbox = Array::create({ Integer::create(font_file->metrics.xmin), Integer::create(font_file->metrics.ymin),
-		    Integer::create(font_file->metrics.xmax), Integer::create(font_file->metrics.ymax) });
+		auto units_per_em_scale = font_file->metrics.units_per_em / 1000.0;
+		auto scale_metric = [units_per_em_scale](auto metric) -> Integer* {
+			return Integer::create(static_cast<int64_t>(metric / units_per_em_scale));
+		};
+
+		auto font_bbox = Array::create({
+		    scale_metric(font_file->metrics.xmin),
+		    scale_metric(font_file->metrics.ymin),
+		    scale_metric(font_file->metrics.xmax),
+		    scale_metric(font_file->metrics.ymax),
+		});
 
 		int cap_height = 0;
 		if(font_file->metrics.cap_height != 0)
@@ -169,6 +178,13 @@ namespace pdf
 			zpr::println("your dumb font doesn't tell me cap_height, assuming 700");
 		}
 
+		int x_height = 0;
+		if(font_file->metrics.x_height != 0)
+			x_height = font_file->metrics.x_height;
+		else
+			x_height = 400;
+
+
 		// truetype fonts don't contain stemv.
 		static constexpr int STEMV_CONSTANT = 69;
 
@@ -178,14 +194,19 @@ namespace pdf
 		// we need a CIDSet for subset fonts
 		ret->cidset = Stream::create(doc, {});
 
-		// TODO: scale the metrics correctly!
 		auto font_desc = Dictionary::createIndirect(doc, names::FontDescriptor,
-		    { { names::FontName, basefont_name }, { names::Flags, Integer::create(4) }, { names::FontBBox, font_bbox },
+		    {
+		        { names::FontName, basefont_name },
+		        { names::Flags, Integer::create(4) },
+		        { names::FontBBox, font_bbox },
 		        { names::ItalicAngle, Integer::create(static_cast<int32_t>(font_file->metrics.italic_angle)) },
-		        { names::Ascent, Integer::create(font_file->metrics.hhea_ascent) },
-		        { names::Descent, Integer::create(font_file->metrics.hhea_descent) },
-		        { names::CapHeight, Integer::create(cap_height) }, { names::XHeight, Integer::create(69) },
-		        { names::StemV, Integer::create(STEMV_CONSTANT) }, { names::CIDSet, IndirectRef::create(ret->cidset) } });
+		        { names::Ascent, scale_metric(font_file->metrics.hhea_ascent) },
+		        { names::Descent, scale_metric(font_file->metrics.hhea_descent) },
+		        { names::CapHeight, scale_metric(cap_height) },
+		        { names::XHeight, scale_metric(x_height) },
+		        { names::StemV, Integer::create(STEMV_CONSTANT) },
+		        { names::CIDSet, IndirectRef::create(ret->cidset) },
+		    });
 
 		cidfont_dict->add(names::FontDescriptor, IndirectRef::create(font_desc));
 

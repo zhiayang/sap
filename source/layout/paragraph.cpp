@@ -93,6 +93,7 @@ namespace sap::layout
 		{
 			auto prev_word_style = parent_style->extend(style);
 			auto word_style = parent_style->extend(w.style());
+
 			line_height = std::max(line_height,
 			    calculateWordSize(last_word, word_style).y() * word_style->line_spacing().value());
 
@@ -286,7 +287,8 @@ namespace sap::layout
 			{
 				// Make sure pdf cursor agrees with our cursor
 				cur_text->offset(pdf::Font::convertPDFScalarToTextSpaceForFontSize(
-				    (m_words[i].start.pos_on_page.x() - current_curs.pos_on_page.x()).into<pdf::PdfScalar>(), m_words[i].font_size));
+				    (m_words[i].start.pos_on_page.x() - current_curs.pos_on_page.x()).into<pdf::PdfScalar>(),
+				    m_words[i].font_size));
 			}
 
 			m_words[i].word.render(cur_text, space);

@@ -22,8 +22,10 @@ namespace sap::interp
 
 		auto define_builtin = [&](auto&&... xs) {
 			auto ret = std::make_unique<BFD>(std::forward<decltype(xs)>(xs)...);
-			builtin_ns->define(cs->addBuiltinDefinition(std::move(ret)));
+			cs->addBuiltinDefinition(std::move(ret))->typecheck(cs);
 		};
+
+		auto _ = cs->pushTree(builtin_ns);
 
 		define_builtin("__bold1", makeParamList(Param { .name = "_", .type = any }), tio, &builtin::bold1);
 		define_builtin("__italic1", makeParamList(Param { .name = "_", .type = any }), tio, &builtin::italic1);

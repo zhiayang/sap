@@ -9,7 +9,7 @@ WARNINGS += -Wno-error=unused-variable
 WARNINGS += -Wno-error=unused-function
 WARNINGS += -Wno-unused-but-set-variable
 
-COMMON_CFLAGS   = -O3 -g
+COMMON_CFLAGS   = -O0 -g
 
 OUTPUT_DIR      := build
 TEST_DIR        := $(OUTPUT_DIR)/test
@@ -51,14 +51,26 @@ INCLUDES        := -Isource/include -Iexternal
 
 UNAME_IDENT := $(shell uname)
 ifeq ("$(UNAME_IDENT)", "Linux")
-USE_FONTCONFIG := 1
+	USE_FONTCONFIG := 1
+endif
+
+ifeq ("$(UNAME_IDENT)", "Darwin")
+	USE_CORETEXT := 1
 endif
 
 ifeq ($(USE_FONTCONFIG), 1)
-DEFINES  += -DUSE_FONTCONFIG
-CXXFLAGS += $(shell pkg-config --cflags fontconfig)
-LDFLAGS  += $(shell pkg-config --libs fontconfig)
+	DEFINES  += -DUSE_FONTCONFIG=1
+	CXXFLAGS += $(shell pkg-config --cflags fontconfig)
+	LDFLAGS  += $(shell pkg-config --libs fontconfig)
 endif
+
+ifeq ($(USE_CORETEXT), 1)
+	DEFINES  += -DUSE_CORETEXT=1
+	LDFLAGS  += -framework Foundation -framework CoreText
+endif
+
+
+
 
 OUTPUT_BIN      := $(OUTPUT_DIR)/sap
 

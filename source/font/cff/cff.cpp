@@ -108,11 +108,13 @@ namespace font::cff
 			// TODO: we might not have parsed the name information yet!
 			if(a != 1 && a != 2)
 			{
-				sap::error("font/cff", "font '{}' has unsupported CFF version '{}.{}'", font->full_name, a, b);
+				sap::error("font/cff", "font '{}' has unsupported CFF version '{}.{}'", //
+				    font->names().full_name, a, b);
 			}
 			else if(b != 0)
 			{
-				sap::warn("font/cff", "font '{}' has unsupported CFF version '{}.{}' (expected minor 0)", font->full_name, a, b);
+				sap::warn("font/cff", "font '{}' has unsupported CFF version '{}.{}' (expected minor 0)", //
+				    font->names().full_name, a, b);
 			}
 
 			if(a == 2)
