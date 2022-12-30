@@ -66,12 +66,12 @@ namespace font
 	}
 
 
-	void FontFile::writeSubset(zst::str_view subset_name, Stream* stream, const std::unordered_set<GlyphId>& used_glyphs)
+	void FontFile::writeSubset(zst::str_view subset_name, Stream* stream)
 	{
 		auto file_contents = this->bytes();
 		if(this->hasCffOutlines())
 		{
-			auto subset = this->createCFFSubset(subset_name, used_glyphs);
+			auto subset = this->createCFFSubset(subset_name);
 			stream->setContents(subset.cff.span());
 			return;
 		}
@@ -118,7 +118,7 @@ namespace font
 
 		if(this->hasTrueTypeOutlines())
 		{
-			auto subset = this->createTTSubset(used_glyphs);
+			auto subset = this->createTTSubset();
 
 			for(auto& table : included_tables)
 			{
@@ -152,7 +152,7 @@ namespace font
 		}
 		else
 		{
-			auto cff_subset = this->createCFFSubset(subset_name, used_glyphs);
+			auto cff_subset = this->createCFFSubset(subset_name);
 
 			for(auto& table : included_tables)
 			{

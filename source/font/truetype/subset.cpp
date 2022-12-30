@@ -10,7 +10,7 @@
 
 namespace font
 {
-	truetype::TTSubset FontFile::createTTSubset(const std::unordered_set<GlyphId>& used_glyphs)
+	truetype::TTSubset FontFile::createTTSubset()
 	{
 		auto& tt = m_truetype_data;
 		assert(tt != nullptr);
@@ -20,7 +20,7 @@ namespace font
 		used_gids.insert(0);
 		used_gids.insert(tt->glyphs[0].component_gids.begin(), tt->glyphs[0].component_gids.end());
 
-		for(auto& gid : used_glyphs)
+		for(auto& gid : m_used_glyphs)
 		{
 			auto gid16 = util::checked_cast<uint16_t>(static_cast<uint32_t>(gid));
 			auto& comps = tt->glyphs[gid16].component_gids;

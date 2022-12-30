@@ -24,7 +24,6 @@
 CLEANUPS:
 
 - use magic .into() for units
-- cleanup the pdf::Font / font::FontFile nonsense
 - maybe wrapper around (const Style*)
 - maybe s/layout/print/ or something
 	- rename layout() methods to print() or something

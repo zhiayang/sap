@@ -168,7 +168,7 @@ namespace font::cff
 namespace font
 {
 	using namespace cff;
-	CFFSubset FontFile::createCFFSubset(zst::str_view subset_name, const std::unordered_set<GlyphId>& used_glyphs)
+	CFFSubset FontFile::createCFFSubset(zst::str_view subset_name)
 	{
 		auto& cff = m_cff_data;
 		assert(cff != nullptr);
@@ -220,7 +220,7 @@ namespace font
 		*/
 
 		// first, figure out which glyphs we don't use.
-		perform_glyph_pruning(cff.get(), used_glyphs);
+		perform_glyph_pruning(cff.get(), m_used_glyphs);
 
 
 		// write the header
@@ -416,7 +416,7 @@ namespace font
 
 
 			copy_kv_pair_with_abs_offset(DictKey::charset);
-			write_charset_table(cff.get(), tmp_buffer, used_glyphs);
+			write_charset_table(cff.get(), tmp_buffer, m_used_glyphs);
 
 
 			{

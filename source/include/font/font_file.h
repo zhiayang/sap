@@ -71,6 +71,8 @@ namespace font
 	// TODO: clean up this entire struct
 	struct FontFile
 	{
+		~FontFile();
+
 		const FontNames& names() const { return m_names; }
 		const FontMetrics& metrics() const { return m_metrics; }
 		const CharacterMapping& characterMapping() const { return m_character_mapping; }
@@ -89,13 +91,17 @@ namespace font
 
 		GlyphMetrics getGlyphMetrics(GlyphId glyphId) const;
 		GlyphId getGlyphIndexForCodepoint(char32_t codepoint) const;
+
+		FontVector2d getWordSize(zst::wstr_view word) const;
 		std::vector<GlyphInfo> getGlyphInfosForString(zst::wstr_view text) const;
 
-		void writeSubset(zst::str_view subset_name, pdf::Stream* stream, const std::unordered_set<GlyphId>& used_glyphs);
+		void writeSubset(zst::str_view subset_name, pdf::Stream* stream);
+
+		bool isGlyphUsed(GlyphId glyph_id) const { return m_used_glyphs.contains(glyph_id); }
+		void markGlyphAsUsed(GlyphId glyph_id) const { m_used_glyphs.insert(glyph_id); }
+		const auto& usedGlyphs() const { return m_used_glyphs; }
 
 		static std::optional<std::shared_ptr<FontFile>> fromHandle(FontHandle handle);
-
-		~FontFile();
 
 	private:
 		FontFile(const uint8_t* bytes, size_t size);
@@ -119,8 +125,8 @@ namespace font
 		    Subset the CFF font (given in `file`), including only the used_glyphs. Returns a new CFF and cmap table
 		    for embedding into the OTF font.
 		*/
-		cff::CFFSubset createCFFSubset(zst::str_view subset_name, const std::unordered_set<GlyphId>& used_glyphs);
-		truetype::TTSubset createTTSubset(const std::unordered_set<GlyphId>& used_glyphs);
+		cff::CFFSubset createCFFSubset(zst::str_view subset_name);
+		truetype::TTSubset createTTSubset();
 
 		static std::shared_ptr<FontFile> from_offset_table(zst::byte_span file_bytes, size_t start_of_offset_table);
 		static std::optional<std::shared_ptr<FontFile>> from_postscript_name_in_collection(zst::byte_span ttc_file,
@@ -148,6 +154,11 @@ namespace font
 
 		// only valid if outline_type == OUTLINES_TRUETYPE
 		std::unique_ptr<truetype::TTData> m_truetype_data {};
+
+		mutable std::unordered_set<GlyphId> m_used_glyphs {};
+		mutable std::map<GlyphId, GlyphMetrics> m_glyph_metrics {};
+		mutable util::hashmap<std::u32string, FontVector2d> m_word_size_cache {};
+		mutable util::hashmap<std::u32string, std::vector<GlyphInfo>> m_glyph_infos_cache {};
 
 		static constexpr int OUTLINES_TRUETYPE = 1;
 		static constexpr int OUTLINES_CFF = 2;

@@ -39,7 +39,7 @@ namespace pdf
 
 		for(auto& [cp, glyph] : mapping)
 		{
-			if(m_used_glyphs.find(glyph) == m_used_glyphs.end())
+			if(not m_source_file->isGlyphUsed(glyph))
 				continue;
 
 			auto codepoint = static_cast<uint32_t>(cp);

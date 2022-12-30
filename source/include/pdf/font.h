@@ -32,17 +32,16 @@ namespace pdf
 		Dictionary* dictionary() const { return this->font_dictionary; }
 
 		GlyphId getGlyphIdFromCodepoint(char32_t codepoint) const;
-		const std::vector<font::GlyphInfo>& getGlyphInfosForString(zst::wstr_view text) const;
+		std::vector<font::GlyphInfo> getGlyphInfosForString(zst::wstr_view text) const;
 
 		void markGlyphAsUsed(GlyphId glyph) const;
 
+		const font::FontMetrics& getFontMetrics() const;
 		font::GlyphMetrics getMetricsForGlyph(GlyphId glyph) const;
 
 		// add an explicit mapping from glyph id to a list of codepoints. This is useful for
 		// ligature substitutions (eg. 'ffi' -> 'f', 'f', 'i') and for single replacements.
 		void addGlyphUnicodeMapping(GlyphId glyph, std::vector<char32_t> codepoints) const;
-
-		const font::FontMetrics& getFontMetrics() const;
 
 		// get the name that we should put in the Resource dictionary of a page that uses this font.
 		std::string getFontResourceName() const;
@@ -103,12 +102,7 @@ namespace pdf
 		void writeUnicodeCMap(File* doc) const;
 		void writeCIDSet(File* doc) const;
 
-		mutable std::unordered_set<GlyphId> m_used_glyphs {};
-		mutable std::map<GlyphId, font::GlyphMetrics> m_glyph_metrics {};
 		mutable std::map<GlyphId, std::vector<char32_t>> m_extra_unicode_mappings {};
-		mutable util::hashmap<std::u32string, std::vector<font::GlyphInfo>> m_glyph_infos_cache {};
-		mutable util::hashmap<std::u32string, Size2d_YDown> m_word_size_cache {};
-
 		mutable bool m_did_serialise = false;
 
 		// the name that goes into the Resource << >> dict in a page. This is a unique name

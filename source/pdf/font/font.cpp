@@ -32,44 +32,14 @@ namespace pdf
 		return m_source_file->metrics();
 	}
 
-	Size2d_YDown PdfFont::getWordSize(zst::wstr_view text, PdfScalar font_size) const
-	{
-		if(auto it = m_word_size_cache.find(text); it != m_word_size_cache.end())
-			return it->second;
-
-		Size2d_YDown size;
-		size.y() = this->scaleMetricForFontSize(m_source_file->metrics().default_line_spacing, font_size);
-		const auto& glyphs = this->getGlyphInfosForString(text);
-		for(auto& g : glyphs)
-		{
-			auto tmp = g.metrics.horz_advance + g.adjustments.horz_advance;
-			size.x() += this->scaleMetricForFontSize(tmp, font_size.into<pdf::PdfScalar>());
-		}
-
-		m_word_size_cache.emplace(text.str(), size);
-		return size;
-	}
-
 	void PdfFont::markGlyphAsUsed(GlyphId glyph) const
 	{
-		m_used_glyphs.insert(glyph);
+		m_source_file->markGlyphAsUsed(glyph);
 	}
-
 
 	font::GlyphMetrics PdfFont::getMetricsForGlyph(GlyphId glyph) const
 	{
-		this->markGlyphAsUsed(glyph);
-
-		if(!m_source_file)
-			return {};
-
-		else if(auto it = m_glyph_metrics.find(glyph); it != m_glyph_metrics.end())
-			return it->second;
-
-		auto metrics = m_source_file->getGlyphMetrics(glyph);
-		m_glyph_metrics[glyph] = metrics;
-
-		return metrics;
+		return m_source_file->getGlyphMetrics(glyph);
 	}
 
 	GlyphId PdfFont::getGlyphIdFromCodepoint(char32_t codepoint) const
@@ -97,57 +67,19 @@ namespace pdf
 		}
 	}
 
-	const std::vector<font::GlyphInfo>& PdfFont::getGlyphInfosForString(zst::wstr_view text) const
+
+	Size2d_YDown PdfFont::getWordSize(zst::wstr_view text, PdfScalar font_size) const
 	{
-		if(auto it = m_glyph_infos_cache.find(text); it != m_glyph_infos_cache.end())
-		{
-			return it->second;
-		}
+		auto sz = m_source_file->getWordSize(text);
+		return Size2d_YDown(                                 //
+		    this->scaleMetricForFontSize(sz.x(), font_size), //
+		    this->scaleMetricForFontSize(sz.y(), font_size));
+	}
 
-		// first, convert all codepoints to glyphs
-		std::vector<GlyphId> glyphs {};
-		for(char32_t cp : text)
-			glyphs.push_back(this->getGlyphIdFromCodepoint(cp));
-
-		using font::Tag;
-		font::off::FeatureSet features {};
-
-		// REMOVE: this is just for testing!
-		features.script = Tag("cyrl");
-		features.language = Tag("BGR ");
-		features.enabled_features = { Tag("kern"), Tag("liga"), Tag("locl") };
-
-		auto span = [](auto& foo) {
-			return zst::span<GlyphId>(foo.data(), foo.size());
-		};
-
-		// next, use GSUB to perform substitutions.
-		glyphs = this->performSubstitutionsForGlyphSequence(span(glyphs), features);
-
-		// next, get base metrics for each glyph.
-		std::vector<font::GlyphInfo> glyph_infos {};
-		for(auto g : glyphs)
-		{
-			font::GlyphInfo info {};
-			info.gid = g;
-			info.metrics = this->getMetricsForGlyph(g);
-			glyph_infos.push_back(std::move(info));
-		}
-
-		// finally, use GPOS
-		auto adjustment_map = this->getPositioningAdjustmentsForGlyphSequence(span(glyphs), features);
-		for(auto& [i, adj] : adjustment_map)
-		{
-			auto& info = glyph_infos[i];
-			info.adjustments.horz_advance += adj.horz_advance;
-			info.adjustments.vert_advance += adj.vert_advance;
-			info.adjustments.horz_placement += adj.horz_placement;
-			info.adjustments.vert_placement += adj.vert_placement;
-		}
-
-		auto res = m_glyph_infos_cache.emplace(text.str(), std::move(glyph_infos));
-
-		return res.first->second;
+	std::vector<font::GlyphInfo> PdfFont::getGlyphInfosForString(zst::wstr_view text) const
+	{
+		assert(m_source_file != nullptr);
+		return m_source_file->getGlyphInfosForString(text);
 	}
 
 	void PdfFont::addGlyphUnicodeMapping(GlyphId glyph, std::vector<char32_t> codepoints) const

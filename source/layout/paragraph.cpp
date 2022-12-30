@@ -211,7 +211,7 @@ namespace sap::layout
 
 			for(size_t i = 0; i < line1.numParts(); i++)
 			{
-				auto word_width = line2.wordWidthForIndex(i);
+				auto word_width = line1.wordWidthForIndex(i);
 
 				auto word_visitor = [&](const Word& word) {
 					auto new_cursor = layout->moveRightFrom(cursor, word_width);
