@@ -4,7 +4,8 @@
 
 #include "location.h" // for error
 
-#include "interp/ast.h"         // for Declaration, FunctionCall, Expr, Fun...
+#include "interp/ast.h" // for Declaration, FunctionCall, Expr, Fun...
+#include "interp/misc.h"
 #include "interp/type.h"        // for Type, FunctionType
 #include "interp/value.h"       // for Value
 #include "interp/interp.h"      // for Interpreter, DefnTree
@@ -12,61 +13,24 @@
 
 namespace sap::interp
 {
-	template <typename T, typename ArgProcessor>
-	ErrorOr<std::pair<std::unordered_map<size_t, T>, std::vector<const Type*>>> resolve_argument_order(Interpreter* cs,
-	    const Declaration* decl, const std::vector<FunctionCall::Arg>& args, ArgProcessor&& ap)
+	static ErrorOr<std::vector<std::tuple<std::string, const Type*, const Expr*>>> convert_params(const Declaration* decl)
 	{
-		// TODO: check for variables.
 		if(auto fdecl = dynamic_cast<const FunctionDecl*>(decl); fdecl != nullptr)
 		{
 			auto decl_type = fdecl->get_type()->toFunction();
 			auto& decl_params = fdecl->params();
 
-			// because of optional arguments, we can have fewer arguments than parameters, but not the other way around
-			if(args.size() > decl_params.size())
-				return ErrFmt("wrong number of arguments: got {}, expected at most {}", args.size(), decl_params.size());
-
-			std::unordered_map<size_t, T> ordered_args {};
-
-			std::vector<const Type*> decl_param_types {};
-			std::unordered_map<std::string, size_t> param_names {};
+			std::vector<std::tuple<std::string, const Type*, const Expr*>> params {};
 			for(size_t i = 0; i < decl_params.size(); i++)
 			{
-				param_names[decl_params[i].name] = i;
-				decl_param_types.push_back(decl_type->parameterTypes()[i]);
+				params.push_back({
+				    decl_params[i].name,
+				    decl_type->parameterTypes()[i],
+				    decl_params[i].default_value.get(),
+				});
 			}
 
-			size_t cur_idx = 0;
-			size_t have_named = false;
-			for(auto& arg : args)
-			{
-				if(arg.name.has_value())
-				{
-					have_named = true;
-					if(auto it = param_names.find(*arg.name); it == param_names.end())
-					{
-						return ErrFmt("function has no parameter named '{}'", *arg.name);
-					}
-					else
-					{
-						assert(it->second < ordered_args.size());
-						if(auto tmp = ordered_args.find(it->second); tmp != ordered_args.end())
-							return ErrFmt("argument for parameter '{}' already specified", *arg.name);
-
-						ordered_args[it->second] = TRY(ap(arg));
-					}
-				}
-				else
-				{
-					// NOTE: this should have been caught in the parser, but just in case...
-					if(have_named)
-						return ErrFmt("positional arguments not allowed after named arguments");
-
-					ordered_args[cur_idx++] = TRY(ap(arg));
-				}
-			}
-
-			return Ok(std::make_pair(std::move(ordered_args), std::move(decl_param_types)));
+			return Ok(std::move(params));
 		}
 		else
 		{
@@ -74,55 +38,29 @@ namespace sap::interp
 		}
 	}
 
+	template <typename T, typename ArgProcessor>
+	ErrorOr<std::pair<std::unordered_map<size_t, T>, std::vector<const Type*>>> arrange_arguments( //
+	    Interpreter* cs,                                                                           //
+	    const std::vector<std::tuple<std::string, const Type*, const Expr*>>& params,              //
+	    const std::vector<FunctionCall::Arg>& args,                                                //
+	    ArgProcessor&& ap)
+	{
+		// TODO: handle for variables.
+		return arrange_arguments<T>(cs, params, args, "function", "argument", "argument for parameter",
+		    static_cast<ArgProcessor&&>(ap));
+	}
+
+
 	static ErrorOr<int> get_calling_cost(Interpreter* cs, const Declaration* decl,
 	    const std::vector<FunctionCall::Arg>& arguments)
 	{
-		auto [ordered_args, decl_params_types] = TRY(resolve_argument_order<const Type*>(cs, decl, arguments, [cs](auto& arg) {
-			return arg.value->typecheck(cs);
-		}));
+		auto params = TRY(convert_params(decl));
+		auto ordered = TRY(arrange_arguments<const Type*>(cs, params, arguments, //
+		    [cs](auto& arg) {
+			    return arg.value->typecheck(cs);
+		    }));
 
-		int cost = 0;
-
-		for(size_t i = 0; i < ordered_args.size(); i++)
-		{
-			auto arg_type = ordered_args[i];
-
-			if(arg_type == nullptr)
-			{
-				if(auto fdecl = dynamic_cast<const FunctionDecl*>(decl); fdecl != nullptr)
-				{
-					auto& params = fdecl->params();
-					if(params[i].default_value == nullptr)
-						return ErrFmt("missing argument for parameter '{}'", params[i].name);
-
-					arg_type = TRY(params[i].default_value->typecheck(cs));
-				}
-				else
-				{
-					return ErrFmt("????");
-				}
-			}
-
-			// if the param is an any, we can just do it, but with extra cost.
-			if(auto param_type = decl_params_types[i]; arg_type != param_type)
-			{
-				if(param_type->isAny())
-				{
-					cost += 2;
-				}
-				else
-				{
-					return ErrFmt("mismatched types for argument {}: got '{}', expected '{}'", //
-					    1 + i, arg_type, param_type);
-				}
-			}
-			else
-			{
-				cost += 1;
-			}
-		}
-
-		return Ok(cost);
+		return get_calling_cost(cs, params, ordered, "function", "argument", "argument for parameter");
 	}
 
 
@@ -211,7 +149,9 @@ namespace sap::interp
 			assert(m_resolved_func_decl != nullptr);
 
 			auto decl = m_resolved_func_decl;
-			auto [ordered_args, _] = TRY(resolve_argument_order<Value>(cs, decl, this->arguments, //
+			auto params = TRY(convert_params(decl));
+
+			auto [ordered_args, _] = TRY(arrange_arguments<Value>(cs, params, this->arguments, //
 			    [cs](auto& arg) -> ErrorOr<Value> {
 				    return Ok(std::move(TRY_VALUE(arg.value->evaluate(cs))));
 			    }));

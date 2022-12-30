@@ -3,6 +3,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #include "interp/ast.h"
+#include "interp/misc.h"
 #include "interp/interp.h"
 
 namespace sap::interp
@@ -57,6 +58,57 @@ namespace sap::interp
 	}
 
 	ErrorOr<EvalResult> StructDefn::evaluate(Interpreter* cs) const
+	{
+		// this also doesn't do anything
+		return Ok(EvalResult::of_void());
+	}
+
+
+
+	ErrorOr<const Type*> StructLit::typecheck_impl(Interpreter* cs, const Type* infer) const
+	{
+		const StructType* struct_type = nullptr;
+		if(struct_name.name.empty())
+		{
+			if(infer == nullptr)
+				return ErrFmt("cannot infer type of struct literal");
+			else if(not infer->isStruct())
+				return ErrFmt("inferred non-struct type '{}' for struct literal", infer);
+
+			struct_type = infer->toStruct();
+		}
+		else
+		{
+			auto t = TRY(cs->resolveType(frontend::PType::named(this->struct_name)));
+			if(not t->isStruct())
+				return ErrFmt("invalid non-struct type '{}' for struct literal", t);
+
+			struct_type = t->toStruct();
+		}
+
+		// make sure the struct has all the things
+		std::vector<std::tuple<std::string, const Type*, const Expr*>> fields {};
+
+		auto& struct_fields = struct_type->getFields();
+		for(size_t i = 0; i < struct_fields.size(); i++)
+		{
+			fields.push_back({
+			    struct_fields[i].name,
+			    struct_fields[i].type,
+			    nullptr,
+			});
+		}
+
+		auto ordered = TRY(arrange_arguments<const Type*>(cs, fields, this->field_inits, //
+		    "struct", "field", "field", [cs](auto& arg) {
+			    return arg.value->typecheck(cs);
+		    }));
+
+		TRY(get_calling_cost(cs, fields, ordered, "struct", "field", "field"));
+		return Ok(struct_type);
+	}
+
+	ErrorOr<EvalResult> StructLit::evaluate(Interpreter* cs) const
 	{
 		// this also doesn't do anything
 		return Ok(EvalResult::of_void());

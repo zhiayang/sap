@@ -111,6 +111,18 @@ namespace sap::interp
 		std::u32string string;
 	};
 
+	struct StructLit : Expr
+	{
+		virtual ErrorOr<EvalResult> evaluate(Interpreter* cs) const override;
+		virtual ErrorOr<const Type*> typecheck_impl(Interpreter* cs, const Type* infer = nullptr) const override;
+
+		using Arg = FunctionCall::Arg;
+
+		QualifiedId struct_name;
+		std::vector<Arg> field_inits;
+	};
+
+
 	struct BinaryOp : Expr
 	{
 		virtual ErrorOr<EvalResult> evaluate(Interpreter* cs) const override;

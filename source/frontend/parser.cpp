@@ -419,6 +419,39 @@ namespace sap::frontend
 		}
 	}
 
+	static std::unique_ptr<interp::StructLit> parse_struct_literal(Lexer& lexer, interp::QualifiedId id)
+	{
+		if(not lexer.expect(TT::LBrace))
+			error(lexer.location(), "expected '{' for struct literal");
+
+		auto ret = std::make_unique<interp::StructLit>();
+		ret->struct_name = std::move(id);
+
+		while(not lexer.expect(TT::RBrace))
+		{
+			if(not lexer.expect(TT::Period))
+				error(lexer.location(), "expected '.' to begin designated struct initialiser, found '{}'");
+
+			auto field_name = lexer.match(TT::Identifier);
+			if(not field_name.has_value())
+				error(lexer.location(), "expected identifier after '.' for field name");
+
+			if(not lexer.expect(TT::Equal))
+				error(lexer.location(), "expected '=' after field name");
+
+			auto value = parse_expr(lexer);
+			ret->field_inits.push_back(interp::StructLit::Arg {
+			    .name = field_name->text.str(),
+			    .value = std::move(value),
+			});
+
+			if(not lexer.expect(TT::Comma) && lexer.peek() != TT::RBrace)
+				error(lexer.location(), "expected ',' in struct initialiser list");
+		}
+
+		return ret;
+	}
+
 
 
 	static std::unique_ptr<interp::Expr> parse_primary(Lexer& lexer)
@@ -428,7 +461,21 @@ namespace sap::frontend
 			auto qid = parse_qualified_id(lexer);
 			auto ident = std::make_unique<interp::Ident>();
 			ident->name = std::move(qid);
-			return ident;
+
+			// check for struct literal
+			if(lexer.peek() == TT::LBrace)
+			{
+				return parse_struct_literal(lexer, std::move(ident->name));
+			}
+			else
+			{
+				return ident;
+			}
+		}
+		else if(lexer.peek() == TT::LBrace)
+		{
+			// '{' starts a struct literal with no name
+			return parse_struct_literal(lexer, {});
 		}
 		else if(auto num = lexer.match(TT::Number); num)
 		{
