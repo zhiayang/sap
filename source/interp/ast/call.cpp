@@ -19,6 +19,7 @@ namespace sap::interp
 		// TODO: check for variables.
 		if(auto fdecl = dynamic_cast<const FunctionDecl*>(decl); fdecl != nullptr)
 		{
+			auto decl_type = fdecl->get_type()->toFunction();
 			auto& decl_params = fdecl->params();
 
 			// because of optional arguments, we can have fewer arguments than parameters, but not the other way around
@@ -32,7 +33,7 @@ namespace sap::interp
 			for(size_t i = 0; i < decl_params.size(); i++)
 			{
 				param_names[decl_params[i].name] = i;
-				decl_param_types.push_back(decl_params[i].type);
+				decl_param_types.push_back(decl_type->parameterTypes()[i]);
 			}
 
 			size_t cur_idx = 0;

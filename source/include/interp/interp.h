@@ -12,6 +12,11 @@
 #include "interp/basedefs.h"    // for InlineObject
 #include "interp/eval_result.h" // for EvalResult
 
+namespace sap::frontend
+{
+	struct PType;
+}
+
 namespace sap::interp
 {
 	struct DefnTree
@@ -27,7 +32,6 @@ namespace sap::interp
 		ErrorOr<std::vector<const Declaration*>> lookup(QualifiedId id) const;
 
 		ErrorOr<void> declare(const Declaration* decl);
-		// ErrorOr<void> define(Definition* defn);
 
 	private:
 		explicit DefnTree(std::string name, DefnTree* parent) : m_name(std::move(name)), m_parent(parent) { }
@@ -77,6 +81,8 @@ namespace sap::interp
 
 		DefnTree* current() { return m_current; }
 		const DefnTree* current() const { return m_current; }
+
+		ErrorOr<const Type*> resolveType(const frontend::PType& ptype);
 
 		[[nodiscard]] auto pushTree(DefnTree* tree)
 		{

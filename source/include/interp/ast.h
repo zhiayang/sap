@@ -15,6 +15,7 @@
 #include "interp/value.h"       // for Interpreter, Value
 #include "interp/basedefs.h"    // for InlineObject
 #include "interp/eval_result.h" // for EvalResult
+#include "interp/parser_type.h"
 
 namespace sap::interp
 {
@@ -193,7 +194,7 @@ namespace sap::interp
 	struct VariableDefn : Definition
 	{
 		VariableDefn(const std::string& name, bool is_mutable, std::unique_ptr<Expr> init,
-		    std::optional<const Type*> explicit_type)
+		    std::optional<frontend::PType> explicit_type)
 		    : Definition(new VariableDecl(name))
 		    , is_mutable(is_mutable)
 		    , initialiser(std::move(init))
@@ -206,7 +207,7 @@ namespace sap::interp
 
 		bool is_mutable;
 		std::unique_ptr<Expr> initialiser;
-		std::optional<const Type*> explicit_type;
+		std::optional<frontend::PType> explicit_type;
 	};
 
 	struct FunctionDecl : Declaration
@@ -214,11 +215,11 @@ namespace sap::interp
 		struct Param
 		{
 			std::string name;
-			const Type* type;
+			frontend::PType type;
 			std::unique_ptr<Expr> default_value;
 		};
 
-		FunctionDecl(const std::string& name, std::vector<Param>&& params, const Type* return_type)
+		FunctionDecl(const std::string& name, std::vector<Param>&& params, frontend::PType return_type)
 		    : Declaration(name)
 		    , m_params(std::move(params))
 		    , m_return_type(return_type)
@@ -232,7 +233,7 @@ namespace sap::interp
 
 	private:
 		std::vector<Param> m_params;
-		const Type* m_return_type;
+		frontend::PType m_return_type;
 	};
 
 	template <std::same_as<FunctionDecl::Param>... P>
@@ -246,7 +247,7 @@ namespace sap::interp
 
 	struct FunctionDefn : Definition
 	{
-		FunctionDefn(const std::string& name, std::vector<FunctionDecl::Param> params, const Type* return_type)
+		FunctionDefn(const std::string& name, std::vector<FunctionDecl::Param> params, frontend::PType return_type)
 		    : Definition(new FunctionDecl(name, std::move(params), return_type))
 		{
 		}
@@ -266,7 +267,7 @@ namespace sap::interp
 	{
 		using FuncTy = std::function<ErrorOr<EvalResult>(Interpreter*, std::vector<Value>&)>;
 
-		BuiltinFunctionDefn(const std::string& name, std::vector<FunctionDecl::Param>&& params, const Type* return_type,
+		BuiltinFunctionDefn(const std::string& name, std::vector<FunctionDecl::Param>&& params, frontend::PType return_type,
 		    const FuncTy& fn)
 		    : Definition(new FunctionDecl(name, std::move(params), return_type))
 		    , function(fn)
@@ -290,7 +291,7 @@ namespace sap::interp
 
 	struct StructDefn : Definition
 	{
-		StructDefn(const std::string& name, std::vector<std::pair<std::string, const Type*>> fields)
+		StructDefn(const std::string& name, std::vector<std::pair<std::string, frontend::PType>> fields)
 		    : Definition(new StructDecl(name))
 		    , fields(std::move(fields))
 		{
@@ -299,7 +300,7 @@ namespace sap::interp
 		virtual ErrorOr<EvalResult> evaluate(Interpreter* cs) const override;
 		virtual ErrorOr<const Type*> typecheck_impl(Interpreter* cs, const Type* infer = nullptr) const override;
 
-		std::vector<std::pair<std::string, const Type*>> fields;
+		std::vector<std::pair<std::string, frontend::PType>> fields;
 	};
 }
 

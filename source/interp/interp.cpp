@@ -14,11 +14,13 @@ namespace sap::interp
 {
 	static void define_builtins(Interpreter* cs, DefnTree* builtin_ns)
 	{
+		using namespace sap::frontend;
+
 		using BFD = BuiltinFunctionDefn;
 		using Param = FunctionDecl::Param;
 
-		auto any = Type::makeAny();
-		auto tio = Type::makeTreeInlineObj();
+		auto any = PType::named(TYPE_ANY);
+		auto tio = PType::named(TYPE_TREE_INLINE);
 
 		auto define_builtin = [&](auto&&... xs) {
 			auto ret = std::make_unique<BFD>(std::forward<decltype(xs)>(xs)...);
@@ -52,6 +54,54 @@ namespace sap::interp
 		// TODO: not if these are all the cases
 		return false;
 	}
+
+	ErrorOr<const Type*> Interpreter::resolveType(const frontend::PType& ptype)
+	{
+		using namespace sap::frontend;
+		if(ptype.isNamed())
+		{
+			auto& name = ptype.name();
+			if(name == TYPE_INT)
+				return Ok(Type::makeInteger());
+			else if(name == TYPE_ANY)
+				return Ok(Type::makeAny());
+			else if(name == TYPE_BOOL)
+				return Ok(Type::makeBool());
+			else if(name == TYPE_CHAR)
+				return Ok(Type::makeChar());
+			else if(name == TYPE_VOID)
+				return Ok(Type::makeVoid());
+			else if(name == TYPE_FLOAT)
+				return Ok(Type::makeFloating());
+			else if(name == TYPE_TREE_INLINE)
+				return Ok(Type::makeTreeInlineObj());
+
+			// uwu.
+		}
+		else if(ptype.isArray())
+		{
+			return Ok(Type::makeArray(TRY(this->resolveType(ptype.getArrayElement())), ptype.isVariadicArray()));
+		}
+		else if(ptype.isFunction())
+		{
+			std::vector<const Type*> params {};
+			for(auto& t : ptype.getTypeList())
+				params.push_back(TRY(this->resolveType(t)));
+
+			assert(params.size() > 0);
+			auto ret = params.back();
+			params.pop_back();
+
+			return Ok(Type::makeFunction(std::move(params), ret));
+		}
+		else
+		{
+		}
+
+		return ErrFmt("unknown type");
+	}
+
+
 
 
 	Definition* Interpreter::addBuiltinDefinition(std::unique_ptr<Definition> defn)

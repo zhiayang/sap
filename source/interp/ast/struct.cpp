@@ -29,7 +29,10 @@ namespace sap::interp
 				return ErrFmt("duplicate field '{}' in struct '{}'", name, struct_type->name());
 
 			seen_names.insert(name);
-			field_types.push_back(StructType::Field { .name = name, .type = type });
+			field_types.push_back(StructType::Field {
+			    .name = name,
+			    .type = TRY(cs->resolveType(type)),
+			});
 		}
 
 		const_cast<StructType*>(struct_type)->setFields(std::move(field_types));

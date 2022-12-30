@@ -74,16 +74,7 @@ namespace sap::interp
 		if(a->name != b->name || a->params().size() != b->params().size())
 			return false;
 
-		for(size_t i = 0; i < a->params().size(); i++)
-		{
-			auto& ap = a->params()[i];
-			auto& bp = b->params()[i];
-
-			if(ap.type != bp.type)
-				return false;
-		}
-
-		return true;
+		return a->get_type() == b->get_type();
 	}
 
 

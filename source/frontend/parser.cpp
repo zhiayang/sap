@@ -11,21 +11,15 @@
 #include "interp/tree.h"     // for Paragraph, ScriptBlock, ScriptCall, Text
 #include "interp/type.h"     // for Type, interp, ArrayType, FunctionType
 #include "interp/basedefs.h" // for DocumentObject, InlineObject
+#include "interp/parser_type.h"
 
 namespace sap::frontend
 {
 	constexpr auto KW_LET = "let";
 	constexpr auto KW_VAR = "var";
 	constexpr auto KW_FUNC = "fn";
+	constexpr auto KW_STRUCT = "struct";
 	constexpr auto KW_SCRIPT_BLOCK = "script";
-
-	constexpr auto TYPE_ANY = "any";
-	constexpr auto TYPE_INT = "int";
-	constexpr auto TYPE_BOOL = "bool";
-	constexpr auto TYPE_CHAR = "char";
-	constexpr auto TYPE_VOID = "void";
-	constexpr auto TYPE_FLOAT = "float";
-
 
 	using TT = TokenType;
 	using namespace sap::tree;
@@ -422,7 +416,7 @@ namespace sap::frontend
 		return parse_rhs(lexer, std::move(lhs), 0);
 	}
 
-	static const interp::Type* parse_type(Lexer& lexer)
+	static const PType parse_type(Lexer& lexer)
 	{
 		if(lexer.eof())
 			error(lexer.location(), "unexpected end of file");
@@ -431,17 +425,17 @@ namespace sap::frontend
 
 		auto fst = lexer.next();
 		if(fst.text == TYPE_INT)
-			return Type::makeInteger();
+			return PType::named(TYPE_INT);
 		else if(fst.text == TYPE_ANY)
-			return Type::makeAny();
+			return PType::named(TYPE_ANY);
 		else if(fst.text == TYPE_BOOL)
-			return Type::makeBool();
+			return PType::named(TYPE_BOOL);
 		else if(fst.text == TYPE_CHAR)
-			return Type::makeChar();
+			return PType::named(TYPE_CHAR);
 		else if(fst.text == TYPE_VOID)
-			return Type::makeVoid();
+			return PType::named(TYPE_VOID);
 		else if(fst.text == TYPE_FLOAT)
-			return Type::makeFloating();
+			return PType::named(TYPE_FLOAT);
 
 		if(fst == TT::Ampersand)
 		{
@@ -450,11 +444,11 @@ namespace sap::frontend
 		else if(fst == TT::LSquare)
 		{
 			auto elm = parse_type(lexer);
-			return Type::makeArray(elm, /* is_variadic: */ lexer.match(TT::Ellipsis).has_value());
+			return PType::array(std::move(elm), /* is_variadic: */ lexer.match(TT::Ellipsis).has_value());
 		}
 		else if(fst == TT::LParen)
 		{
-			std::vector<const Type*> types {};
+			std::vector<PType> types {};
 			while(not lexer.expect(TT::RParen))
 			{
 				types.push_back(parse_type(lexer));
@@ -467,7 +461,7 @@ namespace sap::frontend
 				error(lexer.location(), "TODO: tuples not implemented");
 
 			auto return_type = parse_type(lexer);
-			return Type::makeFunction(std::move(types), return_type);
+			return PType::function(std::move(types), return_type);
 		}
 
 		error(lexer.location(), "invalid start of type specifier '{}'", lexer.peek().text);
@@ -485,7 +479,7 @@ namespace sap::frontend
 			error(lexer.location(), "expected identifier after '{}'", kw.text);
 
 		std::unique_ptr<interp::Expr> initialiser {};
-		std::optional<const interp::Type*> explicit_type {};
+		std::optional<PType> explicit_type {};
 
 		if(lexer.match(TT::Colon))
 			explicit_type = parse_type(lexer);
@@ -543,7 +537,7 @@ namespace sap::frontend
 				error(lexer.location(), "expected ',' or ')' in function parameter list");
 		}
 
-		auto return_type = Type::makeVoid();
+		auto return_type = PType::named(TYPE_VOID);
 		if(lexer.expect(TT::RArrow))
 			return_type = parse_type(lexer);
 
@@ -557,6 +551,37 @@ namespace sap::frontend
 
 		return defn;
 	}
+
+	static std::unique_ptr<interp::StructDefn> parse_struct_defn(Lexer& lexer)
+	{
+		auto x = lexer.match(TT::Identifier);
+		assert(x.has_value() && x->text == KW_STRUCT);
+
+		std::string name;
+		if(auto name_tok = lexer.match(TT::Identifier); not name_tok.has_value())
+			error(lexer.location(), "expected identifier after '{}'", KW_STRUCT);
+		else
+			name = name_tok->text.str();
+
+
+		if(not lexer.expect(TT::LBrace))
+			error(lexer.location(), "expected '{' in struct body");
+
+		std::vector<std::pair<std::string, const interp::Type*>> fields {};
+		while(not lexer.expect(TT::RBrace))
+		{
+			// params.push_back(parse_param(lexer));
+			if(not lexer.match(TT::Semicolon) && lexer.peek() != TT::RBrace)
+				error(lexer.location(), "expected ';' or '}' in struct body");
+		}
+
+		// auto defn = std::make_unique<interp::FunctionDefn>(name, std::move(params), return_type);
+		// return defn;
+		return {};
+	}
+
+
+
 
 
 	static std::unique_ptr<interp::Stmt> parse_stmt(Lexer& lexer)
@@ -584,6 +609,11 @@ namespace sap::frontend
 			else if(tok.text == KW_FUNC)
 			{
 				stmt = parse_function_defn(lexer);
+				optional_semicolon = true;
+			}
+			else if(tok.text == KW_STRUCT)
+			{
+				stmt = parse_struct_defn(lexer);
 				optional_semicolon = true;
 			}
 			else

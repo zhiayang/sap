@@ -41,20 +41,22 @@ namespace sap::interp
 		const Type* the_type = TRY([&]() -> ErrorOr<const Type*> {
 			if(this->explicit_type.has_value())
 			{
-				if((*this->explicit_type)->isVoid())
+				auto resolved_type = TRY(cs->resolveType(*this->explicit_type));
+
+				if(resolved_type->isVoid())
 					return ErrFmt("cannot declare variable of type 'void'");
 
 				if(this->initialiser != nullptr)
 				{
-					auto initialiser_type = TRY(this->initialiser->typecheck(cs, /* infer: */ *this->explicit_type));
-					if(not cs->canImplicitlyConvert(initialiser_type, *this->explicit_type))
+					auto initialiser_type = TRY(this->initialiser->typecheck(cs, /* infer: */ resolved_type));
+					if(not cs->canImplicitlyConvert(initialiser_type, resolved_type))
 					{
-						return ErrFmt("cannot initialise variable of type '{}' with expression of type '{}'",
-						    *this->explicit_type, initialiser_type);
+						return ErrFmt("cannot initialise variable of type '{}' with expression of type '{}'", //
+						    resolved_type, initialiser_type);
 					}
 				}
 
-				return Ok(*this->explicit_type);
+				return Ok(resolved_type);
 			}
 			else
 			{
