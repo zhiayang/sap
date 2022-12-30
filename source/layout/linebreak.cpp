@@ -75,8 +75,6 @@ namespace sap::layout
 				}
 
 
-				// Hold off on incrementing neighbour_broken_until
-				// since the broken_until iterator needs to point *at* the separator.
 				// TODO: make it not ugly lol
 				auto wordorsep = *neighbour_broken_until++;
 				std::visit(
