@@ -163,6 +163,9 @@ namespace sap::interp
 
 	ErrorOr<const Type*> FunctionCall::typecheck_impl(Interpreter* cs, const Type* infer) const
 	{
+		// TODO: handle rewritten_ufcs
+
+
 		const Type* fn_type = nullptr;
 
 		// TODO: this might be problematic if we want to have bidirectional type inference

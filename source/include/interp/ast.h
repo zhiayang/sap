@@ -84,6 +84,7 @@ namespace sap::interp
 			std::unique_ptr<Expr> value;
 		};
 
+		bool rewritten_ufcs = false;
 		std::unique_ptr<Expr> callee;
 		std::vector<Arg> arguments;
 
@@ -146,6 +147,19 @@ namespace sap::interp
 		std::unique_ptr<Expr> first;
 		std::vector<std::pair<Op, std::unique_ptr<Expr>>> rest;
 	};
+
+	struct DotOp : Expr
+	{
+		virtual ErrorOr<EvalResult> evaluate(Interpreter* cs) const override;
+		virtual ErrorOr<const Type*> typecheck_impl(Interpreter* cs, const Type* infer = nullptr) const override;
+
+		std::unique_ptr<Expr> lhs;
+		std::string rhs;
+	};
+
+
+
+
 
 	struct Block : Stmt
 	{

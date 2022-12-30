@@ -61,11 +61,85 @@ namespace sap::frontend
 		return ret;
 	}
 
+	static std::u32string unescape_string(const Location& loc, zst::str_view sv)
+	{
+		std::u32string ret {};
+		ret.reserve(sv.size());
+
+		auto bs = sv.bytes();
+		while(bs.size() > 0)
+		{
+			auto cp = unicode::consumeCodepointFromUtf8(bs);
+			if(cp == U'\\')
+			{
+				auto is_hex = [](uint8_t c) -> bool {
+					return ('0' <= c && c <= '9') || ('a' <= c && c <= 'f') || ('A' <= c && c <= 'F');
+				};
+
+				auto convert_hex = [](uint8_t c) -> char32_t {
+					if('0' <= c && c <= '9')
+						return static_cast<char32_t>(c - '0');
+					else if('a' <= c && c <= 'f')
+						return static_cast<char32_t>(10 + c - 'a');
+					else if('A' <= c && c <= 'F')
+						return static_cast<char32_t>(10 + c - 'A');
+					else
+						return 0;
+				};
+
+				cp = unicode::consumeCodepointFromUtf8(bs);
+				switch(cp)
+				{
+					case U'\\': ret += U'\\'; break;
+					case U'n': ret += U'\n'; break;
+					case U't': ret += U'\t'; break;
+					case U'b': ret += U'\b'; break;
+					case U'x':
+						assert(bs.size() >= 2);
+						assert(is_hex(bs[0]) && is_hex(bs[1]));
+						ret += 16u * convert_hex(bs[0]) + convert_hex(bs[1]);
+						break;
+					case U'u':
+						assert(bs.size() >= 4);
+						assert(is_hex(bs[0]) && is_hex(bs[1]) && is_hex(bs[2]) && is_hex(bs[3]));
+						ret += 16u * 16u * 16u * convert_hex(bs[0]) //
+						     + 16u * 16u * convert_hex(bs[1])       //
+						     + 16u * convert_hex(bs[2])             //
+						     + convert_hex(bs[3]);
+						break;
+					case U'U':
+						assert(bs.size() >= 8);
+						assert(is_hex(bs[0]) && is_hex(bs[1]) && is_hex(bs[2]) && is_hex(bs[3]));
+						assert(is_hex(bs[4]) && is_hex(bs[5]) && is_hex(bs[6]) && is_hex(bs[7]));
+
+						ret += 16u * 16u * 16u * 16u * 16u * 16u * 16u * convert_hex(bs[0]) //
+						     + 16u * 16u * 16u * 16u * 16u * 16u * convert_hex(bs[1])       //
+						     + 16u * 16u * 16u * 16u * 16u * convert_hex(bs[2])             //
+						     + 16u * 16u * 16u * 16u * convert_hex(bs[3])                   //
+						     + 16u * 16u * 16u * convert_hex(bs[4])                         //
+						     + 16u * 16u * convert_hex(bs[5])                               //
+						     + 16u * convert_hex(bs[6])                                     //
+						     + convert_hex(bs[7]);
+						break;
+					default: sap::error(loc, "invalid escape sequence starting with '{}'", cp); break;
+				}
+			}
+			else
+			{
+				ret += cp;
+			}
+		}
+
+		return ret;
+	}
+
 	static int get_front_token_precedence(Lexer& lexer)
 	{
 		switch(lexer.peek())
 		{
 			case TT::LParen: return 1000;
+
+			case TT::Period: return 999;
 
 			case TT::Asterisk:
 			case TT::Slash: return 400;
@@ -234,6 +308,24 @@ namespace sap::frontend
 		error(lexer.peek().loc, "expected '(' or '[' after expression, found '{}'", lexer.peek().text);
 	}
 
+	static std::unique_ptr<interp::FunctionCall> parse_ufcs(Lexer& lexer, std::unique_ptr<interp::Expr> first_arg,
+	    const std::string& method_name)
+	{
+		auto method = std::make_unique<interp::Ident>();
+		method->name.top_level = false;
+		method->name.name = method_name;
+
+		auto call = parse_function_call(lexer, std::move(method));
+		call->rewritten_ufcs = true;
+		call->arguments.insert(call->arguments.begin(),
+		    interp::FunctionCall::Arg {
+		        .name = std::nullopt,
+		        .value = std::move(first_arg),
+		    });
+
+		return call;
+	}
+
 
 	static std::unique_ptr<interp::Expr> parse_rhs(Lexer& lexer, std::unique_ptr<interp::Expr> lhs, int prio)
 	{
@@ -254,6 +346,31 @@ namespace sap::frontend
 			}
 
 			auto op_tok = lexer.next();
+
+			// special handling for dot op -- check here.
+			if(op_tok == TT::Period)
+			{
+				// TODO: maybe support .0, .1 syntax for tuples
+				auto field_name = lexer.match(TT::Identifier);
+				if(not field_name.has_value())
+					error(lexer.location(), "expected field name after '.'");
+
+				auto newlhs = std::make_unique<interp::DotOp>();
+				newlhs->rhs = field_name->text.str();
+				newlhs->lhs = std::move(lhs);
+
+				// special case method calls: UFCS, rewrite into a free function call.
+				if(lexer.peek() == TT::LParen)
+				{
+					lhs = parse_ufcs(lexer, std::move(newlhs->lhs), field_name->text.str());
+				}
+				else
+				{
+					lhs = std::move(newlhs);
+				}
+				continue;
+			}
+
 			auto rhs = parse_unary(lexer);
 			int next = get_front_token_precedence(lexer);
 
@@ -303,77 +420,6 @@ namespace sap::frontend
 	}
 
 
-	static std::u32string unescape_string(const Location& loc, zst::str_view sv)
-	{
-		std::u32string ret {};
-		ret.reserve(sv.size());
-
-		auto bs = sv.bytes();
-		while(bs.size() > 0)
-		{
-			auto cp = unicode::consumeCodepointFromUtf8(bs);
-			if(cp == U'\\')
-			{
-				auto is_hex = [](uint8_t c) -> bool {
-					return ('0' <= c && c <= '9') || ('a' <= c && c <= 'f') || ('A' <= c && c <= 'F');
-				};
-
-				auto convert_hex = [](uint8_t c) -> char32_t {
-					if('0' <= c && c <= '9')
-						return static_cast<char32_t>(c - '0');
-					else if('a' <= c && c <= 'f')
-						return static_cast<char32_t>(10 + c - 'a');
-					else if('A' <= c && c <= 'F')
-						return static_cast<char32_t>(10 + c - 'A');
-					else
-						return 0;
-				};
-
-				cp = unicode::consumeCodepointFromUtf8(bs);
-				switch(cp)
-				{
-					case U'\\': ret += U'\\'; break;
-					case U'n': ret += U'\n'; break;
-					case U't': ret += U'\t'; break;
-					case U'b': ret += U'\b'; break;
-					case U'x':
-						assert(bs.size() >= 2);
-						assert(is_hex(bs[0]) && is_hex(bs[1]));
-						ret += 16u * convert_hex(bs[0]) + convert_hex(bs[1]);
-						break;
-					case U'u':
-						assert(bs.size() >= 4);
-						assert(is_hex(bs[0]) && is_hex(bs[1]) && is_hex(bs[2]) && is_hex(bs[3]));
-						ret += 16u * 16u * 16u * convert_hex(bs[0]) //
-						     + 16u * 16u * convert_hex(bs[1])       //
-						     + 16u * convert_hex(bs[2])             //
-						     + convert_hex(bs[3]);
-						break;
-					case U'U':
-						assert(bs.size() >= 8);
-						assert(is_hex(bs[0]) && is_hex(bs[1]) && is_hex(bs[2]) && is_hex(bs[3]));
-						assert(is_hex(bs[4]) && is_hex(bs[5]) && is_hex(bs[6]) && is_hex(bs[7]));
-
-						ret += 16u * 16u * 16u * 16u * 16u * 16u * 16u * convert_hex(bs[0]) //
-						     + 16u * 16u * 16u * 16u * 16u * 16u * convert_hex(bs[1])       //
-						     + 16u * 16u * 16u * 16u * 16u * convert_hex(bs[2])             //
-						     + 16u * 16u * 16u * 16u * convert_hex(bs[3])                   //
-						     + 16u * 16u * 16u * convert_hex(bs[4])                         //
-						     + 16u * 16u * convert_hex(bs[5])                               //
-						     + 16u * convert_hex(bs[6])                                     //
-						     + convert_hex(bs[7]);
-						break;
-					default: sap::error(loc, "invalid escape sequence starting with '{}'", cp); break;
-				}
-			}
-			else
-			{
-				ret += cp;
-			}
-		}
-
-		return ret;
-	}
 
 	static std::unique_ptr<interp::Expr> parse_primary(Lexer& lexer)
 	{

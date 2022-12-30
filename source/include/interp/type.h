@@ -129,7 +129,7 @@ namespace sap::interp
 
 		const std::string& name() const { return m_name; }
 
-		bool haveFieldNamed(zst::str_view name) const;
+		bool hasFieldNamed(zst::str_view name) const;
 		size_t getFieldIndex(zst::str_view name) const;
 		const Type* getFieldNamed(zst::str_view name) const;
 

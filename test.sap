@@ -22,14 +22,19 @@ fi fl Bсички хора се раждат свободни и равни по
 
 	foozle(10);
 
-
 	struct Cactus
 	{
 		thorns: int;
-		cactus: [char];
+		juice: float;
+	}
+
+	fn kek(c: Cactus)
+	{
+		builtin::println("kek!!!");
 	}
 
 	let bar: Cactus;
+	bar.kek();
 }
 
 My name is Yoshikage Kira. I'm\builtin::__bold_italic1(1 < 2 < 5 > 7)years old. My house is in the northeast section of Morioh,

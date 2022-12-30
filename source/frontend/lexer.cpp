@@ -377,6 +377,7 @@ namespace sap::frontend
 				case '[': tt = TT::LSquare; break;
 				case ']': tt = TT::RSquare; break;
 				case ',': tt = TT::Comma; break;
+				case '.': tt = TT::Period; break;
 				case ':': tt = TT::Colon; break;
 				case '{': tt = TT::LBrace; break;
 				case '}': tt = TT::RBrace; break;

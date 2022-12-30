@@ -35,7 +35,7 @@ namespace sap::interp
 		return other->isStruct() && other->toStruct()->name() == m_name;
 	}
 
-	bool StructType::haveFieldNamed(zst::str_view name) const
+	bool StructType::hasFieldNamed(zst::str_view name) const
 	{
 		return m_field_map.contains(name);
 	}

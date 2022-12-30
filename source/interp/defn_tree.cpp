@@ -63,16 +63,21 @@ namespace sap::interp
 				return next.to_err();
 		}
 
-		if(auto it = current->m_decls.find(id.name); it != current->m_decls.end())
+		while(current != nullptr)
 		{
-			std::vector<const Declaration*> decls {};
-			for(auto& d : it->second)
-				decls.push_back(d);
+			if(auto it = current->m_decls.find(id.name); it != current->m_decls.end())
+			{
+				std::vector<const Declaration*> decls {};
+				for(auto& d : it->second)
+					decls.push_back(d);
 
-			return Ok(decls);
+				return Ok(decls);
+			}
+
+			current = current->parent();
 		}
 
-		return ErrFmt("no declaration named '{}' in '{}'", id.name, current->name());
+		return ErrFmt("no declaration named '{}' (search started at '{}')", id.name, m_name);
 	}
 
 	static bool function_decls_conflict(const FunctionDecl* a, const FunctionDecl* b)

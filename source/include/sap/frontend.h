@@ -41,6 +41,7 @@ namespace sap::frontend
 		RAngle,
 		Colon,
 		Comma,
+		Period,
 		Ampersand,
 
 		Semicolon,
