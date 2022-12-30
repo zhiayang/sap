@@ -27,7 +27,7 @@ namespace sap::interp
 		ErrorOr<std::vector<const Declaration*>> lookup(QualifiedId id) const;
 
 		ErrorOr<void> declare(const Declaration* decl);
-		ErrorOr<void> define(Definition* defn);
+		// ErrorOr<void> define(Definition* defn);
 
 	private:
 		explicit DefnTree(std::string name, DefnTree* parent) : m_name(std::move(name)), m_parent(parent) { }

@@ -290,7 +290,7 @@ namespace sap::interp
 
 	struct StructDefn : Definition
 	{
-		StructDefn(const std::string& name, std::vector<std::unique_ptr<VariableDecl>> fields)
+		StructDefn(const std::string& name, std::vector<std::pair<std::string, const Type*>> fields)
 		    : Definition(new StructDecl(name))
 		    , fields(std::move(fields))
 		{
@@ -299,7 +299,7 @@ namespace sap::interp
 		virtual ErrorOr<EvalResult> evaluate(Interpreter* cs) const override;
 		virtual ErrorOr<const Type*> typecheck_impl(Interpreter* cs, const Type* infer = nullptr) const override;
 
-		std::vector<std::unique_ptr<VariableDecl>> fields;
+		std::vector<std::pair<std::string, const Type*>> fields;
 	};
 }
 
