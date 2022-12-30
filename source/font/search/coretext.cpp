@@ -2,7 +2,7 @@
 // Copyright (c) 2022, zhiayang
 // SPDX-License-Identifier: Apache-2.0
 
-#if defined(USE_CORETEXT)
+#if defined(USE_CORETEXT) && USE_CORETEXT != 0
 
 #include <cmath>
 #include <cstring>

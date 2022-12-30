@@ -23,6 +23,8 @@ namespace font
 		extern std::vector<std::string> get_all_typefaces();
 		extern std::optional<FontHandle> search_for_font(zst::str_view typeface_name, FontProperties properties);
 		extern std::optional<FontHandle> search_for_font_with_postscript_name(zst::str_view postscript_name);
+
+		extern std::optional<FontHandle> get_font_for_generic_name(zst::str_view name, FontProperties properties);
 	}
 
 
@@ -224,13 +226,12 @@ namespace font
 
 	static std::optional<FontHandle> get_font_for_generic_name(zst::str_view typeface, FontProperties properties)
 	{
-#if defined(USE_CORETEXT)
+#if defined(USE_CORETEXT) && USE_CORETEXT != 0
 		return coretext::get_font_for_generic_name(typeface, properties);
-#elif defined(USE_FONTCONFIG)
+#elif defined(USE_FONTCONFIG) && USE_FONTCONFIG != 0
 		return fontconfig::get_font_for_generic_name(typeface, properties);
-#else
-		return {};
 #endif
+		return {};
 	}
 
 	std::optional<FontHandle> findFont(const std::vector<std::string>& typefaces, FontProperties properties)
@@ -254,45 +255,51 @@ namespace font
 
 	std::vector<FontHandle> getAllFonts()
 	{
-#if defined(USE_CORETEXT)
+#if defined(USE_CORETEXT) && USE_CORETEXT != 0
 		return coretext::get_all_fonts();
-#elif defined(USE_FONTCONFIG)
+#elif defined(USE_FONTCONFIG) && USE_FONTCONFIG != 0
 		return fontconfig::get_all_fonts();
-#else
-		return {};
 #endif
+
+		return {};
 	}
 
 	std::vector<std::string> getAllTypefaces()
 	{
-#if defined(USE_CORETEXT)
+#if defined(USE_CORETEXT) && USE_CORETEXT != 0
 		return coretext::get_all_typefaces();
-#elif defined(USE_FONTCONFIG)
+#elif defined(USE_FONTCONFIG) && USE_FONTCONFIG != 0
 		return fontconfig::get_all_typefaces();
-#else
-		return {};
 #endif
+
+		return {};
 	}
 
 	std::optional<FontHandle> searchForFont(zst::str_view typeface_name, FontProperties properties)
 	{
-#if defined(USE_CORETEXT)
-		return coretext::search_for_font(typeface_name, properties);
-#elif defined(USE_FONTCONFIG)
-		return fontconfig::search_for_font(typeface_name, properties);
-#else
-		return {};
+#if defined(USE_CORETEXT) && USE_CORETEXT != 0
+		if(auto x = coretext::search_for_font(typeface_name, properties); x.has_value())
+			return x;
+
+#elif defined(USE_FONTCONFIG) && USE_FONTCONFIG != 0
+		if(auto x = fontconfig::search_for_font(typeface_name, properties); x.has_value())
+			return x;
 #endif
+
+		return {};
 	}
 
 	std::optional<FontHandle> searchForFontWithPostscriptName(zst::str_view postscript_name)
 	{
-#if defined(USE_CORETEXT)
-		return coretext::search_for_font_with_postscript_name(postscript_name);
-#elif defined(USE_FONTCONFIG)
-		return fontconfig::search_for_font_with_postscript_name(postscript_name);
-#else
-		return {};
+#if defined(USE_CORETEXT) && USE_CORETEXT != 0
+		if(auto x = coretext::search_for_font_with_postscript_name(postscript_name); x.has_value())
+			return x;
+
+#elif defined(USE_FONTCONFIG) && USE_FONTCONFIG != 0
+		if(auto x = fontconfig::search_for_font_with_postscript_name(postscript_name); x.has_value())
+			return x;
 #endif
+
+		return {};
 	}
 }

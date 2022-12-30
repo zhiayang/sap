@@ -51,23 +51,12 @@ int main(int argc, char** argv)
 	auto font_family = [&]() {
 		using namespace font;
 
-		auto regular_handle = font::findFont({ "Helvetica", GENERIC_SERIF }, FontProperties {});
+		std::vector<std::string> prefs = { "Source Serif 4", GENERIC_SERIF };
 
-		auto italic_handle = font::findFont({ "Helvetica", GENERIC_SERIF },
-		    FontProperties {
-		        .style = FontStyle::ITALIC,
-		    });
-
-		auto bold_handle = font::findFont({ "Helvetica", GENERIC_SERIF },
-		    FontProperties {
-		        .weight = FontWeight::BOLD,
-		    });
-
-		auto boldit_handle = font::findFont({ "Helvetica", GENERIC_SERIF },
-		    FontProperties {
-		        .style = FontStyle::ITALIC,
-		        .weight = FontWeight::BOLD,
-		    });
+		auto regular_handle = font::findFont(prefs, FontProperties {});
+		auto italic_handle = font::findFont(prefs, FontProperties { .style = FontStyle::ITALIC });
+		auto bold_handle = font::findFont(prefs, FontProperties { .weight = FontWeight::BOLD });
+		auto boldit_handle = font::findFont(prefs, FontProperties { .style = FontStyle::ITALIC, .weight = FontWeight::BOLD });
 
 		assert(regular_handle.has_value());
 		assert(italic_handle.has_value());

@@ -568,13 +568,10 @@ namespace font
 			const auto& name_table = tables[Tag("name")];
 			auto font_names = parse_name_table(file, name_table);
 
-			zpr::println("{} vs {} ({}/{}), {x}", postscript_name, font_names.postscript_name, i, num_fonts, name_table.offset);
-
 			if(font_names.postscript_name == postscript_name)
 				return parse_offset_table(file, offset);
 		}
 
-		zpr::println("o no: {}", postscript_name);
 		return std::nullopt;
 	}
 
