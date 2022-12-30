@@ -29,9 +29,16 @@ namespace sap::interp
 				return ErrFmt("duplicate field '{}' in struct '{}'", name, struct_type->name());
 
 			seen_names.insert(name);
+
+			auto field_type = TRY(cs->resolveType(type));
+			if(field_type == struct_type)
+				return ErrFmt("recursive struct not allowed");
+			else if(field_type->isVoid())
+				return ErrFmt("field cannot have type 'void'");
+
 			field_types.push_back(StructType::Field {
 			    .name = name,
-			    .type = TRY(cs->resolveType(type)),
+			    .type = field_type,
 			});
 		}
 

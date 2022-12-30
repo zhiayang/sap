@@ -436,6 +436,8 @@ namespace sap::frontend
 			return PType::named(TYPE_VOID);
 		else if(fst.text == TYPE_FLOAT)
 			return PType::named(TYPE_FLOAT);
+		else if(fst.text == TYPE_STRING)
+			return PType::named(TYPE_STRING);
 
 		if(fst == TT::Ampersand)
 		{
@@ -444,6 +446,9 @@ namespace sap::frontend
 		else if(fst == TT::LSquare)
 		{
 			auto elm = parse_type(lexer);
+			if(not lexer.expect(TT::RSquare))
+				error(lexer.location(), "expected ']' in array type");
+
 			return PType::array(std::move(elm), /* is_variadic: */ lexer.match(TT::Ellipsis).has_value());
 		}
 		else if(fst == TT::LParen)
@@ -567,17 +572,24 @@ namespace sap::frontend
 		if(not lexer.expect(TT::LBrace))
 			error(lexer.location(), "expected '{' in struct body");
 
-		std::vector<std::pair<std::string, const interp::Type*>> fields {};
+		std::vector<std::pair<std::string, PType>> fields {};
 		while(not lexer.expect(TT::RBrace))
 		{
-			// params.push_back(parse_param(lexer));
+			auto field_name = lexer.match(TT::Identifier);
+			if(not field_name.has_value())
+				error(lexer.location(), "expected field name in struct");
+
+			if(not lexer.expect(TT::Colon))
+				error(lexer.location(), "expected ':' after field name");
+
+			auto field_type = parse_type(lexer);
+
+			fields.push_back({ field_name->text.str(), std::move(field_type) });
 			if(not lexer.match(TT::Semicolon) && lexer.peek() != TT::RBrace)
 				error(lexer.location(), "expected ';' or '}' in struct body");
 		}
 
-		// auto defn = std::make_unique<interp::FunctionDefn>(name, std::move(params), return_type);
-		// return defn;
-		return {};
+		return std::make_unique<interp::StructDefn>(name, std::move(fields));
 	}
 
 

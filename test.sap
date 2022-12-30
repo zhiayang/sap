@@ -6,7 +6,6 @@ this     is     a    aoeu bsdf
 
 fi fl Bсички хора се раждат свободни и равни по \{ \}
 
-#:
 \script {
 	let foo = 10;
 	builtin::print("foo = ");
@@ -22,8 +21,14 @@ fi fl Bсички хора се раждат свободни и равни по
 	}
 
 	foozle(10);
+
+
+	struct Cactus
+	{
+		thorns: int;
+		cactus: [char];
+	}
 }
-:#
 
 My name is Yoshikage Kira. I'm\builtin::__bold_italic1(1 < 2 < 5 > 7)years old. My house is in the northeast section of Morioh,
 where all the villas are, and I am not married. I work as an employee for the Kame Yu department

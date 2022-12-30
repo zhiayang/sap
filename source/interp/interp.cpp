@@ -73,6 +73,8 @@ namespace sap::interp
 				return Ok(Type::makeVoid());
 			else if(name == TYPE_FLOAT)
 				return Ok(Type::makeFloating());
+			else if(name == TYPE_STRING)
+				return Ok(Type::makeString());
 			else if(name == TYPE_TREE_INLINE)
 				return Ok(Type::makeTreeInlineObj());
 

@@ -14,6 +14,7 @@ namespace sap::frontend
 	inline constexpr const char* TYPE_CHAR = "char";
 	inline constexpr const char* TYPE_VOID = "void";
 	inline constexpr const char* TYPE_FLOAT = "float";
+	inline constexpr const char* TYPE_STRING = "string";
 	inline constexpr const char* TYPE_TREE_BLOCK = "Block";
 	inline constexpr const char* TYPE_TREE_INLINE = "Inline";
 
