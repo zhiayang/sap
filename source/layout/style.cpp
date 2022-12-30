@@ -24,7 +24,7 @@ namespace sap
 			return it->second;
 
 		auto style = Style();
-		style.set_fontset(main->fontset(this))
+		style.set_font_family(main->font_family(this))
 		    .set_font_style(main->font_style(this))
 		    .set_font_size(main->font_size(this))
 		    .set_line_spacing(main->line_spacing(this))

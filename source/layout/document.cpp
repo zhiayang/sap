@@ -6,10 +6,10 @@
 #include "pdf/units.h"    // for PdfScalar
 #include "pdf/document.h" // for File
 
-#include "sap/style.h"    // for Style
-#include "sap/units.h"    // for Length
-#include "sap/fontset.h"  // for FontSet, FontStyle, FontStyle::Regular
-#include "sap/document.h" // for Document
+#include "sap/style.h"       // for Style
+#include "sap/units.h"       // for Length
+#include "sap/document.h"    // for Document
+#include "sap/font_family.h" // for FontSet, FontStyle, FontStyle::Regular
 
 #include "interp/tree.h"     // for Paragraph, Document
 #include "interp/basedefs.h" // for DocumentObject
@@ -21,13 +21,13 @@ namespace sap::layout
 {
 	Document::Document()
 	{
-		static auto default_font_set = sap::FontSet( //
+		static auto default_font_family = sap::FontFamily( //
 		    pdf::PdfFont::fromBuiltin(&pdf(), "Times-Roman"), pdf::PdfFont::fromBuiltin(&pdf(), "Times-Italic"),
 		    pdf::PdfFont::fromBuiltin(&pdf(), "Times-Bold"), pdf::PdfFont::fromBuiltin(&pdf(), "Times-BoldItalic"));
 
 		static auto default_style =
 		    sap::Style()
-		        .set_fontset(default_font_set)
+		        .set_font_family(default_font_family)
 		        .set_font_style(sap::FontStyle::Regular)
 		        .set_font_size(pdf::PdfScalar(12.0).into<sap::Length>())
 		        .set_line_spacing(sap::Length(1.0))

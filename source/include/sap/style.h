@@ -9,8 +9,8 @@
 
 #include "pdf/font.h" // for Font
 
-#include "sap/units.h"   // for Length
-#include "sap/fontset.h" // for FontSet, FontStyle
+#include "sap/units.h"       // for Length
+#include "sap/font_family.h" // for FontSet, FontStyle
 
 namespace sap
 {
@@ -30,7 +30,7 @@ namespace sap
 		sap::internal_error("Accessed unset style field");                     \
 	}
 
-		DEFINE_ACCESSOR(FontSet, m_fontset, fontset);
+		DEFINE_ACCESSOR(FontFamily, m_font_family, font_family);
 		DEFINE_ACCESSOR(FontStyle, m_font_style, font_style);
 		DEFINE_ACCESSOR(Length, m_font_size, font_size);
 		DEFINE_ACCESSOR(Length, m_line_spacing, line_spacing);
@@ -45,7 +45,7 @@ namespace sap
 		return *this;                                      \
 	}
 
-		DEFINE_SETTER(FontSet, m_fontset, set_fontset);
+		DEFINE_SETTER(FontFamily, m_font_family, set_font_family);
 		DEFINE_SETTER(FontStyle, m_font_style, set_font_style);
 		DEFINE_SETTER(Length, m_font_size, set_font_size);
 		DEFINE_SETTER(Length, m_line_spacing, set_line_spacing);
@@ -63,12 +63,12 @@ namespace sap
 
 		constexpr bool operator==(const Style& other) const = default;
 
-		const pdf::PdfFont* font() const { return this->fontset().getFontForStyle(this->font_style()); }
+		const pdf::PdfFont* font() const { return this->font_family().getFontForStyle(this->font_style()); }
 
 		static const Style* empty() { return &s_empty_style; }
 
 	private:
-		std::optional<FontSet> m_fontset;
+		std::optional<FontFamily> m_font_family;
 		std::optional<FontStyle> m_font_style;
 		std::optional<Length> m_font_size;
 		std::optional<Length> m_line_spacing;

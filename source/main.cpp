@@ -7,10 +7,10 @@
 #include "pdf/units.h"  // for PdfScalar
 #include "pdf/writer.h" // for Writer
 
-#include "sap/style.h"    // for Style
-#include "sap/fontset.h"  // for FontSet, FontStyle, FontStyle::Regular
-#include "sap/document.h" // for Document
-#include "sap/frontend.h" // for parse
+#include "sap/style.h"       // for Style
+#include "sap/document.h"    // for Document
+#include "sap/frontend.h"    // for parse
+#include "sap/font_family.h" // for FontSet, FontStyle, FontStyle::Regular
 
 #include "font/tag.h"       // for font
 #include "font/handle.h"    // for FontProperties, FontStyle, FontStyle::ITALIC
@@ -67,12 +67,12 @@ int main(int argc, char** argv)
 		auto bold = layout_doc.addFont(std::move(*FontFile::fromHandle(*bold_handle)));
 		auto boldit = layout_doc.addFont(std::move(*FontFile::fromHandle(*boldit_handle)));
 
-		return sap::FontSet(regular, italic, bold, boldit);
+		return sap::FontFamily(regular, italic, bold, boldit);
 	}();
 
 	auto main_style = sap::Style {};
 	main_style //
-	    .set_fontset(font_family)
+	    .set_font_family(font_family)
 	    .set_font_style(sap::FontStyle::Regular)
 	    .set_font_size(pdf::PdfScalar(12).into());
 

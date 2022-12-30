@@ -2,8 +2,8 @@
 // Copyright (c) 2022, zhiayang
 // SPDX-License-Identifier: Apache-2.0
 
-#include "sap/style.h"   // for Style
-#include "sap/fontset.h" // for FontStyle, FontStyle::Bold, FontStyl...
+#include "sap/style.h"       // for Style
+#include "sap/font_family.h" // for FontStyle, FontStyle::Bold, FontStyl...
 
 #include "interp/tree.h"        // for Text
 #include "interp/value.h"       // for Value

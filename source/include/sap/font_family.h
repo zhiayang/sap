@@ -1,4 +1,4 @@
-// fontset.h
+// font_family.h
 // Copyright (c) 2022, zhiayang
 // SPDX-License-Identifier: Apache-2.0
 
@@ -16,9 +16,9 @@ namespace sap
 		BoldItalic,
 	};
 
-	struct FontSet
+	struct FontFamily
 	{
-		FontSet(pdf::PdfFont* regular, pdf::PdfFont* italic, pdf::PdfFont* bold, pdf::PdfFont* bold_italic)
+		FontFamily(pdf::PdfFont* regular, pdf::PdfFont* italic, pdf::PdfFont* bold, pdf::PdfFont* bold_italic)
 		    : m_regular_font(regular)
 		    , m_italic_font(italic)
 		    , m_bold_font(bold)
@@ -42,7 +42,7 @@ namespace sap
 		pdf::PdfFont* bold() const { return m_bold_font; }
 		pdf::PdfFont* boldItalic() const { return m_bold_italic_font; }
 
-		constexpr bool operator==(const FontSet&) const = default;
+		constexpr bool operator==(const FontFamily&) const = default;
 
 	private:
 		pdf::PdfFont* m_regular_font;
