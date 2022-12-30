@@ -25,137 +25,77 @@
 
 namespace sap::layout
 {
-	struct Line2
+
+	static Size2d calculateWordSize(zst::wstr_view text, const Style* style)
 	{
-		// "Input"
-		RectPageLayout* layout;
-		const Style* parent_style;
-		Cursor prev_cursor;
+		return style->font()->getWordSize(text, style->font_size().into<pdf::PdfScalar>()).into<Size2d>();
+	}
 
-		// Sometimes we need to populate a line in a struct even though it's never read... yeah i'm sorry :(
-		static Line2 invalid_line() { return Line2(); }
+	struct LineMetrics
+	{
+		sap::Length total_space_width;
+		sap::Length total_word_width;
+		std::vector<sap::Length> word_widths;
+		sap::Length line_height;
 
-		Line2(RectPageLayout* layout, const Style* parent_style, Cursor prev_cursor)
-		    : layout(layout)
-		    , parent_style(parent_style)
-		    , prev_cursor(prev_cursor)
+		template <typename It>
+		static LineMetrics computeLineMetrics(It words_begin, It words_end, const Style* parent_style)
 		{
-		}
+			LineMetrics ret;
 
-	private:
-		// "state" / "output"
-		Length line_height {};
-		Length line_width_excluding_last_word {};
-		std::optional<Separator> last_sep {};
-		std::u32string last_word {};
+			sap::Length word_chunk_width;
+			const Style* word_chunk_style;
+			std::u32string word_chunk_text;
+			auto word_chunk_it = words_begin;
 
-		size_t num_spaces = 0;
-		const Style* style = Style::empty();
-		Length m_total_word_width;
-		Length m_total_space_width;
-		std::vector<Length> m_word_widths;
-
-		// Helper functions
-		static Size2d calculateWordSize(zst::wstr_view text, const Style* style)
-		{
-			return style->font()->getWordSize(text, style->font_size().into<pdf::PdfScalar>()).into<Size2d>();
-		}
-
-	public:
-		// Getters
-		Length width()
-		{
-			auto last_word_style = parent_style->extend(style);
-			if(last_sep)
+			for(auto it = words_begin; it != words_end; ++it)
 			{
-				last_word += last_sep->endOfLine().sv();
-				auto ret = line_width_excluding_last_word + calculateWordSize(last_word, last_word_style).x();
-				last_word.erase(last_word.size() - last_sep->endOfLine().size());
-				return ret;
-			}
-			else
-			{
-				return line_width_excluding_last_word + calculateWordSize(last_word, last_word_style).x();
-			}
-		}
-
-		// const std::vector<Scalar>& wordWidths() const { return m_word_widths; }
-		Length totalWordWidth() const { return m_total_word_width; }
-		Length totalSpaceWidth() const { return m_total_space_width; }
-
-		Cursor lineCursor() const { return layout->newLineFrom(prev_cursor, line_height); }
-		size_t numParts() const { return m_word_widths.size(); }
-
-		Length wordWidthForIndex(size_t idx) const { return m_word_widths[idx]; }
-
-		// Modifiers
-		void add(const Word& w)
-		{
-			auto prev_word_style = parent_style->extend(style);
-			auto word_style = parent_style->extend(w.style());
-
-			line_height = std::max(line_height,
-			    calculateWordSize(last_word, word_style).y() * word_style->line_spacing().value());
-
-			if(last_sep)
-			{
-				if(last_sep->kind == tree::Separator::SPACE)
+				if(auto word = std::get_if<Word>(&*it); word)
 				{
-					line_width_excluding_last_word += calculateWordSize(last_word, prev_word_style).x();
-					last_word.clear();
+					auto style = parent_style->extend(word->style());
+					if(it != word_chunk_it && word_chunk_style != style)
+					{
+						ret.total_word_width += word_chunk_width;
+						word_chunk_width = 0;
+						word_chunk_style = style;
+						word_chunk_text.clear();
+						word_chunk_it = it;
+					}
+					word_chunk_text += word->text().sv();
+					auto chunk_size = calculateWordSize(word_chunk_text, style);
+					ret.word_widths.push_back(chunk_size.x() - word_chunk_width);
+					word_chunk_width = chunk_size.x();
 
-					Length space_width = std::max( //
-					    calculateWordSize(last_sep->middleOfLine(), prev_word_style).x(),
-					    calculateWordSize(last_sep->middleOfLine(), word_style).x());
-					line_width_excluding_last_word += space_width;
-					m_total_space_width += space_width;
-					m_word_widths.push_back(space_width);
-					num_spaces++;
+					ret.line_height = std::max(ret.line_height, chunk_size.y());
 				}
-				else
+				else if(auto sep = std::get_if<Separator>(&*it); sep)
 				{
-					sap::internal_error("support other seps {}", last_sep->kind);
+					if(sep->kind == tree::Separator::SPACE)
+					{
+						const auto& prev_word = std::get<Word>(*(it - 1));
+						const auto& next_word = std::get<Word>(*(it + 1));
+						ret.total_word_width += word_chunk_width;
+						word_chunk_width = 0;
+						word_chunk_style = nullptr;
+						word_chunk_text.clear();
+						word_chunk_it = it + 1;
+
+						Length space_width = std::max( //
+						    calculateWordSize(sep->middleOfLine(), prev_word.style()).x(),
+						    calculateWordSize(sep->middleOfLine(), next_word.style()).x());
+						ret.total_space_width += space_width;
+						ret.word_widths.push_back(space_width);
+					}
+					else
+					{
+						sap::internal_error("support other seps {}", sep->kind);
+					}
 				}
+			}
+			ret.total_word_width += word_chunk_width;
 
-				last_sep.reset();
-
-				style = w.style();
-				last_word = w.text().sv();
-				Length word_width = calculateWordSize(last_word, word_style).x();
-				m_total_word_width += word_width;
-				m_word_widths.push_back(word_width);
-			}
-			else if(style != nullptr && style != w.style() && *style != *w.style())
-			{
-				line_width_excluding_last_word += calculateWordSize(last_word, prev_word_style).x();
-				last_word.clear();
-				style = w.style();
-				last_word = w.text().sv();
-				Length word_width = calculateWordSize(last_word, word_style).x();
-				m_total_word_width += word_width;
-				m_word_widths.push_back(word_width);
-			}
-			else
-			{
-				style = w.style();
-				Length prev_word_width = calculateWordSize(last_word, word_style).x();
-				last_word += w.text().sv();
-				Length new_word_width = calculateWordSize(last_word, word_style).x();
-				m_total_word_width += new_word_width - prev_word_width;
-				m_word_widths.push_back(new_word_width - prev_word_width);
-			}
+			return ret;
 		}
-
-		void add(Separator sep)
-		{
-			if(sep.kind == tree::Separator::SPACE)
-				last_sep = sep;
-			else
-				sap::internal_error("support other seps {}", sep.kind);
-		}
-
-	private:
-		Line2() = default;
 	};
 
 
@@ -184,34 +124,40 @@ namespace sap::layout
 
 		// Justify and add words to region
 		double prev_space_width_factor = 1;
-		for(auto it = lines.begin(); it != lines.end(); ++it)
+		for(auto line_it = lines.begin(); line_it != lines.end(); ++line_it)
 		{
-			auto& line1 = *it;
-			auto line2 = Line2(line1.layout, line1.parent_style, line1.prev_cursor);
+			auto& line1 = *line_it;
 
-			for(size_t i = 0; i < line1.numParts(); i++)
+			auto words_begin = words_and_seps.begin() + (ssize_t) current_idx;
+			auto words_end = words_and_seps.begin() + (ssize_t) current_idx + (ssize_t) line1.numParts();
+
+			if(!std::holds_alternative<Word>(*words_begin))
 			{
-				if(auto& ws = words_and_seps[current_idx + i]; std::holds_alternative<Word>(ws))
-					line2.add(std::get<Word>(ws));
-				else
-					line2.add(std::get<Separator>(ws));
+				sap::internal_error(
+				    "line starting with non-Word found, "
+				    "either line breaking algo is broken "
+				    "or we had multiple separators in a row");
 			}
 
+			// Ignore space at end of line
+			const auto& last_word = *(words_end - 1);
+			if(auto sep = std::get_if<Separator>(&last_word); sep && sep->kind == tree::Separator::SPACE)
+				--words_end;
 
-			cursor = line2.lineCursor();
-			auto desired_space_width = layout->getWidthAt(cursor) - line2.totalWordWidth();
-			auto total_space_width = line2.totalSpaceWidth();
+			LineMetrics line_metrics = LineMetrics::computeLineMetrics(words_begin, words_end, parent_style);
 
-			double space_width_factor = desired_space_width / total_space_width;
-			if(it + 1 == lines.end())
+			cursor = layout->newLineFrom(cursor, line_metrics.line_height);
+			auto desired_space_width = layout->getWidthAt(cursor) - line_metrics.total_word_width;
+			double space_width_factor = desired_space_width / line_metrics.total_space_width;
+
+			if(line_it + 1 == lines.end())
 				space_width_factor = std::min(prev_space_width_factor, space_width_factor);
 
-			const Style* prev_word_style = nullptr;
-
-
-			for(size_t i = 0; i < line1.numParts(); i++)
+			const Style* prev_word_style = Style::empty();
+			size_t num_words = (size_t) (words_end - words_begin);
+			for(size_t i = 0; i < num_words; i++)
 			{
-				auto word_width = line1.wordWidthForIndex(i);
+				auto word_width = line_metrics.word_widths[i];
 
 				auto word_visitor = [&](const Word& word) {
 					auto new_cursor = layout->moveRightFrom(cursor, word_width);
