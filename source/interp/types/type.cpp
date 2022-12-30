@@ -40,16 +40,6 @@ namespace sap::interp
 		{
 			return "InlineObj";
 		}
-		else if(this->isFunction())
-		{
-			std::string ret {};
-
-			auto& params = this->toFunction()->parameterTypes();
-			for(size_t i = 0; i < params.size(); i++)
-				ret += zpr::sprint("{}{}", i == 0 ? "" : ", ", params[i]);
-
-			return zpr::sprint("({}) -> {}", ret, this->toFunction()->returnType());
-		}
 		else
 		{
 			return "?????";
@@ -163,6 +153,15 @@ namespace sap::interp
 		return get_or_add_type(new ArrayType(elem, is_variadic));
 	}
 
+	const StructType* Type::makeStruct(const std::string& name, const std::vector<std::pair<std::string, const Type*>>& foo)
+	{
+		std::vector<StructType::Field> fields {};
+		for(auto& [n, t] : foo)
+			fields.push_back(StructType::Field { .name = n, .type = t });
+
+		return get_or_add_type(new StructType(name, std::move(fields)));
+	}
+
 
 
 
@@ -170,13 +169,19 @@ namespace sap::interp
 
 	const FunctionType* Type::toFunction() const
 	{
-		assert(isFunction());
+		assert(this->isFunction());
 		return dynamic_cast<const FunctionType*>(this);
 	}
 
 	const ArrayType* Type::toArray() const
 	{
-		assert(isArray());
+		assert(this->isArray());
 		return dynamic_cast<const ArrayType*>(this);
+	}
+
+	const StructType* Type::toStruct() const
+	{
+		assert(this->isStruct());
+		return dynamic_cast<const StructType*>(this);
 	}
 }

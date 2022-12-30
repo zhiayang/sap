@@ -4,9 +4,12 @@
 
 #pragma once
 
+#include "util.h"
+
 namespace sap::interp
 {
 	struct ArrayType;
+	struct StructType;
 	struct FunctionType;
 
 	struct Type
@@ -16,6 +19,7 @@ namespace sap::interp
 		bool isBool() const { return m_kind == KIND_BOOL; }
 		bool isChar() const { return m_kind == KIND_CHAR; }
 		bool isArray() const { return m_kind == KIND_ARRAY; }
+		bool isStruct() const { return m_kind == KIND_STRUCT; }
 		bool isInteger() const { return m_kind == KIND_INTEGER; }
 		bool isFloating() const { return m_kind == KIND_FLOATING; }
 		bool isFunction() const { return m_kind == KIND_FUNCTION; }
@@ -36,6 +40,7 @@ namespace sap::interp
 		// the conversion functions can't be inline because dynamic_cast needs
 		// a complete type (and obviously derived types need the complete definition of Type)
 		const FunctionType* toFunction() const;
+		const StructType* toStruct() const;
 		const ArrayType* toArray() const;
 
 		virtual std::string str() const;
@@ -52,6 +57,8 @@ namespace sap::interp
 
 		static const FunctionType* makeFunction(std::vector<const Type*> param_types, const Type* return_type);
 		static const ArrayType* makeArray(const Type* element_type, bool is_variadic = false);
+		static const StructType* makeStruct(const std::string& name,
+		    const std::vector<std::pair<std::string, const Type*>>& fields);
 
 	protected:
 		enum Kind
@@ -66,6 +73,7 @@ namespace sap::interp
 
 			KIND_TREE_INLINE_OBJ = 7,
 			KIND_ARRAY = 8,
+			KIND_STRUCT = 9,
 		};
 
 		Kind m_kind;
@@ -104,6 +112,38 @@ namespace sap::interp
 
 		const Type* m_element_type;
 		bool m_is_variadic;
+
+		friend struct Type;
+	};
+
+	struct StructType : Type
+	{
+		struct Field
+		{
+			std::string name;
+			const Type* type;
+		};
+
+		virtual std::string str() const override;
+		virtual bool sameAs(const Type* other) const override;
+
+		const std::string& name() const { return m_name; }
+
+		bool haveFieldNamed(zst::str_view name) const;
+		size_t getFieldIndex(zst::str_view name) const;
+		const Type* getFieldNamed(zst::str_view name) const;
+
+		void setFields(std::vector<Field> fields);
+
+		const std::vector<Field>& getFields() const;
+		std::vector<const Type*> getFieldTypes() const;
+
+	private:
+		StructType(std::string name, std::vector<Field> fields);
+
+		std::string m_name;
+		std::vector<Field> m_fields;
+		util::hashmap<std::string, std::pair<size_t, const Type*>> m_field_map;
 
 		friend struct Type;
 	};

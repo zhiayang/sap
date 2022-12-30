@@ -278,7 +278,32 @@ namespace sap::interp
 
 		FuncTy function;
 	};
+
+
+	struct StructDecl : Declaration
+	{
+		StructDecl(const std::string& name) : Declaration(name) { }
+
+		virtual ErrorOr<EvalResult> evaluate(Interpreter* cs) const override;
+		virtual ErrorOr<const Type*> typecheck_impl(Interpreter* cs, const Type* infer = nullptr) const override;
+	};
+
+	struct StructDefn : Definition
+	{
+		StructDefn(const std::string& name, std::vector<std::unique_ptr<VariableDecl>> fields)
+		    : Definition(new StructDecl(name))
+		    , fields(std::move(fields))
+		{
+		}
+
+		virtual ErrorOr<EvalResult> evaluate(Interpreter* cs) const override;
+		virtual ErrorOr<const Type*> typecheck_impl(Interpreter* cs, const Type* infer = nullptr) const override;
+
+		std::vector<std::unique_ptr<VariableDecl>> fields;
+	};
 }
+
+
 
 
 
