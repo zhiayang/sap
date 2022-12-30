@@ -5,8 +5,8 @@
 #include "util.h"  // for checked_cast, convertBEU16, convertBEU32
 #include "types.h" // for GlyphId
 
-#include "font/font.h"     // for FontFile
-#include "font/truetype.h" // for TTData, TTSubset, createTTSubset
+#include "font/truetype.h"  // for TTData, TTSubset, createTTSubset
+#include "font/font_file.h" // for FontFile
 
 namespace font::truetype
 {

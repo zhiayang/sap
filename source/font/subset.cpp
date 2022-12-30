@@ -9,10 +9,10 @@
 
 #include "pdf/object.h" // for Stream
 
-#include "font/cff.h"      // for CFFSubset, createCFFSubset
-#include "font/tag.h"      // for Tag
-#include "font/font.h"     // for Table, FontFile, Stream, FontFile::OUTLIN...
-#include "font/truetype.h" // for TTSubset, createTTSubset
+#include "font/cff.h"       // for CFFSubset, createCFFSubset
+#include "font/tag.h"       // for Tag
+#include "font/truetype.h"  // for TTSubset, createTTSubset
+#include "font/font_file.h" // for Table, FontFile, Stream, FontFile::OUTLIN...
 
 namespace font
 {
@@ -187,7 +187,7 @@ namespace font
 	}
 
 
-	std::string generateSubsetName(FontFile* font)
+	std::string generateSubsetName(const FontFile* font)
 	{
 		static auto foo = []() {
 			srand(static_cast<unsigned int>(time(nullptr)));

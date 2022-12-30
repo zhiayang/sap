@@ -11,7 +11,7 @@
 #include "pdf/font.h"   // for Font, File
 #include "pdf/object.h" // for Stream
 
-#include "font/font.h" // for CharacterMapping, FontFile
+#include "font/font_file.h" // for CharacterMapping, FontFile
 
 namespace pdf
 {

@@ -5,9 +5,9 @@
 #include "util.h"  // for checked_cast, convertBEU16
 #include "types.h" // for GlyphId
 
-#include "font/cff.h"  // for FontDict, Operand, CFFData, Glyph, DictBuilder
-#include "font/tag.h"  // for Tag
-#include "font/font.h" // for FontFile, Table
+#include "font/cff.h"       // for FontDict, Operand, CFFData, Glyph, DictBuilder
+#include "font/tag.h"       // for Tag
+#include "font/font_file.h" // for FontFile, Table
 
 namespace font::cff
 {

@@ -4,8 +4,9 @@
 
 #include "util.h" // for checked_cast
 
-#include "font/cff.h"  // for Subroutine, CFFData, IndexTable, FontDict, Glyph
-#include "font/font.h" // for consume_u8, consume_u16, peek_u16, FontFile
+#include "font/cff.h" // for Subroutine, CFFData, IndexTable, FontDict, Glyph
+#include "font/misc.h"
+#include "font/font_file.h" // for consume_u8, consume_u16, peek_u16, FontFile
 
 namespace font::cff
 {

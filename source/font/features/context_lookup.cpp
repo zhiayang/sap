@@ -5,7 +5,7 @@
 #include "util.h"  // for checked_cast
 #include "types.h" // for GlyphId
 
-#include "font/font.h"     // for consume_u16, peek_u16
+#include "font/misc.h"
 #include "font/features.h" // for ContextualLookupRecord, getGlyphCoverageI...
 
 namespace font::off

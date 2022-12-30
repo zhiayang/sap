@@ -5,7 +5,7 @@
 #include "util.h"  // for convertBEU16
 #include "types.h" // for GlyphId
 
-#include "font/font.h"     // for consume_u16
+#include "font/misc.h"
 #include "font/features.h" // for getGlyphClass, parseAllClassDefs, parseGl...
 
 namespace font::off

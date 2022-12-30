@@ -3,7 +3,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #include "font/cff.h"  // for Operand, readNumberFromCharString, readNumber...
-#include "font/font.h" // for consume_u32, consume_u16
+#include "font/misc.h" // for consume_u32, consume_u16
 
 namespace font::cff
 {

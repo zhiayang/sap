@@ -52,6 +52,11 @@ namespace sap::layout
 		m_objects.push_back(std::move(obj));
 	}
 
+	pdf::Font* Document::addFont(font::FontFile* font)
+	{
+		return pdf::Font::fromFontFile(&m_pdf_document, font);
+	}
+
 	void Document::layout(interp::Interpreter* cs, const tree::Document& treedoc)
 	{
 		Cursor cursor = m_page_layout.newCursor();

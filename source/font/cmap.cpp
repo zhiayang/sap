@@ -5,7 +5,8 @@
 #include "util.h"  // for convertBEU16
 #include "types.h" // for GlyphId, GlyphId::notdef
 
-#include "font/font.h" // for consume_u16, consume_u32, CharacterMapping
+#include "font/misc.h"
+#include "font/font_file.h" // for consume_u16, consume_u32, CharacterMapping
 
 namespace font
 {

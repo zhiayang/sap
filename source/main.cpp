@@ -12,10 +12,10 @@
 #include "sap/document.h" // for Document
 #include "sap/frontend.h" // for parse
 
-#include "font/tag.h"    // for font
-#include "font/font.h"   // for FontFile
-#include "font/handle.h" // for FontProperties, FontStyle, FontStyle::ITALIC
-#include "font/search.h" // for findFont, GENERIC_SERIF
+#include "font/tag.h"       // for font
+#include "font/handle.h"    // for FontProperties, FontStyle, FontStyle::ITALIC
+#include "font/search.h"    // for findFont, GENERIC_SERIF
+#include "font/font_file.h" // for FontFile
 
 #include "interp/tree.h"   // for Document
 #include "interp/interp.h" // for Interpreter
@@ -25,7 +25,6 @@ CLEANUPS:
 
 - use magic .into() for units
 - cleanup the pdf::Font / font::FontFile nonsense
-- "fontconfig" for macos
 - maybe wrapper around (const Style*)
 - maybe s/layout/print/ or something
 	- rename layout() methods to print() or something

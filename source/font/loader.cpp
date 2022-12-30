@@ -1,4 +1,4 @@
-// parser.cpp
+// loader.cpp
 // Copyright (c) 2021, zhiayang
 // SPDX-License-Identifier: Apache-2.0
 
@@ -6,10 +6,10 @@
 
 #include "font/cff.h"         // for parseCFFData
 #include "font/tag.h"         // for Tag
-#include "font/font.h"        // for FontFile, Table, FontNames, FontMetrics
 #include "font/handle.h"      // for FontHandle
 #include "font/features.h"    // for parseGPos, parseGSub
 #include "font/truetype.h"    // for TTData, parseGlyfTable, parseLocaTable
+#include "font/font_file.h"   // for FontFile, Table, FontNames, FontMetrics
 #include "font/font_scalar.h" // for FontScalar
 
 namespace misc

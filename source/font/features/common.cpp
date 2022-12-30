@@ -2,9 +2,10 @@
 // Copyright (c) 2021, zhiayang
 // SPDX-License-Identifier: Apache-2.0
 
-#include "font/tag.h"      // for Tag
-#include "font/font.h"     // for consume_u16, FontFile, consume_u32, Table
-#include "font/features.h" // for LookupTable, TaggedTable, Feature, Script
+#include "font/tag.h" // for Tag
+#include "font/misc.h"
+#include "font/features.h"  // for LookupTable, TaggedTable, Feature, Script
+#include "font/font_file.h" // for consume_u16, FontFile, consume_u32, Table
 
 namespace font::off
 {
@@ -12,10 +13,10 @@ namespace font::off
 	constexpr auto DEFAULT = Tag("DFLT");
 
 	template <typename TableKind>
-	std::vector<uint16_t> getLookupTablesForFeatures(TableKind& table, const FeatureSet& features)
+	std::vector<uint16_t> getLookupTablesForFeatures(const TableKind& table, const FeatureSet& features)
 	{
 		// step 1: get the script.
-		Script* script = nullptr;
+		const Script* script = nullptr;
 		if(auto it = table.scripts.find(features.script); it != table.scripts.end())
 			script = &it->second;
 		else if(auto it = table.scripts.find(DEFAULT); it != table.scripts.end())
@@ -26,7 +27,7 @@ namespace font::off
 		assert(script != nullptr);
 
 		// step 2: same thing for the language
-		Language* lang = nullptr;
+		const Language* lang = nullptr;
 		if(auto it = script->languages.find(features.language); it != script->languages.end())
 			lang = &it->second;
 		else if(auto it = script->languages.find(DEFAULT); it != script->languages.end())
@@ -54,10 +55,8 @@ namespace font::off
 		return lookups;
 	}
 
-
-
-	template std::vector<uint16_t> getLookupTablesForFeatures(GPosTable& table, const FeatureSet& features);
-	template std::vector<uint16_t> getLookupTablesForFeatures(GSubTable& table, const FeatureSet& features);
+	template std::vector<uint16_t> getLookupTablesForFeatures<GPosTable>(const GPosTable& table, const FeatureSet& features);
+	template std::vector<uint16_t> getLookupTablesForFeatures<GSubTable>(const GSubTable& table, const FeatureSet& features);
 
 	static Language parse_one_language(Tag tag, zst::byte_span buf)
 	{

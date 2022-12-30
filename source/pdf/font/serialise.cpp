@@ -10,7 +10,8 @@
 #include "pdf/object.h"   // for Dictionary, Integer, Name, IndirectRef
 #include "pdf/document.h" // for File
 
-#include "font/font.h" // for FontFile, FontMetrics, generateSubsetName
+#include "font/misc.h"
+#include "font/font_file.h" // for FontFile, FontMetrics, generateSubsetName
 
 namespace pdf
 {

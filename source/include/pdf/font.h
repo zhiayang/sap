@@ -9,9 +9,14 @@
 
 #include "pdf/units.h" // for TextSpace1d, PdfScalar, GlyphSpace1d
 
-#include "font/font.h"        // for GlyphMetrics, FontMetrics, Stream, Fon...
-#include "font/features.h"    // for FeatureSet, GlyphAdjustment
+#include "font/metrics.h"
+#include "font/features.h"
 #include "font/font_scalar.h" // for font_design_space, FontScalar
+
+namespace font
+{
+	struct FontFile;
+}
 
 namespace pdf
 {

@@ -7,20 +7,13 @@
 #include "types.h" // for GlyphId
 
 #include "font/tag.h"         // for Tag
+#include "font/metrics.h"     //
 #include "font/font_scalar.h" // for FontScalar
 
 namespace font
 {
 	struct Table;
 	struct FontFile;
-
-	struct GlyphAdjustment
-	{
-		FontScalar horz_placement;
-		FontScalar vert_placement;
-		FontScalar horz_advance;
-		FontScalar vert_advance;
-	};
 }
 
 namespace font::off
@@ -109,7 +102,7 @@ namespace font::off
 	    if that particular glyph needs to be adjusted. Only glyphs that need to be adjusted
 	    will be part of the map.
 	*/
-	std::map<size_t, GlyphAdjustment> getPositioningAdjustmentsForGlyphSequence(FontFile* font, zst::span<GlyphId> glyphs,
+	std::map<size_t, GlyphAdjustment> getPositioningAdjustmentsForGlyphSequence(const FontFile* font, zst::span<GlyphId> glyphs,
 	    const FeatureSet& features);
 
 	/*
@@ -153,7 +146,7 @@ namespace font::off
 	    For simplicity of use, this API returns a vector of glyphs, which *wholesale* replace the
 	    input glyph sequence -- even if no substitutions took place.
 	*/
-	SubstitutedGlyphString performSubstitutionsForGlyphSequence(FontFile* font, zst::span<GlyphId> glyphs,
+	SubstitutedGlyphString performSubstitutionsForGlyphSequence(const FontFile* font, zst::span<GlyphId> glyphs,
 	    const FeatureSet& features);
 
 
@@ -181,7 +174,7 @@ namespace font::off
 	    Return a list of LookupTable indices for the given feature set in either the GPOS or GSUB tables.
 	*/
 	template <typename TableKind>
-	std::vector<uint16_t> getLookupTablesForFeatures(TableKind& gpos_or_gsub, const FeatureSet& features);
+	std::vector<uint16_t> getLookupTablesForFeatures(const TableKind& gpos_or_gsub, const FeatureSet& features);
 
 	/*
 	    Parse the script and language tables from the given buffer.

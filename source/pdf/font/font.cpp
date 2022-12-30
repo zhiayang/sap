@@ -11,8 +11,8 @@
 #include "pdf/win_ansi_encoding.h" // for WIN_ANSI
 
 #include "font/tag.h"         // for Tag
-#include "font/font.h"        // for GlyphInfo, CharacterMapping, Glyp...
 #include "font/features.h"    // for GlyphAdjustment, FeatureSet, Subs...
+#include "font/font_file.h"   // for GlyphInfo, CharacterMapping, Glyp...
 #include "font/font_scalar.h" // for FontScalar, font_design_space
 
 namespace pdf

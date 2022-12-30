@@ -16,9 +16,6 @@
 #include "sap/style.h" // for Stylable
 #include "sap/units.h" // for Vector2
 
-#include "font/font.h"     // for FontFile
-#include "font/features.h" // for GlyphAdjustment
-
 #include "layout/base.h" // for RectPageLayout, LayoutObject, Document
 
 namespace pdf
@@ -28,6 +25,11 @@ namespace pdf
 	struct Text;
 	struct File;
 	struct Writer;
+}
+
+namespace font
+{
+	struct FontFile;
 }
 
 namespace sap
@@ -105,10 +107,11 @@ namespace sap::layout
 		Document(Document&&) = default;
 		Document& operator=(Document&&) = default;
 
+		pdf::Font* addFont(font::FontFile* font);
 		void addObject(std::unique_ptr<LayoutObject> obj);
 
 		void layout(interp::Interpreter* cs, const tree::Document& document);
-		pdf::Font* addFont(font::FontFile* font) { return pdf::Font::fromFontFile(&m_pdf_document, font); }
+
 		void write(pdf::Writer* stream)
 		{
 			auto pages = m_page_layout.render();

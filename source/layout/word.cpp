@@ -11,8 +11,8 @@
 #include "sap/style.h" // for Style
 #include "sap/units.h" // for Length
 
-#include "font/font.h"     // for GlyphInfo
-#include "font/features.h" // for GlyphAdjustment
+#include "font/features.h"  // for GlyphAdjustment
+#include "font/font_file.h" // for GlyphInfo
 
 #include "layout/word.h" // for Word
 

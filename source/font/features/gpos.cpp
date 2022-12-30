@@ -4,8 +4,9 @@
 
 #include "types.h" // for GlyphId
 
-#include "font/font.h"        // for consume_u16, consume_i16, peek_u16
+#include "font/misc.h"
 #include "font/features.h"    // for AdjustmentResult, GlyphAdjustment, Loo...
+#include "font/font_file.h"   // for consume_u16, consume_i16, peek_u16
 #include "font/font_scalar.h" // for FontScalar
 
 namespace font::off::gpos
@@ -351,7 +352,7 @@ namespace font::off::gpos
 
 namespace font::off
 {
-	std::map<size_t, GlyphAdjustment> getPositioningAdjustmentsForGlyphSequence(FontFile* font, zst::span<GlyphId> glyphs,
+	std::map<size_t, GlyphAdjustment> getPositioningAdjustmentsForGlyphSequence(const FontFile* font, zst::span<GlyphId> glyphs,
 	    const FeatureSet& features)
 	{
 		auto gpos = font->gpos_table;

@@ -4,8 +4,8 @@
 
 #include "util.h" // for checked_cast, convertBEU32, convertBEU16, to_...
 
-#include "font/cff.h"  // for CFFData, Glyph, createCMapForCFFSubset
-#include "font/font.h" // for FontFile
+#include "font/cff.h"       // for CFFData, Glyph, createCMapForCFFSubset
+#include "font/font_file.h" // for FontFile
 
 namespace font::cff
 {
