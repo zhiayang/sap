@@ -2,8 +2,6 @@
 // Copyright (c) 2022, zhiayang
 // SPDX-License-Identifier: Apache-2.0
 
-#include <algorithm> // for all_of
-
 #include "util.h"     // for checked_cast
 #include "location.h" // for Location, error
 

@@ -4,9 +4,8 @@
 
 #pragma once
 
-#include <queue>
+#include <queue> // for priority_queue
 #include <ranges>
-#include <algorithm> // for reverse
 #include <functional>
 
 #include "util.h" // for hasher

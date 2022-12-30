@@ -2,8 +2,11 @@
 // Copyright (c) 2022, zhiayang
 // SPDX-License-Identifier: Apache-2.0
 
-#include "interp/value.h"
-#include "interp/interp.h"
+#include "util.h" // for stringFromU32String
+
+#include "interp/value.h"       // for Value
+#include "interp/interp.h"      // for Interpreter
+#include "interp/eval_result.h" // for EvalResult
 
 namespace sap::interp::builtin
 {

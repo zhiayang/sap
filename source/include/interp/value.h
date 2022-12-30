@@ -20,6 +20,7 @@ namespace sap::tree
 namespace sap::interp
 {
 	struct Interpreter;
+
 	struct Value
 	{
 		const Type* type() const { return m_type; }

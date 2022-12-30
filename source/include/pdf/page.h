@@ -5,7 +5,7 @@
 #pragma once
 
 #include "pdf/units.h"       // for Size2d, Vector2_YDown, Vector2_YUp
-#include "pdf/object.h"      // for Dictionary, Document
+#include "pdf/object.h"      // for Dictionary, File
 #include "pdf/page_object.h" // for PageObject
 
 namespace pdf

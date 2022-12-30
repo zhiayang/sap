@@ -2,20 +2,20 @@
 // Copyright (c) 2022, zhiayang
 // SPDX-License-Identifier: Apache-2.0
 
-#include "util.h" // for dynamic_pointer_cast
-
 #include "pdf/font.h"     // for Font
-#include "pdf/units.h"    // for Scalar
-#include "pdf/document.h" // for Document
+#include "pdf/units.h"    // for PdfScalar
+#include "pdf/document.h" // for File
 
 #include "sap/style.h"    // for Style
-#include "sap/units.h"    // for Scalar
+#include "sap/units.h"    // for Length
 #include "sap/fontset.h"  // for FontSet, FontStyle, FontStyle::Regular
-#include "sap/document.h" // for Document, Cursor, LayoutObject, Interpreter
+#include "sap/document.h" // for Document
 
-#include "interp/tree.h" // for Document, Paragraph
+#include "interp/tree.h"     // for Paragraph, Document
+#include "interp/basedefs.h" // for DocumentObject
 
-#include "layout/paragraph.h"
+#include "layout/base.h"      // for Cursor, LayoutObject, Interpreter, Rec...
+#include "layout/paragraph.h" // for Paragraph
 
 namespace sap::layout
 {

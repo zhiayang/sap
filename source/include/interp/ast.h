@@ -12,8 +12,9 @@
 // #include "value.h"
 #include "location.h" // for Location
 
-#include "interp/basedefs.h" // for InlineObject
-#include "interp/eval_result.h"
+#include "interp/value.h"       // for Interpreter, Value
+#include "interp/basedefs.h"    // for InlineObject
+#include "interp/eval_result.h" // for EvalResult
 
 namespace sap::interp
 {

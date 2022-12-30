@@ -7,7 +7,7 @@
 #include "util.h"  // for checked_cast, convertBEU32, convertBEU16
 #include "types.h" // for GlyphId
 
-#include "pdf/object.h" // for Stream, Integer, Dictionary, Length1
+#include "pdf/object.h" // for Stream
 
 #include "font/cff.h"      // for CFFSubset, createCFFSubset
 #include "font/tag.h"      // for Tag

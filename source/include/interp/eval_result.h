@@ -4,9 +4,9 @@
 
 #pragma once
 
-#include <optional>
+#include <optional> // for optional, nullopt
 
-#include "interp/value.h"
+#include "interp/value.h" // for Value
 
 namespace sap::interp
 {

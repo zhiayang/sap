@@ -7,13 +7,13 @@
 
 #include "pdf/font.h"              // for Font, Font::ENCODING_CID, Font::E...
 #include "pdf/misc.h"              // for error
-#include "pdf/units.h"             // for Scalar, pdf_typographic_unit_y_down
+#include "pdf/units.h"             // for PdfScalar, Size2d_YDown
 #include "pdf/win_ansi_encoding.h" // for WIN_ANSI
 
 #include "font/tag.h"         // for Tag
 #include "font/font.h"        // for GlyphInfo, CharacterMapping, Glyp...
 #include "font/features.h"    // for GlyphAdjustment, FeatureSet, Subs...
-#include "font/font_scalar.h" // for font_design_space, FontScalar
+#include "font/font_scalar.h" // for FontScalar, font_design_space
 
 namespace pdf
 {

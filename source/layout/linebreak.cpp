@@ -2,10 +2,16 @@
 // Copyright (c) 2022, zhiayang
 // SPDX-License-Identifier: Apache-2.0
 
-#include "dijkstra.h"
+#include <variant> // for holds_alternative, variant, visit
 
-#include "layout/word.h"
-#include "layout/line.h"
+#include "dijkstra.h" // for dijkstra_shortest_path
+
+#include "sap/style.h" // for Style
+#include "sap/units.h" // for Length
+
+#include "layout/base.h" // for RectPageLayout, Cursor
+#include "layout/line.h" // for Line, breakLines
+#include "layout/word.h" // for Separator, Word
 
 namespace sap::layout
 {

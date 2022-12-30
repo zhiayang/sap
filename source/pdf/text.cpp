@@ -6,7 +6,7 @@
 #include "pdf/misc.h"  // for error
 #include "pdf/page.h"  // for Page
 #include "pdf/text.h"  // for Text::Group, Text, Text::(anonymous)
-#include "pdf/units.h" // for Offset2d, Position2d, TextSpace1d, Scalar
+#include "pdf/units.h" // for Offset2d, Position2d, TextSpace1d, PdfScalar
 
 namespace pdf
 {

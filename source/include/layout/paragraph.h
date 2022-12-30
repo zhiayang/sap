@@ -4,8 +4,15 @@
 
 #pragma once
 
-#include "layout/base.h"
-#include "layout/word.h"
+#include "pdf/font.h"  // for Font
+#include "pdf/units.h" // for PdfScalar
+
+#include "sap/style.h" // for Style
+
+#include "interp/tree.h" // for Paragraph
+
+#include "layout/base.h" // for Cursor, LayoutObject, RectPageLayout, Inter...
+#include "layout/word.h" // for Word
 
 namespace sap::layout
 {

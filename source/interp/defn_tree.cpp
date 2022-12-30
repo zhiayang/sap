@@ -2,8 +2,10 @@
 // Copyright (c) 2022, zhiayang
 // SPDX-License-Identifier: Apache-2.0
 
-#include "interp/ast.h"
-#include "interp/interp.h"
+#include "util.h" // for hashmap
+
+#include "interp/ast.h"    // for FunctionDecl, Declaration, QualifiedId
+#include "interp/interp.h" // for DefnTree
 
 namespace sap::interp
 {

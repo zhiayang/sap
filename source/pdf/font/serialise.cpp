@@ -2,15 +2,13 @@
 // Copyright (c) 2022, zhiayang
 // SPDX-License-Identifier: Apache-2.0
 
-#include <algorithm> // for find_if, sort
-
 #include "types.h" // for GlyphId
 
 #include "pdf/font.h"     // for Font, Font::ENCODING_CID, Font::ENCODING_W...
 #include "pdf/misc.h"     // for error
 #include "pdf/units.h"    // for TextSpace1d
-#include "pdf/object.h"   // for Integer, Name, Dictionary, Object, Indirec...
-#include "pdf/document.h" // for Document
+#include "pdf/object.h"   // for Dictionary, Integer, Name, IndirectRef
+#include "pdf/document.h" // for File
 
 #include "font/font.h" // for FontFile, FontMetrics, generateSubsetName
 

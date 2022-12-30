@@ -6,16 +6,15 @@
 
 #include "pdf/font.h"  // for Font, Font::ENCODING_CID
 #include "pdf/text.h"  // for Text
-#include "pdf/units.h" // for Scalar
+#include "pdf/units.h" // for PdfScalar
 
-#include "sap/style.h"   // for Style
-#include "sap/units.h"   // for Scalar
-#include "sap/fontset.h" // for FontSet
+#include "sap/style.h" // for Style
+#include "sap/units.h" // for Length
 
 #include "font/font.h"     // for GlyphInfo
 #include "font/features.h" // for GlyphAdjustment
 
-#include "layout/word.h"
+#include "layout/word.h" // for Word
 
 namespace sap::layout
 {

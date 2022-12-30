@@ -9,7 +9,7 @@
 
 #include "pdf/font.h" // for Font
 
-#include "sap/units.h"   // for Scalar
+#include "sap/units.h"   // for Length
 #include "sap/fontset.h" // for FontSet, FontStyle
 
 namespace sap

@@ -7,7 +7,9 @@
 #include <memory>
 
 #include "util.h"
-#include "interp/eval_result.h"
+
+#include "interp/value.h"       // for Interpreter, Value
+#include "interp/eval_result.h" // for EvalResult
 
 namespace sap::interp
 {

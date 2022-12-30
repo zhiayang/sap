@@ -4,8 +4,8 @@
 
 #include "types.h" // for GlyphId
 
-#include "font/font.h"        // for consume_u16, consume_i16, peek_u16, FontFile
-#include "font/features.h"    // for AdjustmentResult, GlyphAdjustment, Lookup...
+#include "font/font.h"        // for consume_u16, consume_i16, peek_u16
+#include "font/features.h"    // for AdjustmentResult, GlyphAdjustment, Loo...
 #include "font/font_scalar.h" // for FontScalar
 
 namespace font::off::gpos

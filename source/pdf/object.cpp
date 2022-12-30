@@ -7,7 +7,7 @@
 #include "pdf/misc.h"     // for IndirHelper, error
 #include "pdf/object.h"   // for Name, Dictionary, Object, Array, IndirectRef
 #include "pdf/writer.h"   // for Writer
-#include "pdf/document.h" // for createObject, createIndirectObject, Document
+#include "pdf/document.h" // for createObject, createIndirectObject, File
 
 namespace pdf
 {

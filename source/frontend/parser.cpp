@@ -10,7 +10,7 @@
 #include "interp/ast.h"      // for Expr, FunctionDecl::Param, FunctionCall...
 #include "interp/tree.h"     // for Paragraph, ScriptBlock, ScriptCall, Text
 #include "interp/type.h"     // for Type, interp, ArrayType, FunctionType
-#include "interp/basedefs.h" // for DocumentObject
+#include "interp/basedefs.h" // for DocumentObject, InlineObject
 
 namespace sap::frontend
 {

@@ -5,7 +5,7 @@
 #pragma once
 
 #include "util.h"
-#include "units.h" // for Scalar, MAKE_UNITS_COMPATIBLE, DEFINE_UNIT_IN_NAM...
+#include "units.h" // for MAKE_UNITS_COMPATIBLE, Vector2, DEFINE_UNIT_IN_NA...
 
 #include "pdf/units.h"
 
@@ -27,7 +27,6 @@
 
 struct PDF_COORD_Y_UP;
 struct PDF_COORD_Y_DOWN;
-
 struct PDF_UNIT_TYPOGRAPHIC;
 struct PDF_UNIT_GLYPH_SPACE;
 struct PDF_UNIT_TEXT_SPACE;

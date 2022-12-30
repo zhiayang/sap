@@ -4,8 +4,18 @@
 
 #pragma once
 
-#include "layout/base.h"
-#include "layout/word.h"
+#include <variant> // for variant
+
+#include "pdf/font.h"  // for Font
+#include "pdf/units.h" // for PdfScalar, Size2d_YDown
+
+#include "sap/style.h" // for Style
+#include "sap/units.h" // for Length
+
+#include "interp/tree.h" // for Separator, Separator::SPACE
+
+#include "layout/base.h" // for Size2d, Cursor, RectPageLayout
+#include "layout/word.h" // for Separator, Word
 
 namespace sap::layout
 {

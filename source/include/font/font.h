@@ -11,7 +11,7 @@
 #include "font/tag.h"         // for Tag
 #include "font/handle.h"      // for FontHandle
 #include "font/features.h"    // for GlyphAdjustment, Feature, LookupTable
-#include "font/font_scalar.h" // for FontScalar, FontVector2d, font_design_space
+#include "font/font_scalar.h" // for FontScalar, FontVector2d, font_design_...
 
 namespace pdf
 {

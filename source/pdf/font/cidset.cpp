@@ -4,7 +4,7 @@
 
 #include "types.h" // for GlyphId
 
-#include "pdf/font.h"   // for Font, Document
+#include "pdf/font.h"   // for Font, File
 #include "pdf/object.h" // for Stream
 
 #include "font/font.h" // for FontFile

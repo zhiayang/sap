@@ -4,8 +4,9 @@
 
 #pragma once
 
-#include "util.h"
-#include <array>
+#include <array> // for array
+
+#include "util.h" // for hashmap, ShortString
 
 namespace sap::hyph
 {

@@ -6,6 +6,7 @@
 
 #include "defs.h"
 #include "util.h"
+
 #include "font/search.h"
 
 #include <fontconfig/fontconfig.h> // for FcChar8, FcPatternDestroy, FcConf...

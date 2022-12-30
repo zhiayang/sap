@@ -10,6 +10,7 @@
 
 #include "defs.h"
 #include "util.h"
+
 #include "font/search.h"
 
 #include <CoreText/CoreText.h>

@@ -7,9 +7,9 @@
 #include "util.h"  // for hashmap
 #include "types.h" // for GlyphId
 
-#include "pdf/units.h" // for TextSpace1d, Scalar, GlyphSpace1d, pdf_ty...
+#include "pdf/units.h" // for TextSpace1d, PdfScalar, GlyphSpace1d
 
-#include "font/font.h"        // for GlyphMetrics, FontMetrics, Stream, FontFile
+#include "font/font.h"        // for GlyphMetrics, FontMetrics, Stream, Fon...
 #include "font/features.h"    // for FeatureSet, GlyphAdjustment
 #include "font/font_scalar.h" // for font_design_space, FontScalar
 

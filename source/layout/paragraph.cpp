@@ -2,26 +2,26 @@
 // Copyright (c) 2021, zhiayang
 // SPDX-License-Identifier: Apache-2.0
 
-#include <variant> // for variant, visit, holds_alternative
+#include <variant> // for variant, get, holds_alternative, visit
 
-#include "util.h"     // for dynamic_pointer_cast, overloaded
-#include "dijkstra.h" // for dijkstra_shortest_path
+#include "util.h" // for overloaded
 
 #include "pdf/font.h"  // for Font
 #include "pdf/page.h"  // for Page
 #include "pdf/text.h"  // for Text
-#include "pdf/units.h" // for pdf_typographic_unit_1d, Scalar, Positi...
+#include "pdf/units.h" // for PdfScalar, Position2d_YDown, Offset2d
 
-#include "sap/style.h"   // for Style, Stylable
-#include "sap/units.h"   // for Scalar
-#include "sap/fontset.h" // for FontSet
+#include "sap/style.h" // for Style
+#include "sap/units.h" // for Length
 
-#include "interp/tree.h"     // for Separator, Paragraph, Separator::SPACE
+#include "interp/tree.h"     // for Separator, Paragraph, Text, Separator:...
+#include "interp/value.h"    // for Interpreter
 #include "interp/basedefs.h" // for InlineObject
 
-#include "layout/word.h"
-#include "layout/line.h"
-#include "layout/paragraph.h"
+#include "layout/base.h"      // for Cursor, Size2d, RectPageLayout, Position
+#include "layout/line.h"      // for Line, breakLines
+#include "layout/word.h"      // for Separator, Word
+#include "layout/paragraph.h" // for Paragraph, PositionedWord
 
 namespace sap::layout
 {

@@ -2,14 +2,14 @@
 // Copyright (c) 2021, zhiayang
 // SPDX-License-Identifier: Apache-2.0
 
-#include <miniz/miniz.h> // for tdefl_compress_buffer, tdefl_compressor_free
+#include <miniz/miniz.h> // for tdefl_compress_buffer, tdefl_init, TDEFL_F...
 
 #include "util.h" // for checked_cast
 
 #include "pdf/misc.h"     // for error, IndirHelper
-#include "pdf/object.h"   // for Stream, Integer, Dictionary, Name, Length
+#include "pdf/object.h"   // for Stream, Dictionary, Integer, Name, Length
 #include "pdf/writer.h"   // for Writer
-#include "pdf/document.h" // for createIndirectObject, Document, createObject
+#include "pdf/document.h" // for createIndirectObject, File, createObject
 
 namespace pdf
 {

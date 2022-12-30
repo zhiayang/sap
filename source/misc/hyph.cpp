@@ -1,5 +1,4 @@
 #include "hyph.h"
-#include <ranges>
 
 namespace sap::hyph
 {

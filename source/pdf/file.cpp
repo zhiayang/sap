@@ -4,9 +4,9 @@
 
 #include "util.h" // for checked_cast
 
+#include "pdf/font.h"     // for Font
 #include "pdf/misc.h"     // for error
 #include "pdf/page.h"     // for Page
-#include "pdf/font.h"     // for Font
 #include "pdf/object.h"   // for Object, Dictionary, Name, IndirectRef, Int...
 #include "pdf/writer.h"   // for Writer
 #include "pdf/document.h" // for Document

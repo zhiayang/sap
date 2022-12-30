@@ -11,15 +11,15 @@
 #include "pdf/page.h"     // for Page
 #include "pdf/units.h"    // for Scalar
 #include "pdf/object.h"   // for Writer
-#include "pdf/document.h" // for Document
+#include "pdf/document.h" // for File
 
-#include "sap/style.h" // for Stylable, Style
-#include "sap/units.h" // for Scalar, Vector2
+#include "sap/style.h" // for Stylable
+#include "sap/units.h" // for Vector2
 
 #include "font/font.h"     // for FontFile
 #include "font/features.h" // for GlyphAdjustment
 
-#include "layout/base.h"
+#include "layout/base.h" // for RectPageLayout, LayoutObject, Document
 
 namespace pdf
 {

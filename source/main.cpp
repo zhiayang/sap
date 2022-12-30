@@ -4,17 +4,18 @@
 
 #include "util.h" // for readEntireFile
 
-#include "pdf/units.h"  // for Scalar
+#include "pdf/units.h"  // for PdfScalar
 #include "pdf/writer.h" // for Writer
 
 #include "sap/style.h"    // for Style
-#include "sap/units.h"    // for Scalar
 #include "sap/fontset.h"  // for FontSet, FontStyle, FontStyle::Regular
 #include "sap/document.h" // for Document
 #include "sap/frontend.h" // for parse
 
-#include "font/font.h" // for findFontPath, FontFile
-#include "font/search.h"
+#include "font/tag.h"    // for font
+#include "font/font.h"   // for FontFile
+#include "font/handle.h" // for FontProperties, FontStyle, FontStyle::ITALIC
+#include "font/search.h" // for findFont, GENERIC_SERIF
 
 #include "interp/tree.h"   // for Document
 #include "interp/interp.h" // for Interpreter

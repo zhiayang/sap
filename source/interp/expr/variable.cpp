@@ -2,9 +2,10 @@
 // Copyright (c) 2022, zhiayang
 // SPDX-License-Identifier: Apache-2.0
 
-#include "interp/ast.h"
-#include "interp/value.h"
-#include "interp/interp.h"
+#include "interp/ast.h"         // for VariableDefn, Expr, Declaration, Var...
+#include "interp/type.h"        // for Type
+#include "interp/interp.h"      // for Interpreter, DefnTree, StackFrame
+#include "interp/eval_result.h" // for EvalResult, TRY_VALUE
 
 namespace sap::interp
 {

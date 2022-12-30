@@ -2,8 +2,6 @@
 // Copyright (c) 2022, zhiayang
 // SPDX-License-Identifier: Apache-2.0
 
-#include <algorithm> // for remove_if
-
 #include "util.h"  // for checked_cast, convertBEU16
 #include "types.h" // for GlyphId
 

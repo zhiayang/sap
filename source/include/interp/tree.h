@@ -6,7 +6,8 @@
 
 #include "sap/style.h" // for Style
 
-#include "interp/ast.h"      // for Stmt, FunctionCall, Interpreter
+#include "interp/ast.h"      // for Stmt, FunctionCall
+#include "interp/value.h"    // for Interpreter
 #include "interp/basedefs.h" // for InlineObject, DocumentObject, BlockObject
 
 

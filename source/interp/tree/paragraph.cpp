@@ -2,13 +2,12 @@
 // Copyright (c) 2022, zhiayang
 // SPDX-License-Identifier: Apache-2.0
 
-#include "util.h" // for dynamic_pointer_cast
-
-#include "interp/ast.h"      // for FunctionCall
-#include "interp/tree.h"     // for Text, Separator, Paragraph, ScriptCall
-#include "interp/value.h"    // for Value
-#include "interp/interp.h"   // for Interpreter
-#include "interp/basedefs.h" // for InlineObject
+#include "interp/ast.h"         // for FunctionCall
+#include "interp/tree.h"        // for Text, Separator, Paragraph, ScriptCall
+#include "interp/value.h"       // for Value
+#include "interp/interp.h"      // for Interpreter
+#include "interp/basedefs.h"    // for InlineObject
+#include "interp/eval_result.h" // for EvalResult
 
 namespace sap::tree
 {

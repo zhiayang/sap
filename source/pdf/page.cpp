@@ -2,11 +2,9 @@
 // Copyright (c) 2021, zhiayang
 // SPDX-License-Identifier: Apache-2.0
 
-#include <algorithm> // for find
-
-#include "pdf/font.h"        // for Font, Document
+#include "pdf/font.h"        // for Font, File
 #include "pdf/page.h"        // for Page
-#include "pdf/units.h"       // for Size2d, Vector2_YDown, Vector2_YUp, pdf_...
+#include "pdf/units.h"       // for pdf_typographic_unit, Size2d, Vector2_Y...
 #include "pdf/object.h"      // for Name, Dictionary, Object, IndirectRef
 #include "pdf/page_object.h" // for PageObject
 

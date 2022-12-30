@@ -2,9 +2,9 @@
 // Copyright (c) 2022, zhiayang
 // SPDX-License-Identifier: Apache-2.0
 
-#include "pdf/page.h"
+#include "pdf/page.h" // for Page
 
-#include "layout/base.h"
+#include "layout/base.h" // for RectPageLayout, LayoutObject
 
 namespace sap::layout
 {

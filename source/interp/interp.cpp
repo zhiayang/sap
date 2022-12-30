@@ -4,11 +4,11 @@
 
 #include "location.h" // for error
 
-#include "interp/ast.h"     // for Expr, Definition, makeParamList, Stmt
-#include "interp/type.h"    // for Type
-#include "interp/value.h"   // for Value
-#include "interp/interp.h"  // for StackFrame, Interpreter, DefnTree
-#include "interp/builtin.h" // for bold1, bold_italic1, italic1, print, pri...
+#include "interp/ast.h"         // for Definition, makeParamList, Expr, Stmt
+#include "interp/type.h"        // for Type
+#include "interp/interp.h"      // for StackFrame, Interpreter, DefnTree
+#include "interp/builtin.h"     // for bold1, bold_italic1, italic1, print
+#include "interp/eval_result.h" // for EvalResult
 
 namespace sap::interp
 {

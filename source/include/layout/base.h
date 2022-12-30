@@ -4,7 +4,8 @@
 
 #pragma once
 
-#include "sap/style.h"
+#include "sap/style.h" // for Stylable
+#include "sap/units.h" // for Length, Vector2
 
 namespace pdf
 {
