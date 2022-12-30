@@ -8,11 +8,11 @@
 #include "font/truetype.h"  // for TTData, TTSubset, createTTSubset
 #include "font/font_file.h" // for FontFile
 
-namespace font::truetype
+namespace font
 {
-	TTSubset createTTSubset(FontFile* font, const std::unordered_set<GlyphId>& used_glyphs)
+	truetype::TTSubset FontFile::createTTSubset(const std::unordered_set<GlyphId>& used_glyphs)
 	{
-		auto tt = font->truetype_data;
+		auto& tt = m_truetype_data;
 		assert(tt != nullptr);
 
 		// needs to be sorted. always insert 0.
@@ -29,7 +29,7 @@ namespace font::truetype
 			used_gids.insert(comps.begin(), comps.end());
 		}
 
-		TTSubset subset {};
+		truetype::TTSubset subset {};
 
 		// the loca table must contain an entry for every glyph id in the font. since we're not
 		// changing the glyph ids themselves, we must iterate over every glyph id.
@@ -39,7 +39,7 @@ namespace font::truetype
 			zst::byte_buffer loca {};
 			zst::byte_buffer glyf {};
 
-			for(uint16_t gid = 0; gid < font->num_glyphs; gid++)
+			for(uint16_t gid = 0; gid < m_num_glyphs; gid++)
 			{
 				if(half)
 					loca.append_bytes(util::convertBEU16(util::checked_cast<uint16_t>(glyf.size() / 2)));

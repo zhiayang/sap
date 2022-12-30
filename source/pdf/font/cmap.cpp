@@ -18,11 +18,10 @@ namespace pdf
 	static void write_cmap_header(Stream* stream, zst::str_view font_name);
 	static void write_cmap_footer(Stream* stream);
 
-	void Font::writeUnicodeCMap(File* doc) const
+	void PdfFont::writeUnicodeCMap(File* doc) const
 	{
 		auto cmap = this->unicode_cmap;
 		cmap->clear();
-
 
 		write_cmap_header(cmap, this->pdf_font_name);
 
@@ -31,8 +30,8 @@ namespace pdf
 		    "<0000> <FFFF>\n"
 		    "endcodespacerange\n");
 
-		assert(this->source_file != nullptr);
-		auto& mapping = this->source_file->character_mapping.forward;
+		assert(m_source_file != nullptr);
+		auto& mapping = m_source_file->characterMapping().forward;
 
 		// TODO: this is not very optimal. ideally we want to make ranges whenever we can,
 		// but that requires a whole bunch of extra work.

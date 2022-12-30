@@ -64,7 +64,7 @@ namespace pdf
 		    { { names::Resources, resources }, { names::MediaBox, a4paper }, { names::Contents, contents } });
 	}
 
-	void Page::useFont(const Font* font) const
+	void Page::useFont(const PdfFont* font) const
 	{
 		if(std::find(m_used_fonts.begin(), m_used_fonts.end(), font) != m_used_fonts.end())
 			return;

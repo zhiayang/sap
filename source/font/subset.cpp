@@ -66,13 +66,12 @@ namespace font
 	}
 
 
-	void writeFontSubset(FontFile* font, zst::str_view subset_name, Stream* stream,
-	    const std::unordered_set<GlyphId>& used_glyphs)
+	void FontFile::writeSubset(zst::str_view subset_name, Stream* stream, const std::unordered_set<GlyphId>& used_glyphs)
 	{
-		auto file_contents = zst::byte_span(font->file_bytes, font->file_size);
-		if(font->outline_type == FontFile::OUTLINES_CFF)
+		auto file_contents = this->bytes();
+		if(this->hasCffOutlines())
 		{
-			auto subset = cff::createCFFSubset(font, subset_name, used_glyphs);
+			auto subset = this->createCFFSubset(subset_name, used_glyphs);
 			stream->setContents(subset.cff.span());
 			return;
 		}
@@ -83,17 +82,17 @@ namespace font
 		// it's easier to keep a list of which tables we want to keep, so we at least
 		// know how many there are because we need to compute the offsets.
 		std::vector<Table> included_tables {};
-		for(auto& [_, table] : font->tables)
+		for(auto& [_, table] : m_tables)
 		{
 			// for now, use a blacklist. too lazy to figure out what each table does.
 			if(!should_exclude_table(table.tag))
 				included_tables.push_back(table);
 		}
 
-		if(font->outline_type == FontFile::OUTLINES_TRUETYPE)
+		if(this->hasTrueTypeOutlines())
 			stream->append_bytes(util::convertBEU32(0x00010000));
 
-		else if(font->outline_type == FontFile::OUTLINES_CFF)
+		else if(this->hasCffOutlines())
 			stream->append_bytes(util::convertBEU32(0x4F54544F));
 
 		else
@@ -117,9 +116,9 @@ namespace font
 			current_table_offset += size;
 		};
 
-		if(font->outline_type == FontFile::OUTLINES_TRUETYPE)
+		if(this->hasTrueTypeOutlines())
 		{
-			auto subset = truetype::createTTSubset(font, used_glyphs);
+			auto subset = this->createTTSubset(used_glyphs);
 
 			for(auto& table : included_tables)
 			{
@@ -153,7 +152,7 @@ namespace font
 		}
 		else
 		{
-			auto cff_subset = cff::createCFFSubset(font, subset_name, used_glyphs);
+			auto cff_subset = this->createCFFSubset(subset_name, used_glyphs);
 
 			for(auto& table : included_tables)
 			{

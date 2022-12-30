@@ -169,7 +169,7 @@ namespace font::cff
 	/*
 	    Parse CFF data from the given buffer
 	*/
-	CFFData* parseCFFData(FontFile* font, zst::byte_span cff_data);
+	std::unique_ptr<CFFData> parseCFFData(FontFile* font, zst::byte_span cff_data);
 
 	/*
 	    Read a number from a *Type 2* CharString. For the 5-byte encoding which represents a
@@ -222,11 +222,6 @@ namespace font::cff
 	std::map<uint16_t, uint16_t> readCharsetTable(size_t num_glyphs, zst::byte_span dict);
 
 	/*
-	    Create the cmap corresponding to the subset CFF file. Don't call this directly.
-	*/
-	zst::byte_buffer createCMapForCFFSubset(FontFile* file);
-
-	/*
 	    Get one of the predefined charsets, returning the mapping from glyph ID to SIDs.
 
 	    0 = ISOAdobe
@@ -249,14 +244,6 @@ namespace font::cff
 		zst::byte_buffer cff;
 		zst::byte_buffer cmap;
 	};
-
-
-	/*
-	    Subset the CFF font (given in `file`), including only the used_glyphs. Returns a new CFF and cmap table
-	    for embedding into the OTF font.
-	*/
-	CFFSubset createCFFSubset(FontFile* file, zst::str_view subset_name, const std::unordered_set<GlyphId>& used_glyphs);
-
 
 	/*
 	    Build an INDEX by appending the following data items.

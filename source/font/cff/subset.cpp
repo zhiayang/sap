@@ -93,10 +93,84 @@ namespace font::cff
 		}
 	}
 
-
-	CFFSubset createCFFSubset(FontFile* font, zst::str_view subset_name, const std::unordered_set<GlyphId>& used_glyphs)
+	static zst::byte_buffer create_cmap_for_cff_subset(CFFData* cff)
 	{
-		auto cff = font->cff_data;
+		/*
+		    i guess what we want to do is just map the cid to the gid...
+		*/
+
+		auto append16 = [](zst::byte_buffer& buf, uint16_t x) {
+			buf.append_bytes(util::convertBEU16(x));
+		};
+
+		zst::byte_buffer cmap {};
+
+		append16(cmap, 0);
+		append16(cmap, 2);
+
+		auto subtable_offset = (2 + 2) + 2 * (2 + 2 + 4);
+
+		append16(cmap, 0);
+		append16(cmap, 4);
+		cmap.append_bytes(util::convertBEU32(util::checked_cast<uint32_t>(subtable_offset)));
+
+		append16(cmap, 3);
+		append16(cmap, 1);
+		cmap.append_bytes(util::convertBEU32(util::checked_cast<uint32_t>(subtable_offset)));
+
+		std::map<uint16_t, uint16_t> mapping {};
+		for(auto& glyph : cff->glyphs)
+			mapping[glyph.gid] = glyph.cid;
+
+		auto seg_count = cff->glyphs.size() + 1;
+
+		// format 4
+		append16(cmap, 4);
+		append16(cmap, util::checked_cast<uint16_t>(8 * 2 + (4 * 2 * seg_count)));
+		append16(cmap, 0);
+		append16(cmap, util::checked_cast<uint16_t>(2 * seg_count));
+
+		auto search_range = 2 * (1 << (int) log2(static_cast<double>(seg_count)));
+		append16(cmap, util::checked_cast<uint16_t>(search_range));
+		append16(cmap, util::checked_cast<uint16_t>((int) log2(static_cast<double>(search_range)) - 1));
+		append16(cmap, util::checked_cast<uint16_t>(2 * seg_count - util::to_unsigned(search_range)));
+
+		zst::byte_buffer start_codes {};
+		zst::byte_buffer end_codes {};
+		zst::byte_buffer id_deltas {};
+		zst::byte_buffer id_range_offsets {};
+
+		for(auto& [gid, cid] : mapping)
+		{
+			append16(start_codes, gid);
+			append16(end_codes, gid + 1);
+			append16(id_deltas, cid - gid);
+			append16(id_range_offsets, 0);
+		}
+
+		append16(end_codes, 0xFFFF);
+		append16(start_codes, 0xFFFF);
+		append16(id_deltas, 1);
+		append16(id_range_offsets, 0);
+
+
+		cmap.append(end_codes.span());
+		append16(cmap, 0);
+		cmap.append(start_codes.span());
+		cmap.append(id_deltas.span());
+		cmap.append(id_range_offsets.span());
+
+		return cmap;
+	}
+}
+
+
+namespace font
+{
+	using namespace cff;
+	CFFSubset FontFile::createCFFSubset(zst::str_view subset_name, const std::unordered_set<GlyphId>& used_glyphs)
+	{
+		auto& cff = m_cff_data;
 		assert(cff != nullptr);
 
 		zst::byte_buffer buffer {};
@@ -112,9 +186,8 @@ namespace font::cff
 			CFFSubset ret {};
 			ret.cff = std::move(buffer);
 
-			auto orig_cmap_table = font->tables[Tag("cmap")];
-			ret.cmap.append(
-			    zst::byte_span(font->file_bytes, font->file_size).drop(orig_cmap_table.offset).take(orig_cmap_table.length));
+			auto orig_cmap_table = m_tables.at(Tag("cmap"));
+			ret.cmap.append(this->bytes().drop(orig_cmap_table.offset).take(orig_cmap_table.length));
 
 			return ret;
 		}
@@ -147,7 +220,7 @@ namespace font::cff
 		*/
 
 		// first, figure out which glyphs we don't use.
-		perform_glyph_pruning(cff, used_glyphs);
+		perform_glyph_pruning(cff.get(), used_glyphs);
 
 
 		// write the header
@@ -343,7 +416,7 @@ namespace font::cff
 
 
 			copy_kv_pair_with_abs_offset(DictKey::charset);
-			write_charset_table(cff, tmp_buffer, used_glyphs);
+			write_charset_table(cff.get(), tmp_buffer, used_glyphs);
 
 
 			{
@@ -375,7 +448,7 @@ namespace font::cff
 
 		CFFSubset ret {};
 		ret.cff = std::move(buffer);
-		ret.cmap = createCMapForCFFSubset(font);
+		ret.cmap = cff::create_cmap_for_cff_subset(cff.get());
 
 		return ret;
 	}

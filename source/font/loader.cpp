@@ -191,15 +191,15 @@ namespace font
 		return names;
 	}
 
-	static void parse_name_table(FontFile* font, const Table& name_table)
+	void FontFile::parse_name_table(const Table& name_table)
 	{
-		font->m_names = parse_name_table(zst::byte_span(font->file_bytes, font->file_size), name_table);
+		m_names = ::font::parse_name_table(this->bytes(), name_table);
 	}
 
 
-	static void parse_cmap_table(FontFile* font, const Table& cmap_table)
+	void FontFile::parse_cmap_table(const Table& cmap_table)
 	{
-		auto buf = zst::byte_span(font->file_bytes, font->file_size);
+		auto buf = this->bytes();
 		buf.remove_prefix(cmap_table.offset);
 
 		const auto table_start = buf;
@@ -262,32 +262,29 @@ namespace font
 			sap::error("font/off", "could not find suitable cmap table");
 
 		auto foo = table_start.drop(chosen_table.offset);
-		font->character_mapping = readCMapTable(foo);
-
-		// zpr::println("found cmap: pid {}, eid {}, format {}", chosen_table.platform_id,
-		//	chosen_table.encoding_id, chosen_table.format);
+		m_character_mapping = readCMapTable(foo);
 	}
 
 
 
 
-	static void parse_head_table(FontFile* font, const Table& head_table)
+	void FontFile::parse_head_table(const Table& head_table)
 	{
-		auto buf = zst::byte_span(font->file_bytes, font->file_size);
+		auto buf = this->bytes();
 		buf.remove_prefix(head_table.offset);
 
 		// skip the following: major ver (16), minor ver (16), font rev (32), checksum (32), magicnumber (32),
 		// flags (16), unitsperem (16), created (64), modified (64).
 		buf.remove_prefix(18);
 
-		font->metrics.units_per_em = consume_u16(buf);
+		m_metrics.units_per_em = consume_u16(buf);
 
 		buf.remove_prefix(16);
 
-		font->metrics.xmin = consume_i16(buf);
-		font->metrics.ymin = consume_i16(buf);
-		font->metrics.xmax = consume_i16(buf);
-		font->metrics.ymax = consume_i16(buf);
+		m_metrics.xmin = consume_i16(buf);
+		m_metrics.ymin = consume_i16(buf);
+		m_metrics.xmax = consume_i16(buf);
+		m_metrics.ymax = consume_i16(buf);
 
 		// skip some stuff
 		buf.remove_prefix(6);
@@ -295,16 +292,16 @@ namespace font
 		// by the time we reach this place, the tt_data should have been created
 		// by the `glyf` table already.
 		size_t loca_bytes = (consume_u16(buf) == 0) ? 2 : 4;
-		if(font->outline_type == FontFile::OUTLINES_TRUETYPE)
+		if(m_outline_type == OUTLINES_TRUETYPE)
 		{
-			assert(font->truetype_data != nullptr);
-			font->truetype_data->loca_bytes_per_entry = loca_bytes;
+			assert(m_truetype_data != nullptr);
+			m_truetype_data->loca_bytes_per_entry = loca_bytes;
 		}
 	}
 
-	static void parse_post_table(FontFile* font, const Table& post_table)
+	void FontFile::parse_post_table(const Table& post_table)
 	{
-		auto buf = zst::byte_span(font->file_bytes, font->file_size);
+		auto buf = this->bytes();
 		buf.remove_prefix(post_table.offset);
 
 		// for now we only need the italic angle and the "isfixedpitch" flag.
@@ -315,117 +312,93 @@ namespace font
 			auto whole = consume_i16(buf);
 			auto frac = consume_u16(buf);
 
-			font->metrics.italic_angle = static_cast<double>(whole) + (static_cast<double>(frac) / 65536.0);
+			m_metrics.italic_angle = static_cast<double>(whole) + (static_cast<double>(frac) / 65536.0);
 		}
 
 		consume_u32(buf); // skip the two underline-related metrics
-
-		font->metrics.is_monospaced = consume_u32(buf) != 0;
+		m_metrics.is_monospaced = consume_u32(buf) != 0;
 	}
 
-	static void parse_hhea_table(FontFile* font, const Table& hhea_table)
+	void FontFile::parse_hhea_table(const Table& hhea_table)
 	{
-		auto buf = zst::byte_span(font->file_bytes, font->file_size);
+		auto buf = this->bytes();
 		buf.remove_prefix(hhea_table.offset);
 
 		// skip the versions
 		buf.remove_prefix(4);
 
 		// we should have already parsed the head table, so this value should be present.
-		assert(font->metrics.units_per_em != 0);
+		assert(m_metrics.units_per_em != 0);
 
-		font->metrics.hhea_ascent = consume_i16(buf);
-		font->metrics.hhea_descent = consume_i16(buf);
-		font->metrics.hhea_linegap = consume_i16(buf);
+		m_metrics.hhea_ascent = consume_i16(buf);
+		m_metrics.hhea_descent = consume_i16(buf);
+		m_metrics.hhea_linegap = consume_i16(buf);
 
 		// skip all the nonsense
 		buf.remove_prefix(24);
 
-		font->num_hmetrics = consume_u16(buf);
+		m_num_hmetrics = consume_u16(buf);
 	}
 
-	static void parse_os2_table(FontFile* font, const Table& os2_table)
+	void FontFile::parse_os2_table(const Table& os2_table)
 	{
-		auto buf = zst::byte_span(font->file_bytes, font->file_size);
+		auto buf = this->bytes();
 		buf.remove_prefix(os2_table.offset);
 
 		auto version = peek_u16(buf);
 
 		// the sTypo things are always available, even at version 0
-		font->metrics.typo_ascent = peek_i16(buf.drop(68));
-		font->metrics.typo_descent = peek_i16(buf.drop(70));
-		font->metrics.typo_linegap = peek_i16(buf.drop(72));
+		m_metrics.typo_ascent = peek_i16(buf.drop(68));
+		m_metrics.typo_descent = peek_i16(buf.drop(70));
+		m_metrics.typo_linegap = peek_i16(buf.drop(72));
 
 		// "it is strongly recommended to use OS/2.sTypoAscender - OS/2.sTypoDescender+ OS/2.sTypoLineGap
 		// as a value for default line spacing for this font."
 
 		// note that FreeType also does this x1.2 "magic factor", and it seems to line up with
 		// what other programs (eg. word, pages) use.
-		font->metrics.default_line_spacing = FontScalar(std::max( //
-		    (font->metrics.units_per_em * 12) / 10,
-		    font->metrics.typo_ascent - font->metrics.typo_descent + font->metrics.typo_linegap //
+		m_metrics.default_line_spacing = FontScalar(std::max( //
+		    (m_metrics.units_per_em * 12) / 10,
+		    m_metrics.typo_ascent - m_metrics.typo_descent + m_metrics.typo_linegap //
 		    ));
 
 		if(version >= 2)
 		{
-			font->metrics.x_height = peek_i16(buf.drop(84));
-			font->metrics.cap_height = peek_i16(buf.drop(84 + 2));
+			m_metrics.x_height = peek_i16(buf.drop(84));
+			m_metrics.cap_height = peek_i16(buf.drop(84 + 2));
 		}
 	}
 
-	static void parse_hmtx_table(FontFile* font, const Table& hmtx_table)
+	void FontFile::parse_hmtx_table(const Table& hmtx_table)
 	{
 		// hhea should have been parsed already, so this should be present.
-		assert(font->num_hmetrics > 0);
-		font->hmtx_table = zst::byte_span(font->file_bytes, font->file_size).drop(hmtx_table.offset).take(hmtx_table.length);
+		assert(m_num_hmetrics > 0);
+		m_hmtx_table = this->bytes().drop(hmtx_table.offset).take(hmtx_table.length);
 
 		// deferred processing -- we only take the glyph data when it is requested.
 	}
 
-	static void parse_maxp_table(FontFile* font, const Table& maxp_table)
+	void FontFile::parse_maxp_table(const Table& maxp_table)
 	{
 		// we are only interested in the number of glyphs, so the version is
 		// not really relevant (neither is any other field)
-		auto buf = zst::byte_span(font->file_bytes, font->file_size);
+		auto buf = this->bytes();
 		buf.remove_prefix(maxp_table.offset);
 
 		auto version = consume_u32(buf);
 		(void) version;
 
-		font->num_glyphs = consume_u16(buf);
+		m_num_glyphs = consume_u16(buf);
 	}
 
-
-	static void parse_loca_table(FontFile* font, const Table& loca_table)
+	void FontFile::parse_cff_table(const Table& cff_table)
 	{
-		if(font->outline_type != FontFile::OUTLINES_TRUETYPE)
-			sap::internal_error("found 'loca' table in file with non-truetype outlines");
-
-		assert(font->truetype_data != nullptr);
-		auto table = zst::byte_span(font->file_bytes, font->file_size).drop(loca_table.offset).take(loca_table.length);
-
-		truetype::parseLocaTable(font, table);
-	}
-
-	static void parse_glyf_table(FontFile* font, const Table& glyf_table)
-	{
-		if(font->outline_type != FontFile::OUTLINES_TRUETYPE)
-			sap::internal_error("found 'glyf' table in file with non-truetype outlines");
-
-		assert(font->truetype_data != nullptr);
-		auto table = zst::byte_span(font->file_bytes, font->file_size).drop(glyf_table.offset).take(glyf_table.length);
-
-		truetype::parseGlyfTable(font, table);
-	}
-
-	static void parse_cff_table(FontFile* font, const Table& cff_table)
-	{
-		if(font->outline_type != FontFile::OUTLINES_CFF)
+		if(m_outline_type != FontFile::OUTLINES_CFF)
 			sap::internal_error("found 'CFF' table in file with non-CFF outlines");
 
-		auto cff_data = zst::byte_span(font->file_bytes, font->file_size).drop(cff_table.offset).take(cff_table.length);
+		auto cff_data = this->bytes().drop(cff_table.offset).take(cff_table.length);
 
-		font->cff_data = cff::parseCFFData(font, cff_data);
+		m_cff_data = cff::parseCFFData(this, cff_data);
 	}
 
 
@@ -482,22 +455,20 @@ namespace font
 		return tables;
 	}
 
-
-	static FontFile* parse_offset_table(zst::byte_span file_buf_, size_t offset)
+	std::shared_ptr<FontFile> FontFile::from_offset_table(zst::byte_span file_bytes, size_t start_of_offset_table)
 	{
 		// this is perfectly fine, because we own the data referred to by 'buf'.
-		auto font = util::make<FontFile>();
-		font->file_bytes = const_cast<uint8_t*>(file_buf_.data());
-		font->file_size = file_buf_.size();
-		font->tables = get_table_offsets(file_buf_.drop(offset));
+		auto font = std::shared_ptr<FontFile>(new FontFile(file_bytes.data(), file_bytes.size()));
+
+		font->m_tables = get_table_offsets(file_bytes.drop(start_of_offset_table));
 
 		// first get the version.
-		auto sfnt_version = Tag(peek_u32(file_buf_.drop(offset)));
+		auto sfnt_version = Tag(peek_u32(file_bytes.drop(start_of_offset_table)));
 
 		if(sfnt_version == Tag("OTTO"))
-			font->outline_type = FontFile::OUTLINES_CFF;
+			font->m_outline_type = FontFile::OUTLINES_CFF;
 		else if(sfnt_version == Tag(0, 1, 0, 0) || sfnt_version == Tag("true"))
-			font->outline_type = FontFile::OUTLINES_TRUETYPE;
+			font->m_outline_type = FontFile::OUTLINES_TRUETYPE;
 		else
 			sap::internal_error("unsupported ttf/otf file; unknown header bytes '{}'", sfnt_version.str());
 
@@ -508,95 +479,76 @@ namespace font
 
 		// CFF makes its own data (since everything is self-contained in the CFF table)
 		// but for TrueType, it's split across several tables, so just make one here.
-		if(font->outline_type == FontFile::OUTLINES_TRUETYPE)
-			font->truetype_data = util::make<truetype::TTData>();
+		if(font->m_outline_type == FontFile::OUTLINES_TRUETYPE)
+			font->m_truetype_data = std::make_unique<truetype::TTData>();
 
 		for(auto tag : table_processing_order)
 		{
-			if(auto it = font->tables.find(tag); it != font->tables.end())
+			if(auto it = font->sfntTables().find(tag); it != font->sfntTables().end())
 			{
 				auto& tbl = it->second;
 				if(tag == Tag("CFF "))
-					parse_cff_table(font, tbl);
+					font->parse_cff_table(tbl);
 				else if(tag == Tag("CFF2"))
-					parse_cff_table(font, tbl);
+					font->parse_cff_table(tbl);
 				else if(tag == Tag("GPOS"))
-					off::parseGPos(font, tbl);
+					font->parse_gpos_table(tbl);
 				else if(tag == Tag("GSUB"))
-					off::parseGSub(font, tbl);
+					font->parse_gsub_table(tbl);
 				else if(tag == Tag("OS/2"))
-					parse_os2_table(font, tbl);
+					font->parse_os2_table(tbl);
 				else if(tag == Tag("cmap"))
-					parse_cmap_table(font, tbl);
+					font->parse_cmap_table(tbl);
 				else if(tag == Tag("glyf"))
-					parse_glyf_table(font, tbl);
+					font->parse_glyf_table(tbl);
 				else if(tag == Tag("head"))
-					parse_head_table(font, tbl);
+					font->parse_head_table(tbl);
 				else if(tag == Tag("hhea"))
-					parse_hhea_table(font, tbl);
+					font->parse_hhea_table(tbl);
 				else if(tag == Tag("hmtx"))
-					parse_hmtx_table(font, tbl);
+					font->parse_hmtx_table(tbl);
 				else if(tag == Tag("loca"))
-					parse_loca_table(font, tbl);
+					font->parse_loca_table(tbl);
 				else if(tag == Tag("maxp"))
-					parse_maxp_table(font, tbl);
+					font->parse_maxp_table(tbl);
 				else if(tag == Tag("name"))
-					parse_name_table(font, tbl);
+					font->parse_name_table(tbl);
 				else if(tag == Tag("post"))
-					parse_post_table(font, tbl);
+					font->parse_post_table(tbl);
 			}
 		}
+
 		return font;
 	}
 
-	static std::optional<FontFile*> search_for_font_in_collection_with_postscript_name(zst::byte_span bytes,
+	std::optional<std::shared_ptr<FontFile>> FontFile::from_postscript_name_in_collection(zst::byte_span ttc_file,
 	    zst::str_view postscript_name)
 	{
-		assert(memcmp(bytes.data(), "ttcf", 4) == 0);
+		assert(memcmp(ttc_file.data(), "ttcf", 4) == 0);
 
 		// copy the thing
-		auto file = bytes;
+		auto file = ttc_file;
 
 		// tag + major version + minor version
-		bytes.remove_prefix(4 + 2 + 2);
+		ttc_file.remove_prefix(4 + 2 + 2);
 
-		auto num_fonts = consume_u32(bytes);
+		auto num_fonts = consume_u32(ttc_file);
 		for(uint32_t i = 0; i < num_fonts; i++)
 		{
-			auto offset = consume_u32(bytes);
+			auto offset = consume_u32(ttc_file);
 			auto tables = get_table_offsets(file.drop(offset));
 
 			const auto& name_table = tables[Tag("name")];
-			auto font_names = parse_name_table(file, name_table);
+			auto font_names = ::font::parse_name_table(file, name_table);
 
 			if(font_names.postscript_name == postscript_name)
-				return parse_offset_table(file, offset);
+				return FontFile::from_offset_table(file, offset);
 		}
 
 		return std::nullopt;
 	}
 
-
-
-
-
-	FontFile* FontFile::parseFromFile(const std::string& path)
-	{
-		auto [buf, len] = util::readEntireFile(path);
-		if(len < 4)
-			sap::internal_error("font file too short");
-
-		if(memcmp(buf, "OTTO", 4) == 0 || memcmp(buf, "true", 4) == 0 || memcmp(buf, "\x00\x01\x00\x00", 4) == 0)
-			return parse_offset_table(zst::byte_span(buf, len), /* offset: */ 0);
-
-		else
-			sap::internal_error("unsupported font file; unknown header bytes '{}'", zst::str_view((char*) buf, 4));
-	}
-
-
-
-
-	std::optional<FontFile*> FontFile::fromHandle(FontHandle handle)
+	std::optional<std::shared_ptr<FontFile>> FontFile::fromHandle(FontHandle handle)
 	{
 		auto [buf, len] = util::readEntireFile(handle.path);
 		if(len < 4)
@@ -605,14 +557,22 @@ namespace font
 		auto span = zst::byte_span(buf, len);
 
 		if(memcmp(buf, "OTTO", 4) == 0 || memcmp(buf, "true", 4) == 0 || memcmp(buf, "\x00\x01\x00\x00", 4) == 0)
-			return parse_offset_table(span, /* offset: */ 0);
+			return FontFile::from_offset_table(span, /* offset: */ 0);
 
 		else if(memcmp(buf, "ttcf", 4) == 0)
-			return search_for_font_in_collection_with_postscript_name(span, handle.postscript_name);
+			return FontFile::from_postscript_name_in_collection(span, handle.postscript_name);
 
 		else
 			sap::internal_error("unsupported font file; unknown header bytes '{}'", zst::str_view((char*) buf, 4));
 
 		return std::nullopt;
+	}
+
+	FontFile::FontFile(const uint8_t* bytes, size_t size) : m_file_bytes(bytes), m_file_size(size)
+	{
+	}
+
+	FontFile::~FontFile()
+	{
 	}
 }

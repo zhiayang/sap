@@ -355,7 +355,7 @@ namespace font::off
 	std::map<size_t, GlyphAdjustment> getPositioningAdjustmentsForGlyphSequence(const FontFile* font, zst::span<GlyphId> glyphs,
 	    const FeatureSet& features)
 	{
-		auto gpos = font->gpos_table;
+		auto& gpos = font->getGPosTable();
 
 		/*
 		    OFF 1.9, page 217
@@ -369,7 +369,7 @@ namespace font::off
 		*/
 
 		std::map<size_t, GlyphAdjustment> adjustments {};
-		auto lookups = getLookupTablesForFeatures(font->gpos_table, features);
+		auto lookups = getLookupTablesForFeatures(gpos, features);
 
 		for(auto& lookup_idx : lookups)
 		{

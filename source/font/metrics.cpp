@@ -60,20 +60,20 @@ namespace font
 
 	GlyphMetrics FontFile::getGlyphMetrics(GlyphId glyph_id) const
 	{
-		auto u16_array = this->hmtx_table.cast<uint16_t>();
+		auto u16_array = m_hmtx_table.cast<uint16_t>();
 
 		GlyphMetrics ret {};
 		auto gid32 = static_cast<uint32_t>(glyph_id);
 
 		// note the *2, because there's also an 2-byte "lsb".
-		if(gid32 >= this->num_hmetrics)
+		if(gid32 >= m_num_hmetrics)
 		{
 			// the remaining glyphs not in the array use the last value.
-			ret.horz_advance = FontScalar(util::convertBEU16(u16_array[(this->num_hmetrics - 1) * 2]));
+			ret.horz_advance = FontScalar(util::convertBEU16(u16_array[(m_num_hmetrics - 1) * 2]));
 
 			// there is an array of lsbs for glyph_ids > num_hmetrics
-			auto lsb_array = this->hmtx_table.drop(2 * this->num_hmetrics);
-			auto tmp = lsb_array[gid32 - this->num_hmetrics];
+			auto lsb_array = m_hmtx_table.drop(2 * m_num_hmetrics);
+			auto tmp = lsb_array[gid32 - m_num_hmetrics];
 
 			ret.left_side_bearing = FontScalar((int16_t) util::convertBEU16(tmp));
 		}
@@ -84,9 +84,9 @@ namespace font
 		}
 
 		// now, figure out xmin and xmax
-		if(this->outline_type == OUTLINES_TRUETYPE)
+		if(this->hasTrueTypeOutlines())
 		{
-			auto bb = truetype::getGlyphBoundingBox(this->truetype_data, glyph_id);
+			auto bb = truetype::getGlyphBoundingBox(m_truetype_data.get(), glyph_id);
 			ret.xmin = FontScalar(bb.xmin);
 			ret.ymin = FontScalar(bb.ymin);
 			ret.xmax = FontScalar(bb.xmax);
@@ -95,18 +95,16 @@ namespace font
 			// calculate RSB
 			ret.right_side_bearing = ret.horz_advance - ret.left_side_bearing - (ret.xmax - ret.xmin);
 		}
-		else if(this->outline_type == OUTLINES_CFF)
+		else if(this->hasCffOutlines())
 		{
 			// sap::warn("font/metrics", "bounding-box metrics for CFF-outline fonts are not supported yet!");
 
 			// well, we're shit out of luck.
 			// best effort, i guess?
-			auto metrics = this->metrics;
-
-			ret.xmin = FontScalar(metrics.xmin);
-			ret.xmax = FontScalar(metrics.xmax);
-			ret.ymin = FontScalar(metrics.ymin);
-			ret.ymax = FontScalar(metrics.ymax);
+			ret.xmin = FontScalar(m_metrics.xmin);
+			ret.xmax = FontScalar(m_metrics.xmax);
+			ret.ymin = FontScalar(m_metrics.ymin);
+			ret.ymax = FontScalar(m_metrics.ymax);
 		}
 		else
 		{

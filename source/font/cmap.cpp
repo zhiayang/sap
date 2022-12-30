@@ -188,7 +188,7 @@ namespace font
 
 	GlyphId FontFile::getGlyphIndexForCodepoint(char32_t codepoint) const
 	{
-		auto& fwd = this->character_mapping.forward;
+		auto& fwd = this->characterMapping().forward;
 		if(auto it = fwd.find(codepoint); it != fwd.end())
 			return it->second;
 		else

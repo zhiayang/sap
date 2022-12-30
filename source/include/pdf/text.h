@@ -9,7 +9,7 @@
 
 namespace pdf
 {
-	struct Font;
+	struct PdfFont;
 	struct Page;
 
 	/*
@@ -29,7 +29,7 @@ namespace pdf
 		virtual std::string serialise(const Page* page) const override;
 
 		// must be called before the first text item is inserted (addText).
-		void setFont(const Font* font, PdfScalar height);
+		void setFont(const PdfFont* font, PdfScalar height);
 
 		void moveAbs(Position2d pos);
 		void nextLine(Offset2d offset);
@@ -70,11 +70,11 @@ namespace pdf
 
 		struct
 		{
-			const Font* font = nullptr;
+			const PdfFont* font = nullptr;
 			PdfScalar height {};
 		} m_current_font {};
 
 		std::vector<Group> m_groups {};
-		std::set<const Font*> m_used_fonts {};
+		std::set<const PdfFont*> m_used_fonts {};
 	};
 }

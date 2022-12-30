@@ -10,7 +10,7 @@
 
 namespace pdf
 {
-	struct Font;
+	struct PdfFont;
 	struct File;
 
 	struct Page
@@ -19,7 +19,7 @@ namespace pdf
 
 		Dictionary* serialise(File* doc) const;
 
-		void useFont(const Font* font) const;
+		void useFont(const PdfFont* font) const;
 		void addObject(PageObject* obj);
 
 		Size2d size() const;
@@ -27,10 +27,10 @@ namespace pdf
 		Vector2_YUp convertVector2(Vector2_YDown v2) const;
 		Vector2_YDown convertVector2(Vector2_YUp v2) const;
 
-		const std::vector<const Font*>& usedFonts() const { return m_used_fonts; }
+		const std::vector<const PdfFont*>& usedFonts() const { return m_used_fonts; }
 
 	private:
-		mutable std::vector<const Font*> m_used_fonts;
+		mutable std::vector<const PdfFont*> m_used_fonts;
 		std::vector<PageObject*> m_objects;
 
 		Size2d m_page_size {};

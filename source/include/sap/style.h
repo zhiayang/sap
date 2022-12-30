@@ -63,7 +63,7 @@ namespace sap
 
 		constexpr bool operator==(const Style& other) const = default;
 
-		const pdf::Font* font() const { return this->fontset().getFontForStyle(this->font_style()); }
+		const pdf::PdfFont* font() const { return this->fontset().getFontForStyle(this->font_style()); }
 
 		static const Style* empty() { return &s_empty_style; }
 

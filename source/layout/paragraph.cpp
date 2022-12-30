@@ -286,7 +286,7 @@ namespace sap::layout
 			else if(m_words[i].start.pos_on_page.x() != current_curs.pos_on_page.x())
 			{
 				// Make sure pdf cursor agrees with our cursor
-				cur_text->offset(pdf::Font::convertPDFScalarToTextSpaceForFontSize(
+				cur_text->offset(pdf::PdfFont::convertPDFScalarToTextSpaceForFontSize(
 				    (m_words[i].start.pos_on_page.x() - current_curs.pos_on_page.x()).into<pdf::PdfScalar>(),
 				    m_words[i].font_size));
 			}

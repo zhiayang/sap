@@ -17,28 +17,28 @@
 
 namespace pdf
 {
-	std::string Font::getFontResourceName() const
+	std::string PdfFont::getFontResourceName() const
 	{
 		return this->font_resource_name;
 	}
 
 
-	font::FontMetrics Font::getFontMetrics() const
+	const font::FontMetrics& PdfFont::getFontMetrics() const
 	{
 		// TODO: metrics for the 14 built-in fonts
 		// see https://stackoverflow.com/questions/6383511/
-		assert(this->source_file);
+		assert(m_source_file);
 
-		return this->source_file->metrics;
+		return m_source_file->metrics();
 	}
 
-	Size2d_YDown Font::getWordSize(zst::wstr_view text, PdfScalar font_size) const
+	Size2d_YDown PdfFont::getWordSize(zst::wstr_view text, PdfScalar font_size) const
 	{
 		if(auto it = m_word_size_cache.find(text); it != m_word_size_cache.end())
 			return it->second;
 
 		Size2d_YDown size;
-		size.y() = this->scaleMetricForFontSize(source_file->metrics.default_line_spacing, font_size);
+		size.y() = this->scaleMetricForFontSize(m_source_file->metrics().default_line_spacing, font_size);
 		const auto& glyphs = this->getGlyphInfosForString(text);
 		for(auto& g : glyphs)
 		{
@@ -50,29 +50,29 @@ namespace pdf
 		return size;
 	}
 
-	void Font::markGlyphAsUsed(GlyphId glyph) const
+	void PdfFont::markGlyphAsUsed(GlyphId glyph) const
 	{
 		m_used_glyphs.insert(glyph);
 	}
 
 
-	font::GlyphMetrics Font::getMetricsForGlyph(GlyphId glyph) const
+	font::GlyphMetrics PdfFont::getMetricsForGlyph(GlyphId glyph) const
 	{
 		this->markGlyphAsUsed(glyph);
 
-		if(!this->source_file)
+		if(!m_source_file)
 			return {};
 
 		else if(auto it = m_glyph_metrics.find(glyph); it != m_glyph_metrics.end())
 			return it->second;
 
-		auto metrics = this->source_file->getGlyphMetrics(glyph);
+		auto metrics = m_source_file->getGlyphMetrics(glyph);
 		m_glyph_metrics[glyph] = metrics;
 
 		return metrics;
 	}
 
-	GlyphId Font::getGlyphIdFromCodepoint(char32_t codepoint) const
+	GlyphId PdfFont::getGlyphIdFromCodepoint(char32_t codepoint) const
 	{
 		if(this->encoding_kind == ENCODING_WIN_ANSI)
 		{
@@ -80,10 +80,10 @@ namespace pdf
 		}
 		else if(this->encoding_kind == ENCODING_CID)
 		{
-			assert(this->source_file != nullptr);
+			assert(m_source_file != nullptr);
 
 			// also pre-load the metrics (because in all likelihood we'll need the metrics soon)
-			auto gid = this->source_file->getGlyphIndexForCodepoint(codepoint);
+			auto gid = m_source_file->getGlyphIndexForCodepoint(codepoint);
 			this->markGlyphAsUsed(gid);
 
 			if(gid == GlyphId::notdef)
@@ -97,7 +97,7 @@ namespace pdf
 		}
 	}
 
-	const std::vector<font::GlyphInfo>& Font::getGlyphInfosForString(zst::wstr_view text) const
+	const std::vector<font::GlyphInfo>& PdfFont::getGlyphInfosForString(zst::wstr_view text) const
 	{
 		if(auto it = m_glyph_infos_cache.find(text); it != m_glyph_infos_cache.end())
 		{
@@ -150,7 +150,7 @@ namespace pdf
 		return res.first->second;
 	}
 
-	void Font::addGlyphUnicodeMapping(GlyphId glyph, std::vector<char32_t> codepoints) const
+	void PdfFont::addGlyphUnicodeMapping(GlyphId glyph, std::vector<char32_t> codepoints) const
 	{
 		if(auto it = m_extra_unicode_mappings.find(glyph); it != m_extra_unicode_mappings.end() && it->second != codepoints)
 		{
@@ -162,24 +162,24 @@ namespace pdf
 	}
 
 
-	std::map<size_t, font::GlyphAdjustment> Font::getPositioningAdjustmentsForGlyphSequence(zst::span<GlyphId> glyphs,
+	std::map<size_t, font::GlyphAdjustment> PdfFont::getPositioningAdjustmentsForGlyphSequence(zst::span<GlyphId> glyphs,
 	    const font::off::FeatureSet& features) const
 	{
-		if(!this->source_file)
+		if(!m_source_file)
 			return {};
 
-		return font::off::getPositioningAdjustmentsForGlyphSequence(this->source_file, glyphs, features);
+		return font::off::getPositioningAdjustmentsForGlyphSequence(m_source_file.get(), glyphs, features);
 	}
 
-	std::vector<GlyphId> Font::performSubstitutionsForGlyphSequence(zst::span<GlyphId> glyphs,
+	std::vector<GlyphId> PdfFont::performSubstitutionsForGlyphSequence(zst::span<GlyphId> glyphs,
 	    const font::off::FeatureSet& features) const
 	{
-		if(!this->source_file)
+		if(!m_source_file)
 			return std::vector<GlyphId>(glyphs.begin(), glyphs.end());
 
-		auto subst = font::off::performSubstitutionsForGlyphSequence(this->source_file, glyphs, features);
+		auto subst = font::off::performSubstitutionsForGlyphSequence(m_source_file.get(), glyphs, features);
 
-		auto& cmap = this->source_file->character_mapping;
+		auto& cmap = m_source_file->characterMapping();
 		for(auto& [out, in] : subst.mapping.replacements)
 		{
 			this->markGlyphAsUsed(out);

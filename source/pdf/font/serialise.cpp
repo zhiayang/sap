@@ -15,12 +15,12 @@
 
 namespace pdf
 {
-	Font::Font()
+	PdfFont::PdfFont()
 	{
 		this->font_dictionary = Dictionary::create(names::Font, {});
 	}
 
-	Dictionary* Font::serialise(File* doc) const
+	Dictionary* PdfFont::serialise(File* doc) const
 	{
 		assert(this->font_dictionary->isIndirect());
 
@@ -30,7 +30,7 @@ namespace pdf
 		m_did_serialise = true;
 
 		// we need to write out the widths.
-		if(this->source_file && this->glyph_widths_array)
+		if(m_source_file != nullptr && this->glyph_widths_array)
 		{
 			std::vector<std::pair<GlyphId, double>> widths {};
 			for(auto& gid : m_used_glyphs)
@@ -71,9 +71,9 @@ namespace pdf
 		}
 
 		// finally, make a font subset based on the glyphs that we use.
-		if(this->source_file && this->embedded_contents)
+		if(m_source_file && this->embedded_contents)
 		{
-			writeFontSubset(this->source_file, this->pdf_font_name, this->embedded_contents, m_used_glyphs);
+			m_source_file->writeSubset(this->pdf_font_name, this->embedded_contents, m_used_glyphs);
 
 			// write the cmap we'll use for /ToUnicode.
 			this->writeUnicodeCMap(doc);
@@ -85,10 +85,10 @@ namespace pdf
 		return this->font_dictionary;
 	}
 
-	Font* Font::fromFontFile(File* doc, font::FontFile* font_file)
+	PdfFont* PdfFont::fromFontFile(File* doc, std::shared_ptr<font::FontFile> font_file)
 	{
-		auto ret = util::make<Font>();
-		ret->source_file = font_file;
+		auto ret = util::make<PdfFont>();
+		ret->m_source_file = font_file;
 
 		/*
 		    this is the general structure for composite fonts (which we always create, for now):
@@ -110,7 +110,7 @@ namespace pdf
 		        /FontFile0/1/2/3: the stream containing the actual file
 		        /CIDSet: if we're doing a subset (which we aren't for now)
 		*/
-		ret->pdf_font_name = font::generateSubsetName(font_file);
+		ret->pdf_font_name = font::generateSubsetName(font_file.get());
 		auto basefont_name = Name::create(ret->pdf_font_name);
 
 		// start with making the CIDFontType2/0 entry.
@@ -124,12 +124,10 @@ namespace pdf
 		        { names::Supplement, Integer::create(0) },
 		    }));
 
-		bool truetype_outlines = (font_file->outline_type == font::FontFile::OUTLINES_TRUETYPE);
-
 		ret->glyph_widths_array = Array::createIndirect(doc, {});
 		cidfont_dict->add(names::W, IndirectRef::create(ret->glyph_widths_array));
 
-		if(truetype_outlines)
+		if(font_file->hasTrueTypeOutlines())
 		{
 			cidfont_dict->add(names::CIDToGIDMap, names::Identity.ptr());
 			cidfont_dict->add(names::Subtype, names::CIDFontType2.ptr());
@@ -150,22 +148,24 @@ namespace pdf
 		        monstrous in size.
 		*/
 
-		auto units_per_em_scale = font_file->metrics.units_per_em / 1000.0;
+		const auto& font_metrics = font_file->metrics();
+
+		auto units_per_em_scale = font_metrics.units_per_em / 1000.0;
 		auto scale_metric = [units_per_em_scale](auto metric) -> Integer* {
 			return Integer::create(static_cast<int64_t>(metric / units_per_em_scale));
 		};
 
 		auto font_bbox = Array::create({
-		    scale_metric(font_file->metrics.xmin),
-		    scale_metric(font_file->metrics.ymin),
-		    scale_metric(font_file->metrics.xmax),
-		    scale_metric(font_file->metrics.ymax),
+		    scale_metric(font_metrics.xmin),
+		    scale_metric(font_metrics.ymin),
+		    scale_metric(font_metrics.xmax),
+		    scale_metric(font_metrics.ymax),
 		});
 
 		int cap_height = 0;
-		if(font_file->metrics.cap_height != 0)
+		if(font_metrics.cap_height != 0)
 		{
-			cap_height = font_file->metrics.cap_height;
+			cap_height = font_metrics.cap_height;
 		}
 		else
 		{
@@ -174,12 +174,11 @@ namespace pdf
 
 			// TODO: i don't feel like doing this now
 			cap_height = 700;
-			zpr::println("your dumb font doesn't tell me cap_height, assuming 700");
 		}
 
 		int x_height = 0;
-		if(font_file->metrics.x_height != 0)
-			x_height = font_file->metrics.x_height;
+		if(font_metrics.x_height != 0)
+			x_height = font_metrics.x_height;
 		else
 			x_height = 400;
 
@@ -198,9 +197,9 @@ namespace pdf
 		        { names::FontName, basefont_name },
 		        { names::Flags, Integer::create(4) },
 		        { names::FontBBox, font_bbox },
-		        { names::ItalicAngle, Integer::create(static_cast<int32_t>(font_file->metrics.italic_angle)) },
-		        { names::Ascent, scale_metric(font_file->metrics.hhea_ascent) },
-		        { names::Descent, scale_metric(font_file->metrics.hhea_descent) },
+		        { names::ItalicAngle, Integer::create(static_cast<int32_t>(font_metrics.italic_angle)) },
+		        { names::Ascent, scale_metric(font_metrics.hhea_ascent) },
+		        { names::Descent, scale_metric(font_metrics.hhea_descent) },
 		        { names::CapHeight, scale_metric(cap_height) },
 		        { names::XHeight, scale_metric(x_height) },
 		        { names::StemV, Integer::create(STEMV_CONSTANT) },
@@ -212,7 +211,7 @@ namespace pdf
 		ret->embedded_contents = Stream::create(doc, {});
 		ret->embedded_contents->setCompressed(true);
 
-		if(truetype_outlines)
+		if(font_file->hasTrueTypeOutlines())
 		{
 			font_desc->add(names::FontFile2, IndirectRef::create(ret->embedded_contents));
 			ret->font_type = FONT_TRUETYPE_CID;
@@ -253,7 +252,7 @@ namespace pdf
 		return ret;
 	}
 
-	Font* Font::fromBuiltin(File* doc, zst::str_view name)
+	PdfFont* PdfFont::fromBuiltin(File* doc, zst::str_view name)
 	{
 		const char* known_fonts[] = {
 			"Times-Roman",
@@ -279,7 +278,7 @@ namespace pdf
 		if(it == std::end(known_fonts))
 			pdf::error("'{}' is not a PDF builtin font", name);
 
-		auto font = util::make<Font>();
+		auto font = util::make<PdfFont>();
 		font->font_type = FONT_TYPE1;
 
 		auto dict = font->font_dictionary;

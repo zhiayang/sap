@@ -91,7 +91,7 @@ namespace pdf
 		pagetree->refer();
 
 		// figure out which fonts were used.
-		std::unordered_set<const Font*> used_fonts {};
+		std::unordered_set<const PdfFont*> used_fonts {};
 		for(auto page : m_pages)
 			used_fonts.insert(page->usedFonts().begin(), page->usedFonts().end());
 

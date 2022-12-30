@@ -54,53 +54,6 @@ namespace font::truetype
 		}
 	}
 
-	void parseLocaTable(FontFile* font, zst::byte_span loca_table)
-	{
-		auto tt = font->truetype_data;
-		assert(tt != nullptr);
-
-		// the loca table should come after the glyph table!
-		assert(tt->glyf_data.size() > 0);
-
-		bool half = tt->loca_bytes_per_entry == 2;
-		auto get_ofs = [&]() -> uint32_t {
-			if(half)
-				return 2 * consume_u16(loca_table);
-			else
-				return 1 * consume_u32(loca_table);
-		};
-
-		auto peek_ofs = [&]() -> uint32_t {
-			if(half)
-				return 2 * peek_u16(loca_table);
-			else
-				return 1 * peek_u32(loca_table);
-		};
-
-		for(uint16_t i = 0; i < font->num_glyphs; i++)
-		{
-			Glyph glyph {};
-			glyph.gid = i;
-
-			auto offset = get_ofs();
-			auto next = peek_ofs();
-
-			glyph.glyph_data = tt->glyf_data.drop(offset).take(next - offset);
-
-			tt->glyphs.push_back(std::move(glyph));
-			parse_glyph_components(tt, tt->glyphs[i]);
-		}
-	}
-
-	void parseGlyfTable(FontFile* font, zst::byte_span glyf_table)
-	{
-		auto tt = font->truetype_data;
-		assert(tt != nullptr);
-
-		tt->glyf_data = glyf_table;
-	}
-
-
 	BoundingBox getGlyphBoundingBox(TTData* tt, GlyphId glyph_id)
 	{
 		if(static_cast<uint32_t>(glyph_id) >= tt->glyphs.size())
@@ -119,5 +72,60 @@ namespace font::truetype
 		ret.ymax = (int16_t) util::convertBEU16(foozle[4]);
 
 		return ret;
+	}
+}
+
+namespace font
+{
+	void FontFile::parse_glyf_table(const Table& glyf_table)
+	{
+		if(m_outline_type != OUTLINES_TRUETYPE)
+			sap::internal_error("found 'glyf' table in file with non-truetype outlines");
+
+		assert(m_truetype_data != nullptr);
+		auto data = this->bytes().drop(glyf_table.offset).take(glyf_table.length);
+
+		m_truetype_data->glyf_data = data;
+	}
+
+	void FontFile::parse_loca_table(const Table& tbl)
+	{
+		if(m_outline_type != OUTLINES_TRUETYPE)
+			sap::internal_error("found 'loca' table in file with non-truetype outlines");
+
+		assert(m_truetype_data != nullptr);
+		auto loca_table = this->bytes().drop(tbl.offset).take(tbl.length);
+
+		// the loca table should come after the glyph table!
+		assert(m_truetype_data->glyf_data.size() > 0);
+
+		bool half = m_truetype_data->loca_bytes_per_entry == 2;
+		auto get_ofs = [&]() -> uint32_t {
+			if(half)
+				return 2 * consume_u16(loca_table);
+			else
+				return 1 * consume_u32(loca_table);
+		};
+
+		auto peek_ofs = [&]() -> uint32_t {
+			if(half)
+				return 2 * peek_u16(loca_table);
+			else
+				return 1 * peek_u32(loca_table);
+		};
+
+		for(uint16_t i = 0; i < m_num_glyphs; i++)
+		{
+			truetype::Glyph glyph {};
+			glyph.gid = i;
+
+			auto offset = get_ofs();
+			auto next = peek_ofs();
+
+			glyph.glyph_data = m_truetype_data->glyf_data.drop(offset).take(next - offset);
+
+			m_truetype_data->glyphs.push_back(std::move(glyph));
+			truetype::parse_glyph_components(m_truetype_data.get(), m_truetype_data->glyphs[i]);
+		}
 	}
 }

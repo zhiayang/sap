@@ -11,16 +11,16 @@
 
 namespace pdf
 {
-	void Font::writeCIDSet(File* doc) const
+	void PdfFont::writeCIDSet(File* doc) const
 	{
 		auto stream = this->cidset;
 		stream->clear();
 
-		assert(this->source_file != nullptr);
+		assert(m_source_file != nullptr);
 
 		int num_bits = 0;
 		uint8_t current = 0;
-		for(uint32_t gid = 0; gid < this->source_file->num_glyphs; gid++)
+		for(uint32_t gid = 0; gid < m_source_file->numGlyphs(); gid++)
 		{
 			bool bit = m_used_glyphs.find(GlyphId { gid }) != m_used_glyphs.end();
 			current <<= 1;

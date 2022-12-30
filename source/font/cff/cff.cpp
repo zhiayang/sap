@@ -87,9 +87,9 @@ namespace font::cff
 
 
 
-	CFFData* parseCFFData(FontFile* font, zst::byte_span buf)
+	std::unique_ptr<CFFData> parseCFFData(FontFile* font, zst::byte_span buf)
 	{
-		auto cff = util::make<CFFData>();
+		auto cff = std::make_unique<CFFData>();
 		cff->bytes = buf;
 
 		/*
@@ -247,7 +247,7 @@ namespace font::cff
 			}
 		}
 
-		auto read_private_dict_and_local_subrs_from_dict = [cff](const Dictionary& dict) -> auto
+		auto read_private_dict_and_local_subrs_from_dict = [&cff](const Dictionary& dict) -> auto
 		{
 			auto foo = dict.get(DictKey::Private);
 			if(foo.size() != 2)

@@ -33,7 +33,7 @@ namespace sap::layout
 		text->setFont(font, font_size.into<pdf::PdfScalar>());
 
 		auto add_gid = [&font, text](GlyphId gid) {
-			if(font->encoding_kind == pdf::Font::ENCODING_CID)
+			if(font->encoding_kind == pdf::PdfFont::ENCODING_CID)
 				text->addEncoded(2, static_cast<uint32_t>(gid));
 			else
 				text->addEncoded(1, static_cast<uint32_t>(gid));

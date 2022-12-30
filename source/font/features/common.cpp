@@ -208,7 +208,7 @@ namespace font::off
 
 
 	template <typename TableType>
-	static void parseGPosOrGSub(FontFile* font, TableType* output, zst::byte_span buf)
+	static void parseGPosOrGSub(TableType* output, zst::byte_span buf)
 	{
 		auto table_start = buf;
 
@@ -235,20 +235,17 @@ namespace font::off
 				output->feature_variations_table = table_start.drop(feat_var_ofs);
 		}
 	}
+}
 
-	void parseGPos(FontFile* font, const Table& table)
+namespace font
+{
+	void FontFile::parse_gsub_table(const Table& table)
 	{
-		auto buf = zst::byte_span(font->file_bytes, font->file_size);
-		buf.remove_prefix(table.offset);
-
-		parseGPosOrGSub(font, &font->gpos_table, buf);
+		parseGPosOrGSub(&m_gsub_table, this->bytes().drop(table.offset));
 	}
 
-	void parseGSub(FontFile* font, const Table& table)
+	void FontFile::parse_gpos_table(const Table& table)
 	{
-		auto buf = zst::byte_span(font->file_bytes, font->file_size);
-		buf.remove_prefix(table.offset);
-
-		parseGPosOrGSub(font, &font->gsub_table, buf);
+		parseGPosOrGSub(&m_gpos_table, this->bytes().drop(table.offset));
 	}
 }

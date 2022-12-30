@@ -19,7 +19,7 @@ namespace sap::layout
 	struct PositionedWord
 	{
 		Word word;
-		const pdf::Font* font;
+		const pdf::PdfFont* font;
 		pdf::PdfScalar font_size;
 		Cursor start;
 		Cursor end;

@@ -25,7 +25,7 @@ namespace pdf
 	struct File;
 	struct Dictionary;
 
-	struct Font
+	struct PdfFont
 	{
 		Dictionary* serialise(File* doc) const;
 		bool didSerialise() const { return m_did_serialise; }
@@ -42,7 +42,7 @@ namespace pdf
 		// ligature substitutions (eg. 'ffi' -> 'f', 'f', 'i') and for single replacements.
 		void addGlyphUnicodeMapping(GlyphId glyph, std::vector<char32_t> codepoints) const;
 
-		font::FontMetrics getFontMetrics() const;
+		const font::FontMetrics& getFontMetrics() const;
 
 		// get the name that we should put in the Resource dictionary of a page that uses this font.
 		std::string getFontResourceName() const;
@@ -80,8 +80,8 @@ namespace pdf
 		int font_type = 0;
 		int encoding_kind = 0;
 
-		static Font* fromBuiltin(File* doc, zst::str_view name);
-		static Font* fromFontFile(File* doc, font::FontFile* font);
+		static PdfFont* fromBuiltin(File* doc, zst::str_view name);
+		static PdfFont* fromFontFile(File* doc, std::shared_ptr<font::FontFile> font);
 
 		static constexpr int FONT_TYPE1 = 1;
 		static constexpr int FONT_TRUETYPE = 2;
@@ -97,7 +97,7 @@ namespace pdf
 		}
 
 	private:
-		Font();
+		PdfFont();
 		Dictionary* font_dictionary = 0;
 
 		void writeUnicodeCMap(File* doc) const;
@@ -116,7 +116,7 @@ namespace pdf
 		std::string font_resource_name {};
 
 		// only used for embedded fonts
-		font::FontFile* source_file = 0;
+		std::shared_ptr<font::FontFile> m_source_file {};
 		Array* glyph_widths_array = 0;
 
 		Stream* embedded_contents = 0;

@@ -22,8 +22,8 @@ namespace sap::layout
 	Document::Document()
 	{
 		static auto default_font_set = sap::FontSet( //
-		    pdf::Font::fromBuiltin(&pdf(), "Times-Roman"), pdf::Font::fromBuiltin(&pdf(), "Times-Italic"),
-		    pdf::Font::fromBuiltin(&pdf(), "Times-Bold"), pdf::Font::fromBuiltin(&pdf(), "Times-BoldItalic"));
+		    pdf::PdfFont::fromBuiltin(&pdf(), "Times-Roman"), pdf::PdfFont::fromBuiltin(&pdf(), "Times-Italic"),
+		    pdf::PdfFont::fromBuiltin(&pdf(), "Times-Bold"), pdf::PdfFont::fromBuiltin(&pdf(), "Times-BoldItalic"));
 
 		static auto default_style =
 		    sap::Style()
@@ -52,9 +52,9 @@ namespace sap::layout
 		m_objects.push_back(std::move(obj));
 	}
 
-	pdf::Font* Document::addFont(font::FontFile* font)
+	pdf::PdfFont* Document::addFont(std::shared_ptr<font::FontFile> font)
 	{
-		return pdf::Font::fromFontFile(&m_pdf_document, font);
+		return pdf::PdfFont::fromFontFile(&m_pdf_document, font);
 	}
 
 	void Document::layout(interp::Interpreter* cs, const tree::Document& treedoc)
