@@ -148,9 +148,12 @@ namespace sap::frontend
 		interp::QualifiedId qid {};
 		while(not lexer.eof())
 		{
+			if(lexer.expect(TT::ColonColon))
+				qid.top_level = true;
+
 			auto tok = lexer.next();
 			if(tok != TT::Identifier)
-				error(tok.loc, "expected identifier");
+				error(tok.loc, "expected identifier, got '{}'", tok.text);
 
 			if(lexer.expect(TT::ColonColon))
 			{
@@ -374,7 +377,7 @@ namespace sap::frontend
 
 	static std::unique_ptr<interp::Expr> parse_primary(Lexer& lexer)
 	{
-		if(lexer.peek() == TT::Identifier)
+		if(lexer.peek() == TT::Identifier || lexer.peek() == TT::ColonColon)
 		{
 			auto qid = parse_qualified_id(lexer);
 			auto ident = std::make_unique<interp::Ident>();
@@ -423,28 +426,38 @@ namespace sap::frontend
 
 		using namespace interp;
 
-		auto fst = lexer.next();
-		if(fst.text == TYPE_INT)
-			return PType::named(TYPE_INT);
-		else if(fst.text == TYPE_ANY)
-			return PType::named(TYPE_ANY);
-		else if(fst.text == TYPE_BOOL)
-			return PType::named(TYPE_BOOL);
-		else if(fst.text == TYPE_CHAR)
-			return PType::named(TYPE_CHAR);
-		else if(fst.text == TYPE_VOID)
-			return PType::named(TYPE_VOID);
-		else if(fst.text == TYPE_FLOAT)
-			return PType::named(TYPE_FLOAT);
-		else if(fst.text == TYPE_STRING)
-			return PType::named(TYPE_STRING);
+		auto fst = lexer.peek();
+		if(fst == TT::Identifier)
+		{
+			if(fst.text == TYPE_INT)
+				return lexer.next(), PType::named(TYPE_INT);
+			else if(fst.text == TYPE_ANY)
+				return lexer.next(), PType::named(TYPE_ANY);
+			else if(fst.text == TYPE_BOOL)
+				return lexer.next(), PType::named(TYPE_BOOL);
+			else if(fst.text == TYPE_CHAR)
+				return lexer.next(), PType::named(TYPE_CHAR);
+			else if(fst.text == TYPE_VOID)
+				return lexer.next(), PType::named(TYPE_VOID);
+			else if(fst.text == TYPE_FLOAT)
+				return lexer.next(), PType::named(TYPE_FLOAT);
+			else if(fst.text == TYPE_STRING)
+				return lexer.next(), PType::named(TYPE_STRING);
 
-		if(fst == TT::Ampersand)
+			return PType::named(parse_qualified_id(lexer));
+		}
+		else if(fst == TT::ColonColon)
+		{
+			return PType::named(parse_qualified_id(lexer));
+		}
+		else if(fst == TT::Ampersand)
 		{
 			error(lexer.location(), "TODO: pointer type");
 		}
 		else if(fst == TT::LSquare)
 		{
+			lexer.next();
+
 			auto elm = parse_type(lexer);
 			if(not lexer.expect(TT::RSquare))
 				error(lexer.location(), "expected ']' in array type");
@@ -453,6 +466,8 @@ namespace sap::frontend
 		}
 		else if(fst == TT::LParen)
 		{
+			lexer.next();
+
 			std::vector<PType> types {};
 			while(not lexer.expect(TT::RParen))
 			{

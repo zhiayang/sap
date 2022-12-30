@@ -18,6 +18,7 @@ namespace sap::interp
 
 	ErrorOr<const Type*> StructDefn::typecheck_impl(Interpreter* cs, const Type* infer) const
 	{
+		this->declaration->resolved_defn = this;
 		auto struct_type = TRY(this->declaration->typecheck(cs))->toStruct();
 
 		std::unordered_set<std::string> seen_names;

@@ -39,6 +39,7 @@ namespace sap::interp
 
 	ErrorOr<const Type*> FunctionDefn::typecheck_impl(Interpreter* cs, const Type* infer) const
 	{
+		this->declaration->resolved_defn = this;
 		auto decl_type = TRY(this->declaration->typecheck(cs));
 
 		// TODO: maybe a less weird mangling solution? idk

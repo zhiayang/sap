@@ -61,24 +61,33 @@ namespace sap::interp
 		if(ptype.isNamed())
 		{
 			auto& name = ptype.name();
-			if(name == TYPE_INT)
-				return Ok(Type::makeInteger());
-			else if(name == TYPE_ANY)
-				return Ok(Type::makeAny());
-			else if(name == TYPE_BOOL)
-				return Ok(Type::makeBool());
-			else if(name == TYPE_CHAR)
-				return Ok(Type::makeChar());
-			else if(name == TYPE_VOID)
-				return Ok(Type::makeVoid());
-			else if(name == TYPE_FLOAT)
-				return Ok(Type::makeFloating());
-			else if(name == TYPE_STRING)
-				return Ok(Type::makeString());
-			else if(name == TYPE_TREE_INLINE)
-				return Ok(Type::makeTreeInlineObj());
+			if(name.parents.empty() && !name.top_level)
+			{
+				auto& nn = name.name;
+				if(nn == TYPE_INT)
+					return Ok(Type::makeInteger());
+				else if(nn == TYPE_ANY)
+					return Ok(Type::makeAny());
+				else if(nn == TYPE_BOOL)
+					return Ok(Type::makeBool());
+				else if(nn == TYPE_CHAR)
+					return Ok(Type::makeChar());
+				else if(nn == TYPE_VOID)
+					return Ok(Type::makeVoid());
+				else if(nn == TYPE_FLOAT)
+					return Ok(Type::makeFloating());
+				else if(nn == TYPE_STRING)
+					return Ok(Type::makeString());
+				else if(nn == TYPE_TREE_INLINE)
+					return Ok(Type::makeTreeInlineObj());
+			}
 
-			// uwu.
+			auto decl = TRY(this->current()->lookup(name));
+			if(decl.size() > 1)
+				return ErrFmt("ambiguous type '{}'", name);
+
+			if(auto struct_decl = dynamic_cast<const StructDecl*>(decl[0]); struct_decl)
+				return Ok(struct_decl->get_type());
 		}
 		else if(ptype.isArray())
 		{

@@ -61,13 +61,6 @@ namespace sap::interp
 		mutable std::unique_ptr<tree::InlineObject> object;
 	};
 
-
-	struct QualifiedId
-	{
-		std::vector<std::string> parents;
-		std::string name;
-	};
-
 	struct Declaration;
 	struct FunctionDecl;
 

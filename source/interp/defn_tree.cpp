@@ -35,6 +35,12 @@ namespace sap::interp
 	{
 		auto current = this;
 
+		if(id.top_level)
+		{
+			while(current->parent() != nullptr)
+				current = current->parent();
+		}
+
 		// look upwards at our parents to find something that matches the first thing
 		if(not id.parents.empty())
 		{
