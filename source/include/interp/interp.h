@@ -83,6 +83,8 @@ namespace sap::interp
 		const DefnTree* current() const { return m_current; }
 
 		ErrorOr<const Type*> resolveType(const frontend::PType& ptype);
+		ErrorOr<const Definition*> getDefinitionForType(const Type* type);
+		ErrorOr<void> addTypeDefinition(const Type* type, const Definition* defn);
 
 		[[nodiscard]] auto pushTree(DefnTree* tree)
 		{
@@ -125,6 +127,8 @@ namespace sap::interp
 	private:
 		std::unique_ptr<DefnTree> m_top;
 		DefnTree* m_current;
+
+		std::unordered_map<const Type*, const Definition*> m_type_definitions;
 
 		std::vector<std::unique_ptr<Definition>> m_builtin_defns;
 		std::vector<std::unique_ptr<StackFrame>> m_stack_frames;

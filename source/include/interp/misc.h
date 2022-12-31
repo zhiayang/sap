@@ -59,7 +59,7 @@ namespace sap::interp
 			{
 				// NOTE: this should have been caught in the parser, but just in case...
 				if(have_named)
-					return ErrFmt("positional {} not allowed after named arguments", thing_name);
+					return ErrFmt("positional {} not allowed after named {}s", thing_name, thing_name);
 
 				ordered_args[cur_idx++] = TRY(ap(arg));
 			}

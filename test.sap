@@ -24,7 +24,7 @@ fi fl Bсички хора се раждат свободни и равни по
 
 	struct Cactus
 	{
-		thorns: int;
+		thorns: int = 100;
 		juice: int;
 	}
 
@@ -32,10 +32,10 @@ fi fl Bсички хора се раждат свободни и равни по
 	{
 		builtin::print("thorns = ");
 		builtin::println(c.thorns);
+		builtin::println(c.juice);
 	}
 
 	let bar = Cactus {
-		.thorns = 69,
 		.juice = 420,
 	};
 

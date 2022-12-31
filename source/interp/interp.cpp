@@ -113,6 +113,24 @@ namespace sap::interp
 	}
 
 
+	ErrorOr<const Definition*> Interpreter::getDefinitionForType(const Type* type)
+	{
+		auto it = m_type_definitions.find(type);
+		if(it == m_type_definitions.end())
+			return ErrFmt("no definition for type '{}'", type);
+		else
+			return Ok(it->second);
+	}
+
+	ErrorOr<void> Interpreter::addTypeDefinition(const Type* type, const Definition* defn)
+	{
+		if(m_type_definitions.contains(type))
+			return ErrFmt("type '{}' was already defined", type);
+
+		m_type_definitions[type] = defn;
+		return Ok();
+	}
+
 
 
 	Definition* Interpreter::addBuiltinDefinition(std::unique_ptr<Definition> defn)

@@ -25,7 +25,7 @@ namespace sap::interp
 		std::unordered_set<std::string> seen_names;
 		std::vector<StructType::Field> field_types {};
 
-		for(auto& [name, type] : this->fields)
+		for(auto& [name, type, init_value] : this->fields)
 		{
 			if(seen_names.contains(name))
 				return ErrFmt("duplicate field '{}' in struct '{}'", name, struct_type->name());
@@ -38,6 +38,13 @@ namespace sap::interp
 			else if(field_type->isVoid())
 				return ErrFmt("field cannot have type 'void'");
 
+			if(init_value != nullptr)
+			{
+				auto initialiser_type = TRY(init_value->typecheck(cs));
+				if(not cs->canImplicitlyConvert(initialiser_type, field_type))
+					return ErrFmt("cannot initialise field of type '{}' with value of type '{}'", field_type, initialiser_type);
+			}
+
 			field_types.push_back(StructType::Field {
 			    .name = name,
 			    .type = field_type,
@@ -45,6 +52,8 @@ namespace sap::interp
 		}
 
 		const_cast<StructType*>(struct_type)->setFields(std::move(field_types));
+		TRY(cs->addTypeDefinition(struct_type, this));
+
 		return Ok(struct_type);
 	}
 
@@ -64,8 +73,15 @@ namespace sap::interp
 	}
 
 
-	static std::vector<std::tuple<std::string, const Type*, const Expr*>> get_field_things(const StructType* struct_type)
+	static std::vector<std::tuple<std::string, const Type*, const Expr*>> get_field_things(Interpreter* cs,
+	    const StructType* struct_type)
 	{
+		auto tmp = cs->getDefinitionForType(struct_type);
+		assert(tmp.ok());
+
+		auto struct_defn = dynamic_cast<const StructDefn*>(tmp.unwrap());
+		assert(struct_defn != nullptr);
+
 		std::vector<std::tuple<std::string, const Type*, const Expr*>> fields {};
 
 		auto& struct_fields = struct_type->getFields();
@@ -74,7 +90,7 @@ namespace sap::interp
 			fields.push_back({
 			    struct_fields[i].name,
 			    struct_fields[i].type,
-			    nullptr,
+			    struct_defn->fields[i].initialiser.get(),
 			});
 		}
 
@@ -103,7 +119,7 @@ namespace sap::interp
 		}
 
 		// make sure the struct has all the things
-		auto fields = get_field_things(struct_type);
+		auto fields = get_field_things(cs, struct_type);
 		auto ordered = TRY(arrange_arguments<const Type*>(cs, fields, this->field_inits, //
 		    "struct", "field", "field", [cs](auto& arg) {
 			    return arg.value->typecheck(cs);
@@ -118,15 +134,31 @@ namespace sap::interp
 		assert(this->get_type()->isStruct());
 		auto struct_type = this->get_type()->toStruct();
 
-		auto fields = get_field_things(struct_type);
+		auto struct_defn = dynamic_cast<const StructDefn*>(TRY(cs->getDefinitionForType(struct_type)));
+		assert(struct_defn != nullptr);
+
+		auto fields = get_field_things(cs, struct_type);
 		auto [ordered, _] = TRY(arrange_arguments<Value>(cs, fields, this->field_inits, //
 		    "struct", "field", "field", [cs](auto& arg) -> ErrorOr<Value> {
 			    return Ok(std::move(TRY_VALUE(arg.value->evaluate(cs))));
 		    }));
 
 		std::vector<Value> field_values {};
-		for(auto& tmp : ordered)
-			field_values.push_back(std::move(tmp.second));
+
+		for(size_t i = 0; i < struct_type->getFields().size(); i++)
+		{
+			if(auto it = ordered.find(i); it == ordered.end())
+			{
+				if(struct_defn->fields[i].initialiser == nullptr)
+					return ErrFmt("missing value for field '{}'", struct_defn->fields[i].name);
+
+				field_values.push_back(TRY_VALUE(struct_defn->fields[i].initialiser->evaluate(cs)));
+			}
+			else
+			{
+				field_values.push_back(std::move(it->second));
+			}
+		}
 
 		return Ok(EvalResult::of_value(Value::structure(struct_type, std::move(field_values))));
 	}

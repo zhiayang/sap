@@ -680,7 +680,7 @@ namespace sap::frontend
 		if(not lexer.expect(TT::LBrace))
 			error(lexer.location(), "expected '{' in struct body");
 
-		std::vector<std::pair<std::string, PType>> fields {};
+		std::vector<interp::StructDefn::Field> fields {};
 		while(not lexer.expect(TT::RBrace))
 		{
 			auto field_name = lexer.match(TT::Identifier);
@@ -691,8 +691,17 @@ namespace sap::frontend
 				error(lexer.location(), "expected ':' after field name");
 
 			auto field_type = parse_type(lexer);
+			std::unique_ptr<interp::Expr> field_initialiser {};
 
-			fields.push_back({ field_name->text.str(), std::move(field_type) });
+			if(lexer.expect(TT::Equal))
+				field_initialiser = parse_expr(lexer);
+
+			fields.push_back(interp::StructDefn::Field {
+			    .name = field_name->text.str(),
+			    .type = std::move(field_type),
+			    .initialiser = std::move(field_initialiser),
+			});
+
 			if(not lexer.match(TT::Semicolon) && lexer.peek() != TT::RBrace)
 				error(lexer.location(), "expected ';' or '}' in struct body");
 		}
