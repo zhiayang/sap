@@ -147,12 +147,4 @@ namespace sap::interp
 
 		return stmt->evaluate(this);
 	}
-
-	const Type* Expr::type(Interpreter* cs) const
-	{
-		if(m_type != nullptr)
-			return m_type;
-
-		error(this->location, "cannot get type of expression that was not typechecked!");
-	}
 }

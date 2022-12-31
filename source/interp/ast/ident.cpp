@@ -11,7 +11,7 @@
 
 namespace sap::interp
 {
-	ErrorOr<const Type*> Ident::typecheck_impl(Interpreter* cs, const Type* infer) const
+	ErrorOr<TCResult> Ident::typecheck_impl(Interpreter* cs, const Type* infer) const
 	{
 		auto tree = cs->current();
 
@@ -24,10 +24,10 @@ namespace sap::interp
 		assert(decls.size() > 0);
 		if(decls.size() == 1)
 		{
-			m_type = TRY(decls[0]->typecheck(cs));
+			auto ret = TRY(decls[0]->typecheck(cs));
 			m_resolved_decl = decls[0];
 
-			return Ok(m_type);
+			return Ok(ret);
 		}
 		else
 		{
@@ -46,7 +46,7 @@ namespace sap::interp
 		while(true)
 		{
 			if(auto value = frame->valueOf(m_resolved_decl->resolved_defn); value != nullptr)
-				return EvalResult::of_lvalue(*value);
+				return EvalResult::ofLValue(*value);
 
 			if(frame->parent())
 				frame = frame->parent();

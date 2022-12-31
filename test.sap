@@ -7,7 +7,7 @@ this     is     a    aoeu bsdf
 fi fl Bсички хора се раждат свободни и равни по \{ \}
 
 \script {
-	var foo = 10;
+	let foo = 10;
 	builtin::print("foo = ");
 	builtin::println(foo);
 

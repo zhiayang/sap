@@ -87,7 +87,7 @@ namespace sap::interp
 				if(auto default_value = std::get<2>(expected[i]); default_value == nullptr)
 					return ErrFmt("missing {} '{}'", thing_name2, std::get<0>(expected[i]));
 				else
-					arg_type = TRY(default_value->typecheck(cs));
+					arg_type = TRY(default_value->typecheck(cs)).type();
 			}
 
 			// if the param is an any, we can just do it, but with extra cost.

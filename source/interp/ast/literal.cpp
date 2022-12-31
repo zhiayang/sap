@@ -8,29 +8,29 @@
 
 namespace sap::interp
 {
-	ErrorOr<const Type*> NumberLit::typecheck_impl(Interpreter* cs, const Type* infer) const
+	ErrorOr<TCResult> NumberLit::typecheck_impl(Interpreter* cs, const Type* infer) const
 	{
 		if(this->is_floating)
-			return Ok(Type::makeFloating());
+			return TCResult::ofRValue(Type::makeFloating());
 		else
-			return Ok(Type::makeInteger());
+			return TCResult::ofRValue(Type::makeInteger());
 	}
 
 	ErrorOr<EvalResult> NumberLit::evaluate(Interpreter* cs) const
 	{
 		if(this->is_floating)
-			return EvalResult::of_value(Value::floating(float_value));
+			return EvalResult::ofValue(Value::floating(float_value));
 		else
-			return EvalResult::of_value(Value::integer(int_value));
+			return EvalResult::ofValue(Value::integer(int_value));
 	}
 
-	ErrorOr<const Type*> StringLit::typecheck_impl(Interpreter* cs, const Type* infer) const
+	ErrorOr<TCResult> StringLit::typecheck_impl(Interpreter* cs, const Type* infer) const
 	{
-		return Ok(Type::makeString());
+		return TCResult::ofRValue(Type::makeString());
 	}
 
 	ErrorOr<EvalResult> StringLit::evaluate(Interpreter* cs) const
 	{
-		return EvalResult::of_value(Value::string(this->string));
+		return EvalResult::ofValue(Value::string(this->string));
 	}
 }

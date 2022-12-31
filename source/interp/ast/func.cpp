@@ -10,22 +10,22 @@
 
 namespace sap::interp
 {
-	ErrorOr<const Type*> FunctionDecl::typecheck_impl(Interpreter* cs, const Type* infer) const
+	ErrorOr<TCResult> FunctionDecl::typecheck_impl(Interpreter* cs, const Type* infer) const
 	{
 		std::vector<const Type*> param_types {};
 		for(auto& param : m_params)
 			param_types.push_back(TRY(cs->resolveType(param.type)));
 
 		TRY(cs->current()->declare(this));
-		return Ok(Type::makeFunction(std::move(param_types), TRY(cs->resolveType(m_return_type))));
+		return TCResult::ofRValue(Type::makeFunction(std::move(param_types), TRY(cs->resolveType(m_return_type))));
 	}
 
-	ErrorOr<const Type*> BuiltinFunctionDefn::typecheck_impl(Interpreter* cs, const Type* infer) const
+	ErrorOr<TCResult> BuiltinFunctionDefn::typecheck_impl(Interpreter* cs, const Type* infer) const
 	{
 		return this->declaration->typecheck(cs);
 	}
 
-	ErrorOr<const Type*> Block::typecheck_impl(Interpreter* cs, const Type* infer) const
+	ErrorOr<TCResult> Block::typecheck_impl(Interpreter* cs, const Type* infer) const
 	{
 		auto tree = cs->current()->declareAnonymousNamespace();
 		auto _ = cs->pushTree(tree);
@@ -33,14 +33,14 @@ namespace sap::interp
 		for(auto& stmt : this->body)
 			TRY(stmt->typecheck(cs));
 
-		return Ok(Type::makeVoid());
+		return TCResult::ofVoid();
 	}
 
 
-	ErrorOr<const Type*> FunctionDefn::typecheck_impl(Interpreter* cs, const Type* infer) const
+	ErrorOr<TCResult> FunctionDefn::typecheck_impl(Interpreter* cs, const Type* infer) const
 	{
 		this->declaration->resolved_defn = this;
-		auto decl_type = TRY(this->declaration->typecheck(cs));
+		auto decl_type = TRY(this->declaration->typecheck(cs)).type();
 
 		// TODO: maybe a less weird mangling solution? idk
 		auto tree = cs->current()->lookupOrDeclareNamespace(zpr::sprint("{}${}", this->declaration->name, decl_type->str()));
@@ -52,7 +52,7 @@ namespace sap::interp
 			auto resolved_type = TRY(cs->resolveType(param.type));
 			if(param.default_value != nullptr)
 			{
-				auto ty = TRY(param.default_value->typecheck(cs));
+				auto ty = TRY(param.default_value->typecheck(cs)).type();
 				if(not cs->canImplicitlyConvert(ty, resolved_type))
 				{
 					return ErrFmt("default value for parameter '{}' has type '{}', "
@@ -70,7 +70,7 @@ namespace sap::interp
 		for(auto& stmt : this->body)
 			TRY(stmt->typecheck(cs));
 
-		return Ok(decl_type);
+		return TCResult::ofRValue(decl_type);
 	}
 
 	ErrorOr<EvalResult> FunctionDefn::call(Interpreter* cs, std::vector<Value>& args) const
@@ -88,14 +88,14 @@ namespace sap::interp
 		{
 			auto result = TRY(stmt->evaluate(cs));
 
-			if(result.is_return())
+			if(result.isReturn())
 				return Ok(std::move(result));
 
-			else if(not result.is_normal())
+			else if(not result.isNormal())
 				return ErrFmt("unexpected statement in function body");
 		}
 
-		return EvalResult::of_void();
+		return EvalResult::ofVoid();
 	}
 
 
@@ -107,16 +107,16 @@ namespace sap::interp
 	// evaluating these don't do anything
 	ErrorOr<EvalResult> FunctionDefn::evaluate(Interpreter* cs) const
 	{
-		return EvalResult::of_void();
+		return EvalResult::ofVoid();
 	}
 
 	ErrorOr<EvalResult> FunctionDecl::evaluate(Interpreter* cs) const
 	{
-		return EvalResult::of_void();
+		return EvalResult::ofVoid();
 	}
 
 	ErrorOr<EvalResult> BuiltinFunctionDefn::evaluate(Interpreter* cs) const
 	{
-		return EvalResult::of_void();
+		return EvalResult::ofVoid();
 	}
 }

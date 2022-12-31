@@ -46,14 +46,14 @@ namespace sap::interp::builtin
 			auto new_style = style->extend(tio->style());
 			value.getTreeInlineObj()->setStyle(new_style);
 
-			return EvalResult::of_value(std::move(value));
+			return EvalResult::ofValue(std::move(value));
 		}
 		else
 		{
 			auto word = std::make_unique<tree::Text>(value.toString());
 			word->setStyle(style);
 
-			return EvalResult::of_value(Value::treeInlineObject(std::move(word)));
+			return EvalResult::ofValue(Value::treeInlineObject(std::move(word)));
 		}
 	}
 

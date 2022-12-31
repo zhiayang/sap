@@ -8,19 +8,19 @@
 
 namespace sap::interp
 {
-	ErrorOr<const Type*> StructDecl::typecheck_impl(Interpreter* cs, const Type* infer) const
+	ErrorOr<TCResult> StructDecl::typecheck_impl(Interpreter* cs, const Type* infer) const
 	{
 		TRY(cs->current()->declare(this));
 
 		// when declaring a struct, we just make an empty field list.
 		// the fields will be set later on.
-		return Ok(Type::makeStruct(this->name, {}));
+		return TCResult::ofRValue(Type::makeStruct(this->name, {}));
 	}
 
-	ErrorOr<const Type*> StructDefn::typecheck_impl(Interpreter* cs, const Type* infer) const
+	ErrorOr<TCResult> StructDefn::typecheck_impl(Interpreter* cs, const Type* infer) const
 	{
 		this->declaration->resolved_defn = this;
-		auto struct_type = TRY(this->declaration->typecheck(cs))->toStruct();
+		auto struct_type = TRY(this->declaration->typecheck(cs)).type()->toStruct();
 
 		std::unordered_set<std::string> seen_names;
 		std::vector<StructType::Field> field_types {};
@@ -40,7 +40,7 @@ namespace sap::interp
 
 			if(init_value != nullptr)
 			{
-				auto initialiser_type = TRY(init_value->typecheck(cs));
+				auto initialiser_type = TRY(init_value->typecheck(cs)).type();
 				if(not cs->canImplicitlyConvert(initialiser_type, field_type))
 					return ErrFmt("cannot initialise field of type '{}' with value of type '{}'", field_type, initialiser_type);
 			}
@@ -54,7 +54,7 @@ namespace sap::interp
 		const_cast<StructType*>(struct_type)->setFields(std::move(field_types));
 		TRY(cs->addTypeDefinition(struct_type, this));
 
-		return Ok(struct_type);
+		return TCResult::ofRValue(struct_type);
 	}
 
 
@@ -63,13 +63,13 @@ namespace sap::interp
 	ErrorOr<EvalResult> StructDecl::evaluate(Interpreter* cs) const
 	{
 		// do nothing
-		return EvalResult::of_void();
+		return EvalResult::ofVoid();
 	}
 
 	ErrorOr<EvalResult> StructDefn::evaluate(Interpreter* cs) const
 	{
 		// this also doesn't do anything
-		return EvalResult::of_void();
+		return EvalResult::ofVoid();
 	}
 
 
@@ -97,7 +97,7 @@ namespace sap::interp
 		return fields;
 	}
 
-	ErrorOr<const Type*> StructLit::typecheck_impl(Interpreter* cs, const Type* infer) const
+	ErrorOr<TCResult> StructLit::typecheck_impl(Interpreter* cs, const Type* infer) const
 	{
 		const StructType* struct_type = nullptr;
 		if(struct_name.name.empty())
@@ -121,12 +121,14 @@ namespace sap::interp
 		// make sure the struct has all the things
 		auto fields = get_field_things(cs, struct_type);
 		auto ordered = TRY(arrange_arguments<const Type*>(cs, fields, this->field_inits, //
-		    "struct", "field", "field", [cs](auto& arg) {
-			    return arg.value->typecheck(cs);
+		    "struct", "field", "field", [cs](auto& arg) -> ErrorOr<const Type*> {
+			    return arg.value->typecheck(cs).map([](const auto& x) {
+				    return x.type();
+			    });
 		    }));
 
 		TRY(get_calling_cost(cs, fields, ordered, "struct", "field", "field"));
-		return Ok(struct_type);
+		return TCResult::ofRValue(struct_type);
 	}
 
 	ErrorOr<EvalResult> StructLit::evaluate(Interpreter* cs) const
@@ -160,6 +162,6 @@ namespace sap::interp
 			}
 		}
 
-		return EvalResult::of_value(Value::structure(struct_type, std::move(field_values)));
+		return EvalResult::ofValue(Value::structure(struct_type, std::move(field_values)));
 	}
 }

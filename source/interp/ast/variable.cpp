@@ -9,7 +9,7 @@
 
 namespace sap::interp
 {
-	ErrorOr<const Type*> VariableDecl::typecheck_impl(Interpreter* cs, const Type* infer) const
+	ErrorOr<TCResult> VariableDecl::typecheck_impl(Interpreter* cs, const Type* infer) const
 	{
 		assert(infer != nullptr);
 		if(infer->isVoid())
@@ -18,19 +18,19 @@ namespace sap::interp
 		auto ns = cs->current();
 		TRY(ns->declare(this));
 
-		return Ok(infer);
+		return TCResult::ofLValue(infer, this->is_mutable);
 	}
 
 	ErrorOr<EvalResult> VariableDecl::evaluate(Interpreter* cs) const
 	{
 		// this does nothing
-		return EvalResult::of_void();
+		return EvalResult::ofVoid();
 	}
 
 
 
 
-	ErrorOr<const Type*> VariableDefn::typecheck_impl(Interpreter* cs, const Type* infer) const
+	ErrorOr<TCResult> VariableDefn::typecheck_impl(Interpreter* cs, const Type* infer) const
 	{
 		this->declaration->resolved_defn = this;
 
@@ -38,7 +38,7 @@ namespace sap::interp
 		if(not this->explicit_type.has_value() && this->initialiser == nullptr)
 			return ErrFmt("variable without explicit type must have an initialiser");
 
-		const Type* the_type = TRY([&]() -> ErrorOr<const Type*> {
+		auto the_type = TRY([&]() -> ErrorOr<TCResult> {
 			if(this->explicit_type.has_value())
 			{
 				auto resolved_type = TRY(cs->resolveType(*this->explicit_type));
@@ -48,7 +48,7 @@ namespace sap::interp
 
 				if(this->initialiser != nullptr)
 				{
-					auto initialiser_type = TRY(this->initialiser->typecheck(cs, /* infer: */ resolved_type));
+					auto initialiser_type = TRY(this->initialiser->typecheck(cs, /* infer: */ resolved_type)).type();
 					if(not cs->canImplicitlyConvert(initialiser_type, resolved_type))
 					{
 						return ErrFmt("cannot initialise variable of type '{}' with expression of type '{}'", //
@@ -56,7 +56,7 @@ namespace sap::interp
 					}
 				}
 
-				return Ok(resolved_type);
+				return TCResult::ofRValue(resolved_type);
 			}
 			else
 			{
@@ -65,7 +65,7 @@ namespace sap::interp
 			}
 		}());
 
-		return this->declaration->typecheck(cs, the_type);
+		return this->declaration->typecheck(cs, the_type.type());
 	}
 
 	ErrorOr<EvalResult> VariableDefn::evaluate(Interpreter* cs) const
@@ -73,6 +73,6 @@ namespace sap::interp
 		if(this->initialiser != nullptr)
 			cs->frame().setValue(this, TRY_VALUE(this->initialiser->evaluate(cs)));
 
-		return EvalResult::of_void();
+		return EvalResult::ofVoid();
 	}
 }

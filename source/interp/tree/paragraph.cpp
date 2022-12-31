@@ -26,13 +26,13 @@ namespace sap::tree
 					error("interp", "evaluation failed: {}", value_or_err.error());
 
 				auto value_or_empty = value_or_err.take_value();
-				if(not value_or_empty.has_value())
+				if(not value_or_empty.hasValue())
 				{
 					obj.reset(new tree::Text(U"", obj->style()));
 					continue;
 				}
 
-				auto value = std::move(value_or_empty).take_value();
+				auto value = std::move(value_or_empty).take();
 
 				if(value.isTreeInlineObj())
 					obj.reset(std::move(value).takeTreeInlineObj().release());

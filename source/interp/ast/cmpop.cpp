@@ -106,14 +106,14 @@ namespace sap::interp
 
 
 
-	ErrorOr<const Type*> ComparisonOp::typecheck_impl(Interpreter* cs, const Type* infer) const
+	ErrorOr<TCResult> ComparisonOp::typecheck_impl(Interpreter* cs, const Type* infer) const
 	{
 		assert(not this->rest.empty());
 
-		auto lhs = TRY(this->first->typecheck(cs));
+		auto lhs = TRY(this->first->typecheck(cs)).type();
 
 		auto op = this->rest[0].first;
-		auto rhs = TRY(this->rest[0].second->typecheck(cs));
+		auto rhs = TRY(this->rest[0].second->typecheck(cs)).type();
 
 		for(size_t i = 0;;)
 		{
@@ -126,10 +126,10 @@ namespace sap::interp
 			i += 1;
 			lhs = rhs;
 			op = this->rest[i].first;
-			rhs = TRY(this->rest[i].second->typecheck(cs));
+			rhs = TRY(this->rest[i].second->typecheck(cs)).type();
 		}
 
-		return Ok(Type::makeBool());
+		return TCResult::ofRValue(Type::makeBool());
 	}
 
 	ErrorOr<EvalResult> ComparisonOp::evaluate(Interpreter* cs) const
@@ -146,7 +146,7 @@ namespace sap::interp
 			assert(can_compare(op, lhs.type(), rhs.type()));
 
 			if(not do_compare(op, lhs, rhs))
-				return EvalResult::of_value(Value::boolean(false));
+				return EvalResult::ofValue(Value::boolean(false));
 
 			if(i + 1 == this->rest.size())
 				break;
@@ -157,6 +157,6 @@ namespace sap::interp
 			rhs = TRY_VALUE(this->rest[i].second->evaluate(cs));
 		}
 
-		return EvalResult::of_value(Value::boolean(true));
+		return EvalResult::ofValue(Value::boolean(true));
 	}
 }

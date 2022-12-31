@@ -11,7 +11,7 @@
 
 namespace sap::interp
 {
-	ErrorOr<const Type*> InlineTreeExpr::typecheck_impl(Interpreter* cs, const Type* infer) const
+	ErrorOr<TCResult> InlineTreeExpr::typecheck_impl(Interpreter* cs, const Type* infer) const
 	{
 		return ErrFmt("aoeu");
 	}
@@ -22,6 +22,6 @@ namespace sap::interp
 		// otherwise this becomes untenable.
 		assert(this->object != nullptr);
 
-		return EvalResult::of_value(Value::treeInlineObject(std::move(this->object)));
+		return EvalResult::ofValue(Value::treeInlineObject(std::move(this->object)));
 	}
 }

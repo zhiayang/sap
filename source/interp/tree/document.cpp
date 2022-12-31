@@ -18,13 +18,13 @@ namespace sap::tree
 				error("interp", "evaluation failed: {}", result_or_err.error());
 
 			auto result = result_or_err.take_value();
-			if(result.is_return())
+			if(result.isReturn())
 			{
 				// TODO: handle returning values here
-				if(result.has_value())
+				if(result.hasValue())
 					error("interp", "TODO: returning values from \\script{} is unimplemented");
 			}
-			else if(not result.is_normal())
+			else if(not result.isNormal())
 			{
 				error("interp", "unexpected statement in function body");
 			}

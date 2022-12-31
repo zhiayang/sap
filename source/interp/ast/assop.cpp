@@ -20,31 +20,35 @@ namespace sap::interp
 		}
 	}
 
-	ErrorOr<const Type*> AssignOp::typecheck_impl(Interpreter* cs, const Type* infer) const
+	ErrorOr<TCResult> AssignOp::typecheck_impl(Interpreter* cs, const Type* infer) const
 	{
-		auto ltype = TRY(this->lhs->typecheck(cs));
-		auto rtype = TRY(this->rhs->typecheck(cs));
+		auto lres = TRY(this->lhs->typecheck(cs));
+		if(not lres.isLValue())
+			return ErrFmt("cannot assign to non-lvalue");
+		else if(not lres.isMutable())
+			return ErrFmt("cannot assign to immutable lvalue");
 
-		auto void_ty = Type::makeVoid();
+		auto ltype = lres.type();
+		auto rtype = TRY(this->rhs->typecheck(cs)).type();
 
 		if((ltype->isInteger() && rtype->isInteger()) || (ltype->isFloating() && rtype->isFloating()))
 		{
 			if(util::is_one_of(this->op, Op::None, Op::Add, Op::Subtract, Op::Multiply, Op::Divide, Op::Modulo))
-				return Ok(void_ty);
+				return TCResult::ofVoid();
 		}
 		else if(ltype->isArray() && rtype->isArray() && ltype->toArray()->elementType() == rtype->toArray()->elementType())
 		{
 			if(this->op == Op::Add || this->op == Op::None)
-				return Ok(void_ty);
+				return TCResult::ofVoid();
 		}
 		else if((ltype->isArray() && rtype->isInteger()) || (ltype->isInteger() && rtype->isArray()))
 		{
 			if(this->op == Op::Multiply)
-				return Ok(void_ty);
+				return TCResult::ofVoid();
 		}
 		else if(this->op == Op::None && cs->canImplicitlyConvert(rtype, ltype))
 		{
-			return Ok(void_ty);
+			return TCResult::ofVoid();
 		}
 
 		if(this->op == Op::None)
@@ -57,18 +61,18 @@ namespace sap::interp
 	{
 		auto lval_result = TRY(this->lhs->evaluate(cs));
 
-		if(not lval_result.is_lvalue())
+		if(not lval_result.isLValue())
 			return ErrFmt("cannot assign to non-lvalue");
 
 		auto rval = TRY_VALUE(this->rhs->evaluate(cs));
 		auto rtype = rval.type();
 
-		auto ltype = lval_result.get_value().type();
+		auto ltype = lval_result.get().type();
 
 		if(this->op != Op::None)
 		{
 			// read the value
-			auto lval = lval_result.get_value().clone();
+			auto lval = lval_result.get().clone();
 
 			auto do_op = [](Op op, auto a, auto b) {
 				switch(op)
@@ -136,7 +140,7 @@ namespace sap::interp
 		}
 
 		// TODO: 'any' might need work here
-		lval_result.get_value() = std::move(rval);
-		return EvalResult::of_void();
+		lval_result.get() = std::move(rval);
+		return EvalResult::ofVoid();
 	}
 }

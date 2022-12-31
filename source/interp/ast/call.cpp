@@ -56,8 +56,10 @@ namespace sap::interp
 	{
 		auto params = TRY(convert_params(decl));
 		auto ordered = TRY(arrange_arguments<const Type*>(cs, params, arguments, //
-		    [cs](auto& arg) {
-			    return arg.value->typecheck(cs);
+		    [cs](auto& arg) -> ErrorOr<const Type*> {
+			    return arg.value->typecheck(cs).map([](const auto& x) {
+				    return x.type();
+			    });
 		    }));
 
 		return get_calling_cost(cs, params, ordered, "function", "argument", "argument for parameter");
@@ -99,10 +101,9 @@ namespace sap::interp
 
 
 
-	ErrorOr<const Type*> FunctionCall::typecheck_impl(Interpreter* cs, const Type* infer) const
+	ErrorOr<TCResult> FunctionCall::typecheck_impl(Interpreter* cs, const Type* infer) const
 	{
 		// TODO: handle rewritten_ufcs
-
 
 		const Type* fn_type = nullptr;
 
@@ -120,21 +121,21 @@ namespace sap::interp
 			const Declaration* best_decl = TRY(resolve_overload_set(cs, decls, this->arguments));
 			assert(best_decl != nullptr);
 
-			fn_type = TRY(best_decl->typecheck(cs));
+			fn_type = TRY(best_decl->typecheck(cs)).type();
 			m_resolved_func_decl = best_decl;
 		}
 		else
 		{
 			zpr::println("warning: expr call");
 
-			fn_type = TRY(this->callee->typecheck(cs));
+			fn_type = TRY(this->callee->typecheck(cs)).type();
 			m_resolved_func_decl = nullptr;
 		}
 
 		if(not fn_type->isFunction())
 			error(this->location, "callee of function call must be a function type, got '{}'", fn_type);
 
-		return Ok(fn_type->toFunction()->returnType());
+		return TCResult::ofRValue(fn_type->toFunction()->returnType());
 	}
 
 	ErrorOr<EvalResult> FunctionCall::evaluate(Interpreter* cs) const

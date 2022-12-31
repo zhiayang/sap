@@ -24,25 +24,25 @@ namespace sap::interp
 		}
 	}
 
-	ErrorOr<const Type*> BinaryOp::typecheck_impl(Interpreter* cs, const Type* infer) const
+	ErrorOr<TCResult> BinaryOp::typecheck_impl(Interpreter* cs, const Type* infer) const
 	{
-		auto ltype = TRY(this->lhs->typecheck(cs));
-		auto rtype = TRY(this->rhs->typecheck(cs));
+		auto ltype = TRY(this->lhs->typecheck(cs)).type();
+		auto rtype = TRY(this->rhs->typecheck(cs)).type();
 
 		if((ltype->isInteger() && rtype->isInteger()) || (ltype->isFloating() && rtype->isFloating()))
 		{
 			if(util::is_one_of(this->op, Op::Add, Op::Subtract, Op::Multiply, Op::Divide, Op::Modulo))
-				return Ok(ltype);
+				return TCResult::ofRValue(ltype);
 		}
 		else if(ltype->isArray() && rtype->isArray() && ltype->toArray()->elementType() == rtype->toArray()->elementType())
 		{
 			if(this->op == Op::Add)
-				return Ok(ltype);
+				return TCResult::ofRValue(ltype);
 		}
 		else if((ltype->isArray() && rtype->isInteger()) || (ltype->isInteger() && rtype->isArray()))
 		{
 			if(this->op == Op::Multiply)
-				return Ok(ltype->isArray() ? ltype : rtype);
+				return TCResult::ofRValue(ltype->isArray() ? ltype : rtype);
 		}
 
 		return ErrFmt("unsupported operation '{}' between types '{}' and '{}'", op_to_string(this->op), ltype, rtype);
@@ -77,9 +77,9 @@ namespace sap::interp
 			{
 				// TODO: this might be bad because implicit conversions
 				if(ltype->isInteger())
-					return EvalResult::of_value(Value::integer(do_op(this->op, lval.getInteger(), rval.getInteger())));
+					return EvalResult::ofValue(Value::integer(do_op(this->op, lval.getInteger(), rval.getInteger())));
 				else
-					return EvalResult::of_value(Value::floating(do_op(this->op, lval.getFloating(), rval.getFloating())));
+					return EvalResult::ofValue(Value::floating(do_op(this->op, lval.getFloating(), rval.getFloating())));
 			}
 		}
 		else if(ltype->isArray() && rtype->isArray() && ltype->toArray()->elementType() == rtype->toArray()->elementType())
@@ -92,7 +92,7 @@ namespace sap::interp
 				for(auto& x : rhs)
 					lhs.push_back(std::move(x));
 
-				return EvalResult::of_value(Value::array(ltype->toArray()->elementType(), std::move(lhs)));
+				return EvalResult::ofValue(Value::array(ltype->toArray()->elementType(), std::move(lhs)));
 			}
 		}
 		else if((ltype->isArray() && rtype->isInteger()) || (ltype->isInteger() && rtype->isArray()))
@@ -104,7 +104,7 @@ namespace sap::interp
 				auto num = (ltype->isArray() ? std::move(rval) : std::move(lval)).getInteger();
 
 				if(num <= 0)
-					return EvalResult::of_value(Value::array(elm, {}));
+					return EvalResult::ofValue(Value::array(elm, {}));
 
 				std::vector<Value> ret = std::move(arr.clone()).takeArray();
 
@@ -115,7 +115,7 @@ namespace sap::interp
 						ret.push_back(std::move(c));
 				}
 
-				return EvalResult::of_value(Value::array(elm, std::move(ret)));
+				return EvalResult::ofValue(Value::array(elm, std::move(ret)));
 			}
 		}
 
