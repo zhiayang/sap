@@ -33,6 +33,6 @@ namespace sap::interp
 		assert(struct_type->hasFieldNamed(this->rhs));
 
 		auto field_idx = struct_type->getFieldIndex(this->rhs);
-		return Ok(EvalResult::of_value(lhs_value.getStructField(field_idx).clone()));
+		return EvalResult::of_value(lhs_value.getStructField(field_idx).clone());
 	}
 }

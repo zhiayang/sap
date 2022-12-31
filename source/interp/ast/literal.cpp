@@ -19,9 +19,9 @@ namespace sap::interp
 	ErrorOr<EvalResult> NumberLit::evaluate(Interpreter* cs) const
 	{
 		if(this->is_floating)
-			return Ok(EvalResult::of_value(Value::floating(float_value)));
+			return EvalResult::of_value(Value::floating(float_value));
 		else
-			return Ok(EvalResult::of_value(Value::integer(int_value)));
+			return EvalResult::of_value(Value::integer(int_value));
 	}
 
 	ErrorOr<const Type*> StringLit::typecheck_impl(Interpreter* cs, const Type* infer) const
@@ -31,6 +31,6 @@ namespace sap::interp
 
 	ErrorOr<EvalResult> StringLit::evaluate(Interpreter* cs) const
 	{
-		return Ok(EvalResult::of_value(Value::string(this->string)));
+		return EvalResult::of_value(Value::string(this->string));
 	}
 }

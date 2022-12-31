@@ -10,32 +10,37 @@
 
 namespace sap::interp
 {
-	// TODO: make this something that we don't have to keep throwing Ok() around
+	struct TCResult
+	{
+		const Type* type() const { return m_type; }
+		bool isMutable() const { return m_is_mutable; }
+		bool isLValue() const { return m_is_lvalue; }
+
+
+
+	private:
+		explicit TCResult(const Type* type, bool is_mutable, bool is_lvalue)
+		    : m_type(type)
+		    , m_is_mutable(is_mutable)
+		    , m_is_lvalue(is_lvalue)
+		{
+		}
+
+		const Type* m_type;
+		bool m_is_mutable;
+		bool m_is_lvalue;
+	};
+
+
 	struct EvalResult
 	{
-		bool has_value() const { return result.has_value(); }
-		bool is_normal() const { return kind == Normal; }
-		bool is_return() const { return kind == Return; }
-		bool is_loop_break() const { return kind == LoopBreak; }
-		bool is_loop_continue() const { return kind == LoopContinue; }
+		bool has_value() const { return m_result.has_value() || m_lvalue != nullptr; }
 
-		const Value& get_value() const
-		{
-			assert(this->has_value());
-			return *result;
-		}
-
-		Value& get_value()
-		{
-			assert(this->has_value());
-			return *result;
-		}
-
-		Value take_value()
-		{
-			assert(this->has_value());
-			return std::move(*result);
-		}
+		bool is_lvalue() const { return m_kind == Normal && m_lvalue != nullptr; }
+		bool is_normal() const { return m_kind == Normal; }
+		bool is_return() const { return m_kind == Return; }
+		bool is_loop_break() const { return m_kind == LoopBreak; }
+		bool is_loop_continue() const { return m_kind == LoopContinue; }
 
 		enum ResultKind
 		{
@@ -45,57 +50,62 @@ namespace sap::interp
 			LoopContinue,
 		};
 
-		ResultKind kind = Normal;
-		std::optional<Value> result = std::nullopt;
-
-		static EvalResult of_void()
+		const Value& get_value() const
 		{
-			return EvalResult {
-				.kind = Normal,
-				.result = std::nullopt,
-			};
+			assert(this->has_value());
+			if(m_lvalue != nullptr)
+				return *m_lvalue;
+
+			return *m_result;
 		}
 
-		static EvalResult of_value(Value value)
+		Value& get_value()
 		{
-			return EvalResult {
-				.kind = Normal,
-				.result = std::move(value),
-			};
+			assert(this->has_value());
+			if(m_lvalue != nullptr)
+				return *m_lvalue;
+
+			return *m_result;
 		}
 
-		static EvalResult of_loop_break()
+		Value take_value()
 		{
-			return EvalResult {
-				.kind = LoopBreak,
-				.result = std::nullopt,
-			};
+			assert(this->has_value());
+
+			// if we are an lvalue, we can't let you "take" -- that doesn't make any sense.
+			// instead we clone the lvalue and give it to you.
+			if(m_lvalue != nullptr)
+				return m_lvalue->clone();
+
+			return std::move(*m_result);
 		}
 
-		static EvalResult of_loop_continue()
+
+		static ErrorOr<EvalResult> of_void() { return Ok(EvalResult(Normal, {})); }
+		static ErrorOr<EvalResult> of_value(Value value) { return Ok(EvalResult(Normal, std::move(value))); }
+
+		static ErrorOr<EvalResult> of_loop_break() { return Ok(EvalResult(LoopBreak, {})); }
+		static ErrorOr<EvalResult> of_loop_continue() { return Ok(EvalResult(LoopContinue, {})); }
+		static ErrorOr<EvalResult> of_return_void() { return Ok(EvalResult(Return, {})); }
+		static ErrorOr<EvalResult> of_return_value(Value value) { return Ok(EvalResult(Return, std::move(value))); }
+
+		static ErrorOr<EvalResult> of_lvalue(Value& lvalue)
 		{
-			return EvalResult {
-				.kind = LoopContinue,
-				.result = std::nullopt,
-			};
+			auto ret = EvalResult(Normal, {});
+			ret.m_lvalue = &lvalue;
+
+			return Ok(std::move(ret));
 		}
 
-		static EvalResult of_return_void()
-		{
-			return EvalResult {
-				.kind = Return,
-				.result = std::nullopt,
-			};
-		}
+	private:
+		EvalResult(ResultKind kind, std::optional<Value> value) : m_kind(kind), m_result(std::move(value)) { }
 
-		static EvalResult of_return_value(Value value)
-		{
-			return EvalResult {
-				.kind = Return,
-				.result = std::move(value),
-			};
-		}
+		ResultKind m_kind = Normal;
+		std::optional<Value> m_result = std::nullopt;
+
+		Value* m_lvalue = nullptr;
 	};
+
 
 #define TRY_VALUE(x)                                                                        \
 	__extension__({                                                                         \

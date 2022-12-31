@@ -24,7 +24,7 @@ namespace sap::interp
 	ErrorOr<EvalResult> VariableDecl::evaluate(Interpreter* cs) const
 	{
 		// this does nothing
-		return Ok(EvalResult::of_void());
+		return EvalResult::of_void();
 	}
 
 
@@ -73,6 +73,6 @@ namespace sap::interp
 		if(this->initialiser != nullptr)
 			cs->frame().setValue(this, TRY_VALUE(this->initialiser->evaluate(cs)));
 
-		return Ok(EvalResult::of_void());
+		return EvalResult::of_void();
 	}
 }

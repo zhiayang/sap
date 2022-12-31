@@ -141,17 +141,18 @@ namespace sap::frontend
 
 			case TT::Period: return 999;
 
-			case TT::Asterisk:
+			case TT::Asterisk: [[fallthrough]];
+			case TT::Percent: [[fallthrough]];
 			case TT::Slash: return 400;
 
 			case TT::Plus:
 			case TT::Minus: return 300;
 
-			case TT::LAngle:
-			case TT::RAngle:
-			case TT::EqualEqual:
-			case TT::LAngleEqual:
-			case TT::RAngleEqual:
+			case TT::LAngle: [[fallthrough]];
+			case TT::RAngle: [[fallthrough]];
+			case TT::EqualEqual: [[fallthrough]];
+			case TT::LAngleEqual: [[fallthrough]];
+			case TT::RAngleEqual: [[fallthrough]];
 			case TT::ExclamationEqual: return 200;
 
 			default: return -1;
@@ -170,12 +171,13 @@ namespace sap::frontend
 
 	static bool is_assignment_op(TokenType tok)
 	{
-		return util::is_one_of(tok, TT::Equal);
+		return util::is_one_of(tok, TT::Equal, TT::PlusEqual, TT::MinusEqual, TT::AsteriskEqual, TT::SlashEqual,
+		    TT::PercentEqual);
 	}
 
 	static bool is_regular_binary_op(TokenType tok)
 	{
-		return util::is_one_of(tok, TT::Plus, TT::Minus, TT::Asterisk, TT::Slash);
+		return util::is_one_of(tok, TT::Plus, TT::Minus, TT::Asterisk, TT::Slash, TT::Percent);
 	}
 
 	static bool is_comparison_op(TokenType tok)
@@ -192,6 +194,7 @@ namespace sap::frontend
 			case TT::Minus: return interp::BinaryOp::Subtract;
 			case TT::Asterisk: return interp::BinaryOp::Multiply;
 			case TT::Slash: return interp::BinaryOp::Divide;
+			case TT::Percent: return interp::BinaryOp::Modulo;
 			default: assert(false && "unreachable!");
 		}
 	}
@@ -206,6 +209,20 @@ namespace sap::frontend
 			case TT::RAngleEqual: return interp::ComparisonOp::GE;
 			case TT::EqualEqual: return interp::ComparisonOp::EQ;
 			case TT::ExclamationEqual: return interp::ComparisonOp::NE;
+			default: assert(false && "unreachable!");
+		}
+	}
+
+	static interp::AssignOp::Op convert_assignment_op(TokenType tok)
+	{
+		switch(tok)
+		{
+			case TT::Equal: return interp::AssignOp::None;
+			case TT::Plus: return interp::AssignOp::Add;
+			case TT::Minus: return interp::AssignOp::Subtract;
+			case TT::Asterisk: return interp::AssignOp::Multiply;
+			case TT::Slash: return interp::AssignOp::Divide;
+			case TT::Percent: return interp::AssignOp::Modulo;
 			default: assert(false && "unreachable!");
 		}
 	}
@@ -345,6 +362,10 @@ namespace sap::frontend
 				continue;
 			}
 
+			// if we see an assignment, bail without consuming the operator token.
+			if(is_assignment_op(lexer.peek()))
+				return lhs;
+
 			auto op_tok = lexer.next();
 
 			// special handling for dot op -- check here.
@@ -377,18 +398,7 @@ namespace sap::frontend
 			if(next > prec || is_right_associative(lexer))
 				rhs = parse_rhs(lexer, std::move(rhs), prec + 1);
 
-			if(is_assignment_op(op_tok))
-			{
-				error(lexer.peek().loc, "asdf");
-				// auto newlhs = util::pool<AssignOp>(loc);
-
-				// newlhs->left = dcast(Expr, lhs);
-				// newlhs->right = rhs;
-				// newlhs->op = op;
-
-				// lhs = newlhs;
-			}
-			else if(is_comparison_op(op_tok))
+			if(is_comparison_op(op_tok))
 			{
 				if(auto cmp = dynamic_cast<interp::ComparisonOp*>(lhs.get()))
 				{
@@ -511,6 +521,20 @@ namespace sap::frontend
 
 		return parse_rhs(lexer, std::move(lhs), 0);
 	}
+
+	static std::unique_ptr<interp::AssignOp> parse_assignment(std::unique_ptr<interp::Expr> lhs, Lexer& lexer)
+	{
+		auto op = lexer.next();
+		assert(is_assignment_op(op));
+
+		auto ret = std::make_unique<interp::AssignOp>();
+		ret->op = convert_assignment_op(op);
+		ret->lhs = std::move(lhs);
+		ret->rhs = parse_expr(lexer);
+
+		return ret;
+	}
+
 
 	static const PType parse_type(Lexer& lexer)
 	{
@@ -758,7 +782,14 @@ namespace sap::frontend
 		if(not stmt)
 			error(tok.loc, "invalid start of statement");
 
-		else if(not lexer.expect(TT::Semicolon) && not optional_semicolon)
+		// check for assignment
+		if(is_assignment_op(lexer.peek()))
+		{
+			if(auto expr = dynamic_cast<const interp::Expr*>(stmt.get()); expr != nullptr)
+				stmt = parse_assignment(util::static_pointer_cast<interp::Expr>(std::move(stmt)), lexer);
+		}
+
+		if(not lexer.expect(TT::Semicolon) && not optional_semicolon)
 			error(lexer.peek().loc, "expected ';' after statement, found '{}'", lexer.peek().text);
 
 		return stmt;

@@ -146,7 +146,7 @@ namespace sap::interp
 			assert(can_compare(op, lhs.type(), rhs.type()));
 
 			if(not do_compare(op, lhs, rhs))
-				return Ok(EvalResult::of_value(Value::boolean(false)));
+				return EvalResult::of_value(Value::boolean(false));
 
 			if(i + 1 == this->rest.size())
 				break;
@@ -157,6 +157,6 @@ namespace sap::interp
 			rhs = TRY_VALUE(this->rest[i].second->evaluate(cs));
 		}
 
-		return Ok(EvalResult::of_value(Value::boolean(true)));
+		return EvalResult::of_value(Value::boolean(true));
 	}
 }

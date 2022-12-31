@@ -22,7 +22,6 @@ namespace sap::interp
 		// otherwise this becomes untenable.
 		assert(this->object != nullptr);
 
-		return Ok(EvalResult::of_value(Value::treeInlineObject(std::move(this->object))));
+		return EvalResult::of_value(Value::treeInlineObject(std::move(this->object)));
 	}
-
 }

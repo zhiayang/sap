@@ -282,6 +282,26 @@ namespace sap::frontend
 		{
 			return advance_and_return(stream, loc, Token { .loc = loc, .type = TT::ExclamationEqual, .text = stream.take(2) }, 2);
 		}
+		else if(stream.starts_with("+="))
+		{
+			return advance_and_return(stream, loc, Token { .loc = loc, .type = TT::PlusEqual, .text = stream.take(2) }, 2);
+		}
+		else if(stream.starts_with("-="))
+		{
+			return advance_and_return(stream, loc, Token { .loc = loc, .type = TT::MinusEqual, .text = stream.take(2) }, 2);
+		}
+		else if(stream.starts_with("*="))
+		{
+			return advance_and_return(stream, loc, Token { .loc = loc, .type = TT::AsteriskEqual, .text = stream.take(2) }, 2);
+		}
+		else if(stream.starts_with("/="))
+		{
+			return advance_and_return(stream, loc, Token { .loc = loc, .type = TT::SlashEqual, .text = stream.take(2) }, 2);
+		}
+		else if(stream.starts_with("%="))
+		{
+			return advance_and_return(stream, loc, Token { .loc = loc, .type = TT::PercentEqual, .text = stream.take(2) }, 2);
+		}
 		else if(stream.starts_with("->"))
 		{
 			return advance_and_return(stream, loc, Token { .loc = loc, .type = TT::RArrow, .text = stream.take(2) }, 2);
@@ -385,6 +405,7 @@ namespace sap::frontend
 				case '-': tt = TT::Minus; break;
 				case '*': tt = TT::Asterisk; break;
 				case '/': tt = TT::Slash; break;
+				case '%': tt = TT::Percent; break;
 				case '=': tt = TT::Equal; break;
 				case ';': tt = TT::Semicolon; break;
 				case '<': tt = TT::LAngle; break;

@@ -46,7 +46,7 @@ namespace sap::interp
 		while(true)
 		{
 			if(auto value = frame->valueOf(m_resolved_decl->resolved_defn); value != nullptr)
-				return Ok(EvalResult::of_value(value->clone()));
+				return EvalResult::of_lvalue(*value);
 
 			if(frame->parent())
 				frame = frame->parent();

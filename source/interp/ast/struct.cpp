@@ -63,13 +63,13 @@ namespace sap::interp
 	ErrorOr<EvalResult> StructDecl::evaluate(Interpreter* cs) const
 	{
 		// do nothing
-		return Ok(EvalResult::of_void());
+		return EvalResult::of_void();
 	}
 
 	ErrorOr<EvalResult> StructDefn::evaluate(Interpreter* cs) const
 	{
 		// this also doesn't do anything
-		return Ok(EvalResult::of_void());
+		return EvalResult::of_void();
 	}
 
 
@@ -160,6 +160,6 @@ namespace sap::interp
 			}
 		}
 
-		return Ok(EvalResult::of_value(Value::structure(struct_type, std::move(field_values))));
+		return EvalResult::of_value(Value::structure(struct_type, std::move(field_values)));
 	}
 }

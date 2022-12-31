@@ -92,10 +92,10 @@ namespace sap::interp
 				return Ok(std::move(result));
 
 			else if(not result.is_normal())
-				return ErrFmt("unexpected statement in function body: {}", result.kind);
+				return ErrFmt("unexpected statement in function body");
 		}
 
-		return Ok(EvalResult::of_void());
+		return EvalResult::of_void();
 	}
 
 
@@ -107,16 +107,16 @@ namespace sap::interp
 	// evaluating these don't do anything
 	ErrorOr<EvalResult> FunctionDefn::evaluate(Interpreter* cs) const
 	{
-		return Ok(EvalResult::of_void());
+		return EvalResult::of_void();
 	}
 
 	ErrorOr<EvalResult> FunctionDecl::evaluate(Interpreter* cs) const
 	{
-		return Ok(EvalResult::of_void());
+		return EvalResult::of_void();
 	}
 
 	ErrorOr<EvalResult> BuiltinFunctionDefn::evaluate(Interpreter* cs) const
 	{
-		return Ok(EvalResult::of_void());
+		return EvalResult::of_void();
 	}
 }

@@ -7,7 +7,11 @@ this     is     a    aoeu bsdf
 fi fl Bсички хора се раждат свободни и равни по \{ \}
 
 \script {
-	let foo = 10;
+	var foo = 10;
+	builtin::print("foo = ");
+	builtin::println(foo);
+
+	foo = 69;
 	builtin::print("foo = ");
 	builtin::println(foo);
 
@@ -20,7 +24,7 @@ fi fl Bсички хора се раждат свободни и равни по
 		builtin::println(a);
 	}
 
-	foozle(10);
+	foo = 69;
 
 	struct Cactus
 	{

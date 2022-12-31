@@ -137,6 +137,27 @@ namespace sap::interp
 			Subtract,
 			Multiply,
 			Divide,
+			Modulo,
+		};
+		Op op;
+	};
+
+	struct AssignOp : Stmt
+	{
+		virtual ErrorOr<EvalResult> evaluate(Interpreter* cs) const override;
+		virtual ErrorOr<const Type*> typecheck_impl(Interpreter* cs, const Type* infer = nullptr) const override;
+
+		std::unique_ptr<Expr> lhs;
+		std::unique_ptr<Expr> rhs;
+
+		enum Op
+		{
+			None,
+			Add,
+			Subtract,
+			Multiply,
+			Divide,
+			Modulo,
 		};
 		Op op;
 	};

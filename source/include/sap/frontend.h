@@ -50,6 +50,7 @@ namespace sap::frontend
 		Asterisk,
 		Slash,
 		Equal,
+		Percent,
 
 		RArrow,
 		ColonColon,
@@ -57,6 +58,12 @@ namespace sap::frontend
 		RAngleEqual,
 		EqualEqual,
 		ExclamationEqual,
+
+		PlusEqual,
+		MinusEqual,
+		AsteriskEqual,
+		SlashEqual,
+		PercentEqual,
 
 		Ellipsis,
 	};

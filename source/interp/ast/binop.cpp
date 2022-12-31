@@ -20,6 +20,7 @@ namespace sap::interp
 			case BinaryOp::Op::Subtract: return "-";
 			case BinaryOp::Op::Multiply: return "*";
 			case BinaryOp::Op::Divide: return "/";
+			case BinaryOp::Op::Modulo: return "%";
 		}
 	}
 
@@ -30,7 +31,7 @@ namespace sap::interp
 
 		if((ltype->isInteger() && rtype->isInteger()) || (ltype->isFloating() && rtype->isFloating()))
 		{
-			if(util::is_one_of(this->op, Op::Add, Op::Subtract, Op::Multiply, Op::Divide))
+			if(util::is_one_of(this->op, Op::Add, Op::Subtract, Op::Multiply, Op::Divide, Op::Modulo))
 				return Ok(ltype);
 		}
 		else if(ltype->isArray() && rtype->isArray() && ltype->toArray()->elementType() == rtype->toArray()->elementType())
@@ -62,18 +63,23 @@ namespace sap::interp
 				case Op::Subtract: return a - b;
 				case Op::Multiply: return a * b;
 				case Op::Divide: return a / b;
+				case Op::Modulo:
+					if constexpr(std::is_floating_point_v<decltype(a)>)
+						return fmod(a, b);
+					else
+						return a % b;
 			}
 		};
 
 		if((ltype->isInteger() && rtype->isInteger()) || (ltype->isFloating() && rtype->isFloating()))
 		{
-			if(util::is_one_of(this->op, Op::Add, Op::Subtract, Op::Multiply, Op::Divide))
+			if(util::is_one_of(this->op, Op::Add, Op::Subtract, Op::Multiply, Op::Divide, Op::Modulo))
 			{
 				// TODO: this might be bad because implicit conversions
 				if(ltype->isInteger())
-					return Ok(EvalResult::of_value(Value::integer(do_op(this->op, lval.getInteger(), rval.getInteger()))));
+					return EvalResult::of_value(Value::integer(do_op(this->op, lval.getInteger(), rval.getInteger())));
 				else
-					return Ok(EvalResult::of_value(Value::floating(do_op(this->op, lval.getFloating(), rval.getFloating()))));
+					return EvalResult::of_value(Value::floating(do_op(this->op, lval.getFloating(), rval.getFloating())));
 			}
 		}
 		else if(ltype->isArray() && rtype->isArray() && ltype->toArray()->elementType() == rtype->toArray()->elementType())
@@ -86,7 +92,7 @@ namespace sap::interp
 				for(auto& x : rhs)
 					lhs.push_back(std::move(x));
 
-				return Ok(EvalResult::of_value(Value::array(ltype->toArray()->elementType(), std::move(lhs))));
+				return EvalResult::of_value(Value::array(ltype->toArray()->elementType(), std::move(lhs)));
 			}
 		}
 		else if((ltype->isArray() && rtype->isInteger()) || (ltype->isInteger() && rtype->isArray()))
@@ -98,7 +104,7 @@ namespace sap::interp
 				auto num = (ltype->isArray() ? std::move(rval) : std::move(lval)).getInteger();
 
 				if(num <= 0)
-					return Ok(EvalResult::of_value(Value::array(elm, {})));
+					return EvalResult::of_value(Value::array(elm, {}));
 
 				std::vector<Value> ret = std::move(arr.clone()).takeArray();
 
@@ -109,7 +115,7 @@ namespace sap::interp
 						ret.push_back(std::move(c));
 				}
 
-				return Ok(EvalResult::of_value(Value::array(elm, std::move(ret))));
+				return EvalResult::of_value(Value::array(elm, std::move(ret)));
 			}
 		}
 

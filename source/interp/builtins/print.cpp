@@ -19,7 +19,7 @@ namespace sap::interp::builtin
 	ErrorOr<EvalResult> print(Interpreter* cs, std::vector<Value>& args)
 	{
 		print_values(args);
-		return Ok(EvalResult::of_void());
+		return EvalResult::of_void();
 	}
 
 	ErrorOr<EvalResult> println(Interpreter* cs, std::vector<Value>& args)
@@ -27,6 +27,6 @@ namespace sap::interp::builtin
 		print_values(args);
 		zpr::println("");
 
-		return Ok(EvalResult::of_void());
+		return EvalResult::of_void();
 	}
 }

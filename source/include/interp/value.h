@@ -309,7 +309,7 @@ namespace sap::interp
 		}
 
 	private:
-		Value(const Type* type) : m_type(type) { }
+		explicit Value(const Type* type) : m_type(type) { }
 
 		void destroy()
 		{
