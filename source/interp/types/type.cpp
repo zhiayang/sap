@@ -36,6 +36,10 @@ namespace sap::interp
 		{
 			return "char";
 		}
+		else if(this->isNullPtr())
+		{
+			return "null";
+		}
 		else if(this->isTreeInlineObj())
 		{
 			return "Inline";
@@ -54,8 +58,11 @@ namespace sap::interp
 		// note: if the kind is a "primitive", we know that we can just compare m_kind.
 		// otherwise, we should call the virtual function. However, we are a primitive; this means
 		// that the other guy must be the non-primitive, so call their sameAs() instead.
-		if(util::is_one_of(m_kind, KIND_VOID, KIND_ANY, KIND_BOOL, KIND_CHAR, KIND_INTEGER, KIND_FLOATING, KIND_TREE_INLINE_OBJ))
+		if(util::is_one_of(m_kind, KIND_VOID, KIND_ANY, KIND_BOOL, KIND_CHAR, KIND_INTEGER, KIND_FLOATING, KIND_TREE_INLINE_OBJ,
+		       KIND_NULLPTR))
+		{
 			return true;
+		}
 
 		// in theory, this should never end up in a cyclic call.
 		return other->sameAs(this);
@@ -116,6 +123,12 @@ namespace sap::interp
 		return char_type;
 	}
 
+	const Type* Type::makeNullPtr()
+	{
+		static Type* nullptr_type = new Type(KIND_NULLPTR);
+		return nullptr_type;
+	}
+
 	const Type* Type::makeInteger()
 	{
 		static Type* number_type = new Type(KIND_INTEGER);
@@ -167,7 +180,10 @@ namespace sap::interp
 
 
 
-
+	bool Type::isMutablePointer() const
+	{
+		return this->isPointer() && this->toPointer()->isMutable();
+	}
 
 	const FunctionType* Type::toFunction() const
 	{

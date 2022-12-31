@@ -104,6 +104,18 @@ namespace sap::interp
 			return v_array;
 		}
 
+		const Value& getPointer() const
+		{
+			assert(this->isPointer());
+			return *v_pointer;
+		}
+
+		Value& getMutablePointer() const
+		{
+			assert(m_type->isMutablePointer());
+			return *const_cast<Value*>(v_pointer);
+		}
+
 
 		std::u32string toString() const
 		{
@@ -168,6 +180,7 @@ namespace sap::interp
 		bool isArray() const { return m_type->isArray(); }
 		bool isStruct() const { return m_type->isStruct(); }
 		bool isInteger() const { return m_type->isInteger(); }
+		bool isPointer() const { return m_type->isPointer(); }
 		bool isFloating() const { return m_type->isFloating(); }
 		bool isFunction() const { return m_type->isFunction(); }
 		bool isTreeInlineObj() const { return m_type->isTreeInlineObj(); }
@@ -191,6 +204,7 @@ namespace sap::interp
 			this->steal_from(std::move(val));
 			return *this;
 		}
+
 
 		static Value boolean(bool value)
 		{
@@ -265,6 +279,27 @@ namespace sap::interp
 			return ret;
 		}
 
+		static Value nullPointer()
+		{
+			auto ret = Value(Type::makeNullPtr());
+			ret.v_pointer = nullptr;
+			return ret;
+		}
+
+		static Value pointer(const Value& value)
+		{
+			auto ret = Value(value.type()->pointerTo());
+			ret.v_pointer = &value;
+			return ret;
+		}
+
+		static Value mutablePointer(Value& value)
+		{
+			auto ret = Value(value.type()->mutablePointerTo());
+			ret.v_pointer = &value;
+			return ret;
+		}
+
 
 		Value clone() const
 		{
@@ -285,6 +320,10 @@ namespace sap::interp
 			{
 				val.v_floating = v_floating;
 			}
+			else if(m_type->isPointer() || m_type->isNullPtr())
+			{
+				val.v_pointer = v_pointer;
+			}
 			else if(m_type->isFunction())
 			{
 				val.v_function = v_function;
@@ -302,6 +341,7 @@ namespace sap::interp
 			}
 			else
 			{
+				zpr::println("weird type: {}", m_type);
 				assert(false && "unreachable!");
 			}
 
@@ -332,6 +372,8 @@ namespace sap::interp
 				v_floating = std::move(val.v_floating);
 			else if(m_type->isFunction())
 				v_function = std::move(val.v_function);
+			else if(m_type->isPointer() || m_type->isNullPtr())
+				v_pointer = std::move(val.v_pointer);
 			else if(m_type->isTreeInlineObj())
 				new(&v_inline_obj) decltype(v_inline_obj)(std::move(val.v_inline_obj));
 			else if(m_type->isArray() || m_type->isStruct())
@@ -354,6 +396,7 @@ namespace sap::interp
 
 			std::unique_ptr<tree::InlineObject> v_inline_obj;
 			std::vector<Value> v_array;
+			const Value* v_pointer;
 		};
 	};
 }

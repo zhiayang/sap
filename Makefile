@@ -9,7 +9,7 @@ WARNINGS += -Wno-error=unused-variable
 WARNINGS += -Wno-error=unused-function
 WARNINGS += -Wno-unused-but-set-variable
 
-COMMON_CFLAGS   = -O0 -g
+COMMON_CFLAGS   = -O0 -g -fsanitize=address
 
 OUTPUT_DIR      := build
 TEST_DIR        := $(OUTPUT_DIR)/test
@@ -87,7 +87,7 @@ build-headers: $(CXXGCHS)
 test: $(TESTS)
 
 %.pdf: %.sap build
-	@$(OUTPUT_BIN) $<
+	@env MallocNanoZone=0 $(OUTPUT_BIN) $<
 
 %.pdf.gdb: %.sap build
 	@gdb --args $(OUTPUT_BIN) $<

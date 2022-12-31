@@ -91,6 +91,12 @@ namespace sap::interp
 		mutable const Declaration* m_resolved_func_decl = nullptr;
 	};
 
+	struct NullLit : Expr
+	{
+		virtual ErrorOr<EvalResult> evaluate(Interpreter* cs) const override;
+		virtual ErrorOr<TCResult> typecheck_impl(Interpreter* cs, const Type* infer = nullptr) const override;
+	};
+
 	struct NumberLit : Expr
 	{
 		virtual ErrorOr<EvalResult> evaluate(Interpreter* cs) const override;

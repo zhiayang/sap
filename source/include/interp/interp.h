@@ -121,7 +121,7 @@ namespace sap::interp
 			m_stack_frames.pop_back();
 		}
 
-
+		Value castValue(Value value, const Type* to) const;
 		bool canImplicitlyConvert(const Type* from, const Type* to) const;
 
 	private:

@@ -21,6 +21,7 @@ namespace sap::interp
 		bool isChar() const { return m_kind == KIND_CHAR; }
 		bool isArray() const { return m_kind == KIND_ARRAY; }
 		bool isStruct() const { return m_kind == KIND_STRUCT; }
+		bool isNullPtr() const { return m_kind == KIND_NULLPTR; }
 		bool isInteger() const { return m_kind == KIND_INTEGER; }
 		bool isPointer() const { return m_kind == KIND_POINTER; }
 		bool isFloating() const { return m_kind == KIND_FLOATING; }
@@ -37,12 +38,17 @@ namespace sap::interp
 		virtual std::string str() const;
 		virtual bool sameAs(const Type* other) const;
 
+		bool isMutablePointer() const;
+		const PointerType* pointerTo() const { return makePointer(this, false); }
+		const PointerType* mutablePointerTo() const { return makePointer(this, true); }
+
 		static const Type* makeAny();
 		static const Type* makeVoid();
 		static const Type* makeBool();
 		static const Type* makeChar();
 		static const Type* makeString();
 		static const Type* makeInteger();
+		static const Type* makeNullPtr();
 		static const Type* makeFloating();
 		static const Type* makeTreeInlineObj();
 
@@ -71,6 +77,7 @@ namespace sap::interp
 			KIND_ARRAY = 8,
 			KIND_STRUCT = 9,
 			KIND_POINTER = 10,
+			KIND_NULLPTR = 11,
 		};
 
 		Kind m_kind;

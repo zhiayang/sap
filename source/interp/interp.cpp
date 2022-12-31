@@ -51,8 +51,38 @@ namespace sap::interp
 		if(from == to || to->isAny())
 			return true;
 
+		else if(from->isNullPtr() && to->isPointer())
+			return true;
+
+		else if(from->isPointer() && to->isPointer())
+			return from->toPointer()->elementType() == to->toPointer()->elementType() && from->isMutablePointer();
+
 		// TODO: not if these are all the cases
 		return false;
+	}
+
+	Value Interpreter::castValue(Value value, const Type* to) const
+	{
+		if(value.type() == to)
+			return value;
+
+		// TODO: handle 'any'
+		auto from_type = value.type();
+		if(from_type->isNullPtr() && to->isPointer())
+		{
+			return from_type->isMutablePointer()
+			         ? Value::mutablePointer(value.getMutablePointer())
+			         : Value::pointer(value.getPointer());
+		}
+		else if(from_type->isMutablePointer() && to->isPointer()
+		        && from_type->toPointer()->elementType() == to->toPointer()->elementType())
+		{
+			return Value::pointer(value.getPointer());
+		}
+		else
+		{
+			return value;
+		}
 	}
 
 	ErrorOr<const Type*> Interpreter::resolveType(const frontend::PType& ptype)
@@ -104,6 +134,10 @@ namespace sap::interp
 			params.pop_back();
 
 			return Ok(Type::makeFunction(std::move(params), ret));
+		}
+		else if(ptype.isPointer())
+		{
+			return Ok(Type::makePointer(TRY(this->resolveType(ptype.getPointerElement())), ptype.isMutablePointer()));
 		}
 		else
 		{

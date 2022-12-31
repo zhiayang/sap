@@ -18,6 +18,7 @@ namespace sap::frontend
 	constexpr auto KW_LET = "let";
 	constexpr auto KW_VAR = "var";
 	constexpr auto KW_FUNC = "fn";
+	constexpr auto KW_NULL = "null";
 	constexpr auto KW_MUTABLE = "mut";
 	constexpr auto KW_STRUCT = "struct";
 	constexpr auto KW_SCRIPT_BLOCK = "script";
@@ -469,6 +470,9 @@ namespace sap::frontend
 	{
 		if(lexer.peek() == TT::Identifier || lexer.peek() == TT::ColonColon)
 		{
+			if(lexer.peek().text == KW_NULL)
+				return lexer.next(), std::make_unique<interp::NullLit>();
+
 			auto qid = parse_qualified_id(lexer);
 			auto ident = std::make_unique<interp::Ident>();
 			ident->name = std::move(qid);

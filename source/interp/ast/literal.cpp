@@ -33,4 +33,16 @@ namespace sap::interp
 	{
 		return EvalResult::ofValue(Value::string(this->string));
 	}
+
+
+
+	ErrorOr<TCResult> NullLit::typecheck_impl(Interpreter* cs, const Type* infer) const
+	{
+		return TCResult::ofRValue(Type::makeNullPtr());
+	}
+
+	ErrorOr<EvalResult> NullLit::evaluate(Interpreter* cs) const
+	{
+		return EvalResult::ofValue(Value::nullPointer());
+	}
 }

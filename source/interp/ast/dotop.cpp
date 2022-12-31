@@ -18,6 +18,7 @@ namespace sap::interp
 		if(not struct_type->hasFieldNamed(this->rhs))
 			return ErrFmt("type '{}' has no field named '{}'", lhs_res.type(), this->rhs);
 
+		// basically, we copy the lvalue-ness and mutability of the lhs.
 		return Ok(lhs_res.replacingType(struct_type->getFieldNamed(this->rhs)));
 	}
 
@@ -26,7 +27,11 @@ namespace sap::interp
 		auto lhs_type = this->lhs->get_type();
 		assert(lhs_type->isStruct());
 
-		auto lhs_value = TRY_VALUE(this->lhs->evaluate(cs));
+		auto lhs_res = TRY(this->lhs->evaluate(cs));
+		if(not lhs_res.hasValue())
+			return ErrFmt("unexpected void value");
+
+		auto& lhs_value = lhs_res.get();
 		if(not lhs_value.isStruct() || lhs_value.type() != lhs_type)
 			return ErrFmt("unexpected type '{}' in dotop", lhs_value.type());
 
@@ -34,6 +39,10 @@ namespace sap::interp
 		assert(struct_type->hasFieldNamed(this->rhs));
 
 		auto field_idx = struct_type->getFieldIndex(this->rhs);
-		return EvalResult::ofValue(lhs_value.getStructField(field_idx).clone());
+
+		if(lhs_res.isLValue())
+			return EvalResult::ofLValue(lhs_value.getStructField(field_idx));
+		else
+			return EvalResult::ofValue(lhs_value.getStructField(field_idx).clone());
 	}
 }
