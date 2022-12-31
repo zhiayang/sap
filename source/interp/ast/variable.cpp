@@ -71,7 +71,10 @@ namespace sap::interp
 	ErrorOr<EvalResult> VariableDefn::evaluate(Interpreter* cs) const
 	{
 		if(this->initialiser != nullptr)
-			cs->frame().setValue(this, TRY_VALUE(this->initialiser->evaluate(cs)));
+		{
+			auto value = cs->castValue(TRY_VALUE(this->initialiser->evaluate(cs)), this->get_type());
+			cs->frame().setValue(this, std::move(value));
+		}
 
 		return EvalResult::ofVoid();
 	}

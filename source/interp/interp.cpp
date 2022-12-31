@@ -70,14 +70,14 @@ namespace sap::interp
 		auto from_type = value.type();
 		if(from_type->isNullPtr() && to->isPointer())
 		{
-			return from_type->isMutablePointer()
-			         ? Value::mutablePointer(value.getMutablePointer())
-			         : Value::pointer(value.getPointer());
+			return to->isMutablePointer() //
+			         ? Value::mutablePointer(to->toPointer()->elementType(), nullptr)
+			         : Value::pointer(to->toPointer()->elementType(), nullptr);
 		}
 		else if(from_type->isMutablePointer() && to->isPointer()
 		        && from_type->toPointer()->elementType() == to->toPointer()->elementType())
 		{
-			return Value::pointer(value.getPointer());
+			return Value::pointer(to->toPointer()->elementType(), value.getPointer());
 		}
 		else
 		{

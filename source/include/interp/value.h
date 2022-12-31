@@ -104,16 +104,16 @@ namespace sap::interp
 			return v_array;
 		}
 
-		const Value& getPointer() const
+		const Value* getPointer() const
 		{
 			assert(this->isPointer());
-			return *v_pointer;
+			return v_pointer;
 		}
 
-		Value& getMutablePointer() const
+		Value* getMutablePointer() const
 		{
 			assert(m_type->isMutablePointer());
-			return *const_cast<Value*>(v_pointer);
+			return const_cast<Value*>(v_pointer);
 		}
 
 
@@ -286,17 +286,17 @@ namespace sap::interp
 			return ret;
 		}
 
-		static Value pointer(const Value& value)
+		static Value pointer(const Type* elm_type, const Value* value)
 		{
-			auto ret = Value(value.type()->pointerTo());
-			ret.v_pointer = &value;
+			auto ret = Value(elm_type->pointerTo());
+			ret.v_pointer = value;
 			return ret;
 		}
 
-		static Value mutablePointer(Value& value)
+		static Value mutablePointer(const Type* elm_type, Value* value)
 		{
-			auto ret = Value(value.type()->mutablePointerTo());
-			ret.v_pointer = &value;
+			auto ret = Value(elm_type->mutablePointerTo());
+			ret.v_pointer = value;
 			return ret;
 		}
 

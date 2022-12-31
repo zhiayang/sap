@@ -140,7 +140,11 @@ namespace sap::interp
 		}
 
 		// TODO: 'any' might need work here
-		lval_result.get() = std::move(rval);
+		auto value = cs->castValue(std::move(rval), ltype);
+		if(value.type() != ltype)
+			return ErrFmt("cannot assign to '{}' from incompatible type '{}'", ltype, value.type());
+
+		lval_result.get() = std::move(value);
 		return EvalResult::ofVoid();
 	}
 }
