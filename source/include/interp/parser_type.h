@@ -30,10 +30,13 @@ namespace sap::frontend
 		const interp::QualifiedId& name() const { return m_name; }
 
 		bool isVariadicArray() const { return m_kind == PT_ARRAY && m_array_variadic; }
-
-		const std::vector<PType>& getTypeList() const { return m_type_list; }
+		bool isMutablePointer() const { return m_kind == PT_POINTER && m_pointer_mutable; }
 
 		const PType& getArrayElement() const { return m_type_list[0]; }
+		const PType& getPointerElement() const { return m_type_list[0]; }
+		const std::vector<PType>& getTypeList() const { return m_type_list; }
+
+		static PType named(interp::QualifiedId qid) { return PType(std::move(qid), 0, {}); }
 
 		static PType named(const char* name)
 		{
@@ -45,8 +48,6 @@ namespace sap::frontend
 			    },
 			    0, {});
 		}
-
-		static PType named(interp::QualifiedId qid) { return PType(std::move(qid), 0, {}); }
 
 		static PType function(std::vector<PType> params, PType ret)
 		{
@@ -61,12 +62,20 @@ namespace sap::frontend
 			return ret;
 		}
 
+		static PType pointer(PType elm, bool is_mut)
+		{
+			auto ret = PType({}, PT_POINTER, { elm });
+			ret.m_pointer_mutable = is_mut;
+			return ret;
+		}
+
 	private:
 		PType(interp::QualifiedId name, int kind, std::vector<PType> type_list)
 		    : m_kind(kind)
 		    , m_name(std::move(name))
 		    , m_type_list(std::move(type_list))
 		    , m_array_variadic(false)
+		    , m_pointer_mutable(false)
 		{
 		}
 
@@ -78,5 +87,6 @@ namespace sap::frontend
 		interp::QualifiedId m_name;
 		std::vector<PType> m_type_list;
 		bool m_array_variadic;
+		bool m_pointer_mutable;
 	};
 }

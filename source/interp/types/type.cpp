@@ -38,7 +38,7 @@ namespace sap::interp
 		}
 		else if(this->isTreeInlineObj())
 		{
-			return "InlineObj";
+			return "Inline";
 		}
 		else
 		{
@@ -54,11 +54,8 @@ namespace sap::interp
 		// note: if the kind is a "primitive", we know that we can just compare m_kind.
 		// otherwise, we should call the virtual function. However, we are a primitive; this means
 		// that the other guy must be the non-primitive, so call their sameAs() instead.
-		if(m_kind == KIND_VOID || m_kind == KIND_INTEGER || m_kind == KIND_FLOATING || m_kind == KIND_ANY
-		    || m_kind == KIND_TREE_INLINE_OBJ)
-		{
+		if(util::is_one_of(m_kind, KIND_VOID, KIND_ANY, KIND_BOOL, KIND_CHAR, KIND_INTEGER, KIND_FLOATING, KIND_TREE_INLINE_OBJ))
 			return true;
-		}
 
 		// in theory, this should never end up in a cyclic call.
 		return other->sameAs(this);
@@ -143,6 +140,11 @@ namespace sap::interp
 		return obj_type;
 	}
 
+	const PointerType* Type::makePointer(const Type* element_type, bool is_mutable)
+	{
+		return get_or_add_type(new PointerType(element_type, is_mutable));
+	}
+
 	const FunctionType* Type::makeFunction(std::vector<const Type*> params, const Type* return_type)
 	{
 		return get_or_add_type(new FunctionType(std::move(params), return_type));
@@ -170,18 +172,24 @@ namespace sap::interp
 	const FunctionType* Type::toFunction() const
 	{
 		assert(this->isFunction());
-		return dynamic_cast<const FunctionType*>(this);
+		return static_cast<const FunctionType*>(this);
+	}
+
+	const PointerType* Type::toPointer() const
+	{
+		assert(this->isPointer());
+		return static_cast<const PointerType*>(this);
 	}
 
 	const ArrayType* Type::toArray() const
 	{
 		assert(this->isArray());
-		return dynamic_cast<const ArrayType*>(this);
+		return static_cast<const ArrayType*>(this);
 	}
 
 	const StructType* Type::toStruct() const
 	{
 		assert(this->isStruct());
-		return dynamic_cast<const StructType*>(this);
+		return static_cast<const StructType*>(this);
 	}
 }

@@ -10,6 +10,7 @@ namespace sap::interp
 {
 	struct ArrayType;
 	struct StructType;
+	struct PointerType;
 	struct FunctionType;
 
 	struct Type
@@ -21,25 +22,15 @@ namespace sap::interp
 		bool isArray() const { return m_kind == KIND_ARRAY; }
 		bool isStruct() const { return m_kind == KIND_STRUCT; }
 		bool isInteger() const { return m_kind == KIND_INTEGER; }
+		bool isPointer() const { return m_kind == KIND_POINTER; }
 		bool isFloating() const { return m_kind == KIND_FLOATING; }
 		bool isFunction() const { return m_kind == KIND_FUNCTION; }
 		bool isTreeInlineObj() const { return m_kind == KIND_TREE_INLINE_OBJ; }
 
-		bool isBuiltin() const
-		{
-			return isAny()      //
-			    || isVoid()     //
-			    || isBool()     //
-			    || isChar()     //
-			    || isInteger()  //
-			    || isFloating() //
-			    || isFunction() //
-			    || isTreeInlineObj();
-		}
-
 		// the conversion functions can't be inline because dynamic_cast needs
 		// a complete type (and obviously derived types need the complete definition of Type)
 		const FunctionType* toFunction() const;
+		const PointerType* toPointer() const;
 		const StructType* toStruct() const;
 		const ArrayType* toArray() const;
 
@@ -55,10 +46,15 @@ namespace sap::interp
 		static const Type* makeFloating();
 		static const Type* makeTreeInlineObj();
 
+		static const PointerType* makePointer(const Type* element_type, bool is_mutable);
+
 		static const FunctionType* makeFunction(std::vector<const Type*> param_types, const Type* return_type);
 		static const ArrayType* makeArray(const Type* element_type, bool is_variadic = false);
 		static const StructType* makeStruct(const std::string& name,
 		    const std::vector<std::pair<std::string, const Type*>>& fields);
+
+		virtual ~Type();
+
 
 	protected:
 		enum Kind
@@ -74,12 +70,29 @@ namespace sap::interp
 			KIND_TREE_INLINE_OBJ = 7,
 			KIND_ARRAY = 8,
 			KIND_STRUCT = 9,
+			KIND_POINTER = 10,
 		};
 
 		Kind m_kind;
 
-		Type(Kind kind) : m_kind(kind) { }
-		virtual ~Type();
+		explicit Type(Kind kind) : m_kind(kind) { }
+	};
+
+	struct PointerType : Type
+	{
+		virtual std::string str() const override;
+		virtual bool sameAs(const Type* other) const override;
+
+		const Type* elementType() const { return m_element_type; }
+		bool isMutable() const { return m_is_mutable; }
+
+	private:
+		PointerType(const Type* elm, bool is_mutable) : Type(KIND_POINTER), m_element_type(elm), m_is_mutable(is_mutable) { }
+
+		const Type* m_element_type;
+		bool m_is_mutable;
+
+		friend struct Type;
 	};
 
 	struct FunctionType : Type

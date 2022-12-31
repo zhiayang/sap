@@ -18,6 +18,7 @@ namespace sap::frontend
 	constexpr auto KW_LET = "let";
 	constexpr auto KW_VAR = "var";
 	constexpr auto KW_FUNC = "fn";
+	constexpr auto KW_MUTABLE = "mut";
 	constexpr auto KW_STRUCT = "struct";
 	constexpr auto KW_SCRIPT_BLOCK = "script";
 
@@ -569,7 +570,13 @@ namespace sap::frontend
 		}
 		else if(fst == TT::Ampersand)
 		{
-			error(lexer.location(), "TODO: pointer type");
+			lexer.next();
+
+			bool is_mutable = false;
+			if(auto x = lexer.peek(); x == TT::Identifier && x.text == KW_MUTABLE)
+				lexer.next(), is_mutable = true;
+
+			return PType::pointer(parse_type(lexer), is_mutable);
 		}
 		else if(fst == TT::LSquare)
 		{
