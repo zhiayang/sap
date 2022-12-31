@@ -80,8 +80,29 @@ namespace sap::interp
 			return std::move(v_array);
 		}
 
+		Value& getStructField(size_t idx)
+		{
+			assert(this->isStruct());
+			return v_array[idx];
+		}
 
+		const Value& getStructField(size_t idx) const
+		{
+			assert(this->isStruct());
+			return v_array[idx];
+		}
 
+		std::vector<Value> takeStructFields() &&
+		{
+			assert(this->isStruct());
+			return std::move(v_array);
+		}
+
+		const std::vector<Value>& getStructFields() const
+		{
+			assert(this->isStruct());
+			return v_array;
+		}
 
 
 		std::u32string toString() const
@@ -145,6 +166,7 @@ namespace sap::interp
 		bool isBool() const { return m_type->isBool(); }
 		bool isChar() const { return m_type->isChar(); }
 		bool isArray() const { return m_type->isArray(); }
+		bool isStruct() const { return m_type->isStruct(); }
 		bool isInteger() const { return m_type->isInteger(); }
 		bool isFloating() const { return m_type->isFloating(); }
 		bool isFunction() const { return m_type->isFunction(); }
@@ -236,26 +258,43 @@ namespace sap::interp
 			return ret;
 		}
 
+		static Value structure(const StructType* ty, std::vector<Value> fields)
+		{
+			auto ret = Value(ty);
+			new(&ret.v_array) decltype(ret.v_array)(std::move(fields));
+			return ret;
+		}
+
+
 		Value clone() const
 		{
 			auto val = Value(m_type);
 			if(m_type->isBool())
-				val.v_bool = val.v_bool;
+			{
+				val.v_bool = v_bool;
+			}
 			else if(m_type->isChar())
-				val.v_char = val.v_char;
+			{
+				val.v_char = v_char;
+			}
 			else if(m_type->isInteger())
-				val.v_integer = val.v_integer;
+			{
+				val.v_integer = v_integer;
+			}
 			else if(m_type->isFloating())
-				val.v_floating = val.v_floating;
+			{
+				val.v_floating = v_floating;
+			}
 			else if(m_type->isFunction())
-				val.v_function = val.v_function;
-
+			{
+				val.v_function = v_function;
+			}
 			else if(m_type->isTreeInlineObj())
 			{
 				// TODO!
 				sap::internal_error("oh no");
 			}
-			else if(m_type->isArray())
+			else if(m_type->isArray() || m_type->isStruct())
 			{
 				new(&val.v_array) decltype(v_array)();
 				for(auto& e : v_array)
@@ -276,7 +315,7 @@ namespace sap::interp
 		{
 			if(m_type->isTreeInlineObj())
 				v_inline_obj.~decltype(v_inline_obj)();
-			else if(m_type->isArray())
+			else if(m_type->isArray() || m_type->isStruct())
 				v_array.~decltype(v_array)();
 		}
 
@@ -295,7 +334,7 @@ namespace sap::interp
 				v_function = std::move(val.v_function);
 			else if(m_type->isTreeInlineObj())
 				new(&v_inline_obj) decltype(v_inline_obj)(std::move(val.v_inline_obj));
-			else if(m_type->isArray())
+			else if(m_type->isArray() || m_type->isStruct())
 				new(&v_array) decltype(v_array)(std::move(val.v_array));
 			else
 				assert(false && "unreachable!");

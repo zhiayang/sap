@@ -64,6 +64,22 @@ namespace sap::interp
 	}
 
 
+	static std::vector<std::tuple<std::string, const Type*, const Expr*>> get_field_things(const StructType* struct_type)
+	{
+		std::vector<std::tuple<std::string, const Type*, const Expr*>> fields {};
+
+		auto& struct_fields = struct_type->getFields();
+		for(size_t i = 0; i < struct_fields.size(); i++)
+		{
+			fields.push_back({
+			    struct_fields[i].name,
+			    struct_fields[i].type,
+			    nullptr,
+			});
+		}
+
+		return fields;
+	}
 
 	ErrorOr<const Type*> StructLit::typecheck_impl(Interpreter* cs, const Type* infer) const
 	{
@@ -87,18 +103,7 @@ namespace sap::interp
 		}
 
 		// make sure the struct has all the things
-		std::vector<std::tuple<std::string, const Type*, const Expr*>> fields {};
-
-		auto& struct_fields = struct_type->getFields();
-		for(size_t i = 0; i < struct_fields.size(); i++)
-		{
-			fields.push_back({
-			    struct_fields[i].name,
-			    struct_fields[i].type,
-			    nullptr,
-			});
-		}
-
+		auto fields = get_field_things(struct_type);
 		auto ordered = TRY(arrange_arguments<const Type*>(cs, fields, this->field_inits, //
 		    "struct", "field", "field", [cs](auto& arg) {
 			    return arg.value->typecheck(cs);
@@ -110,7 +115,19 @@ namespace sap::interp
 
 	ErrorOr<EvalResult> StructLit::evaluate(Interpreter* cs) const
 	{
-		// this also doesn't do anything
-		return Ok(EvalResult::of_void());
+		assert(this->get_type()->isStruct());
+		auto struct_type = this->get_type()->toStruct();
+
+		auto fields = get_field_things(struct_type);
+		auto [ordered, _] = TRY(arrange_arguments<Value>(cs, fields, this->field_inits, //
+		    "struct", "field", "field", [cs](auto& arg) -> ErrorOr<Value> {
+			    return Ok(std::move(TRY_VALUE(arg.value->evaluate(cs))));
+		    }));
+
+		std::vector<Value> field_values {};
+		for(auto& tmp : ordered)
+			field_values.push_back(std::move(tmp.second));
+
+		return Ok(EvalResult::of_value(Value::structure(struct_type, std::move(field_values))));
 	}
 }

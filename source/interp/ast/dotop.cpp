@@ -22,6 +22,17 @@ namespace sap::interp
 
 	ErrorOr<EvalResult> DotOp::evaluate(Interpreter* cs) const
 	{
-		return Ok(EvalResult::of_void());
+		auto lhs_type = this->lhs->get_type();
+		assert(lhs_type->isStruct());
+
+		auto lhs_value = TRY_VALUE(this->lhs->evaluate(cs));
+		if(not lhs_value.isStruct() || lhs_value.type() != lhs_type)
+			return ErrFmt("unexpected type '{}' in dotop", lhs_value.type());
+
+		auto struct_type = lhs_type->toStruct();
+		assert(struct_type->hasFieldNamed(this->rhs));
+
+		auto field_idx = struct_type->getFieldIndex(this->rhs);
+		return Ok(EvalResult::of_value(lhs_value.getStructField(field_idx).clone()));
 	}
 }

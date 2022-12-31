@@ -30,7 +30,8 @@ fi fl Bсички хора се раждат свободни и равни по
 
 	fn kek(c: Cactus)
 	{
-		builtin::println("kek!!!");
+		builtin::print("thorns = ");
+		builtin::println(c.thorns);
 	}
 
 	let bar = Cactus {

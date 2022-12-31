@@ -392,7 +392,6 @@ namespace util
 	};
 }
 
-
 namespace unicode
 {
 	std::string utf8FromUtf16(zst::span<uint16_t> utf16);
@@ -409,4 +408,18 @@ namespace unicode
 
 	// high-order surrogate first.
 	std::pair<uint16_t, uint16_t> codepointToSurrogatePair(char32_t codepoint);
+}
+
+namespace zpr
+{
+	template <>
+	struct print_formatter<std::u32string>
+	{
+		template <typename Cb>
+		void print(const std::u32string& x, Cb&& cb, format_args args)
+		{
+			auto s = unicode::stringFromU32String(x);
+			detail::print_one(static_cast<Cb&&>(cb), std::move(args), std::move(s));
+		}
+	};
 }
