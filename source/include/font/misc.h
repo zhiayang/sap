@@ -10,6 +10,7 @@ namespace font
 {
 	struct FontFile;
 
+	int16_t peek_i16(const zst::byte_span& s);
 	uint16_t peek_u16(const zst::byte_span& s);
 	uint32_t peek_u32(const zst::byte_span& s);
 

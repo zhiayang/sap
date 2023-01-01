@@ -52,7 +52,7 @@ namespace pdf
 		std::map<size_t, font::GlyphAdjustment> getPositioningAdjustmentsForGlyphSequence(zst::span<GlyphId> glyphs,
 		    const font::off::FeatureSet& features) const;
 
-		std::vector<GlyphId> performSubstitutionsForGlyphSequence(zst::span<GlyphId> glyphs,
+		std::optional<std::vector<GlyphId>> performSubstitutionsForGlyphSequence(zst::span<GlyphId> glyphs,
 		    const font::off::FeatureSet& features) const;
 
 		GlyphSpace1d scaleFontMetricForPDFGlyphSpace(font::FontScalar metric) const

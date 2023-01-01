@@ -474,8 +474,23 @@ namespace font
 
 
 		// there is an order that we want to use:
-		constexpr Tag table_processing_order[] = { Tag("head"), Tag("name"), Tag("hhea"), Tag("hmtx"), Tag("maxp"), Tag("post"),
-			Tag("CFF "), Tag("CFF2"), Tag("glyf"), Tag("loca"), Tag("cmap"), Tag("GPOS"), Tag("GSUB"), Tag("OS/2") };
+		constexpr Tag table_processing_order[] = {
+			Tag("head"),
+			Tag("name"),
+			Tag("hhea"),
+			Tag("hmtx"),
+			Tag("maxp"),
+			Tag("post"),
+			Tag("CFF "),
+			Tag("CFF2"),
+			Tag("glyf"),
+			Tag("loca"),
+			Tag("cmap"),
+			Tag("GPOS"),
+			Tag("GSUB"),
+			Tag("kern"),
+			Tag("OS/2"),
+		};
 
 		// CFF makes its own data (since everything is self-contained in the CFF table)
 		// but for TrueType, it's split across several tables, so just make one here.
@@ -515,6 +530,8 @@ namespace font
 					font->parse_name_table(tbl);
 				else if(tag == Tag("post"))
 					font->parse_post_table(tbl);
+				else if(tag == Tag("kern"))
+					font->parse_kern_table(tbl);
 			}
 		}
 

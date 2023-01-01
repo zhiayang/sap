@@ -208,7 +208,7 @@ namespace font::off
 
 
 	template <typename TableType>
-	static void parseGPosOrGSub(TableType* output, zst::byte_span buf)
+	static std::optional<TableType> parse_gpos_or_gsub_table(zst::byte_span buf)
 	{
 		auto table_start = buf;
 
@@ -218,22 +218,25 @@ namespace font::off
 		if(major != 1 || (minor != 0 && minor != 1))
 		{
 			zpr::println("warning: unsupported GPOS/GSUB table version {}.{}, ignoring", major, minor);
-			return;
+			return std::nullopt;
 		}
 
 		auto script_list_ofs = consume_u16(buf);
 		auto feature_list_ofs = consume_u16(buf);
 		auto lookup_list_ofs = consume_u16(buf);
 
-		output->scripts = parseScriptAndLanguageTables(table_start.drop(script_list_ofs));
-		output->features = parseFeatureList(table_start.drop(feature_list_ofs));
-		output->lookups = parseLookupList(table_start.drop(lookup_list_ofs));
+		TableType ret {};
+		ret.scripts = parseScriptAndLanguageTables(table_start.drop(script_list_ofs));
+		ret.features = parseFeatureList(table_start.drop(feature_list_ofs));
+		ret.lookups = parseLookupList(table_start.drop(lookup_list_ofs));
 
 		if(major == 1 && minor == 1)
 		{
 			if(auto feat_var_ofs = consume_u16(buf); feat_var_ofs != 0)
-				output->feature_variations_table = table_start.drop(feat_var_ofs);
+				ret.feature_variations_table = table_start.drop(feat_var_ofs);
 		}
+
+		return ret;
 	}
 }
 
@@ -241,11 +244,11 @@ namespace font
 {
 	void FontFile::parse_gsub_table(const Table& table)
 	{
-		parseGPosOrGSub(&m_gsub_table, this->bytes().drop(table.offset));
+		m_gsub_table = off::parse_gpos_or_gsub_table<off::GSubTable>(this->bytes().drop(table.offset));
 	}
 
 	void FontFile::parse_gpos_table(const Table& table)
 	{
-		parseGPosOrGSub(&m_gpos_table, this->bytes().drop(table.offset));
+		m_gpos_table = off::parse_gpos_or_gsub_table<off::GPosTable>(this->bytes().drop(table.offset));
 	}
 }

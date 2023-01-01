@@ -23,11 +23,13 @@
 #if 0
 CLEANUPS:
 
-- use magic .into() for units
+- make magic-into() for units use a Converter<> struct instead
 - maybe wrapper around (const Style*)
 - maybe s/layout/print/ or something
 	- rename layout() methods to print() or something
 	- さあぁぁぁぁ
+
+- FontFile and PdfFont have a little duplicate work in performSubstitutionsForGlyphSequence
 
 #endif
 
@@ -50,7 +52,7 @@ int main(int argc, char** argv)
 	auto font_family = [&]() {
 		using namespace font;
 
-		std::vector<std::string> prefs = { "Source Serif 4", GENERIC_SERIF };
+		std::vector<std::string> prefs = { "Helvetica", GENERIC_SERIF };
 
 		auto regular_handle = font::findFont(prefs, FontProperties {});
 		auto italic_handle = font::findFont(prefs, FontProperties { .style = FontStyle::ITALIC });

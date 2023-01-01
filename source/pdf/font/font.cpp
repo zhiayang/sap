@@ -100,19 +100,21 @@ namespace pdf
 		if(!m_source_file)
 			return {};
 
-		return font::off::getPositioningAdjustmentsForGlyphSequence(m_source_file.get(), glyphs, features);
+		return m_source_file->getPositioningAdjustmentsForGlyphSequence(glyphs, features);
 	}
 
-	std::vector<GlyphId> PdfFont::performSubstitutionsForGlyphSequence(zst::span<GlyphId> glyphs,
+	std::optional<std::vector<GlyphId>> PdfFont::performSubstitutionsForGlyphSequence(zst::span<GlyphId> glyphs,
 	    const font::off::FeatureSet& features) const
 	{
 		if(!m_source_file)
-			return std::vector<GlyphId>(glyphs.begin(), glyphs.end());
+			return std::nullopt;
 
-		auto subst = font::off::performSubstitutionsForGlyphSequence(m_source_file.get(), glyphs, features);
+		auto subst = m_source_file->performSubstitutionsForGlyphSequence(glyphs, features);
+		if(not subst.has_value())
+			return std::nullopt;
 
 		auto& cmap = m_source_file->characterMapping();
-		for(auto& [out, in] : subst.mapping.replacements)
+		for(auto& [out, in] : subst->mapping.replacements)
 		{
 			this->markGlyphAsUsed(out);
 
@@ -152,7 +154,7 @@ namespace pdf
 			}
 		};
 
-		for(auto& [out, ins] : subst.mapping.contractions)
+		for(auto& [out, ins] : subst->mapping.contractions)
 		{
 			this->markGlyphAsUsed(out);
 			std::vector<char32_t> in_cps {};
@@ -165,7 +167,7 @@ namespace pdf
 			this->addGlyphUnicodeMapping(out, std::move(in_cps));
 		}
 
-		for(auto& g : subst.mapping.extra_glyphs)
+		for(auto& g : subst->mapping.extra_glyphs)
 		{
 			this->markGlyphAsUsed(g);
 
@@ -173,6 +175,6 @@ namespace pdf
 				this->addGlyphUnicodeMapping(g, find_codepoint_for_gid(g));
 		}
 
-		return subst.glyphs;
+		return std::move(subst->glyphs);
 	}
 }

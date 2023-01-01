@@ -8,7 +8,8 @@
 #include "types.h" // for GlyphId
 #include "units.h" // for Scalar, operator+, Vector2<>::scalar_type
 
-#include "font/tag.h"         // for Tag
+#include "font/tag.h" // for Tag
+#include "font/aat.h"
 #include "font/handle.h"      // for FontHandle
 #include "font/metrics.h"     //
 #include "font/features.h"    // for GlyphAdjustment, Feature, LookupTable
@@ -77,9 +78,6 @@ namespace font
 		const FontMetrics& metrics() const { return m_metrics; }
 		const CharacterMapping& characterMapping() const { return m_character_mapping; }
 
-		const off::GPosTable& getGPosTable() const { return m_gpos_table; }
-		const off::GSubTable& getGSubTable() const { return m_gsub_table; }
-
 		const std::map<Tag, Table>& sfntTables() const { return m_tables; }
 
 		zst::byte_span bytes() const { return zst::byte_span(m_file_bytes, m_file_size); }
@@ -101,6 +99,12 @@ namespace font
 		void markGlyphAsUsed(GlyphId glyph_id) const { m_used_glyphs.insert(glyph_id); }
 		const auto& usedGlyphs() const { return m_used_glyphs; }
 
+		std::map<size_t, GlyphAdjustment> getPositioningAdjustmentsForGlyphSequence(zst::span<GlyphId> glyphs,
+		    const font::off::FeatureSet& features) const;
+
+		std::optional<SubstitutedGlyphString> performSubstitutionsForGlyphSequence(zst::span<GlyphId> glyphs,
+		    const font::off::FeatureSet& features) const;
+
 		static std::optional<std::shared_ptr<FontFile>> fromHandle(FontHandle handle);
 
 	private:
@@ -108,6 +112,10 @@ namespace font
 
 		void parse_gpos_table(const Table& gpos);
 		void parse_gsub_table(const Table& gsub);
+
+		void parse_kern_table(const Table& kern);
+		void parse_mort_table(const Table& mort);
+		void parse_morx_table(const Table& morx);
 
 		void parse_name_table(const Table& table);
 		void parse_cmap_table(const Table& table);
@@ -140,9 +148,6 @@ namespace font
 		// note: this *MUST* be a std::map (ie. ordered) because the tables must be sorted by Tag.
 		std::map<Tag, Table> m_tables {};
 
-		off::GPosTable m_gpos_table {};
-		off::GSubTable m_gsub_table {};
-
 		// some stuff we need to save, internal use.
 		size_t m_num_hmetrics = 0;
 		zst::byte_span m_hmtx_table {};
@@ -155,6 +160,12 @@ namespace font
 		// only valid if outline_type == OUTLINES_TRUETYPE
 		std::unique_ptr<truetype::TTData> m_truetype_data {};
 
+		// optional feature tables
+		std::optional<off::GPosTable> m_gpos_table {};
+		std::optional<off::GSubTable> m_gsub_table {};
+		std::optional<aat::KernTable> m_kern_table {};
+
+		// caches
 		mutable std::unordered_set<GlyphId> m_used_glyphs {};
 		mutable std::map<GlyphId, GlyphMetrics> m_glyph_metrics {};
 		mutable util::hashmap<std::u32string, FontVector2d> m_word_size_cache {};

@@ -354,10 +354,9 @@ namespace font::off::gsub
 
 namespace font::off
 {
-	SubstitutedGlyphString performSubstitutionsForGlyphSequence(const FontFile* font, zst::span<GlyphId> input,
+	SubstitutedGlyphString performSubstitutionsForGlyphSequence(const GSubTable& gsub_table, zst::span<GlyphId> input,
 	    const FeatureSet& features)
 	{
-		auto& gsub_table = font->getGSubTable();
 		auto lookups = getLookupTablesForFeatures(gsub_table, features);
 
 		SubstitutedGlyphString result {};

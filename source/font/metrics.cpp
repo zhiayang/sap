@@ -112,7 +112,8 @@ namespace font
 
 		// next, use GSUB to perform substitutions.
 		// ignore glyph mappings because we only care about the final result
-		glyphs = font::off::performSubstitutionsForGlyphSequence(this, span(glyphs), features).glyphs;
+		if(auto subst = this->performSubstitutionsForGlyphSequence(span(glyphs), features); subst.has_value())
+			glyphs = std::move(subst->glyphs);
 
 		// next, get base metrics for each glyph.
 		std::vector<GlyphInfo> glyph_infos {};
@@ -125,7 +126,7 @@ namespace font
 		}
 
 		// finally, use GPOS
-		auto adjustment_map = font::off::getPositioningAdjustmentsForGlyphSequence(this, span(glyphs), features);
+		auto adjustment_map = this->getPositioningAdjustmentsForGlyphSequence(span(glyphs), features);
 		for(auto& [i, adj] : adjustment_map)
 		{
 			auto& info = glyph_infos[i];
@@ -139,6 +140,27 @@ namespace font
 		return res.first->second;
 	}
 
+	std::map<size_t, font::GlyphAdjustment> FontFile::getPositioningAdjustmentsForGlyphSequence(zst::span<GlyphId> glyphs,
+	    const font::off::FeatureSet& features) const
+	{
+		if(m_gpos_table.has_value())
+			return off::getPositioningAdjustmentsForGlyphSequence(*m_gpos_table, glyphs, features);
+		else if(m_kern_table.has_value())
+			return aat::getPositioningAdjustmentsForGlyphSequence(*m_kern_table, glyphs);
+		else
+			return {};
+	}
 
-
+	std::optional<SubstitutedGlyphString> FontFile::performSubstitutionsForGlyphSequence(zst::span<GlyphId> glyphs,
+	    const font::off::FeatureSet& features) const
+	{
+		if(m_gsub_table.has_value())
+		{
+			return off::performSubstitutionsForGlyphSequence(*m_gsub_table, glyphs, features);
+		}
+		else
+		{
+			return {};
+		}
+	}
 }

@@ -352,11 +352,9 @@ namespace font::off::gpos
 
 namespace font::off
 {
-	std::map<size_t, GlyphAdjustment> getPositioningAdjustmentsForGlyphSequence(const FontFile* font, zst::span<GlyphId> glyphs,
+	std::map<size_t, GlyphAdjustment> getPositioningAdjustmentsForGlyphSequence(const GPosTable& gpos, zst::span<GlyphId> glyphs,
 	    const FeatureSet& features)
 	{
-		auto& gpos = font->getGPosTable();
-
 		/*
 		    OFF 1.9, page 217
 
