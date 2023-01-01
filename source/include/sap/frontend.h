@@ -115,8 +115,6 @@ namespace sap::frontend
 
 		Token peekWithMode(Mode mode) const;
 
-		void skipComments();
-
 		SaveState save();
 		void rewind(SaveState st);
 

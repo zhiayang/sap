@@ -61,9 +61,8 @@ This also acts as a sort of TODO; as time goes on completed features may be remo
 - [x] Embedded font subsetting (both TrueType and CFF)
 - [ ] Variable font support
 - [ ] Further size optimisation for embedded fonts
-- [x] Glyph positioning (OpenType GPOS, lookups 1, 2, 7, 8, 9)
-- [x] Glyph substitutions (incl. ligatures) (OpenType GSUB, lookups 1, 2, 4, 5, 6, 7)
-- [ ] Truetype/AAT `kern` table
+- [x] Glyph positioning (`kern` & GPOS lookups 1, 2, 7, 8, 9)
+- [x] Glyph substitutions (incl. ligatures) (OpenType GSUB lookups 1, 2, 4, 5, 6, 7)
 - [ ] AAT tables (`kerx`, `morx`)
 - [ ] More advanced typography support (`BASE`, `MATH`, `JSTF`)
 - [x] Text extraction (eg. copy/paste) support — `ToUnicode` table

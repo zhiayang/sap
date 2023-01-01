@@ -865,17 +865,25 @@ namespace sap::frontend
 	}
 
 
-	static std::unique_ptr<Paragraph> parse_paragraph(Lexer& lexer)
+	static std::optional<std::unique_ptr<Paragraph>> parse_paragraph(Lexer& lexer)
 	{
 		auto para = std::make_unique<Paragraph>();
 
+		bool have_actual_words = false;
 		while(true)
 		{
 			auto tok = lexer.next();
 
 			if(tok == TT::Text)
 			{
+				auto is_not_space = [](char32_t s) -> bool {
+					return not util::is_one_of(s, U' ', U'\t', U'\n', U'\r');
+				};
+
 				auto word = std::make_unique<Text>(escape_word_text(tok.loc, tok.text));
+				if(std::any_of(word->contents().begin(), word->contents().end(), is_not_space))
+					have_actual_words = true;
+
 				para->addObject(std::move(word));
 			}
 			else if(tok == TT::ParagraphBreak || tok == TT::EndOfFile)
@@ -884,6 +892,8 @@ namespace sap::frontend
 			}
 			else if(tok == TT::Backslash)
 			{
+				have_actual_words = true;
+
 				auto obj = parse_script_object(lexer);
 				para->addObject(std::move(obj));
 			}
@@ -893,7 +903,10 @@ namespace sap::frontend
 			}
 		}
 
-		return para;
+		if(have_actual_words)
+			return para;
+		else
+			return std::nullopt;
 	}
 
 
@@ -901,28 +914,6 @@ namespace sap::frontend
 	{
 		while(true)
 		{
-			if(auto tok = lexer.peek(); tok == TT::Text)
-			{
-				return parse_paragraph(lexer);
-			}
-			else if(tok == TT::ParagraphBreak)
-			{
-				lexer.next();
-				continue;
-			}
-			else if(tok == TT::Backslash)
-			{
-				lexer.next();
-				return parse_script_object(lexer);
-			}
-			else if(tok == TT::EndOfFile)
-			{
-				error(tok.loc, "unexpected end of file");
-			}
-			else
-			{
-				error(tok.loc, "unexpected token '{}' ({}) at top level", tok.text, tok.type);
-			}
 		}
 	}
 
@@ -933,13 +924,28 @@ namespace sap::frontend
 
 		while(true)
 		{
-			lexer.skipComments();
-			auto tok = lexer.peek();
-
-			if(tok == TT::EndOfFile)
+			if(lexer.eof())
 				break;
 
-			document.addObject(parse_top_level(lexer));
+			if(auto tok = lexer.peek(); tok == TT::Text)
+			{
+				if(auto ret = parse_paragraph(lexer); ret.has_value())
+					document.addObject(std::move(*ret));
+			}
+			else if(tok == TT::ParagraphBreak)
+			{
+				lexer.next();
+				continue;
+			}
+			else if(tok == TT::Backslash)
+			{
+				lexer.next();
+				document.addObject(parse_script_object(lexer));
+			}
+			else
+			{
+				error(tok.loc, "unexpected token '{}' ({}) at top level", tok.text, tok.type);
+			}
 		}
 
 		return document;

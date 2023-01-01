@@ -110,8 +110,8 @@ namespace sap::frontend
 		}
 		else if(stream.starts_with("#"))
 		{
-			auto tok = parse_comment(stream, loc);
-			return tok;
+			(void) parse_comment(stream, loc);
+			return consume_text_token(stream, loc);
 		}
 		else if(stream.starts_with(":#"))
 		{
@@ -238,7 +238,8 @@ namespace sap::frontend
 
 		else if(stream.starts_with("#"))
 		{
-			return parse_comment(stream, loc);
+			(void) parse_comment(stream, loc);
+			return consume_script_token(stream, loc);
 		}
 		else if(stream.starts_with(":#"))
 		{
@@ -442,7 +443,6 @@ namespace sap::frontend
 	Lexer::Lexer(zst::str_view filename, zst::str_view contents) : m_stream(contents)
 	{
 		m_mode_stack.push_back(Mode::Text);
-
 		m_location = Location { .line = 0, .column = 0, .file = filename };
 	}
 
@@ -454,27 +454,11 @@ namespace sap::frontend
 
 		// TODO: figure out how we wanna handle comments
 		if(mode == Mode::Text)
-		{
-			Token ret {};
-			do
-			{
-				ret = consume_text_token(foo, bar);
-			} while(ret == TT::Comment);
-			return ret;
-		}
+			return consume_text_token(foo, bar);
 		else if(mode == Mode::Script)
-		{
-			Token ret {};
-			do
-			{
-				ret = consume_script_token(foo, bar);
-			} while(ret == TT::Comment);
-			return ret;
-		}
+			return consume_script_token(foo, bar);
 		else
-		{
 			assert(false);
-		}
 	}
 
 	Token Lexer::peek() const
@@ -490,27 +474,11 @@ namespace sap::frontend
 	Token Lexer::next()
 	{
 		if(this->mode() == Mode::Text)
-		{
-			Token ret {};
-			do
-			{
-				ret = consume_text_token(m_stream, m_location);
-			} while(ret == TT::Comment);
-			return ret;
-		}
+			return consume_text_token(m_stream, m_location);
 		else if(this->mode() == Mode::Script)
-		{
-			Token ret {};
-			do
-			{
-				ret = consume_script_token(m_stream, m_location);
-			} while(ret == TT::Comment);
-			return ret;
-		}
+			return consume_script_token(m_stream, m_location);
 		else
-		{
 			assert(false);
-		}
 	}
 
 	bool Lexer::expect(TokenType type)
@@ -572,11 +540,5 @@ namespace sap::frontend
 	{
 		m_stream = st.stream;
 		m_location = st.location;
-	}
-
-	void Lexer::skipComments()
-	{
-		while(this->peek() == TT::Comment)
-			this->next();
 	}
 }

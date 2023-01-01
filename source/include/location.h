@@ -22,7 +22,8 @@ namespace sap
 	{
 		zpr::fprintln(stderr, "{}:{}:{}: error: {}", loc.file, loc.line + 1, loc.column + 1,
 		    zpr::fwd(fmt, static_cast<Args&&>(args)...));
-		exit(1);
+		abort();
+		// exit(1);
 	}
 
 	template <typename... Args>
