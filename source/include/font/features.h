@@ -16,27 +16,20 @@ namespace font
 	{
 		Tag script;
 		Tag language;
-		std::set<Tag> enabled_features {};
+
+		std::unordered_set<Tag> enabled_features {};
+		std::unordered_set<Tag> disabled_features {};
+
+		bool is_disabled(Tag feat) const { return disabled_features.contains(feat); }
+		bool is_enabled(Tag feat) const { return enabled_features.contains(feat) && not disabled_features.contains(feat); }
 	};
 
 #define DECLARE_FEATURE(name) inline constexpr auto name = Tag(#name)
-
-	/*
-	    GPOS FEATURES
-	    =============
-	*/
 	namespace feature
 	{
 		DECLARE_FEATURE(kern); // kerning
 		DECLARE_FEATURE(cpsp); // capital spacing (all-caps words have larger advance)
-	}
 
-	/*
-	    GSUB FEATURES
-	    =============
-	*/
-	namespace feature
-	{
 		DECLARE_FEATURE(aalt); // access all alternates
 		DECLARE_FEATURE(calt); // contextual alternates
 		DECLARE_FEATURE(salt); // stylistic alternates
@@ -53,6 +46,7 @@ namespace font
 		DECLARE_FEATURE(c2sc); // substitute uppercase for small caps
 		DECLARE_FEATURE(c2pc); // substitute uppercase for petite caps
 
+		// of course, case is a keyword
 		inline constexpr auto case_ = Tag("case"); // case sensitive forms
 
 		DECLARE_FEATURE(ss01); // stylistic set 01

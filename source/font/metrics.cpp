@@ -119,10 +119,10 @@ namespace font
 		std::vector<GlyphInfo> glyph_infos {};
 		for(auto g : glyphs)
 		{
-			GlyphInfo info {};
-			info.gid = g;
-			info.metrics = this->getGlyphMetrics(g);
-			glyph_infos.push_back(std::move(info));
+			glyph_infos.push_back(GlyphInfo {
+			    .gid = g,
+			    .metrics = this->getGlyphMetrics(g),
+			});
 		}
 
 		// finally, use GPOS
@@ -146,7 +146,7 @@ namespace font
 		if(m_gpos_table.has_value())
 			return off::getPositioningAdjustmentsForGlyphSequence(*m_gpos_table, glyphs, features);
 		else if(m_kern_table.has_value())
-			return aat::getPositioningAdjustmentsForGlyphSequence(*m_kern_table, glyphs);
+			return aat::getPositioningAdjustmentsForGlyphSequence(*m_kern_table, glyphs, features);
 		else
 			return {};
 	}
@@ -157,7 +157,7 @@ namespace font
 		if(m_gsub_table.has_value())
 			return off::performSubstitutionsForGlyphSequence(*m_gsub_table, glyphs, features);
 		else if(m_morx_table.has_value())
-			return aat::performSubstitutionsForGlyphSequence(*m_morx_table, glyphs);
+			return aat::performSubstitutionsForGlyphSequence(*m_morx_table, glyphs, features);
 		else
 			return {};
 	}

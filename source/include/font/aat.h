@@ -11,6 +11,7 @@
 
 #include "font/tag.h"         // for Tag
 #include "font/metrics.h"     //
+#include "font/features.h"    //
 #include "font/font_scalar.h" // for FontScalar
 
 namespace font
@@ -28,6 +29,9 @@ namespace font::aat
 	{
 		uint16_t type;
 		uint16_t selector;
+
+		constexpr bool operator==(Feature f) const { return type == f.type && selector == f.selector; }
+		constexpr bool operator!=(Feature f) const { return !(*this == f); }
 	};
 
 	/*
@@ -118,13 +122,13 @@ namespace font::aat
 		std::vector<KernSubTable3> subtables_f3;
 	};
 
-	std::map<size_t, GlyphAdjustment> getPositioningAdjustmentsForGlyphSequence(const KernTable& font, zst::span<GlyphId> glyphs);
+	std::map<size_t, GlyphAdjustment> getPositioningAdjustmentsForGlyphSequence(const KernTable& font, zst::span<GlyphId> glyphs,
+	    const FeatureSet& features);
 
 
 	struct MorxFeature
 	{
-		uint16_t type;
-		uint16_t selector;
+		aat::Feature feature;
 
 		uint32_t enable_flags;
 		uint32_t disable_flags;
@@ -198,5 +202,15 @@ namespace font::aat
 		size_t num_font_glyphs;
 	};
 
-	std::optional<SubstitutedGlyphString> performSubstitutionsForGlyphSequence(const MorxTable& morx, zst::span<GlyphId> glyphs);
+	std::optional<SubstitutedGlyphString> performSubstitutionsForGlyphSequence(const MorxTable& morx, zst::span<GlyphId> glyphs,
+	    const FeatureSet& features);
 }
+
+template <>
+struct std::hash<font::aat::Feature>
+{
+	constexpr size_t operator()(font::aat::Feature f) const
+	{
+		return std::hash<uint32_t>()(((uint32_t) f.type << 16) | f.selector);
+	}
+};

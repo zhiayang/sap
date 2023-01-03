@@ -262,9 +262,10 @@ namespace font::aat
 			return std::nullopt;
 	}
 
-	std::map<size_t, GlyphAdjustment> getPositioningAdjustmentsForGlyphSequence(const KernTable& table, zst::span<GlyphId> glyphs)
+	std::map<size_t, GlyphAdjustment> getPositioningAdjustmentsForGlyphSequence(const KernTable& table, zst::span<GlyphId> glyphs,
+	    const FeatureSet& features)
 	{
-		if(glyphs.size() < 2)
+		if(glyphs.size() < 2 || features.is_disabled(feature::kern))
 			return {};
 
 		std::map<size_t, GlyphAdjustment> adjustments {};

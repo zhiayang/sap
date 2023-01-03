@@ -590,10 +590,7 @@ namespace font
 	{
 		auto it = g_feature_mapping.find(feature);
 		if(it == g_feature_mapping.end())
-		{
-			sap::warn("font/aat", "could not find corresponding AAT feature for OFF feature '{}'", feature.str());
 			return {};
-		}
 
 		return it->second;
 	}

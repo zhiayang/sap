@@ -37,3 +37,9 @@ namespace font
 		uint32_t value;
 	};
 }
+
+template <>
+struct std::hash<font::Tag>
+{
+	constexpr size_t operator()(font::Tag t) const { return t.hash(); }
+};

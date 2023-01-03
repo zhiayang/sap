@@ -19,8 +19,7 @@ namespace font::aat
 		auto disable_flags = consume_u32(feature);
 
 		return MorxFeature {
-			.type = type,
-			.selector = selector,
+			.feature = Feature { .type = type, .selector = selector },
 			.enable_flags = enable_flags,
 			.disable_flags = disable_flags,
 		};
@@ -684,16 +683,42 @@ namespace font::aat
 	}
 
 
-	std::optional<SubstitutedGlyphString> performSubstitutionsForGlyphSequence(const MorxTable& morx, zst::span<GlyphId> glyphs)
+	std::optional<SubstitutedGlyphString> performSubstitutionsForGlyphSequence(const MorxTable& morx, zst::span<GlyphId> glyphs,
+	    const FeatureSet& features)
 	{
 		std::optional<SubstitutedGlyphString> ret {};
+
+		std::unordered_set<aat::Feature> enabled_features {};
+		std::unordered_set<aat::Feature> disabled_features {};
+
+		for(auto& f : features.enabled_features)
+		{
+			auto tmp = convertOFFFeatureToAAT(f);
+			enabled_features.insert(tmp.begin(), tmp.end());
+		}
+
+		for(auto& f : features.disabled_features)
+		{
+			auto tmp = convertOFFFeatureToAAT(f);
+			disabled_features.insert(tmp.begin(), tmp.end());
+		}
 
 		// TODO: handle feature selection
 		for(auto& chain : morx.chains)
 		{
 			uint32_t flags = chain.default_flags;
-
-			// for now, we have no features, so do nothing with chain.features
+			for(auto& feat : chain.features)
+			{
+				if(disabled_features.contains(feat.feature))
+				{
+					flags &= ~feat.enable_flags;
+				}
+				else if(enabled_features.contains(feat.feature))
+				{
+					flags |= feat.enable_flags;
+					flags &= feat.disable_flags;
+				}
+			}
 
 			auto get_common = [](const auto& subtable) -> const MorxSubtableCommon& {
 				return std::visit(
