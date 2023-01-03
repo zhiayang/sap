@@ -4,6 +4,8 @@
 
 #pragma once
 
+#include <variant>
+
 #include "types.h" // for GlyphId
 
 #include "font/tag.h"         // for Tag
@@ -21,6 +23,41 @@ namespace font
 
 namespace font::aat
 {
+	/*
+	    lookup tables
+	*/
+	struct Lookup
+	{
+		std::unordered_map<GlyphId, uint64_t> map;
+	};
+
+	std::optional<Lookup> parseLookupTable(zst::byte_span buf, size_t num_font_glyphs);
+
+
+	/*
+	    encodes a state machine
+	*/
+	struct StateTable
+	{
+		size_t num_classes;
+		std::unordered_map<GlyphId, uint16_t> glyph_classes;
+
+		zst::byte_span state_array;
+		size_t state_row_size;
+
+		zst::byte_span entry_array;
+		bool is_extended;
+	};
+
+	StateTable parseStateTable(zst::byte_span& state_table, size_t num_font_glyphs);
+	StateTable parseExtendedStateTable(zst::byte_span& state_table, size_t num_font_glyphs);
+
+
+
+
+
+
+
 	struct KernSubTableCoverage
 	{
 		bool is_vertical;
@@ -40,7 +77,9 @@ namespace font::aat
 		};
 
 		KernSubTableCoverage coverage;
-		std::vector<Pair> pairs;
+		size_t num_pairs;
+
+		zst::byte_span lookup_table;
 	};
 
 	struct KernSubTable1
@@ -74,5 +113,79 @@ namespace font::aat
 
 	std::map<size_t, GlyphAdjustment> getPositioningAdjustmentsForGlyphSequence(const KernTable& font, zst::span<GlyphId> glyphs);
 
-	std::optional<SubstitutedGlyphString> performSubstitutionsForGlyphSequence(const KernTable& font, zst::span<GlyphId> glyphs);
+
+	struct MorxFeature
+	{
+		uint16_t type;
+		uint16_t selector;
+
+		uint32_t enable_flags;
+		uint32_t disable_flags;
+	};
+
+	struct MorxSubtableCommon
+	{
+		uint32_t flags;
+		bool process_logical_order;
+		bool process_descending_order;
+
+		bool only_vertical;
+		bool both_horizontal_and_vertical;
+	};
+
+	struct MorxRearrangementSubtable
+	{
+		MorxSubtableCommon common;
+		StateTable state_table;
+	};
+
+	struct MorxContextualSubtable
+	{
+		MorxSubtableCommon common;
+		StateTable state_table;
+
+		zst::byte_span substitution_tables;
+	};
+
+	struct MorxLigatureSubtable
+	{
+		MorxSubtableCommon common;
+		StateTable state_table;
+
+		zst::byte_span ligature_actions;
+		zst::byte_span component_table;
+		zst::byte_span ligatures;
+	};
+
+	struct MorxNonContextualSubtable
+	{
+		MorxSubtableCommon common;
+		Lookup lookup;
+	};
+
+	struct MorxInsertionSubtable
+	{
+		MorxSubtableCommon common;
+		StateTable state_table;
+
+		zst::byte_span insertion_glyph_table;
+	};
+
+	using MorxSubtable = std::variant<MorxRearrangementSubtable, MorxContextualSubtable, MorxLigatureSubtable,
+	    MorxNonContextualSubtable, MorxInsertionSubtable>;
+
+	struct MorxChain
+	{
+		uint32_t default_flags;
+
+		std::vector<MorxFeature> features;
+		std::vector<MorxSubtable> subtables;
+	};
+
+	struct MorxTable
+	{
+		std::vector<MorxChain> chains;
+	};
+
+	std::optional<SubstitutedGlyphString> performSubstitutionsForGlyphSequence(const MorxTable& morx, zst::span<GlyphId> glyphs);
 }

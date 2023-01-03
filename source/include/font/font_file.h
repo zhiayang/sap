@@ -114,7 +114,6 @@ namespace font
 		void parse_gsub_table(const Table& gsub);
 
 		void parse_kern_table(const Table& kern);
-		void parse_mort_table(const Table& mort);
 		void parse_morx_table(const Table& morx);
 
 		void parse_name_table(const Table& table);
@@ -164,6 +163,7 @@ namespace font
 		std::optional<off::GPosTable> m_gpos_table {};
 		std::optional<off::GSubTable> m_gsub_table {};
 		std::optional<aat::KernTable> m_kern_table {};
+		std::optional<aat::MorxTable> m_morx_table {};
 
 		// caches
 		mutable std::unordered_set<GlyphId> m_used_glyphs {};

@@ -20,6 +20,12 @@ namespace misc
 namespace font
 {
 	// these are all BIG ENDIAN, because FUCK YOU.
+	uint8_t peek_u8(const zst::byte_span& s)
+	{
+		assert(s.size() >= 1);
+		return s[0];
+	}
+
 	uint16_t peek_u16(const zst::byte_span& s)
 	{
 		assert(s.size() >= 2);
@@ -36,6 +42,20 @@ namespace font
 		assert(s.size() >= 4);
 		return ((uint32_t) s[0] << 24) | ((uint32_t) s[1] << 16) | ((uint32_t) s[2] << 8) | ((uint32_t) s[3] << 0);
 	}
+
+	uint64_t peek_u64(const zst::byte_span& s)
+	{
+		assert(s.size() >= 8);
+		return ((uint64_t) s[0] << 56) //
+		     | ((uint64_t) s[1] << 48) //
+		     | ((uint64_t) s[2] << 40) //
+		     | ((uint64_t) s[3] << 32) //
+		     | ((uint64_t) s[4] << 24) //
+		     | ((uint64_t) s[5] << 16) //
+		     | ((uint64_t) s[6] << 8)  //
+		     | ((uint64_t) s[7] << 0);
+	}
+
 
 	uint8_t consume_u8(zst::byte_span& s)
 	{
@@ -64,6 +84,14 @@ namespace font
 		s.remove_prefix(4);
 		return ret;
 	}
+
+	uint64_t consume_u64(zst::byte_span& s)
+	{
+		auto ret = peek_u64(s);
+		s.remove_prefix(8);
+		return ret;
+	}
+
 
 	std::optional<std::string> convert_name_to_utf8(uint16_t platform_id, uint16_t encoding_id, zst::byte_span str)
 	{
@@ -489,6 +517,7 @@ namespace font
 			Tag("GPOS"),
 			Tag("GSUB"),
 			Tag("kern"),
+			Tag("morx"),
 			Tag("OS/2"),
 		};
 
@@ -532,6 +561,8 @@ namespace font
 					font->parse_post_table(tbl);
 				else if(tag == Tag("kern"))
 					font->parse_kern_table(tbl);
+				else if(tag == Tag("morx"))
+					font->parse_morx_table(tbl);
 			}
 		}
 

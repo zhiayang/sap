@@ -155,12 +155,10 @@ namespace font
 	    const font::off::FeatureSet& features) const
 	{
 		if(m_gsub_table.has_value())
-		{
 			return off::performSubstitutionsForGlyphSequence(*m_gsub_table, glyphs, features);
-		}
+		else if(m_morx_table.has_value())
+			return aat::performSubstitutionsForGlyphSequence(*m_morx_table, glyphs);
 		else
-		{
 			return {};
-		}
 	}
 }

@@ -19,26 +19,10 @@ namespace font::aat
 	static KernSubTable0 parse_kern_f0(KernSubTableCoverage coverage, zst::byte_span buf)
 	{
 		KernSubTable0 ret {};
+
 		ret.coverage = std::move(coverage);
-
-		auto& pairs = ret.pairs;
-
-		auto num_pairs = consume_u16(buf);
-
-		buf.remove_prefix(6); // skip the binary search stuff
-
-		for(auto i = 0u; i < num_pairs; i++)
-		{
-			auto left = consume_u16(buf);
-			auto right = consume_u16(buf);
-			auto adjust = consume_i16(buf);
-
-			pairs.push_back(KernSubTable0::Pair {
-			    .left = GlyphId(left),
-			    .right = GlyphId(right),
-			    .shift = FontScalar(adjust),
-			});
-		}
+		ret.num_pairs = consume_u16(buf);
+		ret.lookup_table = buf.drop(3 * sizeof(uint16_t)); // skip the binary search stuff
 
 		return ret;
 	}
@@ -150,7 +134,7 @@ namespace font::aat
 
 			auto subtable_len = total_len - 3 * sizeof(uint16_t);
 
-			if(format > 4)
+			if(format != 0 && format != 2)
 			{
 				sap::warn("otf/kern", "unsupported kern subtable format {}", format);
 				buf.remove_prefix(subtable_len);
@@ -218,18 +202,24 @@ namespace font::aat
 
 				// now, binary search the second set.
 				size_t low = 0;
-				size_t high = sub.pairs.size();
+				size_t high = sub.num_pairs;
+
+				auto search_array = sub.lookup_table;
 
 				while(low < high)
 				{
 					auto mid = (low + high) / 2u;
 
-					auto tmp = ((static_cast<uint32_t>(sub.pairs[mid].left) & 0xffff) << 16)
-					         | (static_cast<uint32_t>(sub.pairs[mid].right) & 0xffff);
+					auto arr = search_array.drop(mid * 3 * sizeof(uint16_t));
+					auto tmp_l = consume_u16(arr);
+					auto tmp_r = consume_u16(arr);
+					auto shift = FontScalar(consume_i16(arr));
+
+					auto tmp = ((static_cast<uint32_t>(tmp_l) & 0xffff) << 16) | (static_cast<uint32_t>(tmp_r) & 0xffff);
 
 					if(tmp == search_u32)
 					{
-						add_adjustment(sub.pairs[mid].shift, sub.coverage);
+						add_adjustment(shift, sub.coverage);
 						break;
 					}
 					else if(tmp < search_u32)

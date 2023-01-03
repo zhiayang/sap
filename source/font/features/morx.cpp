@@ -1,0 +1,442 @@
+// morx.cpp
+// Copyright (c) 2022, zhiayang
+// SPDX-License-Identifier: Apache-2.0
+
+#include <span>
+
+#include "font/aat.h"
+#include "font/misc.h"
+#include "font/font_file.h"
+
+namespace font::aat
+{
+	static MorxFeature parse_morx_feature(zst::byte_span& feature)
+	{
+		auto type = consume_u16(feature);
+		auto selector = consume_u16(feature);
+		auto enable_flags = consume_u32(feature);
+		auto disable_flags = consume_u32(feature);
+
+		return MorxFeature {
+			.type = type,
+			.selector = selector,
+			.enable_flags = enable_flags,
+			.disable_flags = disable_flags,
+		};
+	}
+
+	static MorxRearrangementSubtable parse_rearrangement_subtable(zst::byte_span buf, size_t num_glyphs)
+	{
+		return MorxRearrangementSubtable {
+			.state_table = parseExtendedStateTable(buf, num_glyphs),
+		};
+	}
+
+	static MorxContextualSubtable parse_contextual_subtable(zst::byte_span buf, size_t num_glyphs)
+	{
+		auto start = buf;
+		auto state_table = parseExtendedStateTable(buf, num_glyphs);
+
+		auto substitution_table = start.drop(consume_u32(buf));
+
+		return MorxContextualSubtable {
+			.state_table = std::move(state_table),
+			.substitution_tables = substitution_table,
+		};
+	}
+
+	static MorxLigatureSubtable parse_ligature_subtable(zst::byte_span buf, size_t num_glyphs)
+	{
+		auto start = buf;
+		auto state_table = parseExtendedStateTable(buf, num_glyphs);
+
+		auto ligature_actions = start.drop(consume_u32(buf));
+		auto component_table = start.drop(consume_u32(buf));
+		auto ligatures = start.drop(consume_u32(buf));
+
+		return MorxLigatureSubtable {
+			.state_table = std::move(state_table),
+			.ligature_actions = ligature_actions,
+			.component_table = component_table,
+			.ligatures = ligatures,
+		};
+	}
+
+	static MorxNonContextualSubtable parse_non_contextual_subtable(zst::byte_span buf, size_t num_glyphs)
+	{
+		return MorxNonContextualSubtable {
+			.lookup = *parseLookupTable(buf, num_glyphs),
+		};
+	}
+
+	static MorxInsertionSubtable parse_insertion_subtable(zst::byte_span buf, size_t num_glyphs)
+	{
+		auto start = buf;
+		auto state_table = parseExtendedStateTable(buf, num_glyphs);
+
+		auto insertion_glyph_table = start.drop(consume_u32(buf));
+
+		return MorxInsertionSubtable {
+			.state_table = std::move(state_table),
+			.insertion_glyph_table = insertion_glyph_table,
+		};
+	}
+
+	static std::optional<MorxSubtable> parse_morx_subtable(zst::byte_span& buf, size_t num_glyphs)
+	{
+		auto len = consume_u32(buf);
+		auto cov = consume_u32(buf);
+		auto flags = consume_u32(buf);
+
+		auto type = (cov & 0xff);
+		if(type == 3 || type > 5)
+		{
+			sap::warn("font/aat", "unsupported subtable type {}", type);
+			buf.remove_prefix(len - 3 * sizeof(uint32_t));
+			return std::nullopt;
+		}
+
+		MorxSubtableCommon com {
+			.flags = flags,
+			.process_logical_order = bool(cov & 0x10000000),
+			.process_descending_order = bool(cov & 0x40000000),
+			.only_vertical = bool(cov & 0x80000000),
+			.both_horizontal_and_vertical = bool(cov & 0x20000000),
+		};
+
+		MorxSubtable subtable {};
+
+		auto subtable_data = buf.take(len - 3 * sizeof(uint32_t));
+		if(type == 0)
+			subtable = parse_rearrangement_subtable(subtable_data, num_glyphs);
+		else if(type == 1)
+			subtable = parse_contextual_subtable(subtable_data, num_glyphs);
+		else if(type == 2)
+			subtable = parse_ligature_subtable(subtable_data, num_glyphs);
+		else if(type == 4)
+			subtable = parse_non_contextual_subtable(subtable_data, num_glyphs);
+		else if(type == 5)
+			subtable = parse_insertion_subtable(subtable_data, num_glyphs);
+		else
+			assert(false && "unreachable!");
+
+
+		buf.remove_prefix(len - 3 * sizeof(uint32_t));
+		std::visit(
+		    [&com](auto& v) {
+			    v.common = com;
+		    },
+		    subtable);
+
+		return subtable;
+	}
+
+	static MorxChain parse_morx_chain(zst::byte_span buf, bool has_subtable_coverage, size_t num_glyphs)
+	{
+		auto default_flags = consume_u32(buf);
+		auto chain_len = consume_u32(buf);
+		assert(chain_len == buf.size() + 8);
+
+		auto num_feature_entries = consume_u32(buf);
+		auto num_subtables = consume_u32(buf);
+
+		MorxChain chain {};
+		chain.default_flags = default_flags;
+
+		for(auto i = 0u; i < num_feature_entries; i++)
+			chain.features.push_back(parse_morx_feature(buf));
+
+		for(auto i = 0u; i < num_subtables; i++)
+		{
+			if(auto s = parse_morx_subtable(buf, num_glyphs); s.has_value())
+				chain.subtables.push_back(std::move(*s));
+		}
+
+		return chain;
+	}
+}
+
+namespace font::aat
+{
+	inline constexpr uint16_t CLASS_CODE_END_OF_TEXT = 0;
+	inline constexpr uint16_t CLASS_CODE_OUT_OF_BOUNDS = 1;
+	inline constexpr uint16_t CLASS_CODE_DELETED_GLYPH = 2;
+	inline constexpr uint16_t CLASS_CODE_END_OF_LINE = 3;
+
+	template <typename T>
+	static std::optional<SubstitutedGlyphString> apply_table(const T&, zst::span<GlyphId> glyphs, bool is_reverse);
+
+
+	static size_t get_entry_index_for_state(const StateTable& machine, size_t state, uint16_t glyph_class)
+	{
+		auto tmp = machine.state_array.drop(state * machine.state_row_size);
+		if(machine.is_extended)
+			return peek_u16(tmp.drop(glyph_class * sizeof(uint16_t)));
+		else
+			return peek_u8(tmp.drop(glyph_class * sizeof(uint8_t)));
+	}
+
+
+	template <>
+	std::optional<SubstitutedGlyphString> apply_table(const MorxLigatureSubtable& table, zst::span<GlyphId> glyphs,
+	    bool is_reverse)
+	{
+		bool did_substitute = true;
+		SubstitutedGlyphString ret;
+
+		std::unordered_set<size_t> deleted_glyphs {};
+		std::unordered_map<size_t, GlyphId> replacements {};
+
+		using LigatureAction = uint32_t;
+		constexpr size_t EntrySize = 3 * sizeof(uint16_t);
+
+		// TODO: figure out which state to start in
+		size_t current_state = 0;
+
+		auto& machine = table.state_table;
+		std::vector<size_t> glyph_stack {};
+
+		size_t i = (is_reverse ? glyphs.size() - 1 : 0);
+
+		while(i < glyphs.size())
+		{
+			uint16_t glyph_class = 0;
+			if(auto it = machine.glyph_classes.find(glyphs[i]); it != machine.glyph_classes.end())
+				glyph_class = it->second;
+			else
+				glyph_class = CLASS_CODE_OUT_OF_BOUNDS;
+
+			auto entry_idx = get_entry_index_for_state(machine, current_state, glyph_class);
+			auto entry_start = machine.entry_array.drop(entry_idx * EntrySize);
+
+			auto next_state = consume_u16(entry_start);
+			auto flags = consume_u16(entry_start);
+
+			auto lig_action_idx = consume_u16(entry_start);
+
+			if(flags & 0x8000)
+				glyph_stack.push_back(i);
+
+			// perform action
+			if(flags & 0x2000)
+			{
+				uint32_t accum_idx = 0;
+				std::vector<size_t> constituent_glyph_idxs {};
+
+				while(true)
+				{
+					auto idx = glyph_stack.back();
+					auto cur_glyph = glyphs[idx];
+
+					glyph_stack.pop_back();
+
+					uint32_t lig_action = peek_u32(table.ligature_actions.drop(lig_action_idx * sizeof(LigatureAction)));
+
+					int32_t component_offset = static_cast<int32_t>(lig_action << 2) >> 2;
+					auto component_table_idx = static_cast<uint32_t>(static_cast<int32_t>(cur_glyph) + component_offset);
+
+					accum_idx += peek_u16(table.component_table.drop(component_table_idx * sizeof(uint16_t)));
+
+					bool is_last = (lig_action & 0x80000000);
+					bool should_store = is_last || (lig_action & 0x40000000);
+					if(should_store)
+					{
+						constituent_glyph_idxs.push_back(idx);
+
+						auto output_lig = GlyphId(peek_u16(table.ligatures.drop(accum_idx * sizeof(uint16_t))));
+						replacements[idx] = output_lig;
+
+						std::vector<GlyphId> constituent_glyphs {};
+						for(auto i : constituent_glyph_idxs)
+							constituent_glyphs.push_back(glyphs[i]);
+
+						ret.mapping.contractions[output_lig] = std::move(constituent_glyphs);
+
+						constituent_glyph_idxs.clear();
+						accum_idx = 0;
+					}
+					else
+					{
+						deleted_glyphs.insert(idx);
+					}
+
+					if(is_last)
+						break;
+
+					lig_action_idx += 1;
+				}
+
+				glyph_stack.insert(glyph_stack.end(), constituent_glyph_idxs.begin(), constituent_glyph_idxs.end());
+			}
+
+			// dont-advance flag
+			if(not(flags & 0x4000))
+			{
+				if(is_reverse)
+				{
+					if(i == 0)
+						break;
+					i -= 1;
+				}
+				else
+				{
+					if(i == glyphs.size() - 1)
+						break;
+					i += 1;
+				}
+			}
+
+			// for ligatures, these are indices into the state table.
+			current_state = next_state;
+		}
+
+		if(not did_substitute)
+			return std::nullopt;
+
+		ret.glyphs.reserve(glyphs.size());
+		for(size_t i = 0; i < glyphs.size(); i++)
+		{
+			if(deleted_glyphs.contains(i))
+				continue;
+			else if(auto it = replacements.find(i); it != replacements.end())
+				ret.glyphs.push_back(it->second);
+			else
+				ret.glyphs.push_back(glyphs[i]);
+		}
+
+		return std::move(ret);
+	}
+
+
+	template <>
+	std::optional<SubstitutedGlyphString> apply_table(const MorxRearrangementSubtable& table, zst::span<GlyphId> glyphs,
+	    bool is_reverse)
+	{
+		zpr::println("applying rearrangement");
+		return {};
+	}
+
+	template <>
+	std::optional<SubstitutedGlyphString> apply_table(const MorxContextualSubtable& table, zst::span<GlyphId> glyphs,
+	    bool is_reverse)
+	{
+		zpr::println("applying contextual");
+		return {};
+	}
+
+	template <>
+	std::optional<SubstitutedGlyphString> apply_table(const MorxNonContextualSubtable& table, zst::span<GlyphId> glyphs,
+	    bool is_reverse)
+	{
+		zpr::println("applying non-contextual");
+		return {};
+	}
+
+	template <>
+	std::optional<SubstitutedGlyphString> apply_table(const MorxInsertionSubtable& table, zst::span<GlyphId> glyphs,
+	    bool is_reverse)
+	{
+		zpr::println("applying insertion");
+		return {};
+	}
+
+
+	static SubstitutionMapping& combine_subst_mapping(SubstitutionMapping& to, SubstitutionMapping&& from)
+	{
+		to.extra_glyphs.insert(std::move_iterator(from.extra_glyphs.begin()), std::move_iterator(from.extra_glyphs.end()));
+		to.contractions.insert(std::move_iterator(from.contractions.begin()), std::move_iterator(from.contractions.end()));
+		to.replacements.insert(std::move_iterator(from.replacements.begin()), std::move_iterator(from.replacements.end()));
+		return to;
+	}
+
+
+	std::optional<SubstitutedGlyphString> performSubstitutionsForGlyphSequence(const MorxTable& morx, zst::span<GlyphId> glyphs)
+	{
+		std::optional<SubstitutedGlyphString> ret {};
+
+		// TODO: handle feature selection
+		for(auto& chain : morx.chains)
+		{
+			uint32_t flags = chain.default_flags;
+
+			// for now, we have no features, so do nothing with chain.features
+
+			auto get_common = [](const auto& subtable) -> const MorxSubtableCommon& {
+				return std::visit(
+				    [](const auto& x) -> const auto& { return x.common; }, subtable);
+			};
+
+			size_t tmp = 0;
+			for(auto& subtable : chain.subtables)
+			{
+				auto& common = get_common(subtable);
+				if(not(common.flags & flags))
+					continue;
+
+				// assume we are only dealing with horizontal text
+				if(common.only_vertical && not common.both_horizontal_and_vertical)
+					continue;
+
+				// assume we do not do right-to-left text; logical order is always the same
+				// as layout order in this case.
+				bool reverse_glyphs = common.process_descending_order;
+
+				if(not ret.has_value())
+				{
+					ret = SubstitutedGlyphString();
+					ret->glyphs = std::vector(glyphs.begin(), glyphs.end());
+				}
+
+				auto visitor = [&](auto& t) {
+					auto tmp = zst::span<GlyphId>(ret->glyphs.data(), ret->glyphs.size());
+					return apply_table(t, tmp, reverse_glyphs);
+				};
+
+				if(auto result = std::visit(visitor, subtable); result.has_value())
+				{
+					ret->glyphs = std::move(result->glyphs);
+					combine_subst_mapping(ret->mapping, std::move(result->mapping));
+				}
+
+				tmp++;
+			}
+		}
+
+		return ret;
+	}
+}
+
+namespace font
+{
+	void FontFile::parse_morx_table(const Table& morx)
+	{
+		auto buf = this->bytes().drop(morx.offset);
+		auto version = consume_u16(buf);
+		(void) consume_u16(buf); // unused
+
+		if(version < 2 || version > 3)
+		{
+			sap::warn("font/aat", "invalid morx table version {}", version);
+			return;
+		}
+
+		aat::MorxTable morx_table {};
+
+		auto num_chains = consume_u32(buf);
+		for(auto i = 0u; i < num_chains; i++)
+		{
+			auto chain_start = buf;
+
+			// do a little peeking to figure out how long the chain is
+			(void) consume_u32(buf);
+			auto chain_len = consume_u32(buf);
+
+			morx_table.chains.push_back(aat::parse_morx_chain(chain_start.take(chain_len),
+			    /* have_subtable_coverage: */ version >= 3, m_num_glyphs));
+
+			buf.remove_prefix(chain_len - 4);
+		}
+
+		m_morx_table = std::move(morx_table);
+	}
+}
