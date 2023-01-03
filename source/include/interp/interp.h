@@ -104,7 +104,6 @@ namespace sap::interp
 
 		Definition* addBuiltinDefinition(std::unique_ptr<Definition> defn);
 
-		// TODO: make this safer
 		StackFrame& frame() { return *m_stack_frames.back(); }
 		[[nodiscard]] auto pushFrame()
 		{
@@ -121,6 +120,29 @@ namespace sap::interp
 			m_stack_frames.pop_back();
 		}
 
+		[[nodiscard]] auto enterFunctionWithReturnType(const Type* t)
+		{
+			m_expected_return_types.push_back(t);
+			return util::Defer([this]() {
+				this->leaveFunctionWithReturnType();
+			});
+		}
+
+		void leaveFunctionWithReturnType()
+		{
+			assert(not m_expected_return_types.empty());
+			m_expected_return_types.pop_back();
+		}
+
+		bool isCurrentlyInFunction() const { return not m_expected_return_types.empty(); }
+		const Type* getCurrentFunctionReturnType() const
+		{
+			assert(this->isCurrentlyInFunction());
+			return m_expected_return_types.back();
+		}
+
+
+
 		Value castValue(Value value, const Type* to) const;
 		bool canImplicitlyConvert(const Type* from, const Type* to) const;
 
@@ -132,5 +154,7 @@ namespace sap::interp
 
 		std::vector<std::unique_ptr<Definition>> m_builtin_defns;
 		std::vector<std::unique_ptr<StackFrame>> m_stack_frames;
+
+		std::vector<const Type*> m_expected_return_types;
 	};
 }

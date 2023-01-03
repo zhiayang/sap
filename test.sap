@@ -59,6 +59,28 @@ fi fl Bсички хора се раждат свободни и равни по
 	let p3: &int = p2;
 }
 
+
+\script {
+	fn sum(n: int) -> int
+	{
+		if(n > 0)
+		{
+			builtin::print("  n = ");
+			builtin::println(n);
+			return n + sum(n - 1);
+		}
+		else
+		{
+			return n;
+		}
+	}
+
+	let x = sum(10);
+	builtin::print("x = ");
+	builtin::println(x);
+}
+
+
 My name is Yoshikage Kira. I'm\builtin::__bold_italic1(1 < 2 < 5 > 7)years old. My house is in the northeast section of Morioh,
 where all the villas are, and I am not married. I work as an employee for the Kame Yu department
 stores, and I get home every day by 8 PM at the latest. I don't smoke, but I occasionally drink.

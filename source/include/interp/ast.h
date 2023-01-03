@@ -222,6 +222,17 @@ namespace sap::interp
 		std::unique_ptr<Block> else_body;
 	};
 
+	struct ReturnStmt : Stmt
+	{
+		ReturnStmt() { }
+
+		virtual ErrorOr<EvalResult> evaluate(Interpreter* cs) const override;
+		virtual ErrorOr<TCResult> typecheck_impl(Interpreter* cs, const Type* infer = nullptr) const override;
+
+		std::unique_ptr<Expr> expr;
+		mutable const Type* return_value_type;
+	};
+
 
 
 	struct Definition;

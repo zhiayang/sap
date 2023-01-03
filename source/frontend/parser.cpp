@@ -23,6 +23,7 @@ namespace sap::frontend
 	constexpr auto KW_ELSE = "else";
 	constexpr auto KW_MUTABLE = "mut";
 	constexpr auto KW_STRUCT = "struct";
+	constexpr auto KW_RETURN = "return";
 	constexpr auto KW_SCRIPT_BLOCK = "script";
 
 	using TT = TokenType;
@@ -782,6 +783,18 @@ namespace sap::frontend
 		return if_stmt;
 	}
 
+	static std::unique_ptr<interp::ReturnStmt> parse_return_stmt(Lexer& lexer)
+	{
+		auto x = lexer.expectString(KW_RETURN);
+		assert(x);
+
+		auto ret = std::make_unique<interp::ReturnStmt>();
+		if(lexer.peek() == TT::Semicolon)
+			return ret;
+
+		ret->expr = parse_expr(lexer);
+		return ret;
+	}
 
 
 
@@ -821,6 +834,10 @@ namespace sap::frontend
 			{
 				stmt = parse_if_stmt(lexer);
 				optional_semicolon = true;
+			}
+			else if(tok.text == KW_RETURN)
+			{
+				stmt = parse_return_stmt(lexer);
 			}
 			else
 			{

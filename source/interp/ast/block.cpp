@@ -26,12 +26,8 @@ namespace sap::interp
 		for(auto& stmt : this->body)
 		{
 			auto result = TRY(stmt->evaluate(cs));
-
-			if(result.isReturn())
+			if(not result.isNormal())
 				return Ok(std::move(result));
-
-			else if(not result.isNormal())
-				return ErrFmt("unexpected statement in block");
 		}
 
 		return EvalResult::ofVoid();

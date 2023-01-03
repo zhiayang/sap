@@ -56,7 +56,11 @@ namespace sap::interp
 			TRY(this->param_defns.back()->typecheck(cs));
 		}
 
+		auto return_type = decl_type->toFunction()->returnType();
+		auto __ = cs->enterFunctionWithReturnType(return_type);
+
 		TRY(this->body->typecheck(cs));
+
 		return TCResult::ofRValue(decl_type);
 	}
 
@@ -73,6 +77,39 @@ namespace sap::interp
 
 		return this->body->evaluate(cs);
 	}
+
+
+	ErrorOr<TCResult> ReturnStmt::typecheck_impl(Interpreter* cs, const Type* infer) const
+	{
+		if(not cs->isCurrentlyInFunction())
+			return ErrFmt("invalid use of 'return' outside of a function body");
+
+		auto ret_type = cs->getCurrentFunctionReturnType();
+		this->return_value_type = ret_type;
+
+		auto expr_type = Type::makeVoid();
+		if(this->expr != nullptr)
+			expr_type = TRY(this->expr->typecheck(cs, ret_type)).type();
+
+		if(not cs->canImplicitlyConvert(expr_type, ret_type))
+			return ErrFmt("cannot return value of type '{}' in function returning '{}'", expr_type, ret_type);
+
+		return TCResult::ofVoid();
+	}
+
+	ErrorOr<EvalResult> ReturnStmt::evaluate(Interpreter* cs) const
+	{
+		if(this->expr == nullptr)
+			return EvalResult::ofReturnVoid();
+
+		auto value = TRY_VALUE(this->expr->evaluate(cs));
+		value = cs->castValue(std::move(value), this->return_value_type);
+
+		return EvalResult::ofReturnValue(std::move(value));
+	}
+
+
+
 
 
 

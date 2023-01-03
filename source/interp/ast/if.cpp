@@ -27,9 +27,15 @@ namespace sap::interp
 		cond = cs->castValue(std::move(cond), Type::makeBool());
 
 		if(cond.getBool())
-			TRY(this->if_body->evaluate(cs));
+		{
+			if(auto ret = TRY(this->if_body->evaluate(cs)); not ret.isNormal())
+				return Ok(std::move(ret));
+		}
 		else if(this->else_body != nullptr)
-			TRY(this->else_body->evaluate(cs));
+		{
+			if(auto ret = TRY(this->else_body->evaluate(cs)); not ret.isNormal())
+				return Ok(std::move(ret));
+		}
 
 		return EvalResult::ofVoid();
 	}
