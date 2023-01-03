@@ -8,8 +8,8 @@
 #include "types.h" // for GlyphId
 #include "units.h" // for Scalar, operator+, Vector2<>::scalar_type
 
-#include "font/tag.h" // for Tag
 #include "font/aat.h"
+#include "font/tag.h"         // for Tag
 #include "font/handle.h"      // for FontHandle
 #include "font/metrics.h"     //
 #include "font/features.h"    // for GlyphAdjustment, Feature, LookupTable

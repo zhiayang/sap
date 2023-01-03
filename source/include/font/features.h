@@ -229,8 +229,8 @@ namespace font::off
 	    zst::span<GlyphId> glyphs);
 
 	/*
-	    Parse and match the input glyphstring (where the current glyph is at glyphs[position], using the provided *subtable*.
-	    The same caveats apply as for `performContextualLookup`. Use for GPOS type 8 and GSUB type 6.
+	    Parse and match the input glyphstring (where the current glyph is at glyphs[position], using the provided
+	   *subtable*. The same caveats apply as for `performContextualLookup`. Use for GPOS type 8 and GSUB type 6.
 	*/
 	std::optional<std::pair<std::vector<ContextualLookupRecord>, size_t>> performChainedContextLookup(zst::byte_span subtable,
 	    zst::span<GlyphId> glyphs, size_t position);
@@ -356,8 +356,8 @@ namespace font::off::gsub
 	    zst::span<GlyphId> glyphs);
 
 	/*
-	    Lookup a chaining context substitution (type 6, LOOKUP_CHAINING_CONTEXT). Same semantics as GPOS chaining-context
-	    positioning wrt. the `glyphs` and `position` values.
+	    Lookup a chaining context substitution (type 6, LOOKUP_CHAINING_CONTEXT). Same semantics as GPOS
+	   chaining-context positioning wrt. the `glyphs` and `position` values.
 
 	    The returned result (if it exists) replaces glyphs from
 	        `glyphs[input_start + position]` to `glyphs[input_start + position + input_consumed - 1]`

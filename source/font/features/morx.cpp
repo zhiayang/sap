@@ -4,6 +4,7 @@
 
 #include <span>
 
+
 #include "font/aat.h"
 #include "font/misc.h"
 #include "font/font_file.h"
@@ -176,26 +177,13 @@ namespace font::aat
 			return peek_u8(tmp.drop(glyph_class * sizeof(uint8_t)));
 	}
 
-
-	template <>
-	std::optional<SubstitutedGlyphString> apply_table(const MorxLigatureSubtable& table, zst::span<GlyphId> glyphs,
-	    bool is_reverse)
+	template <size_t EntrySize, typename Action>
+	static void run_state_machine(const StateTable& machine, zst::span<GlyphId> glyphs, bool is_reverse, Action&& action)
 	{
-		bool did_substitute = true;
-		SubstitutedGlyphString ret;
+		// this is the same for all the tables
+		constexpr uint16_t FLAG_DONT_ADVANCE = 0x4000;
 
-		std::unordered_set<size_t> deleted_glyphs {};
-		std::unordered_map<size_t, GlyphId> replacements {};
-
-		using LigatureAction = uint32_t;
-		constexpr size_t EntrySize = 3 * sizeof(uint16_t);
-
-		// TODO: figure out which state to start in
 		size_t current_state = 0;
-
-		auto& machine = table.state_table;
-		std::vector<size_t> glyph_stack {};
-
 		size_t i = (is_reverse ? glyphs.size() - 1 : 0);
 
 		while(i < glyphs.size())
@@ -212,28 +200,85 @@ namespace font::aat
 			auto next_state = consume_u16(entry_start);
 			auto flags = consume_u16(entry_start);
 
-			auto lig_action_idx = consume_u16(entry_start);
+			action(i, flags, entry_start);
 
-			if(flags & 0x8000)
+			// dont-advance flag
+			if(not(flags & FLAG_DONT_ADVANCE))
+			{
+				if(is_reverse)
+				{
+					if(i == 0)
+						break;
+					i -= 1;
+				}
+				else
+				{
+					if(i == glyphs.size() - 1)
+						break;
+					i += 1;
+				}
+			}
+
+			// for ligatures, these are indices into the state table.
+			current_state = next_state;
+		}
+	}
+
+
+
+
+	template <>
+	std::optional<SubstitutedGlyphString> apply_table(const MorxLigatureSubtable& table, zst::span<GlyphId> glyphs,
+	    bool is_reverse)
+	{
+		constexpr uint16_t PERFORM_ACTION = 0x2000;
+		constexpr uint16_t SET_COMPONENT = 0x8000;
+
+		constexpr size_t EntrySize = 3 * sizeof(uint16_t);
+
+		bool did_substitute = false;
+		SubstitutedGlyphString ret;
+
+		std::unordered_set<size_t> deleted_glyphs {};
+		std::unordered_map<size_t, GlyphId> replacements {};
+
+		using LigatureAction = uint32_t;
+
+		std::vector<size_t> glyph_stack {};
+
+		auto runner = [&](size_t i, uint16_t flags, zst::byte_span extra) {
+			auto lig_action_idx = consume_u16(extra);
+
+			if(flags & SET_COMPONENT)
 				glyph_stack.push_back(i);
 
 			// perform action
-			if(flags & 0x2000)
+			if(flags & PERFORM_ACTION)
 			{
+				did_substitute = true;
+
 				uint32_t accum_idx = 0;
 				std::vector<size_t> constituent_glyph_idxs {};
 
 				while(true)
 				{
 					auto idx = glyph_stack.back();
+
 					auto cur_glyph = glyphs[idx];
+
+					// TODO: is this the right thign to do?
+					assert(not deleted_glyphs.contains(idx));
+
+					if(auto it = replacements.find(idx); it != replacements.end())
+						cur_glyph = it->second;
 
 					glyph_stack.pop_back();
 
-					uint32_t lig_action = peek_u32(table.ligature_actions.drop(lig_action_idx * sizeof(LigatureAction)));
+					auto lig_offset = lig_action_idx * sizeof(LigatureAction);
+					uint32_t lig_action = peek_u32(table.ligature_actions.drop(lig_offset));
 
 					int32_t component_offset = static_cast<int32_t>(lig_action << 2) >> 2;
-					auto component_table_idx = static_cast<uint32_t>(static_cast<int32_t>(cur_glyph) + component_offset);
+					auto component_table_idx = uint32_t(int32_t(cur_glyph) + component_offset);
 
 					accum_idx += peek_u16(table.component_table.drop(component_table_idx * sizeof(uint16_t)));
 
@@ -268,27 +313,9 @@ namespace font::aat
 
 				glyph_stack.insert(glyph_stack.end(), constituent_glyph_idxs.begin(), constituent_glyph_idxs.end());
 			}
+		};
 
-			// dont-advance flag
-			if(not(flags & 0x4000))
-			{
-				if(is_reverse)
-				{
-					if(i == 0)
-						break;
-					i -= 1;
-				}
-				else
-				{
-					if(i == glyphs.size() - 1)
-						break;
-					i += 1;
-				}
-			}
-
-			// for ligatures, these are indices into the state table.
-			current_state = next_state;
-		}
+		run_state_machine<EntrySize>(table.state_table, glyphs, is_reverse, runner);
 
 		if(not did_substitute)
 			return std::nullopt;
@@ -309,11 +336,188 @@ namespace font::aat
 
 
 	template <>
-	std::optional<SubstitutedGlyphString> apply_table(const MorxRearrangementSubtable& table, zst::span<GlyphId> glyphs,
+	std::optional<SubstitutedGlyphString> apply_table(const MorxRearrangementSubtable& table, zst::span<GlyphId> input,
 	    bool is_reverse)
 	{
-		zpr::println("applying rearrangement");
-		return {};
+		constexpr uint16_t MARK_FIRST = 0x8000;
+		constexpr uint16_t MARK_LAST = 0x2000;
+		constexpr uint16_t VERB_MASK = 0xF;
+
+		constexpr size_t EntrySize = 2 * sizeof(uint16_t);
+
+		SubstitutedGlyphString ret;
+		ret.glyphs = std::vector(input.begin(), input.end());
+		auto& glyphs = ret.glyphs;
+
+		size_t first_idx = 0;
+		size_t last_idx = 0;
+
+		auto runner = [&](size_t idx, uint16_t flags, zst::byte_span extra) {
+			if(flags & MARK_FIRST)
+				first_idx = idx;
+
+			if(flags & MARK_LAST)
+				last_idx = idx;
+
+			auto verb = flags & VERB_MASK;
+			auto it_first = glyphs.begin() + ssize_t(first_idx);
+			auto it_last = glyphs.begin() + ssize_t(last_idx) + 1;
+
+			switch(verb)
+			{
+				case 0x0: break;
+				case 0x1: { // Ax => xA
+					auto A = glyphs[first_idx];
+					std::shift_left(it_first, it_last, 1);
+					glyphs[last_idx] = A;
+					break;
+				}
+
+				case 0x2: { // xD => Dx
+					auto D = glyphs[last_idx];
+					std::shift_right(it_first, it_last, 1);
+					glyphs[first_idx] = D;
+					break;
+				}
+
+				case 0x3: { // AxD => DxA
+					std::swap(glyphs[first_idx], glyphs[last_idx]);
+					break;
+				}
+
+				case 0x4: { // ABx => xAB
+					auto A = glyphs[first_idx];
+					auto B = glyphs[first_idx + 1];
+					std::shift_left(it_first, it_last, 2);
+					glyphs[last_idx - 1] = A;
+					glyphs[last_idx - 0] = B;
+					break;
+				}
+
+				case 0x5: { // ABx => xBA
+					auto A = glyphs[first_idx];
+					auto B = glyphs[first_idx + 1];
+					std::shift_left(it_first, it_last, 2);
+					glyphs[last_idx - 1] = B;
+					glyphs[last_idx - 0] = A;
+					break;
+				}
+
+				case 0x6: { // xCD => CDx
+					auto C = glyphs[last_idx - 1];
+					auto D = glyphs[last_idx - 0];
+					std::shift_right(it_first, it_last, 2);
+					glyphs[first_idx + 0] = C;
+					glyphs[first_idx + 1] = D;
+					break;
+				}
+
+				case 0x7: { // xCD => DCx
+					auto C = glyphs[last_idx - 1];
+					auto D = glyphs[last_idx - 0];
+					std::shift_right(it_first, it_last, 2);
+					glyphs[first_idx + 0] = D;
+					glyphs[first_idx + 1] = C;
+					break;
+				}
+
+				case 0x8: { // AxCD => CDxA
+					auto A = glyphs[first_idx];
+					auto C = glyphs[last_idx - 1];
+					auto D = glyphs[last_idx - 0];
+					std::shift_right(it_first, it_last, 1);
+					glyphs[first_idx + 0] = C;
+					glyphs[first_idx + 1] = D;
+					glyphs[last_idx] = A;
+					break;
+				}
+
+				case 0x9: { // AxCD => DCxA
+					auto A = glyphs[first_idx];
+					auto C = glyphs[last_idx - 1];
+					auto D = glyphs[last_idx - 0];
+					std::shift_right(it_first, it_last, 1);
+					glyphs[first_idx + 0] = D;
+					glyphs[first_idx + 1] = C;
+					glyphs[last_idx] = A;
+					break;
+				}
+
+				case 0xA: { // ABxD => DxAB
+					auto A = glyphs[first_idx + 0];
+					auto B = glyphs[first_idx + 1];
+					auto D = glyphs[last_idx];
+					std::shift_left(it_first, it_last, 1);
+					glyphs[first_idx + 0] = D;
+					glyphs[last_idx - 1] = A;
+					glyphs[last_idx - 0] = B;
+					break;
+				}
+
+				case 0xB: { // ABxD => DxBA
+					auto A = glyphs[first_idx + 0];
+					auto B = glyphs[first_idx + 1];
+					auto D = glyphs[last_idx];
+					std::shift_left(it_first, it_last, 1);
+					glyphs[first_idx + 0] = D;
+					glyphs[last_idx - 1] = B;
+					glyphs[last_idx - 0] = A;
+					break;
+				}
+
+				case 0xC: { // ABxCD => CDxAB
+					auto A = glyphs[first_idx + 0];
+					auto B = glyphs[first_idx + 1];
+					auto C = glyphs[last_idx - 1];
+					auto D = glyphs[last_idx - 0];
+					glyphs[first_idx + 0] = C;
+					glyphs[first_idx + 1] = D;
+					glyphs[last_idx - 1] = A;
+					glyphs[last_idx - 0] = B;
+					break;
+				}
+
+				case 0xD: { // ABxCD => CDxBA
+					auto A = glyphs[first_idx + 0];
+					auto B = glyphs[first_idx + 1];
+					auto C = glyphs[last_idx - 1];
+					auto D = glyphs[last_idx - 0];
+					glyphs[first_idx + 0] = C;
+					glyphs[first_idx + 1] = D;
+					glyphs[last_idx - 1] = B;
+					glyphs[last_idx - 0] = A;
+					break;
+				}
+
+				case 0xE: { // ABxCD => DCxAB
+					auto A = glyphs[first_idx + 0];
+					auto B = glyphs[first_idx + 1];
+					auto C = glyphs[last_idx - 1];
+					auto D = glyphs[last_idx - 0];
+					glyphs[first_idx + 0] = D;
+					glyphs[first_idx + 1] = C;
+					glyphs[last_idx - 1] = A;
+					glyphs[last_idx - 0] = B;
+					break;
+				}
+
+				case 0xF: { // ABxCD => DCxBA
+					auto A = glyphs[first_idx + 0];
+					auto B = glyphs[first_idx + 1];
+					auto C = glyphs[last_idx - 1];
+					auto D = glyphs[last_idx - 0];
+					glyphs[first_idx + 0] = D;
+					glyphs[first_idx + 1] = C;
+					glyphs[last_idx - 1] = B;
+					glyphs[last_idx - 0] = A;
+					break;
+				}
+			}
+		};
+
+		run_state_machine<EntrySize>(table.state_table, input, is_reverse, runner);
+
+		return std::move(ret);
 	}
 
 	template <>

@@ -238,8 +238,8 @@ namespace pdf
 		type0->add(names::Subtype, names::Type0.ptr());
 		type0->add(names::BaseFont, basefont_name);
 
-		// TODO: here's the thing about CMap. if we use Identity-H then we don't need a CMap, but it forces the text stream
-		// to contain glyph IDs instead of anything sensible.
+		// TODO: here's the thing about CMap. if we use Identity-H then we don't need a CMap, but it forces the text
+		// stream to contain glyph IDs instead of anything sensible.
 		type0->add(names::Encoding, Name::create("Identity-H"));
 
 		// add the unicode map so text selection isn't completely broken
