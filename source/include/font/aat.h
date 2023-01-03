@@ -24,6 +24,12 @@ namespace font
 
 namespace font::aat
 {
+	struct Feature
+	{
+		uint16_t type;
+		uint16_t selector;
+	};
+
 	/*
 	    lookup tables
 	*/

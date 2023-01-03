@@ -175,32 +175,30 @@ namespace font
 		// TODO: non-english things are not even handled rn.
 		for(auto& nr : name_records)
 		{
-			// TODO: for now, we don't support any encoding other than Windows + Unicode BMP.
-			// (which includes surrogate pairs, i think -- since the OTF spec explicitly
-			// mentions "UTF-16BE")
-
 			auto text = convert_name_to_utf8(nr.platform_id, nr.encoding_id, storage.drop(nr.offset).take(nr.length));
 			if(not text.has_value())
 				continue;
 
 			if(nr.name_id == 0)
-				names.copyright_info = *text;
+				names.copyright_info = std::move(*text);
 			else if(nr.name_id == 1)
-				names.family_compat = *text;
+				names.family_compat = std::move(*text);
 			else if(nr.name_id == 2)
-				names.subfamily_compat = *text;
+				names.subfamily_compat = std::move(*text);
 			else if(nr.name_id == 3)
-				names.unique_name = *text;
+				names.unique_name = std::move(*text);
 			else if(nr.name_id == 4)
-				names.full_name = *text;
+				names.full_name = std::move(*text);
 			else if(nr.name_id == 6)
-				names.postscript_name = *text;
+				names.postscript_name = std::move(*text);
 			else if(nr.name_id == 13)
-				names.license_info = *text;
+				names.license_info = std::move(*text);
 			else if(nr.name_id == 16)
-				names.family = *text;
+				names.family = std::move(*text);
 			else if(nr.name_id == 17)
-				names.subfamily = *text;
+				names.subfamily = std::move(*text);
+			else
+				names.others[nr.name_id] = std::move(*text);
 		}
 
 		if(names.family.empty())

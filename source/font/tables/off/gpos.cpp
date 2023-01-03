@@ -4,6 +4,7 @@
 
 #include "types.h" // for GlyphId
 
+#include "font/off.h"
 #include "font/misc.h"
 #include "font/features.h"    // for AdjustmentResult, GlyphAdjustment, Loo...
 #include "font/font_file.h"   // for consume_u16, consume_i16, peek_u16

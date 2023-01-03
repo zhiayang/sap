@@ -2,8 +2,9 @@
 // Copyright (c) 2021, zhiayang
 // SPDX-License-Identifier: Apache-2.0
 
+#include "font/off.h"
+#include "font/tag.h" // for Tag
 #include "font/misc.h"
-#include "font/tag.h"       // for Tag
 #include "font/features.h"  // for LookupTable, TaggedTable, Feature, Script
 #include "font/font_file.h" // for consume_u16, FontFile, consume_u32, Table
 

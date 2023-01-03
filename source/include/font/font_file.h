@@ -9,6 +9,7 @@
 #include "units.h" // for Scalar, operator+, Vector2<>::scalar_type
 
 #include "font/aat.h"
+#include "font/off.h"
 #include "font/tag.h"         // for Tag
 #include "font/handle.h"      // for FontHandle
 #include "font/metrics.h"     //
@@ -67,6 +68,9 @@ namespace font
 		// when embedding this font, we are probably legally required to reproduce the license.
 		std::string copyright_info; // name 0
 		std::string license_info;   // name 13
+
+		// other names
+		std::unordered_map<uint16_t, std::string> others;
 	};
 
 	// TODO: clean up this entire struct
@@ -100,10 +104,10 @@ namespace font
 		const auto& usedGlyphs() const { return m_used_glyphs; }
 
 		std::map<size_t, GlyphAdjustment> getPositioningAdjustmentsForGlyphSequence(zst::span<GlyphId> glyphs,
-		    const font::off::FeatureSet& features) const;
+		    const font::FeatureSet& features) const;
 
 		std::optional<SubstitutedGlyphString> performSubstitutionsForGlyphSequence(zst::span<GlyphId> glyphs,
-		    const font::off::FeatureSet& features) const;
+		    const font::FeatureSet& features) const;
 
 		static std::optional<std::shared_ptr<FontFile>> fromHandle(FontHandle handle);
 

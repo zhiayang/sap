@@ -5,6 +5,7 @@
 #include "util.h"  // for convertBEU16
 #include "types.h" // for GlyphId
 
+#include "font/off.h"
 #include "font/misc.h"
 #include "font/features.h" // for getGlyphClass, parseAllClassDefs, parseGl...
 

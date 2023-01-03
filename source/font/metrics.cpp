@@ -99,7 +99,7 @@ namespace font
 			glyphs.push_back(this->getGlyphIndexForCodepoint(cp));
 
 		using font::Tag;
-		font::off::FeatureSet features {};
+		font::FeatureSet features {};
 
 		// REMOVE: this is just for testing!
 		features.script = Tag("cyrl");
@@ -141,7 +141,7 @@ namespace font
 	}
 
 	std::map<size_t, font::GlyphAdjustment> FontFile::getPositioningAdjustmentsForGlyphSequence(zst::span<GlyphId> glyphs,
-	    const font::off::FeatureSet& features) const
+	    const font::FeatureSet& features) const
 	{
 		if(m_gpos_table.has_value())
 			return off::getPositioningAdjustmentsForGlyphSequence(*m_gpos_table, glyphs, features);
@@ -152,7 +152,7 @@ namespace font
 	}
 
 	std::optional<SubstitutedGlyphString> FontFile::performSubstitutionsForGlyphSequence(zst::span<GlyphId> glyphs,
-	    const font::off::FeatureSet& features) const
+	    const font::FeatureSet& features) const
 	{
 		if(m_gsub_table.has_value())
 			return off::performSubstitutionsForGlyphSequence(*m_gsub_table, glyphs, features);

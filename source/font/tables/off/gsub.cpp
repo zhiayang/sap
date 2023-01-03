@@ -5,6 +5,7 @@
 #include "util.h"  // for checked_cast
 #include "types.h" // for GlyphId
 
+#include "font/off.h"
 #include "font/misc.h"
 #include "font/features.h"  // for GlyphReplacement, LookupTable, Substituti...
 #include "font/font_file.h" // for consume_u16, peek_u16, FontFile

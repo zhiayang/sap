@@ -50,10 +50,10 @@ namespace pdf
 
 		// A very thin wrapper around the identically-named methods taking a FontFile
 		std::map<size_t, font::GlyphAdjustment> getPositioningAdjustmentsForGlyphSequence(zst::span<GlyphId> glyphs,
-		    const font::off::FeatureSet& features) const;
+		    const font::FeatureSet& features) const;
 
 		std::optional<std::vector<GlyphId>> performSubstitutionsForGlyphSequence(zst::span<GlyphId> glyphs,
-		    const font::off::FeatureSet& features) const;
+		    const font::FeatureSet& features) const;
 
 		GlyphSpace1d scaleFontMetricForPDFGlyphSpace(font::FontScalar metric) const
 		{

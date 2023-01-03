@@ -1,12 +1,13 @@
-// contextual_lookup.cpp
+// off_contextual_lookup.cpp
 // Copyright (c) 2022, zhiayang
 // SPDX-License-Identifier: Apache-2.0
 
 #include "util.h"  // for checked_cast
 #include "types.h" // for GlyphId
 
+#include "font/off.h"
 #include "font/misc.h"
-#include "font/features.h" // for ContextualLookupRecord, getGlyphCoverageI...
+#include "font/features.h"
 
 namespace font::off
 {

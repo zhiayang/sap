@@ -1,4 +1,4 @@
-// font.cpp
+// pdf_font.cpp
 // Copyright (c) 2021, zhiayang
 // SPDX-License-Identifier: Apache-2.0
 
@@ -95,7 +95,7 @@ namespace pdf
 
 
 	std::map<size_t, font::GlyphAdjustment> PdfFont::getPositioningAdjustmentsForGlyphSequence(zst::span<GlyphId> glyphs,
-	    const font::off::FeatureSet& features) const
+	    const font::FeatureSet& features) const
 	{
 		if(!m_source_file)
 			return {};
@@ -104,7 +104,7 @@ namespace pdf
 	}
 
 	std::optional<std::vector<GlyphId>> PdfFont::performSubstitutionsForGlyphSequence(zst::span<GlyphId> glyphs,
-	    const font::off::FeatureSet& features) const
+	    const font::FeatureSet& features) const
 	{
 		if(!m_source_file)
 			return std::nullopt;
