@@ -180,7 +180,7 @@ namespace font::aat
 	}
 
 	template <size_t EntrySize, typename Action>
-	static void run_state_machine(const StateTable& machine, zst::span<GlyphId> glyphs, bool is_reverse, Action&& action)
+	static void run_state_machine(const StateTable& machine, zst::span<GlyphId>& glyphs, bool is_reverse, Action&& action)
 	{
 		// this is the same for all the tables
 		constexpr uint16_t FLAG_DONT_ADVANCE = 0x4000;
@@ -611,8 +611,63 @@ namespace font::aat
 	std::optional<SubstitutedGlyphString> apply_table(const MorxInsertionSubtable& table, zst::span<GlyphId> glyphs,
 	    bool is_reverse, size_t num_font_glyphs)
 	{
-		sap::warn("font/aat", "unimplemented: morx insertion");
-		return std::nullopt;
+		constexpr uint16_t SET_MARK = 0x8000;
+		constexpr uint16_t CURRENT_INSERT_BEFORE = 0x800;
+		constexpr uint16_t MARKED_INSERT_BEFORE = 0x400;
+		constexpr uint16_t CURRENT_INSERT_COUNT_MASK = 0x3E0;
+		constexpr uint16_t MARKED_INSERT_COUNT_MASK = 0x1F;
+
+		constexpr size_t EntrySize = 4 * sizeof(uint16_t);
+
+		SubstitutedGlyphString ret {};
+		ret.glyphs = std::vector(glyphs.begin(), glyphs.end());
+
+		size_t marked_glyph_idx = 0;
+
+		auto update_span = [&ret]() {
+			return zst::span<GlyphId>(ret.glyphs.data(), ret.glyphs.size());
+		};
+
+		glyphs = update_span();
+
+		auto insert_glyphs = [&](size_t at, size_t count, zst::byte_span array, size_t start_idx, bool insert_before) {
+			auto tmp = array.cast<uint16_t, std::endian::big>().drop(start_idx).take(count);
+
+			std::vector<GlyphId> to_insert {};
+			for(size_t i = 0; i < count; i++)
+				to_insert.push_back(GlyphId(tmp[i]));
+
+			ret.glyphs.insert(ret.glyphs.begin() + ssize_t(at) + (insert_before ? 0 : 1), to_insert.begin(), to_insert.end());
+			ret.mapping.extra_glyphs.insert(to_insert.begin(), to_insert.end());
+
+			glyphs = update_span();
+		};
+
+		auto runner = [&](size_t idx, uint16_t flags, zst::byte_span extra) {
+			if(flags & SET_MARK)
+				marked_glyph_idx = idx;
+
+			auto curr_insert_idx = consume_u16(extra);
+			auto mark_insert_idx = consume_u16(extra);
+
+			if(mark_insert_idx != 0xffff)
+			{
+				auto insert_count = static_cast<size_t>((flags & MARKED_INSERT_COUNT_MASK) >> 0);
+				insert_glyphs(marked_glyph_idx, insert_count, table.insertion_glyph_table, mark_insert_idx,
+				    flags & MARKED_INSERT_BEFORE);
+			}
+
+			if(curr_insert_idx != 0xffff)
+			{
+				auto insert_count = static_cast<size_t>((flags & CURRENT_INSERT_COUNT_MASK) >> 5);
+				insert_glyphs(marked_glyph_idx, insert_count, table.insertion_glyph_table, curr_insert_idx,
+				    flags & CURRENT_INSERT_BEFORE);
+			}
+		};
+
+		run_state_machine<EntrySize>(table.state_table, glyphs, is_reverse, runner);
+
+		return std::move(ret);
 	}
 
 
