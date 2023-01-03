@@ -29,8 +29,6 @@ CLEANUPS:
 	- rename layout() methods to print() or something
 	- さあぁぁぁぁ
 
-- FontFile and PdfFont have a little duplicate work in performSubstitutionsForGlyphSequence
-
 #endif
 
 int main(int argc, char** argv)

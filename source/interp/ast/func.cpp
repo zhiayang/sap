@@ -25,17 +25,6 @@ namespace sap::interp
 		return this->declaration->typecheck(cs);
 	}
 
-	ErrorOr<TCResult> Block::typecheck_impl(Interpreter* cs, const Type* infer) const
-	{
-		auto tree = cs->current()->declareAnonymousNamespace();
-		auto _ = cs->pushTree(tree);
-
-		for(auto& stmt : this->body)
-			TRY(stmt->typecheck(cs));
-
-		return TCResult::ofVoid();
-	}
-
 
 	ErrorOr<TCResult> FunctionDefn::typecheck_impl(Interpreter* cs, const Type* infer) const
 	{
@@ -67,9 +56,7 @@ namespace sap::interp
 			TRY(this->param_defns.back()->typecheck(cs));
 		}
 
-		for(auto& stmt : this->body)
-			TRY(stmt->typecheck(cs));
-
+		TRY(this->body->typecheck(cs));
 		return TCResult::ofRValue(decl_type);
 	}
 
@@ -84,18 +71,7 @@ namespace sap::interp
 		for(size_t i = 0; i < args.size(); i++)
 			frame.setValue(this->param_defns[i].get(), std::move(args[i]));
 
-		for(auto& stmt : this->body)
-		{
-			auto result = TRY(stmt->evaluate(cs));
-
-			if(result.isReturn())
-				return Ok(std::move(result));
-
-			else if(not result.isNormal())
-				return ErrFmt("unexpected statement in function body");
-		}
-
-		return EvalResult::ofVoid();
+		return this->body->evaluate(cs);
 	}
 
 

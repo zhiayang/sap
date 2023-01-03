@@ -15,10 +15,12 @@
 
 namespace sap::frontend
 {
+	constexpr auto KW_IF = "if";
 	constexpr auto KW_LET = "let";
 	constexpr auto KW_VAR = "var";
 	constexpr auto KW_FUNC = "fn";
 	constexpr auto KW_NULL = "null";
+	constexpr auto KW_ELSE = "else";
 	constexpr auto KW_MUTABLE = "mut";
 	constexpr auto KW_STRUCT = "struct";
 	constexpr auto KW_SCRIPT_BLOCK = "script";
@@ -661,6 +663,22 @@ namespace sap::frontend
 		};
 	}
 
+	static std::unique_ptr<interp::Block> parse_block_or_stmt(Lexer& lexer)
+	{
+		auto block = std::make_unique<interp::Block>();
+		if(lexer.expect(TT::LBrace))
+		{
+			while(not lexer.expect(TT::RBrace))
+				block->body.push_back(parse_stmt(lexer));
+		}
+		else
+		{
+			block->body.push_back(parse_stmt(lexer));
+		}
+
+		return block;
+	}
+
 	static std::unique_ptr<interp::FunctionDefn> parse_function_defn(Lexer& lexer)
 	{
 		using namespace interp;
@@ -690,13 +708,10 @@ namespace sap::frontend
 			return_type = parse_type(lexer);
 
 		auto defn = std::make_unique<interp::FunctionDefn>(name, std::move(params), return_type);
-
-		if(not lexer.expect(TT::LBrace))
+		if(lexer.peek() != TT::LBrace)
 			error(lexer.location(), "expected '{' to begin function body");
 
-		while(not lexer.expect(TT::RBrace))
-			defn->body.push_back(parse_stmt(lexer));
-
+		defn->body = parse_block_or_stmt(lexer);
 		return defn;
 	}
 
@@ -745,6 +760,28 @@ namespace sap::frontend
 	}
 
 
+	static std::unique_ptr<interp::IfStmt> parse_if_stmt(Lexer& lexer)
+	{
+		auto tmp = lexer.expectString(KW_IF);
+		assert(tmp);
+
+		if(not lexer.expect(TT::LParen))
+			error(lexer.location(), "expected '(' after 'if'");
+
+		auto if_stmt = std::make_unique<interp::IfStmt>();
+
+		if_stmt->if_cond = parse_expr(lexer);
+		if(not lexer.expect(TT::RParen))
+			error(lexer.location(), "expected ')' after condition");
+
+		if_stmt->if_body = parse_block_or_stmt(lexer);
+
+		if(lexer.expectString(KW_ELSE))
+			if_stmt->else_body = parse_block_or_stmt(lexer);
+
+		return if_stmt;
+	}
+
 
 
 
@@ -778,6 +815,11 @@ namespace sap::frontend
 			else if(tok.text == KW_STRUCT)
 			{
 				stmt = parse_struct_defn(lexer);
+				optional_semicolon = true;
+			}
+			else if(tok.text == KW_IF)
+			{
+				stmt = parse_if_stmt(lexer);
 				optional_semicolon = true;
 			}
 			else

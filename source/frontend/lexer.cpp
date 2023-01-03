@@ -492,6 +492,18 @@ namespace sap::frontend
 		return false;
 	}
 
+
+	bool Lexer::expectString(zst::str_view sv)
+	{
+		if(auto t = this->peek(); t == TT::Identifier && t.text == sv)
+		{
+			this->next();
+			return true;
+		}
+
+		return false;
+	}
+
 	bool Lexer::isWhitespace() const
 	{
 		if(m_stream.empty())

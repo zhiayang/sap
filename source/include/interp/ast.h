@@ -210,6 +210,20 @@ namespace sap::interp
 	};
 
 
+	struct IfStmt : Stmt
+	{
+		IfStmt() { }
+
+		virtual ErrorOr<EvalResult> evaluate(Interpreter* cs) const override;
+		virtual ErrorOr<TCResult> typecheck_impl(Interpreter* cs, const Type* infer = nullptr) const override;
+
+		std::unique_ptr<Expr> if_cond;
+		std::unique_ptr<Block> if_body;
+		std::unique_ptr<Block> else_body;
+	};
+
+
+
 	struct Definition;
 
 	struct Declaration : Stmt
@@ -302,7 +316,7 @@ namespace sap::interp
 
 		ErrorOr<EvalResult> call(Interpreter* cs, std::vector<Value>& args) const;
 
-		std::vector<std::unique_ptr<Stmt>> body;
+		std::unique_ptr<Block> body;
 
 		mutable std::vector<std::unique_ptr<VariableDefn>> param_defns;
 	};

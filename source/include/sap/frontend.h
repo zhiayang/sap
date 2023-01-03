@@ -113,6 +113,8 @@ namespace sap::frontend
 		bool expect(TokenType type);
 		std::optional<Token> match(TokenType type);
 
+		bool expectString(zst::str_view sv);
+
 		Token peekWithMode(Mode mode) const;
 
 		SaveState save();

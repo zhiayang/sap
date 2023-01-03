@@ -12,7 +12,7 @@ fi fl Bсички хора се раждат свободни и равни по
 	builtin::print("foo = ");
 	builtin::println(foo);
 
-	foo = 69;
+	foo = 10;
 	builtin::print("foo = ");
 	builtin::println(foo);
 
@@ -23,9 +23,16 @@ fi fl Bсички хора се раждат свободни и равни по
 	{
 		builtin::print("a = ");
 		builtin::println(a);
+
+		if(a > 10)
+			builtin::println("a > 10");
+		else
+			builtin::println("a ≤ 10");
 	}
 
+	foozle(foo);
 	foo = 69;
+	foozle(foo);
 
 	struct Cactus
 	{
