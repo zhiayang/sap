@@ -16,7 +16,7 @@
 */
 
 /*
-    Version 1.4.2
+    Version 1.4.3
     =============
 
 
@@ -130,12 +130,72 @@ namespace zst
 	}
 }
 
+#if defined(__cpp_lib_endian)
+#include <bit>
+#endif
 
 namespace zst
 {
+	template <typename T, typename std::enable_if_t<std::is_signed_v<T>, int> = 0>
+	inline T byteswap(T x)
+	{
+		return byteswap<std::make_unsigned_t<T>>(static_cast<std::make_unsigned_t<T>>(x));
+	}
+
+	inline uint16_t byteswap(uint16_t x)
+	{
+#if(_MSC_VER)
+		return _byteswap_ushort(value);
+#else
+		// Compiles to bswap since gcc 4.5.3 and clang 3.4.1
+		return (uint16_t) (((uint16_t) (x & 0x00ff) << 8) | ((uint16_t) (x & 0xff00) >> 8));
+#endif
+	}
+
+	inline uint32_t byteswap(uint32_t x)
+	{
+#if(_MSC_VER)
+		return _byteswap_ulong(value);
+#else
+		// Compiles to bswap since gcc 4.5.3 and clang 3.4.1
+		return ((x & 0x000000ff) << 24) | ((x & 0x0000ff00) << 8) | ((x & 0x00ff0000) >> 8) | ((x & 0xff000000) >> 24);
+#endif
+	}
+
+	inline uint64_t byteswap(uint64_t value)
+	{
+#if(_MSC_VER)
+		return _byteswap_uint64(value);
+#else
+		// Compiles to bswap since gcc 4.5.3 and clang 3.4.1
+		return ((value & 0xFF00000000000000u) >> 56u) | ((value & 0x00FF000000000000u) >> 40u)
+		     | ((value & 0x0000FF0000000000u) >> 24u) | ((value & 0x000000FF00000000u) >> 8u)
+		     | ((value & 0x00000000FF000000u) << 8u) | ((value & 0x0000000000FF0000u) << 24u)
+		     | ((value & 0x000000000000FF00u) << 40u) | ((value & 0x00000000000000FFu) << 56u);
+#endif
+	}
+
 	namespace impl
 	{
-		template <typename CharType>
+		#if defined(__cpp_lib_endian)
+			using endian = std::endian;
+		#else
+			// copied from cppref
+			enum class endian
+			{
+			#if defined(_WIN32)
+				little = 0,
+			    big    = 1,
+			    native = little,
+		    #else
+				little = __ORDER_LITTLE_ENDIAN__,
+				big    = __ORDER_BIG_ENDIAN__,
+				native = __BYTE_ORDER__,
+			#endif
+			};
+		#endif
+
+		template <typename CharType, impl::endian Endian = impl::endian::native>
 		struct str_view
 		{
 			using value_type = CharType;
@@ -177,14 +237,26 @@ namespace zst
 			constexpr inline bool empty() const { return this->len == 0; }
 			constexpr inline const value_type* data() const { return this->ptr; }
 
-			inline str_view<uint8_t> bytes() const { return str_view<uint8_t>(reinterpret_cast<const uint8_t*>(this->ptr), this->len); }
+			inline str_view<uint8_t> bytes() const
+			{
+				return str_view<uint8_t>(reinterpret_cast<const uint8_t*>(this->ptr), this->len);
+			}
 
 			value_type front() const { return this->ptr[0]; }
 			value_type back() const { return this->ptr[this->len - 1]; }
 
 			inline void clear() { this->ptr = 0; this->len = 0; }
 
+			template <auto e = Endian, typename std::enable_if_t<e == impl::endian::native, int> = 0>
 			inline value_type operator[] (size_t n) const { return this->ptr[n]; }
+
+			template <auto e = Endian, typename std::enable_if_t<
+				(e != impl::endian::native) && std::is_integral_v<value_type>,
+			int> = 0>
+			inline value_type operator[] (size_t n) const
+			{
+				return zst::byteswap(this->ptr[n]);
+			}
 
 			inline size_t find(value_type c) const { return this->find(str_view(&c, 1)); }
 			inline size_t find(str_view sv) const
@@ -330,11 +402,11 @@ namespace zst
 				return str_view<char>(reinterpret_cast<const char*>(this->ptr), this->len);
 			}
 
-			template <typename U>
-			str_view<U> cast() const
+			template <typename U, impl::endian E = Endian>
+			str_view<U, E> cast() const
 			{
 				static_assert(sizeof(value_type) % sizeof(U) == 0 || sizeof(U) % sizeof(value_type) == 0, "types are not castable");
-				return str_view<U>(reinterpret_cast<const U*>(this->ptr), (sizeof(value_type) * this->len) / sizeof(U));
+				return str_view<U, E>(reinterpret_cast<const U*>(this->ptr), (sizeof(value_type) * this->len) / sizeof(U));
 			}
 
 		private:
@@ -375,8 +447,8 @@ namespace zst
 	using str_view = impl::str_view<char>;
 	using wstr_view = impl::str_view<char32_t>;
 
-	template <typename T>
-	using span = impl::str_view<T>;
+	template <typename T, impl::endian E = impl::endian::native>
+	using span = impl::str_view<T, E>;
 
 	using byte_span = span<uint8_t>;
 }
@@ -1064,6 +1136,11 @@ namespace zst::impl
 /*
 	Version History
 	===============
+
+	1.4.3 - 03/01/2023
+	------------------
+	- add endianness support to str_view
+
 
 	1.4.2 - 26/09/2022
 	------------------

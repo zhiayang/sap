@@ -40,7 +40,8 @@ namespace font::aat
 		assert(false && "unreachable!");
 	}
 
-	static Lookup parse_lookup_f0(zst::byte_span buf, size_t num_glyphs)
+
+	static Lookup read_lookup_f0(zst::byte_span buf, size_t num_glyphs)
 	{
 		Lookup ret {};
 		for(size_t i = 0; i < num_glyphs; i++)
@@ -49,8 +50,7 @@ namespace font::aat
 		return ret;
 	}
 
-
-	static Lookup parse_lookup_f2(zst::byte_span buf)
+	static Lookup read_lookup_f2(zst::byte_span buf)
 	{
 		auto [num_elems, lookup_size] = parse_binsearch_header(buf, 2 * sizeof(uint16_t));
 
@@ -68,11 +68,11 @@ namespace font::aat
 		return ret;
 	}
 
-	static Lookup parse_lookup_f4(zst::byte_span buf, zst::byte_span table_start)
+	static Lookup read_lookup_f4(zst::byte_span buf, zst::byte_span table_start)
 	{
 		// similar to format 2 but with one more indirection.
 		auto [num_elems, lookup_size] = parse_binsearch_header(buf, 2 * sizeof(uint16_t));
-		assert(lookup_size == 3 * sizeof(uint16_t));
+		assert(lookup_size == sizeof(uint16_t));
 
 		Lookup ret {};
 		for(auto i = 0u; i < num_elems; i++)
@@ -90,7 +90,7 @@ namespace font::aat
 		return ret;
 	}
 
-	static Lookup parse_lookup_f6(zst::byte_span buf)
+	static Lookup read_lookup_f6(zst::byte_span buf)
 	{
 		auto [num_elems, lookup_size] = parse_binsearch_header(buf, sizeof(uint16_t));
 
@@ -105,7 +105,7 @@ namespace font::aat
 		return ret;
 	}
 
-	static Lookup parse_lookup_f8(zst::byte_span buf)
+	static Lookup read_lookup_f8(zst::byte_span buf)
 	{
 		auto first_glyph = consume_u16(buf);
 		auto num_glyphs = consume_u16(buf);
@@ -117,7 +117,7 @@ namespace font::aat
 		return ret;
 	}
 
-	static Lookup parse_lookup_f10(zst::byte_span buf)
+	static Lookup read_lookup_f10(zst::byte_span buf)
 	{
 		auto elem_size = consume_u16(buf);
 		assert(elem_size == 1 || elem_size == 2 || elem_size == 4 || elem_size == 8);
@@ -139,12 +139,174 @@ namespace font::aat
 		auto format = consume_u16(buf);
 		switch(format)
 		{
-			case 0: return parse_lookup_f0(buf, num_glyphs);
-			case 2: return parse_lookup_f2(buf);
-			case 4: return parse_lookup_f4(buf, table_start);
-			case 6: return parse_lookup_f6(buf);
-			case 8: return parse_lookup_f8(buf);
-			case 10: return parse_lookup_f10(buf);
+			case 0: return read_lookup_f0(buf, num_glyphs);
+			case 2: return read_lookup_f2(buf);
+			case 4: return read_lookup_f4(buf, table_start);
+			case 6: return read_lookup_f6(buf);
+			case 8: return read_lookup_f8(buf);
+			case 10: return read_lookup_f10(buf);
+			default: //
+				sap::warn("font/aat", "unknown LookupTable format {}", format);
+				return std::nullopt;
+		}
+	}
+
+
+
+
+
+
+
+
+
+	static std::optional<uint64_t> search_lookup_f0(zst::byte_span buf, size_t num_glyphs, GlyphId target)
+	{
+		if(static_cast<size_t>(target) >= num_glyphs)
+			return std::nullopt;
+
+		return peek_u16(buf.drop(static_cast<size_t>(target) * sizeof(uint16_t)));
+	}
+
+	static std::optional<uint64_t> search_lookup_f2(zst::byte_span buf, GlyphId target)
+	{
+		auto [num_elems, lookup_size] = parse_binsearch_header(buf, 2 * sizeof(uint16_t));
+		auto RecordSize = lookup_size + 2 * sizeof(uint16_t);
+
+		size_t low = 0;
+		size_t high = num_elems;
+
+		while(low < high)
+		{
+			auto mid = (low + high) / 2u;
+			auto last = GlyphId(peek_u16(buf.drop(mid * RecordSize)));
+			auto first = GlyphId(peek_u16(buf.drop(mid * RecordSize + sizeof(uint16_t))));
+
+			if(first <= target && target <= last)
+			{
+				auto tmp = buf.drop(mid * RecordSize + 2 * sizeof(uint16_t));
+				return read_lookup(tmp, lookup_size);
+			}
+			else if(target > last)
+			{
+				low = mid + 1;
+			}
+			else
+			{
+				high = mid;
+			}
+		}
+
+		return std::nullopt;
+	}
+
+	static std::optional<uint64_t> search_lookup_f4(zst::byte_span buf, zst::byte_span table_start, GlyphId target)
+	{
+		// similar to format 2 but with one more indirection.
+		auto [num_elems, lookup_size] = parse_binsearch_header(buf, 2 * sizeof(uint16_t));
+		assert(lookup_size == sizeof(uint16_t));
+
+		auto RecordSize = 3 * sizeof(uint16_t);
+
+		size_t low = 0;
+		size_t high = num_elems;
+
+		while(low < high)
+		{
+			auto mid = (low + high) / 2u;
+			auto last = GlyphId(peek_u16(buf.drop(mid * RecordSize)));
+			auto first = GlyphId(peek_u16(buf.drop(mid * RecordSize + sizeof(uint16_t))));
+
+			if(first <= target && target <= last)
+			{
+				auto offset = peek_u16(buf.drop(mid * RecordSize + 2 * sizeof(uint16_t)));
+				auto data = table_start.drop(offset);
+
+				auto tmp = data.drop(static_cast<size_t>(target - first) * sizeof(uint16_t));
+				return peek_u16(tmp);
+			}
+			else if(target > last)
+			{
+				low = mid + 1;
+			}
+			else
+			{
+				high = mid;
+			}
+		}
+
+		return std::nullopt;
+	}
+
+	static std::optional<uint64_t> search_lookup_f6(zst::byte_span buf, GlyphId target)
+	{
+		auto [num_elems, lookup_size] = parse_binsearch_header(buf, sizeof(uint16_t));
+		auto RecordSize = lookup_size + sizeof(uint16_t);
+
+		size_t low = 0;
+		size_t high = num_elems;
+
+		while(low < high)
+		{
+			auto mid = (low + high) / 2u;
+			auto glyph = GlyphId(peek_u16(buf.drop(mid * RecordSize)));
+
+			if(target == glyph)
+			{
+				auto tmp = buf.drop(mid * RecordSize + sizeof(uint16_t));
+				return read_lookup(tmp, lookup_size);
+			}
+			else if(target > glyph)
+			{
+				low = mid + 1;
+			}
+			else
+			{
+				high = mid;
+			}
+		}
+
+		return std::nullopt;
+	}
+
+	static std::optional<uint64_t> search_lookup_f8(zst::byte_span buf, GlyphId target)
+	{
+		auto first_glyph = GlyphId(consume_u16(buf));
+		auto num_glyphs = consume_u16(buf);
+
+		if(target < first_glyph || (first_glyph + num_glyphs) <= target)
+			return std::nullopt;
+
+		return peek_u16(buf.drop(static_cast<size_t>(target - first_glyph) * sizeof(uint16_t)));
+	}
+
+	static std::optional<uint64_t> search_lookup_f10(zst::byte_span buf, GlyphId target)
+	{
+		auto elem_size = consume_u16(buf);
+		assert(elem_size == 1 || elem_size == 2 || elem_size == 4 || elem_size == 8);
+
+		auto first_glyph = GlyphId(consume_u16(buf));
+		auto num_glyphs = consume_u16(buf);
+
+		if(target < first_glyph || (first_glyph + num_glyphs) <= target)
+			return std::nullopt;
+
+		auto tmp = buf.drop(static_cast<size_t>(target - first_glyph) * elem_size);
+		return read_lookup(tmp, elem_size);
+	}
+
+	std::optional<uint64_t> searchLookupTable(zst::byte_span table, size_t num_font_glyphs, GlyphId target)
+	{
+		auto table_start = table;
+
+		auto format = consume_u16(table);
+		switch(format)
+		{
+			case 0: return search_lookup_f0(table, num_font_glyphs, target);
+			case 2: return search_lookup_f2(table, target);
+			case 4: return search_lookup_f4(table, table_start, target);
+			case 6: return search_lookup_f6(table, target);
+			case 8: return search_lookup_f8(table, target);
+			case 10: return search_lookup_f10(table, target);
 			default: //
 				sap::warn("font/aat", "unknown LookupTable format {}", format);
 				return std::nullopt;

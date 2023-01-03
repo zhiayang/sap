@@ -910,13 +910,6 @@ namespace sap::frontend
 	}
 
 
-	static std::unique_ptr<DocumentObject> parse_top_level(Lexer& lexer)
-	{
-		while(true)
-		{
-		}
-	}
-
 	Document parse(zst::str_view filename, zst::str_view contents)
 	{
 		auto lexer = Lexer(filename, contents);

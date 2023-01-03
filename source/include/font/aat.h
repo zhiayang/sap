@@ -6,6 +6,7 @@
 
 #include <variant>
 
+#include "util.h"
 #include "types.h" // for GlyphId
 
 #include "font/tag.h"         // for Tag
@@ -32,7 +33,7 @@ namespace font::aat
 	};
 
 	std::optional<Lookup> parseLookupTable(zst::byte_span buf, size_t num_font_glyphs);
-
+	std::optional<uint64_t> searchLookupTable(zst::byte_span table, size_t num_font_glyphs, GlyphId target);
 
 	/*
 	    encodes a state machine
@@ -131,6 +132,8 @@ namespace font::aat
 
 		bool only_vertical;
 		bool both_horizontal_and_vertical;
+
+		zst::byte_span table_start;
 	};
 
 	struct MorxRearrangementSubtable
@@ -152,15 +155,16 @@ namespace font::aat
 		MorxSubtableCommon common;
 		StateTable state_table;
 
-		zst::byte_span ligature_actions;
-		zst::byte_span component_table;
-		zst::byte_span ligatures;
+		util::big_endian_span<uint32_t> ligature_actions;
+		util::big_endian_span<uint16_t> component_table;
+		util::big_endian_span<uint16_t> ligatures;
 	};
 
 	struct MorxNonContextualSubtable
 	{
 		MorxSubtableCommon common;
-		Lookup lookup;
+
+		zst::byte_span lookup;
 	};
 
 	struct MorxInsertionSubtable
@@ -185,6 +189,7 @@ namespace font::aat
 	struct MorxTable
 	{
 		std::vector<MorxChain> chains;
+		size_t num_font_glyphs;
 	};
 
 	std::optional<SubstitutedGlyphString> performSubstitutionsForGlyphSequence(const MorxTable& morx, zst::span<GlyphId> glyphs);

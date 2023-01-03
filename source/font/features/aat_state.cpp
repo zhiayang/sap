@@ -23,46 +23,6 @@ namespace font::aat
 			state_table.glyph_classes[GlyphId(first_glyph + i)] = consume_u8(buf);
 	}
 
-#if 0
-	static void parse_state_subtable(StateTable& state_table, zst::byte_span buf, size_t num_states, bool is_stx)
-	{
-		for(size_t state = 0; state < num_states; state++)
-		{
-			std::unordered_map<uint16_t, size_t> transitions;
-			for(uint16_t i = 0; i < state_table.num_classes; i++)
-			{
-				if(is_stx)
-					transitions[i] = consume_u16(buf);
-				else
-					transitions[i] = consume_u8(buf);
-			}
-
-			state_table.states[state] = std::move(transitions);
-		}
-	}
-
-	static void parse_entry_subtable(StateTable& state_table, zst::byte_span buf, size_t num_states, bool is_stx,
-	    size_t entry_size)
-	{
-		assert(entry_size >= 2 * sizeof(uint16_t));
-
-		for(size_t i = 0; i < num_states; i++)
-		{
-			auto new_state = consume_u16(buf);
-			auto flags = consume_u16(buf);
-			auto per_glyph_offset_array = buf;
-
-			buf.remove_prefix(entry_size - 2 * sizeof(uint16_t));
-
-			state_table.entries.push_back(StateTable::Entry {
-			    .new_state = new_state,
-			    .flags = flags,
-			    .per_glyph_table = per_glyph_offset_array,
-			});
-		}
-	}
-#endif
-
 	static StateTable parse_state_table(zst::byte_span& buf, bool is_stx, size_t num_font_glyphs)
 	{
 		auto table_start = buf;

@@ -57,17 +57,15 @@ namespace font::aat
 
 		return MorxLigatureSubtable {
 			.state_table = std::move(state_table),
-			.ligature_actions = ligature_actions,
-			.component_table = component_table,
-			.ligatures = ligatures,
+			.ligature_actions = ligature_actions.cast<uint32_t, std::endian::big>(),
+			.component_table = component_table.cast<uint16_t, std::endian::big>(),
+			.ligatures = ligatures.cast<uint16_t, std::endian::big>(),
 		};
 	}
 
 	static MorxNonContextualSubtable parse_non_contextual_subtable(zst::byte_span buf, size_t num_glyphs)
 	{
-		return MorxNonContextualSubtable {
-			.lookup = *parseLookupTable(buf, num_glyphs),
-		};
+		return MorxNonContextualSubtable { .lookup = buf };
 	}
 
 	static MorxInsertionSubtable parse_insertion_subtable(zst::byte_span buf, size_t num_glyphs)
@@ -85,6 +83,8 @@ namespace font::aat
 
 	static std::optional<MorxSubtable> parse_morx_subtable(zst::byte_span& buf, size_t num_glyphs)
 	{
+		auto table_start = buf;
+
 		auto len = consume_u32(buf);
 		auto cov = consume_u32(buf);
 		auto flags = consume_u32(buf);
@@ -103,6 +103,7 @@ namespace font::aat
 			.process_descending_order = bool(cov & 0x40000000),
 			.only_vertical = bool(cov & 0x80000000),
 			.both_horizontal_and_vertical = bool(cov & 0x20000000),
+			.table_start = table_start,
 		};
 
 		MorxSubtable subtable {};
@@ -165,7 +166,8 @@ namespace font::aat
 	inline constexpr uint16_t CLASS_CODE_END_OF_LINE = 3;
 
 	template <typename T>
-	static std::optional<SubstitutedGlyphString> apply_table(const T&, zst::span<GlyphId> glyphs, bool is_reverse);
+	static std::optional<SubstitutedGlyphString> apply_table(const T&, zst::span<GlyphId> glyphs, bool is_reverse,
+	    size_t num_font_glyphs);
 
 
 	static size_t get_entry_index_for_state(const StateTable& machine, size_t state, uint16_t glyph_class)
@@ -229,7 +231,7 @@ namespace font::aat
 
 	template <>
 	std::optional<SubstitutedGlyphString> apply_table(const MorxLigatureSubtable& table, zst::span<GlyphId> glyphs,
-	    bool is_reverse)
+	    bool is_reverse, size_t num_font_glyphs)
 	{
 		constexpr uint16_t PERFORM_ACTION = 0x2000;
 		constexpr uint16_t SET_COMPONENT = 0x8000;
@@ -241,8 +243,6 @@ namespace font::aat
 
 		std::unordered_set<size_t> deleted_glyphs {};
 		std::unordered_map<size_t, GlyphId> replacements {};
-
-		using LigatureAction = uint32_t;
 
 		std::vector<size_t> glyph_stack {};
 
@@ -266,7 +266,7 @@ namespace font::aat
 
 					auto cur_glyph = glyphs[idx];
 
-					// TODO: is this the right thign to do?
+					// TODO: is this the right thing to do?
 					assert(not deleted_glyphs.contains(idx));
 
 					if(auto it = replacements.find(idx); it != replacements.end())
@@ -274,13 +274,11 @@ namespace font::aat
 
 					glyph_stack.pop_back();
 
-					auto lig_offset = lig_action_idx * sizeof(LigatureAction);
-					uint32_t lig_action = peek_u32(table.ligature_actions.drop(lig_offset));
-
+					uint32_t lig_action = table.ligature_actions[lig_action_idx];
 					int32_t component_offset = static_cast<int32_t>(lig_action << 2) >> 2;
 					auto component_table_idx = uint32_t(int32_t(cur_glyph) + component_offset);
 
-					accum_idx += peek_u16(table.component_table.drop(component_table_idx * sizeof(uint16_t)));
+					accum_idx += table.component_table[component_table_idx];
 
 					bool is_last = (lig_action & 0x80000000);
 					bool should_store = is_last || (lig_action & 0x40000000);
@@ -288,7 +286,7 @@ namespace font::aat
 					{
 						constituent_glyph_idxs.push_back(idx);
 
-						auto output_lig = GlyphId(peek_u16(table.ligatures.drop(accum_idx * sizeof(uint16_t))));
+						auto output_lig = GlyphId(table.ligatures[accum_idx]);
 						replacements[idx] = output_lig;
 
 						std::vector<GlyphId> constituent_glyphs {};
@@ -337,7 +335,7 @@ namespace font::aat
 
 	template <>
 	std::optional<SubstitutedGlyphString> apply_table(const MorxRearrangementSubtable& table, zst::span<GlyphId> input,
-	    bool is_reverse)
+	    bool is_reverse, size_t num_font_glyphs)
 	{
 		constexpr uint16_t MARK_FIRST = 0x8000;
 		constexpr uint16_t MARK_LAST = 0x2000;
@@ -522,27 +520,104 @@ namespace font::aat
 
 	template <>
 	std::optional<SubstitutedGlyphString> apply_table(const MorxContextualSubtable& table, zst::span<GlyphId> glyphs,
-	    bool is_reverse)
+	    bool is_reverse, size_t num_font_glyphs)
 	{
-		zpr::println("applying contextual");
-		return {};
+		constexpr uint16_t SET_MARK = 0x8000;
+		constexpr size_t EntrySize = 4 * sizeof(uint16_t);
+
+		bool did_substitute = false;
+
+		std::unordered_map<size_t, GlyphId> replacements {};
+		size_t marked_glyph_idx = 0;
+
+		auto runner = [&](size_t idx, uint16_t flags, zst::byte_span extra) {
+			auto mark_idx = consume_u16(extra);
+			auto curr_idx = consume_u16(extra);
+
+			auto subst_offsets = table.substitution_tables.cast<uint32_t, std::endian::big>();
+
+			if(mark_idx != 0xffff)
+			{
+				did_substitute = true;
+				auto offset = subst_offsets[mark_idx];
+				auto lookup_table = table.substitution_tables.drop(offset);
+
+				if(auto rep = searchLookupTable(lookup_table, num_font_glyphs, glyphs[marked_glyph_idx]); rep.has_value())
+					replacements[marked_glyph_idx] = GlyphId(*rep);
+			}
+
+			if(curr_idx != 0xffff)
+			{
+				did_substitute = true;
+				auto offset = subst_offsets[curr_idx];
+				auto lookup_table = table.substitution_tables.drop(offset);
+
+				if(auto rep = searchLookupTable(lookup_table, num_font_glyphs, glyphs[idx]); rep.has_value())
+					replacements[idx] = GlyphId(*rep);
+			}
+
+			if(flags & SET_MARK)
+				marked_glyph_idx = idx;
+		};
+
+		run_state_machine<EntrySize>(table.state_table, glyphs, is_reverse, runner);
+
+		if(not did_substitute)
+			return std::nullopt;
+
+		SubstitutedGlyphString ret;
+		ret.glyphs.reserve(glyphs.size());
+		for(size_t i = 0; i < glyphs.size(); i++)
+		{
+			if(auto it = replacements.find(i); it != replacements.end())
+				ret.glyphs.push_back(it->second);
+			else
+				ret.glyphs.push_back(glyphs[i]);
+		}
+
+		return std::move(ret);
 	}
 
 	template <>
 	std::optional<SubstitutedGlyphString> apply_table(const MorxNonContextualSubtable& table, zst::span<GlyphId> glyphs,
-	    bool is_reverse)
+	    bool is_reverse, size_t num_font_glyphs)
 	{
-		zpr::println("applying non-contextual");
-		return {};
+		bool did_substitute = false;
+
+		std::unordered_map<size_t, GlyphId> replacements {};
+		for(size_t i = 0; i < glyphs.size(); i++)
+		{
+			if(auto ret = searchLookupTable(table.lookup, num_font_glyphs, glyphs[i]); ret.has_value())
+				replacements[i] = GlyphId(*ret);
+		}
+
+		if(not did_substitute)
+			return std::nullopt;
+
+		SubstitutedGlyphString ret;
+		ret.glyphs.reserve(glyphs.size());
+		for(size_t i = 0; i < glyphs.size(); i++)
+		{
+			if(auto it = replacements.find(i); it != replacements.end())
+				ret.glyphs.push_back(it->second);
+			else
+				ret.glyphs.push_back(glyphs[i]);
+		}
+
+		return std::move(ret);
 	}
 
 	template <>
 	std::optional<SubstitutedGlyphString> apply_table(const MorxInsertionSubtable& table, zst::span<GlyphId> glyphs,
-	    bool is_reverse)
+	    bool is_reverse, size_t num_font_glyphs)
 	{
-		zpr::println("applying insertion");
-		return {};
+		sap::warn("font/aat", "unimplemented: morx insertion");
+		return std::nullopt;
 	}
+
+
+
+
 
 
 	static SubstitutionMapping& combine_subst_mapping(SubstitutionMapping& to, SubstitutionMapping&& from)
@@ -593,7 +668,7 @@ namespace font::aat
 
 				auto visitor = [&](auto& t) {
 					auto tmp = zst::span<GlyphId>(ret->glyphs.data(), ret->glyphs.size());
-					return apply_table(t, tmp, reverse_glyphs);
+					return apply_table(t, tmp, reverse_glyphs, morx.num_font_glyphs);
 				};
 
 				if(auto result = std::visit(visitor, subtable); result.has_value())
@@ -625,6 +700,7 @@ namespace font
 		}
 
 		aat::MorxTable morx_table {};
+		morx_table.num_font_glyphs = m_num_glyphs;
 
 		auto num_chains = consume_u32(buf);
 		for(auto i = 0u; i < num_chains; i++)
