@@ -60,7 +60,7 @@ namespace sap::interp
 		virtual ErrorOr<EvalResult> evaluate(Evaluator* ev) const override;
 		virtual ErrorOr<TCResult> typecheck_impl(Typechecker* ts, const Type* infer = nullptr) const override;
 
-		mutable std::unique_ptr<tree::InlineObject> object;
+		mutable std::vector<std::unique_ptr<tree::InlineObject>> objects;
 	};
 
 	struct Declaration;

@@ -33,19 +33,28 @@ namespace sap::tree
 			}
 			else
 			{
-				sap::internal_error("aoeu");
+				sap::internal_error("unsupported! {}", typeid(*it).name());
 			}
 		}
 	}
 
 	void Document::processWordSeparators()
 	{
-		for(auto& obj : m_objects)
+		for(auto it = m_objects.begin(); it != m_objects.end();)
 		{
-			if(auto para = dynamic_cast<Paragraph*>(obj); para != nullptr)
+			if(auto para = dynamic_cast<Paragraph*>(*it); para != nullptr)
+			{
 				para->processWordSeparators();
+				if(para->contents().empty())
+					it = m_objects.erase(it);
+				else
+					++it;
+			}
 			else
+			{
 				sap::internal_error("boeu");
+				++it;
+			}
 		}
 	}
 

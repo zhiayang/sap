@@ -900,7 +900,6 @@ namespace sap::frontend
 		return stmt;
 	}
 
-
 	static std::unique_ptr<ScriptBlock> parse_script_block(Lexer& lexer)
 	{
 		auto lm = LexerModer(lexer, Lexer::Mode::Script);
@@ -936,7 +935,8 @@ namespace sap::frontend
 		return block;
 	}
 
-	static std::unique_ptr<ScriptCall> parse_inline_script(Lexer& lexer)
+	static std::unique_ptr<tree::InlineObject> parse_inline_obj(Lexer& lexer);
+	static std::unique_ptr<ScriptCall> parse_inline_script_call(Lexer& lexer)
 	{
 		auto lm = LexerModer(lexer, Lexer::Mode::Script);
 
@@ -951,6 +951,21 @@ namespace sap::frontend
 		auto sc = std::make_unique<ScriptCall>();
 		sc->call = parse_function_call(lexer, std::move(lhs));
 
+		// check if we have trailing things
+		// TODO: support trailing blocks \p, and manually specifying inline \t
+		if(lexer.expect(TT::LBrace))
+		{
+			auto obj = std::make_unique<interp::InlineTreeExpr>();
+
+			while(not lexer.expect(TT::RBrace))
+				obj->objects.push_back(parse_inline_obj(lexer));
+
+			sc->call->arguments.push_back(interp::FunctionCall::Arg {
+			    .name = std::nullopt,
+			    .value = std::move(obj),
+			});
+		}
+
 		return sc;
 	}
 
@@ -962,7 +977,7 @@ namespace sap::frontend
 			if(next.text == KW_SCRIPT_BLOCK)
 				return parse_script_block(lexer);
 			else
-				return parse_inline_script(lexer);
+				return parse_inline_script_call(lexer);
 		}
 		else
 		{
@@ -971,48 +986,35 @@ namespace sap::frontend
 	}
 
 
+	static std::unique_ptr<tree::InlineObject> parse_inline_obj(Lexer& lexer)
+	{
+		auto _ = LexerModer(lexer, Lexer::Mode::Text);
+
+		// for now, these must be text or calls
+		auto tok = lexer.next();
+		if(tok == TT::Text)
+			return std::make_unique<Text>(escape_word_text(tok.loc, tok.text));
+
+		else if(tok == TT::Backslash)
+			return parse_script_object(lexer);
+
+		else
+			error(lexer.location(), "unexpected token '{}' in inline object", tok.text);
+	}
+
+
 	static std::optional<std::unique_ptr<Paragraph>> parse_paragraph(Lexer& lexer)
 	{
 		auto para = std::make_unique<Paragraph>();
-
-		bool have_actual_words = false;
 		while(true)
 		{
-			auto tok = lexer.next();
-
-			if(tok == TT::Text)
-			{
-				auto is_not_space = [](char32_t s) -> bool {
-					return not util::is_one_of(s, U' ', U'\t', U'\n', U'\r');
-				};
-
-				auto word = std::make_unique<Text>(escape_word_text(tok.loc, tok.text));
-				if(std::any_of(word->contents().begin(), word->contents().end(), is_not_space))
-					have_actual_words = true;
-
-				para->addObject(std::move(word));
-			}
-			else if(tok == TT::ParagraphBreak || tok == TT::EndOfFile)
-			{
+			if(auto t = lexer.peek(); t == TT::ParagraphBreak || t == TT::EndOfFile)
 				break;
-			}
-			else if(tok == TT::Backslash)
-			{
-				have_actual_words = true;
 
-				auto obj = parse_script_object(lexer);
-				para->addObject(std::move(obj));
-			}
-			else
-			{
-				error(tok.loc, "unexpected token '{}' in paragraph", tok.text);
-			}
+			para->addObject(parse_inline_obj(lexer));
 		}
 
-		if(have_actual_words)
-			return para;
-		else
-			return std::nullopt;
+		return para;
 	}
 
 

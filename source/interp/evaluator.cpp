@@ -3,6 +3,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #include "interp/ast.h"
+#include "interp/tree.h"
 #include "interp/evaluator.h"
 
 namespace sap::interp
@@ -40,6 +41,28 @@ namespace sap::interp
 			return value;
 		}
 	}
+
+	ErrorOr<std::vector<std::unique_ptr<tree::InlineObject>>> Evaluator::convertValueToText(Value&& value)
+	{
+		std::vector<std::unique_ptr<tree::InlineObject>> ret {};
+
+		if(value.isTreeInlineObj())
+		{
+			auto objs = std::move(value).takeTreeInlineObj();
+			ret.insert(ret.end(), std::move_iterator(objs.begin()), std::move_iterator(objs.end()));
+		}
+		else if(value.isPrintable())
+		{
+			ret.emplace_back(new tree::Text(value.toString()));
+		}
+		else
+		{
+			return ErrFmt("cannot convert value of type '{}' into text", value.type());
+		}
+
+		return Ok(std::move(ret));
+	}
+
 
 	void Evaluator::dropValue(Value&& value)
 	{

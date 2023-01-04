@@ -32,23 +32,25 @@ namespace sap::interp::builtin
 		return style;
 	}();
 
-
-	static ErrorOr<EvalResult> apply_style1(Evaluator* ev, Value& value, const Style* style)
+	static ErrorOr<EvalResult> do_apply_style(Evaluator* ev, Value& value, const Style* style)
 	{
 		if(value.isTreeInlineObj())
 		{
-			auto tio = value.getTreeInlineObj();
-			auto new_style = style->extend(tio->style());
-			value.getTreeInlineObj()->setStyle(new_style);
+			auto tios = std::move(value).takeTreeInlineObj();
+			// for(auto& obj : *tios)
+			// 	obj->setStyle(style->extend(obj->style()));
 
-			return EvalResult::ofValue(std::move(value));
+			return EvalResult::ofValue(Value::treeInlineObject(std::move(tios)));
 		}
 		else
 		{
 			auto word = std::make_unique<tree::Text>(value.toString());
 			word->setStyle(style);
 
-			return EvalResult::ofValue(Value::treeInlineObject(std::move(word)));
+			std::vector<std::unique_ptr<tree::InlineObject>> tmp;
+			tmp.push_back(std::move(word));
+
+			return EvalResult::ofValue(Value::treeInlineObject(std::move(tmp)));
 		}
 	}
 
@@ -59,7 +61,7 @@ namespace sap::interp::builtin
 		assert(args.size() == 2);
 
 
-		return apply_style1(ev, args[0], &g_bold_style);
+		return do_apply_style(ev, args[0], &g_bold_style);
 	}
 
 
@@ -67,20 +69,20 @@ namespace sap::interp::builtin
 	{
 		// TODO: maybe don't assert?
 		assert(args.size() == 1);
-		return apply_style1(ev, args[0], &g_bold_style);
+		return do_apply_style(ev, args[0], &g_bold_style);
 	}
 
 	ErrorOr<EvalResult> italic1(Evaluator* ev, std::vector<Value>& args)
 	{
 		// TODO: maybe don't assert?
 		assert(args.size() == 1);
-		return apply_style1(ev, args[0], &g_italic_style);
+		return do_apply_style(ev, args[0], &g_italic_style);
 	}
 
 	ErrorOr<EvalResult> bold_italic1(Evaluator* ev, std::vector<Value>& args)
 	{
 		// TODO: maybe don't assert?
 		assert(args.size() == 1);
-		return apply_style1(ev, args[0], &g_bold_italic_style);
+		return do_apply_style(ev, args[0], &g_bold_italic_style);
 	}
 }

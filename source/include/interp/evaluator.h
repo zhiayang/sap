@@ -11,6 +11,11 @@
 #include "interp/ast.h"
 #include "interp/value.h"
 
+namespace sap::tree
+{
+	struct InlineObject;
+}
+
 namespace sap::interp
 {
 	struct Evaluator;
@@ -65,6 +70,8 @@ namespace sap::interp
 
 		void dropValue(Value&& value);
 		Value castValue(Value value, const Type* to) const;
+
+		ErrorOr<std::vector<std::unique_ptr<tree::InlineObject>>> convertValueToText(Value&& value);
 
 	private:
 		std::vector<std::unique_ptr<StackFrame>> m_stack_frames;

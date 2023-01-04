@@ -200,7 +200,7 @@ namespace sap::frontend
 						break;
 					}
 				}
-				else if(stream[n] == '#')
+				else if(util::is_one_of(stream[n], '#', '{', '}'))
 				{
 					return finish_and_return(n);
 				}

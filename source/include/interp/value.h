@@ -23,6 +23,8 @@ namespace sap::interp
 
 	struct Value
 	{
+		using InlineObjects = std::vector<std::unique_ptr<tree::InlineObject>>;
+
 		const Type* type() const { return m_type; }
 
 		bool getBool() const
@@ -56,17 +58,18 @@ namespace sap::interp
 			return v_function;
 		}
 
-		tree::InlineObject* getTreeInlineObj() const
+		const InlineObjects& getTreeInlineObj() const
 		{
 			assert(this->isTreeInlineObj());
-			return v_inline_obj.get();
+			return v_inline_obj;
 		}
 
-		std::unique_ptr<tree::InlineObject> takeTreeInlineObj() &&
+		InlineObjects takeTreeInlineObj() &&
 		{
 			assert(this->isTreeInlineObj());
 			return std::move(v_inline_obj);
 		}
+
 
 		const std::vector<Value>& getArray() const
 		{
@@ -265,7 +268,7 @@ namespace sap::interp
 			return ret;
 		}
 
-		static Value treeInlineObject(std::unique_ptr<tree::InlineObject> obj)
+		static Value treeInlineObject(InlineObjects obj)
 		{
 			auto ret = Value(Type::makeTreeInlineObj());
 			new(&ret.v_inline_obj) decltype(ret.v_inline_obj)(std::move(obj));
@@ -330,8 +333,8 @@ namespace sap::interp
 			}
 			else if(m_type->isTreeInlineObj())
 			{
-				// TODO!
-				sap::internal_error("oh no");
+				new(&val.v_inline_obj) decltype(v_inline_obj)();
+				val.v_inline_obj = Value::clone_tios(v_inline_obj);
 			}
 			else if(m_type->isArray() || m_type->isStruct())
 			{
@@ -382,6 +385,8 @@ namespace sap::interp
 				assert(false && "unreachable!");
 		}
 
+		static InlineObjects clone_tios(const InlineObjects& from);
+
 
 		const Type* m_type;
 
@@ -394,7 +399,7 @@ namespace sap::interp
 
 			FnType v_function;
 
-			std::unique_ptr<tree::InlineObject> v_inline_obj;
+			InlineObjects v_inline_obj;
 			std::vector<Value> v_array;
 			const Value* v_pointer;
 		};

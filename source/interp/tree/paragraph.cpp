@@ -13,11 +13,14 @@ namespace sap::tree
 {
 	void Paragraph::evaluateScripts(interp::Interpreter* cs)
 	{
+		std::vector<std::unique_ptr<InlineObject>> ret {};
+		ret.reserve(m_contents.size());
+
 		for(auto& obj : m_contents)
 		{
 			if(auto word = dynamic_cast<tree::Text*>(obj.get()); word != nullptr)
 			{
-				// do nothing
+				ret.push_back(std::move(obj));
 			}
 			else if(auto iscr = dynamic_cast<tree::ScriptCall*>(obj.get()); iscr != nullptr)
 			{
@@ -28,18 +31,25 @@ namespace sap::tree
 				auto value_or_empty = value_or_err.take_value();
 				if(not value_or_empty.hasValue())
 				{
-					obj.reset(new tree::Text(U"", obj->style()));
+					ret.emplace_back(new tree::Text(U"", obj->style()));
 					continue;
 				}
 
 				auto value = std::move(value_or_empty).take();
 
 				if(value.isTreeInlineObj())
-					obj.reset(std::move(value).takeTreeInlineObj().release());
+				{
+					auto objs = std::move(value).takeTreeInlineObj();
+					ret.insert(ret.end(), std::move_iterator(objs.begin()), std::move_iterator(objs.end()));
+				}
 				else if(value.isPrintable())
-					obj.reset(new tree::Text(value.toString(), obj->style()));
+				{
+					ret.emplace_back(new tree::Text(value.toString(), obj->style()));
+				}
 				else
+				{
 					error("layout", "cannot insert value of type '{}' into paragraph", value.type());
+				}
 			}
 			else if(auto iscb = dynamic_cast<tree::ScriptBlock*>(obj.get()); iscb != nullptr)
 			{
@@ -50,6 +60,8 @@ namespace sap::tree
 				error("interp", "unsupported");
 			}
 		}
+
+		m_contents.swap(ret);
 	}
 
 	void Paragraph::processWordSeparators()
@@ -101,6 +113,7 @@ namespace sap::tree
 
 			if(not current_text->contents().empty())
 				ret.push_back(std::move(current_text));
+
 			first_obj = false;
 		}
 
