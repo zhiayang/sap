@@ -115,21 +115,4 @@ namespace sap::interp
 		m_builtin_defns.push_back(std::move(defn));
 		return m_builtin_defns.back().get();
 	}
-
-	const Type* Typechecker::getBridgedType(zst::str_view name)
-	{
-		if(auto it = m_bridged_types.find(name); it != m_bridged_types.end())
-			return it->second;
-
-		error("interp", "bridged type '{}' does not exist! this is a sap bug!", name);
-		return nullptr;
-	}
-
-	void Typechecker::addBridgedType(zst::str_view name, const Type* type)
-	{
-		if(m_bridged_types.contains(name))
-			error("interp", "bridged type '{}' already exists! this is a sap bug!", name);
-
-		m_bridged_types.emplace(name.str(), type);
-	}
 }

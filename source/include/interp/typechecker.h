@@ -103,16 +103,12 @@ namespace sap::interp
 
 		bool canImplicitlyConvert(const Type* from, const Type* to) const;
 
-		const Type* getBridgedType(zst::str_view name);
-		void addBridgedType(zst::str_view name, const Type* type);
-
 	private:
 		std::unique_ptr<DefnTree> m_top;
 
 		std::vector<DefnTree*> m_tree_stack;
 		std::vector<const Type*> m_expected_return_types;
 
-		util::hashmap<std::string, const Type*> m_bridged_types;
 		std::vector<std::unique_ptr<Definition>> m_builtin_defns;
 		std::unordered_map<const Type*, const Definition*> m_type_definitions;
 	};

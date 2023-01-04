@@ -379,14 +379,17 @@ namespace sap::interp
 
 		StructDefn(const std::string& name, std::vector<Field> fields)
 		    : Definition(new StructDecl(name))
-		    , fields(std::move(fields))
+		    , m_fields(std::move(fields))
 		{
 		}
+
+		const std::vector<Field>& fields() const { return m_fields; }
 
 		virtual ErrorOr<EvalResult> evaluate(Evaluator* ev) const override;
 		virtual ErrorOr<TCResult> typecheck_impl(Typechecker* ts, const Type* infer = nullptr) const override;
 
-		std::vector<Field> fields;
+	private:
+		mutable std::vector<Field> m_fields;
 	};
 }
 

@@ -325,6 +325,17 @@ namespace util
 			return lonum ^ (hinum >> 4);
 		}
 	};
+
+
+	template <typename T, std::same_as<T>... Ts>
+	std::vector<T> vectorOf(T&& x, Ts&&... xs)
+	{
+		std::vector<T> ret {};
+		ret.push_back(static_cast<T&&>(x));
+		(ret.push_back(static_cast<Ts&&>(xs)), ...);
+
+		return ret;
+	}
 }
 
 namespace unicode

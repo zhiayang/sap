@@ -2,12 +2,8 @@
 
 \script std::{
 
-	@bridge("__builtin_style")
-	struct Style
-	{
-		font_size: float;
-		line_spacing: float;
-	}
+	@bridge("Style")
+	struct Style { }
 
 	fn set_style(s: Style) -> void
 	{
@@ -16,7 +12,6 @@
 
 	fn style(s: Style, inline_obj: Inline) -> Inline
 	{
-
 	}
 
 

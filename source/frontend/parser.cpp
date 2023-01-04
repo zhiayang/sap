@@ -599,21 +599,6 @@ namespace sap::frontend
 		auto fst = lexer.peek();
 		if(fst == TT::Identifier)
 		{
-			if(fst.text == TYPE_INT)
-				return lexer.next(), PType::named(TYPE_INT);
-			else if(fst.text == TYPE_ANY)
-				return lexer.next(), PType::named(TYPE_ANY);
-			else if(fst.text == TYPE_BOOL)
-				return lexer.next(), PType::named(TYPE_BOOL);
-			else if(fst.text == TYPE_CHAR)
-				return lexer.next(), PType::named(TYPE_CHAR);
-			else if(fst.text == TYPE_VOID)
-				return lexer.next(), PType::named(TYPE_VOID);
-			else if(fst.text == TYPE_FLOAT)
-				return lexer.next(), PType::named(TYPE_FLOAT);
-			else if(fst.text == TYPE_STRING)
-				return lexer.next(), PType::named(TYPE_STRING);
-
 			return PType::named(parse_qualified_id(lexer));
 		}
 		else if(fst == TT::ColonColon)
