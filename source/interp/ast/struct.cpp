@@ -8,9 +8,38 @@
 
 namespace sap::interp
 {
+	static ErrorOr<void> ensure_bridge_types_correspond(const StructType* ty, const std::vector<StructType::Field>& b)
+	{
+		auto& a = ty->getFields();
+		if(a.size() != b.size())
+			return ErrFmt("mismatched field count: expected {}, got {}", a.size(), b.size());
+
+		for(size_t i = 0; i < a.size(); i++)
+		{
+			if(a[i].name != b[i].name)
+				return ErrFmt("mismatched name for field {}: expected '{}', got '{}'", i + 1, a[i].name, b[i].name);
+			else if(a[i].type != b[i].type)
+				return ErrFmt("mismatched type for field {}: expected '{}', got '{}'", i + 1, a[i].type, b[i].type);
+		}
+
+		return Ok();
+	}
+
+
 	ErrorOr<TCResult> StructDecl::typecheck_impl(Typechecker* ts, const Type* infer) const
 	{
 		TRY(ts->current()->declare(this));
+
+		if(auto it = this->attributes.find(ATTRIBUTE_BRIDGE); it != this->attributes.end())
+		{
+			if(it->second.args.size() != 1)
+				return ErrFmt("expected exactly 1 argument for 'bridge' attribute");
+
+			auto bridge_type = ts->getBridgedType(it->second.args[0]);
+			assert(bridge_type != nullptr);
+
+			return TCResult::ofRValue(bridge_type);
+		}
 
 		// when declaring a struct, we just make an empty field list.
 		// the fields will be set later on.
@@ -19,6 +48,10 @@ namespace sap::interp
 
 	ErrorOr<TCResult> StructDefn::typecheck_impl(Typechecker* ts, const Type* infer) const
 	{
+		// transfer the attributes to the declaration before we typecheck it.
+		bool was_bridged = this->attributes.contains(ATTRIBUTE_BRIDGE);
+		this->declaration->attributes = std::move(this->attributes);
+
 		this->declaration->resolved_defn = this;
 		auto struct_type = TRY(this->declaration->typecheck(ts)).type()->toStruct();
 
@@ -51,9 +84,13 @@ namespace sap::interp
 			});
 		}
 
-		const_cast<StructType*>(struct_type)->setFields(std::move(field_types));
-		TRY(ts->addTypeDefinition(struct_type, this));
+		if(was_bridged)
+			TRY(ensure_bridge_types_correspond(struct_type, field_types));
+		else
+			const_cast<StructType*>(struct_type)->setFields(std::move(field_types));
 
+
+		TRY(ts->addTypeDefinition(struct_type, this));
 		return TCResult::ofRValue(struct_type);
 	}
 
@@ -71,6 +108,11 @@ namespace sap::interp
 		// this also doesn't do anything
 		return EvalResult::ofVoid();
 	}
+
+
+
+
+
 
 
 	static std::vector<std::tuple<std::string, const Type*, const Expr*>> get_field_things(const StructDefn* struct_defn,

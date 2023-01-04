@@ -116,26 +116,20 @@ namespace sap::interp
 		return m_builtin_defns.back().get();
 	}
 
+	const Type* Typechecker::getBridgedType(zst::str_view name)
+	{
+		if(auto it = m_bridged_types.find(name); it != m_bridged_types.end())
+			return it->second;
+
+		error("interp", "bridged type '{}' does not exist! this is a sap bug!", name);
+		return nullptr;
+	}
+
 	void Typechecker::addBridgedType(zst::str_view name, const Type* type)
 	{
 		if(m_bridged_types.contains(name))
 			error("interp", "bridged type '{}' already exists! this is a sap bug!", name);
 
 		m_bridged_types.emplace(name.str(), type);
-	}
-
-	ErrorOr<void> Typechecker::declareBridgedType(zst::str_view bridged_name, const Definition* type_defn)
-	{
-		const Type* bridged_type = nullptr;
-		if(auto it = m_bridged_types.find(bridged_name); it != m_bridged_types.end())
-			bridged_type = it->second;
-		else
-			return ErrFmt("'{}' is not a known bridged type", bridged_name);
-
-		if(m_type_definitions.contains(bridged_type))
-			return ErrFmt("type '{}' already has a bridged definition");
-
-		m_type_definitions[bridged_type] = type_defn;
-		return Ok();
 	}
 }

@@ -39,7 +39,7 @@ namespace sap::interp
 		}
 
 		std::optional<Location> location;
-		std::vector<Attribute> attributes;
+		util::hashmap<std::string, Attribute> attributes;
 
 		const Type* get_type() const
 		{

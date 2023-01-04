@@ -246,9 +246,9 @@ namespace sap::frontend
 	static std::unique_ptr<interp::Expr> parse_unary(Lexer& lexer);
 
 
-	static std::vector<interp::Attribute> parse_attributes(Lexer& lexer)
+	static util::hashmap<std::string, interp::Attribute> parse_attributes(Lexer& lexer)
 	{
-		std::vector<interp::Attribute> attrs {};
+		util::hashmap<std::string, interp::Attribute> attrs {};
 
 		while(lexer.expect(TT::At))
 		{
@@ -256,21 +256,29 @@ namespace sap::frontend
 			if(not name.has_value())
 				error(lexer.location(), "expected attribute name after '@'");
 
-			std::vector<std::unique_ptr<interp::Expr>> args;
+			if(attrs.contains(name->text))
+				error(lexer.location(), "duplicate attribute '{}'", name->text);
+
+			std::vector<std::string> args;
 			if(lexer.expect(TT::LParen))
 			{
 				while(not lexer.expect(TT::RParen))
 				{
-					args.push_back(parse_expr(lexer));
+					auto arg = lexer.match(TT::String);
+					if(not arg.has_value())
+						error(lexer.location(), "expected string literal for attribute argument");
+
+					args.push_back(arg->text.str());
+
 					if(not lexer.expect(TT::Comma) && lexer.peek() != TT::RParen)
 						error(lexer.location(), "expected ',' or ')' in attribute argument list");
 				}
 			}
 
-			attrs.push_back({
-			    .name = name->text.str(),
-			    .args = std::move(args),
-			});
+			attrs[name->text.str()] = {
+				.name = name->text.str(),
+				.args = std::move(args),
+			};
 		}
 
 		return attrs;

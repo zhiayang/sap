@@ -103,8 +103,8 @@ namespace sap::interp
 
 		bool canImplicitlyConvert(const Type* from, const Type* to) const;
 
+		const Type* getBridgedType(zst::str_view name);
 		void addBridgedType(zst::str_view name, const Type* type);
-		ErrorOr<void> declareBridgedType(zst::str_view bridged_name, const Definition* type_defn);
 
 	private:
 		std::unique_ptr<DefnTree> m_top;

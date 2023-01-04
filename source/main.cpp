@@ -29,8 +29,6 @@ CLEANUPS:
 	- rename layout() methods to print() or something
 	- さあぁぁぁぁ
 
-- split Interpreter into TypeChecker and Evaluator
-
 #endif
 
 int main(int argc, char** argv)
