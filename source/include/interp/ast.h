@@ -37,6 +37,7 @@ namespace sap::interp
 		}
 
 		std::optional<Location> location;
+		std::vector<Attribute> attributes;
 
 		const Type* get_type() const
 		{

@@ -412,6 +412,7 @@ namespace sap::frontend
 				case '<': tt = TT::LAngle; break;
 				case '>': tt = TT::RAngle; break;
 				case '&': tt = TT::Ampersand; break;
+				case '@': tt = TT::At; break;
 
 				default: sap::error(loc, "unknown token '{}'", stream[0]); break;
 			}

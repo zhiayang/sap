@@ -51,6 +51,7 @@ namespace sap::frontend
 		Slash,
 		Equal,
 		Percent,
+		At,
 
 		RArrow,
 		ColonColon,

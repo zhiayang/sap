@@ -29,9 +29,10 @@ namespace sap::interp
 
 		auto _ = cs->pushTree(builtin_ns);
 
-		define_builtin("__bold1", makeParamList(Param { .name = "_", .type = any }), tio, &builtin::bold1);
-		define_builtin("__italic1", makeParamList(Param { .name = "_", .type = any }), tio, &builtin::italic1);
-		define_builtin("__bold_italic1", makeParamList(Param { .name = "_", .type = any }), tio, &builtin::bold_italic1);
+		define_builtin("bold1", makeParamList(Param { .name = "_", .type = any }), tio, &builtin::bold1);
+		define_builtin("italic1", makeParamList(Param { .name = "_", .type = any }), tio, &builtin::italic1);
+		define_builtin("bold_italic1", makeParamList(Param { .name = "_", .type = any }), tio, &builtin::bold_italic1);
+		define_builtin("apply_style", makeParamList(Param { .name = "_", .type = tio }), tio, &builtin::apply_style);
 
 		// TODO: make these variadic
 		define_builtin("print", makeParamList(Param { .name = "_", .type = any }), tio, &builtin::print);

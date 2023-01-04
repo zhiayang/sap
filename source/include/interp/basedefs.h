@@ -50,4 +50,13 @@ namespace sap::interp
 		std::vector<std::string> parents;
 		std::string name;
 	};
+
+	struct Expr;
+	struct Attribute
+	{
+		std::string name;
+		std::vector<std::unique_ptr<Expr>> args;
+	};
+
+	inline constexpr auto ATTRIBUTE_BRIDGE = "bridge";
 }
