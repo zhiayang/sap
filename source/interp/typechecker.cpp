@@ -26,7 +26,9 @@ namespace sap::interp
 		else if(from->isPointer() && to->isPointer())
 			return from->toPointer()->elementType() == to->toPointer()->elementType() && from->isMutablePointer();
 
-		// TODO: not if these are all the cases
+		else if(from->isInteger() && to->isFloating())
+			return true;
+
 		return false;
 	}
 

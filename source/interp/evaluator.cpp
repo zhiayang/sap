@@ -31,6 +31,10 @@ namespace sap::interp
 		{
 			return Value::pointer(to->toPointer()->elementType(), value.getPointer());
 		}
+		else if(from_type->isInteger() && to->isFloating())
+		{
+			return Value::floating(static_cast<double>(value.getInteger()));
+		}
 		else
 		{
 			return value;

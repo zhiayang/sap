@@ -12,6 +12,8 @@
 
 	fn style(s: Style, inline_obj: Inline) -> Inline
 	{
+		var x = s;
+		x.font_size = 69;
 	}
 
 
