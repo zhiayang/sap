@@ -88,6 +88,7 @@ namespace sap::interp
 		std::vector<Arg> arguments;
 
 	private:
+		mutable bool m_ufcs_self_is_mutable = false;
 		mutable const Declaration* m_resolved_func_decl = nullptr;
 	};
 

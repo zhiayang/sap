@@ -43,7 +43,7 @@ namespace sap::interp
 		define_builtins(this, m_top->lookupOrDeclareNamespace("builtin"));
 
 		// always start with a top level frame.
-		this->m_stack_frames.push_back(std::unique_ptr<StackFrame>(new StackFrame(nullptr)));
+		this->m_stack_frames.push_back(std::unique_ptr<StackFrame>(new StackFrame(this, nullptr)));
 	}
 
 	bool Interpreter::canImplicitlyConvert(const Type* from, const Type* to) const
@@ -165,8 +165,6 @@ namespace sap::interp
 		return Ok();
 	}
 
-
-
 	Definition* Interpreter::addBuiltinDefinition(std::unique_ptr<Definition> defn)
 	{
 		m_builtin_defns.push_back(std::move(defn));
@@ -180,5 +178,20 @@ namespace sap::interp
 			error(stmt->location, "{}", res.take_error());
 
 		return stmt->evaluate(this);
+	}
+
+	void Interpreter::dropValue(Value&& value)
+	{
+		// TODO: call destructors
+	}
+
+
+	void StackFrame::dropTemporaries()
+	{
+		while(not m_temporaries.empty())
+		{
+			m_interp->dropValue(std::move(m_temporaries.back()));
+			m_temporaries.pop_back();
+		}
 	}
 }

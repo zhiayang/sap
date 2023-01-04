@@ -119,13 +119,17 @@ namespace sap::interp
 		}
 
 		// make sure the struct has all the things
+		std::vector<ArrangeArg<const Type*>> processed_fields {};
+		for(auto& f : this->field_inits)
+		{
+			processed_fields.push_back({
+			    .name = f.name,
+			    .value = TRY(f.value->typecheck(cs)).type(),
+			});
+		}
+
 		auto fields = get_field_things(cs, struct_type);
-		auto ordered = TRY(arrange_arguments<const Type*>(cs, fields, this->field_inits, //
-		    "struct", "field", "field", [cs](auto& arg) -> ErrorOr<const Type*> {
-			    return arg.value->typecheck(cs).map([](const auto& x) {
-				    return x.type();
-			    });
-		    }));
+		auto ordered = TRY(arrange_argument_types(cs, fields, processed_fields, "struct", "field", "field"));
 
 		TRY(get_calling_cost(cs, fields, ordered, "struct", "field", "field"));
 		return TCResult::ofRValue(struct_type);
@@ -139,11 +143,18 @@ namespace sap::interp
 		auto struct_defn = dynamic_cast<const StructDefn*>(TRY(cs->getDefinitionForType(struct_type)));
 		assert(struct_defn != nullptr);
 
+		std::vector<ArrangeArg<Value>> processed_fields {};
+		for(auto& f : this->field_inits)
+		{
+			processed_fields.push_back({
+			    .name = f.name,
+			    .value = TRY_VALUE(f.value->evaluate(cs)),
+			});
+		}
+
 		auto fields = get_field_things(cs, struct_type);
-		auto [ordered, _] = TRY(arrange_arguments<Value>(cs, fields, this->field_inits, //
-		    "struct", "field", "field", [cs](auto& arg) -> ErrorOr<Value> {
-			    return Ok(std::move(TRY_VALUE(arg.value->evaluate(cs))));
-		    }));
+		auto ordered = TRY(arrange_argument_values(cs, fields, std::move(processed_fields), //
+		    "struct", "field", "field"));
 
 		std::vector<Value> field_values {};
 

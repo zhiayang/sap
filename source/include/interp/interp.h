@@ -4,6 +4,8 @@
 
 #pragma once
 
+#include <deque>
+
 #include "ast.h"   // for Definition, Declaration, QualifiedId
 #include "util.h"  // for Defer, hashmap
 #include "value.h" // for Value
@@ -49,6 +51,7 @@ namespace sap::interp
 		friend struct Interpreter;
 	};
 
+	struct Interpreter;
 	struct StackFrame
 	{
 		StackFrame* parent() const { return m_parent; }
@@ -62,15 +65,21 @@ namespace sap::interp
 		}
 
 		void setValue(const Definition* defn, Value value) { m_values[defn] = std::move(value); }
+		Value* createTemporary(Value init) { return &m_temporaries.emplace_back(std::move(init)); }
+
+		void dropTemporaries();
 
 	private:
-		explicit StackFrame(StackFrame* parent) : m_parent(parent) { }
+		explicit StackFrame(Interpreter* cs, StackFrame* parent) : m_interp(cs), m_parent(parent) { }
 
 		friend struct Interpreter;
 
+		Interpreter* m_interp;
 		StackFrame* m_parent = nullptr;
 		std::unordered_map<const Definition*, Value> m_values;
+		std::deque<Value> m_temporaries;
 	};
+
 
 	struct Interpreter
 	{
@@ -108,7 +117,7 @@ namespace sap::interp
 		[[nodiscard]] auto pushFrame()
 		{
 			auto cur = m_stack_frames.back().get();
-			m_stack_frames.push_back(std::unique_ptr<StackFrame>(new StackFrame(cur)));
+			m_stack_frames.push_back(std::unique_ptr<StackFrame>(new StackFrame(this, cur)));
 			return util::Defer([this]() {
 				this->popFrame();
 			});
@@ -141,7 +150,7 @@ namespace sap::interp
 			return m_expected_return_types.back();
 		}
 
-
+		void dropValue(Value&& value);
 
 		Value castValue(Value value, const Type* to) const;
 		bool canImplicitlyConvert(const Type* from, const Type* to) const;

@@ -40,10 +40,11 @@ fi fl Bсички хора се раждат свободни и равни по
 		juice: int;
 	}
 
-	fn kek(c: Cactus)
+	fn kek(c: &Cactus)
 	{
 		builtin::print("thorns = ");
 		builtin::println(c.thorns);
+		builtin::print("juice = ");
 		builtin::println(c.juice);
 	}
 
@@ -53,6 +54,11 @@ fi fl Bсички хора се раждат свободни и равни по
 
 	bar.juice = 69420;
 	bar.kek();
+
+	Cactus {
+		.thorns = 999,
+		.juice = 333
+	}.kek();
 
 	let p1: &mut int = null;
 	let p2: &mut int = p1;
