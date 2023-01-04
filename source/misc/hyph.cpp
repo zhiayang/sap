@@ -134,7 +134,7 @@ namespace sap::hyph
 		if(auto it = m_hyphenation_cache.find(word); it != m_hyphenation_cache.end())
 			return it->second;
 
-		std::vector<uint8_t> s(word.size() + 1, (uint8_t) 0);
+		auto s = std::vector<uint8_t>(word.size() + 1, (uint8_t) 0);
 
 		for(size_t i = 0; i < word.size() - 1; ++i)
 		{
@@ -146,7 +146,8 @@ namespace sap::hyph
 					const auto& hyphenation_points = hit->second;
 					for(size_t k = 0; k < hyphenation_points.size(); ++k)
 					{
-						s[i + k] = std::max(s[i + k], hyphenation_points[k]);
+						if(hyphenation_points[k] != 0)
+							s[i + k] = std::max(s[i + k], hyphenation_points[k]);
 					}
 				}
 			}
