@@ -208,6 +208,7 @@ namespace sap::interp
 		virtual ErrorOr<TCResult> typecheck_impl(Interpreter* cs, const Type* infer = nullptr) const override;
 
 		std::vector<std::unique_ptr<Stmt>> body;
+		std::optional<QualifiedId> target_scope;
 	};
 
 

@@ -11,23 +11,16 @@ namespace sap::tree
 {
 	static void run_script_block(interp::Interpreter* cs, ScriptBlock* script_block)
 	{
-		for(auto& stmt : script_block->statements)
-		{
-			auto result_or_err = cs->run(stmt.get());
-			if(result_or_err.is_err())
-				error("interp", "evaluation failed: {}", result_or_err.error());
+		if(auto r = script_block->body->typecheck(cs); r.is_err())
+			error("interp", "typechecking failed: {}", r.take_error());
 
-			auto result = result_or_err.take_value();
-			if(result.isReturn())
-			{
-				// TODO: handle returning values here
-				if(result.hasValue())
-					error("interp", "TODO: returning values from \\script{} is unimplemented");
-			}
-			else if(not result.isNormal())
-			{
-				error("interp", "unexpected statement in function body");
-			}
+		if(auto r = script_block->body->evaluate(cs); r.is_err())
+		{
+			error("interp", "evaluation failed: {}", r.take_error());
+		}
+		else
+		{
+			// TODO: do something with the result here.
 		}
 	}
 

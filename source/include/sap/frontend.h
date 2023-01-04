@@ -108,12 +108,12 @@ namespace sap::frontend
 		Token next();
 		bool eof() const;
 
-		bool isWhitespace() const;
+		void skipWhitespaceAndComments();
 
 		bool expect(TokenType type);
 		std::optional<Token> match(TokenType type);
 
-		bool expectString(zst::str_view sv);
+		bool expect(zst::str_view sv);
 
 		Token peekWithMode(Mode mode) const;
 

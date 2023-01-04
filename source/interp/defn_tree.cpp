@@ -31,6 +31,23 @@ namespace sap::interp
 		return this->lookupOrDeclareNamespace(zpr::sprint("__$anon{}", m_anon_namespace_count++));
 	}
 
+	DefnTree* DefnTree::lookupOrDeclareScope(const std::vector<std::string>& scope, bool is_top_level)
+	{
+		auto current = this;
+
+		if(is_top_level)
+		{
+			while(current->parent() != nullptr)
+				current = current->parent();
+		}
+
+		// this is always additive, so don't do any looking upwards
+		for(auto& ns : scope)
+			current = current->lookupOrDeclareNamespace(ns);
+
+		return current;
+	}
+
 	ErrorOr<std::vector<const Declaration*>> DefnTree::lookup(QualifiedId id) const
 	{
 		auto current = this;

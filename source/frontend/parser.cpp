@@ -29,6 +29,14 @@ namespace sap::frontend
 	using TT = TokenType;
 	using namespace sap::tree;
 
+	template <typename T>
+	static void must_expect(Lexer& lexer, T&& x)
+	{
+		if(not lexer.expect(static_cast<T&&>(x)))
+			error(lexer.location(), "?????");
+	}
+
+
 	static std::u32string escape_word_text(const Location& loc, zst::str_view text_)
 	{
 		std::u32string ret {};
@@ -664,7 +672,7 @@ namespace sap::frontend
 		};
 	}
 
-	static std::unique_ptr<interp::Block> parse_block_or_stmt(Lexer& lexer)
+	static std::unique_ptr<interp::Block> parse_block_or_stmt(Lexer& lexer, bool mandatory_braces = false)
 	{
 		auto block = std::make_unique<interp::Block>();
 		if(lexer.expect(TT::LBrace))
@@ -674,6 +682,9 @@ namespace sap::frontend
 		}
 		else
 		{
+			if(mandatory_braces)
+				error(lexer.location(), "expected '{' to begin a block");
+
 			block->body.push_back(parse_stmt(lexer));
 		}
 
@@ -763,8 +774,7 @@ namespace sap::frontend
 
 	static std::unique_ptr<interp::IfStmt> parse_if_stmt(Lexer& lexer)
 	{
-		auto tmp = lexer.expectString(KW_IF);
-		assert(tmp);
+		must_expect(lexer, KW_IF);
 
 		if(not lexer.expect(TT::LParen))
 			error(lexer.location(), "expected '(' after 'if'");
@@ -777,7 +787,7 @@ namespace sap::frontend
 
 		if_stmt->if_body = parse_block_or_stmt(lexer);
 
-		if(lexer.expectString(KW_ELSE))
+		if(lexer.expect(KW_ELSE))
 			if_stmt->else_body = parse_block_or_stmt(lexer);
 
 		return if_stmt;
@@ -785,8 +795,7 @@ namespace sap::frontend
 
 	static std::unique_ptr<interp::ReturnStmt> parse_return_stmt(Lexer& lexer)
 	{
-		auto x = lexer.expectString(KW_RETURN);
-		assert(x);
+		must_expect(lexer, KW_RETURN);
 
 		auto ret = std::make_unique<interp::ReturnStmt>();
 		if(lexer.peek() == TT::Semicolon)
@@ -869,22 +878,34 @@ namespace sap::frontend
 	static std::unique_ptr<ScriptBlock> parse_script_block(Lexer& lexer)
 	{
 		auto lm = LexerModer(lexer, Lexer::Mode::Script);
-		if(auto x = lexer.match(TT::Identifier); not x || x->text != KW_SCRIPT_BLOCK)
-			error(Location {}, "?????");
-
-		auto openbrace = lexer.next();
-		if(openbrace != TT::LBrace)
-			error(openbrace.loc, "expected '{' after {}", KW_SCRIPT_BLOCK);
+		must_expect(lexer, KW_SCRIPT_BLOCK);
 
 		auto block = std::make_unique<ScriptBlock>();
-		while(lexer.peek() != TT::RBrace)
-			block->statements.push_back(parse_stmt(lexer));
 
-		if(lexer.eof())
-			error(openbrace.loc, "unexpected end of file; unclosed '{' here");
+		std::optional<interp::QualifiedId> target_scope;
+		if(lexer.peek() == TT::ColonColon || lexer.peek() == TT::Identifier)
+		{
+			// parse the thing manually, because it's slightly different from normal.
+			interp::QualifiedId qid {};
+			if(lexer.expect(TT::ColonColon))
+				qid.top_level = true;
 
-		else if(not lexer.match(TT::RBrace))
-			error(openbrace.loc, "expected '}' to match '{' here");
+			while(lexer.peek() != TT::LBrace)
+			{
+				auto id = lexer.match(TT::Identifier);
+				if(not id.has_value())
+					error(lexer.location(), "expected identifier in scope before '{'");
+
+				qid.parents.push_back(id->text.str());
+				if(not lexer.expect(TT::ColonColon))
+					error(lexer.location(), "expected '::' after identifier");
+			}
+
+			target_scope = std::move(qid);
+		}
+
+		block->body = parse_block_or_stmt(lexer, /* mandatory_braces: */ true);
+		block->body->target_scope = std::move(target_scope);
 
 		return block;
 	}
@@ -973,6 +994,9 @@ namespace sap::frontend
 	{
 		auto lexer = Lexer(filename, contents);
 		Document document {};
+
+		// this only needs to happen at the beginning
+		lexer.skipWhitespaceAndComments();
 
 		while(true)
 		{

@@ -10,9 +10,18 @@ namespace sap::interp
 {
 	ErrorOr<TCResult> Block::typecheck_impl(Interpreter* cs, const Type* infer) const
 	{
-		auto tree = cs->current()->declareAnonymousNamespace();
-		auto _ = cs->pushTree(tree);
+		DefnTree* tree = nullptr;
 
+		if(this->target_scope.has_value())
+		{
+			tree = cs->current()->lookupOrDeclareScope(this->target_scope->parents, this->target_scope->top_level);
+		}
+		else
+		{
+			tree = cs->current()->declareAnonymousNamespace();
+		}
+
+		auto _ = cs->pushTree(tree);
 		for(auto& stmt : this->body)
 			TRY(stmt->typecheck(cs));
 

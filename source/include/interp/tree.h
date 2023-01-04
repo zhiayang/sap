@@ -92,7 +92,7 @@ namespace sap::tree
 
 	struct ScriptBlock : ScriptObject
 	{
-		std::vector<std::unique_ptr<interp::Stmt>> statements;
+		std::unique_ptr<interp::Block> body;
 	};
 
 	struct ScriptCall : ScriptObject

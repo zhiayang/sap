@@ -20,7 +20,7 @@ namespace sap::frontend
 		return tok;
 	}
 
-	static Token parse_comment(zst::str_view& stream, Location& loc)
+	static std::optional<Token> parse_comment(zst::str_view& stream, Location& loc)
 	{
 		if(stream.starts_with("#:"))
 		{
@@ -94,7 +94,7 @@ namespace sap::frontend
 		}
 		else
 		{
-			assert(not(const char*) "not a comment, hello?!");
+			return std::nullopt;
 		}
 	}
 
@@ -493,7 +493,7 @@ namespace sap::frontend
 	}
 
 
-	bool Lexer::expectString(zst::str_view sv)
+	bool Lexer::expect(zst::str_view sv)
 	{
 		if(auto t = this->peek(); t == TT::Identifier && t.text == sv)
 		{
@@ -504,13 +504,22 @@ namespace sap::frontend
 		return false;
 	}
 
-	bool Lexer::isWhitespace() const
+	void Lexer::skipWhitespaceAndComments()
 	{
 		if(m_stream.empty())
-			return false;
+			return;
 
-		auto c = m_stream[0];
-		return c == ' ' || c == '\t' || c == '\r' || c == '\n';
+		while(not m_stream.empty())
+		{
+			if(util::is_one_of(m_stream[0], ' ', '\t', '\r', '\n'))
+				m_stream.remove_prefix(1);
+
+			else if(parse_comment(m_stream, m_location).has_value())
+				; // do nothing
+
+			else
+				break; // neither comment nor whitespace
+		}
 	}
 
 	std::optional<Token> Lexer::match(TokenType type)

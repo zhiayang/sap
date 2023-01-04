@@ -29,6 +29,8 @@ namespace sap::interp
 		ErrorOr<DefnTree*> lookupNamespace(std::string_view name) const;
 		DefnTree* lookupOrDeclareNamespace(std::string_view name);
 
+		DefnTree* lookupOrDeclareScope(const std::vector<std::string>& scope, bool is_top_level);
+
 		DefnTree* declareAnonymousNamespace();
 
 		ErrorOr<std::vector<const Declaration*>> lookup(QualifiedId id) const;
@@ -88,8 +90,8 @@ namespace sap::interp
 		DefnTree* top() { return m_top.get(); }
 		const DefnTree* top() const { return m_top.get(); }
 
-		DefnTree* current() { return m_current; }
-		const DefnTree* current() const { return m_current; }
+		DefnTree* current() { return m_tree_stack.back(); }
+		const DefnTree* current() const { return m_tree_stack.back(); }
 
 		ErrorOr<const Type*> resolveType(const frontend::PType& ptype);
 		ErrorOr<const Definition*> getDefinitionForType(const Type* type);
@@ -97,7 +99,7 @@ namespace sap::interp
 
 		[[nodiscard]] auto pushTree(DefnTree* tree)
 		{
-			m_current = tree;
+			m_tree_stack.push_back(tree);
 			return util::Defer([this]() {
 				this->popTree();
 			});
@@ -105,8 +107,8 @@ namespace sap::interp
 
 		void popTree()
 		{
-			assert(m_current->parent() != nullptr);
-			m_current = m_current->parent();
+			assert(not m_tree_stack.empty());
+			m_tree_stack.pop_back();
 		}
 
 		ErrorOr<EvalResult> run(const Stmt* stmt);
@@ -157,7 +159,7 @@ namespace sap::interp
 
 	private:
 		std::unique_ptr<DefnTree> m_top;
-		DefnTree* m_current;
+		std::vector<DefnTree*> m_tree_stack;
 
 		std::unordered_map<const Type*, const Definition*> m_type_definitions;
 

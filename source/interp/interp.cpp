@@ -38,8 +38,10 @@ namespace sap::interp
 		define_builtin("println", makeParamList(Param { .name = "_", .type = any }), tio, &builtin::println);
 	}
 
-	Interpreter::Interpreter() : m_top(new DefnTree("__top_level", /* parent: */ nullptr)), m_current(m_top.get())
+	Interpreter::Interpreter() : m_top(new DefnTree("__top_level", /* parent: */ nullptr))
 	{
+		this->pushTree(m_top.get()).cancel();
+
 		define_builtins(this, m_top->lookupOrDeclareNamespace("builtin"));
 
 		// always start with a top level frame.

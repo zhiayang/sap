@@ -43,7 +43,7 @@ namespace sap::tree
 			}
 			else if(auto iscb = dynamic_cast<tree::ScriptBlock*>(obj.get()); iscb != nullptr)
 			{
-				error("interp", "unsupported");
+				error("interp", "script block unsupported");
 			}
 			else
 			{
