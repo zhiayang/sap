@@ -106,14 +106,14 @@ namespace sap::interp
 
 
 
-	ErrorOr<TCResult> ComparisonOp::typecheck_impl(Interpreter* cs, const Type* infer) const
+	ErrorOr<TCResult> ComparisonOp::typecheck_impl(Typechecker* ts, const Type* infer) const
 	{
 		assert(not this->rest.empty());
 
-		auto lhs = TRY(this->first->typecheck(cs)).type();
+		auto lhs = TRY(this->first->typecheck(ts)).type();
 
 		auto op = this->rest[0].first;
-		auto rhs = TRY(this->rest[0].second->typecheck(cs)).type();
+		auto rhs = TRY(this->rest[0].second->typecheck(ts)).type();
 
 		for(size_t i = 0;;)
 		{
@@ -126,20 +126,20 @@ namespace sap::interp
 			i += 1;
 			lhs = rhs;
 			op = this->rest[i].first;
-			rhs = TRY(this->rest[i].second->typecheck(cs)).type();
+			rhs = TRY(this->rest[i].second->typecheck(ts)).type();
 		}
 
 		return TCResult::ofRValue(Type::makeBool());
 	}
 
-	ErrorOr<EvalResult> ComparisonOp::evaluate(Interpreter* cs) const
+	ErrorOr<EvalResult> ComparisonOp::evaluate(Evaluator* ev) const
 	{
 		assert(not this->rest.empty());
 
-		auto lhs = TRY_VALUE(this->first->evaluate(cs));
+		auto lhs = TRY_VALUE(this->first->evaluate(ev));
 
 		auto op = this->rest[0].first;
-		auto rhs = TRY_VALUE(this->rest[0].second->evaluate(cs));
+		auto rhs = TRY_VALUE(this->rest[0].second->evaluate(ev));
 
 		for(size_t i = 0;;)
 		{
@@ -154,7 +154,7 @@ namespace sap::interp
 			i += 1;
 			lhs = std::move(rhs);
 			op = this->rest[i].first;
-			rhs = TRY_VALUE(this->rest[i].second->evaluate(cs));
+			rhs = TRY_VALUE(this->rest[i].second->evaluate(ev));
 		}
 
 		return EvalResult::ofValue(Value::boolean(true));

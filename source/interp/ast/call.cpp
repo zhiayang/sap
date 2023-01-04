@@ -38,18 +38,18 @@ namespace sap::interp
 		}
 	}
 
-	static ErrorOr<int> get_calling_cost(Interpreter* cs, const Declaration* decl,
+	static ErrorOr<int> get_calling_cost(Typechecker* ts, const Declaration* decl,
 	    const std::vector<ArrangeArg<const Type*>>& arguments)
 	{
 		auto params = TRY(convert_params(decl));
-		auto ordered = TRY(arrange_argument_types(cs, params, arguments, //
+		auto ordered = TRY(arrange_argument_types(params, arguments, //
 		    "function", "argument", "argument for parameter"));
 
-		return get_calling_cost(cs, params, ordered, "function", "argument", "argument for parameter");
+		return get_calling_cost(ts, params, ordered, "function", "argument", "argument for parameter");
 	}
 
 
-	static ErrorOr<const Declaration*> resolve_overload_set(Interpreter* cs, const std::vector<const Declaration*>& decls,
+	static ErrorOr<const Declaration*> resolve_overload_set(Typechecker* ts, const std::vector<const Declaration*>& decls,
 	    const std::vector<ArrangeArg<const Type*>>& arguments)
 	{
 		std::vector<const Declaration*> best_decls {};
@@ -57,7 +57,7 @@ namespace sap::interp
 
 		for(auto decl : decls)
 		{
-			auto cost = get_calling_cost(cs, decl, arguments);
+			auto cost = get_calling_cost(ts, decl, arguments);
 
 			if(cost.is_err())
 				continue;
@@ -84,7 +84,7 @@ namespace sap::interp
 
 
 
-	ErrorOr<TCResult> FunctionCall::typecheck_impl(Interpreter* cs, const Type* infer) const
+	ErrorOr<TCResult> FunctionCall::typecheck_impl(Typechecker* ts, const Type* infer) const
 	{
 		std::vector<ArrangeArg<const Type*>> processed_args {};
 
@@ -95,7 +95,7 @@ namespace sap::interp
 		{
 			auto& arg = this->arguments[i];
 
-			auto t = TRY(arg.value->typecheck(cs));
+			auto t = TRY(arg.value->typecheck(ts));
 			const Type* ty = t.type();
 
 			if(this->rewritten_ufcs && i == 0)
@@ -118,20 +118,20 @@ namespace sap::interp
 		// if the lhs is an identifier, we resolve it manually to handle overloading.
 		if(auto ident = dynamic_cast<const Ident*>(this->callee.get()); ident != nullptr)
 		{
-			auto decls = TRY(cs->current()->lookup(ident->name));
+			auto decls = TRY(ts->current()->lookup(ident->name));
 			assert(decls.size() > 0);
 
-			const Declaration* best_decl = TRY(resolve_overload_set(cs, decls, processed_args));
+			const Declaration* best_decl = TRY(resolve_overload_set(ts, decls, processed_args));
 			assert(best_decl != nullptr);
 
-			fn_type = TRY(best_decl->typecheck(cs)).type();
+			fn_type = TRY(best_decl->typecheck(ts)).type();
 			m_resolved_func_decl = best_decl;
 		}
 		else
 		{
 			zpr::println("warning: expr call");
 
-			fn_type = TRY(this->callee->typecheck(cs)).type();
+			fn_type = TRY(this->callee->typecheck(ts)).type();
 			m_resolved_func_decl = nullptr;
 		}
 
@@ -142,7 +142,7 @@ namespace sap::interp
 	}
 
 
-	ErrorOr<EvalResult> FunctionCall::evaluate(Interpreter* cs) const
+	ErrorOr<EvalResult> FunctionCall::evaluate(Evaluator* ev) const
 	{
 		// TODO: maybe do this only once (instead of twice, once while typechecking and one for eval)
 		// again, if this is an identifier, we do the separate thing.
@@ -151,11 +151,11 @@ namespace sap::interp
 		for(size_t i = 0; i < this->arguments.size(); i++)
 		{
 			auto& arg = this->arguments[i];
-			auto val = TRY_VALUE(arg.value->evaluate(cs));
+			auto val = TRY_VALUE(arg.value->evaluate(ev));
 
 			if(this->rewritten_ufcs)
 			{
-				auto temp = cs->frame().createTemporary(std::move(val));
+				auto temp = ev->frame().createTemporary(std::move(val));
 
 				if(m_ufcs_self_is_mutable)
 					val = Value::mutablePointer(val.type(), temp);
@@ -179,7 +179,7 @@ namespace sap::interp
 			auto decl = m_resolved_func_decl;
 			auto params = TRY(convert_params(decl));
 
-			auto ordered_args = TRY(arrange_argument_values(cs, params, std::move(processed_args), "function", "argument",
+			auto ordered_args = TRY(arrange_argument_values(params, std::move(processed_args), "function", "argument",
 			    "argument for parameter"));
 
 			for(size_t i = 0; i < ordered_args.size(); i++)
@@ -192,7 +192,7 @@ namespace sap::interp
 						if(params[i].default_value == nullptr)
 							return ErrFmt("missing argument for parameter '{}'", params[i].name);
 
-						auto tmp = TRY_VALUE(params[i].default_value->evaluate(cs));
+						auto tmp = TRY_VALUE(params[i].default_value->evaluate(ev));
 						final_args.push_back(std::move(tmp));
 					}
 					else
@@ -211,11 +211,11 @@ namespace sap::interp
 			// check what kind of defn it is
 			if(auto builtin_defn = dynamic_cast<const BuiltinFunctionDefn*>(the_defn); builtin_defn != nullptr)
 			{
-				return builtin_defn->function(cs, final_args);
+				return builtin_defn->function(ev, final_args);
 			}
 			else if(auto func_defn = dynamic_cast<const FunctionDefn*>(the_defn); func_defn != nullptr)
 			{
-				return func_defn->call(cs, final_args);
+				return func_defn->call(ev, final_args);
 			}
 			else
 			{

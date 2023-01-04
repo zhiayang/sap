@@ -21,7 +21,6 @@ namespace sap::interp
 
 	template <typename T, bool MoveValue>
 	ErrorOr<std::unordered_map<size_t, T>> arrange_arguments(                                                //
-	    Interpreter* cs,                                                                                     //
 	    const std::vector<std::tuple<std::string, const Type*, const Expr*>>& expected,                      //
 	    std::conditional_t<MoveValue, std::vector<ArrangeArg<T>>&&, const std::vector<ArrangeArg<T>>&> args, //
 	    const char* fn_or_struct,                                                                            //
@@ -82,7 +81,7 @@ namespace sap::interp
 
 
 	inline ErrorOr<int> get_calling_cost(                                               //
-	    Interpreter* cs,                                                                //
+	    Typechecker* ts,                                                                //
 	    const std::vector<std::tuple<std::string, const Type*, const Expr*>>& expected, //
 	    std::unordered_map<size_t, const Type*>& ordered_args,                          //
 	    const char* fn_or_struct,                                                       //
@@ -98,7 +97,7 @@ namespace sap::interp
 				if(auto default_value = std::get<2>(expected[i]); default_value == nullptr)
 					return ErrFmt("missing {} '{}'", thing_name2, std::get<0>(expected[i]));
 				else
-					arg_type = TRY(default_value->typecheck(cs)).type();
+					arg_type = TRY(default_value->typecheck(ts)).type();
 			}
 
 			// if the param is an any, we can just do it, but with extra cost.
@@ -108,7 +107,7 @@ namespace sap::interp
 				{
 					cost += 2;
 				}
-				else if(cs->canImplicitlyConvert(arg_type, param_type))
+				else if(ts->canImplicitlyConvert(arg_type, param_type))
 				{
 					cost += 1;
 				}

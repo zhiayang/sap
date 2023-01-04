@@ -5,13 +5,13 @@
 #include "sap/frontend.h"
 
 #include "interp/ast.h"
-#include "interp/interp.h"
 #include "interp/bridge.h"
 #include "interp/builtin.h"
+#include "interp/typechecker.h"
 
 namespace sap::interp
 {
-	static void define_builtin_funcs(Interpreter* cs, DefnTree* builtin_ns)
+	static void define_builtin_funcs(Typechecker* ts, DefnTree* builtin_ns)
 	{
 		using namespace sap::frontend;
 
@@ -23,10 +23,10 @@ namespace sap::interp
 
 		auto define_builtin = [&](auto&&... xs) {
 			auto ret = std::make_unique<BFD>(std::forward<decltype(xs)>(xs)...);
-			cs->addBuiltinDefinition(std::move(ret))->typecheck(cs);
+			ts->addBuiltinDefinition(std::move(ret))->typecheck(ts);
 		};
 
-		auto _ = cs->pushTree(builtin_ns);
+		auto _ = ts->pushTree(builtin_ns);
 
 		define_builtin("bold1", makeParamList(Param { .name = "_", .type = any }), tio, &builtin::bold1);
 		define_builtin("italic1", makeParamList(Param { .name = "_", .type = any }), tio, &builtin::italic1);
@@ -38,7 +38,7 @@ namespace sap::interp
 		define_builtin("println", makeParamList(Param { .name = "_", .type = any }), tio, &builtin::println);
 	}
 
-	static void define_builtin_types(Interpreter* cs, DefnTree* builtin_ns)
+	static void define_builtin_types(Typechecker* ts, DefnTree* builtin_ns)
 	{
 		auto t_float = Type::makeFloating();
 
@@ -48,12 +48,12 @@ namespace sap::interp
 		        { "line_spacing", t_float },
 		    });
 
-		cs->addBridgedType("__builtin_style", builtin_style);
+		ts->addBridgedType("__builtin_style", builtin_style);
 	}
 
-	void defineBuiltins(Interpreter* cs, DefnTree* ns)
+	void defineBuiltins(Typechecker* ts, DefnTree* ns)
 	{
-		define_builtin_funcs(cs, ns);
-		define_builtin_types(cs, ns);
+		define_builtin_funcs(ts, ns);
+		define_builtin_types(ts, ns);
 	}
 }

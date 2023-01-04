@@ -24,10 +24,10 @@ namespace sap::interp
 		}
 	}
 
-	ErrorOr<TCResult> BinaryOp::typecheck_impl(Interpreter* cs, const Type* infer) const
+	ErrorOr<TCResult> BinaryOp::typecheck_impl(Typechecker* ts, const Type* infer) const
 	{
-		auto ltype = TRY(this->lhs->typecheck(cs)).type();
-		auto rtype = TRY(this->rhs->typecheck(cs)).type();
+		auto ltype = TRY(this->lhs->typecheck(ts)).type();
+		auto rtype = TRY(this->rhs->typecheck(ts)).type();
 
 		if((ltype->isInteger() && rtype->isInteger()) || (ltype->isFloating() && rtype->isFloating()))
 		{
@@ -48,12 +48,12 @@ namespace sap::interp
 		return ErrFmt("unsupported operation '{}' between types '{}' and '{}'", op_to_string(this->op), ltype, rtype);
 	}
 
-	ErrorOr<EvalResult> BinaryOp::evaluate(Interpreter* cs) const
+	ErrorOr<EvalResult> BinaryOp::evaluate(Evaluator* ev) const
 	{
-		auto lval = TRY_VALUE(this->lhs->evaluate(cs));
+		auto lval = TRY_VALUE(this->lhs->evaluate(ev));
 		auto ltype = lval.type();
 
-		auto rval = TRY_VALUE(this->rhs->evaluate(cs));
+		auto rval = TRY_VALUE(this->rhs->evaluate(ev));
 		auto rtype = rval.type();
 
 		auto do_op = [](Op op, auto a, auto b) {

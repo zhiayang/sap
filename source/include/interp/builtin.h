@@ -16,17 +16,18 @@ namespace sap::interp
 	struct Expr;
 	struct Value;
 	struct DefnTree;
+	struct Evaluator;
 	struct Interpreter;
 
 	namespace builtin
 	{
-		ErrorOr<EvalResult> bold1(Interpreter* cs, std::vector<Value>& args);
-		ErrorOr<EvalResult> italic1(Interpreter* cs, std::vector<Value>& args);
-		ErrorOr<EvalResult> bold_italic1(Interpreter* cs, std::vector<Value>& args);
+		ErrorOr<EvalResult> bold1(Evaluator* cs, std::vector<Value>& args);
+		ErrorOr<EvalResult> italic1(Evaluator* cs, std::vector<Value>& args);
+		ErrorOr<EvalResult> bold_italic1(Evaluator* cs, std::vector<Value>& args);
 
-		ErrorOr<EvalResult> apply_style(Interpreter* cs, std::vector<Value>& args);
+		ErrorOr<EvalResult> apply_style(Evaluator* cs, std::vector<Value>& args);
 
-		ErrorOr<EvalResult> print(Interpreter* cs, std::vector<Value>& args);
-		ErrorOr<EvalResult> println(Interpreter* cs, std::vector<Value>& args);
+		ErrorOr<EvalResult> print(Evaluator* cs, std::vector<Value>& args);
+		ErrorOr<EvalResult> println(Evaluator* cs, std::vector<Value>& args);
 	}
 }

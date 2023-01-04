@@ -8,19 +8,19 @@
 
 namespace sap::interp
 {
-	ErrorOr<TCResult> StructDecl::typecheck_impl(Interpreter* cs, const Type* infer) const
+	ErrorOr<TCResult> StructDecl::typecheck_impl(Typechecker* ts, const Type* infer) const
 	{
-		TRY(cs->current()->declare(this));
+		TRY(ts->current()->declare(this));
 
 		// when declaring a struct, we just make an empty field list.
 		// the fields will be set later on.
 		return TCResult::ofRValue(Type::makeStruct(this->name, {}));
 	}
 
-	ErrorOr<TCResult> StructDefn::typecheck_impl(Interpreter* cs, const Type* infer) const
+	ErrorOr<TCResult> StructDefn::typecheck_impl(Typechecker* ts, const Type* infer) const
 	{
 		this->declaration->resolved_defn = this;
-		auto struct_type = TRY(this->declaration->typecheck(cs)).type()->toStruct();
+		auto struct_type = TRY(this->declaration->typecheck(ts)).type()->toStruct();
 
 		std::unordered_set<std::string> seen_names;
 		std::vector<StructType::Field> field_types {};
@@ -32,7 +32,7 @@ namespace sap::interp
 
 			seen_names.insert(name);
 
-			auto field_type = TRY(cs->resolveType(type));
+			auto field_type = TRY(ts->resolveType(type));
 			if(field_type == struct_type)
 				return ErrFmt("recursive struct not allowed");
 			else if(field_type->isVoid())
@@ -40,8 +40,8 @@ namespace sap::interp
 
 			if(init_value != nullptr)
 			{
-				auto initialiser_type = TRY(init_value->typecheck(cs)).type();
-				if(not cs->canImplicitlyConvert(initialiser_type, field_type))
+				auto initialiser_type = TRY(init_value->typecheck(ts)).type();
+				if(not ts->canImplicitlyConvert(initialiser_type, field_type))
 					return ErrFmt("cannot initialise field of type '{}' with value of type '{}'", field_type, initialiser_type);
 			}
 
@@ -52,7 +52,7 @@ namespace sap::interp
 		}
 
 		const_cast<StructType*>(struct_type)->setFields(std::move(field_types));
-		TRY(cs->addTypeDefinition(struct_type, this));
+		TRY(ts->addTypeDefinition(struct_type, this));
 
 		return TCResult::ofRValue(struct_type);
 	}
@@ -60,28 +60,22 @@ namespace sap::interp
 
 
 
-	ErrorOr<EvalResult> StructDecl::evaluate(Interpreter* cs) const
+	ErrorOr<EvalResult> StructDecl::evaluate(Evaluator* ev) const
 	{
 		// do nothing
 		return EvalResult::ofVoid();
 	}
 
-	ErrorOr<EvalResult> StructDefn::evaluate(Interpreter* cs) const
+	ErrorOr<EvalResult> StructDefn::evaluate(Evaluator* ev) const
 	{
 		// this also doesn't do anything
 		return EvalResult::ofVoid();
 	}
 
 
-	static std::vector<std::tuple<std::string, const Type*, const Expr*>> get_field_things(Interpreter* cs,
+	static std::vector<std::tuple<std::string, const Type*, const Expr*>> get_field_things(const StructDefn* struct_defn,
 	    const StructType* struct_type)
 	{
-		auto tmp = cs->getDefinitionForType(struct_type);
-		assert(tmp.ok());
-
-		auto struct_defn = dynamic_cast<const StructDefn*>(tmp.unwrap());
-		assert(struct_defn != nullptr);
-
 		std::vector<std::tuple<std::string, const Type*, const Expr*>> fields {};
 
 		auto& struct_fields = struct_type->getFields();
@@ -97,7 +91,7 @@ namespace sap::interp
 		return fields;
 	}
 
-	ErrorOr<TCResult> StructLit::typecheck_impl(Interpreter* cs, const Type* infer) const
+	ErrorOr<TCResult> StructLit::typecheck_impl(Typechecker* ts, const Type* infer) const
 	{
 		const StructType* struct_type = nullptr;
 		if(struct_name.name.empty())
@@ -111,12 +105,15 @@ namespace sap::interp
 		}
 		else
 		{
-			auto t = TRY(cs->resolveType(frontend::PType::named(this->struct_name)));
+			auto t = TRY(ts->resolveType(frontend::PType::named(this->struct_name)));
 			if(not t->isStruct())
 				return ErrFmt("invalid non-struct type '{}' for struct literal", t);
 
 			struct_type = t->toStruct();
 		}
+
+		m_struct_defn = dynamic_cast<const StructDefn*>(TRY(ts->getDefinitionForType(struct_type)));
+		assert(m_struct_defn != nullptr);
 
 		// make sure the struct has all the things
 		std::vector<ArrangeArg<const Type*>> processed_fields {};
@@ -124,23 +121,24 @@ namespace sap::interp
 		{
 			processed_fields.push_back({
 			    .name = f.name,
-			    .value = TRY(f.value->typecheck(cs)).type(),
+			    .value = TRY(f.value->typecheck(ts)).type(),
 			});
 		}
 
-		auto fields = get_field_things(cs, struct_type);
-		auto ordered = TRY(arrange_argument_types(cs, fields, processed_fields, "struct", "field", "field"));
+		auto fields = get_field_things(m_struct_defn, struct_type);
+		auto ordered = TRY(arrange_argument_types(fields, processed_fields, "struct", "field", "field"));
 
-		TRY(get_calling_cost(cs, fields, ordered, "struct", "field", "field"));
+		TRY(get_calling_cost(ts, fields, ordered, "struct", "field", "field"));
+
 		return TCResult::ofRValue(struct_type);
 	}
 
-	ErrorOr<EvalResult> StructLit::evaluate(Interpreter* cs) const
+	ErrorOr<EvalResult> StructLit::evaluate(Evaluator* ev) const
 	{
 		assert(this->get_type()->isStruct());
 		auto struct_type = this->get_type()->toStruct();
 
-		auto struct_defn = dynamic_cast<const StructDefn*>(TRY(cs->getDefinitionForType(struct_type)));
+		auto struct_defn = dynamic_cast<const StructDefn*>(m_struct_defn);
 		assert(struct_defn != nullptr);
 
 		std::vector<ArrangeArg<Value>> processed_fields {};
@@ -148,12 +146,12 @@ namespace sap::interp
 		{
 			processed_fields.push_back({
 			    .name = f.name,
-			    .value = TRY_VALUE(f.value->evaluate(cs)),
+			    .value = TRY_VALUE(f.value->evaluate(ev)),
 			});
 		}
 
-		auto fields = get_field_things(cs, struct_type);
-		auto ordered = TRY(arrange_argument_values(cs, fields, std::move(processed_fields), //
+		auto fields = get_field_things(m_struct_defn, struct_type);
+		auto ordered = TRY(arrange_argument_values(fields, std::move(processed_fields), //
 		    "struct", "field", "field"));
 
 		std::vector<Value> field_values {};
@@ -165,7 +163,7 @@ namespace sap::interp
 				if(struct_defn->fields[i].initialiser == nullptr)
 					return ErrFmt("missing value for field '{}'", struct_defn->fields[i].name);
 
-				field_values.push_back(TRY_VALUE(struct_defn->fields[i].initialiser->evaluate(cs)));
+				field_values.push_back(TRY_VALUE(struct_defn->fields[i].initialiser->evaluate(ev)));
 			}
 			else
 			{

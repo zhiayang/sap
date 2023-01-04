@@ -11,17 +11,10 @@ namespace sap::tree
 {
 	static void run_script_block(interp::Interpreter* cs, ScriptBlock* script_block)
 	{
-		if(auto r = script_block->body->typecheck(cs); r.is_err())
-			error("interp", "typechecking failed: {}", r.take_error());
+		if(auto ret = cs->run(script_block->body.get()); ret.is_err())
+			error("interp", "{}", ret.take_error());
 
-		if(auto r = script_block->body->evaluate(cs); r.is_err())
-		{
-			error("interp", "evaluation failed: {}", r.take_error());
-		}
-		else
-		{
-			// TODO: do something with the result here.
-		}
+		// TODO: do something with the result here.
 	}
 
 	void Document::evaluateScripts(interp::Interpreter* cs)

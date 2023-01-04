@@ -11,9 +11,9 @@
 
 namespace sap::interp
 {
-	ErrorOr<TCResult> Ident::typecheck_impl(Interpreter* cs, const Type* infer) const
+	ErrorOr<TCResult> Ident::typecheck_impl(Typechecker* ts, const Type* infer) const
 	{
-		auto tree = cs->current();
+		auto tree = ts->current();
 
 		std::vector<const Declaration*> decls {};
 		if(auto result = tree->lookup(this->name); result.ok())
@@ -24,7 +24,7 @@ namespace sap::interp
 		assert(decls.size() > 0);
 		if(decls.size() == 1)
 		{
-			auto ret = TRY(decls[0]->typecheck(cs));
+			auto ret = TRY(decls[0]->typecheck(ts));
 			m_resolved_decl = decls[0];
 
 			return Ok(ret);
@@ -36,13 +36,13 @@ namespace sap::interp
 		}
 	}
 
-	ErrorOr<EvalResult> Ident::evaluate(Interpreter* cs) const
+	ErrorOr<EvalResult> Ident::evaluate(Evaluator* ev) const
 	{
 		// this should have been set by typechecking!
 		assert(m_resolved_decl != nullptr);
 		assert(m_resolved_decl->resolved_defn);
 
-		auto* frame = &cs->frame();
+		auto* frame = &ev->frame();
 		while(true)
 		{
 			if(auto value = frame->valueOf(m_resolved_decl->resolved_defn); value != nullptr)

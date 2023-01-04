@@ -11,12 +11,12 @@
 
 namespace sap::interp
 {
-	ErrorOr<TCResult> InlineTreeExpr::typecheck_impl(Interpreter* cs, const Type* infer) const
+	ErrorOr<TCResult> InlineTreeExpr::typecheck_impl(Typechecker* ts, const Type* infer) const
 	{
 		return ErrFmt("aoeu");
 	}
 
-	ErrorOr<EvalResult> InlineTreeExpr::evaluate(Interpreter* cs) const
+	ErrorOr<EvalResult> InlineTreeExpr::evaluate(Evaluator* ev) const
 	{
 		// i guess we have to assert that we cannot evaluate something twice, because
 		// otherwise this becomes untenable.

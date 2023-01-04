@@ -20,16 +20,16 @@ namespace sap::interp
 		}
 	}
 
-	ErrorOr<TCResult> AssignOp::typecheck_impl(Interpreter* cs, const Type* infer) const
+	ErrorOr<TCResult> AssignOp::typecheck_impl(Typechecker* ts, const Type* infer) const
 	{
-		auto lres = TRY(this->lhs->typecheck(cs));
+		auto lres = TRY(this->lhs->typecheck(ts));
 		if(not lres.isLValue())
 			return ErrFmt("cannot assign to non-lvalue");
 		else if(not lres.isMutable())
 			return ErrFmt("cannot assign to immutable lvalue");
 
 		auto ltype = lres.type();
-		auto rtype = TRY(this->rhs->typecheck(cs)).type();
+		auto rtype = TRY(this->rhs->typecheck(ts)).type();
 
 		if((ltype->isInteger() && rtype->isInteger()) || (ltype->isFloating() && rtype->isFloating()))
 		{
@@ -46,7 +46,7 @@ namespace sap::interp
 			if(this->op == Op::Multiply)
 				return TCResult::ofVoid();
 		}
-		else if(this->op == Op::None && cs->canImplicitlyConvert(rtype, ltype))
+		else if(this->op == Op::None && ts->canImplicitlyConvert(rtype, ltype))
 		{
 			return TCResult::ofVoid();
 		}
@@ -57,14 +57,14 @@ namespace sap::interp
 			return ErrFmt("unsupported operation '{}' between types '{}' and '{}'", op_to_string(this->op), ltype, rtype);
 	}
 
-	ErrorOr<EvalResult> AssignOp::evaluate(Interpreter* cs) const
+	ErrorOr<EvalResult> AssignOp::evaluate(Evaluator* ev) const
 	{
-		auto lval_result = TRY(this->lhs->evaluate(cs));
+		auto lval_result = TRY(this->lhs->evaluate(ev));
 
 		if(not lval_result.isLValue())
 			return ErrFmt("cannot assign to non-lvalue");
 
-		auto rval = TRY_VALUE(this->rhs->evaluate(cs));
+		auto rval = TRY_VALUE(this->rhs->evaluate(ev));
 		auto rtype = rval.type();
 
 		auto ltype = lval_result.get().type();
@@ -140,7 +140,7 @@ namespace sap::interp
 		}
 
 		// TODO: 'any' might need work here
-		auto value = cs->castValue(std::move(rval), ltype);
+		auto value = ev->castValue(std::move(rval), ltype);
 		if(value.type() != ltype)
 			return ErrFmt("cannot assign to '{}' from incompatible type '{}'", ltype, value.type());
 

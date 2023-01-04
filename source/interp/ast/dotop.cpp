@@ -17,9 +17,9 @@ namespace sap::interp
 			return nullptr;
 	}
 
-	ErrorOr<TCResult> DotOp::typecheck_impl(Interpreter* cs, const Type* infer) const
+	ErrorOr<TCResult> DotOp::typecheck_impl(Typechecker* ts, const Type* infer) const
 	{
-		auto lhs_res = TRY(this->lhs->typecheck(cs));
+		auto lhs_res = TRY(this->lhs->typecheck(ts));
 
 		auto struct_type = get_struct_type(lhs_res.type());
 		if(struct_type == nullptr)
@@ -32,9 +32,9 @@ namespace sap::interp
 		return Ok(lhs_res.replacingType(struct_type->getFieldNamed(this->rhs)));
 	}
 
-	ErrorOr<EvalResult> DotOp::evaluate(Interpreter* cs) const
+	ErrorOr<EvalResult> DotOp::evaluate(Evaluator* ev) const
 	{
-		auto lhs_res = TRY(this->lhs->evaluate(cs));
+		auto lhs_res = TRY(this->lhs->evaluate(ev));
 		if(not lhs_res.hasValue())
 			return ErrFmt("unexpected void value");
 

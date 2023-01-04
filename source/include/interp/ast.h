@@ -14,24 +14,26 @@
 
 #include "interp/value.h"    // for Interpreter, Value
 #include "interp/basedefs.h" // for InlineObject
+#include "interp/tc_result.h"
 #include "interp/parser_type.h"
 #include "interp/eval_result.h" // for EvalResult
 
 namespace sap::interp
 {
 	struct Value;
-	struct Interpreter;
+	struct Evaluator;
+	struct Typechecker;
 
 	struct Stmt
 	{
 		virtual ~Stmt();
-		virtual ErrorOr<TCResult> typecheck_impl(Interpreter* cs, const Type* infer = nullptr) const = 0;
+		virtual ErrorOr<TCResult> typecheck_impl(Typechecker* ts, const Type* infer = nullptr) const = 0;
 
-		virtual ErrorOr<EvalResult> evaluate(Interpreter* cs) const = 0;
-		virtual ErrorOr<TCResult> typecheck(Interpreter* cs, const Type* infer = nullptr) const
+		virtual ErrorOr<EvalResult> evaluate(Evaluator* ev) const = 0;
+		virtual ErrorOr<TCResult> typecheck(Typechecker* ts, const Type* infer = nullptr) const
 		{
 			if(not m_tc_result.has_value())
-				m_tc_result = TRY(this->typecheck_impl(cs, infer));
+				m_tc_result = TRY(this->typecheck_impl(ts, infer));
 
 			return Ok(*m_tc_result);
 		}
@@ -55,8 +57,8 @@ namespace sap::interp
 
 	struct InlineTreeExpr : Expr
 	{
-		virtual ErrorOr<EvalResult> evaluate(Interpreter* cs) const override;
-		virtual ErrorOr<TCResult> typecheck_impl(Interpreter* cs, const Type* infer = nullptr) const override;
+		virtual ErrorOr<EvalResult> evaluate(Evaluator* ev) const override;
+		virtual ErrorOr<TCResult> typecheck_impl(Typechecker* ts, const Type* infer = nullptr) const override;
 
 		mutable std::unique_ptr<tree::InlineObject> object;
 	};
@@ -66,8 +68,8 @@ namespace sap::interp
 
 	struct Ident : Expr
 	{
-		virtual ErrorOr<EvalResult> evaluate(Interpreter* cs) const override;
-		virtual ErrorOr<TCResult> typecheck_impl(Interpreter* cs, const Type* infer = nullptr) const override;
+		virtual ErrorOr<EvalResult> evaluate(Evaluator* ev) const override;
+		virtual ErrorOr<TCResult> typecheck_impl(Typechecker* ts, const Type* infer = nullptr) const override;
 
 		QualifiedId name {};
 		mutable const Declaration* m_resolved_decl = nullptr;
@@ -75,8 +77,8 @@ namespace sap::interp
 
 	struct FunctionCall : Expr
 	{
-		virtual ErrorOr<EvalResult> evaluate(Interpreter* cs) const override;
-		virtual ErrorOr<TCResult> typecheck_impl(Interpreter* cs, const Type* infer = nullptr) const override;
+		virtual ErrorOr<EvalResult> evaluate(Evaluator* ev) const override;
+		virtual ErrorOr<TCResult> typecheck_impl(Typechecker* ts, const Type* infer = nullptr) const override;
 
 		struct Arg
 		{
@@ -95,14 +97,14 @@ namespace sap::interp
 
 	struct NullLit : Expr
 	{
-		virtual ErrorOr<EvalResult> evaluate(Interpreter* cs) const override;
-		virtual ErrorOr<TCResult> typecheck_impl(Interpreter* cs, const Type* infer = nullptr) const override;
+		virtual ErrorOr<EvalResult> evaluate(Evaluator* ev) const override;
+		virtual ErrorOr<TCResult> typecheck_impl(Typechecker* ts, const Type* infer = nullptr) const override;
 	};
 
 	struct NumberLit : Expr
 	{
-		virtual ErrorOr<EvalResult> evaluate(Interpreter* cs) const override;
-		virtual ErrorOr<TCResult> typecheck_impl(Interpreter* cs, const Type* infer = nullptr) const override;
+		virtual ErrorOr<EvalResult> evaluate(Evaluator* ev) const override;
+		virtual ErrorOr<TCResult> typecheck_impl(Typechecker* ts, const Type* infer = nullptr) const override;
 
 		bool is_floating = false;
 
@@ -112,28 +114,32 @@ namespace sap::interp
 
 	struct StringLit : Expr
 	{
-		virtual ErrorOr<EvalResult> evaluate(Interpreter* cs) const override;
-		virtual ErrorOr<TCResult> typecheck_impl(Interpreter* cs, const Type* infer = nullptr) const override;
+		virtual ErrorOr<EvalResult> evaluate(Evaluator* ev) const override;
+		virtual ErrorOr<TCResult> typecheck_impl(Typechecker* ts, const Type* infer = nullptr) const override;
 
 		std::u32string string;
 	};
 
+	struct StructDefn;
 	struct StructLit : Expr
 	{
-		virtual ErrorOr<EvalResult> evaluate(Interpreter* cs) const override;
-		virtual ErrorOr<TCResult> typecheck_impl(Interpreter* cs, const Type* infer = nullptr) const override;
+		virtual ErrorOr<EvalResult> evaluate(Evaluator* ev) const override;
+		virtual ErrorOr<TCResult> typecheck_impl(Typechecker* ts, const Type* infer = nullptr) const override;
 
 		using Arg = FunctionCall::Arg;
 
 		QualifiedId struct_name;
 		std::vector<Arg> field_inits;
+
+	private:
+		mutable const StructDefn* m_struct_defn = nullptr;
 	};
 
 
 	struct BinaryOp : Expr
 	{
-		virtual ErrorOr<EvalResult> evaluate(Interpreter* cs) const override;
-		virtual ErrorOr<TCResult> typecheck_impl(Interpreter* cs, const Type* infer = nullptr) const override;
+		virtual ErrorOr<EvalResult> evaluate(Evaluator* ev) const override;
+		virtual ErrorOr<TCResult> typecheck_impl(Typechecker* ts, const Type* infer = nullptr) const override;
 
 		std::unique_ptr<Expr> lhs;
 		std::unique_ptr<Expr> rhs;
@@ -151,8 +157,8 @@ namespace sap::interp
 
 	struct AssignOp : Stmt
 	{
-		virtual ErrorOr<EvalResult> evaluate(Interpreter* cs) const override;
-		virtual ErrorOr<TCResult> typecheck_impl(Interpreter* cs, const Type* infer = nullptr) const override;
+		virtual ErrorOr<EvalResult> evaluate(Evaluator* ev) const override;
+		virtual ErrorOr<TCResult> typecheck_impl(Typechecker* ts, const Type* infer = nullptr) const override;
 
 		std::unique_ptr<Expr> lhs;
 		std::unique_ptr<Expr> rhs;
@@ -171,8 +177,8 @@ namespace sap::interp
 
 	struct ComparisonOp : Expr
 	{
-		virtual ErrorOr<EvalResult> evaluate(Interpreter* cs) const override;
-		virtual ErrorOr<TCResult> typecheck_impl(Interpreter* cs, const Type* infer = nullptr) const override;
+		virtual ErrorOr<EvalResult> evaluate(Evaluator* ev) const override;
+		virtual ErrorOr<TCResult> typecheck_impl(Typechecker* ts, const Type* infer = nullptr) const override;
 
 		enum Op
 		{
@@ -190,8 +196,8 @@ namespace sap::interp
 
 	struct DotOp : Expr
 	{
-		virtual ErrorOr<EvalResult> evaluate(Interpreter* cs) const override;
-		virtual ErrorOr<TCResult> typecheck_impl(Interpreter* cs, const Type* infer = nullptr) const override;
+		virtual ErrorOr<EvalResult> evaluate(Evaluator* ev) const override;
+		virtual ErrorOr<TCResult> typecheck_impl(Typechecker* ts, const Type* infer = nullptr) const override;
 
 		std::unique_ptr<Expr> lhs;
 		std::string rhs;
@@ -205,8 +211,8 @@ namespace sap::interp
 	{
 		Block() { }
 
-		virtual ErrorOr<EvalResult> evaluate(Interpreter* cs) const override;
-		virtual ErrorOr<TCResult> typecheck_impl(Interpreter* cs, const Type* infer = nullptr) const override;
+		virtual ErrorOr<EvalResult> evaluate(Evaluator* ev) const override;
+		virtual ErrorOr<TCResult> typecheck_impl(Typechecker* ts, const Type* infer = nullptr) const override;
 
 		std::vector<std::unique_ptr<Stmt>> body;
 		std::optional<QualifiedId> target_scope;
@@ -217,8 +223,8 @@ namespace sap::interp
 	{
 		IfStmt() { }
 
-		virtual ErrorOr<EvalResult> evaluate(Interpreter* cs) const override;
-		virtual ErrorOr<TCResult> typecheck_impl(Interpreter* cs, const Type* infer = nullptr) const override;
+		virtual ErrorOr<EvalResult> evaluate(Evaluator* ev) const override;
+		virtual ErrorOr<TCResult> typecheck_impl(Typechecker* ts, const Type* infer = nullptr) const override;
 
 		std::unique_ptr<Expr> if_cond;
 		std::unique_ptr<Block> if_body;
@@ -229,8 +235,8 @@ namespace sap::interp
 	{
 		ReturnStmt() { }
 
-		virtual ErrorOr<EvalResult> evaluate(Interpreter* cs) const override;
-		virtual ErrorOr<TCResult> typecheck_impl(Interpreter* cs, const Type* infer = nullptr) const override;
+		virtual ErrorOr<EvalResult> evaluate(Evaluator* ev) const override;
+		virtual ErrorOr<TCResult> typecheck_impl(Typechecker* ts, const Type* infer = nullptr) const override;
 
 		std::unique_ptr<Expr> expr;
 		mutable const Type* return_value_type;
@@ -260,8 +266,8 @@ namespace sap::interp
 	{
 		VariableDecl(const std::string& name, bool mut) : Declaration(name), is_mutable(mut) { }
 
-		virtual ErrorOr<EvalResult> evaluate(Interpreter* cs) const override;
-		virtual ErrorOr<TCResult> typecheck_impl(Interpreter* cs, const Type* infer = nullptr) const override;
+		virtual ErrorOr<EvalResult> evaluate(Evaluator* ev) const override;
+		virtual ErrorOr<TCResult> typecheck_impl(Typechecker* ts, const Type* infer = nullptr) const override;
 
 		bool is_mutable;
 	};
@@ -276,8 +282,8 @@ namespace sap::interp
 		{
 		}
 
-		virtual ErrorOr<EvalResult> evaluate(Interpreter* cs) const override;
-		virtual ErrorOr<TCResult> typecheck_impl(Interpreter* cs, const Type* infer = nullptr) const override;
+		virtual ErrorOr<EvalResult> evaluate(Evaluator* ev) const override;
+		virtual ErrorOr<TCResult> typecheck_impl(Typechecker* ts, const Type* infer = nullptr) const override;
 
 		std::unique_ptr<Expr> initialiser;
 		std::optional<frontend::PType> explicit_type;
@@ -299,8 +305,8 @@ namespace sap::interp
 		{
 		}
 
-		virtual ErrorOr<EvalResult> evaluate(Interpreter* cs) const override;
-		virtual ErrorOr<TCResult> typecheck_impl(Interpreter* cs, const Type* infer = nullptr) const override;
+		virtual ErrorOr<EvalResult> evaluate(Evaluator* ev) const override;
+		virtual ErrorOr<TCResult> typecheck_impl(Typechecker* ts, const Type* infer = nullptr) const override;
 
 		const std::vector<Param>& params() const { return m_params; }
 
@@ -325,10 +331,10 @@ namespace sap::interp
 		{
 		}
 
-		virtual ErrorOr<EvalResult> evaluate(Interpreter* cs) const override;
-		virtual ErrorOr<TCResult> typecheck_impl(Interpreter* cs, const Type* infer = nullptr) const override;
+		virtual ErrorOr<EvalResult> evaluate(Evaluator* ev) const override;
+		virtual ErrorOr<TCResult> typecheck_impl(Typechecker* ts, const Type* infer = nullptr) const override;
 
-		ErrorOr<EvalResult> call(Interpreter* cs, std::vector<Value>& args) const;
+		ErrorOr<EvalResult> call(Evaluator* ev, std::vector<Value>& args) const;
 
 		std::unique_ptr<Block> body;
 
@@ -338,7 +344,7 @@ namespace sap::interp
 
 	struct BuiltinFunctionDefn : Definition
 	{
-		using FuncTy = std::function<ErrorOr<EvalResult>(Interpreter*, std::vector<Value>&)>;
+		using FuncTy = std::function<ErrorOr<EvalResult>(Evaluator*, std::vector<Value>&)>;
 
 		BuiltinFunctionDefn(const std::string& name, std::vector<FunctionDecl::Param>&& params, frontend::PType return_type,
 		    const FuncTy& fn)
@@ -347,8 +353,8 @@ namespace sap::interp
 		{
 		}
 
-		virtual ErrorOr<EvalResult> evaluate(Interpreter* cs) const override;
-		virtual ErrorOr<TCResult> typecheck_impl(Interpreter* cs, const Type* infer = nullptr) const override;
+		virtual ErrorOr<EvalResult> evaluate(Evaluator* ev) const override;
+		virtual ErrorOr<TCResult> typecheck_impl(Typechecker* ts, const Type* infer = nullptr) const override;
 
 		FuncTy function;
 	};
@@ -358,8 +364,8 @@ namespace sap::interp
 	{
 		StructDecl(const std::string& name) : Declaration(name) { }
 
-		virtual ErrorOr<EvalResult> evaluate(Interpreter* cs) const override;
-		virtual ErrorOr<TCResult> typecheck_impl(Interpreter* cs, const Type* infer = nullptr) const override;
+		virtual ErrorOr<EvalResult> evaluate(Evaluator* ev) const override;
+		virtual ErrorOr<TCResult> typecheck_impl(Typechecker* ts, const Type* infer = nullptr) const override;
 	};
 
 	struct StructDefn : Definition
@@ -377,8 +383,8 @@ namespace sap::interp
 		{
 		}
 
-		virtual ErrorOr<EvalResult> evaluate(Interpreter* cs) const override;
-		virtual ErrorOr<TCResult> typecheck_impl(Interpreter* cs, const Type* infer = nullptr) const override;
+		virtual ErrorOr<EvalResult> evaluate(Evaluator* ev) const override;
+		virtual ErrorOr<TCResult> typecheck_impl(Typechecker* ts, const Type* infer = nullptr) const override;
 
 		std::vector<Field> fields;
 	};
