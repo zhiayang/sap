@@ -157,15 +157,19 @@ namespace sap::interp
 		Value castValue(Value value, const Type* to) const;
 		bool canImplicitlyConvert(const Type* from, const Type* to) const;
 
+		void addBridgedType(zst::str_view name, const Type* type);
+		ErrorOr<void> declareBridgedType(zst::str_view bridged_name, const Definition* type_defn);
+
 	private:
 		std::unique_ptr<DefnTree> m_top;
-		std::vector<DefnTree*> m_tree_stack;
 
+		std::vector<DefnTree*> m_tree_stack;
+		std::vector<const Type*> m_expected_return_types;
+
+		util::hashmap<std::string, const Type*> m_bridged_types;
+		std::vector<std::unique_ptr<Definition>> m_builtin_defns;
 		std::unordered_map<const Type*, const Definition*> m_type_definitions;
 
-		std::vector<std::unique_ptr<Definition>> m_builtin_defns;
 		std::vector<std::unique_ptr<StackFrame>> m_stack_frames;
-
-		std::vector<const Type*> m_expected_return_types;
 	};
 }

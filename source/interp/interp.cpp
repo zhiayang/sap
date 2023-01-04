@@ -7,43 +7,17 @@
 #include "interp/ast.h"         // for Definition, makeParamList, Expr, Stmt
 #include "interp/type.h"        // for Type
 #include "interp/interp.h"      // for StackFrame, Interpreter, DefnTree
-#include "interp/builtin.h"     // for bold1, bold_italic1, italic1, print
 #include "interp/eval_result.h" // for EvalResult
 
 namespace sap::interp
 {
-	static void define_builtins(Interpreter* cs, DefnTree* builtin_ns)
-	{
-		using namespace sap::frontend;
-
-		using BFD = BuiltinFunctionDefn;
-		using Param = FunctionDecl::Param;
-
-		auto any = PType::named(TYPE_ANY);
-		auto tio = PType::named(TYPE_TREE_INLINE);
-
-		auto define_builtin = [&](auto&&... xs) {
-			auto ret = std::make_unique<BFD>(std::forward<decltype(xs)>(xs)...);
-			cs->addBuiltinDefinition(std::move(ret))->typecheck(cs);
-		};
-
-		auto _ = cs->pushTree(builtin_ns);
-
-		define_builtin("bold1", makeParamList(Param { .name = "_", .type = any }), tio, &builtin::bold1);
-		define_builtin("italic1", makeParamList(Param { .name = "_", .type = any }), tio, &builtin::italic1);
-		define_builtin("bold_italic1", makeParamList(Param { .name = "_", .type = any }), tio, &builtin::bold_italic1);
-		define_builtin("apply_style", makeParamList(Param { .name = "_", .type = tio }), tio, &builtin::apply_style);
-
-		// TODO: make these variadic
-		define_builtin("print", makeParamList(Param { .name = "_", .type = any }), tio, &builtin::print);
-		define_builtin("println", makeParamList(Param { .name = "_", .type = any }), tio, &builtin::println);
-	}
+	extern void defineBuiltins(Interpreter* cs, DefnTree* builtin_ns);
 
 	Interpreter::Interpreter() : m_top(new DefnTree("__top_level", /* parent: */ nullptr))
 	{
 		this->pushTree(m_top.get()).cancel();
 
-		define_builtins(this, m_top->lookupOrDeclareNamespace("builtin"));
+		defineBuiltins(this, m_top->lookupOrDeclareNamespace("builtin"));
 
 		// always start with a top level frame.
 		this->m_stack_frames.push_back(std::unique_ptr<StackFrame>(new StackFrame(this, nullptr)));
@@ -187,6 +161,31 @@ namespace sap::interp
 	{
 		// TODO: call destructors
 	}
+
+
+	void Interpreter::addBridgedType(zst::str_view name, const Type* type)
+	{
+		if(m_bridged_types.contains(name))
+			error("interp", "bridged type '{}' already exists! this is a sap bug!", name);
+
+		m_bridged_types.emplace(name.str(), type);
+	}
+
+	ErrorOr<void> Interpreter::declareBridgedType(zst::str_view bridged_name, const Definition* type_defn)
+	{
+		const Type* bridged_type = nullptr;
+		if(auto it = m_bridged_types.find(bridged_name); it != m_bridged_types.end())
+			bridged_type = it->second;
+		else
+			return ErrFmt("'{}' is not a known bridged type", bridged_name);
+
+		if(m_type_definitions.contains(bridged_type))
+			return ErrFmt("type '{}' already has a bridged definition");
+
+		m_type_definitions[bridged_type] = type_defn;
+		return Ok();
+	}
+
 
 
 	void StackFrame::dropTemporaries()

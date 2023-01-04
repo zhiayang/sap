@@ -23,6 +23,7 @@ namespace sap::interp
 		ErrorOr<EvalResult> bold1(Interpreter* cs, std::vector<Value>& args);
 		ErrorOr<EvalResult> italic1(Interpreter* cs, std::vector<Value>& args);
 		ErrorOr<EvalResult> bold_italic1(Interpreter* cs, std::vector<Value>& args);
+
 		ErrorOr<EvalResult> apply_style(Interpreter* cs, std::vector<Value>& args);
 
 		ErrorOr<EvalResult> print(Interpreter* cs, std::vector<Value>& args);

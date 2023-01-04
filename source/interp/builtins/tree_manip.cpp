@@ -57,6 +57,8 @@ namespace sap::interp::builtin
 	{
 		// TODO: maybe don't assert?
 		assert(args.size() == 2);
+
+
 		return apply_style1(cs, args[0], &g_bold_style);
 	}
 
