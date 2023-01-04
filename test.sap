@@ -63,27 +63,23 @@ fi fl Bсички хора се раждат свободни и равни по
 	let p1: &mut int = null;
 	let p2: &mut int = p1;
 	let p3: &int = p2;
+
 }
 
 
 \script {
-	fn sum(n: int) -> int
+	fn fib(n: int) -> int
 	{
-		if(n > 0)
-		{
-			builtin::print("  n = ");
-			builtin::println(n);
-			return n + sum(n - 1);
-		}
-		else
-		{
-			return n;
-		}
+		if(n == 0)
+			return 0;
+		else if(n <= 2)
+			return 1;
+
+		return fib(n - 1) + fib(n - 2);
 	}
 
-	let x = sum(10);
-	builtin::print("x = ");
-	builtin::println(x);
+	builtin::print("fib(15) = ");
+	builtin::println(fib(15));
 }
 
 

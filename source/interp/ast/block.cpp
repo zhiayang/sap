@@ -26,6 +26,8 @@ namespace sap::interp
 		for(auto& stmt : this->body)
 		{
 			auto result = TRY(stmt->evaluate(cs));
+			cs->frame().dropTemporaries();
+
 			if(not result.isNormal())
 				return Ok(std::move(result));
 		}
