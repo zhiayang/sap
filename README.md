@@ -57,19 +57,21 @@ While I appreciate the vast ecosystem that LaTeX has, having any kind of compati
 
 This also acts as a sort of TODO; as time goes on completed features may be removed from this list if they are deemed "trivial".
 
-- [x] OpenType font (otf/ttf) loading and embedding
-- [x] Embedded font subsetting (both TrueType and CFF)
-- [ ] Variable font support
-- [ ] Further size optimisation for embedded fonts
-- [x] Glyph positioning (`kern` & GPOS lookups 1, 2, 7, 8, 9)
-- [x] Glyph substitutions (incl. ligatures) (OpenType GSUB lookups 1, 2, 4, 5, 6, 7)
-- [ ] AAT tables (`kerx`, `morx`)
-- [ ] More advanced typography support (`BASE`, `MATH`, `JSTF`)
-- [x] Text extraction (eg. copy/paste) support — `ToUnicode` table
+- [ ] Layout integration with scripting language
+- [ ] Graphical output
 - [ ] Unicode substitution (eg. codepoint (de)composition)
+- [ ] More advanced typography support (`BASE`, `MATH`, `JSTF`, AAT `kerx`)
+- [ ] Further size optimisation for embedded fonts
+- [ ] Optimising bytecode compiler for the scripting language
+- [x] OpenType font (otf/ttf) loading and embedding
+- [x] Embedded font subsetting for TrueType fonts (CFF fonts are a little iffy)
+- [x] Glyph positioning (`kern` & GPOS lookups 1, 2, 7, 8, 9)
+- [x] Glyph substitutions (incl. ligatures) (`morx` & OpenType GSUB lookups 1, 2, 4, 5, 6, 7)
+- [x] Text extraction (eg. copy/paste) support — `ToUnicode` table
+- [x] Basic paragraph layout, linebreaking, and pagination
+- [x] Some meta language
 - [ ] Vertical writing
-- [x] Very very (very very...) basic paragraph layout, linebreaking, and pagination
-- [ ] Literally any metalanguage
+- [ ] ~~Variable font support~~ Unlikely to support variable fonts, since it's a pain
 
 
 ### alternatives
@@ -86,4 +88,4 @@ But what about `<insert_tool_here>`?
 sap is licensed under the [Apache License version 2.0](./LICENSE). [utf8proc](./external/utf8proc/LICENSE.md)
 and [miniz](./external/miniz/LICENSE) are licensed under their respective licenses.
 
-The hyphenation list is MIT licensed, see the hyphenation file [hyph-en-gb.tex](./hyph-en-gb.tex) or see [the repo](https://github.com/hyphenation/tex-hyphen).
+The hyphenation list is MIT licensed, see the hyphenation file [hyph-en-gb.tex](./hyph-en-gb.tex) or [the repo](https://github.com/hyphenation/tex-hyphen).
