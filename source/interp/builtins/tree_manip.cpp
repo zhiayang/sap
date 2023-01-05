@@ -5,12 +5,13 @@
 #include "sap/style.h"       // for Style
 #include "sap/font_family.h" // for FontStyle, FontStyle::Bold, FontStyl...
 
-#include "interp/tree.h"        // for Text
-#include "interp/value.h"       // for Value
-#include "interp/interp.h"      // for Interpreter
-#include "interp/basedefs.h"    // for InlineObject
-#include "interp/eval_result.h" // for EvalResult
-#include "interp/builtin_fns.h" // for bold1, bold_italic1, italic1
+#include "interp/tree.h"          // for Text
+#include "interp/value.h"         // for Value
+#include "interp/interp.h"        // for Interpreter
+#include "interp/basedefs.h"      // for InlineObject
+#include "interp/eval_result.h"   // for EvalResult
+#include "interp/builtin_fns.h"   // for bold1, bold_italic1, italic1
+#include "interp/builtin_types.h" //
 
 namespace sap::interp::builtin
 {
@@ -55,13 +56,37 @@ namespace sap::interp::builtin
 	}
 
 
+	template <typename T>
+	static std::optional<T> get_field(Value& str, zst::str_view field)
+	{
+		auto& fields = str.getStructFields();
+		auto idx = str.type()->toStruct()->getFieldIndex(field);
+
+		auto& f = fields[idx];
+		if(not f.haveOptionalValue())
+			return std::nullopt;
+
+		return (*f.getOptional())->get<T>();
+	}
+
 	ErrorOr<EvalResult> apply_style(Evaluator* ev, std::vector<Value>& args)
 	{
-		// TODO: maybe don't assert?
 		assert(args.size() == 2);
+		assert(args[0].type() == BStyle::type);
 
+		auto get_scalar = [&args](zst::str_view field) -> std::optional<sap::Length> {
+			auto f = get_field<double>(args[0], field);
+			if(f.has_value())
+				return sap::Length(*f);
 
-		return do_apply_style(ev, args[0], &g_bold_style);
+			return std::nullopt;
+		};
+
+		auto style = Style();
+		style.set_font_size(get_scalar("font_size"));
+		style.set_line_spacing(get_scalar("line_spacing"));
+
+		return do_apply_style(ev, args[1], &style);
 	}
 
 

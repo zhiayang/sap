@@ -94,17 +94,20 @@ namespace sap::interp
 		auto& defn_fields = struct_defn->fields();
 		for(size_t i = 0; i < struct_type->getFields().size(); i++)
 		{
+			Value field {};
 			if(auto it = ordered.find(i); it == ordered.end())
 			{
 				if(defn_fields[i].initialiser == nullptr)
 					return ErrFmt("missing value for field '{}'", defn_fields[i].name);
 
-				field_values.push_back(TRY_VALUE(defn_fields[i].initialiser->evaluate(ev)));
+				field = TRY_VALUE(defn_fields[i].initialiser->evaluate(ev));
 			}
 			else
 			{
-				field_values.push_back(std::move(it->second));
+				field = std::move(it->second);
 			}
+
+			field_values.push_back(ev->castValue(std::move(field), struct_type->getFieldAtIndex(i)));
 		}
 
 		return EvalResult::ofValue(Value::structure(struct_type, std::move(field_values)));

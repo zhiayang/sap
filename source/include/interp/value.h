@@ -323,6 +323,12 @@ namespace sap::interp
 		{
 			auto ret = Value(ty);
 			new(&ret.v_array) decltype(ret.v_array)(std::move(fields));
+			for(size_t i = 0; i < ret.v_array.size(); i++)
+			{
+				if(ret.v_array[i].type() != ty->getFieldAtIndex(i))
+					sap::internal_error("mismatched field types!");
+			}
+
 			return ret;
 		}
 
@@ -404,6 +410,34 @@ namespace sap::interp
 
 			return val;
 		}
+
+
+
+		template <typename T>
+		T get() const
+		{
+			if constexpr(std::is_same_v<T, bool>)
+				return this->getBool();
+
+			else if constexpr(std::is_same_v<T, char32_t>)
+				return this->getChar();
+
+			else if constexpr(std::is_same_v<T, int64_t>)
+				return this->getInteger();
+
+			else if constexpr(std::is_same_v<T, double>)
+				return this->getFloating();
+
+			else
+			{
+				static_assert(std::is_same_v<T, T>, "unsupported type");
+				return {};
+			}
+		}
+
+
+
+
 
 	private:
 		explicit Value(const Type* type) : m_type(type) { }

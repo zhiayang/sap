@@ -35,6 +35,9 @@ namespace sap::interp
 		else if(to->isOptional() && from->isNullPtr())
 			return true;
 
+		else if(to->isOptional() && this->canImplicitlyConvert(from, to->optionalElement()))
+			return true;
+
 		return false;
 	}
 

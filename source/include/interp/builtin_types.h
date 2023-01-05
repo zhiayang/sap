@@ -12,6 +12,8 @@ namespace sap::interp::builtin
 	struct BStyle
 	{
 		static constexpr auto name = "Style";
+
+		static const Type* type;
 		static std::vector<StructDefn::Field> fields();
 	};
 };

@@ -1,4 +1,4 @@
-// bridge.cpp
+// builtins.cpp
 // Copyright (c) 2022, zhiayang
 // SPDX-License-Identifier: Apache-2.0
 
@@ -16,11 +16,17 @@ namespace sap::interp
 
 	static auto pt_float = PT::named(frontend::TYPE_FLOAT);
 
+	static auto get_null()
+	{
+		return std::make_unique<NullLit>();
+	}
+
+	const Type* builtin::BStyle::type = nullptr;
 	std::vector<Field> builtin::BStyle::fields()
 	{
-		return util::vectorOf(                                             //
-		    Field { .name = "font_size", .type = PT::optional(pt_float) }, //
-		    Field { .name = "line_spacing", .type = PT::optional(pt_float) });
+		return util::vectorOf(                                                                        //
+		    Field { .name = "font_size", .type = PT::optional(pt_float), .initialiser = get_null() }, //
+		    Field { .name = "line_spacing", .type = PT::optional(pt_float), .initialiser = get_null() });
 	}
 
 
@@ -28,7 +34,7 @@ namespace sap::interp
 	void define_builtin_struct(Typechecker* ts)
 	{
 		auto str = std::make_unique<StructDefn>(T::name, T::fields());
-		ts->addBuiltinDefinition(std::move(str))->typecheck(ts);
+		T::type = ts->addBuiltinDefinition(std::move(str))->typecheck(ts).unwrap().type();
 	}
 
 

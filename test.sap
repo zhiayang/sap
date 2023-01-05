@@ -6,10 +6,9 @@
 		# builtin::set_current_style(s);
 	}
 
-	fn style(s: builtin::Style, inline_obj: Inline) -> Inline
+	fn style(s: builtin::Style, obj: Inline) -> Inline
 	{
-		var x = s;
-		x.font_size = 69;
+		return builtin::apply_style(s, obj);
 	}
 
 	fn bold(x: Inline) -> Inline
@@ -31,6 +30,7 @@ this     is     a    aoeu bsdf, fill me up flour
 
 fi fl Bсички хора се раждат свободни и равни по \{ \}
 
+#:
 \script {
 	std::asdf();
 
@@ -140,9 +140,9 @@ fi fl Bсички хора се раждат свободни и равни по
 	builtin::print("f3 = ");
 	builtin::println(f3);
 }
+:#
 
-
-hello \std::bold() { world } asdf
+hello \std::style(builtin::Style { .font_size = 16 }) { world } asdf
 
 
 My name is Yoshikage Kira. I'm\builtin::bold_italic1(1 < 2 < 5 > 7)years old. My house is in the northeast section of Morioh,

@@ -43,6 +43,11 @@ namespace sap::interp
 		{
 			return Value::optional(to->optionalElement(), std::nullopt);
 		}
+		else if(to->isOptional())
+		{
+			auto elm = to->optionalElement();
+			return Value::optional(elm, this->castValue(std::move(value), elm));
+		}
 		else
 		{
 			return value;
