@@ -253,7 +253,27 @@ namespace sap::frontend
 			while(isascii(stream[n]) && (isdigit(stream[n]) || isalpha(stream[n]) || stream[n] == '_'))
 				n++;
 
-			return advance_and_return(stream, loc, Token { .loc = loc, .type = TT::Identifier, .text = stream.take(n) }, n);
+			auto text = stream.take(n);
+			auto tt = TT::Identifier;
+
+			if(text == "if")
+				tt = TT::KW_If;
+			else if(text == "fn")
+				tt = TT::KW_Fn;
+			else if(text == "mut")
+				tt = TT::KW_Mut;
+			else if(text == "let")
+				tt = TT::KW_Let;
+			else if(text == "var")
+				tt = TT::KW_Var;
+			else if(text == "else")
+				tt = TT::KW_Else;
+			else if(text == "struct")
+				tt = TT::KW_Struct;
+			else if(text == "return")
+				tt = TT::KW_Return;
+
+			return advance_and_return(stream, loc, Token { .loc = loc, .type = tt, .text = text }, n);
 		}
 		else if(isascii(stream[0]) && isdigit(stream[0]))
 		{

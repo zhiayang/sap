@@ -68,6 +68,16 @@ namespace sap::frontend
 		PercentEqual,
 
 		Ellipsis,
+
+		// keywords
+		KW_If,
+		KW_Fn,
+		KW_Mut,
+		KW_Let,
+		KW_Var,
+		KW_Else,
+		KW_Struct,
+		KW_Return,
 	};
 
 	struct Token

@@ -15,15 +15,7 @@
 
 namespace sap::frontend
 {
-	constexpr auto KW_IF = "if";
-	constexpr auto KW_LET = "let";
-	constexpr auto KW_VAR = "var";
-	constexpr auto KW_FUNC = "fn";
 	constexpr auto KW_NULL = "null";
-	constexpr auto KW_ELSE = "else";
-	constexpr auto KW_MUTABLE = "mut";
-	constexpr auto KW_STRUCT = "struct";
-	constexpr auto KW_RETURN = "return";
 	constexpr auto KW_SCRIPT_BLOCK = "script";
 
 	using TT = TokenType;
@@ -627,8 +619,8 @@ namespace sap::frontend
 			lexer.next();
 
 			bool is_mutable = false;
-			if(auto x = lexer.peek(); x == TT::Identifier && x.text == KW_MUTABLE)
-				lexer.next(), is_mutable = true;
+			if(lexer.expect(TT::KW_Mut))
+				is_mutable = true;
 
 			return PType::pointer(parse_type(lexer), is_mutable);
 		}
@@ -673,8 +665,7 @@ namespace sap::frontend
 	static std::unique_ptr<interp::VariableDefn> parse_var_defn(Lexer& lexer)
 	{
 		auto kw = lexer.next();
-		assert(kw == TT::Identifier);
-		assert(kw.text == KW_LET || kw.text == KW_VAR);
+		assert(kw == TT::KW_Let || kw == TT::KW_Var);
 
 		// expect a name
 		auto maybe_name = lexer.match(TT::Identifier);
@@ -690,7 +681,7 @@ namespace sap::frontend
 		if(lexer.match(TT::Equal))
 			initialiser = parse_expr(lexer);
 
-		return std::make_unique<interp::VariableDefn>(maybe_name->str(), /* is_mutable: */ kw.text == KW_VAR,
+		return std::make_unique<interp::VariableDefn>(maybe_name->str(), /* is_mutable: */ kw == TT::KW_Var,
 		    std::move(initialiser), std::move(explicit_type));
 	}
 
@@ -738,13 +729,11 @@ namespace sap::frontend
 	static std::unique_ptr<interp::FunctionDefn> parse_function_defn(Lexer& lexer)
 	{
 		using namespace interp;
-
-		auto x = lexer.match(TT::Identifier);
-		assert(x.has_value() && x->text == KW_FUNC);
+		must_expect(lexer, TT::KW_Fn);
 
 		std::string name;
 		if(auto name_tok = lexer.match(TT::Identifier); not name_tok.has_value())
-			error(lexer.location(), "expected identifier after '{}'", KW_FUNC);
+			error(lexer.location(), "expected identifier after 'fn'");
 		else
 			name = name_tok->text.str();
 
@@ -773,12 +762,11 @@ namespace sap::frontend
 
 	static std::unique_ptr<interp::StructDefn> parse_struct_defn(Lexer& lexer)
 	{
-		auto x = lexer.match(TT::Identifier);
-		assert(x.has_value() && x->text == KW_STRUCT);
+		must_expect(lexer, TT::KW_Struct);
 
 		std::string name;
 		if(auto name_tok = lexer.match(TT::Identifier); not name_tok.has_value())
-			error(lexer.location(), "expected identifier after '{}'", KW_STRUCT);
+			error(lexer.location(), "expected identifier after 'struct'");
 		else
 			name = name_tok->text.str();
 
@@ -818,7 +806,7 @@ namespace sap::frontend
 
 	static std::unique_ptr<interp::IfStmt> parse_if_stmt(Lexer& lexer)
 	{
-		must_expect(lexer, KW_IF);
+		must_expect(lexer, TT::KW_If);
 
 		if(not lexer.expect(TT::LParen))
 			error(lexer.location(), "expected '(' after 'if'");
@@ -831,7 +819,7 @@ namespace sap::frontend
 
 		if_stmt->if_body = parse_block_or_stmt(lexer);
 
-		if(lexer.expect(KW_ELSE))
+		if(lexer.expect(TT::KW_Else))
 			if_stmt->else_body = parse_block_or_stmt(lexer);
 
 		return if_stmt;
@@ -839,7 +827,7 @@ namespace sap::frontend
 
 	static std::unique_ptr<interp::ReturnStmt> parse_return_stmt(Lexer& lexer)
 	{
-		must_expect(lexer, KW_RETURN);
+		must_expect(lexer, TT::KW_Return);
 
 		auto ret = std::make_unique<interp::ReturnStmt>();
 		if(lexer.peek() == TT::Semicolon)
@@ -870,35 +858,28 @@ namespace sap::frontend
 
 		bool optional_semicolon = false;
 
-		if(tok.type == TT::Identifier)
+		if(tok == TT::KW_Let || tok == TT::KW_Var)
 		{
-			if(tok.text == KW_LET || tok.text == KW_VAR)
-			{
-				stmt = parse_var_defn(lexer);
-			}
-			else if(tok.text == KW_FUNC)
-			{
-				stmt = parse_function_defn(lexer);
-				optional_semicolon = true;
-			}
-			else if(tok.text == KW_STRUCT)
-			{
-				stmt = parse_struct_defn(lexer);
-				optional_semicolon = true;
-			}
-			else if(tok.text == KW_IF)
-			{
-				stmt = parse_if_stmt(lexer);
-				optional_semicolon = true;
-			}
-			else if(tok.text == KW_RETURN)
-			{
-				stmt = parse_return_stmt(lexer);
-			}
-			else
-			{
-				stmt = parse_expr(lexer);
-			}
+			stmt = parse_var_defn(lexer);
+		}
+		else if(tok == TT::KW_Fn)
+		{
+			stmt = parse_function_defn(lexer);
+			optional_semicolon = true;
+		}
+		else if(tok == TT::KW_Struct)
+		{
+			stmt = parse_struct_defn(lexer);
+			optional_semicolon = true;
+		}
+		else if(tok == TT::KW_If)
+		{
+			stmt = parse_if_stmt(lexer);
+			optional_semicolon = true;
+		}
+		else if(tok == TT::KW_Return)
+		{
+			stmt = parse_return_stmt(lexer);
 		}
 		else
 		{
