@@ -133,7 +133,11 @@ namespace pdf
 
 	struct Array : Object
 	{
-		explicit Array(std::vector<Object*> values) : m_values(std::move(values)) { }
+		explicit Array(std::vector<Object*> values) : m_values(std::move(values))
+		{
+			for(auto obj : m_values)
+				obj->refer();
+		}
 
 		virtual void writeFull(Writer* w) const override;
 
@@ -155,7 +159,12 @@ namespace pdf
 		const std::vector<Object*>& values() const { return m_values; }
 		std::vector<Object*>& values() { return m_values; }
 
-		void append(Object* obj) { m_values.push_back(obj); }
+		void append(Object* obj)
+		{
+			obj->refer();
+			m_values.push_back(obj);
+		}
+
 		void clear() { m_values.clear(); }
 
 	private:
@@ -165,7 +174,11 @@ namespace pdf
 	struct Dictionary : Object
 	{
 		Dictionary() { }
-		explicit Dictionary(std::map<Name, Object*> values) : m_values(std::move(values)) { }
+		explicit Dictionary(std::map<Name, Object*> values) : m_values(std::move(values))
+		{
+			for(auto& [_, obj] : m_values)
+				obj->refer();
+		}
 
 		void add(const Name& n, Object* obj);
 		void addOrReplace(const Name& n, Object* obj);
@@ -188,7 +201,7 @@ namespace pdf
 	// owns the memory.
 	struct Stream : Object
 	{
-		explicit Stream(Dictionary* dict, zst::byte_buffer bytes) : m_bytes(std::move(bytes)), m_dict(dict) { }
+		explicit Stream(Dictionary* dict, zst::byte_buffer bytes) : m_bytes(std::move(bytes)), m_dict(dict) { m_dict->refer(); }
 		~Stream();
 
 		virtual void writeFull(Writer* w) const override;

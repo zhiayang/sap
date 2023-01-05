@@ -31,8 +31,9 @@ namespace pdf
 	{
 		Dictionary* serialise(File* doc) const;
 		bool didSerialise() const { return m_did_serialise; }
-		Dictionary* dictionary() const { return this->font_dictionary; }
+		Dictionary* dictionary() const { return m_font_dictionary; }
 		std::string getFontResourceName() const { return m_font_resource_name; }
+		bool isCIDFont() const { return not m_source->isBuiltin(); }
 
 		const font::FontMetrics& getFontMetrics() const { return m_source->metrics(); }
 		font::GlyphMetrics getMetricsForGlyph(GlyphId glyph) const { return m_source->getGlyphMetrics(glyph); }
@@ -79,7 +80,6 @@ namespace pdf
 		}
 
 		int font_type = 0;
-		int encoding_kind = 0;
 
 		static PdfFont* fromBuiltin(File* doc, BuiltinFont::Core14 font_name);
 		static PdfFont* fromFontFile(File* doc, std::unique_ptr<font::FontFile> font);
@@ -89,17 +89,14 @@ namespace pdf
 		static constexpr int FONT_CFF_CID = 3;
 		static constexpr int FONT_TRUETYPE_CID = 4;
 
-		static constexpr int ENCODING_WIN_ANSI = 1;
-		static constexpr int ENCODING_CID = 2;
-
 		static TextSpace1d convertPDFScalarToTextSpaceForFontSize(PdfScalar scalar, PdfScalar font_size)
 		{
 			return GlyphSpace1d(scalar / font_size).into<TextSpace1d>();
 		}
 
 	private:
-		PdfFont();
-		Dictionary* font_dictionary = 0;
+		PdfFont(File* doc, BuiltinFont::Core14 builtin_font);
+		PdfFont(File* doc, std::unique_ptr<font::FontFile> font);
 
 		void writeUnicodeCMap(File* doc) const;
 		void writeCIDSet(File* doc) const;
@@ -107,20 +104,22 @@ namespace pdf
 		mutable std::map<GlyphId, std::vector<char32_t>> m_extra_unicode_mappings {};
 		mutable bool m_did_serialise = false;
 
+		std::unique_ptr<font::FontSource> m_source {};
+		Dictionary* m_font_dictionary = nullptr;
+		Array* m_glyph_widths_array = nullptr;
+
 		// the name that goes into the Resource << >> dict in a page. This is a unique name
 		// that we get from the Document when the font is created.
 		std::string m_font_resource_name {};
 
-		// only used for embedded fonts
-		std::unique_ptr<font::FontSource> m_source {};
-		Array* glyph_widths_array = 0;
 
-		Stream* embedded_contents = 0;
-		Stream* unicode_cmap = 0;
-		Stream* cidset = 0;
+
+		Stream* m_embedded_contents = nullptr;
+		Stream* m_unicode_cmap = nullptr;
+		Stream* m_cidset = nullptr;
 
 		// what goes in BaseName. for subsets, this includes the ABCDEF+ part.
-		std::string pdf_font_name;
+		std::string m_pdf_font_name;
 
 		// pool needs to be a friend because it needs the constructor
 		template <typename>

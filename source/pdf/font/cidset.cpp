@@ -17,7 +17,7 @@ namespace pdf
 		if(not font_file)
 			return;
 
-		auto stream = this->cidset;
+		auto stream = m_cidset;
 		stream->clear();
 
 		int num_bits = 0;

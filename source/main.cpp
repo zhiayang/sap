@@ -57,7 +57,7 @@ int main(int argc, char** argv)
 	auto font_family = [&]() {
 		using namespace font;
 
-		std::vector<std::string> prefs = { "Helvetica", GENERIC_SERIF };
+		std::vector<std::string> prefs = { "Source Serif 4", "Helvetica", GENERIC_SERIF };
 
 		auto regular_handle = font::findFont(prefs, FontProperties {});
 		auto italic_handle = font::findFont(prefs, FontProperties { .style = FontStyle::ITALIC });
@@ -84,8 +84,7 @@ int main(int argc, char** argv)
 	    .set_font_size(pdf::PdfScalar(12).into());
 
 	auto actual_style = layout_doc.style()->extendWith(&main_style);
-
-	// layout_doc.setStyle(actual_style);
+	layout_doc.setStyle(actual_style);
 
 	document.evaluateScripts(&interpreter);
 	document.processWordSeparators();

@@ -24,10 +24,10 @@ namespace pdf
 		if(not font_file)
 			return;
 
-		auto cmap = this->unicode_cmap;
+		auto cmap = m_unicode_cmap;
 		cmap->clear();
 
-		write_cmap_header(cmap, this->pdf_font_name);
+		write_cmap_header(cmap, m_pdf_font_name);
 
 		cmap->append(
 		    "1 begincodespacerange\n"

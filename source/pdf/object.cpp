@@ -51,7 +51,8 @@ namespace pdf
 	void Object::refer()
 	{
 		if(not m_is_indirect)
-			pdf::error("cannot refer to non-indirect object");
+			return;
+
 		m_reference_count++;
 	}
 
@@ -169,11 +170,13 @@ namespace pdf
 		if(auto it = m_values.find(n); it != m_values.end())
 			pdf::error("key '{}' already exists in dictionary", n.name());
 
+		obj->refer();
 		m_values.emplace(n, obj);
 	}
 
 	void Dictionary::addOrReplace(const Name& n, Object* obj)
 	{
+		obj->refer();
 		m_values.insert_or_assign(n, obj);
 	}
 
