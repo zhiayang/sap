@@ -66,6 +66,8 @@ namespace sap::frontend
 		AsteriskEqual,
 		SlashEqual,
 		PercentEqual,
+		QuestionQuestion,
+		QuestionPeriod,
 
 		Ellipsis,
 

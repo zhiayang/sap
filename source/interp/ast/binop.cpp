@@ -21,6 +21,7 @@ namespace sap::interp
 			case BinaryOp::Op::Multiply: return "*";
 			case BinaryOp::Op::Divide: return "/";
 			case BinaryOp::Op::Modulo: return "%";
+			case BinaryOp::Op::NullCoalesce: return "??";
 		}
 	}
 
@@ -28,6 +29,20 @@ namespace sap::interp
 	{
 		auto ltype = TRY(this->lhs->typecheck(ts)).type();
 		auto rtype = TRY(this->rhs->typecheck(ts)).type();
+
+		if(this->op == Op::NullCoalesce)
+		{
+			if(not ltype->isOptional())
+				return ErrFmt("invalid use of '??' with non-optional type '{}' on left-hand side", ltype);
+
+			auto tmp = rtype->isOptional() ? rtype->optionalElement() : rtype;
+			if(tmp != ltype->optionalElement())
+				return ErrFmt("mismatched types for '??' -- '{}' on left and '{}' on right", ltype, tmp);
+
+			// if the rhs is an optional, we return an optional also
+			// (this allows things like a ?? b ?? c to work)
+			return TCResult::ofRValue(rtype);
+		}
 
 		if((ltype->isInteger() && rtype->isInteger()) || (ltype->isFloating() && rtype->isFloating()))
 		{
@@ -56,20 +71,40 @@ namespace sap::interp
 		auto rval = TRY_VALUE(this->rhs->evaluate(ev));
 		auto rtype = rval.type();
 
-		auto do_op = [](Op op, auto a, auto b) {
+		auto do_arith = [](Op op, auto a, auto b) {
 			switch(op)
 			{
 				case Op::Add: return a + b;
 				case Op::Subtract: return a - b;
 				case Op::Multiply: return a * b;
 				case Op::Divide: return a / b;
-				case Op::Modulo:
+				case Op::Modulo: {
 					if constexpr(std::is_floating_point_v<decltype(a)>)
 						return fmod(a, b);
 					else
 						return a % b;
+				}
+				default: assert(false && "unreachable!");
 			}
 		};
+
+		if(this->op == Op::NullCoalesce)
+		{
+			assert(lval.isOptional());
+			if(lval.haveOptionalValue())
+			{
+				// if the right side is an optional, we return an optional too.
+				if(rtype->isOptional())
+					return EvalResult::ofValue(Value::optional(ltype->optionalElement(), std::move(lval).takeOptional()));
+				else
+					return EvalResult::ofValue(std::move(*std::move(lval).takeOptional()));
+			}
+			else
+			{
+				return EvalResult::ofValue(std::move(rval));
+			}
+		}
+
 
 		if((ltype->isInteger() && rtype->isInteger()) || (ltype->isFloating() && rtype->isFloating()))
 		{
@@ -77,9 +112,9 @@ namespace sap::interp
 			{
 				// TODO: this might be bad because implicit conversions
 				if(ltype->isInteger())
-					return EvalResult::ofValue(Value::integer(do_op(this->op, lval.getInteger(), rval.getInteger())));
+					return EvalResult::ofValue(Value::integer(do_arith(this->op, lval.getInteger(), rval.getInteger())));
 				else
-					return EvalResult::ofValue(Value::floating(do_op(this->op, lval.getFloating(), rval.getFloating())));
+					return EvalResult::ofValue(Value::floating(do_arith(this->op, lval.getFloating(), rval.getFloating())));
 			}
 		}
 		else if(ltype->isArray() && rtype->isArray() && ltype->toArray()->elementType() == rtype->toArray()->elementType())

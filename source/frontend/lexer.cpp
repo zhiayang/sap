@@ -281,55 +281,78 @@ namespace sap::frontend
 			while(isascii(stream[n]) && isdigit(stream[n]))
 				n++;
 
-			return advance_and_return(stream, loc, Token { .loc = loc, .type = TT::Number, .text = stream.take(n) }, n);
+			return advance_and_return(stream, loc, //
+			    Token { .loc = loc, .type = TT::Number, .text = stream.take(n) }, n);
 		}
 		else if(stream.starts_with("::"))
 		{
-			return advance_and_return(stream, loc, Token { .loc = loc, .type = TT::ColonColon, .text = stream.take(2) }, 2);
+			return advance_and_return(stream, loc, //
+			    Token { .loc = loc, .type = TT::ColonColon, .text = stream.take(2) }, 2);
 		}
 		else if(stream.starts_with("<="))
 		{
-			return advance_and_return(stream, loc, Token { .loc = loc, .type = TT::LAngleEqual, .text = stream.take(2) }, 2);
+			return advance_and_return(stream, loc, //
+			    Token { .loc = loc, .type = TT::LAngleEqual, .text = stream.take(2) }, 2);
 		}
 		else if(stream.starts_with(">="))
 		{
-			return advance_and_return(stream, loc, Token { .loc = loc, .type = TT::RAngleEqual, .text = stream.take(2) }, 2);
+			return advance_and_return(stream, loc, //
+			    Token { .loc = loc, .type = TT::RAngleEqual, .text = stream.take(2) }, 2);
 		}
 		else if(stream.starts_with("=="))
 		{
-			return advance_and_return(stream, loc, Token { .loc = loc, .type = TT::EqualEqual, .text = stream.take(2) }, 2);
+			return advance_and_return(stream, loc, //
+			    Token { .loc = loc, .type = TT::EqualEqual, .text = stream.take(2) }, 2);
 		}
 		else if(stream.starts_with("!="))
 		{
-			return advance_and_return(stream, loc, Token { .loc = loc, .type = TT::ExclamationEqual, .text = stream.take(2) }, 2);
+			return advance_and_return(stream, loc, //
+			    Token { .loc = loc, .type = TT::ExclamationEqual, .text = stream.take(2) }, 2);
 		}
 		else if(stream.starts_with("+="))
 		{
-			return advance_and_return(stream, loc, Token { .loc = loc, .type = TT::PlusEqual, .text = stream.take(2) }, 2);
+			return advance_and_return(stream, loc, //
+			    Token { .loc = loc, .type = TT::PlusEqual, .text = stream.take(2) }, 2);
 		}
 		else if(stream.starts_with("-="))
 		{
-			return advance_and_return(stream, loc, Token { .loc = loc, .type = TT::MinusEqual, .text = stream.take(2) }, 2);
+			return advance_and_return(stream, loc, //
+			    Token { .loc = loc, .type = TT::MinusEqual, .text = stream.take(2) }, 2);
 		}
 		else if(stream.starts_with("*="))
 		{
-			return advance_and_return(stream, loc, Token { .loc = loc, .type = TT::AsteriskEqual, .text = stream.take(2) }, 2);
+			return advance_and_return(stream, loc, //
+			    Token { .loc = loc, .type = TT::AsteriskEqual, .text = stream.take(2) }, 2);
 		}
 		else if(stream.starts_with("/="))
 		{
-			return advance_and_return(stream, loc, Token { .loc = loc, .type = TT::SlashEqual, .text = stream.take(2) }, 2);
+			return advance_and_return(stream, loc, //
+			    Token { .loc = loc, .type = TT::SlashEqual, .text = stream.take(2) }, 2);
 		}
 		else if(stream.starts_with("%="))
 		{
-			return advance_and_return(stream, loc, Token { .loc = loc, .type = TT::PercentEqual, .text = stream.take(2) }, 2);
+			return advance_and_return(stream, loc, //
+			    Token { .loc = loc, .type = TT::PercentEqual, .text = stream.take(2) }, 2);
 		}
 		else if(stream.starts_with("->"))
 		{
-			return advance_and_return(stream, loc, Token { .loc = loc, .type = TT::RArrow, .text = stream.take(2) }, 2);
+			return advance_and_return(stream, loc, //
+			    Token { .loc = loc, .type = TT::RArrow, .text = stream.take(2) }, 2);
+		}
+		else if(stream.starts_with("??"))
+		{
+			return advance_and_return(stream, loc, //
+			    Token { .loc = loc, .type = TT::QuestionQuestion, .text = stream.take(2) }, 2);
+		}
+		else if(stream.starts_with("?."))
+		{
+			return advance_and_return(stream, loc, //
+			    Token { .loc = loc, .type = TT::QuestionPeriod, .text = stream.take(2) }, 2);
 		}
 		else if(stream.starts_with("..."))
 		{
-			return advance_and_return(stream, loc, Token { .loc = loc, .type = TT::Ellipsis, .text = stream.take(3) }, 3);
+			return advance_and_return(stream, loc, //
+			    Token { .loc = loc, .type = TT::Ellipsis, .text = stream.take(3) }, 3);
 		}
 		else if(stream[0] == '"')
 		{

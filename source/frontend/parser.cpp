@@ -146,21 +146,24 @@ namespace sap::frontend
 			case TT::LSquare: return 1000000;
 			case TT::Question: return 1000000;
 
-			case TT::Period: return 999;
+			case TT::Period: return 900;
+			case TT::QuestionPeriod: return 900;
 
-			case TT::Asterisk: [[fallthrough]];
-			case TT::Percent: [[fallthrough]];
+			case TT::Asterisk:
+			case TT::Percent:
 			case TT::Slash: return 400;
 
 			case TT::Plus:
 			case TT::Minus: return 300;
 
-			case TT::LAngle: [[fallthrough]];
-			case TT::RAngle: [[fallthrough]];
-			case TT::EqualEqual: [[fallthrough]];
-			case TT::LAngleEqual: [[fallthrough]];
-			case TT::RAngleEqual: [[fallthrough]];
+			case TT::LAngle:
+			case TT::RAngle:
+			case TT::EqualEqual:
+			case TT::LAngleEqual:
+			case TT::RAngleEqual:
 			case TT::ExclamationEqual: return 200;
+
+			case TT::QuestionQuestion: return 100;
 
 			default: return -1;
 		}
@@ -184,7 +187,7 @@ namespace sap::frontend
 
 	static bool is_regular_binary_op(TokenType tok)
 	{
-		return util::is_one_of(tok, TT::Plus, TT::Minus, TT::Asterisk, TT::Slash, TT::Percent);
+		return util::is_one_of(tok, TT::Plus, TT::Minus, TT::Asterisk, TT::Slash, TT::Percent, TT::QuestionQuestion);
 	}
 
 	static bool is_comparison_op(TokenType tok)
@@ -202,6 +205,7 @@ namespace sap::frontend
 			case TT::Asterisk: return interp::BinaryOp::Multiply;
 			case TT::Slash: return interp::BinaryOp::Divide;
 			case TT::Percent: return interp::BinaryOp::Modulo;
+			case TT::QuestionQuestion: return interp::BinaryOp::NullCoalesce;
 			default: assert(false && "unreachable!");
 		}
 	}

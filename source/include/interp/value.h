@@ -143,7 +143,15 @@ namespace sap::interp
 			if(v_array.empty())
 				return std::nullopt;
 
-			return std::move(v_array[0]);
+			auto ret = std::move(v_array[0]);
+			v_array.clear();
+			return ret;
+		}
+
+		bool haveOptionalValue() const
+		{
+			assert(m_type->isOptional());
+			return v_array.size() > 0;
 		}
 
 

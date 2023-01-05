@@ -7,9 +7,8 @@
 #include <concepts>
 #include <functional> // for function
 
-#include "type.h" // for Type
-#include "util.h" // for ErrorOr, Ok, TRY
-// #include "value.h"
+#include "type.h"     // for Type
+#include "util.h"     // for ErrorOr, Ok, TRY
 #include "location.h" // for Location
 
 #include "interp/value.h"    // for Interpreter, Value
@@ -151,6 +150,7 @@ namespace sap::interp
 			Multiply,
 			Divide,
 			Modulo,
+			NullCoalesce,
 		};
 		Op op;
 	};
