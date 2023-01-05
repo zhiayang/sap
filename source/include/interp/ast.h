@@ -203,7 +203,13 @@ namespace sap::interp
 		std::string rhs;
 	};
 
+	struct OptionalCheckOp : Expr
+	{
+		virtual ErrorOr<EvalResult> evaluate(Evaluator* ev) const override;
+		virtual ErrorOr<TCResult> typecheck_impl(Typechecker* ts, const Type* infer = nullptr) const override;
 
+		std::unique_ptr<Expr> expr;
+	};
 
 
 

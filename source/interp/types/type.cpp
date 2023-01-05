@@ -158,6 +158,11 @@ namespace sap::interp
 		return get_or_add_type(new PointerType(element_type, is_mutable));
 	}
 
+	const OptionalType* Type::makeOptional(const Type* element_type)
+	{
+		return get_or_add_type(new OptionalType(element_type));
+	}
+
 	const FunctionType* Type::makeFunction(std::vector<const Type*> params, const Type* return_type)
 	{
 		return get_or_add_type(new FunctionType(std::move(params), return_type));
@@ -177,8 +182,17 @@ namespace sap::interp
 		return get_or_add_type(new StructType(name, std::move(fields)));
 	}
 
+	const Type* Type::pointerElement() const
+	{
+		assert(this->isPointer());
+		return this->toPointer()->elementType();
+	}
 
-
+	const Type* Type::optionalElement() const
+	{
+		assert(this->isOptional());
+		return this->toOptional()->elementType();
+	}
 
 	bool Type::isMutablePointer() const
 	{
@@ -189,6 +203,12 @@ namespace sap::interp
 	{
 		assert(this->isFunction());
 		return static_cast<const FunctionType*>(this);
+	}
+
+	const OptionalType* Type::toOptional() const
+	{
+		assert(this->isOptional());
+		return static_cast<const OptionalType*>(this);
 	}
 
 	const PointerType* Type::toPointer() const

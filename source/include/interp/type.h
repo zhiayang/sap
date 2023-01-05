@@ -11,6 +11,7 @@ namespace sap::interp
 	struct ArrayType;
 	struct StructType;
 	struct PointerType;
+	struct OptionalType;
 	struct FunctionType;
 
 	struct Type
@@ -24,6 +25,7 @@ namespace sap::interp
 		bool isNullPtr() const { return m_kind == KIND_NULLPTR; }
 		bool isInteger() const { return m_kind == KIND_INTEGER; }
 		bool isPointer() const { return m_kind == KIND_POINTER; }
+		bool isOptional() const { return m_kind == KIND_OPTIONAL; }
 		bool isFloating() const { return m_kind == KIND_FLOATING; }
 		bool isFunction() const { return m_kind == KIND_FUNCTION; }
 		bool isTreeInlineObj() const { return m_kind == KIND_TREE_INLINE_OBJ; }
@@ -31,6 +33,7 @@ namespace sap::interp
 		// the conversion functions can't be inline because dynamic_cast needs
 		// a complete type (and obviously derived types need the complete definition of Type)
 		const FunctionType* toFunction() const;
+		const OptionalType* toOptional() const;
 		const PointerType* toPointer() const;
 		const StructType* toStruct() const;
 		const ArrayType* toArray() const;
@@ -39,8 +42,13 @@ namespace sap::interp
 		virtual bool sameAs(const Type* other) const;
 
 		bool isMutablePointer() const;
+		const OptionalType* optionalOf() const { return makeOptional(this); }
 		const PointerType* pointerTo() const { return makePointer(this, false); }
 		const PointerType* mutablePointerTo() const { return makePointer(this, true); }
+
+		// convenience functions
+		const Type* pointerElement() const;
+		const Type* optionalElement() const;
 
 		static const Type* makeAny();
 		static const Type* makeVoid();
@@ -53,6 +61,7 @@ namespace sap::interp
 		static const Type* makeTreeInlineObj();
 
 		static const PointerType* makePointer(const Type* element_type, bool is_mutable);
+		static const OptionalType* makeOptional(const Type* element_type);
 
 		static const FunctionType* makeFunction(std::vector<const Type*> param_types, const Type* return_type);
 		static const ArrayType* makeArray(const Type* element_type, bool is_variadic = false);
@@ -78,6 +87,7 @@ namespace sap::interp
 			KIND_STRUCT = 9,
 			KIND_POINTER = 10,
 			KIND_NULLPTR = 11,
+			KIND_OPTIONAL = 12,
 		};
 
 		Kind m_kind;
@@ -98,6 +108,21 @@ namespace sap::interp
 
 		const Type* m_element_type;
 		bool m_is_mutable;
+
+		friend struct Type;
+	};
+
+	struct OptionalType : Type
+	{
+		virtual std::string str() const override;
+		virtual bool sameAs(const Type* other) const override;
+
+		const Type* elementType() const { return m_element_type; }
+
+	private:
+		OptionalType(const Type* elm) : Type(KIND_OPTIONAL), m_element_type(elm) { }
+
+		const Type* m_element_type;
 
 		friend struct Type;
 	};

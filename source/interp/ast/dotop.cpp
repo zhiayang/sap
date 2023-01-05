@@ -11,8 +11,8 @@ namespace sap::interp
 	{
 		if(t->isStruct())
 			return t->toStruct();
-		else if(t->isPointer() && t->toPointer()->elementType()->isStruct())
-			return t->toPointer()->elementType()->toStruct();
+		else if(t->isPointer() && t->pointerElement()->isStruct())
+			return t->pointerElement()->toStruct();
 		else
 			return nullptr;
 	}

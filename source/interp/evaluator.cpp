@@ -24,17 +24,24 @@ namespace sap::interp
 		if(from_type->isNullPtr() && to->isPointer())
 		{
 			return to->isMutablePointer() //
-			         ? Value::mutablePointer(to->toPointer()->elementType(), nullptr)
-			         : Value::pointer(to->toPointer()->elementType(), nullptr);
+			         ? Value::mutablePointer(to->pointerElement(), nullptr)
+			         : Value::pointer(to->pointerElement(), nullptr);
 		}
-		else if(from_type->isMutablePointer() && to->isPointer()
-		        && from_type->toPointer()->elementType() == to->toPointer()->elementType())
+		else if(from_type->isMutablePointer() && to->isPointer() && from_type->pointerElement() == to->pointerElement())
 		{
-			return Value::pointer(to->toPointer()->elementType(), value.getPointer());
+			return Value::pointer(to->pointerElement(), value.getPointer());
 		}
 		else if(from_type->isInteger() && to->isFloating())
 		{
 			return Value::floating(static_cast<double>(value.getInteger()));
+		}
+		else if(to->isOptional() && to->optionalElement() == from_type)
+		{
+			return Value::optional(from_type, std::move(value));
+		}
+		else if(to->isOptional() && from_type->isNullPtr())
+		{
+			return Value::optional(to->optionalElement(), std::nullopt);
 		}
 		else
 		{

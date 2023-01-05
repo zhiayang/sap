@@ -119,6 +119,34 @@ namespace sap::interp
 			return const_cast<Value*>(v_pointer);
 		}
 
+		std::optional<const Value*> getOptional() const
+		{
+			assert(m_type->isOptional());
+			if(v_array.empty())
+				return std::nullopt;
+
+			return &v_array[0];
+		}
+
+		std::optional<Value*> getOptional()
+		{
+			assert(m_type->isOptional());
+			if(v_array.empty())
+				return std::nullopt;
+
+			return &v_array[0];
+		}
+
+		std::optional<Value> takeOptional() &&
+		{
+			assert(m_type->isOptional());
+			if(v_array.empty())
+				return std::nullopt;
+
+			return std::move(v_array[0]);
+		}
+
+
 
 		std::u32string toString() const
 		{
@@ -145,6 +173,13 @@ namespace sap::interp
 			else if(this->isTreeInlineObj())
 			{
 				return U"tree_inline_obj";
+			}
+			else if(this->isOptional())
+			{
+				if(v_array.empty())
+					return U"empty";
+				else
+					return v_array[0].toString();
 			}
 			else if(this->isArray())
 			{
@@ -186,6 +221,7 @@ namespace sap::interp
 		bool isPointer() const { return m_type->isPointer(); }
 		bool isFloating() const { return m_type->isFloating(); }
 		bool isFunction() const { return m_type->isFunction(); }
+		bool isOptional() const { return m_type->isOptional(); }
 		bool isTreeInlineObj() const { return m_type->isTreeInlineObj(); }
 
 		bool isPrintable() const { return isBool() || isChar() || isArray() || isInteger() || isFloating(); }
@@ -303,6 +339,16 @@ namespace sap::interp
 			return ret;
 		}
 
+		static Value optional(const Type* type, std::optional<Value> value)
+		{
+			auto ret = Value(type->optionalOf());
+			new(&ret.v_array) decltype(v_array)();
+			if(value.has_value())
+				ret.v_array.push_back(std::move(*value));
+
+			return ret;
+		}
+
 
 		Value clone() const
 		{
@@ -336,7 +382,7 @@ namespace sap::interp
 				new(&val.v_inline_obj) decltype(v_inline_obj)();
 				val.v_inline_obj = Value::clone_tios(v_inline_obj);
 			}
-			else if(m_type->isArray() || m_type->isStruct())
+			else if(m_type->isArray() || m_type->isStruct() || m_type->isOptional())
 			{
 				new(&val.v_array) decltype(v_array)();
 				for(auto& e : v_array)
@@ -358,7 +404,7 @@ namespace sap::interp
 		{
 			if(m_type->isTreeInlineObj())
 				v_inline_obj.~decltype(v_inline_obj)();
-			else if(m_type->isArray() || m_type->isStruct())
+			else if(m_type->isArray() || m_type->isStruct() || m_type->isOptional())
 				v_array.~decltype(v_array)();
 		}
 
@@ -379,7 +425,7 @@ namespace sap::interp
 				v_pointer = std::move(val.v_pointer);
 			else if(m_type->isTreeInlineObj())
 				new(&v_inline_obj) decltype(v_inline_obj)(std::move(val.v_inline_obj));
-			else if(m_type->isArray() || m_type->isStruct())
+			else if(m_type->isArray() || m_type->isStruct() || m_type->isOptional())
 				new(&v_array) decltype(v_array)(std::move(val.v_array));
 			else
 				assert(false && "unreachable!");

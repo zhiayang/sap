@@ -12,7 +12,7 @@ namespace sap::interp
 	{
 		auto cond = TRY(this->if_cond->typecheck(ts, Type::makeBool()));
 		if(not cond.type()->isBool())
-			return ErrFmt("if condition requires boolean expression");
+			return ErrFmt("cannot convert '{}' to boolean condition", cond.type());
 
 		TRY(this->if_body->typecheck(ts));
 		if(this->else_body)

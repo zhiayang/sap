@@ -150,7 +150,9 @@ namespace sap::frontend
 	{
 		switch(lexer.peek())
 		{
-			case TT::LParen: return 1000;
+			case TT::LParen: return 1000000;
+			case TT::LSquare: return 1000000;
+			case TT::Question: return 1000000;
 
 			case TT::Period: return 999;
 
@@ -179,7 +181,7 @@ namespace sap::frontend
 
 	static bool is_postfix_unary(Lexer& lexer)
 	{
-		return lexer.peek() == TT::LParen || lexer.peek() == TT::LSquare;
+		return lexer.peek() == TT::LParen || lexer.peek() == TT::LSquare || lexer.peek() == TT::Question;
 	}
 
 	static bool is_assignment_op(TokenType tok)
@@ -370,7 +372,15 @@ namespace sap::frontend
 	static std::unique_ptr<interp::Expr> parse_postfix_unary(Lexer& lexer, std::unique_ptr<interp::Expr> lhs)
 	{
 		if(lexer.peek() == TT::LParen)
+		{
 			return parse_function_call(lexer, std::move(lhs));
+		}
+		else if(lexer.expect(TT::Question))
+		{
+			auto ret = std::make_unique<interp::OptionalCheckOp>();
+			ret->expr = std::move(lhs);
+			return ret;
+		}
 
 		error(lexer.peek().loc, "expected '(' or '[' after expression, found '{}'", lexer.peek().text);
 	}
@@ -402,10 +412,9 @@ namespace sap::frontend
 		while(true)
 		{
 			int prec = get_front_token_precedence(lexer);
-			if(prec < prio && !is_right_associative(lexer))
+			if(prec < prio && not is_right_associative(lexer))
 				return lhs;
 
-			// we don't really need to check, because if it's botched we'll have returned due to -1 < everything
 			if(is_postfix_unary(lexer))
 			{
 				lhs = parse_postfix_unary(lexer, std::move(lhs));
@@ -556,9 +565,17 @@ namespace sap::frontend
 
 			return ret;
 		}
+		else if(lexer.expect(TT::LParen))
+		{
+			auto inside = parse_expr(lexer);
+			if(not lexer.expect(TT::RParen))
+				error(lexer.location(), "expected closing ')'");
+
+			return inside;
+		}
 		else
 		{
-			error(lexer.peek().loc, "invalid start of expression '{}'", lexer.peek().text);
+			error(lexer.location(), "invalid start of expression '{}'", lexer.peek().text);
 		}
 	}
 
@@ -614,6 +631,11 @@ namespace sap::frontend
 				lexer.next(), is_mutable = true;
 
 			return PType::pointer(parse_type(lexer), is_mutable);
+		}
+		else if(fst == TT::Question)
+		{
+			lexer.next();
+			return PType::optional(parse_type(lexer));
 		}
 		else if(fst == TT::LSquare)
 		{

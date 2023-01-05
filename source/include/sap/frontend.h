@@ -43,6 +43,7 @@ namespace sap::frontend
 		Comma,
 		Period,
 		Ampersand,
+		Question,
 
 		Semicolon,
 		Plus,

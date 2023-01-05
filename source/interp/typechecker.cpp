@@ -24,9 +24,15 @@ namespace sap::interp
 			return true;
 
 		else if(from->isPointer() && to->isPointer())
-			return from->toPointer()->elementType() == to->toPointer()->elementType() && from->isMutablePointer();
+			return from->pointerElement() == to->pointerElement() && from->isMutablePointer();
 
 		else if(from->isInteger() && to->isFloating())
+			return true;
+
+		else if(to->isOptional() && to->optionalElement() == from)
+			return true;
+
+		else if(to->isOptional() && from->isNullPtr())
 			return true;
 
 		return false;
@@ -86,9 +92,11 @@ namespace sap::interp
 		{
 			return Ok(Type::makePointer(TRY(this->resolveType(ptype.getPointerElement())), ptype.isMutablePointer()));
 		}
-		else
+		else if(ptype.isOptional())
 		{
+			return Ok(Type::makeOptional(TRY(this->resolveType(ptype.getOptionalElement()))));
 		}
+
 
 		return ErrFmt("unknown type");
 	}

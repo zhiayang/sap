@@ -21,9 +21,6 @@
 		return builtin::bold1(x);
 	}
 
-
-
-
 	fn asdf()
 	{
 		builtin::println("hello!");
@@ -113,6 +110,13 @@ fi fl Bсички хора се раждат свободни и равни по
 
 	builtin::print("fib(15) = ");
 	builtin::println(fib(15));
+
+
+	let f1: ?int = null;
+	let f2: ?int = 10;
+
+	if(f1?) builtin::println("f1!");
+	if(f2?) builtin::println("f2!");
 }
 
 

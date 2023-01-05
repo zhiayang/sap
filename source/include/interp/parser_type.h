@@ -23,6 +23,7 @@ namespace sap::frontend
 	struct PType
 	{
 		bool isFunction() const { return m_kind == PT_FUNCTION; }
+		bool isOptional() const { return m_kind == PT_OPTIONAL; }
 		bool isPointer() const { return m_kind == PT_POINTER; }
 		bool isArray() const { return m_kind == PT_ARRAY; }
 
@@ -34,6 +35,7 @@ namespace sap::frontend
 
 		const PType& getArrayElement() const { return m_type_list[0]; }
 		const PType& getPointerElement() const { return m_type_list[0]; }
+		const PType& getOptionalElement() const { return m_type_list[0]; }
 		const std::vector<PType>& getTypeList() const { return m_type_list; }
 
 		static PType named(interp::QualifiedId qid) { return PType(std::move(qid), 0, {}); }
@@ -69,6 +71,8 @@ namespace sap::frontend
 			return ret;
 		}
 
+		static PType optional(PType elm) { return PType({}, PT_OPTIONAL, { elm }); }
+
 	private:
 		PType(interp::QualifiedId name, int kind, std::vector<PType> type_list)
 		    : m_kind(kind)
@@ -82,6 +86,7 @@ namespace sap::frontend
 		static constexpr int PT_FUNCTION = 0;
 		static constexpr int PT_POINTER = 1;
 		static constexpr int PT_ARRAY = 2;
+		static constexpr int PT_OPTIONAL = 3;
 
 		int m_kind;
 		interp::QualifiedId m_name;
