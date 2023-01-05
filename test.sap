@@ -90,11 +90,11 @@ fi fl Bсички хора се раждат свободни и равни по
 		c!.juice = 0;
 	}
 
-	bar.tus();
+	tus(&mut bar);
 
 	builtin::print("------\njuice = ");
 	builtin::println(bar.juice);
-
+	builtin::println("------");
 
 	Cactus {
 		.thorns = 999,
@@ -110,6 +110,7 @@ fi fl Bсички хора се раждат свободни и равни по
 		.juice = 6969
 	};
 
+	builtin::println("------");
 	builtin::print("juice = ");
 	builtin::println(asdf?.juice);
 }

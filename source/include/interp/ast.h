@@ -17,7 +17,7 @@
 #include "interp/parser_type.h"
 #include "interp/eval_result.h" // for EvalResult
 
-namespace sap::interp
+    namespace sap::interp
 {
 	struct Value;
 	struct Evaluator;
@@ -236,6 +236,15 @@ namespace sap::interp
 		std::unique_ptr<Expr> expr;
 	};
 
+	struct AddressOfOp : Expr
+	{
+		virtual ErrorOr<EvalResult> evaluate(Evaluator* ev) const override;
+		virtual ErrorOr<TCResult> typecheck_impl(Typechecker* ts, const Type* infer = nullptr) const override;
+
+		std::unique_ptr<Expr> expr;
+		bool is_mutable = false;
+	};
+
 
 
 	struct Block : Stmt
@@ -347,7 +356,7 @@ namespace sap::interp
 	};
 
 	template <std::same_as<FunctionDecl::Param>... P>
-	std::vector<FunctionDecl::Param> makeParamList(P&&... params)
+	std::vector<FunctionDecl::Param> makeParamList(P && ... params)
 	{
 		std::vector<FunctionDecl::Param> ret {};
 		(ret.push_back(std::move(params)), ...);

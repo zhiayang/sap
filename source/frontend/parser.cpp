@@ -595,6 +595,16 @@ namespace sap::frontend
 
 	static std::unique_ptr<interp::Expr> parse_unary(Lexer& lexer)
 	{
+		if(lexer.expect(TT::Ampersand))
+		{
+			bool is_mutable = lexer.expect(TT::KW_Mut);
+
+			auto ret = std::make_unique<interp::AddressOfOp>();
+			ret->expr = parse_unary(lexer);
+			ret->is_mutable = is_mutable;
+			return ret;
+		}
+
 		return parse_primary(lexer);
 	}
 
