@@ -92,6 +92,8 @@ fi fl Bсички хора се раждат свободни и равни по
 
 	tus(&mut bar);
 
+	let kekw: (int)->int;
+
 	builtin::print("------\njuice = ");
 	builtin::println(bar.juice);
 	builtin::println("------");

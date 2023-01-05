@@ -317,10 +317,13 @@ namespace sap::frontend
 		call->callee = std::move(callee);
 
 		// parse arguments.
-		bool have_named_param = false;
-		while(lexer.peek() != TT::RParen)
+		bool saw_named_arg = false;
+		for(bool first = true; not lexer.expect(TT::RParen); first = false)
 		{
-			bool flag = false;
+			if(not first && not lexer.expect(TT::Comma))
+				error(lexer.peek().loc, "expected ',' or ')' in call argument list, got '{}'", lexer.peek().text);
+
+			bool is_arg_named = false;
 
 			interp::FunctionCall::Arg arg {};
 			if(lexer.peek() == TT::Identifier)
@@ -333,8 +336,8 @@ namespace sap::frontend
 					arg.value = parse_expr(lexer);
 					arg.name = name.text.str();
 
-					have_named_param = true;
-					flag = true;
+					saw_named_arg = true;
+					is_arg_named = true;
 				}
 				else
 				{
@@ -342,9 +345,9 @@ namespace sap::frontend
 				}
 			}
 
-			if(not flag)
+			if(not is_arg_named)
 			{
-				if(have_named_param)
+				if(saw_named_arg)
 					error(lexer.peek().loc, "positional arguments are not allowed after named arguments");
 
 				arg.name = {};
@@ -352,16 +355,9 @@ namespace sap::frontend
 			}
 
 			call->arguments.push_back(std::move(arg));
-
-			if(not lexer.expect(TT::Comma) && lexer.peek() != TT::RParen)
-				error(lexer.peek().loc, "expected ',' or ')' in call argument list, got '{}'", lexer.peek().text);
 		}
 
-		if(not lexer.expect(TT::RParen))
-			error(lexer.peek().loc, "expected ')'");
-
 		// TODO: (potentially multiple) trailing blocks
-
 		return call;
 	}
 
@@ -681,11 +677,12 @@ namespace sap::frontend
 			lexer.next();
 
 			std::vector<PType> types {};
-			while(not lexer.expect(TT::RParen))
+			for(bool first = true; not lexer.expect(TT::RParen); first = false)
 			{
-				types.push_back(parse_type(lexer));
-				if(not lexer.match(TT::Comma) && lexer.peek() != TT::RParen)
+				if(not first && not lexer.expect(TT::Comma))
 					error(lexer.location(), "expected ',' or ')' in type specifier");
+
+				types.push_back(parse_type(lexer));
 			}
 
 			// TODO: support tuples
@@ -778,11 +775,12 @@ namespace sap::frontend
 			error(lexer.location(), "expected '(' in function definition");
 
 		std::vector<FunctionDecl::Param> params {};
-		while(not lexer.expect(TT::RParen))
+		for(bool first = true; not lexer.expect(TT::RParen); first = false)
 		{
-			params.push_back(parse_param(lexer));
-			if(not lexer.match(TT::Comma) && lexer.peek() != TT::RParen)
+			if(not first && not lexer.expect(TT::Comma))
 				error(lexer.location(), "expected ',' or ')' in function parameter list");
+
+			params.push_back(parse_param(lexer));
 		}
 
 		auto return_type = PType::named(TYPE_VOID);
