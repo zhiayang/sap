@@ -13,7 +13,7 @@ namespace sap
 
 	static std::unordered_map<std::pair<const Style*, const Style*>, const Style*, CombinedStylesHasher> g_combined_styles;
 
-	const Style* Style::extend(const Style* main) const
+	const Style* Style::extendWith(const Style* main) const
 	{
 		if(main == nullptr)
 		{
@@ -23,13 +23,21 @@ namespace sap
 		if(auto it = g_combined_styles.find({ main, this }); it != g_combined_styles.end())
 			return it->second;
 
+		auto flat_value_or = [](const auto& a, const auto& b) -> auto
+		{
+			if(a.has_value())
+				return a;
+			return b;
+		};
+
+
 		auto style = Style();
-		style.set_font_family(main->font_family(this))
-		    .set_font_style(main->font_style(this))
-		    .set_font_size(main->font_size(this))
-		    .set_line_spacing(main->line_spacing(this))
-		    .set_pre_paragraph_spacing(main->pre_paragraph_spacing(this))
-		    .set_post_paragraph_spacing(main->post_paragraph_spacing(this));
+		style.set_font_family(flat_value_or(main->m_font_family, m_font_family))
+		    .set_font_style(flat_value_or(main->m_font_style, m_font_style))
+		    .set_font_size(flat_value_or(main->m_font_size, m_font_size))
+		    .set_line_spacing(flat_value_or(main->m_line_spacing, m_line_spacing))
+		    .set_pre_paragraph_spacing(flat_value_or(main->m_pre_para_spacing, m_pre_para_spacing))
+		    .set_post_paragraph_spacing(flat_value_or(main->m_post_para_spacing, m_post_para_spacing));
 
 		if(style == *main)
 		{

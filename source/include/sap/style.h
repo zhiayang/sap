@@ -38,11 +38,11 @@ namespace sap
 		DEFINE_ACCESSOR(Length, m_post_para_spacing, post_paragraph_spacing);
 #undef DEFINE_ACCESSOR
 
-#define DEFINE_SETTER(field_type, field_name, method_name) \
-	inline Style& method_name(field_type new_value)        \
-	{                                                      \
-		field_name = std::move(new_value);                 \
-		return *this;                                      \
+#define DEFINE_SETTER(field_type, field_name, method_name)         \
+	inline Style& method_name(std::optional<field_type> new_value) \
+	{                                                              \
+		field_name = std::move(new_value);                         \
+		return *this;                                              \
 	}
 
 		DEFINE_SETTER(FontFamily, m_font_family, set_font_family);
@@ -59,7 +59,7 @@ namespace sap
 		    or from the backup style (or any of its parents). if both input styles are null, then the
 		    default style is used.
 		*/
-		const Style* extend(const Style* main) const;
+		const Style* extendWith(const Style* main) const;
 
 		constexpr bool operator==(const Style& other) const = default;
 

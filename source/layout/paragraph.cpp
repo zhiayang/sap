@@ -52,7 +52,7 @@ namespace sap::layout
 			{
 				if(auto word = std::get_if<Word>(&*it); word)
 				{
-					auto style = parent_style->extend(word->style());
+					auto style = parent_style->extendWith(word->style());
 					if(it != word_chunk_it && word_chunk_style != style)
 					{
 						ret.total_word_width += word_chunk_width;
@@ -109,7 +109,7 @@ namespace sap::layout
 
 		for(auto& wordorsep : treepara->contents())
 		{
-			auto style = parent_style->extend(wordorsep->style());
+			auto style = parent_style->extendWith(wordorsep->style());
 			if(auto word = dynamic_cast<tree::Text*>(wordorsep.get()); word != nullptr)
 				words_and_seps.push_back(Word(word->contents(), style));
 

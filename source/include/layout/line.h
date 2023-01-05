@@ -58,7 +58,7 @@ namespace sap::layout
 		// Getters
 		Length width()
 		{
-			auto last_word_style = parent_style->extend(style);
+			auto last_word_style = parent_style->extendWith(style);
 			if(last_sep)
 			{
 				last_word += last_sep->endOfLine().sv();
@@ -79,8 +79,8 @@ namespace sap::layout
 		// Modifiers
 		void add(const Word& w)
 		{
-			auto prev_word_style = parent_style->extend(style);
-			auto word_style = parent_style->extend(w.style());
+			auto prev_word_style = parent_style->extendWith(style);
+			auto word_style = parent_style->extendWith(w.style());
 			line_height = std::max(line_height,
 			    calculateWordSize(last_word, word_style).y() * word_style->line_spacing().value());
 

@@ -37,8 +37,8 @@ namespace sap::interp::builtin
 		if(value.isTreeInlineObj())
 		{
 			auto tios = std::move(value).takeTreeInlineObj();
-			// for(auto& obj : *tios)
-			// 	obj->setStyle(style->extend(obj->style()));
+			for(auto& obj : tios)
+				obj->setStyle(style->extendWith(obj->style()));
 
 			return EvalResult::ofValue(Value::treeInlineObject(std::move(tios)));
 		}

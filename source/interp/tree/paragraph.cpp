@@ -35,21 +35,12 @@ namespace sap::tree
 					continue;
 				}
 
-				auto value = std::move(value_or_empty).take();
+				auto tmp = cs->evaluator().convertValueToText(std::move(value_or_empty).take());
+				if(tmp.is_err())
+					error("interp", "convertion to text failed: {}", tmp.error());
 
-				if(value.isTreeInlineObj())
-				{
-					auto objs = std::move(value).takeTreeInlineObj();
-					ret.insert(ret.end(), std::move_iterator(objs.begin()), std::move_iterator(objs.end()));
-				}
-				else if(value.isPrintable())
-				{
-					ret.emplace_back(new tree::Text(value.toString(), obj->style()));
-				}
-				else
-				{
-					error("layout", "cannot insert value of type '{}' into paragraph", value.type());
-				}
+				auto objs = tmp.take_value();
+				ret.insert(ret.end(), std::move_iterator(objs.begin()), std::move_iterator(objs.end()));
 			}
 			else if(auto iscb = dynamic_cast<tree::ScriptBlock*>(obj.get()); iscb != nullptr)
 			{

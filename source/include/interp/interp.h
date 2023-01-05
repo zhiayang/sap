@@ -24,6 +24,9 @@ namespace sap::interp
 		Interpreter();
 		ErrorOr<EvalResult> run(const Stmt* stmt);
 
+		Evaluator& evaluator() { return *m_evaluator; }
+		Typechecker& typechecker() { return *m_typechecker; }
+
 	private:
 		std::unique_ptr<Typechecker> m_typechecker;
 		std::unique_ptr<Evaluator> m_evaluator;
