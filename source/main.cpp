@@ -69,10 +69,10 @@ int main(int argc, char** argv)
 		assert(bold_handle.has_value());
 		assert(boldit_handle.has_value());
 
-		auto regular = layout_doc.addFont(std::move(*FontFile::fromHandle(*regular_handle)));
-		auto italic = layout_doc.addFont(std::move(*FontFile::fromHandle(*italic_handle)));
-		auto bold = layout_doc.addFont(std::move(*FontFile::fromHandle(*bold_handle)));
-		auto boldit = layout_doc.addFont(std::move(*FontFile::fromHandle(*boldit_handle)));
+		auto regular = layout_doc.addFont(*FontFile::fromHandle(*regular_handle));
+		auto italic = layout_doc.addFont(*FontFile::fromHandle(*italic_handle));
+		auto bold = layout_doc.addFont(*FontFile::fromHandle(*bold_handle));
+		auto boldit = layout_doc.addFont(*FontFile::fromHandle(*boldit_handle));
 
 		return sap::FontFamily(regular, italic, bold, boldit);
 	}();

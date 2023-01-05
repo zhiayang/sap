@@ -44,8 +44,8 @@ namespace font
 	protected:
 		virtual GlyphMetrics get_glyph_metrics_impl(GlyphId glyphid) const = 0;
 
-		size_t m_num_glyphs;
-		FontMetrics m_metrics;
+		size_t m_num_glyphs = 0;
+		FontMetrics m_metrics {};
 
 		CharacterMapping m_character_mapping {};
 

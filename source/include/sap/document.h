@@ -7,7 +7,6 @@
 #include "util.h"
 #include "types.h" // for GlyphId
 
-#include "pdf/font.h"     // for Font
 #include "pdf/page.h"     // for Page
 #include "pdf/units.h"    // for Scalar
 #include "pdf/object.h"   // for Writer
@@ -107,7 +106,8 @@ namespace sap::layout
 		Document(Document&&) = default;
 		Document& operator=(Document&&) = default;
 
-		pdf::PdfFont* addFont(std::unique_ptr<font::FontFile> font);
+		pdf::PdfFont* addFont(std::unique_ptr<font::FontSource> font);
+
 		void addObject(std::unique_ptr<LayoutObject> obj);
 
 		void layout(interp::Interpreter* cs, const tree::Document& document);
@@ -129,6 +129,7 @@ namespace sap::layout
 		pdf::File m_pdf_document {};
 		RectPageLayout m_page_layout = RectPageLayout(dim::mm(210, 297).into<Size2d>(), dim::mm(25));
 
+		std::vector<std::unique_ptr<pdf::PdfFont>> m_fonts {};
 		std::vector<std::unique_ptr<LayoutObject>> m_objects {};
 	};
 }

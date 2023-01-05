@@ -81,8 +81,8 @@ namespace pdf
 
 		int font_type = 0;
 
-		static PdfFont* fromBuiltin(File* doc, BuiltinFont::Core14 font_name);
-		static PdfFont* fromFontFile(File* doc, std::unique_ptr<font::FontFile> font);
+		static std::unique_ptr<PdfFont> fromBuiltin(File* doc, BuiltinFont::Core14 font_name);
+		static std::unique_ptr<PdfFont> fromSource(File* doc, std::unique_ptr<font::FontSource> font);
 
 		static constexpr int FONT_TYPE1 = 1;
 		static constexpr int FONT_TRUETYPE = 2;
@@ -95,7 +95,7 @@ namespace pdf
 		}
 
 	private:
-		PdfFont(File* doc, BuiltinFont::Core14 builtin_font);
+		PdfFont(File* doc, std::unique_ptr<pdf::BuiltinFont> builtin_font);
 		PdfFont(File* doc, std::unique_ptr<font::FontFile> font);
 
 		void writeUnicodeCMap(File* doc) const;

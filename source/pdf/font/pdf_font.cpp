@@ -76,8 +76,8 @@ namespace pdf
 		return font_desc;
 	}
 
-	PdfFont::PdfFont(File* doc, BuiltinFont::Core14 builtin_font_name)
-	    : m_source(BuiltinFont::get(builtin_font_name))
+	PdfFont::PdfFont(File* doc, std::unique_ptr<pdf::BuiltinFont> source_)
+	    : m_source(std::move(source_))
 	    , m_font_dictionary(Dictionary::createIndirect(doc, names::Font, {}))
 	    , m_glyph_widths_array(Array::createIndirect(doc))
 	    , m_font_resource_name(zpr::sprint("F{}", doc->getNextFontResourceNumber()))
@@ -302,5 +302,25 @@ namespace pdf
 		}
 
 		return std::move(subst->glyphs);
+	}
+
+
+
+	std::unique_ptr<PdfFont> PdfFont::fromSource(File* doc, std::unique_ptr<font::FontSource> font)
+	{
+		auto ptr = font.release();
+		if(auto x = dynamic_cast<font::FontFile*>(ptr); x != nullptr)
+			return std::unique_ptr<PdfFont>(new PdfFont(doc, std::unique_ptr<font::FontFile>(x)));
+
+		else if(auto x = dynamic_cast<pdf::BuiltinFont*>(ptr); x != nullptr)
+			return std::unique_ptr<PdfFont>(new PdfFont(doc, std::unique_ptr<pdf::BuiltinFont>(x)));
+
+		else
+			sap::internal_error("unsupported font source");
+	}
+
+	std::unique_ptr<PdfFont> PdfFont::fromBuiltin(File* doc, BuiltinFont::Core14 font_name)
+	{
+		return std::unique_ptr<PdfFont>(new PdfFont(doc, BuiltinFont::get(font_name)));
 	}
 }

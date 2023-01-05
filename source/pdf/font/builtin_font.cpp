@@ -93,6 +93,8 @@ namespace pdf
 
 	BuiltinFont::BuiltinFont(Core14 which)
 	{
+		m_kind = which;
+
 		using font::FontScalar;
 
 		auto [b, l] = decompress_afm(get_compressed_afm(which));

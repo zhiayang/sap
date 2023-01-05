@@ -23,11 +23,11 @@ namespace sap::layout
 {
 	Document::Document()
 	{
-		static auto default_font_family = sap::FontFamily(                    //
-		    pdf::PdfFont::fromBuiltin(&pdf(), pdf::BuiltinFont::TimesRoman),  //
-		    pdf::PdfFont::fromBuiltin(&pdf(), pdf::BuiltinFont::TimesItalic), //
-		    pdf::PdfFont::fromBuiltin(&pdf(), pdf::BuiltinFont::TimesBold),   //
-		    pdf::PdfFont::fromBuiltin(&pdf(), pdf::BuiltinFont::TimesBoldItalic));
+		static auto default_font_family = sap::FontFamily(                       //
+		    this->addFont(pdf::BuiltinFont::get(pdf::BuiltinFont::TimesRoman)),  //
+		    this->addFont(pdf::BuiltinFont::get(pdf::BuiltinFont::TimesItalic)), //
+		    this->addFont(pdf::BuiltinFont::get(pdf::BuiltinFont::TimesBold)),   //
+		    this->addFont(pdf::BuiltinFont::get(pdf::BuiltinFont::TimesBoldItalic)));
 
 		static auto default_style =
 		    sap::Style()
@@ -56,9 +56,10 @@ namespace sap::layout
 		m_objects.push_back(std::move(obj));
 	}
 
-	pdf::PdfFont* Document::addFont(std::unique_ptr<font::FontFile> font)
+	pdf::PdfFont* Document::addFont(std::unique_ptr<font::FontSource> font)
 	{
-		return pdf::PdfFont::fromFontFile(&m_pdf_document, std::move(font));
+		auto f = pdf::PdfFont::fromSource(&m_pdf_document, std::move(font));
+		return m_fonts.emplace_back(std::move(f)).get();
 	}
 
 	void Document::layout(interp::Interpreter* cs, const tree::Document& treedoc)

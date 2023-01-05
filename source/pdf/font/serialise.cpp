@@ -96,15 +96,4 @@ namespace pdf
 
 		return m_font_dictionary;
 	}
-
-
-	PdfFont* PdfFont::fromFontFile(File* doc, std::unique_ptr<font::FontFile> font_file)
-	{
-		return util::make<PdfFont>(doc, std::move(font_file));
-	}
-
-	PdfFont* PdfFont::fromBuiltin(File* doc, BuiltinFont::Core14 font_name)
-	{
-		return util::make<PdfFont>(doc, font_name);
-	}
 }

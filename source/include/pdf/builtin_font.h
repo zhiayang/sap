@@ -43,6 +43,7 @@ namespace pdf
 		};
 
 		const std::string& name() const { return m_name; }
+		Core14 kind() const { return m_kind; }
 
 		GlyphId getFirstGlyphId() const { return m_first_glyph_id; }
 		GlyphId getLastGlyphId() const { return m_last_glyph_id; }
@@ -60,6 +61,8 @@ namespace pdf
 
 	private:
 		BuiltinFont(Core14 which);
+
+		Core14 m_kind;
 
 		std::string m_name;
 		GlyphId m_first_glyph_id;
