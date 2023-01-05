@@ -244,44 +244,6 @@ namespace sap::frontend
 	static std::unique_ptr<interp::Expr> parse_unary(Lexer& lexer);
 
 
-	static util::hashmap<std::string, interp::Attribute> parse_attributes(Lexer& lexer)
-	{
-		util::hashmap<std::string, interp::Attribute> attrs {};
-
-		while(lexer.expect(TT::At))
-		{
-			auto name = lexer.match(TT::Identifier);
-			if(not name.has_value())
-				error(lexer.location(), "expected attribute name after '@'");
-
-			if(attrs.contains(name->text))
-				error(lexer.location(), "duplicate attribute '{}'", name->text);
-
-			std::vector<std::string> args;
-			if(lexer.expect(TT::LParen))
-			{
-				while(not lexer.expect(TT::RParen))
-				{
-					auto arg = lexer.match(TT::String);
-					if(not arg.has_value())
-						error(lexer.location(), "expected string literal for attribute argument");
-
-					args.push_back(arg->text.str());
-
-					if(not lexer.expect(TT::Comma) && lexer.peek() != TT::RParen)
-						error(lexer.location(), "expected ',' or ')' in attribute argument list");
-				}
-			}
-
-			attrs[name->text.str()] = {
-				.name = name->text.str(),
-				.args = std::move(args),
-			};
-		}
-
-		return attrs;
-	}
-
 	static interp::QualifiedId parse_qualified_id(Lexer& lexer)
 	{
 		interp::QualifiedId qid {};
@@ -885,9 +847,6 @@ namespace sap::frontend
 		while(lexer.expect(TT::Semicolon))
 			;
 
-		auto attrs = parse_attributes(lexer);
-
-
 		auto tok = lexer.peek();
 		std::unique_ptr<interp::Stmt> stmt {};
 
@@ -934,7 +893,6 @@ namespace sap::frontend
 		if(not lexer.expect(TT::Semicolon) && not optional_semicolon)
 			error(lexer.peek().loc, "expected ';' after statement, found '{}'", lexer.peek().text);
 
-		stmt->attributes = std::move(attrs);
 		return stmt;
 	}
 

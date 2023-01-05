@@ -4,7 +4,6 @@
 
 #include "interp/ast.h"
 #include "interp/misc.h"
-#include "interp/bridge.h"
 #include "interp/interp.h"
 
 namespace sap::interp
@@ -20,17 +19,6 @@ namespace sap::interp
 
 	ErrorOr<TCResult> StructDefn::typecheck_impl(Typechecker* ts, const Type* infer) const
 	{
-		if(auto it = this->attributes.find(ATTRIBUTE_BRIDGE); it != this->attributes.end())
-		{
-			if(it->second.args.size() != 1)
-				return ErrFmt("expected exactly 1 argument for 'bridge' attribute");
-
-			if(not this->m_fields.empty())
-				return ErrFmt("bridged struct must be empty");
-
-			m_fields = bridge::getFieldsForBridgedType(ts, it->second.args[0]);
-		}
-
 		this->declaration->resolved_defn = this;
 		auto struct_type = TRY(this->declaration->typecheck(ts)).type()->toStruct();
 

@@ -8,9 +8,9 @@
 #include "interp/tree.h"        // for Text
 #include "interp/value.h"       // for Value
 #include "interp/interp.h"      // for Interpreter
-#include "interp/builtin.h"     // for bold1, bold_italic1, italic1
 #include "interp/basedefs.h"    // for InlineObject
 #include "interp/eval_result.h" // for EvalResult
+#include "interp/builtin_fns.h" // for bold1, bold_italic1, italic1
 
 namespace sap::interp::builtin
 {

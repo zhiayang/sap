@@ -1,16 +1,12 @@
 # test.sap
 
 \script std::{
-
-	@bridge("Style")
-	struct Style { }
-
-	fn set_style(s: Style) -> void
+	fn set_style(s: builtin::Style) -> void
 	{
 		# builtin::set_current_style(s);
 	}
 
-	fn style(s: Style, inline_obj: Inline) -> Inline
+	fn style(s: builtin::Style, inline_obj: Inline) -> Inline
 	{
 		var x = s;
 		x.font_size = 69;

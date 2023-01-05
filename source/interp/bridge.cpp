@@ -5,33 +5,40 @@
 #include "sap/frontend.h"
 
 #include "interp/ast.h"
-#include "interp/bridge.h"
-#include "interp/builtin.h"
 #include "interp/typechecker.h"
+#include "interp/builtin_fns.h"
+#include "interp/builtin_types.h"
 
 namespace sap::interp
 {
-	std::vector<StructDefn::Field> bridge::getFieldsForBridgedType(Typechecker* ts, zst::str_view name)
+	using PT = frontend::PType;
+	using Field = StructDefn::Field;
+
+	static auto pt_float = PT::named(frontend::TYPE_FLOAT);
+
+	std::vector<Field> builtin::BStyle::fields()
 	{
-		using namespace frontend;
-
-		using F = StructDefn::Field;
-		using PT = frontend::PType;
-
-		auto pt_float = PT::named(TYPE_FLOAT);
-
-		if(name == bridge::STYLE)
-		{
-			return util::vectorOf(                                    //
-			    F { .name = STYLE_F0_FONT_SIZE, .type = pt_float },   //
-			    F { .name = STYLE_F1_LINE_SPACING, .type = pt_float } //
-			);
-		}
-		else
-		{
-			error("interp", "unknown bridged type '{}'", name);
-		}
+		return util::vectorOf(                                             //
+		    Field { .name = "font_size", .type = PT::optional(pt_float) }, //
+		    Field { .name = "line_spacing", .type = PT::optional(pt_float) });
 	}
+
+
+	template <typename T>
+	void define_builtin_struct(Typechecker* ts)
+	{
+		auto str = std::make_unique<StructDefn>(T::name, T::fields());
+		ts->addBuiltinDefinition(std::move(str))->typecheck(ts);
+	}
+
+
+	static void define_builtin_types(Typechecker* ts, DefnTree* builtin_ns)
+	{
+		auto _ = ts->pushTree(builtin_ns);
+		define_builtin_struct<builtin::BStyle>(ts);
+	}
+
+
 
 	static void define_builtin_funcs(Typechecker* ts, DefnTree* builtin_ns)
 	{
@@ -43,7 +50,7 @@ namespace sap::interp
 		auto any = PType::named(TYPE_ANY);
 		auto tio = PType::named(TYPE_TREE_INLINE);
 
-		auto bstyle_t = PType::named(bridge::STYLE);
+		auto bstyle_t = PType::named(builtin::BStyle::name);
 
 		auto define_builtin = [&](auto&&... xs) {
 			auto ret = std::make_unique<BFD>(std::forward<decltype(xs)>(xs)...);
@@ -70,6 +77,7 @@ namespace sap::interp
 
 	void defineBuiltins(Typechecker* ts, DefnTree* ns)
 	{
+		define_builtin_types(ts, ns);
 		define_builtin_funcs(ts, ns);
 	}
 }

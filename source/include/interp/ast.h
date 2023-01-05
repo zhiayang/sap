@@ -17,7 +17,7 @@
 #include "interp/parser_type.h"
 #include "interp/eval_result.h" // for EvalResult
 
-    namespace sap::interp
+namespace sap::interp
 {
 	struct Value;
 	struct Evaluator;
@@ -38,7 +38,6 @@
 		}
 
 		std::optional<Location> location;
-		util::hashmap<std::string, Attribute> attributes;
 
 		const Type* get_type() const
 		{
@@ -356,7 +355,7 @@
 	};
 
 	template <std::same_as<FunctionDecl::Param>... P>
-	std::vector<FunctionDecl::Param> makeParamList(P && ... params)
+	std::vector<FunctionDecl::Param> makeParamList(P&&... params)
 	{
 		std::vector<FunctionDecl::Param> ret {};
 		(ret.push_back(std::move(params)), ...);
