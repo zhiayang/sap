@@ -13,16 +13,18 @@ namespace pdf
 {
 	void PdfFont::writeCIDSet(File* doc) const
 	{
+		auto font_file = dynamic_cast<const font::FontFile*>(m_source.get());
+		if(not font_file)
+			return;
+
 		auto stream = this->cidset;
 		stream->clear();
 
-		assert(m_source_file != nullptr);
-
 		int num_bits = 0;
 		uint8_t current = 0;
-		for(uint32_t gid = 0; gid < m_source_file->numGlyphs(); gid++)
+		for(uint32_t gid = 0; gid < font_file->numGlyphs(); gid++)
 		{
-			bool bit = m_source_file->isGlyphUsed(GlyphId { gid });
+			bool bit = font_file->isGlyphUsed(GlyphId { gid });
 			current <<= 1;
 			current |= (bit ? 1 : 0);
 			num_bits++;

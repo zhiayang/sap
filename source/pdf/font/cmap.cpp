@@ -20,6 +20,10 @@ namespace pdf
 
 	void PdfFont::writeUnicodeCMap(File* doc) const
 	{
+		auto font_file = dynamic_cast<const font::FontFile*>(m_source.get());
+		if(not font_file)
+			return;
+
 		auto cmap = this->unicode_cmap;
 		cmap->clear();
 
@@ -30,8 +34,8 @@ namespace pdf
 		    "<0000> <FFFF>\n"
 		    "endcodespacerange\n");
 
-		assert(m_source_file != nullptr);
-		auto& mapping = m_source_file->characterMapping().forward;
+		assert(m_source != nullptr);
+		auto& mapping = font_file->characterMapping().forward;
 
 		// TODO: this is not very optimal. ideally we want to make ranges whenever we can,
 		// but that requires a whole bunch of extra work.
@@ -39,7 +43,7 @@ namespace pdf
 
 		for(auto& [cp, glyph] : mapping)
 		{
-			if(not m_source_file->isGlyphUsed(glyph))
+			if(not font_file->isGlyphUsed(glyph))
 				continue;
 
 			auto codepoint = static_cast<uint32_t>(cp);

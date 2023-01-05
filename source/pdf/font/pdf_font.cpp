@@ -17,69 +17,32 @@
 
 namespace pdf
 {
-	std::string PdfFont::getFontResourceName() const
-	{
-		return this->font_resource_name;
-	}
-
-
-	const font::FontMetrics& PdfFont::getFontMetrics() const
-	{
-		// TODO: metrics for the 14 built-in fonts
-		// see https://stackoverflow.com/questions/6383511/
-		assert(m_source_file);
-
-		return m_source_file->metrics();
-	}
-
-	void PdfFont::markGlyphAsUsed(GlyphId glyph) const
-	{
-		m_source_file->markGlyphAsUsed(glyph);
-	}
-
-	font::GlyphMetrics PdfFont::getMetricsForGlyph(GlyphId glyph) const
-	{
-		return m_source_file->getGlyphMetrics(glyph);
-	}
-
+#if 0
 	GlyphId PdfFont::getGlyphIdFromCodepoint(char32_t codepoint) const
 	{
+
 		if(this->encoding_kind == ENCODING_WIN_ANSI)
 		{
 			return GlyphId { encoding::WIN_ANSI(codepoint) };
 		}
 		else if(this->encoding_kind == ENCODING_CID)
 		{
-			assert(m_source_file != nullptr);
 
-			// also pre-load the metrics (because in all likelihood we'll need the metrics soon)
-			auto gid = m_source_file->getGlyphIndexForCodepoint(codepoint);
-			this->markGlyphAsUsed(gid);
-
-			if(gid == GlyphId::notdef)
-				sap::warn("font", "glyph for codepoint U+{04x} not found in font", codepoint);
-
-			return gid;
 		}
 		else
 		{
 			pdf::error("unsupported encoding");
 		}
 	}
+#endif
 
 
 	Size2d_YDown PdfFont::getWordSize(zst::wstr_view text, PdfScalar font_size) const
 	{
-		auto sz = m_source_file->getWordSize(text);
+		auto sz = m_source->getWordSize(text);
 		return Size2d_YDown(                                 //
 		    this->scaleMetricForFontSize(sz.x(), font_size), //
 		    this->scaleMetricForFontSize(sz.y(), font_size));
-	}
-
-	std::vector<font::GlyphInfo> PdfFont::getGlyphInfosForString(zst::wstr_view text) const
-	{
-		assert(m_source_file != nullptr);
-		return m_source_file->getGlyphInfosForString(text);
 	}
 
 	void PdfFont::addGlyphUnicodeMapping(GlyphId glyph, std::vector<char32_t> codepoints) const
@@ -97,26 +60,22 @@ namespace pdf
 	std::map<size_t, font::GlyphAdjustment> PdfFont::getPositioningAdjustmentsForGlyphSequence(zst::span<GlyphId> glyphs,
 	    const font::FeatureSet& features) const
 	{
-		if(!m_source_file)
-			return {};
-
-		return m_source_file->getPositioningAdjustmentsForGlyphSequence(glyphs, features);
+		return m_source->getPositioningAdjustmentsForGlyphSequence(glyphs, features);
 	}
 
 	std::optional<std::vector<GlyphId>> PdfFont::performSubstitutionsForGlyphSequence(zst::span<GlyphId> glyphs,
 	    const font::FeatureSet& features) const
 	{
-		if(!m_source_file)
-			return std::nullopt;
-
-		auto subst = m_source_file->performSubstitutionsForGlyphSequence(glyphs, features);
+		auto subst = m_source->performSubstitutionsForGlyphSequence(glyphs, features);
 		if(not subst.has_value())
 			return std::nullopt;
 
-		auto& cmap = m_source_file->characterMapping();
+			// nocommit
+#if 0
+		auto& cmap = m_source->characterMapping();
 		for(auto& [out, in] : subst->mapping.replacements)
 		{
-			this->markGlyphAsUsed(out);
+			m_source->markGlyphAsUsed(out);
 
 			// if the out is mapped, then we actually don't need to do anything special
 			if(auto m = cmap.reverse.find(out); m == cmap.reverse.end())
@@ -156,7 +115,7 @@ namespace pdf
 
 		for(auto& [out, ins] : subst->mapping.contractions)
 		{
-			this->markGlyphAsUsed(out);
+			m_source->markGlyphAsUsed(out);
 			std::vector<char32_t> in_cps {};
 			for(auto& in_gid : ins)
 			{
@@ -169,11 +128,12 @@ namespace pdf
 
 		for(auto& g : subst->mapping.extra_glyphs)
 		{
-			this->markGlyphAsUsed(g);
+			m_source->markGlyphAsUsed(g);
 
 			if(cmap.reverse.find(g) == cmap.reverse.end())
 				this->addGlyphUnicodeMapping(g, find_codepoint_for_gid(g));
 		}
+#endif
 
 		return std::move(subst->glyphs);
 	}

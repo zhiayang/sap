@@ -185,13 +185,4 @@ namespace font
 			default: sap::warn("font/off", "no supported cmap table! no glyphs will be available"); return {};
 		}
 	}
-
-	GlyphId FontFile::getGlyphIndexForCodepoint(char32_t codepoint) const
-	{
-		auto& fwd = this->characterMapping().forward;
-		if(auto it = fwd.find(codepoint); it != fwd.end())
-			return it->second;
-		else
-			return GlyphId::notdef;
-	}
 }

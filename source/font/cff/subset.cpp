@@ -11,7 +11,7 @@
 
 namespace font::cff
 {
-	static void write_charset_table(CFFData* cff, zst::byte_buffer& buffer, const std::unordered_set<GlyphId>& used_glyphs)
+	static void write_charset_table(CFFData* cff, zst::byte_buffer& buffer, const util::hashset<GlyphId>& used_glyphs)
 	{
 		// format 0
 		buffer.append(0);
@@ -29,7 +29,7 @@ namespace font::cff
 		}
 	}
 
-	static void perform_glyph_pruning(CFFData* cff, const std::unordered_set<GlyphId>& used_glyphs)
+	static void perform_glyph_pruning(CFFData* cff, const util::hashset<GlyphId>& used_glyphs)
 	{
 		std::set<uint8_t> used_font_dicts {};
 

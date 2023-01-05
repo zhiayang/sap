@@ -18,7 +18,6 @@
 
 	fn bold(x: Inline) -> Inline
 	{
-		builtin::println("bolding!");
 		return builtin::bold1(x);
 	}
 
@@ -34,7 +33,7 @@
 
 ffi ffl ff hello aP. asdf no no no
 
-this     is     a    aoeu bsdf
+this     is     a    aoeu bsdf, fill me up flour
 
 
 fi fl Bсички хора се раждат свободни и равни по \{ \}

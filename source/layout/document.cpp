@@ -6,6 +6,8 @@
 #include "pdf/units.h"    // for PdfScalar
 #include "pdf/document.h" // for File
 
+#include "font/font_file.h"
+
 #include "sap/style.h"       // for Style
 #include "sap/units.h"       // for Length
 #include "sap/document.h"    // for Document
@@ -21,9 +23,11 @@ namespace sap::layout
 {
 	Document::Document()
 	{
-		static auto default_font_family = sap::FontFamily( //
-		    pdf::PdfFont::fromBuiltin(&pdf(), "Times-Roman"), pdf::PdfFont::fromBuiltin(&pdf(), "Times-Italic"),
-		    pdf::PdfFont::fromBuiltin(&pdf(), "Times-Bold"), pdf::PdfFont::fromBuiltin(&pdf(), "Times-BoldItalic"));
+		static auto default_font_family = sap::FontFamily(                    //
+		    pdf::PdfFont::fromBuiltin(&pdf(), pdf::BuiltinFont::TimesRoman),  //
+		    pdf::PdfFont::fromBuiltin(&pdf(), pdf::BuiltinFont::TimesItalic), //
+		    pdf::PdfFont::fromBuiltin(&pdf(), pdf::BuiltinFont::TimesBold),   //
+		    pdf::PdfFont::fromBuiltin(&pdf(), pdf::BuiltinFont::TimesBoldItalic));
 
 		static auto default_style =
 		    sap::Style()
@@ -52,9 +56,9 @@ namespace sap::layout
 		m_objects.push_back(std::move(obj));
 	}
 
-	pdf::PdfFont* Document::addFont(std::shared_ptr<font::FontFile> font)
+	pdf::PdfFont* Document::addFont(std::unique_ptr<font::FontFile> font)
 	{
-		return pdf::PdfFont::fromFontFile(&m_pdf_document, font);
+		return pdf::PdfFont::fromFontFile(&m_pdf_document, std::move(font));
 	}
 
 	void Document::layout(interp::Interpreter* cs, const tree::Document& treedoc)

@@ -154,6 +154,12 @@ namespace util
 	{
 		{ a.hash() } -> std::same_as<size_t>;
 	};
+
+	template <typename A>
+	concept has_hash_specialisation = requires(A a)
+	{
+		{ std::hash<A>{}(a) } -> std::same_as<size_t>;
+	};
 	// clang-format on
 
 	// https://en.cppreference.com/w/cpp/container/unordered_map/find
@@ -173,7 +179,17 @@ namespace util
 		size_t operator()(std::u32string_view str) const { return WH {}(str); }
 		size_t operator()(const std::u32string& str) const { return WH {}(str); }
 
-		size_t operator()(const has_hash_method auto& a) const { return a.hash(); }
+		template <has_hash_method T>
+		requires(not has_hash_specialisation<T>) size_t operator()(const T& x) const
+		{
+			return x.hash();
+		}
+
+		template <has_hash_specialisation T>
+		size_t operator()(const T& a) const
+		{
+			return std::hash<std::remove_cvref_t<decltype(a)>>()(a);
+		}
 	};
 
 	template <typename K, typename V, typename H = hasher>

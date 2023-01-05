@@ -33,6 +33,9 @@ namespace font
 
 		bool is_monospaced;
 		double italic_angle;
+
+		int stem_v;
+		int stem_h;
 	};
 
 	struct GlyphMetrics

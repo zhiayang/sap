@@ -107,7 +107,7 @@ namespace sap::layout
 		Document(Document&&) = default;
 		Document& operator=(Document&&) = default;
 
-		pdf::PdfFont* addFont(std::shared_ptr<font::FontFile> font);
+		pdf::PdfFont* addFont(std::unique_ptr<font::FontFile> font);
 		void addObject(std::unique_ptr<LayoutObject> obj);
 
 		void layout(interp::Interpreter* cs, const tree::Document& document);

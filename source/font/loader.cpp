@@ -481,10 +481,10 @@ namespace font
 		return tables;
 	}
 
-	std::shared_ptr<FontFile> FontFile::from_offset_table(zst::byte_span file_bytes, size_t start_of_offset_table)
+	std::unique_ptr<FontFile> FontFile::from_offset_table(zst::byte_span file_bytes, size_t start_of_offset_table)
 	{
 		// this is perfectly fine, because we own the data referred to by 'buf'.
-		auto font = std::shared_ptr<FontFile>(new FontFile(file_bytes.data(), file_bytes.size()));
+		auto font = std::unique_ptr<FontFile>(new FontFile(file_bytes.data(), file_bytes.size()));
 
 		font->m_tables = get_table_offsets(file_bytes.drop(start_of_offset_table));
 
@@ -567,7 +567,7 @@ namespace font
 		return font;
 	}
 
-	std::optional<std::shared_ptr<FontFile>> FontFile::from_postscript_name_in_collection(zst::byte_span ttc_file,
+	std::optional<std::unique_ptr<FontFile>> FontFile::from_postscript_name_in_collection(zst::byte_span ttc_file,
 	    zst::str_view postscript_name)
 	{
 		assert(memcmp(ttc_file.data(), "ttcf", 4) == 0);
@@ -594,7 +594,7 @@ namespace font
 		return std::nullopt;
 	}
 
-	std::optional<std::shared_ptr<FontFile>> FontFile::fromHandle(FontHandle handle)
+	std::optional<std::unique_ptr<FontFile>> FontFile::fromHandle(FontHandle handle)
 	{
 		auto [buf, len] = util::readEntireFile(handle.path);
 		if(len < 4)
@@ -615,10 +615,6 @@ namespace font
 	}
 
 	FontFile::FontFile(const uint8_t* bytes, size_t size) : m_file_bytes(bytes), m_file_size(size)
-	{
-	}
-
-	FontFile::~FontFile()
 	{
 	}
 }

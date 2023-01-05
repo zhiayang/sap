@@ -11,68 +11,16 @@
 
 namespace font
 {
-	GlyphMetrics FontFile::getGlyphMetrics(GlyphId glyph_id) const
+	GlyphMetrics FontSource::getGlyphMetrics(GlyphId glyph_id) const
 	{
 		if(auto it = m_glyph_metrics.find(glyph_id); it != m_glyph_metrics.end())
 			return it->second;
 
-		this->markGlyphAsUsed(glyph_id);
-
-		auto u16_array = m_hmtx_table.cast<uint16_t>();
-
-		GlyphMetrics ret {};
-		auto gid32 = static_cast<uint32_t>(glyph_id);
-
-		// note the *2, because there's also an 2-byte "lsb".
-		if(gid32 >= m_num_hmetrics)
-		{
-			// the remaining glyphs not in the array use the last value.
-			ret.horz_advance = FontScalar(util::convertBEU16(u16_array[(m_num_hmetrics - 1) * 2]));
-
-			// there is an array of lsbs for glyph_ids > num_hmetrics
-			auto lsb_array = m_hmtx_table.drop(2 * m_num_hmetrics);
-			auto tmp = lsb_array[gid32 - m_num_hmetrics];
-
-			ret.left_side_bearing = FontScalar((int16_t) util::convertBEU16(tmp));
-		}
-		else
-		{
-			ret.horz_advance = FontScalar(util::convertBEU16(u16_array[gid32 * 2]));
-			ret.left_side_bearing = FontScalar((int16_t) util::convertBEU16(u16_array[gid32 * 2 + 1]));
-		}
-
-		// now, figure out xmin and xmax
-		if(this->hasTrueTypeOutlines())
-		{
-			auto bb = truetype::getGlyphBoundingBox(m_truetype_data.get(), glyph_id);
-			ret.xmin = FontScalar(bb.xmin);
-			ret.ymin = FontScalar(bb.ymin);
-			ret.xmax = FontScalar(bb.xmax);
-			ret.ymax = FontScalar(bb.ymax);
-
-			// calculate RSB
-			ret.right_side_bearing = ret.horz_advance - ret.left_side_bearing - (ret.xmax - ret.xmin);
-		}
-		else if(this->hasCffOutlines())
-		{
-			// sap::warn("font/metrics", "bounding-box metrics for CFF-outline fonts are not supported yet!");
-
-			// well, we're shit out of luck.
-			// best effort, i guess?
-			ret.xmin = FontScalar(m_metrics.xmin);
-			ret.xmax = FontScalar(m_metrics.xmax);
-			ret.ymin = FontScalar(m_metrics.ymin);
-			ret.ymax = FontScalar(m_metrics.ymax);
-		}
-		else
-		{
-			sap::internal_error("unsupported outline type?!");
-		}
-
-		return m_glyph_metrics.emplace(glyph_id, ret).first->second;
+		auto metrics = this->get_glyph_metrics_impl(glyph_id);
+		return m_glyph_metrics.emplace(glyph_id, std::move(metrics)).first->second;
 	}
 
-	FontVector2d FontFile::getWordSize(zst::wstr_view text) const
+	FontVector2d FontSource::getWordSize(zst::wstr_view text) const
 	{
 		if(auto it = m_word_size_cache.find(text); it != m_word_size_cache.end())
 			return it->second;
@@ -88,7 +36,7 @@ namespace font
 		return size;
 	}
 
-	std::vector<GlyphInfo> FontFile::getGlyphInfosForString(zst::wstr_view text) const
+	std::vector<GlyphInfo> FontSource::getGlyphInfosForString(zst::wstr_view text) const
 	{
 		if(auto it = m_glyph_infos_cache.find(text); it != m_glyph_infos_cache.end())
 			return it->second;
@@ -138,27 +86,5 @@ namespace font
 
 		auto res = m_glyph_infos_cache.emplace(text.str(), std::move(glyph_infos));
 		return res.first->second;
-	}
-
-	std::map<size_t, font::GlyphAdjustment> FontFile::getPositioningAdjustmentsForGlyphSequence(zst::span<GlyphId> glyphs,
-	    const font::FeatureSet& features) const
-	{
-		if(m_gpos_table.has_value())
-			return off::getPositioningAdjustmentsForGlyphSequence(*m_gpos_table, glyphs, features);
-		else if(m_kern_table.has_value())
-			return aat::getPositioningAdjustmentsForGlyphSequence(*m_kern_table, glyphs, features);
-		else
-			return {};
-	}
-
-	std::optional<SubstitutedGlyphString> FontFile::performSubstitutionsForGlyphSequence(zst::span<GlyphId> glyphs,
-	    const font::FeatureSet& features) const
-	{
-		if(m_gsub_table.has_value())
-			return off::performSubstitutionsForGlyphSequence(*m_gsub_table, glyphs, features);
-		else if(m_morx_table.has_value())
-			return aat::performSubstitutionsForGlyphSequence(*m_morx_table, glyphs, features);
-		else
-			return {};
 	}
 }

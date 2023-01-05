@@ -8,10 +8,12 @@
 #include "types.h" // for GlyphId
 
 #include "pdf/units.h" // for TextSpace1d, PdfScalar, GlyphSpace1d
+#include "pdf/builtin_font.h"
 
 #include "font/metrics.h"
 #include "font/features.h"
 #include "font/font_scalar.h" // for font_design_space, FontScalar
+#include "font/font_source.h"
 
 namespace font
 {
@@ -30,21 +32,16 @@ namespace pdf
 		Dictionary* serialise(File* doc) const;
 		bool didSerialise() const { return m_did_serialise; }
 		Dictionary* dictionary() const { return this->font_dictionary; }
+		std::string getFontResourceName() const { return m_font_resource_name; }
 
-		GlyphId getGlyphIdFromCodepoint(char32_t codepoint) const;
-		std::vector<font::GlyphInfo> getGlyphInfosForString(zst::wstr_view text) const;
+		const font::FontMetrics& getFontMetrics() const { return m_source->metrics(); }
+		font::GlyphMetrics getMetricsForGlyph(GlyphId glyph) const { return m_source->getGlyphMetrics(glyph); }
+		GlyphId getGlyphIdFromCodepoint(char32_t codepoint) const { return m_source->getGlyphIndexForCodepoint(codepoint); }
 
-		void markGlyphAsUsed(GlyphId glyph) const;
-
-		const font::FontMetrics& getFontMetrics() const;
-		font::GlyphMetrics getMetricsForGlyph(GlyphId glyph) const;
-
-		// add an explicit mapping from glyph id to a list of codepoints. This is useful for
-		// ligature substitutions (eg. 'ffi' -> 'f', 'f', 'i') and for single replacements.
-		void addGlyphUnicodeMapping(GlyphId glyph, std::vector<char32_t> codepoints) const;
-
-		// get the name that we should put in the Resource dictionary of a page that uses this font.
-		std::string getFontResourceName() const;
+		std::vector<font::GlyphInfo> getGlyphInfosForString(zst::wstr_view text) const
+		{
+			return m_source->getGlyphInfosForString(text);
+		}
 
 		Size2d_YDown getWordSize(zst::wstr_view text, PdfScalar font_size) const;
 
@@ -54,6 +51,11 @@ namespace pdf
 
 		std::optional<std::vector<GlyphId>> performSubstitutionsForGlyphSequence(zst::span<GlyphId> glyphs,
 		    const font::FeatureSet& features) const;
+
+
+		// add an explicit mapping from glyph id to a list of codepoints. This is useful for
+		// ligature substitutions (eg. 'ffi' -> 'f', 'f', 'i') and for single replacements.
+		void addGlyphUnicodeMapping(GlyphId glyph, std::vector<char32_t> codepoints) const;
 
 		GlyphSpace1d scaleFontMetricForPDFGlyphSpace(font::FontScalar metric) const
 		{
@@ -79,8 +81,8 @@ namespace pdf
 		int font_type = 0;
 		int encoding_kind = 0;
 
-		static PdfFont* fromBuiltin(File* doc, zst::str_view name);
-		static PdfFont* fromFontFile(File* doc, std::shared_ptr<font::FontFile> font);
+		static PdfFont* fromBuiltin(File* doc, BuiltinFont::Core14 font_name);
+		static PdfFont* fromFontFile(File* doc, std::unique_ptr<font::FontFile> font);
 
 		static constexpr int FONT_TYPE1 = 1;
 		static constexpr int FONT_TRUETYPE = 2;
@@ -107,10 +109,10 @@ namespace pdf
 
 		// the name that goes into the Resource << >> dict in a page. This is a unique name
 		// that we get from the Document when the font is created.
-		std::string font_resource_name {};
+		std::string m_font_resource_name {};
 
 		// only used for embedded fonts
-		std::shared_ptr<font::FontFile> m_source_file {};
+		std::unique_ptr<font::FontSource> m_source {};
 		Array* glyph_widths_array = 0;
 
 		Stream* embedded_contents = 0;
