@@ -43,7 +43,7 @@ namespace sap::interp
 
 		bool isMutablePointer() const;
 		const OptionalType* optionalOf() const { return makeOptional(this); }
-		const PointerType* pointerTo() const { return makePointer(this, false); }
+		const PointerType* pointerTo(bool mut = false) const { return makePointer(this, mut); }
 		const PointerType* mutablePointerTo() const { return makePointer(this, true); }
 
 		// convenience functions
@@ -177,6 +177,7 @@ namespace sap::interp
 		bool hasFieldNamed(zst::str_view name) const;
 		size_t getFieldIndex(zst::str_view name) const;
 		const Type* getFieldNamed(zst::str_view name) const;
+		const Type* getFieldAtIndex(size_t idx) const;
 
 		void setFields(std::vector<Field> fields);
 

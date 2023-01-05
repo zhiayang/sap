@@ -21,7 +21,6 @@ namespace sap::interp
 			case BinaryOp::Op::Multiply: return "*";
 			case BinaryOp::Op::Divide: return "/";
 			case BinaryOp::Op::Modulo: return "%";
-			case BinaryOp::Op::NullCoalesce: return "??";
 		}
 	}
 
@@ -29,20 +28,6 @@ namespace sap::interp
 	{
 		auto ltype = TRY(this->lhs->typecheck(ts)).type();
 		auto rtype = TRY(this->rhs->typecheck(ts)).type();
-
-		if(this->op == Op::NullCoalesce)
-		{
-			if(not ltype->isOptional())
-				return ErrFmt("invalid use of '??' with non-optional type '{}' on left-hand side", ltype);
-
-			auto tmp = rtype->isOptional() ? rtype->optionalElement() : rtype;
-			if(tmp != ltype->optionalElement())
-				return ErrFmt("mismatched types for '??' -- '{}' on left and '{}' on right", ltype, tmp);
-
-			// if the rhs is an optional, we return an optional also
-			// (this allows things like a ?? b ?? c to work)
-			return TCResult::ofRValue(rtype);
-		}
 
 		if((ltype->isInteger() && rtype->isInteger()) || (ltype->isFloating() && rtype->isFloating()))
 		{
@@ -87,23 +72,6 @@ namespace sap::interp
 				default: assert(false && "unreachable!");
 			}
 		};
-
-		if(this->op == Op::NullCoalesce)
-		{
-			assert(lval.isOptional());
-			if(lval.haveOptionalValue())
-			{
-				// if the right side is an optional, we return an optional too.
-				if(rtype->isOptional())
-					return EvalResult::ofValue(Value::optional(ltype->optionalElement(), std::move(lval).takeOptional()));
-				else
-					return EvalResult::ofValue(std::move(*std::move(lval).takeOptional()));
-			}
-			else
-			{
-				return EvalResult::ofValue(std::move(rval));
-			}
-		}
 
 
 		if((ltype->isInteger() && rtype->isInteger()) || (ltype->isFloating() && rtype->isFloating()))

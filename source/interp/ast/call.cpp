@@ -151,22 +151,34 @@ namespace sap::interp
 		for(size_t i = 0; i < this->arguments.size(); i++)
 		{
 			auto& arg = this->arguments[i];
-			auto val = TRY_VALUE(arg.value->evaluate(ev));
+			auto val = TRY(arg.value->evaluate(ev));
 
 			if(this->rewritten_ufcs)
 			{
-				auto temp = ev->frame().createTemporary(std::move(val));
-
-				if(m_ufcs_self_is_mutable)
-					val = Value::mutablePointer(val.type(), temp);
+				Value* ptr = nullptr;
+				if(val.isLValue())
+					ptr = &val.get();
 				else
-					val = Value::pointer(val.type(), temp);
-			}
+					ptr = ev->frame().createTemporary(std::move(val).take());
 
-			processed_args.push_back({
-			    .name = arg.name,
-			    .value = std::move(val),
-			});
+				Value self {};
+				if(m_ufcs_self_is_mutable)
+					self = Value::mutablePointer(ptr->type(), ptr);
+				else
+					self = Value::pointer(ptr->type(), ptr);
+
+				processed_args.push_back({
+				    .name = arg.name,
+				    .value = std::move(self),
+				});
+			}
+			else
+			{
+				processed_args.push_back({
+				    .name = arg.name,
+				    .value = std::move(val).take(),
+				});
+			}
 		}
 
 

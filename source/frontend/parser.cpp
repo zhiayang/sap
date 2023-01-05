@@ -142,9 +142,10 @@ namespace sap::frontend
 	{
 		switch(lexer.peek())
 		{
-			case TT::LParen: return 1000000;
-			case TT::LSquare: return 1000000;
-			case TT::Question: return 1000000;
+			case TT::LParen:
+			case TT::LSquare:
+			case TT::Question:
+			case TT::Exclamation: return 1000000;
 
 			case TT::Period: return 900;
 			case TT::QuestionPeriod: return 900;
@@ -176,7 +177,7 @@ namespace sap::frontend
 
 	static bool is_postfix_unary(Lexer& lexer)
 	{
-		return lexer.peek() == TT::LParen || lexer.peek() == TT::LSquare || lexer.peek() == TT::Question;
+		return util::is_one_of(lexer.peek().type, TT::LParen, TT::LSquare, TT::Question, TT::Exclamation);
 	}
 
 	static bool is_assignment_op(TokenType tok)
@@ -187,7 +188,7 @@ namespace sap::frontend
 
 	static bool is_regular_binary_op(TokenType tok)
 	{
-		return util::is_one_of(tok, TT::Plus, TT::Minus, TT::Asterisk, TT::Slash, TT::Percent, TT::QuestionQuestion);
+		return util::is_one_of(tok, TT::Plus, TT::Minus, TT::Asterisk, TT::Slash, TT::Percent);
 	}
 
 	static bool is_comparison_op(TokenType tok)
@@ -205,7 +206,6 @@ namespace sap::frontend
 			case TT::Asterisk: return interp::BinaryOp::Multiply;
 			case TT::Slash: return interp::BinaryOp::Divide;
 			case TT::Percent: return interp::BinaryOp::Modulo;
-			case TT::QuestionQuestion: return interp::BinaryOp::NullCoalesce;
 			default: assert(false && "unreachable!");
 		}
 	}
@@ -354,7 +354,7 @@ namespace sap::frontend
 			call->arguments.push_back(std::move(arg));
 
 			if(not lexer.expect(TT::Comma) && lexer.peek() != TT::RParen)
-				error(lexer.peek().loc, "expected ',' or ')' in call argument list");
+				error(lexer.peek().loc, "expected ',' or ')' in call argument list, got '{}'", lexer.peek().text);
 		}
 
 		if(not lexer.expect(TT::RParen))
@@ -377,12 +377,18 @@ namespace sap::frontend
 			ret->expr = std::move(lhs);
 			return ret;
 		}
+		else if(lexer.expect(TT::Exclamation))
+		{
+			auto ret = std::make_unique<interp::DereferenceOp>();
+			ret->expr = std::move(lhs);
+			return ret;
+		}
 
-		error(lexer.peek().loc, "expected '(' or '[' after expression, found '{}'", lexer.peek().text);
+		error(lexer.peek().loc, "unexpected '{}' after expression", lexer.peek().text);
 	}
 
 	static std::unique_ptr<interp::FunctionCall> parse_ufcs(Lexer& lexer, std::unique_ptr<interp::Expr> first_arg,
-	    const std::string& method_name)
+	    const std::string& method_name, bool is_optional)
 	{
 		auto method = std::make_unique<interp::Ident>();
 		method->name.top_level = false;
@@ -390,6 +396,8 @@ namespace sap::frontend
 
 		auto call = parse_function_call(lexer, std::move(method));
 		call->rewritten_ufcs = true;
+		call->is_optional_ufcs = is_optional;
+
 		call->arguments.insert(call->arguments.begin(),
 		    interp::FunctionCall::Arg {
 		        .name = std::nullopt,
@@ -424,7 +432,7 @@ namespace sap::frontend
 			auto op_tok = lexer.next();
 
 			// special handling for dot op -- check here.
-			if(op_tok == TT::Period)
+			if(op_tok == TT::Period || op_tok == TT::QuestionPeriod)
 			{
 				// TODO: maybe support .0, .1 syntax for tuples
 				auto field_name = lexer.match(TT::Identifier);
@@ -432,13 +440,15 @@ namespace sap::frontend
 					error(lexer.location(), "expected field name after '.'");
 
 				auto newlhs = std::make_unique<interp::DotOp>();
+				newlhs->is_optional = (op_tok == TT::QuestionPeriod);
 				newlhs->rhs = field_name->text.str();
 				newlhs->lhs = std::move(lhs);
 
 				// special case method calls: UFCS, rewrite into a free function call.
 				if(lexer.peek() == TT::LParen)
 				{
-					lhs = parse_ufcs(lexer, std::move(newlhs->lhs), field_name->text.str());
+					lhs = parse_ufcs(lexer, std::move(newlhs->lhs), field_name->text.str(),
+					    /* is_optional */ op_tok == TT::QuestionPeriod);
 				}
 				else
 				{
@@ -474,6 +484,14 @@ namespace sap::frontend
 				tmp->lhs = std::move(lhs);
 				tmp->rhs = std::move(rhs);
 				tmp->op = convert_binop(op_tok);
+
+				lhs = std::move(tmp);
+			}
+			else if(op_tok == TT::QuestionQuestion)
+			{
+				auto tmp = std::make_unique<interp::NullCoalesceOp>();
+				tmp->lhs = std::move(lhs);
+				tmp->rhs = std::move(rhs);
 
 				lhs = std::move(tmp);
 			}
@@ -632,6 +650,11 @@ namespace sap::frontend
 		{
 			lexer.next();
 			return PType::optional(parse_type(lexer));
+		}
+		else if(fst == TT::QuestionQuestion)
+		{
+			lexer.next();
+			return PType::optional(PType::optional(parse_type(lexer)));
 		}
 		else if(fst == TT::LSquare)
 		{

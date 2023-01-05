@@ -7,55 +7,91 @@
 
 namespace sap::interp
 {
-	static const StructType* get_struct_type(const Type* t)
-	{
-		if(t->isStruct())
-			return t->toStruct();
-		else if(t->isPointer() && t->pointerElement()->isStruct())
-			return t->pointerElement()->toStruct();
-		else
-			return nullptr;
-	}
-
 	ErrorOr<TCResult> DotOp::typecheck_impl(Typechecker* ts, const Type* infer) const
 	{
 		auto lhs_res = TRY(this->lhs->typecheck(ts));
+		auto ltype = lhs_res.type();
 
-		auto struct_type = get_struct_type(lhs_res.type());
-		if(struct_type == nullptr)
-			return ErrFmt("invalid use of '.' operator on a non-struct type '{}'", lhs_res.type());
+		if(this->is_optional)
+		{
+			if(not ltype->isOptional() && not ltype->isPointer())
+				return ErrFmt("invalid use of '?.' operator on a non-pointer, non-optional type '{}'", ltype);
 
-		if(not struct_type->hasFieldNamed(this->rhs))
-			return ErrFmt("type '{}' has no field named '{}'", lhs_res.type(), this->rhs);
+			auto lelm_type = ltype->isPointer() ? ltype->pointerElement() : ltype->optionalElement();
+			if(not lelm_type->isStruct())
+				return ErrFmt("invalid use of '?.' operator on a non-struct type '{}'", lelm_type);
 
-		// basically, we copy the lvalue-ness and mutability of the lhs.
-		return Ok(lhs_res.replacingType(struct_type->getFieldNamed(this->rhs)));
+			m_struct_type = lelm_type->toStruct();
+		}
+		else
+		{
+			if(not ltype->isStruct())
+				return ErrFmt("invalid use of '.' operator on a non-struct type '{}'", ltype);
+
+			m_struct_type = ltype->toStruct();
+		}
+
+		assert(m_struct_type != nullptr);
+		if(not m_struct_type->hasFieldNamed(this->rhs))
+			return ErrFmt("type '{}' has no field named '{}'", ltype, this->rhs);
+
+		auto field_type = m_struct_type->getFieldNamed(this->rhs);
+		if(this->is_optional)
+		{
+			// if we're optional, make an rvalue always.
+			// this means we can't do a?.b = ... , but that's fine probably.
+			return TCResult::ofRValue(
+			    ltype->isOptional() //
+			        ? (const Type*) field_type->optionalOf()
+			        : (const Type*) field_type->pointerTo(ltype->isMutablePointer()));
+		}
+		else
+		{
+			// otherwise, we copy the lvalue-ness and mutability of the lhs.
+			return Ok(lhs_res.replacingType(field_type));
+		}
 	}
 
 	ErrorOr<EvalResult> DotOp::evaluate(Evaluator* ev) const
 	{
+		assert(m_struct_type->hasFieldNamed(this->rhs));
+		auto field_idx = m_struct_type->getFieldIndex(this->rhs);
+		auto field_type = m_struct_type->getFieldAtIndex(field_idx);
+
 		auto lhs_res = TRY(this->lhs->evaluate(ev));
 		if(not lhs_res.hasValue())
 			return ErrFmt("unexpected void value");
 
 		auto& lhs_value = lhs_res.get();
-		if(lhs_value.isPointer() && lhs_value.getPointer() == nullptr)
-			return ErrFmt("null pointer dereference");
-
-		auto struct_type = get_struct_type(this->lhs->get_type());
-		if(auto value_type = get_struct_type(lhs_value.type()); value_type == nullptr || value_type != struct_type)
-			return ErrFmt("unexpected type '{}' in dotop", lhs_value.type());
-
-		assert(struct_type->hasFieldNamed(this->rhs));
-
-		auto field_idx = struct_type->getFieldIndex(this->rhs);
-
-		if(lhs_value.isPointer())
+		auto ltype = lhs_value.type();
+		if(this->is_optional)
 		{
-			if(lhs_value.type()->isMutablePointer())
-				return EvalResult::ofLValue(lhs_value.getMutablePointer()->getStructField(field_idx));
+			bool left_has_value = (lhs_value.isOptional() && lhs_value.haveOptionalValue())
+			                   || (lhs_value.isPointer() && lhs_value.getPointer() != nullptr);
+
+			if(lhs_value.isPointer())
+			{
+				Value* result = nullptr;
+				if(left_has_value)
+					result = &lhs_value.getStructField(field_idx);
+
+				if(ltype->isMutablePointer())
+					return EvalResult::ofLValue(*result);
+				else
+					return EvalResult::ofValue(Value::pointer(field_type, result));
+			}
 			else
-				return EvalResult::ofValue(lhs_value.getPointer()->getStructField(field_idx).clone());
+			{
+				if(left_has_value)
+				{
+					auto fields = std::move(lhs_value).takeOptional().value().takeStructFields();
+					return EvalResult::ofValue(Value::optional(field_type, std::move(fields[field_idx])));
+				}
+				else
+				{
+					return EvalResult::ofValue(Value::optional(field_type, std::nullopt));
+				}
+			}
 		}
 		else
 		{

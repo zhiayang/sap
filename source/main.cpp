@@ -31,8 +31,6 @@ CLEANUP:
 
 
 TODO:
-
-2. make optional types
 4. make UFCS look for the function in the declared scope of the self type
 5. not all paths return a value
 

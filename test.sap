@@ -73,9 +73,9 @@ fi fl Bсички хора се раждат свободни и равни по
 	fn kek(c: &Cactus)
 	{
 		builtin::print("thorns = ");
-		builtin::println(c.thorns);
+		builtin::println(c!.thorns);
 		builtin::print("juice = ");
-		builtin::println(c.juice);
+		builtin::println(c!.juice);
 	}
 
 	var bar = Cactus {
@@ -84,6 +84,17 @@ fi fl Bсички хора се раждат свободни и равни по
 
 	bar.juice = 69420;
 	bar.kek();
+
+	fn tus(c: &mut Cactus)
+	{
+		c!.juice = 0;
+	}
+
+	bar.tus();
+
+	builtin::print("------\njuice = ");
+	builtin::println(bar.juice);
+
 
 	Cactus {
 		.thorns = 999,
@@ -94,6 +105,13 @@ fi fl Bсички хора се раждат свободни и равни по
 	let p2: &mut int = p1;
 	let p3: &int = p2;
 
+
+	let asdf: ?Cactus = Cactus {
+		.juice = 6969
+	};
+
+	builtin::print("juice = ");
+	builtin::println(asdf?.juice);
 }
 
 

@@ -86,6 +86,7 @@ namespace sap::interp
 		};
 
 		bool rewritten_ufcs = false;
+		bool is_optional_ufcs = false;
 		std::unique_ptr<Expr> callee;
 		std::vector<Arg> arguments;
 
@@ -150,7 +151,6 @@ namespace sap::interp
 			Multiply,
 			Divide,
 			Modulo,
-			NullCoalesce,
 		};
 		Op op;
 	};
@@ -201,9 +201,34 @@ namespace sap::interp
 
 		std::unique_ptr<Expr> lhs;
 		std::string rhs;
+
+		bool is_optional = false;
+
+	private:
+		mutable const StructType* m_struct_type = nullptr;
 	};
 
 	struct OptionalCheckOp : Expr
+	{
+		virtual ErrorOr<EvalResult> evaluate(Evaluator* ev) const override;
+		virtual ErrorOr<TCResult> typecheck_impl(Typechecker* ts, const Type* infer = nullptr) const override;
+
+		std::unique_ptr<Expr> expr;
+	};
+
+	struct NullCoalesceOp : Expr
+	{
+		virtual ErrorOr<EvalResult> evaluate(Evaluator* ev) const override;
+		virtual ErrorOr<TCResult> typecheck_impl(Typechecker* ts, const Type* infer = nullptr) const override;
+
+		std::unique_ptr<Expr> lhs;
+		std::unique_ptr<Expr> rhs;
+
+	private:
+		mutable enum { Flatmap, ValueOr } m_kind;
+	};
+
+	struct DereferenceOp : Expr
 	{
 		virtual ErrorOr<EvalResult> evaluate(Evaluator* ev) const override;
 		virtual ErrorOr<TCResult> typecheck_impl(Typechecker* ts, const Type* infer = nullptr) const override;

@@ -457,6 +457,7 @@ namespace sap::frontend
 				case '&': tt = TT::Ampersand; break;
 				case '@': tt = TT::At; break;
 				case '?': tt = TT::Question; break;
+				case '!': tt = TT::Exclamation; break;
 
 				default: sap::error(loc, "unknown token '{}'", stream[0]); break;
 			}

@@ -56,6 +56,13 @@ namespace sap::interp
 		return it->second.second;
 	}
 
+	const Type* StructType::getFieldAtIndex(size_t idx) const
+	{
+		assert(idx < m_fields.size());
+		return m_fields[idx].type;
+	}
+
+
 	auto StructType::getFields() const -> const std::vector<Field>&
 	{
 		return m_fields;

@@ -52,6 +52,7 @@ namespace sap::frontend
 		Slash,
 		Equal,
 		Percent,
+		Exclamation,
 		At,
 
 		RArrow,
