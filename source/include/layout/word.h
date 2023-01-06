@@ -18,10 +18,10 @@ namespace sap::layout
 {
 	struct Separator : Stylable
 	{
-		Separator(tree::Separator::SeparatorKind kind, const Style* style) : kind(kind)
+		Separator(tree::Separator::SeparatorKind kind, const Style* style) : m_kind(kind)
 		{
 			this->setStyle(style);
-			switch(kind)
+			switch(m_kind)
 			{
 				case decltype(kind)::SPACE:
 					m_end_of_line_char = 0;
@@ -50,14 +50,14 @@ namespace sap::layout
 			return m_middle_of_line_char == 0 ? zst::wstr_view() : zst::wstr_view(m_middle_of_line_char, 1);
 		}
 
-		bool isSpace() const { return this->kind == decltype(kind)::SPACE; }
-		bool isHyphen() const { return this->kind == decltype(kind)::HYPHENATION_POINT; }
-
-		tree::Separator::SeparatorKind kind;
+		bool isSpace() const { return m_kind == decltype(m_kind)::SPACE; }
+		bool isHyphenationPoint() const { return m_kind == decltype(m_kind)::HYPHENATION_POINT; }
+		bool isExplicitBreakPoint() const { return m_kind == decltype(m_kind)::BREAK_POINT; }
 
 	private:
 		const char32_t* m_end_of_line_char;
 		const char32_t* m_middle_of_line_char;
+		tree::Separator::SeparatorKind m_kind;
 
 		constexpr static char32_t s_space = U' ';
 		constexpr static char32_t s_hyphen = U'-';

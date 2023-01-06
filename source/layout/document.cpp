@@ -69,9 +69,7 @@ namespace sap::layout
 		{
 			if(auto treepara = dynamic_cast<const tree::Paragraph*>(obj); treepara != nullptr)
 			{
-				std::optional<const tree::Paragraph*> overflow = treepara;
-				while(overflow)
-					std::tie(overflow, cursor) = Paragraph::layout(cs, &m_page_layout, cursor, m_style, *overflow);
+				cursor = Paragraph::layout(cs, &m_page_layout, cursor, m_style, treepara);
 			}
 			else
 			{

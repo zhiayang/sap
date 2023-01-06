@@ -82,7 +82,7 @@ namespace sap::layout
 					auto sep_width = std::max(calculateWordSize(sep_char, prev_word.style()).x(),
 					    calculateWordSize(sep_char, next_word.style()).x());
 
-					if(sep->kind == tree::Separator::SPACE)
+					if(sep->isSpace())
 						ret.total_space_width += sep_width;
 					else
 						ret.total_word_width += sep_width;
@@ -97,8 +97,8 @@ namespace sap::layout
 	};
 
 
-	std::pair<std::optional<const tree::Paragraph*>, Cursor> Paragraph::layout(interp::Interpreter* cs, RectPageLayout* layout,
-	    Cursor cursor, const Style* parent_style, const tree::Paragraph* treepara)
+	Cursor Paragraph::layout(interp::Interpreter* cs, RectPageLayout* layout, Cursor cursor, const Style* parent_style,
+	    const tree::Paragraph* treepara)
 	{
 		cursor = layout->newLineFrom(cursor, 0);
 
@@ -115,7 +115,7 @@ namespace sap::layout
 				words_and_seps.push_back(Separator(sep->kind(), sep->style()));
 		}
 
-		auto para = util::make<Paragraph>();
+		auto para = std::make_unique<Paragraph>();
 		auto lines = breakLines(layout, cursor, parent_style, words_and_seps, layout->getWidthAt(cursor));
 
 		size_t current_idx = 0;
@@ -139,7 +139,7 @@ namespace sap::layout
 
 			// Ignore space at end of line
 			const auto& last_word = *(words_end - 1);
-			if(auto sep = std::get_if<Separator>(&last_word); sep && sep->kind == tree::Separator::SPACE)
+			if(auto sep = std::get_if<Separator>(&last_word); sep && sep->isSpace())
 				--words_end;
 
 			auto line_metrics = LineMetrics::computeLineMetrics(words_begin, words_end, parent_style);
@@ -192,8 +192,8 @@ namespace sap::layout
 			prev_space_width_factor = space_width_factor;
 		}
 
-		layout->addObject(para);
-		return { std::nullopt, cursor };
+		layout->addObject(std::move(para));
+		return cursor;
 	}
 
 

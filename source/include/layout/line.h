@@ -21,33 +21,33 @@ namespace sap::layout
 {
 	struct Line
 	{
-		// "Input"
-		RectPageLayout* layout;
-		const Style* parent_style;
-		Cursor prev_cursor;
-
 		// Sometimes we need to populate a line in a struct even though it's never read... yeah i'm sorry :(
 		static Line invalid_line() { return Line(); }
 
-		Line(RectPageLayout* layout, const Style* parent_style, Cursor prev_cursor)
-		    : layout(layout)
-		    , parent_style(parent_style)
-		    , prev_cursor(prev_cursor)
+		Line(RectPageLayout* layout, const Style* parent_style, Cursor m_prev_cursor)
+		    : m_layout(layout)
+		    , m_parent_style(parent_style)
+		    , m_prev_cursor(m_prev_cursor)
 		{
 		}
 
 	private:
+		// "Input"
+		RectPageLayout* m_layout;
+		const Style* m_parent_style;
+		Cursor m_prev_cursor;
+
 		// "state" / "output"
-		Length line_height {};
-		Length line_width_excluding_last_word {};
-		std::optional<Separator> last_sep {};
-		std::u32string last_word {};
+		Length m_line_height {};
+		Length m_line_width_excluding_last_word {};
+		std::optional<Separator> m_last_sep {};
+		std::u32string m_last_word {};
 
 		Length m_total_space_width {};
 
-		const Style* style = Style::empty();
+		const Style* m_style = Style::empty();
 
-		size_t num_spaces = 0;
+		size_t m_num_spaces = 0;
 		size_t m_num_parts = 0;
 
 		// Helper functions
@@ -62,82 +62,79 @@ namespace sap::layout
 		// Getters
 		Length width()
 		{
-			auto last_word_style = parent_style->extendWith(style);
-			if(last_sep)
+			auto last_word_style = m_parent_style->extendWith(m_style);
+			if(m_last_sep.has_value())
 			{
-				// auto word_copy = last_word;
+				m_last_word += m_last_sep->endOfLine().sv();
 
-				last_word += last_sep->endOfLine().sv();
-
-				auto ret = line_width_excluding_last_word + calculateWordSize(last_word, last_word_style).x();
-				last_word.erase(last_word.size() - last_sep->endOfLine().size());
-
-				// assert(word_copy == last_word);
+				auto ret = m_line_width_excluding_last_word + calculateWordSize(m_last_word, last_word_style).x();
+				m_last_word.erase(m_last_word.size() - m_last_sep->endOfLine().size());
 				return ret;
 			}
 			else
 			{
-				return line_width_excluding_last_word + calculateWordSize(last_word, last_word_style).x();
+				return m_line_width_excluding_last_word + calculateWordSize(m_last_word, last_word_style).x();
 			}
 		}
 
-		size_t numSpaces() const { return num_spaces; }
+		size_t numSpaces() const { return m_num_spaces; }
 		size_t numParts() const { return m_num_parts; }
-		Cursor lineCursor() const { return layout->newLineFrom(prev_cursor, line_height); }
+		Cursor lineCursor() const { return m_layout->newLineFrom(m_prev_cursor, m_line_height); }
 
 		// Modifiers
 		void add(const Word& w)
 		{
-			auto prev_word_style = parent_style->extendWith(style);
-			auto word_style = parent_style->extendWith(w.style());
-			line_height = std::max(line_height,
-			    calculateWordSize(last_word, word_style).y() * word_style->line_spacing().value());
+			auto prev_word_style = m_parent_style->extendWith(m_style);
+			auto word_style = m_parent_style->extendWith(w.style());
+
+			m_line_height = std::max(m_line_height,
+			    calculateWordSize(m_last_word, word_style).y() * word_style->line_spacing().value());
 
 			m_num_parts++;
 
-			if(last_sep.has_value() && last_sep->isSpace())
+			if(m_last_sep.has_value() && m_last_sep->isSpace())
 			{
-				num_spaces++;
+				m_num_spaces++;
 
-				line_width_excluding_last_word += calculateWordSize(last_word, prev_word_style).x();
-				last_word.clear();
+				m_line_width_excluding_last_word += calculateWordSize(m_last_word, prev_word_style).x();
+				m_last_word.clear();
 
-				style = w.style();
-				last_word = w.text().sv();
+				m_style = w.style();
+				m_last_word = w.text().sv();
 			}
-			else if(style != nullptr && style != w.style() && *style != *w.style())
+			else if(m_style != nullptr && m_style != w.style() && *m_style != *w.style())
 			{
-				line_width_excluding_last_word += calculateWordSize(last_word, prev_word_style).x();
-				last_word.clear();
+				m_line_width_excluding_last_word += calculateWordSize(m_last_word, prev_word_style).x();
+				m_last_word.clear();
 
-				style = w.style();
-				last_word = w.text().sv();
+				m_style = w.style();
+				m_last_word = w.text().sv();
 			}
 			else
 			{
-
 				// either there is no last separator, or the last separator was a hyphen
-				style = w.style();
-				last_word += w.text().sv();
+				m_style = w.style();
+				m_last_word += w.text().sv();
 			}
 
-			if(last_sep.has_value())
+			if(m_last_sep.has_value())
 			{
-				auto sep_width = std::max(calculateWordSize(last_sep->middleOfLine(), prev_word_style).x(),
-				    calculateWordSize(last_sep->middleOfLine(), word_style).x());
+				auto sep_width = std::max(calculateWordSize(m_last_sep->middleOfLine(), prev_word_style).x(),
+				    calculateWordSize(m_last_sep->middleOfLine(), word_style).x());
 
-				line_width_excluding_last_word += sep_width;
+				m_line_width_excluding_last_word += sep_width;
 
-				if(last_sep->isSpace())
+				if(m_last_sep->isSpace())
 					m_total_space_width += sep_width;
 			}
-			last_sep = std::nullopt;
+
+			m_last_sep = std::nullopt;
 		}
 
 		void add(Separator sep)
 		{
 			m_num_parts++;
-			last_sep = std::move(sep);
+			m_last_sep = std::move(sep);
 		}
 
 	private:

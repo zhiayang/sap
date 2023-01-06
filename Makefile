@@ -45,6 +45,7 @@ MINIZ_OBJS      = $(MINIZ_SRCS:%.c=$(OUTPUT_DIR)/%.c.o)
 
 PRECOMP_HDR     := source/include/precompile.h
 PRECOMP_GCH     := $(PRECOMP_HDR:%.h=$(OUTPUT_DIR)/%.h.gch)
+PRECOMP_INCLUDE := $(PRECOMP_HDR:%.h=$(OUTPUT_DIR)/%.h)
 
 DEFINES         :=
 INCLUDES        := -Isource/include -Iexternal
@@ -114,7 +115,7 @@ $(TEST_DIR)/%: $(OUTPUT_DIR)/test/%.cpp.o $(CXXLIBOBJ) $(UTF8PROC_OBJS) $(MINIZ_
 $(OUTPUT_DIR)/%.cpp.o: %.cpp Makefile $(PRECOMP_GCH)
 	@echo "  $<"
 	@mkdir -p $(shell dirname $@)
-	@$(CXX) $(CXXFLAGS) $(WARNINGS) $(INCLUDES) $(DEFINES) -include $(PRECOMP_HDR) -MMD -MP -c -o $@ $<
+	@$(CXX) $(CXXFLAGS) $(WARNINGS) $(INCLUDES) $(DEFINES) -include $(PRECOMP_INCLUDE) -MMD -MP -c -o $@ $<
 
 $(OUTPUT_DIR)/%.c.o: %.c Makefile
 	@echo "  $<"
@@ -124,12 +125,14 @@ $(OUTPUT_DIR)/%.c.o: %.c Makefile
 $(PRECOMP_GCH): $(PRECOMP_HDR) Makefile
 	@printf "# precompiling header $<\n"
 	@mkdir -p $(shell dirname $@)
-	@$(CXX) $(CXXFLAGS) $(WARNINGS) $(INCLUDES) -MMD -MP -x c++-header -o $@ $<
+	@rm -f $@
+	@$(CXX) $(CXXFLAGS) $(WARNINGS) $(INCLUDES) -MMD -MP -x c++-header -o $@ $< &
+	@cp $< $(@:%.gch=%)
 
 $(OUTPUT_DIR)/%.h.gch: %.h $(PRECOMP_GCH) Makefile
 	@printf "# precompiling header $<\n"
 	@mkdir -p $(shell dirname $@)
-	@$(CXX) $(CXXFLAGS) $(WARNINGS) $(INCLUDES) -include $(PRECOMP_HDR) -MMD -MP -x c++-header -o $@ $<
+	@$(CXX) $(CXXFLAGS) $(WARNINGS) $(INCLUDES) -include $(PRECOMP_INCLUDE) -MMD -MP -x c++-header -o $@ $<
 
 clean:
 	-@rm -rf $(OUTPUT_DIR)

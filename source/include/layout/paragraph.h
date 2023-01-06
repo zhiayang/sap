@@ -29,8 +29,9 @@ namespace sap::layout
 	{
 		using LayoutObject::LayoutObject;
 
-		static std::pair<std::optional<const tree::Paragraph*>, Cursor> layout(interp::Interpreter* cs, RectPageLayout* layout,
-		    Cursor cursor, const Style* parent_style, const tree::Paragraph* treepara);
+		static Cursor layout(interp::Interpreter* cs, RectPageLayout* layout, Cursor cursor, const Style* parent_style,
+		    const tree::Paragraph* treepara);
+
 		virtual void render(const RectPageLayout* layout, std::vector<pdf::Page*>& pages) const override;
 
 	private:

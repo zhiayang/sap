@@ -126,13 +126,13 @@ namespace sap::layout
 
 		std::vector<pdf::Page*> render() const;
 
-		void addObject(LayoutObject* obj) { m_objects.push_back(obj); }
+		void addObject(std::unique_ptr<LayoutObject> obj) { m_objects.push_back(std::move(obj)); }
 
 	private:
 		Size2d m_size;
 		Length m_margin;
 		size_t m_num_pages = 1;
-		std::vector<LayoutObject*> m_objects {};
+		std::vector<std::unique_ptr<LayoutObject>> m_objects {};
 	};
 
 	// Theoretical fully generic layout idea?

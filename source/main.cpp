@@ -29,7 +29,10 @@ CLEANUP:
 	- rename layout() methods to print() or something
 	- さあぁぁぁぁ
 
-handle quotes
+- smart quotes
+- hyphenation inside quotes -- eg. "unfortunately" should turn into "unfor-tunately" or something
+- pre-hyphenated words, eg. omega-lul should not have any hyphens added
+- for pre-hyphenated words, add a BREAK_POINT separator at the hyphen so we can hyphenate at only that place
 
 #endif
 

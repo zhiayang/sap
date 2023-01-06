@@ -16,10 +16,10 @@ namespace sap::layout
 			// TODO: Pages should have the size determined by page size
 			ret.emplace_back(util::make<pdf::Page>());
 		}
-		for(auto obj : m_objects)
-		{
+
+		for(auto& obj : m_objects)
 			obj->render(this, ret);
-		}
+
 		return ret;
 	}
 }

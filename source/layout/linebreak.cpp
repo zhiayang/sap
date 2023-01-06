@@ -109,11 +109,11 @@ namespace sap::layout
 
 					cost += extra_space_size * extra_space_size;
 
-					if(sep->kind == tree::Separator::SPACE)
+					if(sep->isSpace())
 					{
 						// do nothing
 					}
-					else if(sep->kind == tree::Separator::HYPHENATION_POINT)
+					else if(sep->isHyphenationPoint())
 					{
 						auto avg_space_width = neighbour_line.totalSpaceWidth().mm() / tmp;
 
