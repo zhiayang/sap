@@ -25,7 +25,7 @@ namespace sap::layout
 			{
 				case decltype(kind)::SPACE:
 					m_end_of_line_char = 0;
-					m_middle_of_line_char = U' ';
+					m_middle_of_line_char = &s_space;
 					break;
 
 				case decltype(kind)::BREAK_POINT:
@@ -34,7 +34,7 @@ namespace sap::layout
 					break;
 
 				case decltype(kind)::HYPHENATION_POINT:
-					m_end_of_line_char = U'-';
+					m_end_of_line_char = &s_hyphen;
 					m_middle_of_line_char = 0;
 					break;
 			}
@@ -42,19 +42,22 @@ namespace sap::layout
 
 		zst::wstr_view endOfLine() const
 		{
-			return m_end_of_line_char == 0 ? zst::wstr_view() : zst::wstr_view(&m_end_of_line_char, 1);
+			return m_end_of_line_char == 0 ? zst::wstr_view() : zst::wstr_view(m_end_of_line_char, 1);
 		}
 
 		zst::wstr_view middleOfLine() const
 		{
-			return m_middle_of_line_char == 0 ? zst::wstr_view() : zst::wstr_view(&m_middle_of_line_char, 1);
+			return m_middle_of_line_char == 0 ? zst::wstr_view() : zst::wstr_view(m_middle_of_line_char, 1);
 		}
 
 		tree::Separator::SeparatorKind kind;
 
 	private:
-		char32_t m_end_of_line_char;
-		char32_t m_middle_of_line_char;
+		const char32_t* m_end_of_line_char;
+		const char32_t* m_middle_of_line_char;
+
+		constexpr static char32_t s_space = U' ';
+		constexpr static char32_t s_hyphen = U'-';
 	};
 
 	struct Word : Stylable

@@ -25,7 +25,6 @@
 
 namespace sap::layout
 {
-
 	static Size2d calculateWordSize(zst::wstr_view text, const Style* style)
 	{
 		return style->font()->getWordSize(text, style->font_size().into<pdf::PdfScalar>()).into<Size2d>();
@@ -70,30 +69,29 @@ namespace sap::layout
 				}
 				else if(auto sep = std::get_if<Separator>(&*it); sep)
 				{
-					if(sep->kind == tree::Separator::SPACE)
-					{
-						const auto& prev_word = std::get<Word>(*(it - 1));
-						const auto& next_word = std::get<Word>(*(it + 1));
-						ret.total_word_width += word_chunk_width;
-						word_chunk_width = 0;
-						word_chunk_style = nullptr;
-						word_chunk_text.clear();
-						word_chunk_it = it + 1;
+					const auto& prev_word = std::get<Word>(*(it - 1));
+					const auto& next_word = std::get<Word>(*(it + 1));
+					ret.total_word_width += word_chunk_width;
 
-						Length space_width = std::max( //
-						    calculateWordSize(sep->middleOfLine(), prev_word.style()).x(),
-						    calculateWordSize(sep->middleOfLine(), next_word.style()).x());
-						ret.total_space_width += space_width;
-						ret.word_widths.push_back(space_width);
-					}
+					word_chunk_width = 0;
+					word_chunk_style = nullptr;
+					word_chunk_text.clear();
+					word_chunk_it = it + 1;
+
+					auto sep_char = (it + 1 == words_end ? sep->endOfLine() : sep->middleOfLine());
+					auto sep_width = std::max(calculateWordSize(sep_char, prev_word.style()).x(),
+					    calculateWordSize(sep_char, next_word.style()).x());
+
+					if(sep->kind == tree::Separator::SPACE)
+						ret.total_space_width += sep_width;
 					else
-					{
-						sap::internal_error("support other seps {}", sep->kind);
-					}
+						ret.total_word_width += sep_width;
+
+					ret.word_widths.push_back(sep_width);
 				}
 			}
-			ret.total_word_width += word_chunk_width;
 
+			ret.total_word_width += word_chunk_width;
 			return ret;
 		}
 	};
@@ -131,7 +129,7 @@ namespace sap::layout
 			auto words_begin = words_and_seps.begin() + (ssize_t) current_idx;
 			auto words_end = words_and_seps.begin() + (ssize_t) current_idx + (ssize_t) line1.numParts();
 
-			if(!std::holds_alternative<Word>(*words_begin))
+			if(not std::holds_alternative<Word>(*words_begin))
 			{
 				sap::internal_error(
 				    "line starting with non-Word found, "
@@ -144,7 +142,7 @@ namespace sap::layout
 			if(auto sep = std::get_if<Separator>(&last_word); sep && sep->kind == tree::Separator::SPACE)
 				--words_end;
 
-			LineMetrics line_metrics = LineMetrics::computeLineMetrics(words_begin, words_end, parent_style);
+			auto line_metrics = LineMetrics::computeLineMetrics(words_begin, words_end, parent_style);
 
 			cursor = layout->newLineFrom(cursor, line_metrics.line_height);
 			auto desired_space_width = layout->getWidthAt(cursor) - line_metrics.total_word_width;
@@ -176,7 +174,7 @@ namespace sap::layout
 				auto sep_visitor = [&](const Separator& sep) {
 					auto end_of_space_cursor = layout->moveRightFrom(cursor, word_width);
 					para->m_words.push_back(PositionedWord {
-					    .word = Word(U" ", prev_word_style),
+					    .word = Word(i + 1 == num_words ? sep.endOfLine() : sep.middleOfLine(), prev_word_style),
 					    .font = prev_word_style->font(),
 					    .font_size = prev_word_style->font_size().into<pdf::PdfScalar>(),
 					    .start = cursor,

@@ -2,6 +2,8 @@
 // Copyright (c) 2022, zhiayang
 // SPDX-License-Identifier: Apache-2.0
 
+#include "misc/hyphenator.h"
+
 #include "interp/ast.h"         // for FunctionCall
 #include "interp/tree.h"        // for Text, Separator, Paragraph, ScriptCall
 #include "interp/value.h"       // for Value
@@ -58,7 +60,32 @@ namespace sap::tree
 
 	static void make_separators_for_word(std::vector<std::unique_ptr<InlineObject>>& vec, std::unique_ptr<Text> text)
 	{
-		vec.push_back(std::move(text));
+		static auto hyphenator = hyph::Hyphenator::parseFromFile("hyph-en-gb.tex");
+		auto& points = hyphenator.computeHyphenationPoints(text->contents());
+
+		auto word = std::move(text->contents());
+		auto span = zst::wstr_view(word);
+
+		// ignore hyphenations at the first index and last index, since
+		// those imply inserting a hyphen before the first character or after the last character
+		for(size_t i = 1, k = 0; i < points.size() - 1; i++)
+		{
+			// TODO: setup costs for separators
+			if(points[i] >= 3)
+			{
+				auto part = span.take_prefix(k);
+				vec.push_back(std::make_unique<Text>(part.str(), text->style()));
+				vec.push_back(std::make_unique<Separator>(Separator::HYPHENATION_POINT));
+				k = 0;
+			}
+			else
+			{
+				k++;
+			}
+		}
+
+		if(span.size() > 0)
+			vec.push_back(std::make_unique<Text>(span.str(), text->style()));
 	}
 
 

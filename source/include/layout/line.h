@@ -62,6 +62,7 @@ namespace sap::layout
 			if(last_sep)
 			{
 				last_word += last_sep->endOfLine().sv();
+
 				auto ret = line_width_excluding_last_word + calculateWordSize(last_word, last_word_style).x();
 				last_word.erase(last_word.size() - last_sep->endOfLine().size());
 				return ret;
@@ -86,23 +87,18 @@ namespace sap::layout
 
 			m_num_parts++;
 
-			if(last_sep)
+			if(last_sep.has_value())
 			{
-				if(last_sep->kind == tree::Separator::SPACE)
-				{
-					line_width_excluding_last_word += calculateWordSize(last_word, prev_word_style).x();
-					last_word.clear();
+				line_width_excluding_last_word += calculateWordSize(last_word, prev_word_style).x();
+				last_word.clear();
 
-					Length space_width = std::max( //
-					    calculateWordSize(last_sep->middleOfLine(), prev_word_style).x(),
-					    calculateWordSize(last_sep->middleOfLine(), word_style).x());
-					line_width_excluding_last_word += space_width;
+				auto sep_width = std::max(calculateWordSize(last_sep->middleOfLine(), prev_word_style).x(),
+				    calculateWordSize(last_sep->middleOfLine(), word_style).x());
+
+				line_width_excluding_last_word += sep_width;
+
+				if(last_sep->kind == tree::Separator::SPACE)
 					num_spaces++;
-				}
-				else
-				{
-					sap::internal_error("support other seps {}", last_sep->kind);
-				}
 
 				last_sep.reset();
 
@@ -126,11 +122,7 @@ namespace sap::layout
 		void add(Separator sep)
 		{
 			m_num_parts++;
-
-			if(sep.kind == tree::Separator::SPACE)
-				last_sep = sep;
-			else
-				sap::internal_error("support other seps {}", sep.kind);
+			last_sep = std::move(sep);
 		}
 
 	private:

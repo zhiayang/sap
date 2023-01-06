@@ -25,7 +25,6 @@ namespace sap::layout
 		Cursor end;
 	};
 
-	// for now we are not concerned with lines.
 	struct Paragraph : LayoutObject
 	{
 		using LayoutObject::LayoutObject;

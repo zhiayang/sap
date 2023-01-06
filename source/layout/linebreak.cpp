@@ -62,8 +62,9 @@ namespace sap::layout
 		std::vector<std::pair<LineBreakNode, Distance>> neighbours()
 		{
 			auto neighbour_broken_until = broken_until;
-			Line neighbour_line(layout, parent_style, line.lineCursor());
+			auto neighbour_line = Line(layout, parent_style, line.lineCursor());
 			std::vector<std::pair<LineBreakNode, Distance>> ret;
+
 			while(true)
 			{
 				if(neighbour_broken_until == end)
@@ -82,6 +83,7 @@ namespace sap::layout
 					    neighbour_line.add(w);
 				    },
 				    wordorsep);
+
 				// TODO: allow shrinking of spaces by allowing lines to go past the end of the preferred_line_length
 				// by 10% of the space width * num_spaces
 				if(neighbour_line.width() >= preferred_line_length)
@@ -93,22 +95,36 @@ namespace sap::layout
 					}
 					return ret;
 				}
-				if(std::holds_alternative<Separator>(wordorsep))
+
+				if(auto sep = std::get_if<Separator>(&wordorsep); sep)
 				{
 					Distance cost = 0;
-					// If there are no spaces we pretend there's half a space,
-					// so the cost is twice as high as having 1 space
-					double extra_space_size = (preferred_line_length - line.width()).mm()
-					                        / (neighbour_line.numSpaces() ? (double) neighbour_line.numSpaces() : 0.5);
-					cost += extra_space_size * extra_space_size;
-					// For now there's no other cost calculation haha
+
+					if(sep->kind == tree::Separator::SPACE)
+					{
+						// If there are no spaces we pretend there's half a space,
+						// so the cost is twice as high as having 1 space
+						double extra_space_size = (preferred_line_length - line.width()).mm()
+						                        / (neighbour_line.numSpaces() ? (double) neighbour_line.numSpaces() : 0.5);
+
+						cost += extra_space_size * extra_space_size;
+					}
+					else if(sep->kind == tree::Separator::HYPHENATION_POINT)
+					{
+						cost += 0;
+					}
+					else
+					{
+						sap::internal_error("handle other sep");
+					}
+
 					ret.emplace_back(this->make_neighbour(neighbour_broken_until, neighbour_line), cost);
 				}
 			}
 		}
 
 		size_t hash() const { return static_cast<size_t>(broken_until - words->begin()); }
-		bool operator==(LineBreakNode other) const { return broken_until == other.broken_until; }
+		bool operator==(const LineBreakNode& other) const { return broken_until == other.broken_until; }
 	};
 
 	std::vector<Line> breakLines(RectPageLayout* layout, Cursor cursor, const Style* parent_style, const WordVec& words,
@@ -127,6 +143,8 @@ namespace sap::layout
 		    LineBreakNode::make_end(words.end()));
 
 		std::vector<Line> ret;
+		ret.reserve(path.size());
+
 		for(auto& node : path)
 			ret.push_back(std::move(node.line));
 
