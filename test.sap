@@ -20,8 +20,11 @@
 	{
 		builtin::println("hello!");
 	}
-}
 
+	struct UWU { x: int; }
+
+	fn uwu(x: &UWU) { builtin::println("uwu"); }
+}
 
 ffi ffl ff hello aP. asdf no no no
 
@@ -30,8 +33,10 @@ this     is     a    aoeu bsdf, fill me up flour
 
 fi fl Bсички хора се раждат свободни и равни по \{ \}
 
-#:
 \script {
+	let u = std::UWU { .x = 10 };
+	u.uwu();
+
 	std::asdf();
 
 	var foo = 10;
@@ -139,10 +144,19 @@ fi fl Bсички хора се раждат свободни и равни по
 
 	builtin::print("f3 = ");
 	builtin::println(f3);
-}
-:#
 
-hello \std::style(builtin::Style { .font_size = 16 }) { world } asdf
+
+	fn foozle(n: int) -> int
+	{
+		if(n < 0)
+			return 69;
+		else
+			return 420;
+	}
+}
+
+
+hello \std::style(builtin::Style { .font_size = 5 }) { world } asdf
 
 
 My name is Yoshikage Kira. I'm\builtin::bold_italic1(1 < 2 < 5 > 7)years old. My house is in the northeast section of Morioh,

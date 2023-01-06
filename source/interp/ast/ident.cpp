@@ -40,12 +40,12 @@ namespace sap::interp
 	{
 		// this should have been set by typechecking!
 		assert(m_resolved_decl != nullptr);
-		assert(m_resolved_decl->resolved_defn);
+		assert(m_resolved_decl->definition());
 
 		auto* frame = &ev->frame();
 		while(true)
 		{
-			if(auto value = frame->valueOf(m_resolved_decl->resolved_defn); value != nullptr)
+			if(auto value = frame->valueOf(m_resolved_decl->definition()); value != nullptr)
 				return EvalResult::ofLValue(*value);
 
 			if(frame->parent())

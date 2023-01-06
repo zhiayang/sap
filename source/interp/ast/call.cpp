@@ -115,10 +115,14 @@ namespace sap::interp
 
 		const Type* fn_type = nullptr;
 
-		// if the lhs is an identifier, we resolve it manually to handle overloading.
+		// if the function expression is an identifier, we resolve it manually to handle overloading.
 		if(auto ident = dynamic_cast<const Ident*>(this->callee.get()); ident != nullptr)
 		{
-			auto decls = TRY(ts->current()->lookup(ident->name));
+			const DefnTree* lookup_in = ts->current();
+			if(this->rewritten_ufcs)
+				lookup_in = TRY(ts->getDefinitionForType(processed_args[0].value))->declaration->declaredTree();
+
+			auto decls = TRY(lookup_in->lookup(ident->name));
 			assert(decls.size() > 0);
 
 			const Declaration* best_decl = TRY(resolve_overload_set(ts, decls, processed_args));
@@ -218,7 +222,7 @@ namespace sap::interp
 				}
 			}
 
-			auto the_defn = m_resolved_func_decl->resolved_defn;
+			auto the_defn = m_resolved_func_decl->definition();
 
 			// check what kind of defn it is
 			if(auto builtin_defn = dynamic_cast<const BuiltinFunctionDefn*>(the_defn); builtin_defn != nullptr)

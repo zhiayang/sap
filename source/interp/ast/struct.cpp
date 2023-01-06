@@ -19,7 +19,7 @@ namespace sap::interp
 
 	ErrorOr<TCResult> StructDefn::typecheck_impl(Typechecker* ts, const Type* infer) const
 	{
-		this->declaration->resolved_defn = this;
+		this->declaration->resolve(this);
 		auto struct_type = TRY(this->declaration->typecheck(ts)).type()->toStruct();
 
 		std::unordered_set<std::string> seen_names;

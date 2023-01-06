@@ -139,6 +139,8 @@ namespace sap::interp
 		}
 
 		m_decls[name].push_back(new_decl);
+		const_cast<Declaration*>(new_decl)->declareAt(this);
+
 		return Ok();
 	}
 }

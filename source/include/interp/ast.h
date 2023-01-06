@@ -20,6 +20,7 @@
 namespace sap::interp
 {
 	struct Value;
+	struct DefnTree;
 	struct Evaluator;
 	struct Typechecker;
 
@@ -70,6 +71,10 @@ namespace sap::interp
 		virtual ErrorOr<TCResult> typecheck_impl(Typechecker* ts, const Type* infer = nullptr) const override;
 
 		QualifiedId name {};
+
+		void resolve(const Declaration* decl) { m_resolved_decl = decl; }
+
+	private:
 		mutable const Declaration* m_resolved_decl = nullptr;
 	};
 
@@ -253,6 +258,8 @@ namespace sap::interp
 		virtual ErrorOr<EvalResult> evaluate(Evaluator* ev) const override;
 		virtual ErrorOr<TCResult> typecheck_impl(Typechecker* ts, const Type* infer = nullptr) const override;
 
+		bool checkAllPathsReturn(const Type* return_type);
+
 		std::vector<std::unique_ptr<Stmt>> body;
 		std::optional<QualifiedId> target_scope;
 	};
@@ -290,12 +297,21 @@ namespace sap::interp
 		Declaration(const std::string& name) : name(name) { }
 
 		std::string name;
-		const Definition* resolved_defn = nullptr;
+
+		const Definition* definition() const { return m_resolved_defn; }
+		void resolve(const Definition* defn) { m_resolved_defn = defn; }
+
+		const DefnTree* declaredTree() const { return m_declared_tree; }
+		void declareAt(const DefnTree* tree) { m_declared_tree = tree; }
+
+	private:
+		const Definition* m_resolved_defn = nullptr;
+		const DefnTree* m_declared_tree = nullptr;
 	};
 
 	struct Definition : Stmt
 	{
-		Definition(Declaration* decl) : declaration(decl) { declaration->resolved_defn = this; }
+		Definition(Declaration* decl) : declaration(decl) { declaration->resolve(this); }
 
 		// the definition owns its declaration
 		std::unique_ptr<Declaration> declaration {};

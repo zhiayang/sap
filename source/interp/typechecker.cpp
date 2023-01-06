@@ -107,6 +107,17 @@ namespace sap::interp
 
 	ErrorOr<const Definition*> Typechecker::getDefinitionForType(const Type* type)
 	{
+		// first, reduce the type to its base.
+		while(true)
+		{
+			if(type->isPointer())
+				type = type->pointerElement();
+			else if(type->isOptional())
+				type = type->optionalElement();
+			else
+				break;
+		}
+
 		auto it = m_type_definitions.find(type);
 		if(it == m_type_definitions.end())
 			return ErrFmt("no definition for type '{}'", type);

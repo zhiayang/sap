@@ -32,7 +32,7 @@ namespace sap::interp
 
 	ErrorOr<TCResult> VariableDefn::typecheck_impl(Typechecker* ts, const Type* infer) const
 	{
-		this->declaration->resolved_defn = this;
+		this->declaration->resolve(this);
 
 		// if we have neither, it's an error
 		if(not this->explicit_type.has_value() && this->initialiser == nullptr)

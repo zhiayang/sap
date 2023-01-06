@@ -29,11 +29,6 @@ CLEANUP:
 	- rename layout() methods to print() or something
 	- さあぁぁぁぁ
 
-
-TODO:
-4. make UFCS look for the function in the declared scope of the self type
-5. not all paths return a value
-
 #endif
 
 int main(int argc, char** argv)

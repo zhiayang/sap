@@ -28,7 +28,7 @@ namespace sap::interp
 
 	ErrorOr<TCResult> FunctionDefn::typecheck_impl(Typechecker* ts, const Type* infer) const
 	{
-		this->declaration->resolved_defn = this;
+		this->declaration->resolve(this);
 		auto decl_type = TRY(this->declaration->typecheck(ts)).type();
 
 		// TODO: maybe a less weird mangling solution? idk
@@ -60,6 +60,12 @@ namespace sap::interp
 		auto __ = ts->enterFunctionWithReturnType(return_type);
 
 		TRY(this->body->typecheck(ts));
+
+		if(not return_type->isVoid())
+		{
+			if(not this->body->checkAllPathsReturn(return_type))
+				return ErrFmt("not all control paths return a value");
+		}
 
 		return TCResult::ofRValue(decl_type);
 	}

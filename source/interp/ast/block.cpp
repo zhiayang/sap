@@ -43,4 +43,23 @@ namespace sap::interp
 
 		return EvalResult::ofVoid();
 	}
+
+	bool Block::checkAllPathsReturn(const Type* return_type)
+	{
+		for(auto& stmt : this->body)
+		{
+			// if this returns, we're good already (since we're looking from the back)
+			if(auto ret = dynamic_cast<ReturnStmt*>(stmt.get()); ret != nullptr)
+			{
+				return true;
+			}
+			else if(auto if_stmt = dynamic_cast<IfStmt*>(stmt.get()); if_stmt != nullptr && if_stmt->else_body)
+			{
+				if(if_stmt->if_body->checkAllPathsReturn(return_type) && if_stmt->else_body->checkAllPathsReturn(return_type))
+					return true;
+			}
+		}
+
+		return false;
+	}
 }
