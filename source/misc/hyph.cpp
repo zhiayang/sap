@@ -144,12 +144,13 @@ namespace sap::hyph
 		if(auto it = m_hyphenation_cache.find(word); it != m_hyphenation_cache.end())
 			return it->second;
 
-		std::u32string lowercased;
-		lowercased.resize(word.size());
-		for(size_t i = 0; i < word.size(); i++)
-			lowercased[i] = (char32_t) utf8proc_tolower((int32_t) word[i]);
+		auto ret = std::vector<uint8_t>(word.size() + 1, (uint8_t) 0);
 
-		auto s = std::vector<uint8_t>(lowercased.size() + 1, (uint8_t) 0);
+		std::u32string lowercased;
+		lowercased.reserve(word.size());
+
+		for(size_t i = 0; i < word.size(); i++)
+			lowercased.push_back((char32_t) utf8proc_tolower((int32_t) word[i]));
 
 		for(size_t j = 1; j <= 16 && j < lowercased.size(); ++j)
 		{
@@ -160,7 +161,7 @@ namespace sap::hyph
 				for(size_t k = 0; k < points.size(); ++k)
 				{
 					if(points[k] != 0)
-						s[k] = std::max(s[k], points[k]);
+						ret[k] = std::max(ret[k], points[k]);
 				}
 			}
 		}
@@ -177,7 +178,7 @@ namespace sap::hyph
 					for(size_t k = 0; k < points.size(); ++k)
 					{
 						if(points[k] != 0)
-							s[i + k] = std::max(s[i + k], points[k]);
+							ret[i + k] = std::max(ret[i + k], points[k]);
 					}
 				}
 			}
@@ -194,12 +195,12 @@ namespace sap::hyph
 				for(size_t k = 0; k < points.size(); ++k)
 				{
 					if(points[k] != 0)
-						s[start_idx + k] = std::max(s[start_idx + k], points[k]);
+						ret[start_idx + k] = std::max(ret[start_idx + k], points[k]);
 				}
 			}
 		}
 
-		auto res = m_hyphenation_cache.emplace(std::move(lowercased), std::move(s));
+		auto res = m_hyphenation_cache.emplace(std::move(lowercased), std::move(ret));
 		return res.first->second;
 	}
 }

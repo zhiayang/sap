@@ -29,6 +29,8 @@ CLEANUP:
 	- rename layout() methods to print() or something
 	- さあぁぁぁぁ
 
+handle quotes
+
 #endif
 
 int main(int argc, char** argv)

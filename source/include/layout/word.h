@@ -50,6 +50,9 @@ namespace sap::layout
 			return m_middle_of_line_char == 0 ? zst::wstr_view() : zst::wstr_view(m_middle_of_line_char, 1);
 		}
 
+		bool isSpace() const { return this->kind == decltype(kind)::SPACE; }
+		bool isHyphen() const { return this->kind == decltype(kind)::HYPHENATION_POINT; }
+
 		tree::Separator::SeparatorKind kind;
 
 	private:

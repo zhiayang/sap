@@ -43,6 +43,8 @@ namespace sap::layout
 		std::optional<Separator> last_sep {};
 		std::u32string last_word {};
 
+		Length m_total_space_width {};
+
 		const Style* style = Style::empty();
 
 		size_t num_spaces = 0;
@@ -55,16 +57,22 @@ namespace sap::layout
 		}
 
 	public:
+		Length totalSpaceWidth() const { return m_total_space_width; }
+
 		// Getters
 		Length width()
 		{
 			auto last_word_style = parent_style->extendWith(style);
 			if(last_sep)
 			{
+				// auto word_copy = last_word;
+
 				last_word += last_sep->endOfLine().sv();
 
 				auto ret = line_width_excluding_last_word + calculateWordSize(last_word, last_word_style).x();
 				last_word.erase(last_word.size() - last_sep->endOfLine().size());
+
+				// assert(word_copy == last_word);
 				return ret;
 			}
 			else
@@ -87,20 +95,12 @@ namespace sap::layout
 
 			m_num_parts++;
 
-			if(last_sep.has_value())
+			if(last_sep.has_value() && last_sep->isSpace())
 			{
+				num_spaces++;
+
 				line_width_excluding_last_word += calculateWordSize(last_word, prev_word_style).x();
 				last_word.clear();
-
-				auto sep_width = std::max(calculateWordSize(last_sep->middleOfLine(), prev_word_style).x(),
-				    calculateWordSize(last_sep->middleOfLine(), word_style).x());
-
-				line_width_excluding_last_word += sep_width;
-
-				if(last_sep->kind == tree::Separator::SPACE)
-					num_spaces++;
-
-				last_sep.reset();
 
 				style = w.style();
 				last_word = w.text().sv();
@@ -109,14 +109,29 @@ namespace sap::layout
 			{
 				line_width_excluding_last_word += calculateWordSize(last_word, prev_word_style).x();
 				last_word.clear();
+
 				style = w.style();
 				last_word = w.text().sv();
 			}
 			else
 			{
+
+				// either there is no last separator, or the last separator was a hyphen
 				style = w.style();
 				last_word += w.text().sv();
 			}
+
+			if(last_sep.has_value())
+			{
+				auto sep_width = std::max(calculateWordSize(last_sep->middleOfLine(), prev_word_style).x(),
+				    calculateWordSize(last_sep->middleOfLine(), word_style).x());
+
+				line_width_excluding_last_word += sep_width;
+
+				if(last_sep->isSpace())
+					m_total_space_width += sep_width;
+			}
+			last_sep = std::nullopt;
 		}
 
 		void add(Separator sep)

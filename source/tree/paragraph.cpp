@@ -68,15 +68,15 @@ namespace sap::tree
 
 		// ignore hyphenations at the first index and last index, since
 		// those imply inserting a hyphen before the first character or after the last character
-		for(size_t i = 1, k = 0; i < points.size() - 1; i++)
+		for(size_t i = 1, k = 1; i < points.size() - 1; i++)
 		{
 			// TODO: setup costs for separators
-			if(points[i] >= 3)
+			if(points[i] == 3 || points[i] == 5)
 			{
 				auto part = span.take_prefix(k);
 				vec.push_back(std::make_unique<Text>(part.str(), text->style()));
 				vec.push_back(std::make_unique<Separator>(Separator::HYPHENATION_POINT));
-				k = 0;
+				k = 1;
 			}
 			else
 			{

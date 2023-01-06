@@ -99,19 +99,25 @@ namespace sap::layout
 				if(auto sep = std::get_if<Separator>(&wordorsep); sep)
 				{
 					Distance cost = 0;
+					// If there are no spaces we pretend there's half a space,
+					// so the cost is twice as high as having 1 space
+					auto tmp = (neighbour_line.numSpaces() ? (double) neighbour_line.numSpaces() : 0.5);
+
+
+					// note: this is "extra mm per space character"
+					double extra_space_size = (preferred_line_length - neighbour_line.width()).mm() / tmp;
+
+					cost += extra_space_size * extra_space_size;
 
 					if(sep->kind == tree::Separator::SPACE)
 					{
-						// If there are no spaces we pretend there's half a space,
-						// so the cost is twice as high as having 1 space
-						double extra_space_size = (preferred_line_length - line.width()).mm()
-						                        / (neighbour_line.numSpaces() ? (double) neighbour_line.numSpaces() : 0.5);
-
-						cost += extra_space_size * extra_space_size;
+						// do nothing
 					}
 					else if(sep->kind == tree::Separator::HYPHENATION_POINT)
 					{
-						cost += 0;
+						auto avg_space_width = neighbour_line.totalSpaceWidth().mm() / tmp;
+
+						cost += 0.001 * (avg_space_width * avg_space_width);
 					}
 					else
 					{
