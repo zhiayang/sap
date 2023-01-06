@@ -481,10 +481,12 @@ namespace font
 		return tables;
 	}
 
-	std::unique_ptr<FontFile> FontFile::from_offset_table(zst::byte_span file_bytes, size_t start_of_offset_table)
+	std::unique_ptr<FontFile> FontFile::from_offset_table(util::mmap_ptr<const uint8_t[]> file_buf, size_t file_size,
+	    size_t start_of_offset_table)
 	{
 		// this is perfectly fine, because we own the data referred to by 'buf'.
-		auto font = std::unique_ptr<FontFile>(new FontFile(file_bytes.data(), file_bytes.size()));
+		auto font = std::unique_ptr<FontFile>(new FontFile(std::move(file_buf), file_size));
+		auto file_bytes = font->bytes();
 
 		font->m_tables = get_table_offsets(file_bytes.drop(start_of_offset_table));
 
@@ -567,28 +569,30 @@ namespace font
 		return font;
 	}
 
-	std::optional<std::unique_ptr<FontFile>> FontFile::from_postscript_name_in_collection(zst::byte_span ttc_file,
-	    zst::str_view postscript_name)
+	std::optional<std::unique_ptr<FontFile>> FontFile::from_postscript_name_in_collection( //
+	    util::mmap_ptr<const uint8_t[]> file_buf, size_t file_size, zst::str_view postscript_name)
 	{
-		assert(memcmp(ttc_file.data(), "ttcf", 4) == 0);
+		assert(memcmp(file_buf.get(), "ttcf", 4) == 0);
+
+		auto file_span = zst::byte_span(file_buf.get(), file_size);
 
 		// copy the thing
-		auto file = ttc_file;
+		auto ttc_span = file_span;
 
 		// tag + major version + minor version
-		ttc_file.remove_prefix(4 + 2 + 2);
+		ttc_span.remove_prefix(4 + 2 + 2);
 
-		auto num_fonts = consume_u32(ttc_file);
+		auto num_fonts = consume_u32(ttc_span);
 		for(uint32_t i = 0; i < num_fonts; i++)
 		{
-			auto offset = consume_u32(ttc_file);
-			auto tables = get_table_offsets(file.drop(offset));
+			auto offset = consume_u32(ttc_span);
+			auto tables = get_table_offsets(file_span.drop(offset));
 
 			const auto& name_table = tables[Tag("name")];
-			auto font_names = ::font::parse_name_table(file, name_table);
+			auto font_names = ::font::parse_name_table(file_span, name_table);
 
 			if(font_names.postscript_name == postscript_name)
-				return FontFile::from_offset_table(file, offset);
+				return FontFile::from_offset_table(std::move(file_buf), file_size, offset);
 		}
 
 		return std::nullopt;
@@ -596,25 +600,30 @@ namespace font
 
 	std::optional<std::unique_ptr<FontFile>> FontFile::fromHandle(FontHandle handle)
 	{
-		auto [buf, len] = util::readEntireFile(handle.path);
-		if(len < 4)
+		auto [file, size] = util::readEntireFile(handle.path);
+		if(size < 4)
 			sap::internal_error("font file too short");
 
-		auto span = zst::byte_span(buf, len);
+		auto span = zst::byte_span(file.get(), size);
 
-		if(memcmp(buf, "OTTO", 4) == 0 || memcmp(buf, "true", 4) == 0 || memcmp(buf, "\x00\x01\x00\x00", 4) == 0)
-			return FontFile::from_offset_table(span, /* offset: */ 0);
-
-		else if(memcmp(buf, "ttcf", 4) == 0)
-			return FontFile::from_postscript_name_in_collection(span, handle.postscript_name);
-
+		if(memcmp(span.data(), "OTTO", 4) == 0 || memcmp(span.data(), "true", 4) == 0
+		    || memcmp(span.data(), "\x00\x01\x00\x00", 4) == 0)
+		{
+			return FontFile::from_offset_table(std::move(file), size, /* offset: */ 0);
+		}
+		else if(memcmp(span.data(), "ttcf", 4) == 0)
+		{
+			return FontFile::from_postscript_name_in_collection(std::move(file), size, handle.postscript_name);
+		}
 		else
-			sap::internal_error("unsupported font file; unknown header bytes '{}'", zst::str_view((char*) buf, 4));
+		{
+			sap::internal_error("unsupported font file; unknown header bytes '{}'", span.take(4).chars());
+		}
 
 		return std::nullopt;
 	}
 
-	FontFile::FontFile(const uint8_t* bytes, size_t size) : m_file_bytes(bytes), m_file_size(size)
+	FontFile::FontFile(util::mmap_ptr<const uint8_t[]> bytes, size_t size) : m_file_buf(std::move(bytes)), m_file_size(size)
 	{
 	}
 }

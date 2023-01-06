@@ -40,11 +40,11 @@ int main(int argc, char** argv)
 	}
 
 	auto filename = std::string(argv[1]);
-	auto [buf, size] = util::readEntireFile(filename);
+	auto [file_buf, file_size] = util::readEntireFile(filename);
 
 	auto interpreter = sap::interp::Interpreter();
 
-	auto document = sap::frontend::parse(filename, { (char*) buf, size });
+	auto document = sap::frontend::parse(filename, zst::str_view((char*) file_buf.get(), file_size));
 	auto layout_doc = sap::layout::Document();
 
 	auto font_family = [&]() {

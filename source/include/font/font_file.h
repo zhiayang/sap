@@ -77,7 +77,7 @@ namespace font
 
 		const std::map<Tag, Table>& sfntTables() const { return m_tables; }
 
-		zst::byte_span bytes() const { return zst::byte_span(m_file_bytes, m_file_size); }
+		zst::byte_span bytes() const { return zst::byte_span(m_file_buf.get(), m_file_size); }
 
 		bool hasCffOutlines() const { return m_outline_type == OUTLINES_CFF; }
 		bool hasTrueTypeOutlines() const { return m_outline_type == OUTLINES_TRUETYPE; }
@@ -93,7 +93,7 @@ namespace font
 		static std::optional<std::unique_ptr<FontFile>> fromHandle(FontHandle handle);
 
 	private:
-		FontFile(const uint8_t* bytes, size_t size);
+		FontFile(util::mmap_ptr<const uint8_t[]> bytes, size_t size);
 
 		friend struct FontSource;
 		virtual GlyphMetrics get_glyph_metrics_impl(GlyphId glyphId) const override;
@@ -123,9 +123,10 @@ namespace font
 		cff::CFFSubset createCFFSubset(zst::str_view subset_name);
 		truetype::TTSubset createTTSubset();
 
-		static std::unique_ptr<FontFile> from_offset_table(zst::byte_span file_bytes, size_t start_of_offset_table);
-		static std::optional<std::unique_ptr<FontFile>> from_postscript_name_in_collection(zst::byte_span ttc_file,
-		    zst::str_view postscript_name);
+		static std::unique_ptr<FontFile> from_offset_table(util::mmap_ptr<const uint8_t[]> bytes, //
+		    size_t size, size_t start_of_offset_table);
+		static std::optional<std::unique_ptr<FontFile>> from_postscript_name_in_collection(util::mmap_ptr<const uint8_t[]> bytes,
+		    size_t size, zst::str_view postscript_name);
 
 		FontNames m_names;
 
@@ -153,7 +154,7 @@ namespace font
 
 		int m_outline_type = 0;
 
-		const uint8_t* m_file_bytes = nullptr;
+		util::mmap_ptr<const uint8_t[]> m_file_buf;
 		size_t m_file_size = 0;
 	};
 

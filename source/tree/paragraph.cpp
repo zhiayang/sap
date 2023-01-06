@@ -55,6 +55,14 @@ namespace sap::tree
 		m_contents.swap(ret);
 	}
 
+
+	static void make_separators_for_word(std::vector<std::unique_ptr<InlineObject>>& vec, std::unique_ptr<Text> text)
+	{
+		vec.push_back(std::move(text));
+	}
+
+
+
 	void Paragraph::processWordSeparators()
 	{
 		std::vector<std::unique_ptr<InlineObject>> ret {};
@@ -77,7 +85,7 @@ namespace sap::tree
 					{
 						if(not current_text->contents().empty())
 						{
-							ret.push_back(std::move(current_text));
+							make_separators_for_word(ret, std::move(current_text));
 							ret.push_back(std::make_unique<Separator>(Separator::SPACE));
 
 							current_text = std::make_unique<Text>(U"");
