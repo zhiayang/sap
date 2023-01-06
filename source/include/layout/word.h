@@ -18,7 +18,9 @@ namespace sap::layout
 {
 	struct Separator : Stylable
 	{
-		Separator(tree::Separator::SeparatorKind kind, const Style* style) : m_kind(kind)
+		Separator(tree::Separator::SeparatorKind kind, const Style* style, int hyphenation_cost)
+		    : m_kind(kind)
+		    , m_hyphenation_cost(hyphenation_cost)
 		{
 			this->setStyle(style);
 			switch(m_kind)
@@ -54,10 +56,13 @@ namespace sap::layout
 		bool isHyphenationPoint() const { return m_kind == decltype(m_kind)::HYPHENATION_POINT; }
 		bool isExplicitBreakPoint() const { return m_kind == decltype(m_kind)::BREAK_POINT; }
 
+		int hyphenationCost() const { return m_hyphenation_cost; }
+
 	private:
 		const char32_t* m_end_of_line_char;
 		const char32_t* m_middle_of_line_char;
 		tree::Separator::SeparatorKind m_kind;
+		int m_hyphenation_cost;
 
 		constexpr static char32_t s_space = U' ';
 		constexpr static char32_t s_hyphen = U'-';

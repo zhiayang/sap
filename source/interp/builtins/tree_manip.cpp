@@ -84,7 +84,7 @@ namespace sap::interp::builtin
 
 		auto style = Style();
 		style.set_font_size(get_scalar("font_size"));
-		style.set_line_spacing(get_scalar("line_spacing"));
+		style.set_line_spacing(get_field<double>(args[0], "line_spacing"));
 
 		return do_apply_style(ev, args[1], &style);
 	}

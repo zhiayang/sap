@@ -34,7 +34,7 @@ namespace sap::layout
 		        .set_font_family(default_font_family)
 		        .set_font_style(sap::FontStyle::Regular)
 		        .set_font_size(pdf::PdfScalar(12.0).into<sap::Length>())
-		        .set_line_spacing(sap::Length(1.0))
+		        .set_line_spacing(1.0)
 		        .set_pre_paragraph_spacing(sap::Length(1.0))
 		        .set_post_paragraph_spacing(sap::Length(1.0));
 

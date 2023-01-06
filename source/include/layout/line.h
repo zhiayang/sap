@@ -87,9 +87,7 @@ namespace sap::layout
 			auto prev_word_style = m_parent_style->extendWith(m_style);
 			auto word_style = m_parent_style->extendWith(w.style());
 
-			m_line_height = std::max(m_line_height,
-			    calculateWordSize(m_last_word, word_style).y() * word_style->line_spacing().value());
-
+			m_line_height = std::max(m_line_height, calculateWordSize(m_last_word, word_style).y() * word_style->line_spacing());
 			m_num_parts++;
 
 			if(m_last_sep.has_value() && m_last_sep->isSpace())

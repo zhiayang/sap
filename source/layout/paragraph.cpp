@@ -25,7 +25,7 @@
 
 namespace sap::layout
 {
-	static Size2d calculateWordSize(zst::wstr_view text, const Style* style)
+	static Size2d calculate_word_size(zst::wstr_view text, const Style* style)
 	{
 		return style->font()->getWordSize(text, style->font_size().into<pdf::PdfScalar>()).into<Size2d>();
 	}
@@ -42,9 +42,14 @@ namespace sap::layout
 		{
 			LineMetrics ret;
 
-			sap::Length word_chunk_width;
-			const Style* word_chunk_style;
-			std::u32string word_chunk_text;
+			struct WordChunk
+			{
+				Length width = 0;
+				std::u32string text;
+				const Style* style = nullptr;
+			};
+
+			WordChunk word_chunk {};
 			auto word_chunk_it = words_begin;
 
 			for(auto it = words_begin; it != words_end; ++it)
@@ -52,35 +57,40 @@ namespace sap::layout
 				if(auto word = std::get_if<Word>(&*it); word)
 				{
 					auto style = parent_style->extendWith(word->style());
-					if(it != word_chunk_it && word_chunk_style != style)
+					if(it != word_chunk_it && word_chunk.style != style)
 					{
-						ret.total_word_width += word_chunk_width;
-						word_chunk_width = 0;
-						word_chunk_style = style;
-						word_chunk_text.clear();
+						ret.total_word_width += word_chunk.width;
+
+						word_chunk.width = 0;
+						word_chunk.style = style;
+						word_chunk.text.clear();
 						word_chunk_it = it;
 					}
-					word_chunk_text += word->text().sv();
-					auto chunk_size = calculateWordSize(word_chunk_text, style);
-					ret.word_widths.push_back(chunk_size.x() - word_chunk_width);
-					word_chunk_width = chunk_size.x();
 
-					ret.line_height = std::max(ret.line_height, chunk_size.y());
+					word_chunk.text += word->text().sv();
+
+					auto chunk_size = calculate_word_size(word_chunk.text, style);
+					ret.word_widths.push_back(chunk_size.x() - word_chunk.width);
+
+					word_chunk.width = chunk_size.x();
+
+					ret.line_height = std::max(ret.line_height, chunk_size.y() * style->line_spacing());
 				}
 				else if(auto sep = std::get_if<Separator>(&*it); sep)
 				{
 					const auto& prev_word = std::get<Word>(*(it - 1));
 					const auto& next_word = std::get<Word>(*(it + 1));
-					ret.total_word_width += word_chunk_width;
+					ret.total_word_width += word_chunk.width;
 
-					word_chunk_width = 0;
-					word_chunk_style = nullptr;
-					word_chunk_text.clear();
+					word_chunk.width = 0;
+					word_chunk.style = nullptr;
+					word_chunk.text.clear();
+
 					word_chunk_it = it + 1;
 
 					auto sep_char = (it + 1 == words_end ? sep->endOfLine() : sep->middleOfLine());
-					auto sep_width = std::max(calculateWordSize(sep_char, prev_word.style()).x(),
-					    calculateWordSize(sep_char, next_word.style()).x());
+					auto sep_width = std::max(calculate_word_size(sep_char, prev_word.style()).x(),
+					    calculate_word_size(sep_char, next_word.style()).x());
 
 					if(sep->isSpace())
 						ret.total_space_width += sep_width;
@@ -91,7 +101,7 @@ namespace sap::layout
 				}
 			}
 
-			ret.total_word_width += word_chunk_width;
+			ret.total_word_width += word_chunk.width;
 			return ret;
 		}
 	};
@@ -112,7 +122,7 @@ namespace sap::layout
 				words_and_seps.push_back(Word(word->contents(), style));
 
 			else if(auto sep = dynamic_cast<tree::Separator*>(wordorsep.get()); sep != nullptr)
-				words_and_seps.push_back(Separator(sep->kind(), sep->style()));
+				words_and_seps.push_back(Separator(sep->kind(), sep->style(), sep->hyphenationCost()));
 		}
 
 		auto para = std::make_unique<Paragraph>();

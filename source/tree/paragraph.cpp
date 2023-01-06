@@ -70,17 +70,19 @@ namespace sap::tree
 		// those imply inserting a hyphen before the first character or after the last character
 		for(size_t i = 1, k = 1; i < points.size() - 1; i++)
 		{
-			// TODO: setup costs for separators
-			if(points[i] == 3 || points[i] == 5)
+			if(points[i] % 2 == 0)
 			{
-				auto part = span.take_prefix(k);
-				vec.push_back(std::make_unique<Text>(part.str(), text->style()));
-				vec.push_back(std::make_unique<Separator>(Separator::HYPHENATION_POINT));
-				k = 1;
+				k++;
 			}
 			else
 			{
-				k++;
+				// hyphenation preference increases from 1 to 3 to 5, so 5 has the lowest cost
+				// and 1 has the highest cost.
+
+				auto part = span.take_prefix(k);
+				vec.push_back(std::make_unique<Text>(part.str(), text->style()));
+				vec.push_back(std::make_unique<Separator>(Separator::HYPHENATION_POINT, /* cost: */ 6 - points[i]));
+				k = 1;
 			}
 		}
 

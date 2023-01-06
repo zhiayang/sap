@@ -79,6 +79,7 @@ int main(int argc, char** argv)
 	main_style //
 	    .set_font_family(font_family)
 	    .set_font_style(sap::FontStyle::Regular)
+	    .set_line_spacing(1)
 	    .set_font_size(pdf::PdfScalar(12).into());
 
 	auto actual_style = layout_doc.style()->extendWith(&main_style);

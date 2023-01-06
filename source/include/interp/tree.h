@@ -55,12 +55,18 @@ namespace sap::tree
 			HYPHENATION_POINT,
 		};
 
-		explicit Separator(SeparatorKind kind) : m_kind(kind) { }
+		explicit Separator(SeparatorKind kind, int hyphenation_cost = 0) //
+		    : m_kind(kind)
+		    , m_hyphenation_cost(hyphenation_cost)
+		{
+		}
 
 		SeparatorKind kind() const { return m_kind; }
+		int hyphenationCost() const { return m_hyphenation_cost; }
 
 	private:
 		SeparatorKind m_kind;
+		int m_hyphenation_cost;
 	};
 
 	struct Paragraph : BlockObject

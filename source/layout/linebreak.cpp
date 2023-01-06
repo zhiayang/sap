@@ -101,23 +101,23 @@ namespace sap::layout
 					Distance cost = 0;
 					// If there are no spaces we pretend there's half a space,
 					// so the cost is twice as high as having 1 space
-					auto tmp = (neighbour_line.numSpaces() ? (double) neighbour_line.numSpaces() : 0.5);
-
 
 					// note: this is "extra mm per space character"
-					double extra_space_size = (preferred_line_length - neighbour_line.width()).mm() / tmp;
-
-					cost += extra_space_size * extra_space_size;
-
 					if(sep->isSpace())
 					{
-						// do nothing
+						auto tmp = std::max((double) neighbour_line.numSpaces(), 0.5);
+						double extra_space_size = (preferred_line_length - neighbour_line.width()).mm() / tmp;
+						cost += extra_space_size * extra_space_size;
 					}
 					else if(sep->isHyphenationPoint())
 					{
+						auto tmp = std::max((double) neighbour_line.numSpaces() - 1, 0.5);
 						auto avg_space_width = neighbour_line.totalSpaceWidth().mm() / tmp;
 
-						cost += 0.001 * (avg_space_width * avg_space_width);
+						cost += 0.7 * (1 + sep->hyphenationCost()) * (avg_space_width * avg_space_width);
+
+						double extra_space_size = (preferred_line_length - neighbour_line.width()).mm() / tmp;
+						cost += extra_space_size * extra_space_size;
 					}
 					else
 					{
