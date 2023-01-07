@@ -44,21 +44,21 @@ MINIZ_SRCS          := external/miniz/miniz.c
 MINIZ_OBJS          := $(MINIZ_SRCS:%.c=$(OUTPUT_DIR)/%.c.o)
 
 PRECOMP_HDR         := source/include/precompile.h
-PRECOMP_GCH         := $(PRECOMP_HDR:%.h=$(OUTPUT_DIR)/%.h.gch)
-PRECOMP_INCLUDE     := $(PRECOMP_HDR:%.h=$(OUTPUT_DIR)/%.h)
-PRECOMP_OBJ         := $(PRECOMP_HDR:%.h=$(OUTPUT_DIR)/%.h.gch.o)
-
-ifeq ("$(findstring clang,$(CXX))", "clang")
-	CLANG_PCH_FASTER    := -fpch-instantiate-templates -fpch-codegen
-	PCH_INCLUDE_FLAGS   := -include-pch $(PRECOMP_GCH)
-else
-	CLANG_PCH_FASTER    :=
-	PCH_INCLUDE_FLAGS   := -include $(PRECOMP_INCLUDE)
-endif
-
+OUTPUT_BIN          := $(OUTPUT_DIR)/sap
 
 DEFINES             :=
 INCLUDES            := -Isource/include -Iexternal
+
+
+ifeq ("$(findstring clang,$(CXX))", "clang")
+	CLANG_PCH_FASTER    := -fpch-instantiate-templates -fpch-codegen
+	PCH_INCLUDE_FLAGS   := -include-pch
+	PCH_OBJS            := $(CXXSRC:%.cpp=$(OUTPUT_DIR)/%.cpp.gch.o)
+else
+	CLANG_PCH_FASTER    :=
+	PCH_INCLUDE_FLAGS   := -include
+	PCH_OBJS            :=
+endif
 
 UNAME_IDENT := $(shell uname)
 ifeq ("$(UNAME_IDENT)", "Linux")
@@ -80,10 +80,13 @@ ifeq ($(USE_CORETEXT), 1)
 	LDFLAGS  += -framework Foundation -framework CoreText
 endif
 
-OUTPUT_BIN      := $(OUTPUT_DIR)/sap
+.SUFFIXES:
+.SECONDARY:
+.SECONDEXPANSION:
 
-.PHONY: all clean build test format iwyu %.pdf.gdb %.pdf.lldb
-.PRECIOUS: $(PRECOMP_GCH) $(OUTPUT_DIR)/%.cpp.o
+.PHONY: all clean build test format regenerate_pch_files iwyu %.pdf.gdb %.pdf.lldb
+.PRECIOUS: $(OUTPUT_DIR)/%.gch $(OUTPUT_DIR)/%.cpp.o
+
 .DEFAULT_GOAL = all
 
 all: build test
@@ -109,58 +112,64 @@ check: test
 		$$test; \
 	done
 
-$(OUTPUT_BIN): $(PRECOMP_OBJ) $(CXXOBJ) $(UTF8PROC_OBJS) $(MINIZ_OBJS)
-	@echo "  $(notdir $@)"
+$(OUTPUT_BIN): $(CXXOBJ) $(UTF8PROC_OBJS) $(MINIZ_OBJS)
+	@echo "    $(notdir $@)"
+	@mkdir -p $(shell dirname $@)
+	@$(CXX) $(CXXFLAGS) $(WARNINGS) $(DEFINES) $(LDFLAGS) -Iexternal -o $@ \
+		$^ $(shell python3 tools/get_pch_objs.py $(CXX) $(CXXOBJ:%.o=%))
+	@nice -n 15 python3 tools/regenerate_pch_in_background.py $(PCH_OBJS:%.gch.o=%.gch)
+
+$(TEST_DIR)/%: $(OUTPUT_DIR)/test/%.cpp.o $(CXXLIBOBJ) $(UTF8PROC_OBJS) $(MINIZ_OBJS) $(PCH_OBJS)
+	@echo "    $(notdir $@)"
 	@mkdir -p $(shell dirname $@)
 	@$(CXX) $(CXXFLAGS) $(WARNINGS) $(DEFINES) $(LDFLAGS) -Iexternal -o $@ $^
 
-$(TEST_DIR)/%: $(OUTPUT_DIR)/test/%.cpp.o $(CXXLIBOBJ) $(UTF8PROC_OBJS) $(MINIZ_OBJS) $(PRECOMP_OBJ)
-	@echo "  $(notdir $@)"
+$(OUTPUT_DIR)/%.cpp.o: %.cpp tools/include_pch
+	@echo "    $<"
 	@mkdir -p $(shell dirname $@)
-	@$(CXX) $(CXXFLAGS) $(WARNINGS) $(DEFINES) $(LDFLAGS) -Iexternal -o $@ $^
+	@$(CXX) $(shell tools/include_pch $(CXX) $(PRECOMP_HDR) $(OUTPUT_DIR)/$*.cpp)   \
+		$(CXXFLAGS) $(WARNINGS) $(INCLUDES) $(DEFINES) -c -o $@ $<
 
-$(OUTPUT_DIR)/%.cpp.o: %.cpp Makefile $(PRECOMP_GCH)
-	@echo "  $<"
+
+$(OUTPUT_DIR)/%.cpp.gch.o $(OUTPUT_DIR)/%.cpp.gch $(OUTPUT_DIR)/%.cpp.inc: %.cpp
 	@mkdir -p $(shell dirname $@)
-	@$(CXX) $(PCH_INCLUDE_FLAGS) $(CXXFLAGS) $(WARNINGS) $(INCLUDES) $(DEFINES) -MMD -MP -c -o $@ $<
+	@echo "$@"
+	@python3 tools/generate_pch.py $(OUTPUT_DIR)/$*.cpp                                     \
+		----make-deps   $(CXX) $(CXXFLAGS) -include $(PRECOMP_HDR) $(INCLUDES) $(DEFINES)   \
+						-MT $(OUTPUT_DIR)/$*.cpp.o -MT $(OUTPUT_DIR)/$*.cpp.gch -MM -E $<   \
+		----make-pch    $(CXX) $(CXXFLAGS) -include $(PRECOMP_HDR) $(INCLUDES)              \
+						-I. $(DEFINES) -x c++-header $(CLANG_PCH_FASTER)                    \
+						-o $(OUTPUT_DIR)/$*.cpp.gch.tmp                                     \
+						$(OUTPUT_DIR)/$*.cpp.inc                                            \
+		----make-pchobj $(CXX) $(CXXFLAGS) -c -o $(OUTPUT_DIR)/$*.cpp.gch.o.tmp             \
+						$(OUTPUT_DIR)/$*.cpp.gch
 
-$(OUTPUT_DIR)/%.c.o: %.c Makefile
-	@echo "  $<"
+
+$(OUTPUT_DIR)/%.c.o: %.c
+	@echo "    $<"
 	@mkdir -p $(shell dirname $@)
 	@$(CC) $(CFLAGS) -MMD -MP -c -o $@ $<
 
-$(PRECOMP_GCH): $(PRECOMP_HDR) Makefile
-	@printf "# precompiling header $<\n"
-	@mkdir -p $(shell dirname $@)
-	@$(CXX) $(CXXFLAGS) $(WARNINGS) $(INCLUDES) $(CLANG_PCH_FASTER) -MMD -MP -x c++-header -o $@ $<
-	@cp $< $(@:%.gch=%)
 
-$(PRECOMP_OBJ): $(PRECOMP_GCH) Makefile
-	@printf "# compiling pch\n"
-	@mkdir -p $(shell dirname $@)
-	@$(CXX) $(CXXFLAGS) $(WARNINGS) -c -o $@ $<
-
-$(OUTPUT_DIR)/%.h.gch: %.h $(PRECOMP_GCH) Makefile
-	@printf "# precompiling header $<\n"
-	@mkdir -p $(shell dirname $@)
-	@$(CXX) $(CXXFLAGS) $(WARNINGS) $(INCLUDES) -include $(PRECOMP_INCLUDE) -MMD -MP -x c++-header -o $@ $<
+tools/%: tools/%.cpp
+	@echo "  # tool: $@"
+	@$(CXX) $(WARNINGS) -std=c++20 -O3 -march=native -o $@ $<
 
 clean:
-	-@rm -r $(OUTPUT_DIR)
+	-@rm -r $(OUTPUT_DIR) 2> /dev/null
 
 format:
-	find source -iname '*.cpp' -or -iname '*.h' | xargs -I{} -- ./sort_includes.py -i {}
+	find source -iname '*.cpp' -or -iname '*.h' | xargs -I{} -- ./tools/sort_includes.py -i {}
 	clang-format -i $(shell find source -iname "*.cpp" -or -iname "*.h")
 
 iwyu:
 	iwyu-tool -j 8 -p . source -- -Xiwyu --update_comments -Xiwyu --no_fwd_decls -Xiwyu --prefix_header_includes=keep | iwyu-fix-includes --comments --update_comments
-	find source -iname '*.cpp' -or -iname '*.h' | xargs -I{} -- ./sort_includes.py -i {}
+	find source -iname '*.cpp' -or -iname '*.h' | xargs -I{} -- ./tools/sort_includes.py -i {}
 	clang-format -i $(shell find source -iname "*.cpp" -or -iname "*.h")
 
+-include $(CDEPS)
 -include $(CXXDEPS)
 -include $(TESTDEPS)
--include $(CDEPS)
--include $(PRECOMP_GCH:%.gch=%.d)
 
 
 
