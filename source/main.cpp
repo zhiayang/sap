@@ -23,16 +23,12 @@
 #if 0
 CLEANUP:
 
-- make magic-into() for units use a Converter<> struct instead
 - maybe wrapper around (const Style*)
 - maybe s/layout/print/ or something
 	- rename layout() methods to print() or something
 	- さあぁぁぁぁ
 
 - smart quotes
-- hyphenation inside quotes -- eg. "unfortunately" should turn into "unfor-tunately" or something
-- pre-hyphenated words, eg. omega-lul should not have any hyphens added
-- for pre-hyphenated words, add a BREAK_POINT separator at the hyphen so we can hyphenate at only that place
 
 #endif
 

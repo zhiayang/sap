@@ -12,6 +12,7 @@ namespace dim
 	{
 		struct millimetre; // common units are integrated into Scalar
 	}
+
 	/*
 	    Both `Scalar` and `Vector` operate on the same principle. The first template parameter
 	    is simply a tag, so that we do not (and cannot) confuse / interoperate values using
@@ -23,8 +24,7 @@ namespace dim
 
 	    This allows (explicit) conversions between different measurement systems.
 	*/
-
-	template <typename, typename = double, bool = false>
+	template <typename, typename = double>
 	struct Scalar;
 
 	template <typename, typename _CoordSystem, typename = double>
@@ -71,36 +71,35 @@ namespace dim
 		struct can_convert_coord_systems<_U, _U> : std::true_type
 		{
 		};
+
+		template <typename _System, typename _Type>
+		struct ScalarConverter
+		{
+			using value_type = _Type;
+			using unit_system = _System;
+
+			_Type value;
+		};
 	}
 
-	template <typename _System, typename _Type, bool _Converting>
+	template <typename _System, typename _Type>
 	struct Scalar
 	{
 		using value_type = _Type;
 		using unit_system = _System;
-		using self_type = Scalar<_System, _Type, _Converting>;
+		using self_type = Scalar<_System, _Type>;
 		using unit_tag_type = typename _System::Tag;
 
 		static constexpr auto scale_factor = _System::scale_factor;
 		static_assert(scale_factor != 0);
 
-		constexpr Scalar() requires(not _Converting) : _x(0) { }
-		constexpr explicit Scalar(value_type x) requires(not _Converting) : _x(x) { }
+		constexpr Scalar() : _x(0) { }
+		constexpr explicit Scalar(value_type x) : _x(x) { }
 
 		constexpr Scalar(self_type&&) = default;
 		constexpr Scalar(const self_type&) = default;
 		constexpr self_type& operator=(self_type&&) = default;
 		constexpr self_type& operator=(const self_type&) = default;
-
-		template <typename OtherSystem, typename OtherType>
-		constexpr Scalar(Scalar<OtherSystem, OtherType, true> other) : Scalar(other.template into<self_type>())
-		{
-		}
-		template <typename OtherSystem, typename OtherType>
-		constexpr self_type& operator=(Scalar<OtherSystem, OtherType, true> other)
-		{
-			*this = Scalar(other.template into<self_type>());
-		}
 
 		constexpr Scalar(std::nullptr_t) : _x(0) { }
 		constexpr Scalar& operator=(std::nullptr_t)
@@ -108,7 +107,6 @@ namespace dim
 			_x = 0;
 			return *this;
 		}
-
 
 		constexpr bool iszero() const { return this->_x == 0; }
 		constexpr bool nonzero() const { return this->_x != 0; }
@@ -160,18 +158,21 @@ namespace dim
 			return Ret((this->_x * scale_factor) / _Scalar::unit_system::scale_factor);
 		}
 
-		constexpr auto into() const { return Scalar<_System, _Type, true>(_x); }
-
-	private:
-		// only allowed for into() to call
-		constexpr explicit Scalar(value_type x) requires(_Converting) : _x(x) { }
-		friend Scalar<_System, _Type, not _Converting>;
-
-	public:
 		template <typename _Target>
 		constexpr Scalar<_Target> into() const requires(impl::can_convert_units<unit_tag_type, typename _Target::Tag>::value)
 		{
 			return Scalar<_Target>((this->_x * scale_factor) / _Target::scale_factor);
+		}
+
+
+		// converting stuff
+		constexpr auto into() const { return impl::ScalarConverter<_System, _Type> { _x }; }
+
+		template <typename _FromSys, typename _FromType>
+		constexpr Scalar(impl::ScalarConverter<_FromSys, _FromType> conv)
+		    requires(impl::can_convert_units<typename _FromSys::Tag, unit_tag_type>::value)
+		{
+			this->_x = (conv.value * _FromSys::scale_factor) / scale_factor;
 		}
 
 		value_type _x;
