@@ -212,9 +212,9 @@ namespace zst
 			template <size_t N>
 			constexpr str_view(const value_type (&s)[N]) : ptr(s), len(N - 1) { }
 
-			template <typename T, typename = typename std::enable_if_t<
+			template <typename T, typename = std::enable_if_t<
 				std::is_same_v<char, value_type> &&
-				std::is_same_v<const char*, T>
+				(std::is_same_v<char*, T> || std::is_same_v<const char*, T>)
 			>>
 			constexpr str_view(T s) : ptr(s), len(strlen(s)) { }
 
@@ -392,14 +392,19 @@ namespace zst
 			}
 
 		#if ZST_USE_STD
-			str_view(const std::basic_string<value_type>& str) : ptr(str.data()), len(str.size()) { }
-			str_view(const std::basic_string_view<value_type>& sv) : ptr(sv.data()), len(sv.size()) { }
+			template <typename T = value_type, std::enable_if_t<std::is_trivial_v<T> && std::is_same_v<T, value_type>, int> = 0>
+			str_view(const std::basic_string<value_type>& s) : ptr(s.data()), len(s.size()) { }
 
+			template <typename T = value_type, std::enable_if_t<std::is_trivial_v<T> && std::is_same_v<T, value_type>, int> = 0>
+			str_view(std::basic_string_view<value_type> sv) : ptr(sv.data()), len(sv.size()) { }
+
+			template <typename T = value_type, std::enable_if_t<std::is_trivial_v<T> && std::is_same_v<T, value_type>, int> = 0>
 			inline std::basic_string_view<value_type> sv() const
 			{
 				return std::basic_string_view<value_type>(this->data(), this->size());
 			}
 
+			template <typename T = value_type, std::enable_if_t<std::is_trivial_v<T> && std::is_same_v<T, value_type>, int> = 0>
 			inline std::basic_string<value_type> str() const
 			{
 				return std::basic_string<value_type>(this->data(), this->size());

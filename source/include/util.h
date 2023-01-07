@@ -271,9 +271,9 @@ namespace unicode
 	char32_t consumeCodepointFromUtf8(zst::byte_span& utf8);
 
 	std::u32string u32StringFromUtf8(zst::byte_span sv);
-	std::u32string u32StringFromUtf8(zst::str_view sv);
+	std::u32string u32StringFromUtf8(std::string_view sv);
 
-	std::string stringFromU32String(zst::wstr_view sv);
+	std::string stringFromU32String(std::u32string_view sv);
 
 	// high-order surrogate first.
 	std::pair<uint16_t, uint16_t> codepointToSurrogatePair(char32_t codepoint);
@@ -298,7 +298,7 @@ namespace zpr
 		template <typename Cb>
 		void print(zst::wstr_view x, Cb&& cb, format_args args)
 		{
-			detail::print(static_cast<Cb&&>(cb), "{}", unicode::stringFromU32String(x));
+			detail::print(static_cast<Cb&&>(cb), "{}", unicode::stringFromU32String(x.sv()));
 		}
 	};
 }

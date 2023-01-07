@@ -109,12 +109,12 @@ namespace unicode
 		return str;
 	}
 
-	std::u32string u32StringFromUtf8(zst::str_view sv)
+	std::u32string u32StringFromUtf8(std::string_view sv)
 	{
-		return u32StringFromUtf8(sv.bytes());
+		return u32StringFromUtf8(zst::byte_span((uint8_t*) sv.data(), sv.size()));
 	}
 
-	std::string stringFromU32String(zst::wstr_view sv)
+	std::string stringFromU32String(std::u32string_view sv)
 	{
 		std::string s;
 		for(auto c : sv)

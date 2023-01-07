@@ -6,12 +6,6 @@
 
 #include "pdf/builtin_font.h"
 
-template <typename V, typename... T>
-constexpr auto array_of(T&&... t) -> std::array<V, sizeof...(T)>
-{
-	return { { static_cast<V>(std::forward<T>(t))... } };
-}
-
 #include "./builtin_afms/times_roman.h"
 #include "./builtin_afms/times_bold.h"
 #include "./builtin_afms/times_italic.h"
@@ -33,9 +27,9 @@ constexpr auto array_of(T&&... t) -> std::array<V, sizeof...(T)>
 namespace pdf
 {
 	template <size_t N>
-	constexpr static std::pair<const uint8_t*, size_t> split_array(const std::array<uint8_t, N>& arr)
+	constexpr static std::pair<const uint8_t*, size_t> split_array(const uint8_t (&arr)[N])
 	{
-		return { arr.data(), arr.size() };
+		return { &arr[0], sizeof(arr) - 1 };
 	}
 
 	std::pair<const uint8_t*, size_t> get_compressed_afm(BuiltinFont::Core14 font)
