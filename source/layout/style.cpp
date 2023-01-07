@@ -36,8 +36,7 @@ namespace sap
 		    .set_font_style(flat_value_or(main->m_font_style, m_font_style))
 		    .set_font_size(flat_value_or(main->m_font_size, m_font_size))
 		    .set_line_spacing(flat_value_or(main->m_line_spacing, m_line_spacing))
-		    .set_pre_paragraph_spacing(flat_value_or(main->m_pre_para_spacing, m_pre_para_spacing))
-		    .set_post_paragraph_spacing(flat_value_or(main->m_post_para_spacing, m_post_para_spacing));
+		    .set_paragraph_spacing(flat_value_or(main->m_paragraph_spacing, m_paragraph_spacing));
 
 		if(style == *main)
 		{

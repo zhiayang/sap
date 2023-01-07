@@ -9,46 +9,61 @@ WARNINGS += -Wno-error=unused-variable
 WARNINGS += -Wno-error=unused-function
 WARNINGS += -Wno-unused-but-set-variable
 
-COMMON_CFLAGS   = -O0 -g -fsanitize=address
+COMMON_CFLAGS       = -O0 -g -fsanitize=address
 
-OUTPUT_DIR      := build
-TEST_DIR        := $(OUTPUT_DIR)/test
+OUTPUT_DIR          := build
+TEST_DIR            := $(OUTPUT_DIR)/test
 
-CC              := clang
-CXX             := clang++
+CC                  := clang
+CXX                 := clang++
 
-CFLAGS          = $(COMMON_CFLAGS) -std=c99 -fPIC -O3
-CXXFLAGS        = $(COMMON_CFLAGS) -Wno-old-style-cast -std=c++20 -fno-exceptions
+CFLAGS              = $(COMMON_CFLAGS) -std=c99 -fPIC -O3
+CXXFLAGS            = $(COMMON_CFLAGS) -Wno-old-style-cast -std=c++20 -fno-exceptions
 
-CXXSRC          := $(shell find source -iname "*.cpp" -print)
-CXXOBJ          := $(CXXSRC:%.cpp=$(OUTPUT_DIR)/%.cpp.o)
-CXXLIBOBJ       := $(filter-out $(OUTPUT_DIR)/source/main.cpp.o,$(CXXOBJ))
-CXXDEPS         := $(CXXOBJ:.o=.d)
+CXXSRC              := $(shell find source -iname "*.cpp" -print)
+CXXOBJ              := $(CXXSRC:%.cpp=$(OUTPUT_DIR)/%.cpp.o)
+CXXLIBOBJ           := $(filter-out $(OUTPUT_DIR)/source/main.cpp.o,$(CXXOBJ))
+CXXDEPS             := $(CXXOBJ:.o=.d)
 
-CXXHDRS         := $(shell find source -iname "*.h" -print)
-CXXGCHS         := $(CXXHDRS:%.h=$(OUTPUT_DIR)/%.h.gch)
-CXXGCHS         := $(filter-out $(OUTPUT_DIR)/source/include/defs.h.gch,$(CXXGCHS))
-CXXGCHS         := $(filter-out $(OUTPUT_DIR)/source/include/pool.h.gch,$(CXXGCHS))
-CXXGCHS         := $(filter-out $(OUTPUT_DIR)/source/include/units.h.gch,$(CXXGCHS))
-CXXGCHS         := $(filter-out $(OUTPUT_DIR)/source/include/error.h.gch,$(CXXGCHS))
+CXXHDRS             := $(shell find source -iname "*.h" -print)
+CXXGCHS             := $(CXXHDRS:%.h=$(OUTPUT_DIR)/%.h.gch)
+CXXGCHS             := $(filter-out $(OUTPUT_DIR)/source/include/defs.h.gch,$(CXXGCHS))
+CXXGCHS             := $(filter-out $(OUTPUT_DIR)/source/include/pool.h.gch,$(CXXGCHS))
+CXXGCHS             := $(filter-out $(OUTPUT_DIR)/source/include/units.h.gch,$(CXXGCHS))
+CXXGCHS             := $(filter-out $(OUTPUT_DIR)/source/include/error.h.gch,$(CXXGCHS))
 
-TESTSRC          = $(shell find test -iname "*.cpp" -print)
-TESTOBJ          = $(TESTSRC:%.cpp=$(OUTPUT_DIR)/%.cpp.o)
-TESTDEPS         = $(TESTOBJ:.o=.d)
-TESTS            = $(TESTSRC:test/%.cpp=$(TEST_DIR)/%)
+TESTSRC             = $(shell find test -iname "*.cpp" -print)
+TESTOBJ             = $(TESTSRC:%.cpp=$(OUTPUT_DIR)/%.cpp.o)
+TESTDEPS            = $(TESTOBJ:.o=.d)
+TESTS               = $(TESTSRC:test/%.cpp=$(TEST_DIR)/%)
 
-UTF8PROC_SRCS   = external/utf8proc/utf8proc.c
-UTF8PROC_OBJS   = $(UTF8PROC_SRCS:%.c=$(OUTPUT_DIR)/%.c.o)
+UTF8PROC_SRCS       := external/utf8proc/utf8proc.c
+UTF8PROC_OBJS       := $(UTF8PROC_SRCS:%.c=$(OUTPUT_DIR)/%.c.o)
 
-MINIZ_SRCS      = external/miniz/miniz.c
-MINIZ_OBJS      = $(MINIZ_SRCS:%.c=$(OUTPUT_DIR)/%.c.o)
+MINIZ_SRCS          := external/miniz/miniz.c
+MINIZ_OBJS          := $(MINIZ_SRCS:%.c=$(OUTPUT_DIR)/%.c.o)
 
-PRECOMP_HDR     := source/include/precompile.h
-PRECOMP_GCH     := $(PRECOMP_HDR:%.h=$(OUTPUT_DIR)/%.h.gch)
-PRECOMP_INCLUDE := $(PRECOMP_HDR:%.h=$(OUTPUT_DIR)/%.h)
+PRECOMP_HDR         := source/include/precompile.h
+PRECOMP_GCH         := $(PRECOMP_HDR:%.h=$(OUTPUT_DIR)/%.h.gch)
+PRECOMP_INCLUDE     := $(PRECOMP_HDR:%.h=$(OUTPUT_DIR)/%.h)
+PRECOMP_OBJ         := $(PRECOMP_HDR:%.h=$(OUTPUT_DIR)/%.h.gch.o)
 
-DEFINES         :=
-INCLUDES        := -Isource/include -Iexternal
+ifeq ("$(findstring clang,$(CXX))", "clang")
+	CLANG_PCH_FASTER    := -fpch-instantiate-templates -fpch-codegen
+	PCH_INCLUDE_FLAGS   := -include-pch $(PRECOMP_GCH)
+else
+	CLANG_PCH_FASTER    :=
+	PCH_INCLUDE_FLAGS   := -include $(PRECOMP_INCLUDE)
+endif
+
+MOLD_PATH := $(shell which mold)
+ifneq ("$(MOLD_PATH)", "")
+	LDFLAGS += -fuse-ld=mold
+endif
+
+
+DEFINES             :=
+INCLUDES            := -Isource/include -Iexternal
 
 UNAME_IDENT := $(shell uname)
 ifeq ("$(UNAME_IDENT)", "Linux")
@@ -69,9 +84,6 @@ ifeq ($(USE_CORETEXT), 1)
 	DEFINES  += -DUSE_CORETEXT=1
 	LDFLAGS  += -framework Foundation -framework CoreText
 endif
-
-
-
 
 OUTPUT_BIN      := $(OUTPUT_DIR)/sap
 
@@ -102,7 +114,7 @@ check: test
 		$$test; \
 	done
 
-$(OUTPUT_BIN): $(CXXOBJ) $(UTF8PROC_OBJS) $(MINIZ_OBJS)
+$(OUTPUT_BIN): $(PRECOMP_OBJ) $(CXXOBJ) $(UTF8PROC_OBJS) $(MINIZ_OBJS)
 	@echo "  $(notdir $@)"
 	@mkdir -p $(shell dirname $@)
 	@$(CXX) $(CXXFLAGS) $(WARNINGS) $(DEFINES) $(LDFLAGS) -Iexternal -o $@ $^
@@ -115,7 +127,7 @@ $(TEST_DIR)/%: $(OUTPUT_DIR)/test/%.cpp.o $(CXXLIBOBJ) $(UTF8PROC_OBJS) $(MINIZ_
 $(OUTPUT_DIR)/%.cpp.o: %.cpp Makefile $(PRECOMP_GCH)
 	@echo "  $<"
 	@mkdir -p $(shell dirname $@)
-	@$(CXX) $(CXXFLAGS) $(WARNINGS) $(INCLUDES) $(DEFINES) -include $(PRECOMP_INCLUDE) -MMD -MP -c -o $@ $<
+	@$(CXX) $(PCH_INCLUDE_FLAGS) $(CXXFLAGS) $(WARNINGS) $(INCLUDES) $(DEFINES) -MMD -MP -c -o $@ $<
 
 $(OUTPUT_DIR)/%.c.o: %.c Makefile
 	@echo "  $<"
@@ -125,9 +137,13 @@ $(OUTPUT_DIR)/%.c.o: %.c Makefile
 $(PRECOMP_GCH): $(PRECOMP_HDR) Makefile
 	@printf "# precompiling header $<\n"
 	@mkdir -p $(shell dirname $@)
-	@rm -f $@
-	@$(CXX) $(CXXFLAGS) $(WARNINGS) $(INCLUDES) -MMD -MP -x c++-header -o $@ $< &
+	@$(CXX) $(CXXFLAGS) $(WARNINGS) $(INCLUDES) $(CLANG_PCH_FASTER) -MMD -MP -x c++-header -o $@ $<
 	@cp $< $(@:%.gch=%)
+
+$(PRECOMP_OBJ): $(PRECOMP_GCH) Makefile
+	@printf "# compiling pch\n"
+	@mkdir -p $(shell dirname $@)
+	@$(CXX) $(CXXFLAGS) $(WARNINGS) -c -o $@ $<
 
 $(OUTPUT_DIR)/%.h.gch: %.h $(PRECOMP_GCH) Makefile
 	@printf "# precompiling header $<\n"
@@ -135,7 +151,7 @@ $(OUTPUT_DIR)/%.h.gch: %.h $(PRECOMP_GCH) Makefile
 	@$(CXX) $(CXXFLAGS) $(WARNINGS) $(INCLUDES) -include $(PRECOMP_INCLUDE) -MMD -MP -x c++-header -o $@ $<
 
 clean:
-	-@rm -rf $(OUTPUT_DIR)
+	-@rm -r $(OUTPUT_DIR)
 
 format:
 	find source -iname '*.cpp' -or -iname '*.h' | xargs -I{} -- ./sort_includes.py -i {}

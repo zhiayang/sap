@@ -29,14 +29,13 @@ namespace sap::layout
 		    this->addFont(pdf::BuiltinFont::get(pdf::BuiltinFont::TimesBold)),   //
 		    this->addFont(pdf::BuiltinFont::get(pdf::BuiltinFont::TimesBoldItalic)));
 
-		static auto default_style =
+		static auto default_style = //
 		    sap::Style()
 		        .set_font_family(default_font_family)
 		        .set_font_style(sap::FontStyle::Regular)
 		        .set_font_size(pdf::PdfScalar(12.0).into<sap::Length>())
 		        .set_line_spacing(1.0)
-		        .set_pre_paragraph_spacing(sap::Length(1.0))
-		        .set_post_paragraph_spacing(sap::Length(1.0));
+		        .set_paragraph_spacing(sap::Length(1.0));
 
 		setStyle(&default_style);
 	}
