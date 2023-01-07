@@ -56,11 +56,6 @@ else
 	PCH_INCLUDE_FLAGS   := -include $(PRECOMP_INCLUDE)
 endif
 
-MOLD_PATH := $(shell which mold)
-ifneq ("$(MOLD_PATH)", "")
-	LDFLAGS += -fuse-ld=mold
-endif
-
 
 DEFINES             :=
 INCLUDES            := -Isource/include -Iexternal
@@ -119,7 +114,7 @@ $(OUTPUT_BIN): $(PRECOMP_OBJ) $(CXXOBJ) $(UTF8PROC_OBJS) $(MINIZ_OBJS)
 	@mkdir -p $(shell dirname $@)
 	@$(CXX) $(CXXFLAGS) $(WARNINGS) $(DEFINES) $(LDFLAGS) -Iexternal -o $@ $^
 
-$(TEST_DIR)/%: $(OUTPUT_DIR)/test/%.cpp.o $(CXXLIBOBJ) $(UTF8PROC_OBJS) $(MINIZ_OBJS)
+$(TEST_DIR)/%: $(OUTPUT_DIR)/test/%.cpp.o $(CXXLIBOBJ) $(UTF8PROC_OBJS) $(MINIZ_OBJS) $(PRECOMP_OBJ)
 	@echo "  $(notdir $@)"
 	@mkdir -p $(shell dirname $@)
 	@$(CXX) $(CXXFLAGS) $(WARNINGS) $(DEFINES) $(LDFLAGS) -Iexternal -o $@ $^

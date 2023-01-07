@@ -128,6 +128,12 @@ namespace zst
 	{
 		template <typename T> T min(T a, T b) { return a < b ? a : b;}
 	}
+
+	namespace impl
+	{
+		template <typename... Args>
+		[[noreturn]] void error_wrapper(const char* fmt, Args&&... args);
+	}
 }
 
 #if defined(__cpp_lib_endian)
@@ -358,8 +364,8 @@ namespace zst
 
 				if(other.ptr == nullptr)
 					other.ptr = this->ptr;
-				else
-					assert(other.ptr + other.len == this->ptr);
+				else if(other.ptr + other.len != this->ptr)
+					impl::error_wrapper("invalid use of transfer_prefix -- views are not contiguous");
 
 				n = detail::min(n, this->len);
 				other.len += n;
@@ -367,6 +373,23 @@ namespace zst
 				return this->remove_prefix(n);
 			}
 
+			inline str_view& transfer_suffix(str_view& other, size_t n)
+			{
+				if(&other == this)
+					return *this;
+
+				if(other.ptr == nullptr)
+					other.ptr = this->ptr + this->len;
+				else if (this->ptr + this->len != other.ptr)
+					impl::error_wrapper("invalid use of transfer_suffix -- views are not contiguous");
+
+				n = detail::min(n, this->len);
+
+				other.len += n;
+				other.ptr -= n;
+
+				return this->remove_suffix(n);
+			}
 
 		#if ZST_USE_STD
 			str_view(const std::basic_string<value_type>& str) : ptr(str.data()), len(str.size()) { }
@@ -632,12 +655,6 @@ namespace zst
 
 namespace zst
 {
-	namespace impl
-	{
-		template <typename... Args>
-		[[noreturn]] void error_wrapper(const char* fmt, Args&&... args);
-	}
-
 	template <typename, typename>
 	struct Result;
 
@@ -1140,6 +1157,7 @@ namespace zst::impl
 	1.4.3 - 03/01/2023
 	------------------
 	- add endianness support to str_view
+	- add transfer_suffix
 
 
 	1.4.2 - 26/09/2022

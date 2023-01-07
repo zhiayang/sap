@@ -2,8 +2,6 @@
 // Copyright (c) 2022, zhiayang
 // SPDX-License-Identifier: Apache-2.0
 
-#include <utf8proc/utf8proc.h>
-
 #include "misc/hyphenator.h"
 
 namespace sap::hyph
@@ -146,15 +144,9 @@ namespace sap::hyph
 
 		auto ret = std::vector<uint8_t>(word.size() + 1, (uint8_t) 0);
 
-		std::u32string lowercased;
-		lowercased.reserve(word.size());
-
-		for(size_t i = 0; i < word.size(); i++)
-			lowercased.push_back((char32_t) utf8proc_tolower((int32_t) word[i]));
-
-		for(size_t j = 1; j <= 16 && j < lowercased.size(); ++j)
+		for(size_t j = 1; j <= 16 && j < word.size(); ++j)
 		{
-			auto snip = util::ShortString<char32_t>(lowercased.data(), j);
+			auto snip = util::ShortString<char32_t>(word.data(), j);
 			if(auto hit = m_pats.m_front_pats.find(snip); hit != m_pats.m_front_pats.end())
 			{
 				const auto& points = hit->second;
@@ -166,11 +158,11 @@ namespace sap::hyph
 			}
 		}
 
-		for(size_t i = 0; i < lowercased.size() - 1; ++i)
+		for(size_t i = 0; i < word.size() - 1; ++i)
 		{
-			for(size_t j = 1; j <= 16 && i + j < lowercased.size(); ++j)
+			for(size_t j = 1; j <= 16 && i + j < word.size(); ++j)
 			{
-				auto snip = util::ShortString<char32_t>(lowercased.data() + i, j);
+				auto snip = util::ShortString<char32_t>(word.data() + i, j);
 
 				if(auto hit = m_pats.m_mid_pats.find(snip); hit != m_pats.m_mid_pats.end())
 				{
@@ -184,10 +176,10 @@ namespace sap::hyph
 			}
 		}
 
-		for(size_t j = 1; j <= 16 && j < lowercased.size(); ++j)
+		for(size_t j = 1; j <= 16 && j < word.size(); ++j)
 		{
-			auto start_idx = lowercased.size() - j;
-			auto snip = util::ShortString<char32_t>(lowercased.data() + start_idx, j);
+			auto start_idx = word.size() - j;
+			auto snip = util::ShortString<char32_t>(word.data() + start_idx, j);
 
 			if(auto hit = m_pats.m_back_pats.find(snip); hit != m_pats.m_back_pats.end())
 			{
@@ -200,7 +192,7 @@ namespace sap::hyph
 			}
 		}
 
-		auto res = m_hyphenation_cache.emplace(std::move(lowercased), std::move(ret));
+		auto res = m_hyphenation_cache.emplace(word.str(), std::move(ret));
 		return res.first->second;
 	}
 }

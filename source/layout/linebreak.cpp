@@ -109,7 +109,7 @@ namespace sap::layout
 						double extra_space_size = (preferred_line_length - neighbour_line.width()).mm() / tmp;
 						cost += extra_space_size * extra_space_size;
 					}
-					else if(sep->isHyphenationPoint())
+					else if(sep->isHyphenationPoint() || sep->isExplicitBreakPoint())
 					{
 						auto tmp = std::max((double) neighbour_line.numSpaces() - 1, 0.5);
 						auto avg_space_width = neighbour_line.totalSpaceWidth().mm() / tmp;

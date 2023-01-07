@@ -291,4 +291,14 @@ namespace zpr
 			detail::print_one(static_cast<Cb&&>(cb), std::move(args), std::move(s));
 		}
 	};
+
+	template <>
+	struct print_formatter<zst::wstr_view>
+	{
+		template <typename Cb>
+		void print(zst::wstr_view x, Cb&& cb, format_args args)
+		{
+			detail::print(static_cast<Cb&&>(cb), "{}", unicode::stringFromU32String(x));
+		}
+	};
 }

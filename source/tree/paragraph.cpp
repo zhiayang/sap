@@ -2,6 +2,8 @@
 // Copyright (c) 2022, zhiayang
 // SPDX-License-Identifier: Apache-2.0
 
+#include <utf8proc/utf8proc.h>
+
 #include "misc/hyphenator.h"
 
 #include "interp/ast.h"         // for FunctionCall
@@ -57,37 +59,101 @@ namespace sap::tree
 		m_contents.swap(ret);
 	}
 
+	static bool is_letter(char32_t c)
+	{
+		auto category = utf8proc_category((utf8proc_int32_t) c);
+		return util::is_one_of(category, UTF8PROC_CATEGORY_LU, UTF8PROC_CATEGORY_LL, UTF8PROC_CATEGORY_LT, UTF8PROC_CATEGORY_LM,
+		    UTF8PROC_CATEGORY_LO);
+	}
+
 
 	static void make_separators_for_word(std::vector<std::unique_ptr<InlineObject>>& vec, std::unique_ptr<Text> text)
 	{
 		static auto hyphenator = hyph::Hyphenator::parseFromFile("hyph-en-gb.tex");
-		auto& points = hyphenator.computeHyphenationPoints(text->contents());
+
+		// TODO: maybe cache at this level as well
 
 		auto word = std::move(text->contents());
-		auto span = zst::wstr_view(word);
+		auto orig_span = zst::wstr_view(word);
 
-		// ignore hyphenations at the first index and last index, since
-		// those imply inserting a hyphen before the first character or after the last character
-		for(size_t i = 1, k = 1; i < points.size() - 1; i++)
+		zst::wstr_view pre_chunk {};
+		zst::wstr_view post_chunk {};
+
+		for(size_t i = 0; i < orig_span.size(); i++)
 		{
-			if(points[i] % 2 == 0)
-			{
-				k++;
-			}
+			if(not is_letter(orig_span[i]))
+				orig_span.transfer_prefix(pre_chunk, 1);
 			else
-			{
-				// hyphenation preference increases from 1 to 3 to 5, so 5 has the lowest cost
-				// and 1 has the highest cost.
+				break;
+		}
 
-				auto part = span.take_prefix(k);
-				vec.push_back(std::make_unique<Text>(part.str(), text->style()));
-				vec.push_back(std::make_unique<Separator>(Separator::HYPHENATION_POINT, /* cost: */ 6 - points[i]));
-				k = 1;
+		for(size_t i = orig_span.size(); i-- > 0;)
+		{
+			if(not is_letter(orig_span[i]))
+				orig_span.transfer_suffix(post_chunk, 1);
+			else
+				break;
+		}
+
+		if(not pre_chunk.empty())
+			vec.push_back(std::make_unique<Text>(pre_chunk.str(), text->style()));
+
+		bool manual_hyphenation = false;
+		for(size_t i = 0; i < orig_span.size(); i++)
+		{
+			if(not is_letter(orig_span[i]))
+			{
+				manual_hyphenation = true;
+				break;
 			}
 		}
 
-		if(span.size() > 0)
-			vec.push_back(std::make_unique<Text>(span.str(), text->style()));
+		if(manual_hyphenation)
+		{
+			for(size_t i = 0; (i = orig_span.find(U'-')) != (size_t) -1;)
+			{
+				auto part = orig_span.take_prefix(i + 1);
+				vec.push_back(std::make_unique<Text>(part.str(), text->style()));
+				vec.push_back(std::make_unique<Separator>(Separator::BREAK_POINT));
+			}
+
+			vec.push_back(std::make_unique<Text>(orig_span.str(), text->style()));
+		}
+		else
+		{
+			std::u32string lowercased;
+			lowercased.reserve(orig_span.size());
+			for(auto c : orig_span)
+				lowercased.push_back((char32_t) utf8proc_tolower((utf8proc_int32_t) c));
+
+			auto lower_span = zst::wstr_view(lowercased);
+			auto& points = hyphenator.computeHyphenationPoints(lower_span);
+
+			// ignore hyphenations at the first index and last index, since
+			// those imply inserting a hyphen before the first character or after the last character
+			for(size_t i = 1, k = 1; i < points.size() - 1; i++)
+			{
+				if(points[i] % 2 == 0)
+				{
+					k++;
+				}
+				else
+				{
+					// hyphenation preference increases from 1 to 3 to 5, so 5 has the lowest cost, and 1 the highest.
+					auto part = lower_span.take_prefix(k);
+					vec.push_back(std::make_unique<Text>(part.str(), text->style()));
+					vec.push_back(std::make_unique<Separator>(Separator::HYPHENATION_POINT, /* cost: */ 6 - points[i]));
+					k = 1;
+				}
+			}
+
+			if(lower_span.size() > 0)
+				vec.push_back(std::make_unique<Text>(lower_span.str(), text->style()));
+		}
+
+
+		if(not post_chunk.empty())
+			vec.push_back(std::make_unique<Text>(post_chunk.str(), text->style()));
 	}
 
 
