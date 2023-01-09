@@ -9,7 +9,7 @@ WARNINGS += -Wno-error=unused-variable
 WARNINGS += -Wno-error=unused-function
 WARNINGS += -Wno-unused-but-set-variable
 
-COMMON_CFLAGS       = -O0 -g -fsanitize=address
+COMMON_CFLAGS       = -O0 -g -ftime-trace
 
 OUTPUT_DIR          := build
 TEST_DIR            := $(OUTPUT_DIR)/test
@@ -146,15 +146,15 @@ $(OUTPUT_DIR)/%.h.gch: %.h $(PRECOMP_GCH) Makefile
 	@$(CXX) $(CXXFLAGS) $(WARNINGS) $(INCLUDES) -include $(PRECOMP_INCLUDE) -MMD -MP -x c++-header -o $@ $<
 
 clean:
-	-@rm -r $(OUTPUT_DIR)
+	-@rm -fr $(OUTPUT_DIR)
 
 format:
-	find source -iname '*.cpp' -or -iname '*.h' | xargs -I{} -- ./sort_includes.py -i {}
+	find source -iname '*.cpp' -or -iname '*.h' | xargs -I{} -- ./tools/sort_includes.py -i {}
 	clang-format -i $(shell find source -iname "*.cpp" -or -iname "*.h")
 
 iwyu:
 	iwyu-tool -j 8 -p . source -- -Xiwyu --update_comments -Xiwyu --no_fwd_decls -Xiwyu --prefix_header_includes=keep | iwyu-fix-includes --comments --update_comments
-	find source -iname '*.cpp' -or -iname '*.h' | xargs -I{} -- ./sort_includes.py -i {}
+	find source -iname '*.cpp' -or -iname '*.h' | xargs -I{} -- ./tools/sort_includes.py -i {}
 	clang-format -i $(shell find source -iname "*.cpp" -or -iname "*.h")
 
 -include $(CXXDEPS)

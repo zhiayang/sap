@@ -30,10 +30,9 @@ namespace font
 		FontVector2d getWordSize(zst::wstr_view word) const;
 		std::vector<GlyphInfo> getGlyphInfosForString(zst::wstr_view text) const;
 
-		bool isGlyphUsed(GlyphId glyph_id) const { return m_used_glyphs.contains(glyph_id); }
-		void markGlyphAsUsed(GlyphId glyph_id) const { m_used_glyphs.insert(glyph_id); }
-		const auto& usedGlyphs() const { return m_used_glyphs; }
-
+		bool isGlyphUsed(GlyphId glyph_id) const;
+		void markGlyphAsUsed(GlyphId glyph_id) const;
+		const util::hashset<GlyphId>& usedGlyphs() const;
 
 		virtual bool isBuiltin() const = 0;
 		virtual std::map<size_t, GlyphAdjustment> getPositioningAdjustmentsForGlyphSequence(zst::span<GlyphId> glyphs,

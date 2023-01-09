@@ -194,6 +194,17 @@ namespace pdf
 			return nullptr;
 	}
 
+	void Array::append(Object* obj)
+	{
+		obj->refer();
+		m_values.push_back(obj);
+	}
+
+	void Array::clear()
+	{
+		m_values.clear();
+	}
+
 
 
 

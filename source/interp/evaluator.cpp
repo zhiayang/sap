@@ -76,11 +76,53 @@ namespace sap::interp
 	}
 
 
+	StackFrame& Evaluator::frame()
+	{
+		return *m_stack_frames.back();
+	}
+
+	[[nodiscard]] util::Defer Evaluator::pushFrame()
+	{
+		auto cur = m_stack_frames.back().get();
+		m_stack_frames.push_back(std::unique_ptr<StackFrame>(new StackFrame(this, cur)));
+		return util::Defer([this]() {
+			this->popFrame();
+		});
+	}
+
+	void Evaluator::popFrame()
+	{
+		assert(not m_stack_frames.empty());
+		m_stack_frames.pop_back();
+	}
+
+
 	void Evaluator::dropValue(Value&& value)
 	{
 		// TODO: call destructors
 	}
 
+
+
+
+
+	Value* StackFrame::valueOf(const Definition* defn)
+	{
+		if(auto it = m_values.find(defn); it == m_values.end())
+			return nullptr;
+		else
+			return &it->second;
+	}
+
+	void StackFrame::setValue(const Definition* defn, Value value)
+	{
+		m_values[defn] = std::move(value);
+	}
+
+	Value* StackFrame::createTemporary(Value init)
+	{
+		return &m_temporaries.emplace_back(std::move(init));
+	}
 
 	void StackFrame::dropTemporaries()
 	{

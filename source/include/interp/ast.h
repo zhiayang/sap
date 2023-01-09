@@ -11,17 +11,16 @@
 #include "util.h"     // for ErrorOr, Ok, TRY
 #include "location.h" // for Location
 
-#include "interp/value.h"    // for Interpreter, Value
 #include "interp/basedefs.h" // for InlineObject
 #include "interp/tc_result.h"
 #include "interp/parser_type.h"
-#include "interp/eval_result.h" // for EvalResult
 
 namespace sap::interp
 {
 	struct Value;
 	struct DefnTree;
 	struct Evaluator;
+	struct EvalResult;
 	struct Typechecker;
 
 	struct Stmt

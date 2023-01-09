@@ -5,6 +5,7 @@
 #include "interp/ast.h"
 #include "interp/type.h"
 #include "interp/value.h"
+#include "interp/eval_result.h"
 
 namespace sap::interp
 {

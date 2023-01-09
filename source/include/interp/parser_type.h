@@ -27,61 +27,29 @@ namespace sap::frontend
 		bool isPointer() const { return m_kind == PT_POINTER; }
 		bool isArray() const { return m_kind == PT_ARRAY; }
 
-		bool isNamed() const { return not m_name.name.empty(); }
-		const interp::QualifiedId& name() const { return m_name; }
-
 		bool isVariadicArray() const { return m_kind == PT_ARRAY && m_array_variadic; }
 		bool isMutablePointer() const { return m_kind == PT_POINTER && m_pointer_mutable; }
 
-		const PType& getArrayElement() const { return m_type_list[0]; }
-		const PType& getPointerElement() const { return m_type_list[0]; }
-		const PType& getOptionalElement() const { return m_type_list[0]; }
-		const std::vector<PType>& getTypeList() const { return m_type_list; }
+		const PType& getArrayElement() const;
+		const PType& getPointerElement() const;
+		const PType& getOptionalElement() const;
+		const std::vector<PType>& getTypeList() const;
 
-		static PType named(interp::QualifiedId qid) { return PType(std::move(qid), 0, {}); }
+		bool isNamed() const;
+		const interp::QualifiedId& name() const;
 
-		static PType named(const char* name)
-		{
-			return PType(
-			    interp::QualifiedId {
-			        .top_level = false,
-			        .parents = {},
-			        .name = name,
-			    },
-			    0, {});
-		}
+		static PType named(interp::QualifiedId qid);
+		static PType named(const char* name);
 
-		static PType function(std::vector<PType> params, PType ret)
-		{
-			params.push_back(std::move(ret));
-			return PType({}, PT_FUNCTION, std::move(params));
-		}
+		static PType function(std::vector<PType> params, PType ret);
+		static PType array(PType elm, bool variadic);
+		static PType pointer(PType elm, bool is_mut);
+		static PType optional(PType elm);
 
-		static PType array(PType elm, bool variadic)
-		{
-			auto ret = PType({}, PT_ARRAY, { elm });
-			ret.m_array_variadic = variadic;
-			return ret;
-		}
-
-		static PType pointer(PType elm, bool is_mut)
-		{
-			auto ret = PType({}, PT_POINTER, { elm });
-			ret.m_pointer_mutable = is_mut;
-			return ret;
-		}
-
-		static PType optional(PType elm) { return PType({}, PT_OPTIONAL, { elm }); }
+		~PType();
 
 	private:
-		PType(interp::QualifiedId name, int kind, std::vector<PType> type_list)
-		    : m_kind(kind)
-		    , m_name(std::move(name))
-		    , m_type_list(std::move(type_list))
-		    , m_array_variadic(false)
-		    , m_pointer_mutable(false)
-		{
-		}
+		PType(interp::QualifiedId name, int kind, std::vector<PType> type_list);
 
 		static constexpr int PT_FUNCTION = 0;
 		static constexpr int PT_POINTER = 1;

@@ -164,11 +164,6 @@ namespace font::aat
 	inline constexpr uint16_t CLASS_CODE_DELETED_GLYPH = 2;
 	inline constexpr uint16_t CLASS_CODE_END_OF_LINE = 3;
 
-	template <typename T>
-	static std::optional<SubstitutedGlyphString> apply_table(const T&, zst::span<GlyphId> glyphs, bool is_reverse,
-	    size_t num_font_glyphs);
-
-
 	static size_t get_entry_index_for_state(const StateTable& machine, size_t state, uint16_t glyph_class)
 	{
 		auto tmp = machine.state_array.drop(state * machine.state_row_size);
@@ -228,7 +223,6 @@ namespace font::aat
 
 
 
-	template <>
 	std::optional<SubstitutedGlyphString> apply_table(const MorxLigatureSubtable& table, zst::span<GlyphId> glyphs,
 	    bool is_reverse, size_t num_font_glyphs)
 	{
@@ -332,7 +326,6 @@ namespace font::aat
 	}
 
 
-	template <>
 	std::optional<SubstitutedGlyphString> apply_table(const MorxRearrangementSubtable& table, zst::span<GlyphId> input,
 	    bool is_reverse, size_t num_font_glyphs)
 	{
@@ -517,7 +510,6 @@ namespace font::aat
 		return std::move(ret);
 	}
 
-	template <>
 	std::optional<SubstitutedGlyphString> apply_table(const MorxContextualSubtable& table, zst::span<GlyphId> glyphs,
 	    bool is_reverse, size_t num_font_glyphs)
 	{
@@ -577,7 +569,6 @@ namespace font::aat
 		return std::move(ret);
 	}
 
-	template <>
 	std::optional<SubstitutedGlyphString> apply_table(const MorxNonContextualSubtable& table, zst::span<GlyphId> glyphs,
 	    bool is_reverse, size_t num_font_glyphs)
 	{
@@ -606,7 +597,6 @@ namespace font::aat
 		return std::move(ret);
 	}
 
-	template <>
 	std::optional<SubstitutedGlyphString> apply_table(const MorxInsertionSubtable& table, zst::span<GlyphId> glyphs,
 	    bool is_reverse, size_t num_font_glyphs)
 	{

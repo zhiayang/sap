@@ -12,7 +12,8 @@
 
 #include "zst.h" // for str_view, byte_span, wstr_view, Result, span
 #include "types.h"
-#include "endian.h"
+
+#include "misc/hasher.h"
 
 namespace util
 {
@@ -164,50 +165,6 @@ namespace util
 	}
 
 
-	// clang-format off
-	template <typename A>
-	concept has_hash_method = requires(A a)
-	{
-		{ a.hash() } -> std::same_as<size_t>;
-	};
-
-	template <typename A>
-	concept has_hash_specialisation = requires(A a)
-	{
-		{ std::hash<A>{}(a) } -> std::same_as<size_t>;
-	};
-	// clang-format on
-
-	// https://en.cppreference.com/w/cpp/container/unordered_map/find
-	// stupid language
-	struct hasher
-	{
-		using is_transparent = void;
-		using H = std::hash<std::string_view>;
-		using WH = std::hash<std::u32string_view>;
-
-		size_t operator()(const char* str) const { return H {}(str); }
-		size_t operator()(zst::str_view str) const { return H {}(str.sv()); }
-		size_t operator()(std::string_view str) const { return H {}(str); }
-		size_t operator()(const std::string& str) const { return H {}(str); }
-
-		size_t operator()(zst::wstr_view str) const { return WH {}(str.sv()); }
-		size_t operator()(std::u32string_view str) const { return WH {}(str); }
-		size_t operator()(const std::u32string& str) const { return WH {}(str); }
-
-		template <has_hash_method T>
-		requires(not has_hash_specialisation<T>) size_t operator()(const T& x) const
-		{
-			return x.hash();
-		}
-
-		template <has_hash_specialisation T>
-		size_t operator()(const T& a) const
-		{
-			return std::hash<std::remove_cvref_t<decltype(a)>>()(a);
-		}
-	};
-
 	template <typename K, typename V, typename H = hasher>
 	using hashmap = std::unordered_map<K, V, H, std::equal_to<>>;
 
@@ -229,14 +186,33 @@ namespace util
 		};
 	}
 
-	template <typename Callback>
 	struct Defer
 	{
-		Defer(Callback cb) : m_cb(std::move(cb)), m_cancel(false) { }
+		static constexpr size_t STORAGE_SIZE = 16;
+		struct Base
+		{
+			virtual ~Base() { }
+			virtual void operator()() const = 0;
+		};
+
+		template <typename Callback>
+		Defer(Callback cb) : m_cancel(false)
+		{
+			struct Derived : Base
+			{
+				Derived(Callback&& cb) : cb(std::move(cb)) { }
+				virtual void operator()() const override { cb(); }
+				Callback cb;
+			};
+
+			static_assert(sizeof(Derived) <= STORAGE_SIZE);
+			new(&m_storage[0]) Derived(std::move(cb));
+		}
+
 		~Defer()
 		{
 			if(not m_cancel)
-				m_cb();
+				(*(Base*) &m_storage[0])();
 		}
 
 		void cancel() { m_cancel = true; }
@@ -245,9 +221,47 @@ namespace util
 		Defer& operator=(const Defer&) = delete;
 
 	private:
-		Callback m_cb;
+		bool m_cancel;
+		uint8_t m_storage[STORAGE_SIZE];
+	};
+
+
+
+
+	struct DeferMemberFn
+	{
+		template <typename T>
+		DeferMemberFn(const T* self, void (T::*member_fn)())
+		    : m_self(self)
+		    , m_method(member_fn)
+		    , m_cancel(false)
+		{
+			m_callback = [](const void* self, const void* fn_) {
+				auto fn = reinterpret_cast<void (T::*)()>(fn_);
+				(static_cast<const T*>(self)->*fn)();
+			};
+		}
+
+		~DeferMemberFn()
+		{
+			if(not m_cancel)
+				m_callback(m_self, m_method);
+			// m_cb();
+		}
+
+		void cancel() { m_cancel = true; }
+
+		DeferMemberFn(const DeferMemberFn&) = delete;
+		DeferMemberFn& operator=(const DeferMemberFn&) = delete;
+
+	private:
+		const void* m_self;
+		const void* m_method;
+		void (*m_callback)(const void*, const void*);
 		bool m_cancel;
 	};
+
+
 
 
 	template <typename T, std::same_as<T>... Ts>
@@ -258,6 +272,33 @@ namespace util
 		(ret.push_back(static_cast<Ts&&>(xs)), ...);
 
 		return ret;
+	}
+
+	inline uint16_t convertBEU16(uint16_t x)
+	{
+		// Untested cause who has big endian anyway
+		if constexpr(std::endian::native == std::endian::big)
+			return x;
+		else
+			return zst::byteswap(x);
+	}
+
+	inline uint32_t convertBEU32(uint32_t x)
+	{
+		// Untested cause who has big endian anyway
+		if constexpr(std::endian::native == std::endian::big)
+			return x;
+		else
+			return zst::byteswap(x);
+	}
+
+	inline uint64_t convertBEU64(uint64_t x)
+	{
+		// Untested cause who has big endian anyway
+		if constexpr(std::endian::native == std::endian::big)
+			return x;
+		else
+			return zst::byteswap(x);
 	}
 }
 

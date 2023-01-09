@@ -7,8 +7,6 @@
 #include "util.h"
 #include "units.h" // for Scalar
 
-#include "pdf/font.h" // for Font
-
 #include "sap/units.h"       // for Length
 #include "sap/font_family.h" // for FontSet, FontStyle
 

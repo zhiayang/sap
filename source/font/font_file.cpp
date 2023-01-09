@@ -12,6 +12,22 @@ namespace font
 	{
 	}
 
+
+	bool FontSource::isGlyphUsed(GlyphId glyph_id) const
+	{
+		return m_used_glyphs.contains(glyph_id);
+	}
+
+	void FontSource::markGlyphAsUsed(GlyphId glyph_id) const
+	{
+		m_used_glyphs.insert(glyph_id);
+	}
+
+	const util::hashset<GlyphId>& FontSource::usedGlyphs() const
+	{
+		return m_used_glyphs;
+	}
+
 	GlyphId FontSource::getGlyphIndexForCodepoint(char32_t codepoint) const
 	{
 		if(auto it = m_character_mapping.forward.find(codepoint); it != m_character_mapping.forward.end())

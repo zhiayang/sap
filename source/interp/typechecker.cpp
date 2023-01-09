@@ -15,6 +15,42 @@ namespace sap::interp
 		defineBuiltins(this, m_top->lookupOrDeclareNamespace("builtin"));
 	}
 
+	DefnTree* Typechecker::top()
+	{
+		return m_top.get();
+	}
+
+	const DefnTree* Typechecker::top() const
+	{
+		return m_top.get();
+	}
+
+	DefnTree* Typechecker::current()
+	{
+		return m_tree_stack.back();
+	}
+
+	const DefnTree* Typechecker::current() const
+	{
+		return m_tree_stack.back();
+	}
+
+	[[nodiscard]] util::Defer Typechecker::pushTree(DefnTree* tree)
+	{
+		m_tree_stack.push_back(tree);
+		return util::Defer([this]() {
+			this->popTree();
+		});
+	}
+
+	void Typechecker::popTree()
+	{
+		assert(not m_tree_stack.empty());
+		m_tree_stack.pop_back();
+	}
+
+
+
 	bool Typechecker::canImplicitlyConvert(const Type* from, const Type* to) const
 	{
 		if(from == to || to->isAny())
@@ -139,4 +175,30 @@ namespace sap::interp
 		m_builtin_defns.push_back(std::move(defn));
 		return m_builtin_defns.back().get();
 	}
+
+	bool Typechecker::isCurrentlyInFunction() const
+	{
+		return not m_expected_return_types.empty();
+	}
+
+	const Type* Typechecker::getCurrentFunctionReturnType() const
+	{
+		assert(this->isCurrentlyInFunction());
+		return m_expected_return_types.back();
+	}
+
+	[[nodiscard]] util::Defer Typechecker::enterFunctionWithReturnType(const Type* t)
+	{
+		m_expected_return_types.push_back(t);
+		return util::Defer([this]() {
+			this->leaveFunctionWithReturnType();
+		});
+	}
+
+	void Typechecker::leaveFunctionWithReturnType()
+	{
+		assert(not m_expected_return_types.empty());
+		m_expected_return_types.pop_back();
+	}
+
 }

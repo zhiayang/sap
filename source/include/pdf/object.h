@@ -159,13 +159,8 @@ namespace pdf
 		const std::vector<Object*>& values() const { return m_values; }
 		std::vector<Object*>& values() { return m_values; }
 
-		void append(Object* obj)
-		{
-			obj->refer();
-			m_values.push_back(obj);
-		}
-
-		void clear() { m_values.clear(); }
+		void clear();
+		void append(Object* obj);
 
 	private:
 		std::vector<Object*> m_values;

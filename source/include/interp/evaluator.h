@@ -23,16 +23,10 @@ namespace sap::interp
 	{
 		StackFrame* parent() const { return m_parent; }
 
-		Value* valueOf(const Definition* defn)
-		{
-			if(auto it = m_values.find(defn); it == m_values.end())
-				return nullptr;
-			else
-				return &it->second;
-		}
+		Value* valueOf(const Definition* defn);
 
-		void setValue(const Definition* defn, Value value) { m_values[defn] = std::move(value); }
-		Value* createTemporary(Value init) { return &m_temporaries.emplace_back(std::move(init)); }
+		void setValue(const Definition* defn, Value value);
+		Value* createTemporary(Value init);
 
 		void dropTemporaries();
 
@@ -52,21 +46,9 @@ namespace sap::interp
 	{
 		Evaluator();
 
-		StackFrame& frame() { return *m_stack_frames.back(); }
-		[[nodiscard]] auto pushFrame()
-		{
-			auto cur = m_stack_frames.back().get();
-			m_stack_frames.push_back(std::unique_ptr<StackFrame>(new StackFrame(this, cur)));
-			return util::Defer([this]() {
-				this->popFrame();
-			});
-		}
-
-		void popFrame()
-		{
-			assert(not m_stack_frames.empty());
-			m_stack_frames.pop_back();
-		}
+		StackFrame& frame();
+		[[nodiscard]] util::Defer pushFrame();
+		void popFrame();
 
 		void dropValue(Value&& value);
 		Value castValue(Value value, const Type* to) const;

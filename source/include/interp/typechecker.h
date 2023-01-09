@@ -52,54 +52,27 @@ namespace sap::interp
 	{
 		Typechecker();
 
-		DefnTree* top() { return m_top.get(); }
-		const DefnTree* top() const { return m_top.get(); }
+		DefnTree* top();
+		const DefnTree* top() const;
 
-		DefnTree* current() { return m_tree_stack.back(); }
-		const DefnTree* current() const { return m_tree_stack.back(); }
+		DefnTree* current();
+		const DefnTree* current() const;
 
 		ErrorOr<const Type*> resolveType(const frontend::PType& ptype);
 		ErrorOr<const Definition*> getDefinitionForType(const Type* type);
 		ErrorOr<void> addTypeDefinition(const Type* type, const Definition* defn);
 
-		[[nodiscard]] auto pushTree(DefnTree* tree)
-		{
-			m_tree_stack.push_back(tree);
-			return util::Defer([this]() {
-				this->popTree();
-			});
-		}
-
-		void popTree()
-		{
-			assert(not m_tree_stack.empty());
-			m_tree_stack.pop_back();
-		}
+		[[nodiscard]] util::Defer pushTree(DefnTree* tree);
+		void popTree();
 
 		ErrorOr<EvalResult> run(const Stmt* stmt);
 
 		Definition* addBuiltinDefinition(std::unique_ptr<Definition> defn);
 
-		[[nodiscard]] auto enterFunctionWithReturnType(const Type* t)
-		{
-			m_expected_return_types.push_back(t);
-			return util::Defer([this]() {
-				this->leaveFunctionWithReturnType();
-			});
-		}
-
-		void leaveFunctionWithReturnType()
-		{
-			assert(not m_expected_return_types.empty());
-			m_expected_return_types.pop_back();
-		}
-
-		bool isCurrentlyInFunction() const { return not m_expected_return_types.empty(); }
-		const Type* getCurrentFunctionReturnType() const
-		{
-			assert(this->isCurrentlyInFunction());
-			return m_expected_return_types.back();
-		}
+		[[nodiscard]] util::Defer enterFunctionWithReturnType(const Type* t);
+		void leaveFunctionWithReturnType();
+		bool isCurrentlyInFunction() const;
+		const Type* getCurrentFunctionReturnType() const;
 
 		bool canImplicitlyConvert(const Type* from, const Type* to) const;
 

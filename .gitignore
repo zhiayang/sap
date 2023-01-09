@@ -29,3 +29,5 @@ tmp/
 *.cff
 
 big.sap
+test2.sap
+ClangBuildAnalyzer.ini

@@ -4,7 +4,10 @@
 
 #pragma once
 
-#include "pdf/font.h" // for Font
+namespace pdf
+{
+	struct PdfFont;
+}
 
 namespace sap
 {
