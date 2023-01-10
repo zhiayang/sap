@@ -64,9 +64,7 @@ namespace pdf
 			{
 				// ask the object to add whatever resources it needs
 				obj->addResources(this);
-
-				auto ser = obj->pdfRepresentation();
-				strm->append(reinterpret_cast<const uint8_t*>(ser.data()), ser.size());
+				obj->writePdfCommands(strm);
 			}
 
 			contents = IndirectRef::create(strm);

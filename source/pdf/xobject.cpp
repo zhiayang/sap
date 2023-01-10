@@ -9,15 +9,11 @@
 namespace pdf
 {
 	XObject::XObject(const Name& subtype)
-	    : m_contents(Stream::create())
+	    : m_stream(Stream::create())
 	    , m_resource_name(zpr::sprint("X{}", pdf::getNewResourceId()))
 	{
 	}
 
-	std::string XObject::pdfRepresentation() const
-	{
-		return zpr::sprint("/{} Do\n", m_resource_name);
-	}
 
 	void XObject::serialise() const
 	{

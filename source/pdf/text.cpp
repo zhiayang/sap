@@ -10,18 +10,24 @@
 
 namespace pdf
 {
-	std::string Text::pdfRepresentation() const
+	void Text::writePdfCommands(Stream* stream) const
 	{
-		std::string ret = "q BT\n";
+		auto str_buf = zst::buffer<char>();
+		auto appender = [&str_buf](const char* c, size_t n) {
+			str_buf.append(c, n);
+		};
+
+		zpr::cprint(appender, "q BT\n");
 		for(auto& group : m_groups)
 		{
 			for(auto& cmd : group.commands)
-				ret += cmd;
+				appender(cmd.data(), cmd.size());
 
-			ret += zpr::sprint("[{}] TJ\n", group.text);
+			zpr::cprint(appender, "[{}] TJ\n", group.text);
 		}
 
-		return ret + "ET Q\n";
+		zpr::cprint(appender, "ET Q\n");
+		stream->append(str_buf.bytes());
 	}
 
 	void Text::addResources(const Page* page) const

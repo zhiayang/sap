@@ -17,15 +17,14 @@ namespace pdf
 	{
 		XObject(const Name& subtype);
 
-		virtual std::string pdfRepresentation() const override;
 		virtual void addResources(const Page* page) const override;
 
 		void serialise() const;
 		const std::string& getResourceName() const;
-		Stream* stream() const { return m_contents; }
+		Stream* stream() const { return m_stream; }
 
-	private:
-		Stream* m_contents;
+	protected:
+		Stream* m_stream;
 		std::string m_resource_name;
 		mutable bool m_did_serialise = false;
 	};
@@ -34,6 +33,7 @@ namespace pdf
 	struct Image : XObject
 	{
 		Image(PdfScalar width, PdfScalar height, zst::byte_span image);
+		virtual void writePdfCommands(Stream* stream) const override;
 
 	private:
 	};

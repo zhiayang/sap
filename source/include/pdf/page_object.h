@@ -7,12 +7,13 @@
 namespace pdf
 {
 	struct Page;
+	struct Stream;
 
 	struct PageObject
 	{
 		virtual ~PageObject();
 
-		virtual std::string pdfRepresentation() const = 0;
+		virtual void writePdfCommands(Stream* stream) const = 0;
 		virtual void addResources(const Page* page) const = 0;
 	};
 }

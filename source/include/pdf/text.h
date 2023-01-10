@@ -10,6 +10,7 @@
 namespace pdf
 {
 	struct PdfFont;
+	struct Stream;
 	struct Page;
 
 	/*
@@ -26,7 +27,7 @@ namespace pdf
 	*/
 	struct Text : PageObject
 	{
-		virtual std::string pdfRepresentation() const override;
+		virtual void writePdfCommands(Stream* stream) const override;
 
 		// must be called before the first text item is inserted (addText).
 		void setFont(const PdfFont* font, PdfScalar height);
