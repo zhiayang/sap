@@ -11,6 +11,8 @@ namespace pdf
 	struct PageObject
 	{
 		virtual ~PageObject();
-		virtual std::string serialise(const Page* page) const = 0;
+
+		virtual std::string pdfRepresentation() const = 0;
+		virtual void addResources(const Page* page) const = 0;
 	};
 }

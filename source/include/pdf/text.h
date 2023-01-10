@@ -26,7 +26,7 @@ namespace pdf
 	*/
 	struct Text : PageObject
 	{
-		virtual std::string serialise(const Page* page) const override;
+		virtual std::string pdfRepresentation() const override;
 
 		// must be called before the first text item is inserted (addText).
 		void setFont(const PdfFont* font, PdfScalar height);
@@ -57,6 +57,8 @@ namespace pdf
 		*/
 		void addEncoded(size_t bytes, uint32_t encodedValue);
 
+		virtual void addResources(const Page* page) const override;
+
 	private:
 		/*
 		    a Group is defined here as an instance of a TJ operator. we attach commands to groups,
@@ -75,6 +77,6 @@ namespace pdf
 		} m_current_font {};
 
 		std::vector<Group> m_groups {};
-		std::set<const PdfFont*> m_used_fonts {};
+		std::unordered_set<const PdfFont*> m_used_fonts {};
 	};
 }

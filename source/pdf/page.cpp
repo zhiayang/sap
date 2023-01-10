@@ -6,6 +6,7 @@
 #include "pdf/page.h"        // for Page
 #include "pdf/units.h"       // for pdf_typographic_unit, Size2d, Vector2_Y...
 #include "pdf/object.h"      // for Name, Dictionary, Object, IndirectRef
+#include "pdf/xobject.h"     //
 #include "pdf/page_object.h" // for PageObject
 
 namespace pdf
@@ -14,9 +15,19 @@ namespace pdf
 	static const auto a4paper = Array::create(Integer::create(0), Integer::create(0), Decimal::create(595.276),
 	    Decimal::create(841.89));
 
-	Page::Page()
+	Page::Page() : m_dictionary(Dictionary::createIndirect(names::Page, {}))
 	{
 		m_page_size = pdf::Size2d(595.276, 841.89);
+	}
+
+	void Page::addFont(const PdfFont* font) const
+	{
+		m_fonts.insert(font);
+	}
+
+	void Page::addXObject(const XObject* xobject) const
+	{
+		m_xobjects.insert(xobject);
 	}
 
 	Size2d Page::size() const
@@ -34,8 +45,16 @@ namespace pdf
 		return Vector2_YDown(v2.x(), m_page_size.y() - v2.y());
 	}
 
+	void Page::serialiseResources() const
+	{
+		for(auto font : m_fonts)
+			font->serialise();
 
-	Dictionary* Page::serialise() const
+		for(auto xobj : m_xobjects)
+			xobj->serialise();
+	}
+
+	void Page::serialise() const
 	{
 		Object* contents = Null::get();
 		if(not m_objects.empty())
@@ -43,33 +62,31 @@ namespace pdf
 			auto strm = Stream::create({});
 			for(auto obj : m_objects)
 			{
-				auto ser = obj->serialise(this);
+				// ask the object to add whatever resources it needs
+				obj->addResources(this);
+
+				auto ser = obj->pdfRepresentation();
 				strm->append(reinterpret_cast<const uint8_t*>(ser.data()), ser.size());
 			}
 
 			contents = IndirectRef::create(strm);
 		}
 
-		// need to do the fonts only after the objects, because serialising objects
-		// can use fonts.
 		auto font_dict = Dictionary::create({});
-		for(auto font : m_used_fonts)
+		for(auto font : m_fonts)
 			font_dict->add(Name(font->getFontResourceName()), IndirectRef::create(font->dictionary()));
 
+		auto xobject_dict = Dictionary::create({});
+		for(auto xobj : m_xobjects)
+			xobject_dict->add(Name(xobj->getResourceName()), IndirectRef::create(xobj->stream()));
+
 		auto resources = Dictionary::create({});
-		if(not font_dict->empty())
-			resources->add(names::Font, font_dict);
+		resources->add(names::Font, font_dict);
+		resources->add(names::XObject, xobject_dict);
 
-		return Dictionary::createIndirect(names::Page,
-		    { { names::Resources, resources }, { names::MediaBox, a4paper }, { names::Contents, contents } });
-	}
-
-	void Page::useFont(const PdfFont* font) const
-	{
-		if(std::find(m_used_fonts.begin(), m_used_fonts.end(), font) != m_used_fonts.end())
-			return;
-
-		m_used_fonts.push_back(font);
+		m_dictionary->addOrReplace(names::Resources, resources);
+		m_dictionary->addOrReplace(names::MediaBox, a4paper);
+		m_dictionary->addOrReplace(names::Contents, contents);
 	}
 
 	void Page::addObject(PageObject* pobj)

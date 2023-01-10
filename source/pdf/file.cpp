@@ -79,20 +79,15 @@ namespace pdf
 		auto array = Array::create({});
 		for(auto page : m_pages)
 		{
-			auto obj = page->serialise();
-			obj->addOrReplace(names::Parent, pagetree);
-			array->append(IndirectRef::create(obj));
+			page->serialise();
+			page->serialiseResources();
+
+			page->dictionary()->addOrReplace(names::Parent, pagetree);
+
+			array->append(IndirectRef::create(page->dictionary()));
 		}
 
 		pagetree->addOrReplace(names::Kids, array);
-
-		// figure out which fonts were used.
-		std::unordered_set<const PdfFont*> used_fonts {};
-		for(auto page : m_pages)
-			used_fonts.insert(page->usedFonts().begin(), page->usedFonts().end());
-
-		for(auto font : used_fonts)
-			font->serialise();
 
 		return pagetree;
 	}

@@ -7,12 +7,7 @@
 
 namespace pdf
 {
-	XObject::XObject(File* doc, const Name& subtype)
-	{
-		m_contents = Stream::create();
-	}
-
-	Image::Image(File* doc, PdfScalar width, PdfScalar height, zst::byte_span image) : XObject(doc, names::Image)
+	Image::Image(PdfScalar width, PdfScalar height, zst::byte_span image) : XObject(names::Image)
 	{
 	}
 }

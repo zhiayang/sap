@@ -10,11 +10,8 @@
 
 namespace pdf
 {
-	std::string Text::serialise(const Page* page) const
+	std::string Text::pdfRepresentation() const
 	{
-		for(auto font : m_used_fonts)
-			page->useFont(font);
-
 		std::string ret = "q BT\n";
 		for(auto& group : m_groups)
 		{
@@ -25,6 +22,12 @@ namespace pdf
 		}
 
 		return ret + "ET Q\n";
+	}
+
+	void Text::addResources(const Page* page) const
+	{
+		for(auto f : m_used_fonts)
+			page->addFont(f);
 	}
 
 	void Text::setFont(const PdfFont* font, PdfScalar height)

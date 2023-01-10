@@ -29,8 +29,7 @@ namespace pdf
 
 	struct PdfFont
 	{
-		Dictionary* serialise() const;
-		bool didSerialise() const { return m_did_serialise; }
+		void serialise() const;
 		Dictionary* dictionary() const { return m_font_dictionary; }
 		std::string getFontResourceName() const { return m_font_resource_name; }
 		bool isCIDFont() const { return not m_source->isBuiltin(); }

@@ -16,12 +16,12 @@
 
 namespace pdf
 {
-	Dictionary* PdfFont::serialise() const
+	void PdfFont::serialise() const
 	{
 		assert(m_font_dictionary->isIndirect());
 
 		if(m_did_serialise)
-			sap::internal_error("trying to re-serialise font!");
+			return;
 
 		m_did_serialise = true;
 
@@ -93,7 +93,5 @@ namespace pdf
 			// and the cidset
 			this->writeCIDSet();
 		}
-
-		return m_font_dictionary;
 	}
 }
