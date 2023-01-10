@@ -119,28 +119,28 @@ $(TEST_DIR)/%: $(OUTPUT_DIR)/test/%.cpp.o $(CXXLIBOBJ) $(UTF8PROC_OBJS) $(MINIZ_
 	@mkdir -p $(shell dirname $@)
 	@$(CXX) $(CXXFLAGS) $(WARNINGS) $(DEFINES) $(LDFLAGS) -Iexternal -o $@ $^
 
-$(OUTPUT_DIR)/%.cpp.o: %.cpp Makefile $(PRECOMP_GCH)
+$(OUTPUT_DIR)/%.cpp.o: %.cpp $(PRECOMP_GCH)
 	@echo "  $<"
 	@mkdir -p $(shell dirname $@)
 	@$(CXX) $(PCH_INCLUDE_FLAGS) $(CXXFLAGS) $(WARNINGS) $(INCLUDES) $(DEFINES) -MMD -MP -c -o $@ $<
 
-$(OUTPUT_DIR)/%.c.o: %.c Makefile
+$(OUTPUT_DIR)/%.c.o: %.c
 	@echo "  $<"
 	@mkdir -p $(shell dirname $@)
 	@$(CC) $(CFLAGS) -MMD -MP -c -o $@ $<
 
-$(PRECOMP_GCH): $(PRECOMP_HDR) Makefile
+$(PRECOMP_GCH): $(PRECOMP_HDR)
 	@printf "# precompiling header $<\n"
 	@mkdir -p $(shell dirname $@)
 	@$(CXX) $(CXXFLAGS) $(WARNINGS) $(INCLUDES) $(CLANG_PCH_FASTER) -MMD -MP -x c++-header -o $@ $<
 	@cp $< $(@:%.gch=%)
 
-$(PRECOMP_OBJ): $(PRECOMP_GCH) Makefile
+$(PRECOMP_OBJ): $(PRECOMP_GCH)
 	@printf "# compiling pch\n"
 	@mkdir -p $(shell dirname $@)
 	@$(CXX) $(CXXFLAGS) $(WARNINGS) -c -o $@ $<
 
-$(OUTPUT_DIR)/%.h.gch: %.h $(PRECOMP_GCH) Makefile
+$(OUTPUT_DIR)/%.h.gch: %.h $(PRECOMP_GCH)
 	@printf "# precompiling header $<\n"
 	@mkdir -p $(shell dirname $@)
 	@$(CXX) $(CXXFLAGS) $(WARNINGS) $(INCLUDES) -include $(PRECOMP_INCLUDE) -MMD -MP -x c++-header -o $@ $<

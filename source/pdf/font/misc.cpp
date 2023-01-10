@@ -29,7 +29,7 @@ namespace pdf
 	template <size_t N>
 	constexpr static std::pair<const uint8_t*, size_t> split_array(const uint8_t (&arr)[N])
 	{
-		return { &arr[0], sizeof(arr) - 1 };
+		return { &arr[0], sizeof(arr) };
 	}
 
 	std::pair<const uint8_t*, size_t> get_compressed_afm(BuiltinFont::Core14 font)
