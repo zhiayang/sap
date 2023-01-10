@@ -20,81 +20,94 @@ namespace sap::frontend
 		return tok;
 	}
 
-	static std::optional<Token> parse_comment(zst::str_view& stream, Location& loc)
+	static bool parse_comment(zst::str_view& stream, Location& loc)
 	{
 		if(stream.starts_with("#:"))
 		{
-			auto begin = stream;
-			auto begin_loc = loc;
-
 			std::vector<Location> start_locs {};
+
 			while(true)
 			{
-				if(stream.empty())
-					sap::error(start_locs.back(), "unterminated block comment (reached end of file)");
-
-				size_t n = 1;
-				if(stream.starts_with("\r\n"))
+				auto i = stream.find_first_of("\r\n:#");
+				if(i == (size_t) -1)
 				{
-					loc.column = 0;
-					loc.line += 1;
-					n = 2;
+					sap::error(start_locs.back(), "unterminated block comment (reached end of file) '{}', {}, {}",
+					    stream.take(10), loc.column, loc.line);
 				}
-				else if(stream.starts_with("#:"))
+
+
+				loc.column += i;
+				stream.remove_prefix(i);
+
+				assert(not stream.empty());
+				if(stream.starts_with("#:"))
 				{
 					start_locs.push_back(loc);
-					n = 2;
+					stream.remove_prefix(2);
+					loc.column += 2;
 				}
 				else if(stream.starts_with(":#"))
 				{
+					stream.remove_prefix(2);
+					loc.column += 2;
+
 					assert(start_locs.size() > 0);
 					start_locs.pop_back();
-					n = 2;
 
 					if(start_locs.empty())
-						break;
+						return true;
 				}
-				else if(stream[0] == '\n')
+				else if(stream[0] == '\n' || stream.starts_with("\r\n"))
 				{
+					stream.remove_prefix(stream[0] == '\n' ? 1 : 2);
+
 					loc.column = 0;
 					loc.line += 1;
 				}
 				else
 				{
-					loc.column += 1;
+					stream.remove_prefix(1);
+					loc.column++;
 				}
-
-				stream.remove_prefix(n);
 			}
-
-			assert(stream.starts_with(":#"));
-			stream.remove_prefix(2);
-
-			return Token { .loc = begin_loc,
-				.type = TT::Comment,
-				.whitespace_before = false,
-				.text = begin.drop_last(stream.size()) };
 		}
 		else if(stream.starts_with("#"))
 		{
-			auto begin = stream;
-			auto begin_loc = loc;
-			while(not stream.empty() && stream[0] != '\n')
-				loc.length += 1, loc.column += 1, stream.remove_prefix(1);
+			while(true)
+			{
+				auto i = stream.find_first_of("\r\n");
+				if(i != (size_t) -1)
+				{
+					loc.line += 1;
+					loc.column = 0;
 
-			assert(stream.empty() || stream[0] == '\n');
-			stream.remove_prefix(1);
-			loc.column = 0;
-			loc.line += 1;
+					stream.remove_prefix(i);
+					if(not stream.empty())
+					{
+						if(stream.starts_with("\r\n"))
+						{
+							stream.remove_prefix(2);
+						}
+						else if(stream[0] == '\r')
+						{
+							stream.remove_prefix(1);
+							continue;
+						}
+						else // stream[0] == '\n'
+						{
+							stream.remove_prefix(1);
+						}
+					}
 
-			return Token { .loc = begin_loc,
-				.type = TT::Comment,
-				.whitespace_before = false,
-				.text = begin.drop_last(stream.size() + 1) };
+					break;
+				}
+			}
+
+			return true;
 		}
 		else
 		{
-			return std::nullopt;
+			return false;
 		}
 	}
 
@@ -560,7 +573,7 @@ namespace sap::frontend
 			if(util::is_one_of(m_stream[0], ' ', '\t', '\r', '\n'))
 				m_stream.remove_prefix(1);
 
-			else if(parse_comment(m_stream, m_location).has_value())
+			else if(parse_comment(m_stream, m_location))
 				; // do nothing
 
 			else

@@ -4,11 +4,11 @@
 
 #include "types.h" // for GlyphId
 
-#include "pdf/font.h"     // for Font, Font::ENCODING_CID, Font::ENCODING_W...
-#include "pdf/misc.h"     // for error
-#include "pdf/units.h"    // for TextSpace1d
-#include "pdf/object.h"   // for Dictionary, Integer, Name, IndirectRef
-#include "pdf/document.h" // for File
+#include "pdf/file.h"   // for File
+#include "pdf/font.h"   // for Font, Font::ENCODING_CID, Font::ENCODING_W...
+#include "pdf/misc.h"   // for error
+#include "pdf/units.h"  // for TextSpace1d
+#include "pdf/object.h" // for Dictionary, Integer, Name, IndirectRef
 #include "pdf/builtin_font.h"
 
 #include "font/misc.h"
@@ -16,7 +16,7 @@
 
 namespace pdf
 {
-	Dictionary* PdfFont::serialise(File* doc) const
+	Dictionary* PdfFont::serialise() const
 	{
 		assert(m_font_dictionary->isIndirect());
 
@@ -88,10 +88,10 @@ namespace pdf
 			source_file->writeSubset(m_pdf_font_name, m_embedded_contents);
 
 			// write the cmap we'll use for /ToUnicode.
-			this->writeUnicodeCMap(doc);
+			this->writeUnicodeCMap();
 
 			// and the cidset
-			this->writeCIDSet(doc);
+			this->writeCIDSet();
 		}
 
 		return m_font_dictionary;

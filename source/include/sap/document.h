@@ -7,13 +7,15 @@
 #include "util.h"
 #include "types.h" // for GlyphId
 
-#include "pdf/page.h"     // for Page
-#include "pdf/units.h"    // for Scalar
-#include "pdf/object.h"   // for Writer
-#include "pdf/document.h" // for File
+#include "pdf/file.h"   // for File
+#include "pdf/page.h"   // for Page
+#include "pdf/units.h"  // for Scalar
+#include "pdf/object.h" // for Writer
 
 #include "sap/style.h" // for Stylable
 #include "sap/units.h" // for Vector2
+
+#include "font/font_source.h"
 
 #include "layout/base.h" // for RectPageLayout, LayoutObject, Document
 
@@ -111,16 +113,7 @@ namespace sap::layout
 		void addObject(std::unique_ptr<LayoutObject> obj);
 
 		void layout(interp::Interpreter* cs, const tree::Document& document);
-
-		void write(pdf::Writer* stream)
-		{
-			auto pages = m_page_layout.render();
-			for(auto& page : pages)
-			{
-				m_pdf_document.addPage(page);
-			}
-			m_pdf_document.write(stream);
-		}
+		void write(pdf::Writer* stream);
 
 	private:
 		pdf::File& pdf();

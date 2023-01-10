@@ -49,22 +49,8 @@ namespace util
 		return (false || ... || (foo == foos));
 	}
 
-	namespace impl
-	{
-		struct mmap_deleter
-		{
-			mmap_deleter(size_t size) : m_size(size) { }
-			void operator()(const void* ptr);
+	zst::unique_span<uint8_t[]> readEntireFile(const std::string& path);
 
-			size_t m_size;
-		};
-	}
-
-	template <typename T>
-	requires(std::is_array_v<T>) //
-	    using mmap_ptr = std::unique_ptr<T, impl::mmap_deleter>;
-
-	std::pair<mmap_ptr<uint8_t[]>, size_t> readEntireFile(const std::string& path);
 
 
 	uint16_t convertBEU16(uint16_t x);

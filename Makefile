@@ -9,7 +9,9 @@ WARNINGS += -Wno-error=unused-variable
 WARNINGS += -Wno-error=unused-function
 WARNINGS += -Wno-unused-but-set-variable
 
-COMMON_CFLAGS       = -O0 -g -ftime-trace
+OPT_FLAGS           := -O0
+LINKER_OPT_FLAGS    :=
+COMMON_CFLAGS       := -g $(OPT_FLAGS)
 
 OUTPUT_DIR          := build
 TEST_DIR            := $(OUTPUT_DIR)/test
@@ -112,7 +114,7 @@ check: test
 $(OUTPUT_BIN): $(PRECOMP_OBJ) $(CXXOBJ) $(UTF8PROC_OBJS) $(MINIZ_OBJS)
 	@echo "  $(notdir $@)"
 	@mkdir -p $(shell dirname $@)
-	@$(CXX) $(CXXFLAGS) $(WARNINGS) $(DEFINES) $(LDFLAGS) -Iexternal -o $@ $^
+	@$(CXX) $(CXXFLAGS) $(WARNINGS) $(DEFINES) $(LDFLAGS) $(LINKER_OPT_FLAGS) -Iexternal -o $@ $^
 
 $(TEST_DIR)/%: $(OUTPUT_DIR)/test/%.cpp.o $(CXXLIBOBJ) $(UTF8PROC_OBJS) $(MINIZ_OBJS) $(PRECOMP_OBJ)
 	@echo "  $(notdir $@)"

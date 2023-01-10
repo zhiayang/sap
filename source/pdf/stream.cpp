@@ -6,10 +6,10 @@
 
 #include "util.h" // for checked_cast
 
-#include "pdf/misc.h"     // for error, IndirHelper
-#include "pdf/object.h"   // for Stream, Dictionary, Integer, Name, Length
-#include "pdf/writer.h"   // for Writer
-#include "pdf/document.h" // for createIndirectObject, File, createObject
+#include "pdf/file.h"   // for File
+#include "pdf/misc.h"   // for error, IndirHelper
+#include "pdf/object.h" // for Stream, Dictionary, Integer, Name, Length
+#include "pdf/writer.h" // for Writer
 
 namespace pdf
 {
@@ -113,32 +113,21 @@ namespace pdf
 		this->append(bytes);
 	}
 
-	void Stream::attach(File* document)
+	Stream* Stream::create()
 	{
-		if(this->isIndirect())
-			pdf::error("stream has already been attached to a document");
-
-		this->makeIndirect(document);
+		return Stream::create(zst::byte_buffer());
 	}
 
-
-	Stream* Stream::create(File* doc, zst::byte_buffer bytes)
+	Stream* Stream::create(zst::byte_buffer bytes)
 	{
 		auto dict = Dictionary::create({ { names::Length, Integer::create(util::checked_cast<int64_t>(bytes.size())) } });
 
-		return createIndirectObject<Stream>(doc, dict, std::move(bytes));
+		return Object::createIndirect<Stream>(dict, std::move(bytes));
 	}
 
-	Stream* Stream::create(File* doc, Dictionary* dict, zst::byte_buffer bytes)
+	Stream* Stream::create(Dictionary* dict, zst::byte_buffer bytes)
 	{
 		dict->addOrReplace(names::Length, Integer::create(util::checked_cast<int64_t>(bytes.size())));
-		return createIndirectObject<Stream>(doc, dict, std::move(bytes));
+		return Object::createIndirect<Stream>(dict, std::move(bytes));
 	}
-
-	Stream* Stream::createDetached(File* doc, Dictionary* dict, zst::byte_buffer bytes)
-	{
-		dict->addOrReplace(names::Length, Integer::create(util::checked_cast<int64_t>(bytes.size())));
-		return createObject<Stream>(dict, std::move(bytes));
-	}
-
 }

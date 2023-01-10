@@ -116,9 +116,9 @@ namespace sap::hyph
 
 	Hyphenator Hyphenator::parseFromFile(const std::string& path)
 	{
-		auto [file, size] = util::readEntireFile(path);
+		auto file = util::readEntireFile(path);
 
-		auto u32_string = unicode::u32StringFromUtf8({ file.get(), size });
+		auto u32_string = unicode::u32StringFromUtf8({ file.get(), file.size() });
 		auto u32_contents = zst::wstr_view(u32_string);
 
 		auto pats_start = u32_contents.find(U"\\patterns{");

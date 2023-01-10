@@ -4,9 +4,9 @@
 
 #pragma once
 
+#include "pdf/file.h"
 #include "pdf/misc.h"
 #include "pdf/page.h"
 #include "pdf/units.h"
 #include "pdf/object.h"
 #include "pdf/writer.h"
-#include "pdf/document.h"

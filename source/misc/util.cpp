@@ -10,12 +10,7 @@
 
 namespace util
 {
-	void impl::mmap_deleter::operator()(const void* ptr)
-	{
-		munmap((void*) ptr, m_size);
-	}
-
-	std::pair<mmap_ptr<uint8_t[]>, size_t> readEntireFile(const std::string& path)
+	zst::unique_span<uint8_t[]> readEntireFile(const std::string& path)
 	{
 		auto fd = open(path.c_str(), O_RDONLY);
 		if(fd < 0)
@@ -30,6 +25,8 @@ namespace util
 		if(ptr == reinterpret_cast<void*>(-1))
 			sap::internal_error("failed to read '{}': mmap(): {}", path, strerror(errno));
 
-		return { mmap_ptr<uint8_t[]>((uint8_t*) ptr, impl::mmap_deleter(size)), size };
+		return zst::unique_span<uint8_t[]>((uint8_t*) ptr, size, [](const void* ptr, size_t n) {
+			munmap((void*) ptr, n);
+		});
 	}
 }

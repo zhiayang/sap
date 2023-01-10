@@ -35,12 +35,12 @@ namespace pdf
 	}
 
 
-	Dictionary* Page::serialise(File* doc) const
+	Dictionary* Page::serialise() const
 	{
 		Object* contents = Null::get();
 		if(not m_objects.empty())
 		{
-			auto strm = Stream::create(doc, {});
+			auto strm = Stream::create({});
 			for(auto obj : m_objects)
 			{
 				auto ser = obj->serialise(this);
@@ -60,7 +60,7 @@ namespace pdf
 		if(not font_dict->empty())
 			resources->add(names::Font, font_dict);
 
-		return Dictionary::createIndirect(doc, names::Page,
+		return Dictionary::createIndirect(names::Page,
 		    { { names::Resources, resources }, { names::MediaBox, a4paper }, { names::Contents, contents } });
 	}
 

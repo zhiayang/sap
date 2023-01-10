@@ -4,12 +4,13 @@
 
 #include "util.h" // for checked_cast
 
-#include "pdf/font.h"     // for Font
-#include "pdf/misc.h"     // for error
-#include "pdf/page.h"     // for Page
-#include "pdf/object.h"   // for Object, Dictionary, Name, IndirectRef, Int...
-#include "pdf/writer.h"   // for Writer
-#include "pdf/document.h" // for Document
+#include "pdf/file.h"   // for File
+#include "pdf/font.h"   // for Font
+#include "pdf/misc.h"   // for error
+#include "pdf/page.h"   // for Page
+#include "pdf/object.h" // for Object, Dictionary, Name, IndirectRef, Int...
+#include "pdf/writer.h" // for Writer
+
 
 namespace pdf
 {
@@ -23,17 +24,13 @@ namespace pdf
 		w->writeln();
 
 		auto pagetree = this->createPageTree();
-		auto root = Dictionary::createIndirect(this, names::Catalog, { { names::Pages, IndirectRef::create(pagetree) } });
-		root->refer();
+		auto root = Dictionary::createIndirect(names::Catalog, { { names::Pages, IndirectRef::create(pagetree) } });
 
-		// write all the objects.
-		for(auto [_, obj] : m_objects)
-		{
-			// but don't write objects that nobody refers to.
-			// TODO: more advanced reachability detection.
-			if(obj->isReferenced())
-				obj->writeFull(w);
-		}
+		// first, traverse all objects that are reachable from the root
+		root->collectIndirectObjectsAndAssignIds(this);
+
+		// then write the indirect objects
+		root->writeIndirectObjects(w);
 
 		// write the xref table
 		auto xref_position = w->position();
@@ -76,19 +73,18 @@ namespace pdf
 	{
 		// TODO: make this more efficient -- make some kind of balanced tree.
 
-		auto pagetree = Dictionary::createIndirect(this, names::Pages,
+		auto pagetree = Dictionary::createIndirect(names::Pages,
 		    { { names::Count, Integer::create(util::checked_cast<int64_t>(m_pages.size())) } });
 
 		auto array = Array::create({});
 		for(auto page : m_pages)
 		{
-			auto obj = page->serialise(this);
+			auto obj = page->serialise();
 			obj->addOrReplace(names::Parent, pagetree);
 			array->append(IndirectRef::create(obj));
 		}
 
 		pagetree->addOrReplace(names::Kids, array);
-		pagetree->refer();
 
 		// figure out which fonts were used.
 		std::unordered_set<const PdfFont*> used_fonts {};
@@ -96,7 +92,7 @@ namespace pdf
 			used_fonts.insert(page->usedFonts().begin(), page->usedFonts().end());
 
 		for(auto font : used_fonts)
-			font->serialise(this);
+			font->serialise();
 
 		return pagetree;
 	}

@@ -481,11 +481,10 @@ namespace font
 		return tables;
 	}
 
-	std::unique_ptr<FontFile> FontFile::from_offset_table(util::mmap_ptr<const uint8_t[]> file_buf, size_t file_size,
-	    size_t start_of_offset_table)
+	std::unique_ptr<FontFile> FontFile::from_offset_table(zst::unique_span<uint8_t[]> file_buf, size_t start_of_offset_table)
 	{
 		// this is perfectly fine, because we own the data referred to by 'buf'.
-		auto font = std::unique_ptr<FontFile>(new FontFile(std::move(file_buf), file_size));
+		auto font = std::unique_ptr<FontFile>(new FontFile(std::move(file_buf)));
 		auto file_bytes = font->bytes();
 
 		font->m_tables = get_table_offsets(file_bytes.drop(start_of_offset_table));
@@ -570,11 +569,11 @@ namespace font
 	}
 
 	std::optional<std::unique_ptr<FontFile>> FontFile::from_postscript_name_in_collection( //
-	    util::mmap_ptr<const uint8_t[]> file_buf, size_t file_size, zst::str_view postscript_name)
+	    zst::unique_span<uint8_t[]> file_buf, zst::str_view postscript_name)
 	{
 		assert(memcmp(file_buf.get(), "ttcf", 4) == 0);
 
-		auto file_span = zst::byte_span(file_buf.get(), file_size);
+		auto file_span = zst::byte_span(file_buf.get(), file_buf.size());
 
 		// copy the thing
 		auto ttc_span = file_span;
@@ -592,7 +591,7 @@ namespace font
 			auto font_names = ::font::parse_name_table(file_span, name_table);
 
 			if(font_names.postscript_name == postscript_name)
-				return FontFile::from_offset_table(std::move(file_buf), file_size, offset);
+				return FontFile::from_offset_table(std::move(file_buf), offset);
 		}
 
 		return std::nullopt;
@@ -600,20 +599,20 @@ namespace font
 
 	std::optional<std::unique_ptr<FontFile>> FontFile::fromHandle(FontHandle handle)
 	{
-		auto [file, size] = util::readEntireFile(handle.path);
-		if(size < 4)
+		auto file = util::readEntireFile(handle.path);
+		if(file.size() < 4)
 			sap::internal_error("font file too short");
 
-		auto span = zst::byte_span(file.get(), size);
+		auto span = zst::byte_span(file.get(), file.size());
 
 		if(memcmp(span.data(), "OTTO", 4) == 0 || memcmp(span.data(), "true", 4) == 0
 		    || memcmp(span.data(), "\x00\x01\x00\x00", 4) == 0)
 		{
-			return FontFile::from_offset_table(std::move(file), size, /* offset: */ 0);
+			return FontFile::from_offset_table(std::move(file), /* offset: */ 0);
 		}
 		else if(memcmp(span.data(), "ttcf", 4) == 0)
 		{
-			return FontFile::from_postscript_name_in_collection(std::move(file), size, handle.postscript_name);
+			return FontFile::from_postscript_name_in_collection(std::move(file), handle.postscript_name);
 		}
 		else
 		{
@@ -623,7 +622,7 @@ namespace font
 		return std::nullopt;
 	}
 
-	FontFile::FontFile(util::mmap_ptr<const uint8_t[]> bytes, size_t size) : m_file_buf(std::move(bytes)), m_file_size(size)
+	FontFile::FontFile(zst::unique_span<uint8_t[]> bytes) : m_file(std::move(bytes))
 	{
 	}
 }

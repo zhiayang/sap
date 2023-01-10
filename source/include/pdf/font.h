@@ -29,7 +29,7 @@ namespace pdf
 
 	struct PdfFont
 	{
-		Dictionary* serialise(File* doc) const;
+		Dictionary* serialise() const;
 		bool didSerialise() const { return m_did_serialise; }
 		Dictionary* dictionary() const { return m_font_dictionary; }
 		std::string getFontResourceName() const { return m_font_resource_name; }
@@ -81,8 +81,8 @@ namespace pdf
 
 		int font_type = 0;
 
-		static std::unique_ptr<PdfFont> fromBuiltin(File* doc, BuiltinFont::Core14 font_name);
-		static std::unique_ptr<PdfFont> fromSource(File* doc, std::unique_ptr<font::FontSource> font);
+		static std::unique_ptr<PdfFont> fromBuiltin(BuiltinFont::Core14 font_name);
+		static std::unique_ptr<PdfFont> fromSource(std::unique_ptr<font::FontSource> font);
 
 		static constexpr int FONT_TYPE1 = 1;
 		static constexpr int FONT_TRUETYPE = 2;
@@ -95,11 +95,11 @@ namespace pdf
 		}
 
 	private:
-		PdfFont(File* doc, std::unique_ptr<pdf::BuiltinFont> builtin_font);
-		PdfFont(File* doc, std::unique_ptr<font::FontFile> font);
+		PdfFont(std::unique_ptr<pdf::BuiltinFont> builtin_font);
+		PdfFont(std::unique_ptr<font::FontFile> font);
 
-		void writeUnicodeCMap(File* doc) const;
-		void writeCIDSet(File* doc) const;
+		void writeUnicodeCMap() const;
+		void writeCIDSet() const;
 
 		mutable std::map<GlyphId, std::vector<char32_t>> m_extra_unicode_mappings {};
 		mutable bool m_did_serialise = false;

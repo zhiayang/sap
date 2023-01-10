@@ -2,9 +2,10 @@
 // Copyright (c) 2022, zhiayang
 // SPDX-License-Identifier: Apache-2.0
 
-#include "pdf/font.h"     // for Font
-#include "pdf/units.h"    // for PdfScalar
-#include "pdf/document.h" // for File
+#include "pdf/file.h"  // for File
+#include "pdf/font.h"  // for Font
+#include "pdf/units.h" // for PdfScalar
+
 
 #include "font/font_file.h"
 
@@ -57,7 +58,7 @@ namespace sap::layout
 
 	pdf::PdfFont* Document::addFont(std::unique_ptr<font::FontSource> font)
 	{
-		auto f = pdf::PdfFont::fromSource(&m_pdf_document, std::move(font));
+		auto f = pdf::PdfFont::fromSource(std::move(font));
 		return m_fonts.emplace_back(std::move(f)).get();
 	}
 
@@ -77,4 +78,12 @@ namespace sap::layout
 		}
 	}
 
+	void Document::write(pdf::Writer* stream)
+	{
+		auto pages = m_page_layout.render();
+		for(auto& page : pages)
+			m_pdf_document.addPage(page);
+
+		m_pdf_document.write(stream);
+	}
 }

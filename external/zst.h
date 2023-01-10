@@ -24,31 +24,34 @@
     Documentation
     =============
 
-    Just a collection of various common utility classes/functions that aren't big enough
-    to justify their own header library.
+    Just a collection of various common utility classes/functions that aren't
+   big enough to justify their own header library.
 
     Macros:
 
     - ZST_USE_STD
-        this is *TRUE* by default. controls whether or not STL type interfaces are used; with it,
-        str_view gains implicit constructors accepting std::string and std::string_view, as well
-        as methods to convert to them (sv() and str()).
+        this is *TRUE* by default. controls whether or not STL type interfaces
+   are used; with it, str_view gains implicit constructors accepting std::string
+   and std::string_view, as well as methods to convert to them (sv() and str()).
 
     - ZST_FREESTANDING
-        this is *FALSE by default; controls whether or not a standard library implementation is
-        available. if not, then memset(), memmove(), memcmp(), strlen(), and strncmp() are forward declared
-        according to the C library specifications, but not defined.
+        this is *FALSE by default; controls whether or not a standard library
+   implementation is available. if not, then memset(), memmove(), memcmp(),
+   strlen(), and strncmp() are forward declared according to the C library
+   specifications, but not defined.
 
     - ZST_HAVE_BUFFER
-        this is *TRUE* by default. controls whether the zst::buffer<T> type is available. If you do not have
-        operator new[] and want to avoid link errors, then set this to false.
+        this is *TRUE* by default. controls whether the zst::buffer<T> type is
+   available. If you do not have operator new[] and want to avoid link errors,
+   then set this to false.
 
 
     Note that ZST_FREESTANDING implies ZST_USE_STD = 0.
 
-    Also note that buffer<T>, while it is itself a RAII type, it does *NOT* correctly RAII its contents.
-    notably, no copy or move constructors will be called on any elements, only destructors. Thus, the
-    element type should be limited to POD types.
+    Also note that buffer<T>, while it is itself a RAII type, it does *NOT*
+   correctly RAII its contents. notably, no copy or move constructors will be
+   called on any elements, only destructors. Thus, the element type should be
+   limited to POD types.
 
     This may change in the future.
 
@@ -136,7 +139,7 @@ namespace zst
 	}
 }
 
-#if defined(__cpp_lib_endian)
+#if (__cplusplus >= 202000L)
 #include <bit>
 #endif
 
@@ -183,7 +186,7 @@ namespace zst
 
 	namespace impl
 	{
-		#if defined(__cpp_lib_endian)
+		#if (__cplusplus >= 202000L)
 			using endian = std::endian;
 		#else
 			// copied from cppref
@@ -302,6 +305,13 @@ namespace zst
 
 			inline size_t find_first_of(str_view sv)
 			{
+#if !ZST_FREESTANDING && ZST_USE_STD
+				auto ret = std::find_first_of(this->ptr, this->ptr + this->len, sv.ptr, sv.ptr + sv.len);
+				if(ret == this->ptr + this->len)
+					return static_cast<size_t>(-1);
+
+				return static_cast<size_t>(ret - this->ptr);
+#else
 				for(size_t i = 0; i < this->len; i++)
 				{
 					for(value_type k : sv)
@@ -310,8 +320,8 @@ namespace zst
 							return i;
 					}
 				}
-
 				return static_cast<size_t>(-1);
+#endif
 			}
 
 			[[nodiscard]] inline str_view drop(size_t n) const
@@ -654,6 +664,112 @@ namespace zst
 	using byte_buffer = impl::buffer<uint8_t>;
 }
 #endif
+
+
+
+namespace zst
+{
+	#if (__cplusplus >= 202000L)
+		#define ZST_NO_UNIQUE_ADDRESS [[no_unique_address]]
+	#else
+		#define ZST_NO_UNIQUE_ADDRESS
+	#endif
+
+	namespace impl
+	{
+		struct default_deleter
+		{
+			default_deleter() = default;
+			explicit default_deleter(void (*user_deleter)(const void*, size_t)) : m_user_deleter(user_deleter) { }
+
+			template <typename T>
+			void operator()(const T* ptr, size_t n)
+			{
+				if(m_user_deleter != nullptr)
+					m_user_deleter(ptr, n);
+				else
+					delete[] ptr;
+			}
+
+			void (*m_user_deleter)(const void*, size_t) = nullptr;
+		};
+	}
+
+	template <typename _ArrayType, typename _Deleter = impl::default_deleter,
+		typename std::enable_if_t<std::is_array_v<std::remove_reference_t<std::remove_cv_t<_ArrayType>>>, int> = 0>
+	struct unique_span
+	{
+		using _TPtr = std::decay_t<std::remove_reference_t<std::remove_cv_t<_ArrayType>>>;
+
+		static_assert(std::is_pointer_v<_TPtr>);
+		using _T = std::remove_pointer_t<_TPtr>;
+
+		template <typename D = _Deleter, typename std::enable_if_t<std::is_default_constructible_v<D>, int> = 0>
+		explicit unique_span(D del = _Deleter{})
+			: m_ptr(nullptr)
+			, m_size(0)
+			, m_deleter(static_cast<D&&>(del)) { }
+
+		template <typename D = _Deleter, typename std::enable_if_t<std::is_default_constructible_v<D>, int> = 0>
+		explicit unique_span(_T* ptr, size_t size, D del = _Deleter{})
+			: m_ptr(ptr)
+			, m_size(size)
+			, m_deleter(static_cast<D&&>(del)) { }
+
+		unique_span(const unique_span&) = delete;
+		unique_span& operator=(const unique_span&) = delete;
+
+		unique_span(unique_span&& other)
+			: m_ptr(other.m_ptr)
+			, m_size(other.m_size)
+			, m_deleter(static_cast<_Deleter&&>(other.m_deleter))
+		{
+			other.m_ptr = nullptr;
+			other.m_size = 0;
+		}
+
+		unique_span& operator=(unique_span&& other)
+		{
+			if(this == &other)
+				return *this;
+
+			m_ptr = other.m_ptr; other.m_ptr = nullptr;
+			m_size = other.m_size; other.m_size = 0;
+			m_deleter = static_cast<_Deleter&&>(other.m_deleter);
+			return *this;
+		}
+
+		~unique_span()
+		{
+			if(m_ptr != nullptr)
+				m_deleter(m_ptr, m_size);
+
+			m_ptr = nullptr;
+			m_size = 0;
+		}
+
+		_T* get() { return m_ptr; }
+		const _T* get() const { return m_ptr; }
+
+		size_t size() const { return m_size; }
+		bool empty() const { return m_size == 0; }
+
+		_T& operator[](size_t n) { return m_ptr[n]; }
+		const _T& operator[](size_t n) const { return m_ptr[n]; }
+
+		_T* release()
+		{
+			auto ret = m_ptr;
+			m_ptr = nullptr;
+			return ret;
+		}
+
+	private:
+		_T* m_ptr;
+		size_t m_size;
+		ZST_NO_UNIQUE_ADDRESS _Deleter m_deleter;
+	};
+}
 
 
 

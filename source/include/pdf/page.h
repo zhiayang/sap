@@ -17,7 +17,7 @@ namespace pdf
 	{
 		Page();
 
-		Dictionary* serialise(File* doc) const;
+		Dictionary* serialise() const;
 
 		void useFont(const PdfFont* font) const;
 		void addObject(PageObject* obj);

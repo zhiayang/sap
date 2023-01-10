@@ -11,7 +11,7 @@
 
 namespace pdf
 {
-	void PdfFont::writeCIDSet(File* doc) const
+	void PdfFont::writeCIDSet() const
 	{
 		auto font_file = dynamic_cast<const font::FontFile*>(m_source.get());
 		if(not font_file)

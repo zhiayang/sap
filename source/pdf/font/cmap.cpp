@@ -18,7 +18,7 @@ namespace pdf
 	static void write_cmap_header(Stream* stream, zst::str_view font_name);
 	static void write_cmap_footer(Stream* stream);
 
-	void PdfFont::writeUnicodeCMap(File* doc) const
+	void PdfFont::writeUnicodeCMap() const
 	{
 		auto font_file = dynamic_cast<const font::FontFile*>(m_source.get());
 		if(not font_file)

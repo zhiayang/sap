@@ -4,14 +4,21 @@
 
 #include "util.h" // for checked_cast
 
-#include "pdf/misc.h"     // for IndirHelper, error
-#include "pdf/object.h"   // for Name, Dictionary, Object, Array, IndirectRef
-#include "pdf/writer.h"   // for Writer
-#include "pdf/document.h" // for createObject, createIndirectObject, File
+#include "pdf/file.h"   // for File
+#include "pdf/misc.h"   // for IndirHelper, error
+#include "pdf/object.h" // for Name, Dictionary, Object, Array, IndirectRef
+#include "pdf/writer.h" // for Writer
+
 
 namespace pdf
 {
 	static constexpr bool PRETTY_PRINT = false;
+
+	size_t getNewResourceId()
+	{
+		static size_t s_next_resource_id = 0;
+		return ++s_next_resource_id;
+	}
 
 	IndirHelper::IndirHelper(Writer* w, const Object* obj) : w(w), indirect(obj->isIndirect())
 	{
@@ -35,33 +42,6 @@ namespace pdf
 		else
 			this->writeFull(w);
 	}
-
-	void Object::makeIndirect(File* doc)
-	{
-		// TODO: should this be an error?
-		if(m_is_indirect)
-			return;
-
-		m_is_indirect = true;
-		m_id = doc->getNewObjectId();
-		m_gen = 0;
-		doc->addObject(this);
-	}
-
-	void Object::refer()
-	{
-		if(not m_is_indirect)
-			return;
-
-		m_reference_count++;
-	}
-
-	bool Object::isReferenced() const
-	{
-		return (not m_is_indirect) || m_reference_count > 0;
-	}
-
-
 
 	void Boolean::writeFull(Writer* w) const
 	{
@@ -162,7 +142,7 @@ namespace pdf
 	void IndirectRef::writeFull(Writer* w) const
 	{
 		auto helper = IndirHelper(w, this);
-		w->write("{} {} R", this->id, this->generation);
+		w->write("{} {} R", m_object->id(), m_object->gen());
 	}
 
 	void Dictionary::add(const Name& n, Object* obj)
@@ -170,13 +150,11 @@ namespace pdf
 		if(auto it = m_values.find(n); it != m_values.end())
 			pdf::error("key '{}' already exists in dictionary", n.name());
 
-		obj->refer();
 		m_values.emplace(n, obj);
 	}
 
 	void Dictionary::addOrReplace(const Name& n, Object* obj)
 	{
-		obj->refer();
 		m_values.insert_or_assign(n, obj);
 	}
 
@@ -196,7 +174,6 @@ namespace pdf
 
 	void Array::append(Object* obj)
 	{
-		obj->refer();
 		m_values.push_back(obj);
 	}
 
@@ -239,59 +216,59 @@ namespace pdf
 
 	Boolean* Boolean::create(bool value)
 	{
-		return createObject<Boolean>(value);
+		return Object::create<Boolean>(value);
 	}
 
 	Integer* Integer::create(int64_t value)
 	{
-		return createObject<Integer>(value);
+		return Object::create<Integer>(value);
 	}
 
 	Decimal* Decimal::create(double value)
 	{
-		return createObject<Decimal>(value);
+		return Object::create<Decimal>(value);
 	}
 
 	String* String::create(zst::str_view value)
 	{
-		return createObject<String>(value);
+		return Object::create<String>(value);
 	}
 
 	Name* Name::create(zst::str_view name)
 	{
-		return createObject<Name>(name);
+		return Object::create<Name>(name);
 	}
 
 	Array* Array::create(std::vector<Object*> objs)
 	{
-		return createObject<Array>(std::move(objs));
+		return Object::create<Array>(std::move(objs));
 	}
 
-	Array* Array::createIndirect(File* doc, std::vector<Object*> objs)
+	Array* Array::createIndirect(std::vector<Object*> objs)
 	{
-		return createIndirectObject<Array>(doc, std::move(objs));
+		return Object::createIndirect<Array>(std::move(objs));
 	}
 
 	Dictionary* Dictionary::create(std::map<Name, Object*> values)
 	{
-		return createObject<Dictionary>(std::move(values));
+		return Object::create<Dictionary>(std::move(values));
 	}
 
-	Dictionary* Dictionary::createIndirect(File* doc, std::map<Name, Object*> values)
+	Dictionary* Dictionary::createIndirect(std::map<Name, Object*> values)
 	{
-		return createIndirectObject<Dictionary>(doc, std::move(values));
+		return Object::createIndirect<Dictionary>(std::move(values));
 	}
 
 	Dictionary* Dictionary::create(const Name& type, std::map<Name, Object*> values)
 	{
-		auto ret = createObject<Dictionary>(std::move(values));
+		auto ret = Object::create<Dictionary>(std::move(values));
 		ret->add(names::Type, const_cast<Name*>(&type));
 		return ret;
 	}
 
-	Dictionary* Dictionary::createIndirect(File* doc, const Name& type, std::map<Name, Object*> values)
+	Dictionary* Dictionary::createIndirect(const Name& type, std::map<Name, Object*> values)
 	{
-		auto ret = createIndirectObject<Dictionary>(doc, std::move(values));
+		auto ret = Object::createIndirect<Dictionary>(std::move(values));
 		ret->add(names::Type, const_cast<Name*>(&type));
 		return ret;
 	}
@@ -301,8 +278,7 @@ namespace pdf
 		if(not ref->isIndirect())
 			pdf::error("cannot make indirect reference to non-indirect object");
 
-		ref->refer();
-		return createObject<IndirectRef>(util::checked_cast<int64_t>(ref->id()), util::checked_cast<int64_t>(ref->gen()));
+		return Object::create<IndirectRef>(ref);
 	}
 
 	Object::~Object()

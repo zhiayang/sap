@@ -1,4 +1,4 @@
-// document.h
+// file.h
 // Copyright (c) 2021, zhiayang
 // SPDX-License-Identifier: Apache-2.0
 
@@ -43,18 +43,4 @@ namespace pdf
 		Dictionary* createPageTree();
 	};
 
-
-	template <typename T, typename... Args, typename = std::enable_if_t<std::is_base_of_v<Object, T>>>
-	inline T* createObject(Args&&... args)
-	{
-		return util::make<T>(static_cast<Args&&>(args)...);
-	}
-
-	template <typename T, typename... Args, typename = std::enable_if_t<std::is_base_of_v<Object, T>>>
-	inline T* createIndirectObject(File* doc, Args&&... args)
-	{
-		auto obj = Object::createIndirect<T>(doc, doc->getNewObjectId(), static_cast<Args&&>(args)...);
-		doc->addObject(obj);
-		return obj;
-	}
 }

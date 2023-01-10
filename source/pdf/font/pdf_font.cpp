@@ -5,11 +5,11 @@
 #include "util.h"  // for hashmap
 #include "types.h" // for GlyphId, GlyphId::notdef
 
+#include "pdf/file.h"              // for File
 #include "pdf/font.h"              // for Font, Font::ENCODING_CID, Font::E...
 #include "pdf/misc.h"              // for error
 #include "pdf/units.h"             // for PdfScalar, Size2d_YDown
 #include "pdf/object.h"            //
-#include "pdf/document.h"          //
 #include "pdf/win_ansi_encoding.h" // for WIN_ANSI
 
 #include "font/tag.h"         // for Tag
@@ -20,7 +20,7 @@
 
 namespace pdf
 {
-	static Dictionary* create_font_descriptor(File* doc, zst::str_view name, const font::FontSource* font)
+	static Dictionary* create_font_descriptor(zst::str_view name, const font::FontSource* font)
 	{
 		const auto& font_metrics = font->metrics();
 		auto units_per_em_scale = font_metrics.units_per_em / 1000.0;
@@ -60,7 +60,7 @@ namespace pdf
 
 		// TODO: use the FontFile to determine what the flags should be. no idea how important this is
 		// for the pdf to display properly but it's probably entirely inconsequential.
-		auto font_desc = Dictionary::createIndirect(doc, names::FontDescriptor,
+		auto font_desc = Dictionary::createIndirect(names::FontDescriptor,
 		    {
 		        { names::FontName, Name::create(name) },
 		        { names::Flags, Integer::create(4) },
@@ -76,17 +76,17 @@ namespace pdf
 		return font_desc;
 	}
 
-	PdfFont::PdfFont(File* doc, std::unique_ptr<pdf::BuiltinFont> source_)
+	PdfFont::PdfFont(std::unique_ptr<pdf::BuiltinFont> source_)
 	    : m_source(std::move(source_))
-	    , m_font_dictionary(Dictionary::createIndirect(doc, names::Font, {}))
-	    , m_glyph_widths_array(Array::createIndirect(doc))
-	    , m_font_resource_name(zpr::sprint("F{}", doc->getNextFontResourceNumber()))
+	    , m_font_dictionary(Dictionary::createIndirect(names::Font, {}))
+	    , m_glyph_widths_array(Array::createIndirect())
+	    , m_font_resource_name(zpr::sprint("F{}", pdf::getNewResourceId()))
 	{
 		auto* builtin_src = static_cast<BuiltinFont*>(m_source.get());
 
 		this->font_type = FONT_TYPE1;
 
-		auto descriptor = create_font_descriptor(doc, builtin_src->name(), m_source.get());
+		auto descriptor = create_font_descriptor(builtin_src->name(), m_source.get());
 
 		m_font_dictionary->add(names::FontDescriptor, descriptor);
 		m_font_dictionary->add(names::Widths, m_glyph_widths_array);
@@ -98,11 +98,11 @@ namespace pdf
 		m_font_dictionary->add(names::Encoding, Name::create("StandardEncoding"));
 	}
 
-	PdfFont::PdfFont(File* doc, std::unique_ptr<font::FontFile> font_file_)
+	PdfFont::PdfFont(std::unique_ptr<font::FontFile> font_file_)
 	    : m_source(std::move(font_file_))
-	    , m_font_dictionary(Dictionary::createIndirect(doc, names::Font, {}))
-	    , m_glyph_widths_array(Array::createIndirect(doc))
-	    , m_font_resource_name(zpr::sprint("F{}", doc->getNextFontResourceNumber()))
+	    , m_font_dictionary(Dictionary::createIndirect(names::Font, {}))
+	    , m_glyph_widths_array(Array::createIndirect())
+	    , m_font_resource_name(zpr::sprint("F{}", pdf::getNewResourceId()))
 	{
 		auto file_src = static_cast<font::FontFile*>(m_source.get());
 
@@ -130,8 +130,8 @@ namespace pdf
 		auto basefont_name = Name::create(m_pdf_font_name);
 
 		// start with making the CIDFontType2/0 entry.
-		auto cidfont_dict = Dictionary::createIndirect(doc, names::Font, {});
-		auto descriptor = create_font_descriptor(doc, m_pdf_font_name, file_src);
+		auto cidfont_dict = Dictionary::createIndirect(names::Font, {});
+		auto descriptor = create_font_descriptor(m_pdf_font_name, file_src);
 
 		cidfont_dict->add(names::W, m_glyph_widths_array);
 		cidfont_dict->add(names::FontDescriptor, descriptor);
@@ -166,10 +166,10 @@ namespace pdf
 		*/
 
 		// we need a CIDSet for subset fonts
-		m_cidset = Stream::create(doc, {});
+		m_cidset = Stream::create();
 		descriptor->add(names::CIDSet, IndirectRef::create(m_cidset));
 
-		m_embedded_contents = Stream::create(doc, {});
+		m_embedded_contents = Stream::create();
 		m_embedded_contents->setCompressed(true);
 
 		if(file_src->hasTrueTypeOutlines())
@@ -187,11 +187,11 @@ namespace pdf
 		}
 
 		// make a cmap to use for ToUnicode
-		m_unicode_cmap = Stream::create(doc, {});
+		m_unicode_cmap = Stream::create();
 		m_unicode_cmap->setCompressed(true);
 
 		// finally, construct the top-level Type0 font.
-		m_font_dictionary = Dictionary::createIndirect(doc, names::Font, {});
+		m_font_dictionary = Dictionary::createIndirect(names::Font, {});
 		m_font_dictionary->add(names::Subtype, names::Type0.ptr());
 		m_font_dictionary->add(names::BaseFont, basefont_name);
 
@@ -306,21 +306,21 @@ namespace pdf
 
 
 
-	std::unique_ptr<PdfFont> PdfFont::fromSource(File* doc, std::unique_ptr<font::FontSource> font)
+	std::unique_ptr<PdfFont> PdfFont::fromSource(std::unique_ptr<font::FontSource> font)
 	{
 		auto ptr = font.release();
 		if(auto x = dynamic_cast<font::FontFile*>(ptr); x != nullptr)
-			return std::unique_ptr<PdfFont>(new PdfFont(doc, std::unique_ptr<font::FontFile>(x)));
+			return std::unique_ptr<PdfFont>(new PdfFont(std::unique_ptr<font::FontFile>(x)));
 
 		else if(auto x = dynamic_cast<pdf::BuiltinFont*>(ptr); x != nullptr)
-			return std::unique_ptr<PdfFont>(new PdfFont(doc, std::unique_ptr<pdf::BuiltinFont>(x)));
+			return std::unique_ptr<PdfFont>(new PdfFont(std::unique_ptr<pdf::BuiltinFont>(x)));
 
 		else
 			sap::internal_error("unsupported font source");
 	}
 
-	std::unique_ptr<PdfFont> PdfFont::fromBuiltin(File* doc, BuiltinFont::Core14 font_name)
+	std::unique_ptr<PdfFont> PdfFont::fromBuiltin(BuiltinFont::Core14 font_name)
 	{
-		return std::unique_ptr<PdfFont>(new PdfFont(doc, BuiltinFont::get(font_name)));
+		return std::unique_ptr<PdfFont>(new PdfFont(BuiltinFont::get(font_name)));
 	}
 }

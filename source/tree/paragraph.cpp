@@ -119,7 +119,7 @@ namespace sap::tree
 
 			vec.push_back(std::make_unique<Text>(orig_span.str(), text->style()));
 		}
-		else
+		else if(not orig_span.empty())
 		{
 			std::u32string lowercased;
 			lowercased.reserve(orig_span.size());
