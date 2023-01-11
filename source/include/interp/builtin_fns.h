@@ -29,5 +29,7 @@ namespace sap::interp
 
 		ErrorOr<EvalResult> print(Evaluator* cs, std::vector<Value>& args);
 		ErrorOr<EvalResult> println(Evaluator* cs, std::vector<Value>& args);
+
+		ErrorOr<EvalResult> load_image(Evaluator* cs, std::vector<Value>& args);
 	}
 }

@@ -39,6 +39,9 @@ namespace sap::tree
 					continue;
 				}
 
+				if(value_or_empty.get().isTreeBlockObj())
+					error("interp", "TODO: unsupported block object in paragraph!");
+
 				auto tmp = cs->evaluator().convertValueToText(std::move(value_or_empty).take());
 				if(tmp.is_err())
 					error("interp", "convertion to text failed: {}", tmp.error());
@@ -218,4 +221,10 @@ namespace sap::tree
 	{
 		m_contents.push_back(std::move(obj));
 	}
+
+	void Paragraph::addObjects(std::vector<std::unique_ptr<InlineObject>> objs)
+	{
+		m_contents.insert(m_contents.end(), std::move_iterator(objs.begin()), std::move_iterator(objs.end()));
+	}
+
 }

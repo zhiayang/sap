@@ -37,6 +37,12 @@ namespace sap::interp
 		const InlineObjects& getTreeInlineObj() const;
 		InlineObjects takeTreeInlineObj() &&;
 
+		const tree::BlockObject& getTreeBlockObj() const;
+		std::unique_ptr<tree::BlockObject> takeTreeBlockObj() &&;
+
+		std::string getUtf8String() const;
+		std::u32string getUtf32String() const;
+
 		const std::vector<Value>& getArray() const;
 		std::vector<Value> takeArray() &&;
 
@@ -64,7 +70,9 @@ namespace sap::interp
 		bool isFloating() const;
 		bool isFunction() const;
 		bool isOptional() const;
+		bool isTreeBlockObj() const;
 		bool isTreeInlineObj() const;
+
 		bool isPrintable() const;
 
 		Value(const Value&) = delete;
@@ -84,6 +92,7 @@ namespace sap::interp
 		static Value string(const std::u32string& str);
 		static Value array(const Type* elm, std::vector<Value> arr);
 		static Value treeInlineObject(InlineObjects obj);
+		static Value treeBlockObject(std::unique_ptr<tree::BlockObject> obj);
 		static Value structure(const StructType* ty, std::vector<Value> fields);
 		static Value nullPointer();
 		static Value pointer(const Type* elm_type, const Value* value);
@@ -101,6 +110,7 @@ namespace sap::interp
 		void steal_from(Value&& val);
 
 		static InlineObjects clone_tios(const InlineObjects& from);
+		static std::unique_ptr<tree::BlockObject> clone_tbos(const tree::BlockObject& from);
 
 		const Type* m_type;
 
@@ -114,6 +124,7 @@ namespace sap::interp
 			FnType v_function;
 
 			InlineObjects v_inline_obj;
+			std::unique_ptr<tree::BlockObject> v_block_obj;
 			std::vector<Value> v_array;
 			const Value* v_pointer;
 		};

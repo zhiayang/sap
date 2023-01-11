@@ -153,6 +153,12 @@ namespace sap::interp
 		return obj_type;
 	}
 
+	const Type* Type::makeTreeBlockObj()
+	{
+		static Type* obj_type = new Type(KIND_TREE_BLOCK_OBJ);
+		return obj_type;
+	}
+
 	const PointerType* Type::makePointer(const Type* element_type, bool is_mutable)
 	{
 		return get_or_add_type(new PointerType(element_type, is_mutable));

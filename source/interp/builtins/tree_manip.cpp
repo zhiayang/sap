@@ -110,4 +110,25 @@ namespace sap::interp::builtin
 		assert(args.size() == 1);
 		return do_apply_style(ev, args[0], &g_bold_italic_style);
 	}
+
+
+
+
+	ErrorOr<EvalResult> load_image(Evaluator* ev, std::vector<Value>& args)
+	{
+		// TODO: maybe don't assert?
+		assert(args.size() == 3);
+
+		auto img_path = args[0].getUtf8String();
+		zpr::println("loading image '{}'", img_path);
+
+		auto img_width = sap::Length(args[1].getFloating());
+		std::optional<sap::Length> img_height {};
+
+		if(auto tmp = std::move(args[2]).takeOptional(); tmp.has_value())
+			img_height = sap::Length(tmp->getFloating());
+
+		auto img_obj = tree::Image::fromImageFile(img_path, img_width, img_height);
+		return EvalResult::ofValue(Value::treeBlockObject(std::move(img_obj)));
+	}
 }

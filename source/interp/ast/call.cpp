@@ -198,27 +198,20 @@ namespace sap::interp
 			auto ordered_args = TRY(arrange_argument_values(params, std::move(processed_args), "function", "argument",
 			    "argument for parameter"));
 
-			for(size_t i = 0; i < ordered_args.size(); i++)
+			for(size_t i = 0; i < params.size(); i++)
 			{
+				auto param_type = std::get<1>(params[i]);
 				if(auto it = ordered_args.find(i); it == ordered_args.end())
 				{
-					if(auto fdecl = dynamic_cast<const FunctionDecl*>(decl); fdecl != nullptr)
-					{
-						auto& params = fdecl->params();
-						if(params[i].default_value == nullptr)
-							return ErrFmt("missing argument for parameter '{}'", params[i].name);
+					if(std::get<2>(params[i]) == nullptr)
+						return ErrFmt("missing argument for parameter '{}'", std::get<0>(params[i]));
 
-						auto tmp = TRY_VALUE(params[i].default_value->evaluate(ev));
-						final_args.push_back(std::move(tmp));
-					}
-					else
-					{
-						return ErrFmt("????");
-					}
+					auto tmp = TRY_VALUE(std::get<2>(params[i])->evaluate(ev));
+					final_args.push_back(ev->castValue(std::move(tmp), param_type));
 				}
 				else
 				{
-					final_args.push_back(std::move(it->second));
+					final_args.push_back(ev->castValue(std::move(it->second), param_type));
 				}
 			}
 

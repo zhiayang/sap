@@ -2,6 +2,8 @@
 // Copyright (c) 2022, zhiayang
 // SPDX-License-Identifier: Apache-2.0
 
+#include <utf8proc/utf8proc.h>
+
 #include "interp/tree.h"
 #include "interp/value.h"
 
@@ -54,6 +56,18 @@ namespace sap::interp
 		return std::move(v_inline_obj);
 	}
 
+	auto Value::getTreeBlockObj() const -> const tree::BlockObject&
+	{
+		assert(this->isTreeBlockObj());
+		return *v_block_obj;
+	}
+
+	auto Value::takeTreeBlockObj() && -> std::unique_ptr<tree::BlockObject>
+	{
+		assert(this->isTreeBlockObj());
+		return std::move(v_block_obj);
+	}
+
 	const std::vector<Value>& Value::getArray() const
 	{
 		assert(this->isArray());
@@ -65,6 +79,37 @@ namespace sap::interp
 		assert(this->isArray());
 		return std::move(v_array);
 	}
+
+	std::string Value::getUtf8String() const
+	{
+		assert(this->isArray());
+
+		std::string ret {};
+		ret.reserve(v_array.size());
+
+		for(size_t i = 0; i < v_array.size(); i++)
+		{
+			uint8_t buf[4] {};
+			auto n = utf8proc_encode_char((int32_t) v_array[i].getChar(), &buf[0]);
+			ret.append((char*) &buf[0], (size_t) n);
+		}
+
+		return ret;
+	}
+
+	std::u32string Value::getUtf32String() const
+	{
+		assert(this->isArray());
+
+		std::u32string ret {};
+		ret.reserve(v_array.size());
+
+		for(size_t i = 0; i < v_array.size(); i++)
+			ret += v_array[i].getChar();
+
+		return ret;
+	}
+
 
 	Value& Value::getStructField(size_t idx)
 	{
@@ -161,9 +206,13 @@ namespace sap::interp
 		{
 			return U"function";
 		}
+		else if(this->isTreeBlockObj())
+		{
+			return U"Block{...}";
+		}
 		else if(this->isTreeInlineObj())
 		{
-			return U"tree_inline_obj";
+			return U"Inline{...}";
 		}
 		else if(this->isOptional())
 		{
@@ -176,13 +225,7 @@ namespace sap::interp
 		{
 			if(m_type == Type::makeString())
 			{
-				std::u32string ret {};
-				ret.reserve(v_array.size());
-
-				for(size_t i = 0; i < v_array.size(); i++)
-					ret += v_array[i].getChar();
-
-				return ret;
+				return this->getUtf32String();
 			}
 			else
 			{
@@ -243,6 +286,10 @@ namespace sap::interp
 	bool Value::isTreeInlineObj() const
 	{
 		return m_type->isTreeInlineObj();
+	}
+	bool Value::isTreeBlockObj() const
+	{
+		return m_type->isTreeBlockObj();
 	}
 
 	bool Value::isPrintable() const
@@ -340,6 +387,13 @@ namespace sap::interp
 		return ret;
 	}
 
+	Value Value::treeBlockObject(std::unique_ptr<tree::BlockObject> obj)
+	{
+		auto ret = Value(Type::makeTreeBlockObj());
+		new(&ret.v_block_obj) decltype(ret.v_block_obj)(std::move(obj));
+		return ret;
+	}
+
 	Value Value::structure(const StructType* ty, std::vector<Value> fields)
 	{
 		auto ret = Value(ty);
@@ -412,6 +466,11 @@ namespace sap::interp
 		{
 			val.v_function = v_function;
 		}
+		else if(m_type->isTreeBlockObj())
+		{
+			new(&val.v_block_obj) decltype(v_block_obj)();
+			val.v_block_obj = Value::clone_tbos(*v_block_obj);
+		}
 		else if(m_type->isTreeInlineObj())
 		{
 			new(&val.v_inline_obj) decltype(v_inline_obj)();
@@ -465,6 +524,8 @@ namespace sap::interp
 	{
 		if(m_type->isTreeInlineObj())
 			v_inline_obj.~decltype(v_inline_obj)();
+		else if(m_type->isTreeBlockObj())
+			v_block_obj.~decltype(v_block_obj)();
 		else if(m_type->isArray() || m_type->isStruct() || m_type->isOptional())
 			v_array.~decltype(v_array)();
 	}
@@ -484,6 +545,8 @@ namespace sap::interp
 			v_function = std::move(val.v_function);
 		else if(m_type->isPointer() || m_type->isNullPtr())
 			v_pointer = std::move(val.v_pointer);
+		else if(m_type->isTreeBlockObj())
+			new(&v_block_obj) decltype(v_block_obj)(std::move(val.v_block_obj));
 		else if(m_type->isTreeInlineObj())
 			new(&v_inline_obj) decltype(v_inline_obj)(std::move(val.v_inline_obj));
 		else if(m_type->isArray() || m_type->isStruct() || m_type->isOptional())
@@ -508,5 +571,30 @@ namespace sap::interp
 		}
 
 		return ret;
+	}
+
+	std::unique_ptr<tree::BlockObject> Value::clone_tbos(const tree::BlockObject& from)
+	{
+		zpr::println("warning: cloning tbo!");
+		if(auto para = dynamic_cast<const tree::Paragraph*>(&from); para != nullptr)
+		{
+			auto ret = std::make_unique<tree::Paragraph>();
+			ret->addObjects(clone_tios(para->contents()));
+			return ret;
+		}
+		else if(auto img = dynamic_cast<const tree::Image*>(&from); img != nullptr)
+		{
+			auto new_data = new uint8_t[img->span().size()];
+			memcpy(new_data, img->span().data(), img->span().size());
+
+			return std::make_unique<tree::Image>(zst::unique_span<uint8_t[]>(new_data, img->span().size()), img->size());
+		}
+		else if(auto scr = dynamic_cast<const tree::ScriptBlock*>(&from); scr != nullptr)
+		{
+			sap::internal_error("???? script TBO leaked out!");
+		}
+
+		// TODO
+		return nullptr;
 	}
 }

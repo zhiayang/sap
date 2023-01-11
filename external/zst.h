@@ -116,9 +116,13 @@
 // forward declare the zpr namespace...
 namespace zpr
 {
+	// if zpr was included before us, then we don't forward declare.
+#if !defined(ZPR_USE_STD) && !defined(ZPR_FREESTANDING)
 	// as well as the print_formatter.
 	template <typename, typename>
 	struct print_formatter;
+#endif
+
 }
 
 namespace zst
@@ -756,6 +760,8 @@ namespace zst
 
 		_T& operator[](size_t n) { return m_ptr[n]; }
 		const _T& operator[](size_t n) const { return m_ptr[n]; }
+
+		zst::span<_T> span() const { return zst::span<_T>(m_ptr, m_size); }
 
 		_T* release()
 		{

@@ -28,6 +28,7 @@ namespace sap::interp
 		bool isOptional() const { return m_kind == KIND_OPTIONAL; }
 		bool isFloating() const { return m_kind == KIND_FLOATING; }
 		bool isFunction() const { return m_kind == KIND_FUNCTION; }
+		bool isTreeBlockObj() const { return m_kind == KIND_TREE_BLOCK_OBJ; }
 		bool isTreeInlineObj() const { return m_kind == KIND_TREE_INLINE_OBJ; }
 
 		// the conversion functions can't be inline because dynamic_cast needs
@@ -58,6 +59,7 @@ namespace sap::interp
 		static const Type* makeInteger();
 		static const Type* makeNullPtr();
 		static const Type* makeFloating();
+		static const Type* makeTreeBlockObj();
 		static const Type* makeTreeInlineObj();
 
 		static const PointerType* makePointer(const Type* element_type, bool is_mutable);
@@ -88,6 +90,7 @@ namespace sap::interp
 			KIND_POINTER = 10,
 			KIND_NULLPTR = 11,
 			KIND_OPTIONAL = 12,
+			KIND_TREE_BLOCK_OBJ = 13,
 		};
 
 		Kind m_kind;

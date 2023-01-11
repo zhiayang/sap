@@ -13,6 +13,7 @@
 #include <cstddef>
 #include <cstdint>
 #include <utility>
+#include <concepts>
 #include <optional>
 #include <algorithm>
 #include <filesystem>

@@ -12,6 +12,8 @@ namespace pdf
 	    : m_stream(Stream::create())
 	    , m_resource_name(zpr::sprint("X{}", pdf::getNewResourceId()))
 	{
+		m_stream->dictionary()->add(names::Type, names::XObject.ptr());
+		m_stream->setCompressed(true);
 	}
 
 

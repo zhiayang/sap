@@ -53,8 +53,13 @@ namespace sap::interp
 		using BFD = BuiltinFunctionDefn;
 		using Param = FunctionDecl::Param;
 
-		auto any = PType::named(TYPE_ANY);
-		auto tio = PType::named(TYPE_TREE_INLINE);
+		auto t_any = PType::named(TYPE_ANY);
+		auto t_str = PType::named(TYPE_STRING);
+		auto t_void = PType::named(TYPE_VOID);
+		auto t_float = PType::named(TYPE_FLOAT);
+
+		auto t_tbo = PType::named(TYPE_TREE_BLOCK);
+		auto t_tio = PType::named(TYPE_TREE_INLINE);
 
 		auto bstyle_t = PType::named(builtin::BStyle::name);
 
@@ -65,20 +70,26 @@ namespace sap::interp
 
 		auto _ = ts->pushTree(builtin_ns);
 
-		define_builtin("bold1", makeParamList(Param { .name = "_", .type = any }), tio, &builtin::bold1);
-		define_builtin("italic1", makeParamList(Param { .name = "_", .type = any }), tio, &builtin::italic1);
-		define_builtin("bold_italic1", makeParamList(Param { .name = "_", .type = any }), tio, &builtin::bold_italic1);
+		define_builtin("bold1", makeParamList(Param { .name = "_", .type = t_any }), t_tio, &builtin::bold1);
+		define_builtin("italic1", makeParamList(Param { .name = "_", .type = t_any }), t_tio, &builtin::italic1);
+		define_builtin("bold_italic1", makeParamList(Param { .name = "_", .type = t_any }), t_tio, &builtin::bold_italic1);
 
 		define_builtin("apply_style",
 		    makeParamList(                               //
 		        Param { .name = "1", .type = bstyle_t }, //
-		        Param { .name = "2", .type = tio }),
-		    tio, &builtin::apply_style);
+		        Param { .name = "2", .type = t_tio }),
+		    t_tio, &builtin::apply_style);
 
+		define_builtin("load_image",
+		    makeParamList(                              //
+		        Param { .name = "1", .type = t_str },   //
+		        Param { .name = "2", .type = t_float }, //
+		        Param { .name = "3", .type = PType::optional(t_float), .default_value = std::make_unique<interp::NullLit>() }),
+		    t_tbo, &builtin::load_image);
 
 		// TODO: make these variadic
-		define_builtin("print", makeParamList(Param { .name = "_", .type = any }), tio, &builtin::print);
-		define_builtin("println", makeParamList(Param { .name = "_", .type = any }), tio, &builtin::println);
+		define_builtin("print", makeParamList(Param { .name = "_", .type = t_any }), t_void, &builtin::print);
+		define_builtin("println", makeParamList(Param { .name = "_", .type = t_any }), t_void, &builtin::println);
 	}
 
 	void defineBuiltins(Typechecker* ts, DefnTree* ns)

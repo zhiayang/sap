@@ -305,6 +305,9 @@ namespace pdf
 		static const auto ColorSpace = pdf::Name("ColorSpace");
 		static const auto Contents = pdf::Name("Contents");
 		static const auto Count = pdf::Name("Count");
+		static const auto DeviceCMYK = pdf::Name("DeviceCMYK");
+		static const auto DeviceGray = pdf::Name("DeviceGray");
+		static const auto DeviceRGB = pdf::Name("DeviceRGB");
 		static const auto DW = pdf::Name("DW");
 		static const auto Decode = pdf::Name("Decode");
 		static const auto DescendantFonts = pdf::Name("DescendantFonts");

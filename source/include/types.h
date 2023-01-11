@@ -5,6 +5,8 @@
 #pragma once
 
 #include <bit>
+#include <zpr.h>
+#include <cstdint>
 #include <type_traits>
 
 enum class GlyphId : uint32_t

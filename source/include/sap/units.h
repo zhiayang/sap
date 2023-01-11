@@ -4,10 +4,6 @@
 
 #pragma once
 
-#include "units.h" // for mm, BASE_COORD_SYSTEM, Scalar, Vector2
-
-#include "sap/units.h"
-
 namespace sap
 {
 	using Length = dim::Scalar<dim::units::mm>;

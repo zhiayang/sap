@@ -7,20 +7,42 @@
 
 namespace pdf
 {
-	Image::Image(PdfScalar width, PdfScalar height, zst::byte_span image) : XObject(names::Image)
+	Image::Image(Data image_data, PdfScalar display_width, PdfScalar display_height)
+	    : XObject(names::Image)
+	    , m_image_data(std::move(image_data))
+	    , m_width(display_width)
+	    , m_height(display_height)
 	{
 		auto dict = m_stream->dictionary();
-		dict->add(names::Width, Decimal::create(width.value()));
-		dict->add(names::Height, Decimal::create(height.value()));
+
+		dict->add(names::Subtype, names::Image.ptr());
+		dict->add(names::Width, Decimal::create(m_width.value()));
+		dict->add(names::Height, Decimal::create(m_height.value()));
+
+		auto one = Decimal::create(1.0);
+		auto zero = Decimal::create(0.0);
+
+		dict->add(names::ColorSpace, names::DeviceRGB.ptr());
+		dict->add(names::BitsPerComponent, Integer::create(8));
+		dict->add(names::Decode, Array::create(zero, one, zero, one, zero, one));
+
+		m_stream->append(m_image_data.bytes.data(), m_image_data.bytes.size());
 	}
 
 	void Image::writePdfCommands(Stream* stream) const
 	{
-		auto str_buf = zst::buffer<char>();
-		auto appender = [&str_buf](const char* c, size_t n) {
-			str_buf.append(c, n);
+		auto buf = zst::buffer<char>();
+		auto appender = [&buf](const char* c, size_t n) {
+			buf.append(c, n);
 		};
 
-		// return zpr::sprint("/{} Do\n", m_resource_name);
+		zpr::cprint(appender,
+		    "q\n"                // save state
+		    "{} 0 0 {} 0 0 cm\n" // scale by width x height
+		    "/{} Do\n"           // draw the image (xobject)
+		    "Q\n",               // restore state
+		    m_width.value(), m_height.value(), m_resource_name);
+
+		stream->append(buf.bytes().data(), buf.size());
 	}
 }
