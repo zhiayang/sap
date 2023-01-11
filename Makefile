@@ -27,12 +27,13 @@ CXXOBJ              := $(CXXSRC:%.cpp=$(OUTPUT_DIR)/%.cpp.o)
 CXXLIBOBJ           := $(filter-out $(OUTPUT_DIR)/source/main.cpp.o,$(CXXOBJ))
 CXXDEPS             := $(CXXOBJ:.o=.d)
 
-CXXHDRS             := $(shell find source -iname "*.h" -print)
-CXXGCHS             := $(CXXHDRS:%.h=$(OUTPUT_DIR)/%.h.gch)
-CXXGCHS             := $(filter-out $(OUTPUT_DIR)/source/include/defs.h.gch,$(CXXGCHS))
-CXXGCHS             := $(filter-out $(OUTPUT_DIR)/source/include/pool.h.gch,$(CXXGCHS))
-CXXGCHS             := $(filter-out $(OUTPUT_DIR)/source/include/units.h.gch,$(CXXGCHS))
-CXXGCHS             := $(filter-out $(OUTPUT_DIR)/source/include/error.h.gch,$(CXXGCHS))
+CXXHDR              := $(shell find source -iname "*.h" -print)
+
+SPECIAL_HEADERS     := $(addprefix source/include/,defs.h pool.h util.h units.h error.h types.h)
+SPECIAL_HDRS_COMPDB := $(SPECIAL_HEADERS:%=%.special_compile_db)
+
+CXX_COMPDB_HDRS     := $(filter-out $(SPECIAL_HEADERS),$(CXXHDR))
+CXX_COMPDB          := $(CXX_COMPDB_HDRS:%=%.compile_db) $(CXXSRC:%=%.compile_db)
 
 TESTSRC             = $(shell find test -iname "*.cpp" -print)
 TESTOBJ             = $(TESTSRC:%.cpp=$(OUTPUT_DIR)/%.cpp.o)
@@ -92,7 +93,7 @@ all: build test
 
 build: $(OUTPUT_BIN)
 
-build-headers: $(CXXGCHS)
+compdb: $(CXX_COMPDB) $(SPECIAL_HDRS_COMPDB)
 
 test: $(TESTS)
 
@@ -142,10 +143,19 @@ $(PRECOMP_OBJ): $(PRECOMP_GCH)
 	@mkdir -p $(shell dirname $@)
 	@$(CXX) $(CXXFLAGS) $(WARNINGS) -c -o $@ $<
 
-$(OUTPUT_DIR)/%.h.gch: %.h $(PRECOMP_GCH)
-	@printf "# precompiling header $<\n"
-	@mkdir -p $(shell dirname $@)
-	@$(CXX) $(CXXFLAGS) $(WARNINGS) $(INCLUDES) -include $(PRECOMP_INCLUDE) -MMD -MP -x c++-header -o $@ $<
+
+%.h.compile_db: %.h
+	@$(CXX) $(CXXFLAGS) $(WARNINGS) $(INCLUDES) -include $(PRECOMP_HDR) -x c++-header -o /dev/null $<
+
+%.h.special_compile_db: %.h
+	@$(CXX) $(CXXFLAGS) $(WARNINGS) $(INCLUDES) -include $(PRECOMP_HDR) -x c++-header -o /dev/null $<
+
+%.cpp.compile_db: %.cpp
+	@$(CXX) $(CXXFLAGS) $(WARNINGS) $(INCLUDES) -include $(PRECOMP_HDR) -o /dev/null $<
+
+
+
+
 
 clean:
 	-@rm -fr $(OUTPUT_DIR)
