@@ -21,6 +21,8 @@ namespace sap::layout
 	Cursor Image::fromTree(interp::Interpreter* cs, RectPageLayout* layout, Cursor cursor, const Style* parent_style,
 	    const tree::DocumentObject* doc_obj)
 	{
+		cursor = layout->newLineFrom(cursor, 0);
+
 		auto tree_img = static_cast<const tree::Image*>(doc_obj);
 
 		auto img = std::unique_ptr<Image>(new Image(tree_img->span(), tree_img->pixelWidth(), tree_img->pixelHeight()));
@@ -42,7 +44,8 @@ namespace sap::layout
 		        .height = m_pixel_height,
 		        .bits_per_pixel = 8,
 		    },
-		    m_size.x().into(), m_size.y().into());
+		    m_size.into(), //
+		    page->convertVector2(m_position.pos_on_page.into<pdf::Position2d_YDown>()));
 
 		page->addObject(page_obj);
 	}

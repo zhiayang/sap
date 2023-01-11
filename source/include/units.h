@@ -80,6 +80,16 @@ namespace dim
 
 			_Type value;
 		};
+
+		template <typename _System, typename _Type>
+		struct Vector2Converter
+		{
+			using value_type = _Type;
+			using unit_system = _System;
+
+			_Type value1;
+			_Type value2;
+		};
 	}
 
 	template <typename _System, typename _Type>
@@ -257,6 +267,18 @@ namespace dim
 		{
 			return Vector2<_Target, coord_system>((this->_x * scale_factor) / _Target::scale_factor,
 			    (this->_y * scale_factor) / _Target::scale_factor);
+		}
+
+
+		// converting stuff
+		constexpr auto into() const { return impl::Vector2Converter<_System, _Type> { _x._x, _y._x }; }
+
+		template <typename _FromSys, typename _FromType>
+		constexpr Vector2(impl::Vector2Converter<_FromSys, _FromType> conv)
+		    requires(impl::can_convert_units<typename _FromSys::Tag, unit_tag_type>::value)
+		{
+			this->_x = scalar_type(conv.value1 * _FromSys::scale_factor) / scale_factor;
+			this->_y = scalar_type(conv.value2 * _FromSys::scale_factor) / scale_factor;
 		}
 
 		constexpr const scalar_type& x() const { return this->_x; }

@@ -27,6 +27,7 @@
 
 struct PDF_COORD_Y_UP;
 struct PDF_COORD_Y_DOWN;
+struct PDF_COORD_ANY;
 struct PDF_UNIT_TYPOGRAPHIC;
 struct PDF_UNIT_GLYPH_SPACE;
 struct PDF_UNIT_TEXT_SPACE;
@@ -56,6 +57,9 @@ MAKE_UNITS_COMPATIBLE(PDF_UNIT_TEXT_SPACE, PDF_UNIT_GLYPH_SPACE);
 MAKE_COORD_SYSTEMS_COMPATIBLE(PDF_COORD_Y_DOWN, BASE_COORD_SYSTEM);
 MAKE_COORD_SYSTEMS_COMPATIBLE(BASE_COORD_SYSTEM, PDF_COORD_Y_DOWN);
 
+// base is convertible to any
+MAKE_COORD_SYSTEMS_COMPATIBLE(PDF_COORD_ANY, BASE_COORD_SYSTEM);
+MAKE_COORD_SYSTEMS_COMPATIBLE(BASE_COORD_SYSTEM, PDF_COORD_ANY);
 
 namespace pdf
 {
@@ -64,7 +68,8 @@ namespace pdf
 	using Vector2_YUp = dim::Vector2<dim::units::pdf_typographic_unit, PDF_COORD_Y_UP>;
 	using Vector2_YDown = dim::Vector2<dim::units::pdf_typographic_unit, PDF_COORD_Y_DOWN>;
 
-	using Size2d = Vector2_YUp;
+	using Size2d = dim::Vector2<dim::units::pdf_typographic_unit, PDF_COORD_ANY>;
+
 	using Offset2d = Vector2_YUp;
 	using Position2d = Vector2_YUp;
 

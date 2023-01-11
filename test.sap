@@ -205,7 +205,7 @@ Praesent est augue, varius in turpis ut, pretium ultrices risus. Aliquam libero 
 
 Sed non leo nunc. Mauris condimentum dapibus iaculis. Phasellus ullamcorper pellentesque nisl, vel viverra tortor consequat ac. Nulla venenatis, tortor at tincidunt varius, arcu eros tempus sem, ac maximus elit sapien in urna. Sed pellentesque mauris eget lorem lacinia, ut auctor augue ornare. Maecenas at facilisis lorem. Aliquam rhoncus in ipsum a pretium. Maecenas non tempor quam, iaculis fermentum felis. Morbi porttitor tellus a mollis scelerisque. Nullam sit amet pharetra nunc. In consectetur sapien vitae tortor tincidunt lobortis. Nulla malesuada mauris vitae velit commodo, ac ultricies nisl lobortis. Nam commodo odio accumsan lacus viverra, in egestas mi convallis.
 
-\builtin::load_image("asdf.png", 15)
+\builtin::load_image("asdf.png", 80)
 
 Aenean condimentum arcu vel lacinia euismod. Curabitur aliquam eleifend ligula quis volutpat. Vestibulum viverra eros nec finibus eleifend. Donec sit amet blandit velit. Sed eu porttitor purus. Nulla facilisi. Quisque sit amet turpis hendrerit, commodo libero sed, pellentesque felis. In hac habitasse platea dictumst. Praesent egestas odio nulla, vitae viverra massa scelerisque eu. Vestibulum auctor ligula nec eleifend facilisis. Aliquam vitae tortor eu mauris lobortis consectetur. Vestibulum venenatis eleifend suscipit. Donec placerat nunc sed velit porta, quis interdum arcu eleifend. Etiam vitae semper nibh, sit amet tempor nibh. Vivamus vel facilisis lacus, vitae vulputate augue.
 

@@ -40,12 +40,12 @@ namespace pdf
 			size_t bits_per_pixel;
 		};
 
-		Image(Data image_data, PdfScalar display_width, PdfScalar display_height);
+		Image(Data image_data, Size2d display_size, Position2d display_position);
 		virtual void writePdfCommands(Stream* stream) const override;
 
 	private:
 		Data m_image_data;
-		PdfScalar m_width;
-		PdfScalar m_height;
+		Size2d m_display_size;
+		Position2d m_display_position;
 	};
 }
