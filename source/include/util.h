@@ -375,3 +375,5 @@ namespace zpr
 		}
 	};
 }
+
+using util::checked_cast;

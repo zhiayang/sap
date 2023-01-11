@@ -95,8 +95,13 @@ namespace sap::tree
 		zst::byte_span span() const { return m_image_data.span(); }
 		sap::Vector2 size() const { return m_size; }
 
+		size_t pixelWidth() const { return m_pixel_width; }
+		size_t pixelHeight() const { return m_pixel_height; }
+
 	private:
 		zst::unique_span<uint8_t[]> m_image_data;
+		size_t m_pixel_width;
+		size_t m_pixel_height;
 		sap::Vector2 m_size;
 	};
 

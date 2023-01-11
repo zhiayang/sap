@@ -47,34 +47,11 @@ namespace sap::layout
 		virtual ~LayoutObject() = default;
 
 		/*
-		    Place (lay out) the object into the given region, using the `parent_style` as a fallback style
-		    if necessary during the layout process.
-
-		    If the result is a success, it may still return an optional LayoutObject; this indicates that
-		    the object could not be fully laid out on the current page. In that case, the remainder is
-		    returned (in the optional), and is expected to be laid out on the following page.
-
-		    Note that this process can repeat; the remainder can itself have a remainder, so the initial
-		    object might have spanned 3 or more pages.
-
-		    If the result is an error, then the object could not be laid out on the given page, *and*
-		    it could not be split (eg. images, graphics). In this case, placement should continue on the
-		    subsequent page.
-		*/
-
-		// LayoutObjects should implement this
-		// static zst::Result<std::optional<LayoutObject*>, int> layout(interp::Interpreter* cs, LayoutRegion* region,
-		//     const Style* parent_style);
-
-		/*
 		    Render (emit PDF commands) the object. Must be called after layout(). For now, we render directly to
 		    the PDF page (by construcitng and emitting PageObjects), instead of returning a pageobject -- some
 		    layout objects might require multiple pdf page objects, so this is a more flexible design.
 		*/
 		virtual void render(const RectPageLayout* layout, std::vector<pdf::Page*>& pages) const = 0;
-
-	private:
-		std::vector<std::unique_ptr<LayoutObject>> m_children {};
 	};
 
 

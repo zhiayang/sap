@@ -16,8 +16,8 @@ namespace pdf
 		auto dict = m_stream->dictionary();
 
 		dict->add(names::Subtype, names::Image.ptr());
-		dict->add(names::Width, Decimal::create(m_width.value()));
-		dict->add(names::Height, Decimal::create(m_height.value()));
+		dict->add(names::Width, Integer::create(checked_cast<int64_t>(m_image_data.width)));
+		dict->add(names::Height, Integer::create(checked_cast<int64_t>(m_image_data.height)));
 
 		auto one = Decimal::create(1.0);
 		auto zero = Decimal::create(0.0);

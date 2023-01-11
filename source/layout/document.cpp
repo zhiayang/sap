@@ -6,7 +6,6 @@
 #include "pdf/font.h"  // for Font
 #include "pdf/units.h" // for PdfScalar
 
-
 #include "font/font_file.h"
 
 #include "sap/style.h"       // for Style
@@ -18,11 +17,12 @@
 #include "interp/basedefs.h" // for DocumentObject
 
 #include "layout/base.h"      // for Cursor, LayoutObject, Interpreter, Rec...
+#include "layout/image.h"     //
 #include "layout/paragraph.h" // for Paragraph
 
 namespace sap::layout
 {
-	Document::Document()
+	Document::Document() : m_page_layout(RectPageLayout(dim::mm(210, 297).into<Size2d>(), dim::mm(25)))
 	{
 		static auto default_font_family = sap::FontFamily(                       //
 		    this->addFont(pdf::BuiltinFont::get(pdf::BuiltinFont::TimesRoman)),  //
@@ -67,14 +67,20 @@ namespace sap::layout
 		Cursor cursor = m_page_layout.newCursor();
 		for(const auto& obj : treedoc.objects())
 		{
+			Cursor (*layout_fn)(interp::Interpreter*, RectPageLayout*, Cursor, const Style*,
+			    const tree::DocumentObject*) = nullptr;
+
 			if(auto treepara = dynamic_cast<const tree::Paragraph*>(obj); treepara != nullptr)
-			{
-				cursor = Paragraph::layout(cs, &m_page_layout, cursor, m_style, treepara);
-			}
+				layout_fn = &Paragraph::fromTree;
+
+			else if(auto img = dynamic_cast<const tree::Image*>(obj); img != nullptr)
+				layout_fn = &Image::fromTree;
+
 			else
-			{
 				sap::internal_error("lol");
-			}
+
+			assert(layout_fn != nullptr);
+			cursor = layout_fn(cs, &m_page_layout, cursor, m_style, obj);
 		}
 	}
 

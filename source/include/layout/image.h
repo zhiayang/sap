@@ -1,37 +1,24 @@
-// paragraph.h
+// image.h
 // Copyright (c) 2022, zhiayang
 // SPDX-License-Identifier: Apache-2.0
 
 #pragma once
 
-#include "pdf/font.h"  // for Font
-#include "pdf/units.h" // for PdfScalar
-
-#include "layout/base.h" // for Cursor, LayoutObject, RectPageLayout, Inter...
-#include "layout/word.h" // for Word
+#include "layout/base.h"
 
 namespace sap
 {
 	struct Style;
 	namespace tree
 	{
-		struct Paragraph;
+		struct Image;
 		struct DocumentObject;
 	}
 }
 
 namespace sap::layout
 {
-	struct PositionedWord
-	{
-		Word word;
-		const pdf::PdfFont* font;
-		pdf::PdfScalar font_size;
-		Cursor start;
-		Cursor end;
-	};
-
-	struct Paragraph : LayoutObject
+	struct Image : LayoutObject
 	{
 		using LayoutObject::LayoutObject;
 
@@ -41,6 +28,13 @@ namespace sap::layout
 		virtual void render(const RectPageLayout* layout, std::vector<pdf::Page*>& pages) const override;
 
 	private:
-		std::vector<PositionedWord> m_words {};
+		explicit Image(zst::byte_span m_image_data, size_t m_pixel_width, size_t m_pixel_height);
+
+		Cursor m_position {};
+		Size2d m_size {};
+
+		zst::byte_span m_image_data;
+		size_t m_pixel_width;
+		size_t m_pixel_height;
 	};
 }

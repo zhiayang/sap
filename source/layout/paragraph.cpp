@@ -107,9 +107,11 @@ namespace sap::layout
 	};
 
 
-	Cursor Paragraph::layout(interp::Interpreter* cs, RectPageLayout* layout, Cursor cursor, const Style* parent_style,
-	    const tree::Paragraph* treepara)
+	Cursor Paragraph::fromTree(interp::Interpreter* cs, RectPageLayout* layout, Cursor cursor, const Style* parent_style,
+	    const tree::DocumentObject* doc_obj)
 	{
+		auto treepara = static_cast<const tree::Paragraph*>(doc_obj);
+
 		cursor = layout->newLineFrom(cursor, 0);
 
 		using WordSepVec = std::vector<std::variant<Word, Separator>>;

@@ -39,6 +39,10 @@ namespace sap::tree
 		if(not height.has_value())
 			height = width / aspect;
 
-		return std::make_unique<Image>(std::move(image_data), sap::Vector2(width, *height));
+		auto ret = std::make_unique<Image>(std::move(image_data), sap::Vector2(width, *height));
+		ret->m_pixel_width = (size_t) img_width;
+		ret->m_pixel_height = (size_t) img_height;
+
+		return ret;
 	}
 }
