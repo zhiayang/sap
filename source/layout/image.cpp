@@ -11,10 +11,7 @@
 
 namespace sap::layout
 {
-	Image::Image(zst::byte_span image_data, size_t pixel_width, size_t pixel_height)
-	    : m_image_data(image_data)
-	    , m_pixel_width(pixel_width)
-	    , m_pixel_height(pixel_height)
+	Image::Image(ImageBitmap image) : m_image(std::move(image))
 	{
 	}
 
@@ -25,7 +22,7 @@ namespace sap::layout
 
 		auto tree_img = static_cast<const tree::Image*>(doc_obj);
 
-		auto img = std::unique_ptr<Image>(new Image(tree_img->span(), tree_img->pixelWidth(), tree_img->pixelHeight()));
+		auto img = std::unique_ptr<Image>(new Image(tree_img->image()));
 		img->m_size = tree_img->size();
 		img->m_position = cursor;
 		img->setStyle(parent_style);
@@ -37,14 +34,7 @@ namespace sap::layout
 	void Image::render(const RectPageLayout* layout, std::vector<pdf::Page*>& pages) const
 	{
 		auto page = pages[m_position.page_num];
-		auto page_obj = util::make<pdf::Image>(
-		    pdf::Image::Data {
-		        .bytes = m_image_data,
-		        .width = m_pixel_width,
-		        .height = m_pixel_height,
-		        .bits_per_pixel = 8,
-		    },
-		    m_size.into(), //
+		auto page_obj = util::make<pdf::Image>(m_image, m_size.into(),
 		    page->convertVector2(m_position.pos_on_page.into<pdf::Position2d_YDown>()));
 
 		page->addObject(page_obj);

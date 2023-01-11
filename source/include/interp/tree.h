@@ -87,21 +87,16 @@ namespace sap::tree
 
 	struct Image : BlockObject
 	{
-		explicit Image(zst::unique_span<uint8_t[]> image, sap::Vector2 size) : m_image_data(std::move(image)), m_size(size) { }
+		explicit Image(OwnedImageBitmap image, sap::Vector2 size) : m_image(std::move(image)), m_size(size) { }
 
 		static std::unique_ptr<Image> fromImageFile(zst::str_view file_path, sap::Length width,
 		    std::optional<sap::Length> height = std::nullopt);
 
-		zst::byte_span span() const { return m_image_data.span(); }
+		ImageBitmap image() const { return m_image.span(); }
 		sap::Vector2 size() const { return m_size; }
 
-		size_t pixelWidth() const { return m_pixel_width; }
-		size_t pixelHeight() const { return m_pixel_height; }
-
 	private:
-		zst::unique_span<uint8_t[]> m_image_data;
-		size_t m_pixel_width;
-		size_t m_pixel_height;
+		OwnedImageBitmap m_image;
 		sap::Vector2 m_size;
 	};
 

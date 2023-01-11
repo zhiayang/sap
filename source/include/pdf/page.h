@@ -10,9 +10,8 @@
 
 namespace pdf
 {
-	struct XObject;
-	struct PdfFont;
 	struct File;
+	struct Resource;
 
 	struct Page
 	{
@@ -28,16 +27,13 @@ namespace pdf
 		Vector2_YUp convertVector2(Vector2_YDown v2) const;
 		Vector2_YDown convertVector2(Vector2_YUp v2) const;
 
-		void addFont(const PdfFont* font) const;
-		void addXObject(const XObject* xobject) const;
-
+		void addResource(const Resource* resource) const;
 		Dictionary* dictionary() const { return m_dictionary; }
 
 	private:
 		Dictionary* m_dictionary;
 		std::vector<PageObject*> m_objects;
-		mutable std::unordered_set<const PdfFont*> m_fonts;
-		mutable std::unordered_set<const XObject*> m_xobjects;
+		mutable std::unordered_set<const Resource*> m_resources;
 
 		Size2d m_page_size {};
 	};

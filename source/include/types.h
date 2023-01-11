@@ -6,6 +6,7 @@
 
 #include <bit>
 #include <zpr.h>
+#include <zst.h>
 #include <cstdint>
 #include <type_traits>
 
@@ -31,6 +32,47 @@ constexpr inline ssize_t operator-(GlyphId a, GlyphId b)
 		return static_cast<uint32_t>(a) - static_cast<uint32_t>(b);
 	else
 		return static_cast<uint32_t>(b) - static_cast<uint32_t>(a);
+}
+
+namespace sap
+{
+	struct OwnedImageBitmap;
+	struct ImageBitmap
+	{
+		size_t pixel_width;
+		size_t pixel_height;
+		size_t bits_per_pixel;
+
+		zst::byte_span rgb {};
+		zst::byte_span alpha {};
+
+		bool haveAlpha() const { return not alpha.empty(); }
+		OwnedImageBitmap clone() const;
+	};
+
+	struct OwnedImageBitmap
+	{
+		size_t pixel_width;
+		size_t pixel_height;
+		size_t bits_per_pixel;
+
+		zst::unique_span<uint8_t[]> rgb {};
+		zst::unique_span<uint8_t[]> alpha {};
+
+		bool haveAlpha() const { return not alpha.empty(); }
+		OwnedImageBitmap clone() const;
+
+		ImageBitmap span() const
+		{
+			return ImageBitmap {
+				.pixel_width = pixel_width,
+				.pixel_height = pixel_height,
+				.bits_per_pixel = bits_per_pixel,
+				.rgb = rgb.span(),
+				.alpha = alpha.span(),
+			};
+		}
+	};
 }
 
 namespace zpr

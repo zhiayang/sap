@@ -8,14 +8,11 @@
 
 namespace pdf
 {
-	XObject::XObject(const Name& subtype)
-	    : m_stream(Stream::create())
-	    , m_resource_name(zpr::sprint("X{}", pdf::getNewResourceId()))
+	XObject::XObject(const Name& subtype) : Resource(KIND_XOBJECT), m_stream(Stream::create())
 	{
 		m_stream->dictionary()->add(names::Type, names::XObject.ptr());
 		m_stream->setCompressed(true);
 	}
-
 
 	void XObject::serialise() const
 	{
@@ -25,13 +22,13 @@ namespace pdf
 		m_did_serialise = true;
 	}
 
-	void XObject::addResources(const Page* page) const
+	Object* XObject::resourceObject() const
 	{
-		page->addXObject(this);
+		return m_stream;
 	}
 
-	const std::string& XObject::getResourceName() const
+	void XObject::addResources(const Page* page) const
 	{
-		return m_resource_name;
+		page->addResource(this);
 	}
 }

@@ -8,6 +8,7 @@
 #include "types.h" // for GlyphId
 
 #include "pdf/units.h" // for TextSpace1d, PdfScalar, GlyphSpace1d
+#include "pdf/resource.h"
 #include "pdf/builtin_font.h"
 
 #include "font/metrics.h"
@@ -25,13 +26,15 @@ namespace pdf
 	struct Array;
 	struct Stream;
 	struct File;
+	struct Object;
 	struct Dictionary;
 
-	struct PdfFont
+	struct PdfFont : Resource
 	{
-		void serialise() const;
+		virtual Object* resourceObject() const override;
+		virtual void serialise() const override;
+
 		Dictionary* dictionary() const { return m_font_dictionary; }
-		std::string getFontResourceName() const { return m_font_resource_name; }
 		bool isCIDFont() const { return not m_source->isBuiltin(); }
 
 		const font::FontMetrics& getFontMetrics() const { return m_source->metrics(); }
@@ -106,12 +109,6 @@ namespace pdf
 		std::unique_ptr<font::FontSource> m_source {};
 		Dictionary* m_font_dictionary = nullptr;
 		Array* m_glyph_widths_array = nullptr;
-
-		// the name that goes into the Resource << >> dict in a page. This is a unique name
-		// that we get from the Document when the font is created.
-		std::string m_font_resource_name {};
-
-
 
 		Stream* m_embedded_contents = nullptr;
 		Stream* m_unicode_cmap = nullptr;

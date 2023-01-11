@@ -752,6 +752,9 @@ namespace zst
 			m_size = 0;
 		}
 
+		bool operator==(decltype(nullptr) _) const { return m_ptr == nullptr; }
+		bool operator!=(decltype(nullptr) _) const { return m_ptr != nullptr; }
+
 		_T* get() { return m_ptr; }
 		const _T* get() const { return m_ptr; }
 

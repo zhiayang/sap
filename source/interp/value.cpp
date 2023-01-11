@@ -584,10 +584,7 @@ namespace sap::interp
 		}
 		else if(auto img = dynamic_cast<const tree::Image*>(&from); img != nullptr)
 		{
-			auto new_data = new uint8_t[img->span().size()];
-			memcpy(new_data, img->span().data(), img->span().size());
-
-			return std::make_unique<tree::Image>(zst::unique_span<uint8_t[]>(new_data, img->span().size()), img->size());
+			return std::make_unique<tree::Image>(img->image().clone(), img->size());
 		}
 		else if(auto scr = dynamic_cast<const tree::ScriptBlock*>(&from); scr != nullptr)
 		{

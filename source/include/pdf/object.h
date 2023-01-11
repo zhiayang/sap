@@ -342,6 +342,7 @@ namespace pdf
 		static const auto Registry = pdf::Name("Registry");
 		static const auto Resources = pdf::Name("Resources");
 		static const auto Root = pdf::Name("Root");
+		static const auto SMask = pdf::Name("SMask");
 		static const auto Sap = pdf::Name("Sap");
 		static const auto Size = pdf::Name("Size");
 		static const auto StemV = pdf::Name("StemV");

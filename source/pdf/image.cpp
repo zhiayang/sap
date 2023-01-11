@@ -7,17 +7,17 @@
 
 namespace pdf
 {
-	Image::Image(Data image_data, pdf::Size2d display_size, pdf::Position2d display_position)
+	Image::Image(sap::ImageBitmap image_data, pdf::Size2d display_size, pdf::Position2d display_position)
 	    : XObject(names::Image)
-	    , m_image_data(std::move(image_data))
+	    , m_image(std::move(image_data))
 	    , m_display_size(display_size)
 	    , m_display_position(display_position)
 	{
 		auto dict = m_stream->dictionary();
 
 		dict->add(names::Subtype, names::Image.ptr());
-		dict->add(names::Width, Integer::create(checked_cast<int64_t>(m_image_data.width)));
-		dict->add(names::Height, Integer::create(checked_cast<int64_t>(m_image_data.height)));
+		dict->add(names::Width, Integer::create(checked_cast<int64_t>(m_image.pixel_width)));
+		dict->add(names::Height, Integer::create(checked_cast<int64_t>(m_image.pixel_height)));
 
 		auto one = Decimal::create(1.0);
 		auto zero = Decimal::create(0.0);
@@ -26,7 +26,26 @@ namespace pdf
 		dict->add(names::BitsPerComponent, Integer::create(8));
 		dict->add(names::Decode, Array::create(zero, one, zero, one, zero, one));
 
-		m_stream->append(m_image_data.bytes.data(), m_image_data.bytes.size());
+		m_stream->append(m_image.rgb);
+
+		if(m_image.haveAlpha())
+		{
+			// create the "soft mask"
+			m_alpha_channel = Stream::create();
+			m_alpha_channel->append(m_image.alpha);
+
+			auto tmp = m_alpha_channel->dictionary();
+
+			tmp->add(names::Type, names::XObject.ptr());
+			tmp->add(names::Subtype, names::Image.ptr());
+			tmp->add(names::Width, Integer::create(checked_cast<int64_t>(m_image.pixel_width)));
+			tmp->add(names::Height, Integer::create(checked_cast<int64_t>(m_image.pixel_height)));
+			tmp->add(names::ColorSpace, names::DeviceGray.ptr());
+			tmp->add(names::BitsPerComponent, Integer::create(8));
+			tmp->add(names::Decode, Array::create(zero, one));
+
+			dict->add(names::SMask, IndirectRef::create(m_alpha_channel));
+		}
 	}
 
 	void Image::writePdfCommands(Stream* stream) const
@@ -47,7 +66,7 @@ namespace pdf
 		    m_display_size.x().value(),     //
 		    m_display_size.y().value(),     //
 		    m_display_size.y().value(),     //
-		    m_resource_name);
+		    this->resourceName());
 
 		stream->append(buf.bytes().data(), buf.size());
 	}

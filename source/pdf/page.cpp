@@ -20,14 +20,9 @@ namespace pdf
 		m_page_size = pdf::Size2d(595.276, 841.89);
 	}
 
-	void Page::addFont(const PdfFont* font) const
+	void Page::addResource(const Resource* font) const
 	{
-		m_fonts.insert(font);
-	}
-
-	void Page::addXObject(const XObject* xobject) const
-	{
-		m_xobjects.insert(xobject);
+		m_resources.insert(font);
 	}
 
 	Size2d Page::size() const
@@ -47,11 +42,8 @@ namespace pdf
 
 	void Page::serialiseResources() const
 	{
-		for(auto font : m_fonts)
-			font->serialise();
-
-		for(auto xobj : m_xobjects)
-			xobj->serialise();
+		for(auto res : m_resources)
+			res->serialise();
 	}
 
 	void Page::serialise() const
@@ -70,17 +62,20 @@ namespace pdf
 			contents = IndirectRef::create(strm);
 		}
 
-		auto font_dict = Dictionary::create({});
-		for(auto font : m_fonts)
-			font_dict->add(Name(font->getFontResourceName()), IndirectRef::create(font->dictionary()));
-
-		auto xobject_dict = Dictionary::create({});
-		for(auto xobj : m_xobjects)
-			xobject_dict->add(Name(xobj->getResourceName()), IndirectRef::create(xobj->stream()));
+		util::hashmap<std::string, Dictionary*> resource_dicts;
+		for(auto res : m_resources)
+		{
+			auto res_name = Name(res->resourceName());
+			auto res_kind = res->resourceKindString();
+			if(auto it = resource_dicts.find(res_kind); it == resource_dicts.end())
+				resource_dicts.emplace(res_kind.str(), Dictionary::create({ { res_name, res->resourceObject() } }));
+			else
+				resource_dicts[res_kind.str()]->add(res_name, res->resourceObject());
+		}
 
 		auto resources = Dictionary::create({});
-		resources->add(names::Font, font_dict);
-		resources->add(names::XObject, xobject_dict);
+		for(auto& [k, d] : resource_dicts)
+			resources->add(Name(k), d);
 
 		m_dictionary->addOrReplace(names::Resources, resources);
 		m_dictionary->addOrReplace(names::MediaBox, a4paper);

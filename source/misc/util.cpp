@@ -30,3 +30,33 @@ namespace util
 		});
 	}
 }
+
+namespace sap
+{
+	OwnedImageBitmap ImageBitmap::clone() const
+	{
+		auto num_pixels = this->pixel_width * this->pixel_height;
+		auto new_rgb = zst::unique_span<uint8_t[]>(new uint8_t[num_pixels * 3], num_pixels * 3);
+		memcpy(new_rgb.get(), this->rgb.data(), num_pixels * 3);
+
+		zst::unique_span<uint8_t[]> new_alpha {};
+		if(this->haveAlpha())
+		{
+			new_alpha = zst::unique_span<uint8_t[]>(new uint8_t[num_pixels], num_pixels);
+			memcpy(new_alpha.get(), this->alpha.data(), num_pixels);
+		}
+
+		return OwnedImageBitmap {
+			.pixel_width = pixel_width,
+			.pixel_height = pixel_height,
+			.bits_per_pixel = bits_per_pixel,
+			.rgb = std::move(new_rgb),
+			.alpha = std::move(new_alpha),
+		};
+	}
+
+	OwnedImageBitmap OwnedImageBitmap::clone() const
+	{
+		return this->span().clone();
+	}
+}

@@ -33,7 +33,7 @@ namespace pdf
 	void Text::addResources(const Page* page) const
 	{
 		for(auto f : m_used_fonts)
-			page->addFont(f);
+			page->addResource(f);
 	}
 
 	void Text::setFont(const PdfFont* font, PdfScalar height)
@@ -44,7 +44,7 @@ namespace pdf
 			return;
 
 		m_used_fonts.insert(font);
-		this->insertPDFCommand(zpr::sprint(" /{} {} Tf\n", font->getFontResourceName(), height));
+		this->insertPDFCommand(zpr::sprint(" /{} {} Tf\n", font->resourceName(), height));
 
 		m_current_font.font = font;
 		m_current_font.height = height;

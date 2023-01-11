@@ -77,10 +77,10 @@ namespace pdf
 	}
 
 	PdfFont::PdfFont(std::unique_ptr<pdf::BuiltinFont> source_)
-	    : m_source(std::move(source_))
+	    : Resource(KIND_FONT)
+	    , m_source(std::move(source_))
 	    , m_font_dictionary(Dictionary::createIndirect(names::Font, {}))
 	    , m_glyph_widths_array(Array::createIndirect())
-	    , m_font_resource_name(zpr::sprint("F{}", pdf::getNewResourceId()))
 	{
 		auto* builtin_src = static_cast<BuiltinFont*>(m_source.get());
 
@@ -99,10 +99,10 @@ namespace pdf
 	}
 
 	PdfFont::PdfFont(std::unique_ptr<font::FontFile> font_file_)
-	    : m_source(std::move(font_file_))
+	    : Resource(KIND_FONT)
+	    , m_source(std::move(font_file_))
 	    , m_font_dictionary(Dictionary::createIndirect(names::Font, {}))
 	    , m_glyph_widths_array(Array::createIndirect())
-	    , m_font_resource_name(zpr::sprint("F{}", pdf::getNewResourceId()))
 	{
 		auto file_src = static_cast<font::FontFile*>(m_source.get());
 
@@ -322,5 +322,10 @@ namespace pdf
 	std::unique_ptr<PdfFont> PdfFont::fromBuiltin(BuiltinFont::Core14 font_name)
 	{
 		return std::unique_ptr<PdfFont>(new PdfFont(BuiltinFont::get(font_name)));
+	}
+
+	Object* PdfFont::resourceObject() const
+	{
+		return m_font_dictionary;
 	}
 }
