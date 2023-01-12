@@ -27,18 +27,18 @@ namespace sap::layout
 		Word word;
 		const pdf::PdfFont* font;
 		pdf::PdfScalar font_size;
-		Cursor start;
-		Cursor end;
+		PagePosition start;
+		PagePosition end;
 	};
 
 	struct Paragraph : LayoutObject
 	{
 		using LayoutObject::LayoutObject;
 
-		static Cursor fromTree(interp::Interpreter* cs, RectPageLayout* layout, Cursor cursor, const Style* parent_style,
+		static LineCursor fromTree(interp::Interpreter* cs, LayoutBase* layout, LineCursor cursor, const Style* parent_style,
 		    const tree::DocumentObject* obj);
 
-		virtual void render(const RectPageLayout* layout, std::vector<pdf::Page*>& pages) const override;
+		virtual void render(const LayoutBase* layout, std::vector<pdf::Page*>& pages) const override;
 
 	private:
 		std::vector<PositionedWord> m_words {};

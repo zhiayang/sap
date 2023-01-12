@@ -143,15 +143,15 @@ namespace sap::tree
 				else
 				{
 					// hyphenation preference increases from 1 to 3 to 5, so 5 has the lowest cost, and 1 the highest.
-					auto part = lower_span.take_prefix(k);
+					auto part = orig_span.take_prefix(k);
 					vec.push_back(std::make_unique<Text>(part.str(), text->style()));
 					vec.push_back(std::make_unique<Separator>(Separator::HYPHENATION_POINT, /* cost: */ 6 - points[i]));
 					k = 1;
 				}
 			}
 
-			if(lower_span.size() > 0)
-				vec.push_back(std::make_unique<Text>(lower_span.str(), text->style()));
+			if(orig_span.size() > 0)
+				vec.push_back(std::make_unique<Text>(orig_span.str(), text->style()));
 		}
 
 

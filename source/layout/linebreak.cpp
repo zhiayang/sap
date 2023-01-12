@@ -22,14 +22,14 @@ namespace sap::layout
 	struct LineBreakNode
 	{
 		const WordVec* words;
-		RectPageLayout* layout;
+		LayoutBase* layout;
 		const Style* parent_style;
 
 		// TODO: we should get the preferred line length from the layout and not fix it here
 		Length preferred_line_length;
 		WordVecIter broken_until;
 		WordVecIter end;
-		Line line;
+		std::optional<Line> line;
 
 		using Distance = double;
 
@@ -42,7 +42,7 @@ namespace sap::layout
 				.preferred_line_length = 0,
 				.broken_until = end,
 				.end = end,
-				.line = Line::invalid_line(),
+				.line = std::nullopt,
 			};
 		}
 
@@ -62,7 +62,7 @@ namespace sap::layout
 		std::vector<std::pair<LineBreakNode, Distance>> neighbours()
 		{
 			auto neighbour_broken_until = broken_until;
-			auto neighbour_line = Line(layout, parent_style, line.lineCursor());
+			auto neighbour_line = Line(parent_style, line->lineCursor());
 			std::vector<std::pair<LineBreakNode, Distance>> ret;
 
 			while(true)
@@ -133,7 +133,7 @@ namespace sap::layout
 		bool operator==(const LineBreakNode& other) const { return broken_until == other.broken_until; }
 	};
 
-	std::vector<Line> breakLines(RectPageLayout* layout, Cursor cursor, const Style* parent_style, const WordVec& words,
+	std::vector<Line> breakLines(LayoutBase* layout, LineCursor cursor, const Style* parent_style, const WordVec& words,
 	    Length preferred_line_length)
 	{
 		auto path = util::dijkstra_shortest_path(
@@ -144,7 +144,7 @@ namespace sap::layout
 		        .preferred_line_length = preferred_line_length,
 		        .broken_until = words.begin(),
 		        .end = words.end(),
-		        .line = Line(layout, parent_style, cursor),
+		        .line = Line(parent_style, cursor),
 		    },
 		    LineBreakNode::make_end(words.end()));
 
@@ -152,7 +152,7 @@ namespace sap::layout
 		ret.reserve(path.size());
 
 		for(auto& node : path)
-			ret.push_back(std::move(node.line));
+			ret.push_back(std::move(*node.line));
 
 		return ret;
 	}

@@ -22,7 +22,7 @@
 
 namespace sap::layout
 {
-	Document::Document() : m_page_layout(RectPageLayout(dim::mm(210, 297).into<Size2d>(), dim::mm(25)))
+	Document::Document() : m_page_layout(PageLayout(dim::mm(210, 297).into<Size2d>(), dim::mm(25)))
 	{
 		static auto default_font_family = sap::FontFamily(                       //
 		    this->addFont(pdf::BuiltinFont::get(pdf::BuiltinFont::TimesRoman)),  //
@@ -64,10 +64,10 @@ namespace sap::layout
 
 	void Document::layout(interp::Interpreter* cs, const tree::Document& treedoc)
 	{
-		Cursor cursor = m_page_layout.newCursor();
+		LineCursor cursor = m_page_layout.newCursor();
 		for(const auto& obj : treedoc.objects())
 		{
-			Cursor (*layout_fn)(interp::Interpreter*, RectPageLayout*, Cursor, const Style*,
+			LineCursor (*layout_fn)(interp::Interpreter*, LayoutBase*, LineCursor, const Style*,
 			    const tree::DocumentObject*) = nullptr;
 
 			if(auto treepara = dynamic_cast<const tree::Paragraph*>(obj); treepara != nullptr)

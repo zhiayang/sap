@@ -95,8 +95,6 @@ namespace sap::layout
 
 	struct Page;
 	struct Paragraph;
-	struct RectPageLayout;
-
 
 	struct Document : Stylable
 	{
@@ -120,7 +118,7 @@ namespace sap::layout
 		const pdf::File& pdf() const;
 
 		pdf::File m_pdf_document {};
-		RectPageLayout m_page_layout;
+		PageLayout m_page_layout;
 
 		std::vector<std::unique_ptr<pdf::PdfFont>> m_fonts {};
 		std::vector<std::unique_ptr<LayoutObject>> m_objects {};

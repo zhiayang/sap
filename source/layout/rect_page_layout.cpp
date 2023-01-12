@@ -8,7 +8,110 @@
 
 namespace sap::layout
 {
-	std::vector<pdf::Page*> RectPageLayout::render() const
+	using BasePayload = LayoutBase::Payload;
+	struct CursorState
+	{
+		size_t page_num;
+		Vector2 pos_on_page;
+	};
+
+	static_assert(sizeof(CursorState) <= sizeof(BasePayload));
+
+	static const CursorState& get_cursor_state(const BasePayload& payload)
+	{
+		return *reinterpret_cast<const CursorState*>(&payload.payload[0]);
+	}
+
+	static CursorState& get_cursor_state(BasePayload& payload)
+	{
+		return *reinterpret_cast<CursorState*>(&payload.payload[0]);
+	}
+
+	static BasePayload to_base_payload(CursorState payload)
+	{
+		BasePayload ret {};
+		new(&ret.payload[0]) CursorState(std::move(payload));
+
+		return ret;
+	}
+
+	void LayoutBase::addObject(std::unique_ptr<LayoutObject> obj)
+	{
+		m_objects.push_back(std::move(obj));
+	}
+
+
+	PageLayout::PageLayout(Size2d size, Length margin) : m_size(size), m_margin(margin)
+	{
+	}
+
+	LineCursor PageLayout::newCursor() const
+	{
+		return LineCursor(const_cast<PageLayout*>(this), this->new_cursor_payload());
+	}
+
+	BasePayload PageLayout::new_cursor_payload() const
+	{
+		return to_base_payload({
+		    .page_num = 0,
+		    .pos_on_page = { m_margin, m_margin },
+		});
+	}
+
+	void PageLayout::delete_cursor_payload(Payload& payload) const
+	{
+		get_cursor_state(payload).~CursorState();
+	}
+
+	BasePayload PageLayout::copy_cursor_payload(const BasePayload& payload) const
+	{
+		return to_base_payload(get_cursor_state(payload));
+	}
+
+	Length PageLayout::get_width_at_cursor_payload(const BasePayload& curs) const
+	{
+		return m_size.x() - m_margin - get_cursor_state(curs).pos_on_page.x();
+	}
+
+	BasePayload PageLayout::move_right(const BasePayload& payload, Length shift) const
+	{
+		auto& cst = get_cursor_state(payload);
+		return to_base_payload({
+		    .page_num = cst.page_num,
+		    .pos_on_page = cst.pos_on_page + Offset2d(shift, 0),
+		});
+	}
+
+	BasePayload PageLayout::new_line(const BasePayload& payload, Length line_height)
+	{
+		auto& cst = get_cursor_state(payload);
+		if(cst.pos_on_page.y() + line_height >= m_size.y() - m_margin)
+		{
+			m_num_pages = std::max(m_num_pages, cst.page_num + 1 + 1);
+			return to_base_payload({
+			    .page_num = cst.page_num + 1,
+			    .pos_on_page = Position(m_margin, m_margin),
+			});
+		}
+		else
+		{
+			return to_base_payload({
+			    .page_num = cst.page_num,
+			    .pos_on_page = Position(m_margin, cst.pos_on_page.y() + line_height),
+			});
+		}
+	}
+
+	PagePosition PageLayout::get_position_on_page(const Payload& payload) const
+	{
+		auto& cst = get_cursor_state(payload);
+		return PagePosition {
+			.pos = cst.pos_on_page,
+			.page_num = cst.page_num,
+		};
+	}
+
+	std::vector<pdf::Page*> PageLayout::render() const
 	{
 		std::vector<pdf::Page*> ret;
 		for(size_t i = 0; i < m_num_pages; ++i)
@@ -22,4 +125,33 @@ namespace sap::layout
 
 		return ret;
 	}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+	// std::vector<pdf::Page*> RectPageLayout::render() const
+	// {
+	// 	std::vector<pdf::Page*> ret;
+	// 	for(size_t i = 0; i < m_num_pages; ++i)
+	// 	{
+	// 		// TODO: Pages should have the size determined by page size
+	// 		ret.emplace_back(util::make<pdf::Page>());
+	// 	}
+
+	// 	for(auto& obj : m_objects)
+	// 		obj->render(this, ret);
+
+	// 	return ret;
+	// }
 }

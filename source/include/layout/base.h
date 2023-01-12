@@ -33,7 +33,7 @@ namespace sap
 
 namespace sap::layout
 {
-	struct RectPageLayout;
+	struct LayoutBase;
 
 	/*
 	    As mentioned in the overview above, a LayoutObject is some object that can be laid out and
@@ -51,10 +51,10 @@ namespace sap::layout
 		    the PDF page (by construcitng and emitting PageObjects), instead of returning a pageobject -- some
 		    layout objects might require multiple pdf page objects, so this is a more flexible design.
 		*/
-		virtual void render(const RectPageLayout* layout, std::vector<pdf::Page*>& pages) const = 0;
+		virtual void render(const LayoutBase* layout, std::vector<pdf::Page*>& pages) const = 0;
 	};
 
-
+#if 0
 	/*
 	    A layout region holds several objects, where each object is placed at a certain position. During the
 	    layout process, the region has a cursor, which can be used as a convenient method to place objects
@@ -111,6 +111,91 @@ namespace sap::layout
 		size_t m_num_pages = 1;
 		std::vector<std::unique_ptr<LayoutObject>> m_objects {};
 	};
+#endif
+
+	struct PagePosition
+	{
+		Position pos;
+		size_t page_num;
+	};
+
+	struct LineCursor;
+
+	struct LayoutBase
+	{
+		struct Payload
+		{
+			uint8_t payload[32];
+		};
+
+		friend struct LineCursor;
+
+		void addObject(std::unique_ptr<LayoutObject> obj);
+
+	protected:
+		virtual Payload new_cursor_payload() const = 0;
+		virtual void delete_cursor_payload(Payload& payload) const = 0;
+		virtual Payload copy_cursor_payload(const Payload& payload) const = 0;
+
+		virtual Length get_width_at_cursor_payload(const Payload& payload) const = 0;
+		virtual PagePosition get_position_on_page(const Payload& payload) const = 0;
+
+		virtual Payload new_line(const Payload& payload, Length line_height) = 0;
+		virtual Payload move_right(const Payload& payload, Length shift) const = 0;
+
+	protected:
+		std::vector<std::unique_ptr<LayoutObject>> m_objects {};
+	};
+
+	struct PageLayout : LayoutBase
+	{
+		explicit PageLayout(Size2d size, Length margin);
+
+		LineCursor newCursor() const;
+
+		std::vector<pdf::Page*> render() const;
+
+	private:
+		virtual Payload new_cursor_payload() const override;
+		virtual void delete_cursor_payload(Payload& payload) const override;
+
+		virtual Payload copy_cursor_payload(const Payload& payload) const override;
+		virtual PagePosition get_position_on_page(const Payload& payload) const override;
+
+		virtual Payload new_line(const Payload& payload, Length line_height) override;
+		virtual Payload move_right(const Payload& payload, Length shift) const override;
+		virtual Length get_width_at_cursor_payload(const Payload& payload) const override;
+
+	private:
+		Size2d m_size;
+		Length m_margin;
+		size_t m_num_pages = 1;
+	};
+
+	struct LineCursor
+	{
+		LineCursor(LayoutBase* layout, LayoutBase::Payload payload);
+		~LineCursor();
+
+		LineCursor(const LineCursor& other);
+		LineCursor& operator=(const LineCursor& other);
+
+		LineCursor(LineCursor&& other);
+		LineCursor& operator=(LineCursor&& other);
+
+		Length widthAtCursor() const;
+		LineCursor moveRight(Length shift) const;
+		LineCursor newLine(Length line_height) const;
+
+		PagePosition position() const;
+
+	private:
+		LayoutBase* m_layout;
+		LayoutBase::Payload m_payload;
+	};
+
+
+
 
 	// Theoretical fully generic layout idea?
 #if 0

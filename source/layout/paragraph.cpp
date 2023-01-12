@@ -107,12 +107,12 @@ namespace sap::layout
 	};
 
 
-	Cursor Paragraph::fromTree(interp::Interpreter* cs, RectPageLayout* layout, Cursor cursor, const Style* parent_style,
+	LineCursor Paragraph::fromTree(interp::Interpreter* cs, LayoutBase* layout, LineCursor cursor, const Style* parent_style,
 	    const tree::DocumentObject* doc_obj)
 	{
 		auto treepara = static_cast<const tree::Paragraph*>(doc_obj);
 
-		cursor = layout->newLineFrom(cursor, 0);
+		cursor = cursor.newLine(0);
 
 		using WordSepVec = std::vector<std::variant<Word, Separator>>;
 		WordSepVec words_and_seps;
@@ -128,7 +128,7 @@ namespace sap::layout
 		}
 
 		auto para = std::make_unique<Paragraph>();
-		auto lines = breakLines(layout, cursor, parent_style, words_and_seps, layout->getWidthAt(cursor));
+		auto lines = breakLines(layout, cursor, parent_style, words_and_seps, cursor.widthAtCursor());
 
 		size_t current_idx = 0;
 
@@ -156,8 +156,8 @@ namespace sap::layout
 
 			auto line_metrics = LineMetrics::computeLineMetrics(words_begin, words_end, parent_style);
 
-			cursor = layout->newLineFrom(cursor, line_metrics.line_height);
-			auto desired_space_width = layout->getWidthAt(cursor) - line_metrics.total_word_width;
+			cursor = cursor.newLine(line_metrics.line_height);
+			auto desired_space_width = cursor.widthAtCursor() - line_metrics.total_word_width;
 			double space_width_factor = desired_space_width / line_metrics.total_space_width;
 
 			if(line_it + 1 == lines.end())
@@ -170,13 +170,13 @@ namespace sap::layout
 				auto word_width = line_metrics.word_widths[i];
 
 				auto word_visitor = [&](const Word& word) {
-					auto new_cursor = layout->moveRightFrom(cursor, word_width);
+					auto new_cursor = cursor.moveRight(word_width);
 					para->m_words.push_back(PositionedWord {
 					    .word = word,
 					    .font = word.style()->font(),
 					    .font_size = word.style()->font_size().into<pdf::PdfScalar>(),
-					    .start = cursor,
-					    .end = new_cursor,
+					    .start = cursor.position(),
+					    .end = new_cursor.position(),
 					});
 
 					cursor = new_cursor;
@@ -184,16 +184,16 @@ namespace sap::layout
 				};
 
 				auto sep_visitor = [&](const Separator& sep) {
-					auto end_of_space_cursor = layout->moveRightFrom(cursor, word_width);
+					auto end_of_space_cursor = cursor.moveRight(word_width);
 					para->m_words.push_back(PositionedWord {
 					    .word = Word(i + 1 == num_words ? sep.endOfLine() : sep.middleOfLine(), prev_word_style),
 					    .font = prev_word_style->font(),
 					    .font_size = prev_word_style->font_size().into<pdf::PdfScalar>(),
-					    .start = cursor,
-					    .end = end_of_space_cursor,
+					    .start = cursor.position(),
+					    .end = end_of_space_cursor.position(),
 					});
 
-					auto new_cursor = layout->moveRightFrom(cursor, word_width * space_width_factor);
+					auto new_cursor = cursor.moveRight(word_width * space_width_factor);
 					cursor = new_cursor;
 				};
 
@@ -209,42 +209,41 @@ namespace sap::layout
 	}
 
 
-	void Paragraph::render(const RectPageLayout* layout, std::vector<pdf::Page*>& pages) const
+	void Paragraph::render(const LayoutBase* layout, std::vector<pdf::Page*>& pages) const
 	{
 		if(m_words.empty())
 			return;
 
-		Cursor current_curs = m_words.front().start;
+		auto current_curs = m_words.front().start;
 		pdf::Text* cur_text = util::make<pdf::Text>();
-		cur_text->moveAbs(pages[m_words.front().start.page_num]->convertVector2(
-		    m_words.front().start.pos_on_page.into<pdf::Position2d_YDown>()));
+		cur_text->moveAbs(pages[m_words.front().start.page_num]->convertVector2( //
+		    m_words.front().start.pos.into<pdf::Position2d_YDown>()));
 
 		for(size_t i = 0; i < m_words.size(); i++)
 		{
 			cur_text->setFont(m_words[i].font, m_words[i].font_size);
 
-			auto space = m_words[i].start.pos_on_page.x() - current_curs.pos_on_page.x();
+			auto space = m_words[i].start.pos.x() - current_curs.pos.x();
 
 			if(current_curs.page_num != m_words[i].start.page_num)
 			{
 				pages[m_words[i - 1].start.page_num]->addObject(cur_text);
 				cur_text = util::make<pdf::Text>();
-				cur_text->moveAbs(
-				    pages[m_words[i].start.page_num]->convertVector2(m_words[i].start.pos_on_page.into<pdf::Position2d_YDown>()));
+				cur_text->moveAbs(pages[m_words[i].start.page_num]->convertVector2( //
+				    m_words[i].start.pos.into<pdf::Position2d_YDown>()));
 				space = 0;
 			}
-			else if(current_curs.pos_on_page.y() != m_words[i].start.pos_on_page.y())
+			else if(current_curs.pos.y() != m_words[i].start.pos.y())
 			{
-				auto skip = m_words[i].start.pos_on_page.y() - current_curs.pos_on_page.y();
+				auto skip = m_words[i].start.pos.y() - current_curs.pos.y();
 				cur_text->nextLine(pdf::Offset2d(0, -1.0 * skip.into<pdf::PdfScalar>().value()));
 				space = 0;
 			}
-			else if(m_words[i].start.pos_on_page.x() != current_curs.pos_on_page.x())
+			else if(m_words[i].start.pos.x() != current_curs.pos.x())
 			{
 				// Make sure pdf cursor agrees with our cursor
 				cur_text->offset(pdf::PdfFont::convertPDFScalarToTextSpaceForFontSize(
-				    (m_words[i].start.pos_on_page.x() - current_curs.pos_on_page.x()).into<pdf::PdfScalar>(),
-				    m_words[i].font_size));
+				    (m_words[i].start.pos.x() - current_curs.pos.x()).into<pdf::PdfScalar>(), m_words[i].font_size));
 			}
 
 			m_words[i].word.render(cur_text, space);

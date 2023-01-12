@@ -21,21 +21,16 @@ namespace sap::layout
 {
 	struct Line
 	{
-		// Sometimes we need to populate a line in a struct even though it's never read... yeah i'm sorry :(
-		static Line invalid_line() { return Line(); }
-
-		Line(RectPageLayout* layout, const Style* parent_style, Cursor m_prev_cursor)
-		    : m_layout(layout)
-		    , m_parent_style(parent_style)
-		    , m_prev_cursor(m_prev_cursor)
+		Line(const Style* parent_style, LineCursor m_prev_cursor)
+		    : m_parent_style(parent_style)
+		    , m_prev_cursor(std::move(m_prev_cursor))
 		{
 		}
 
 	private:
 		// "Input"
-		RectPageLayout* m_layout;
 		const Style* m_parent_style;
-		Cursor m_prev_cursor;
+		LineCursor m_prev_cursor;
 
 		// "state" / "output"
 		Length m_line_height {};
@@ -79,7 +74,7 @@ namespace sap::layout
 
 		size_t numSpaces() const { return m_num_spaces; }
 		size_t numParts() const { return m_num_parts; }
-		Cursor lineCursor() const { return m_layout->newLineFrom(m_prev_cursor, m_line_height); }
+		LineCursor lineCursor() const { return m_prev_cursor.newLine(m_line_height); }
 
 		// Modifiers
 		void add(const Word& w)
@@ -134,11 +129,8 @@ namespace sap::layout
 			m_num_parts++;
 			m_last_sep = std::move(sep);
 		}
-
-	private:
-		Line() = default;
 	};
 
-	std::vector<Line> breakLines(RectPageLayout* layout, Cursor cursor, const Style* parent_style,
+	std::vector<Line> breakLines(LayoutBase* layout, LineCursor cursor, const Style* parent_style,
 	    const std::vector<std::variant<Word, Separator>>& words, Length preferred_line_length);
 }

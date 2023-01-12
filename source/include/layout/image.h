@@ -22,15 +22,15 @@ namespace sap::layout
 	{
 		using LayoutObject::LayoutObject;
 
-		static Cursor fromTree(interp::Interpreter* cs, RectPageLayout* layout, Cursor cursor, const Style* parent_style,
+		static LineCursor fromTree(interp::Interpreter* cs, LayoutBase* layout, LineCursor cursor, const Style* parent_style,
 		    const tree::DocumentObject* obj);
 
-		virtual void render(const RectPageLayout* layout, std::vector<pdf::Page*>& pages) const override;
+		virtual void render(const LayoutBase* layout, std::vector<pdf::Page*>& pages) const override;
 
 	private:
 		explicit Image(ImageBitmap m_image);
 
-		Cursor m_position {};
+		PagePosition m_position {};
 		Size2d m_size {};
 
 		ImageBitmap m_image;
