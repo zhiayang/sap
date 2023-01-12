@@ -19,7 +19,6 @@ namespace sap::layout
 	    const tree::DocumentObject* doc_obj)
 	{
 		cursor = cursor.newLine(0);
-		// cursor = layout->newLineFrom(cursor, 0);
 
 		auto tree_img = static_cast<const tree::Image*>(doc_obj);
 
@@ -29,14 +28,21 @@ namespace sap::layout
 		img->setStyle(parent_style);
 
 		layout->addObject(std::move(img));
+
+		// move right so that the layout can track the amount of used horizontal space
+		(void) cursor.moveRight(tree_img->size().x());
+
 		return cursor.newLine(tree_img->size().y());
 	}
 
 	void Image::render(const LayoutBase* layout, std::vector<pdf::Page*>& pages) const
 	{
 		auto page = pages[m_position.page_num];
-		auto page_obj = util::make<pdf::Image>(m_image, m_size.into(),
-		    page->convertVector2(m_position.pos.into<pdf::Position2d_YDown>()));
+
+		auto page_obj = util::make<pdf::Image>( //
+		    m_image,                            //
+		    m_size.into(),                      //
+		    page->convertVector2(layout->convertPosition(m_position).pos.into<pdf::Position2d_YDown>()));
 
 		page->addObject(page_obj);
 	}

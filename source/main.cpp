@@ -30,6 +30,8 @@ CLEANUP:
 	- さあぁぁぁぁ
 
 - smart quotes
+- use another way to make words recognise that they're on the same line
+	- something to do with their positions and cursors
 
 #endif
 

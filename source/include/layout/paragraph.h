@@ -27,8 +27,8 @@ namespace sap::layout
 		Word word;
 		const pdf::PdfFont* font;
 		pdf::PdfScalar font_size;
-		PagePosition start;
-		PagePosition end;
+		RelativePos start;
+		RelativePos end;
 	};
 
 	struct Paragraph : LayoutObject

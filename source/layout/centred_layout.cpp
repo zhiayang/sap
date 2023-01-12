@@ -20,11 +20,6 @@ namespace sap::layout
 		return *reinterpret_cast<const CursorState*>(&payload.payload[0]);
 	}
 
-	static CursorState& get_cursor_state(BasePayload& payload)
-	{
-		return *reinterpret_cast<CursorState*>(&payload.payload[0]);
-	}
-
 	static BasePayload to_base_payload(CursorState payload)
 	{
 		BasePayload ret {};
@@ -47,6 +42,17 @@ namespace sap::layout
 		    .page_num = cst.page_num,
 		    .pos_on_page = cst.pos_on_page + Offset2d(shift, 0),
 		});
+	}
+
+	PagePosition CentredLayout::convertPosition(RelativePos pos) const
+	{
+		// the left offset is (parent_size - content_size) / 2
+		auto x = (m_parent->size().x() - pos.pos.x()) / 2;
+
+		return PagePosition {
+			.pos = Position(x, pos.pos.y()),
+			.page_num = pos.page_num,
+		};
 	}
 
 	void CentredLayout::render(const LayoutBase* layout, std::vector<pdf::Page*>& pages) const

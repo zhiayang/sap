@@ -41,7 +41,7 @@ namespace sap::layout
 		return *this;
 	}
 
-	PagePosition LineCursor::position() const
+	RelativePos LineCursor::position() const
 	{
 		return m_layout->get_position_on_page(m_payload);
 	}

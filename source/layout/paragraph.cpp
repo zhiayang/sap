@@ -214,28 +214,30 @@ namespace sap::layout
 		if(m_words.empty())
 			return;
 
-		auto current_curs = m_words.front().start;
+		auto current_curs = layout->convertPosition(m_words.front().start);
+
 		pdf::Text* cur_text = util::make<pdf::Text>();
 		cur_text->moveAbs(pages[m_words.front().start.page_num]->convertVector2( //
-		    m_words.front().start.pos.into<pdf::Position2d_YDown>()));
+		    current_curs.pos.into<pdf::Position2d_YDown>()));
 
 		for(size_t i = 0; i < m_words.size(); i++)
 		{
 			cur_text->setFont(m_words[i].font, m_words[i].font_size);
 
-			auto space = m_words[i].start.pos.x() - current_curs.pos.x();
+			auto word_pos = layout->convertPosition(m_words[i].start);
+			auto space = (word_pos.pos - current_curs.pos).x();
 
 			if(current_curs.page_num != m_words[i].start.page_num)
 			{
 				pages[m_words[i - 1].start.page_num]->addObject(cur_text);
+
 				cur_text = util::make<pdf::Text>();
-				cur_text->moveAbs(pages[m_words[i].start.page_num]->convertVector2( //
-				    m_words[i].start.pos.into<pdf::Position2d_YDown>()));
+				cur_text->moveAbs(pages[word_pos.page_num]->convertVector2(word_pos.pos.into<pdf::Position2d_YDown>()));
 				space = 0;
 			}
-			else if(current_curs.pos.y() != m_words[i].start.pos.y())
+			else if(current_curs.pos.y() != word_pos.pos.y())
 			{
-				auto skip = m_words[i].start.pos.y() - current_curs.pos.y();
+				auto skip = word_pos.pos.y() - current_curs.pos.y();
 				cur_text->nextLine(pdf::Offset2d(0, -1.0 * skip.into<pdf::PdfScalar>().value()));
 				space = 0;
 			}
@@ -243,13 +245,14 @@ namespace sap::layout
 			{
 				// Make sure pdf cursor agrees with our cursor
 				cur_text->offset(pdf::PdfFont::convertPDFScalarToTextSpaceForFontSize(
-				    (m_words[i].start.pos.x() - current_curs.pos.x()).into<pdf::PdfScalar>(), m_words[i].font_size));
+				    (word_pos.pos - current_curs.pos).x().into<pdf::PdfScalar>(), m_words[i].font_size));
 			}
 
 			m_words[i].word.render(cur_text, space);
 
-			current_curs = m_words[i].end;
+			current_curs = layout->convertPosition(m_words[i].end);
 		}
+
 		pages[m_words.back().start.page_num]->addObject(cur_text);
 	}
 }

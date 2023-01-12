@@ -54,11 +54,20 @@ namespace sap::layout
 		virtual void render(const LayoutBase* layout, std::vector<pdf::Page*>& pages) const = 0;
 	};
 
+	struct RelativePos
+	{
+		struct TAG_RELATIVE;
+		using Pos = dim::Vector2<sap::Length::unit_system, TAG_RELATIVE>;
+		Pos pos;
+		size_t page_num;
+	};
+
 	struct PagePosition
 	{
 		Position pos;
 		size_t page_num;
 	};
+
 
 	struct LineCursor;
 
@@ -72,14 +81,16 @@ namespace sap::layout
 		friend struct LineCursor;
 
 		void addObject(std::unique_ptr<LayoutObject> obj);
+
 		virtual Size2d size() const = 0;
+		virtual PagePosition convertPosition(RelativePos pos) const = 0;
 
 		virtual Payload new_cursor_payload() const = 0;
 		virtual void delete_cursor_payload(Payload& payload) const = 0;
 		virtual Payload copy_cursor_payload(const Payload& payload) const = 0;
 
 		virtual Length get_width_at_cursor_payload(const Payload& payload) const = 0;
-		virtual PagePosition get_position_on_page(const Payload& payload) const = 0;
+		virtual RelativePos get_position_on_page(const Payload& payload) const = 0;
 
 		virtual Payload new_line(const Payload& payload, Length line_height) = 0;
 		virtual Payload move_right(const Payload& payload, Length shift) const = 0;
@@ -102,7 +113,7 @@ namespace sap::layout
 		LineCursor moveRight(Length shift) const;
 		LineCursor newLine(Length line_height) const;
 
-		PagePosition position() const;
+		RelativePos position() const;
 
 	private:
 		LayoutBase* m_layout;
@@ -120,13 +131,14 @@ namespace sap::layout
 		std::vector<pdf::Page*> render() const;
 
 		virtual Size2d size() const override;
+		virtual PagePosition convertPosition(RelativePos pos) const override;
 
 	private:
 		virtual Payload new_cursor_payload() const override;
 		virtual void delete_cursor_payload(Payload& payload) const override;
 
 		virtual Payload copy_cursor_payload(const Payload& payload) const override;
-		virtual PagePosition get_position_on_page(const Payload& payload) const override;
+		virtual RelativePos get_position_on_page(const Payload& payload) const override;
 
 		virtual Payload new_line(const Payload& payload, Length line_height) override;
 		virtual Payload move_right(const Payload& payload, Length shift) const override;
@@ -151,7 +163,7 @@ namespace sap::layout
 		virtual void delete_cursor_payload(Payload& payload) const override;
 
 		virtual Payload copy_cursor_payload(const Payload& payload) const override;
-		virtual PagePosition get_position_on_page(const Payload& payload) const override;
+		virtual RelativePos get_position_on_page(const Payload& payload) const override;
 
 		virtual Payload new_line(const Payload& payload, Length line_height) override;
 		virtual Payload move_right(const Payload& payload, Length shift) const override;
@@ -166,6 +178,7 @@ namespace sap::layout
 		explicit CentredLayout(LayoutBase* parent);
 		~CentredLayout();
 
+		virtual PagePosition convertPosition(RelativePos pos) const override;
 		virtual void render(const LayoutBase* layout, std::vector<pdf::Page*>& pages) const override;
 
 	private:

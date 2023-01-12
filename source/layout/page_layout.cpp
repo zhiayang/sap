@@ -12,7 +12,7 @@ namespace sap::layout
 	struct CursorState
 	{
 		size_t page_num;
-		Vector2 pos_on_page;
+		RelativePos::Pos pos_on_page;
 	};
 
 	static_assert(sizeof(CursorState) <= sizeof(BasePayload));
@@ -83,7 +83,7 @@ namespace sap::layout
 		auto& cst = get_cursor_state(payload);
 		return to_base_payload({
 		    .page_num = cst.page_num,
-		    .pos_on_page = cst.pos_on_page + Offset2d(shift, 0),
+		    .pos_on_page = cst.pos_on_page + RelativePos::Pos(shift, 0),
 		});
 	}
 
@@ -95,24 +95,33 @@ namespace sap::layout
 			m_num_pages = std::max(m_num_pages, cst.page_num + 1 + 1);
 			return to_base_payload({
 			    .page_num = cst.page_num + 1,
-			    .pos_on_page = Position(m_margin, m_margin),
+			    .pos_on_page = RelativePos::Pos(m_margin, m_margin),
 			});
 		}
 		else
 		{
 			return to_base_payload({
 			    .page_num = cst.page_num,
-			    .pos_on_page = Position(m_margin, cst.pos_on_page.y() + line_height),
+			    .pos_on_page = RelativePos::Pos(m_margin, cst.pos_on_page.y() + line_height),
 			});
 		}
 	}
 
-	PagePosition PageLayout::get_position_on_page(const Payload& payload) const
+	RelativePos PageLayout::get_position_on_page(const Payload& payload) const
 	{
 		auto& cst = get_cursor_state(payload);
-		return PagePosition {
+		return RelativePos {
 			.pos = cst.pos_on_page,
 			.page_num = cst.page_num,
+		};
+	}
+
+	PagePosition PageLayout::convertPosition(RelativePos pos) const
+	{
+		// PageLayout doesn't do anything with the size.
+		return PagePosition {
+			.pos = Position(pos.pos.x(), pos.pos.y()),
+			.page_num = pos.page_num,
 		};
 	}
 

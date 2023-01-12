@@ -47,7 +47,7 @@ namespace sap::layout
 		return m_parent->new_line(payload, line_height);
 	}
 
-	PagePosition NestedLayout::get_position_on_page(const Payload& payload) const
+	RelativePos NestedLayout::get_position_on_page(const Payload& payload) const
 	{
 		return m_parent->get_position_on_page(payload);
 	}
