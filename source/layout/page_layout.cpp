@@ -1,4 +1,4 @@
-// rect_page_layout.cpp
+// page_layout.cpp
 // Copyright (c) 2022, zhiayang
 // SPDX-License-Identifier: Apache-2.0
 
@@ -43,6 +43,11 @@ namespace sap::layout
 
 	PageLayout::PageLayout(Size2d size, Length margin) : m_size(size), m_margin(margin)
 	{
+	}
+
+	Size2d PageLayout::size() const
+	{
+		return Size2d(m_size.x() - 2 * m_margin, m_size.y() - 2 * m_margin);
 	}
 
 	LineCursor PageLayout::newCursor() const
@@ -125,33 +130,4 @@ namespace sap::layout
 
 		return ret;
 	}
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-	// std::vector<pdf::Page*> RectPageLayout::render() const
-	// {
-	// 	std::vector<pdf::Page*> ret;
-	// 	for(size_t i = 0; i < m_num_pages; ++i)
-	// 	{
-	// 		// TODO: Pages should have the size determined by page size
-	// 		ret.emplace_back(util::make<pdf::Page>());
-	// 	}
-
-	// 	for(auto& obj : m_objects)
-	// 		obj->render(this, ret);
-
-	// 	return ret;
-	// }
 }
