@@ -74,6 +74,8 @@ namespace sap::tree
 		void addObject(std::unique_ptr<InlineObject> obj);
 		void addObjects(std::vector<std::unique_ptr<InlineObject>> obj);
 
+		virtual std::optional<LayoutFn> getLayoutFunction() const override;
+
 		std::vector<std::unique_ptr<InlineObject>>& contents() { return m_contents; }
 		const std::vector<std::unique_ptr<InlineObject>>& contents() const { return m_contents; }
 
@@ -88,6 +90,8 @@ namespace sap::tree
 	struct Image : BlockObject
 	{
 		explicit Image(OwnedImageBitmap image, sap::Vector2 size) : m_image(std::move(image)), m_size(size) { }
+
+		virtual std::optional<LayoutFn> getLayoutFunction() const override;
 
 		static std::unique_ptr<Image> fromImageFile(zst::str_view file_path, sap::Length width,
 		    std::optional<sap::Length> height = std::nullopt);
@@ -108,6 +112,7 @@ namespace sap::tree
 	*/
 	struct ScriptObject : InlineObject, DocumentObject
 	{
+		virtual std::optional<LayoutFn> getLayoutFunction() const override;
 	};
 
 	struct ScriptBlock : ScriptObject

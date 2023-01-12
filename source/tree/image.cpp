@@ -4,6 +4,8 @@
 
 #include "interp/tree.h"
 
+#include "layout/image.h"
+
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wsign-conversion"
 #pragma GCC diagnostic ignored "-Wimplicit-int-conversion"
@@ -69,5 +71,10 @@ namespace sap::tree
 		}
 
 		return std::make_unique<Image>(std::move(image), sap::Vector2(width, *height));
+	}
+
+	auto Image::getLayoutFunction() const -> std::optional<LayoutFn>
+	{
+		return &layout::Image::fromTree;
 	}
 }

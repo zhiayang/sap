@@ -13,6 +13,8 @@
 #include "interp/basedefs.h"    // for InlineObject
 #include "interp/eval_result.h" // for EvalResult
 
+#include "layout/paragraph.h"
+
 namespace sap::tree
 {
 	void Paragraph::evaluateScripts(interp::Interpreter* cs)
@@ -227,4 +229,8 @@ namespace sap::tree
 		m_contents.insert(m_contents.end(), std::move_iterator(objs.begin()), std::move_iterator(objs.end()));
 	}
 
+	auto Paragraph::getLayoutFunction() const -> std::optional<LayoutFn>
+	{
+		return &layout::Paragraph::fromTree;
+	}
 }

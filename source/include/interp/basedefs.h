@@ -2,6 +2,17 @@
 
 #include "sap/style.h" // for Stylable
 
+namespace sap::layout
+{
+	struct LineCursor;
+	struct LayoutBase;
+}
+
+namespace sap::interp
+{
+	struct Interpreter;
+}
+
 namespace sap::tree
 {
 	/*
@@ -28,17 +39,21 @@ namespace sap::tree
 
 	struct DocumentObject
 	{
-		virtual ~DocumentObject();
+		virtual ~DocumentObject() = 0;
+
+		using LayoutFn = layout::LineCursor (*)(interp::Interpreter*, layout::LayoutBase*, layout::LineCursor, const Style*,
+		    const tree::DocumentObject*);
+
+		virtual std::optional<LayoutFn> getLayoutFunction() const = 0;
 	};
 
 	struct InlineObject : Stylable
 	{
-		virtual ~InlineObject();
+		virtual ~InlineObject() = 0;
 	};
 
 	struct BlockObject : DocumentObject
 	{
-		virtual ~BlockObject();
 	};
 }
 

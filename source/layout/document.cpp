@@ -67,6 +67,11 @@ namespace sap::layout
 		LineCursor cursor = m_page_layout.newCursor();
 		for(const auto& obj : treedoc.objects())
 		{
+			auto layout_fn = obj->getLayoutFunction();
+			if(layout_fn.has_value())
+				cursor = (*layout_fn)(cs, &m_page_layout, cursor, m_style, obj);
+
+#if 0
 			LineCursor (*layout_fn)(interp::Interpreter*, LayoutBase*, LineCursor, const Style*,
 			    const tree::DocumentObject*) = nullptr;
 
@@ -80,7 +85,8 @@ namespace sap::layout
 				sap::internal_error("lol");
 
 			assert(layout_fn != nullptr);
-			cursor = layout_fn(cs, &m_page_layout, cursor, m_style, obj);
+			cursor =
+#endif
 		}
 	}
 
