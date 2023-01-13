@@ -22,6 +22,7 @@ namespace sap::interp
 		bool isChar() const { return m_kind == KIND_CHAR; }
 		bool isArray() const { return m_kind == KIND_ARRAY; }
 		bool isStruct() const { return m_kind == KIND_STRUCT; }
+		bool isLength() const { return m_kind == KIND_LENGTH; }
 		bool isNullPtr() const { return m_kind == KIND_NULLPTR; }
 		bool isInteger() const { return m_kind == KIND_INTEGER; }
 		bool isPointer() const { return m_kind == KIND_POINTER; }
@@ -56,6 +57,7 @@ namespace sap::interp
 		static const Type* makeBool();
 		static const Type* makeChar();
 		static const Type* makeString();
+		static const Type* makeLength();
 		static const Type* makeInteger();
 		static const Type* makeNullPtr();
 		static const Type* makeFloating();
@@ -76,21 +78,23 @@ namespace sap::interp
 	protected:
 		enum Kind
 		{
-			KIND_VOID = 0,
-			KIND_ANY = 1,
-			KIND_BOOL = 2,
-			KIND_CHAR = 3,
-			KIND_INTEGER = 4,
-			KIND_FLOATING = 5,
-			KIND_FUNCTION = 6,
+			KIND_VOID,
+			KIND_ANY,
+			KIND_BOOL,
+			KIND_CHAR,
+			KIND_INTEGER,
+			KIND_FLOATING,
+			KIND_FUNCTION,
 
-			KIND_TREE_INLINE_OBJ = 7,
-			KIND_ARRAY = 8,
-			KIND_STRUCT = 9,
-			KIND_POINTER = 10,
-			KIND_NULLPTR = 11,
-			KIND_OPTIONAL = 12,
-			KIND_TREE_BLOCK_OBJ = 13,
+			KIND_ARRAY,
+			KIND_STRUCT,
+			KIND_POINTER,
+			KIND_NULLPTR,
+			KIND_OPTIONAL,
+			KIND_LENGTH,
+
+			KIND_TREE_BLOCK_OBJ,
+			KIND_TREE_INLINE_OBJ,
 		};
 
 		Kind m_kind;

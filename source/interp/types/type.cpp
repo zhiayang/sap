@@ -13,45 +13,37 @@ namespace sap::interp
 	std::string Type::str() const
 	{
 		if(this->isAny())
-		{
 			return "any";
-		}
+
 		else if(this->isVoid())
-		{
 			return "void";
-		}
+
 		else if(this->isInteger())
-		{
 			return "int";
-		}
+
 		else if(this->isFloating())
-		{
 			return "float";
-		}
+
 		else if(this->isBool())
-		{
 			return "bool";
-		}
+
 		else if(this->isChar())
-		{
 			return "char";
-		}
+
 		else if(this->isNullPtr())
-		{
 			return "null";
-		}
+
+		else if(this->isLength())
+			return "length";
+
 		else if(this->isTreeInlineObj())
-		{
 			return "Inline";
-		}
+
 		else if(this->isTreeBlockObj())
-		{
 			return "Block";
-		}
+
 		else
-		{
 			return "?????";
-		}
 	}
 
 	bool Type::sameAs(const Type* other) const
@@ -149,6 +141,12 @@ namespace sap::interp
 	{
 		static const Type* arr_type = Type::makeArray(makeChar());
 		return arr_type;
+	}
+
+	const Type* Type::makeLength()
+	{
+		static Type* length_type = new Type(KIND_LENGTH);
+		return length_type;
 	}
 
 	const Type* Type::makeTreeInlineObj()
