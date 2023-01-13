@@ -219,6 +219,11 @@ namespace sap::tree
 		m_contents.swap(ret);
 	}
 
+
+	Paragraph::Paragraph(std::vector<std::unique_ptr<InlineObject>> objs) : m_contents(std::move(objs))
+	{
+	}
+
 	void Paragraph::addObject(std::unique_ptr<InlineObject> obj)
 	{
 		m_contents.push_back(std::move(obj));

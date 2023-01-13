@@ -33,6 +33,10 @@ CLEANUP:
 - use another way to make words recognise that they're on the same line
 	- something to do with their positions and cursors
 
+- dijkstra linebreaking might accidentally make an extra page;
+	- when rendering, use some mechanism (eg. proxy object) to only make the page if
+		someone tried to actually put stuff in it (or access it)
+
 #endif
 
 int main(int argc, char** argv)

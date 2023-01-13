@@ -40,9 +40,18 @@ namespace sap::layout
 		m_objects.push_back(std::move(obj));
 	}
 
+	LineCursor LayoutBase::newCursor()
+	{
+		return LineCursor(this, this->new_cursor_payload());
+	}
 
 	PageLayout::PageLayout(Size2d size, Length margin) : m_size(size), m_margin(margin)
 	{
+	}
+
+	PageLayout::~PageLayout()
+	{
+		m_objects.clear();
 	}
 
 	Size2d PageLayout::size() const
@@ -87,12 +96,14 @@ namespace sap::layout
 		});
 	}
 
-	BasePayload PageLayout::new_line(const BasePayload& payload, Length line_height)
+	BasePayload PageLayout::new_line(const BasePayload& payload, Length line_height, bool* made_new_page)
 	{
 		auto& cst = get_cursor_state(payload);
 		if(cst.pos_on_page.y() + line_height >= m_size.y() - m_margin)
 		{
 			m_num_pages = std::max(m_num_pages, cst.page_num + 1 + 1);
+
+			*made_new_page = true;
 			return to_base_payload({
 			    .page_num = cst.page_num + 1,
 			    .pos_on_page = RelativePos::Pos(m_margin, m_margin),
@@ -100,6 +111,7 @@ namespace sap::layout
 		}
 		else
 		{
+			*made_new_page = false;
 			return to_base_payload({
 			    .page_num = cst.page_num,
 			    .pos_on_page = RelativePos::Pos(m_margin, cst.pos_on_page.y() + line_height),
@@ -116,10 +128,10 @@ namespace sap::layout
 		};
 	}
 
-	PagePosition PageLayout::convertPosition(RelativePos pos) const
+	AbsolutePagePos PageLayout::convertPosition(RelativePos pos) const
 	{
 		// PageLayout doesn't do anything with the size.
-		return PagePosition {
+		return AbsolutePagePos {
 			.pos = Position(pos.pos.x(), pos.pos.y()),
 			.page_num = pos.page_num,
 		};

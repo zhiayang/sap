@@ -9,7 +9,7 @@ WARNINGS += -Wno-error=unused-variable
 WARNINGS += -Wno-error=unused-function
 WARNINGS += -Wno-unused-but-set-variable
 
-OPT_FLAGS           := -O0
+OPT_FLAGS           := -O0 -fsanitize=address
 LINKER_OPT_FLAGS    :=
 COMMON_CFLAGS       := -g $(OPT_FLAGS)
 

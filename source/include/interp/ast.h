@@ -53,13 +53,22 @@ namespace sap::interp
 	{
 	};
 
-	struct InlineTreeExpr : Expr
+	struct TreeInlineExpr : Expr
 	{
 		virtual ErrorOr<EvalResult> evaluate(Evaluator* ev) const override;
 		virtual ErrorOr<TCResult> typecheck_impl(Typechecker* ts, const Type* infer = nullptr) const override;
 
 		mutable std::vector<std::unique_ptr<tree::InlineObject>> objects;
 	};
+
+	struct TreeBlockExpr : Expr
+	{
+		virtual ErrorOr<EvalResult> evaluate(Evaluator* ev) const override;
+		virtual ErrorOr<TCResult> typecheck_impl(Typechecker* ts, const Type* infer = nullptr) const override;
+
+		mutable std::unique_ptr<tree::BlockObject> object;
+	};
+
 
 	struct Declaration;
 	struct FunctionDecl;

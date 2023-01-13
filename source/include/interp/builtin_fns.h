@@ -31,5 +31,6 @@ namespace sap::interp
 		ErrorOr<EvalResult> println(Evaluator* cs, std::vector<Value>& args);
 
 		ErrorOr<EvalResult> load_image(Evaluator* cs, std::vector<Value>& args);
+		ErrorOr<EvalResult> centred_block(Evaluator* cs, std::vector<Value>& args);
 	}
 }

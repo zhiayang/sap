@@ -112,8 +112,6 @@ namespace sap::layout
 	{
 		auto treepara = static_cast<const tree::Paragraph*>(doc_obj);
 
-		cursor = cursor.newLine(0);
-
 		using WordSepVec = std::vector<std::variant<Word, Separator>>;
 		WordSepVec words_and_seps;
 
@@ -128,6 +126,9 @@ namespace sap::layout
 		}
 
 		auto para = std::make_unique<Paragraph>();
+		cursor = cursor.newLine(0);
+		para->m_position = cursor.position();
+
 		auto lines = breakLines(layout, cursor, parent_style, words_and_seps, cursor.widthAtCursor());
 
 		size_t current_idx = 0;

@@ -18,6 +18,10 @@
 
 namespace sap::tree
 {
+	Image::Image(OwnedImageBitmap image, sap::Vector2 size) : m_image(std::move(image)), m_size(size)
+	{
+	}
+
 	// TODO: make ErrorOr<>
 	std::unique_ptr<Image> Image::fromImageFile(zst::str_view file_path, sap::Length width, std::optional<sap::Length> height)
 	{

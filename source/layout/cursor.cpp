@@ -51,9 +51,15 @@ namespace sap::layout
 		return m_layout->get_width_at_cursor_payload(m_payload);
 	}
 
-	LineCursor LineCursor::newLine(Length line_height) const
+	LineCursor LineCursor::newLine(Length line_height, bool* made_new_page2) const
 	{
-		return LineCursor(m_layout, m_layout->new_line(m_payload, line_height));
+		bool made_new_page = false;
+		auto payload = m_layout->new_line(m_payload, line_height, &made_new_page);
+
+		if(made_new_page2)
+			*made_new_page2 = made_new_page;
+
+		return LineCursor(m_layout, std::move(payload));
 	}
 
 	LineCursor LineCursor::moveRight(Length shift) const

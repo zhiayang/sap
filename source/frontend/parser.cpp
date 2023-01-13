@@ -16,6 +16,8 @@
 namespace sap::frontend
 {
 	constexpr auto KW_NULL = "null";
+
+	constexpr auto KW_PARA_BLOCK = "p";
 	constexpr auto KW_SCRIPT_BLOCK = "script";
 
 	using TT = TokenType;
@@ -931,7 +933,11 @@ namespace sap::frontend
 		return block;
 	}
 
+
 	static std::unique_ptr<tree::InlineObject> parse_inline_obj(Lexer& lexer);
+	static std::optional<std::unique_ptr<Paragraph>> parse_paragraph(Lexer& lexer);
+	static std::vector<std::unique_ptr<BlockObject>> parse_top_level(Lexer& lexer);
+
 	static std::unique_ptr<ScriptCall> parse_inline_script_call(Lexer& lexer)
 	{
 		auto lm = LexerModer(lexer, Lexer::Mode::Script);
@@ -948,18 +954,57 @@ namespace sap::frontend
 		sc->call = parse_function_call(lexer, std::move(lhs));
 
 		// check if we have trailing things
-		// TODO: support trailing blocks \p, and manually specifying inline \t
+		// TODO: support manually specifying inline \t
+		bool is_block = false;
+		if(lexer.expect(TT::Backslash))
+		{
+			if(auto n = lexer.match(TT::Identifier); not n.has_value() || n->text != KW_PARA_BLOCK)
+				error(lexer.location(), "expected 'p' after '\\' in script call");
+
+			is_block = true;
+			if(lexer.peek() != TT::LBrace)
+				error(lexer.location(), "expected '{' after '\\p'");
+		}
+
 		if(lexer.expect(TT::LBrace))
 		{
-			auto obj = std::make_unique<interp::InlineTreeExpr>();
+			if(is_block)
+			{
+				auto obj = std::make_unique<interp::TreeBlockExpr>();
+				auto container = std::make_unique<tree::BlockContainer>();
+				auto inner = parse_top_level(lexer);
+				container->contents().insert(container->contents().end(), std::move_iterator(inner.begin()),
+				    std::move_iterator(inner.end()));
 
-			while(not lexer.expect(TT::RBrace))
-				obj->objects.push_back(parse_inline_obj(lexer));
+				obj->object = std::move(container);
 
-			sc->call->arguments.push_back(interp::FunctionCall::Arg {
-			    .name = std::nullopt,
-			    .value = std::move(obj),
-			});
+#if 0
+				if(auto maybe_para = parse_paragraph(lexer); not maybe_para.has_value())
+					error(lexer.location(), "paragraph expression cannot be empty");
+				else
+					obj->object = std::move(*maybe_para);
+#endif
+
+				if(not lexer.expect(TT::RBrace))
+					error(lexer.location(), "expected closing '}'");
+
+				sc->call->arguments.push_back(interp::FunctionCall::Arg {
+				    .name = std::nullopt,
+				    .value = std::move(obj),
+				});
+			}
+			else
+			{
+				auto obj = std::make_unique<interp::TreeInlineExpr>();
+
+				while(not lexer.expect(TT::RBrace))
+					obj->objects.push_back(parse_inline_obj(lexer));
+
+				sc->call->arguments.push_back(interp::FunctionCall::Arg {
+				    .name = std::nullopt,
+				    .value = std::move(obj),
+				});
+			}
 		}
 
 		return sc;
@@ -1004,8 +1049,18 @@ namespace sap::frontend
 		auto para = std::make_unique<Paragraph>();
 		while(true)
 		{
-			if(auto t = lexer.peek(); t == TT::ParagraphBreak || t == TT::EndOfFile)
+			auto peek = lexer.peek();
+			if(peek == TT::ParagraphBreak || peek == TT::EndOfFile)
+			{
 				break;
+			}
+			else if(peek != TT::Backslash && peek != TT::Text)
+			{
+				if(para->contents().size() == 0)
+					error(lexer.location(), "unexpected token '{}' in inline object", peek.text);
+				else
+					break;
+			}
 
 			para->addObject(parse_inline_obj(lexer));
 		}
@@ -1013,14 +1068,12 @@ namespace sap::frontend
 		return para;
 	}
 
-
-	Document parse(zst::str_view filename, zst::str_view contents)
+	static std::vector<std::unique_ptr<BlockObject>> parse_top_level(Lexer& lexer)
 	{
-		auto lexer = Lexer(filename, contents);
-		Document document {};
-
 		// this only needs to happen at the beginning
 		lexer.skipWhitespaceAndComments();
+
+		std::vector<std::unique_ptr<BlockObject>> objs {};
 
 		while(true)
 		{
@@ -1030,7 +1083,7 @@ namespace sap::frontend
 			if(auto tok = lexer.peek(); tok == TT::Text)
 			{
 				if(auto ret = parse_paragraph(lexer); ret.has_value())
-					document.addObject(std::move(*ret));
+					objs.push_back(std::move(*ret));
 			}
 			else if(tok == TT::ParagraphBreak)
 			{
@@ -1040,12 +1093,36 @@ namespace sap::frontend
 			else if(tok == TT::Backslash)
 			{
 				lexer.next();
-				document.addObject(parse_script_object(lexer));
+				objs.push_back(parse_script_object(lexer));
 			}
 			else
 			{
-				error(tok.loc, "unexpected token '{}' ({}) at top level", tok.text, tok.type);
+				break;
 			}
+		}
+
+		return objs;
+	}
+
+
+
+
+
+	Document parse(zst::str_view filename, zst::str_view contents)
+	{
+		auto lexer = Lexer(filename, contents);
+		Document document {};
+
+		while(true)
+		{
+			auto objs = parse_top_level(lexer);
+			for(auto& obj : objs)
+				document.addObject(std::move(obj));
+
+			if(not lexer.eof())
+				error(lexer.location(), "unexpected token '{}'", lexer.peek().text);
+			else
+				break;
 		}
 
 		return document;

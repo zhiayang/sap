@@ -44,6 +44,10 @@ namespace sap::interp
 		{
 			return "Inline";
 		}
+		else if(this->isTreeBlockObj())
+		{
+			return "Block";
+		}
 		else
 		{
 			return "?????";

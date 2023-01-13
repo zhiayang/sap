@@ -87,6 +87,8 @@ namespace sap::interp
 		        Param { .name = "3", .type = PType::optional(t_float), .default_value = std::make_unique<interp::NullLit>() }),
 		    t_tbo, &builtin::load_image);
 
+		define_builtin("centred_block", makeParamList(Param { .name = "1", .type = t_tbo }), t_tbo, &builtin::centred_block);
+
 		// TODO: make these variadic
 		define_builtin("print", makeParamList(Param { .name = "_", .type = t_any }), t_void, &builtin::print);
 		define_builtin("println", makeParamList(Param { .name = "_", .type = t_any }), t_void, &builtin::println);

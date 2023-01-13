@@ -471,6 +471,7 @@ namespace sap::frontend
 				case '@': tt = TT::At; break;
 				case '?': tt = TT::Question; break;
 				case '!': tt = TT::Exclamation; break;
+				case '\\': tt = TT::Backslash; break;
 
 				default: sap::error(loc, "unknown token '{}'", stream[0]); break;
 			}
@@ -511,7 +512,6 @@ namespace sap::frontend
 		auto foo = m_stream;
 		auto bar = m_location;
 
-		// TODO: figure out how we wanna handle comments
 		if(mode == Mode::Text)
 			return consume_text_token(foo, bar);
 		else if(mode == Mode::Script)

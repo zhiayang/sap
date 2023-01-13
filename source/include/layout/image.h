@@ -30,9 +30,7 @@ namespace sap::layout
 	private:
 		explicit Image(ImageBitmap m_image);
 
-		RelativePos m_position {};
 		Size2d m_size {};
-
 		ImageBitmap m_image;
 	};
 }

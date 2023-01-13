@@ -10,6 +10,10 @@
 #include "interp/value.h"    // for Interpreter
 #include "interp/basedefs.h" // for InlineObject, DocumentObject, BlockObject
 
+namespace sap::layout
+{
+	struct CentredLayout;
+}
 
 // pun not intended
 namespace sap::tree
@@ -25,6 +29,8 @@ namespace sap::tree
 		void processWordSeparators();
 
 	private:
+		bool process_word_separators(DocumentObject* obj);
+
 		std::vector<DocumentObject*> m_objects {};
 		std::vector<std::unique_ptr<DocumentObject>> m_all_objects {};
 	};
@@ -71,6 +77,9 @@ namespace sap::tree
 
 	struct Paragraph : BlockObject
 	{
+		Paragraph() = default;
+		explicit Paragraph(std::vector<std::unique_ptr<InlineObject>> objs);
+
 		void addObject(std::unique_ptr<InlineObject> obj);
 		void addObjects(std::vector<std::unique_ptr<InlineObject>> obj);
 
@@ -89,7 +98,7 @@ namespace sap::tree
 
 	struct Image : BlockObject
 	{
-		explicit Image(OwnedImageBitmap image, sap::Vector2 size) : m_image(std::move(image)), m_size(size) { }
+		explicit Image(OwnedImageBitmap image, sap::Vector2 size);
 
 		virtual std::optional<LayoutFn> getLayoutFunction() const override;
 
@@ -104,13 +113,46 @@ namespace sap::tree
 		sap::Vector2 m_size;
 	};
 
+	struct BlockContainer : BlockObject
+	{
+		virtual std::optional<LayoutFn> getLayoutFunction() const override;
+
+		std::vector<std::unique_ptr<BlockObject>>& contents() { return m_objects; }
+		const std::vector<std::unique_ptr<BlockObject>>& contents() const { return m_objects; }
+
+	private:
+		static layout::LineCursor layout_fn(interp::Interpreter* cs, layout::LayoutBase* layout, layout::LineCursor cursor,
+		    const Style* style, const DocumentObject* obj);
+
+	private:
+		std::vector<std::unique_ptr<BlockObject>> m_objects;
+	};
+
+	struct CentredContainer : BlockObject
+	{
+		explicit CentredContainer(std::unique_ptr<BlockObject> inner);
+
+		virtual std::optional<LayoutFn> getLayoutFunction() const override;
+
+		const BlockObject& inner() const { return *m_inner.get(); }
+
+	private:
+		static layout::LineCursor layout_fn(interp::Interpreter* cs, layout::LayoutBase* layout, layout::LineCursor cursor,
+		    const Style* style, const DocumentObject* obj);
+
+	private:
+		std::unique_ptr<BlockObject> m_inner;
+	};
+
+
+
 
 	/*
 	    Since inline objects are not document objects, we do not have a diamond problem by
 	    inheriting both of them. We want this hierarchy because script blocks and calls can
 	    appear both at the top-level (with blocks or floats), and within blocks/floats as well.
 	*/
-	struct ScriptObject : InlineObject, DocumentObject
+	struct ScriptObject : InlineObject, BlockObject
 	{
 		virtual std::optional<LayoutFn> getLayoutFunction() const override;
 	};

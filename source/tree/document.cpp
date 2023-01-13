@@ -78,28 +78,44 @@ namespace sap::tree
 		m_objects.swap(ret);
 	}
 
+
+	bool Document::process_word_separators(DocumentObject* obj)
+	{
+		if(auto para = dynamic_cast<Paragraph*>(obj); para != nullptr)
+		{
+			para->processWordSeparators();
+			return not para->contents().empty();
+		}
+		else if(auto img = dynamic_cast<Image*>(obj); img != nullptr)
+		{
+			// always keep
+			return true;
+		}
+		else if(auto bc = dynamic_cast<BlockContainer*>(obj); bc != nullptr)
+		{
+			bool keep_any = false;
+			for(auto& obj : bc->contents())
+				keep_any |= process_word_separators(obj.get());
+
+			return keep_any;
+		}
+		else
+		{
+			// keep anything we don't know about, i guess.
+			return true;
+		}
+	}
+
+
 	void Document::processWordSeparators()
 	{
 		for(auto it = m_objects.begin(); it != m_objects.end();)
 		{
-			if(auto para = dynamic_cast<Paragraph*>(*it); para != nullptr)
-			{
-				para->processWordSeparators();
-				if(para->contents().empty())
-					it = m_objects.erase(it);
-				else
-					++it;
-			}
-			else if(auto img = dynamic_cast<Image*>(*it); img != nullptr)
-			{
-				// do nothing
+			auto keep = process_word_separators(*it);
+			if(keep)
 				++it;
-			}
 			else
-			{
-				sap::internal_error("boeu");
-				++it;
-			}
+				it = m_objects.erase(it);
 		}
 	}
 
