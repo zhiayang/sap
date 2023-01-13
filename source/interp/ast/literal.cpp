@@ -9,6 +9,19 @@
 
 namespace sap::interp
 {
+	ErrorOr<TCResult> LengthExpr::typecheck_impl(Typechecker* ts, const Type* infer) const
+	{
+		return ErrFmt("unimplemented");
+	}
+
+	ErrorOr<EvalResult> LengthExpr::evaluate(Evaluator* ev) const
+	{
+		return ErrFmt("unimplemented");
+	}
+
+
+
+
 	ErrorOr<TCResult> NumberLit::typecheck_impl(Typechecker* ts, const Type* infer) const
 	{
 		if(this->is_floating)

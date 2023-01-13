@@ -11,6 +11,8 @@
 #include "util.h"     // for ErrorOr, Ok, TRY
 #include "location.h" // for Location
 
+#include "sap/units.h"
+
 #include "interp/basedefs.h" // for InlineObject
 #include "interp/tc_result.h"
 #include "interp/parser_type.h"
@@ -262,6 +264,16 @@ namespace sap::interp
 		std::unique_ptr<Expr> expr;
 		bool is_mutable = false;
 	};
+
+	struct LengthExpr : Expr
+	{
+		virtual ErrorOr<EvalResult> evaluate(Evaluator* ev) const override;
+		virtual ErrorOr<TCResult> typecheck_impl(Typechecker* ts, const Type* infer = nullptr) const override;
+
+		DynLength length;
+	};
+
+
 
 
 

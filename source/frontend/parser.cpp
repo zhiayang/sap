@@ -5,6 +5,7 @@
 #include "util.h"     // for consumeCodepointFromUtf8, is_one_of
 #include "location.h" // for error, Location
 
+#include "sap/units.h"
 #include "sap/frontend.h" // for Token, Lexer, TokenType, Lexer::Mode
 
 #include "tree/base.h"
@@ -529,19 +530,33 @@ namespace sap::frontend
 		}
 		else if(auto num = lexer.match(TT::Number); num)
 		{
-			auto ret = std::make_unique<interp::NumberLit>();
-			if(num->text.find('.') != (size_t) -1)
+			// check if we have a unit later.
+			if(auto unit = lexer.match(TT::Identifier); unit.has_value())
 			{
-				ret->is_floating = true;
-				ret->float_value = std::stod(num->text.str());
+				auto maybe_unit = DynLength::stringToUnit(unit->text);
+				if(not maybe_unit.has_value())
+					error(lexer.location(), "unknown unit '{}' following number literal", unit->text);
+
+				auto ret = std::make_unique<interp::LengthExpr>();
+				ret->length = DynLength(std::stod(num->text.str()), *maybe_unit);
+
+				return ret;
 			}
 			else
 			{
-				ret->is_floating = false;
-				ret->int_value = std::stoll(num->text.str());
+				auto ret = std::make_unique<interp::NumberLit>();
+				if(num->text.find('.') != (size_t) -1)
+				{
+					ret->is_floating = true;
+					ret->float_value = std::stod(num->text.str());
+				}
+				else
+				{
+					ret->is_floating = false;
+					ret->int_value = std::stoll(num->text.str());
+				}
+				return ret;
 			}
-
-			return ret;
 		}
 		else if(auto str = lexer.match(TT::String); str)
 		{
