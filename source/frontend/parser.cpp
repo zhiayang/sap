@@ -7,8 +7,12 @@
 
 #include "sap/frontend.h" // for Token, Lexer, TokenType, Lexer::Mode
 
+#include "tree/base.h"
+#include "tree/document.h"
+#include "tree/paragraph.h"
+#include "tree/container.h"
+
 #include "interp/ast.h"      // for Expr, FunctionDecl::Param, FunctionCall...
-#include "interp/tree.h"     // for Paragraph, ScriptBlock, ScriptCall, Text
 #include "interp/type.h"     // for Type, interp, ArrayType, FunctionType
 #include "interp/basedefs.h" // for DocumentObject, InlineObject
 #include "interp/parser_type.h"

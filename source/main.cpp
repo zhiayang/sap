@@ -13,12 +13,13 @@
 #include "sap/frontend.h"    // for parse
 #include "sap/font_family.h" // for FontSet, FontStyle, FontStyle::Regular
 
+#include "tree/document.h"
+
 #include "font/tag.h"       // for font
 #include "font/handle.h"    // for FontProperties, FontStyle, FontStyle::ITALIC
 #include "font/search.h"    // for findFont, GENERIC_SERIF
 #include "font/font_file.h" // for FontFile
 
-#include "interp/tree.h"   // for Document
 #include "interp/interp.h" // for Interpreter
 
 #if 0

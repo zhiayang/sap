@@ -7,7 +7,7 @@
 #include "sap/style.h" // for Stylable, Style
 #include "sap/units.h" // for Length
 
-#include "interp/tree.h" // for Separator, Separator::SeparatorKind, Separa...
+#include "tree/paragraph.h"
 
 namespace pdf
 {

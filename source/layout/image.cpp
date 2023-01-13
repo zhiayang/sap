@@ -5,7 +5,7 @@
 #include "pdf/page.h"
 #include "pdf/xobject.h"
 
-#include "interp/tree.h"
+#include "tree/image.h"
 
 #include "layout/image.h"
 

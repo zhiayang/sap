@@ -12,8 +12,6 @@
 #include "sap/style.h" // for Style
 #include "sap/units.h" // for Length
 
-#include "interp/tree.h" // for Separator, Separator::SPACE
-
 #include "layout/base.h" // for Size2d, Cursor, RectPageLayout
 #include "layout/word.h" // for Separator, Word
 

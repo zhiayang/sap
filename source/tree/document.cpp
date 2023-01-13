@@ -2,7 +2,11 @@
 // Copyright (c) 2022, zhiayang
 // SPDX-License-Identifier: Apache-2.0
 
-#include "interp/tree.h"        // for Document, Paragraph, ScriptBlock
+#include "tree/image.h"
+#include "tree/document.h"
+#include "tree/paragraph.h"
+#include "tree/container.h"
+
 #include "interp/interp.h"      // for Interpreter
 #include "interp/basedefs.h"    // for DocumentObject
 #include "interp/eval_result.h" // for EvalResult

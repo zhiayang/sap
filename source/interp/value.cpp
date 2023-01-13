@@ -4,7 +4,9 @@
 
 #include <utf8proc/utf8proc.h>
 
-#include "interp/tree.h"
+#include "tree/image.h"
+#include "tree/paragraph.h"
+
 #include "interp/value.h"
 
 namespace sap::interp

@@ -14,6 +14,7 @@
 
 namespace sap::tree
 {
+	struct BlockObject;
 	struct InlineObject;
 }
 

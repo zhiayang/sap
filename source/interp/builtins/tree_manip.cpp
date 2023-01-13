@@ -5,7 +5,11 @@
 #include "sap/style.h"       // for Style
 #include "sap/font_family.h" // for FontStyle, FontStyle::Bold, FontStyl...
 
-#include "interp/tree.h"          // for Text
+#include "tree/base.h"
+#include "tree/image.h"
+#include "tree/paragraph.h"
+#include "tree/container.h"
+
 #include "interp/value.h"         // for Value
 #include "interp/interp.h"        // for Interpreter
 #include "interp/basedefs.h"      // for InlineObject

@@ -2,8 +2,9 @@
 // Copyright (c) 2022, zhiayang
 // SPDX-License-Identifier: Apache-2.0
 
+#include "tree/paragraph.h"
+
 #include "interp/ast.h"
-#include "interp/tree.h"
 #include "interp/evaluator.h"
 
 namespace sap::interp

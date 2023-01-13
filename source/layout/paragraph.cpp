@@ -14,7 +14,6 @@
 #include "sap/style.h" // for Style
 #include "sap/units.h" // for Length
 
-#include "interp/tree.h"     // for Separator, Paragraph, Text, Separator:...
 #include "interp/value.h"    // for Interpreter
 #include "interp/basedefs.h" // for InlineObject
 

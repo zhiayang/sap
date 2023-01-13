@@ -7,7 +7,6 @@
 #include "misc/hyphenator.h"
 
 #include "interp/ast.h"         // for FunctionCall
-#include "interp/tree.h"        // for Text, Separator, Paragraph, ScriptCall
 #include "interp/value.h"       // for Value
 #include "interp/interp.h"      // for Interpreter
 #include "interp/basedefs.h"    // for InlineObject

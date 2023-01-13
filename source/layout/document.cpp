@@ -13,7 +13,8 @@
 #include "sap/document.h"    // for Document
 #include "sap/font_family.h" // for FontSet, FontStyle, FontStyle::Regular
 
-#include "interp/tree.h"     // for Paragraph, Document
+#include "tree/document.h"
+
 #include "interp/basedefs.h" // for DocumentObject
 
 #include "layout/base.h"      // for Cursor, LayoutObject, Interpreter, Rec...

@@ -15,6 +15,12 @@
 #include "interp/tc_result.h"
 #include "interp/parser_type.h"
 
+namespace sap::tree
+{
+	struct BlockObject;
+	struct InlineObject;
+}
+
 namespace sap::interp
 {
 	struct Value;
