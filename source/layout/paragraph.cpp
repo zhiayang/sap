@@ -205,6 +205,7 @@ namespace sap::layout
 		}
 
 		layout->addObject(std::move(para));
+		cursor = cursor.newLine(parent_style->paragraph_spacing());
 		return cursor;
 	}
 

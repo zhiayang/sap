@@ -530,9 +530,16 @@ namespace sap::frontend
 		else if(auto num = lexer.match(TT::Number); num)
 		{
 			auto ret = std::make_unique<interp::NumberLit>();
-			ret->is_floating = false;
-			ret->int_value = std::stoll(num->text.str());
-			ret->float_value = 0;
+			if(num->text.find('.') != (size_t) -1)
+			{
+				ret->is_floating = true;
+				ret->float_value = std::stod(num->text.str());
+			}
+			else
+			{
+				ret->is_floating = false;
+				ret->int_value = std::stoll(num->text.str());
+			}
 
 			return ret;
 		}

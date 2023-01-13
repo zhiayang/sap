@@ -291,8 +291,15 @@ namespace sap::frontend
 		else if(isascii(stream[0]) && isdigit(stream[0]))
 		{
 			size_t n = 0;
-			while(isascii(stream[n]) && isdigit(stream[n]))
+			while(n < stream.size() && isascii(stream[n]) && isdigit(stream[n]))
 				n++;
+
+			if(n < stream.size() && stream[n] == '.')
+			{
+				n++;
+				while(n < stream.size() && isascii(stream[n]) && isdigit(stream[n]))
+					n++;
+			}
 
 			return advance_and_return(stream, loc, //
 			    Token { .loc = loc, .type = TT::Number, .text = stream.take(n) }, n);
