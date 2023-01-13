@@ -18,6 +18,7 @@ namespace sap::tree
 			if(not layout_fn.has_value())
 				continue;
 
+			// TODO: inter-object margin!
 			cursor = (*layout_fn)(cs, layout, cursor, style, obj.get());
 			cursor = cursor.newLine(0);
 		}

@@ -110,7 +110,7 @@ namespace sap::layout
 
 	void CentredLayout::computeLayoutSize()
 	{
-		// TODO: inter-object spacing!
+		// TODO: inter-object margin!
 		for(auto& obj : m_objects)
 		{
 			m_layout_size.x() = std::max(m_layout_size.x(), obj->layoutSize().x());
