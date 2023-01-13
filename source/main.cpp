@@ -90,6 +90,8 @@ int main(int argc, char** argv)
 	auto actual_style = layout_doc.style()->extendWith(&main_style);
 	layout_doc.setStyle(actual_style);
 
+	interpreter.evaluator().pushStyle(layout_doc.style());
+
 	document.evaluateScripts(&interpreter);
 	document.processWordSeparators();
 	layout_doc.layout(&interpreter, document);

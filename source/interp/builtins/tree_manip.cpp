@@ -61,38 +61,12 @@ namespace sap::interp::builtin
 		}
 	}
 
-
-	template <typename T>
-	static std::optional<T> get_field(Value& str, zst::str_view field)
-	{
-		auto& fields = str.getStructFields();
-		auto idx = str.type()->toStruct()->getFieldIndex(field);
-
-		auto& f = fields[idx];
-		if(not f.haveOptionalValue())
-			return std::nullopt;
-
-		return (*f.getOptional())->get<T>();
-	}
-
 	ErrorOr<EvalResult> apply_style(Evaluator* ev, std::vector<Value>& args)
 	{
 		assert(args.size() == 2);
 		assert(args[0].type() == BStyle::type);
 
-		auto get_scalar = [&args](zst::str_view field) -> std::optional<sap::Length> {
-			auto f = get_field<double>(args[0], field);
-			if(f.has_value())
-				return sap::Length(*f);
-
-			return std::nullopt;
-		};
-
-		auto style = Style();
-		style.set_font_size(get_scalar("font_size"));
-		style.set_line_spacing(get_field<double>(args[0], "line_spacing"));
-
-		return do_apply_style(ev, args[1], &style);
+		return do_apply_style(ev, args[1], BStyle::unmake(args[0]));
 	}
 
 
@@ -118,6 +92,35 @@ namespace sap::interp::builtin
 	}
 
 
+	ErrorOr<EvalResult> current_style(Evaluator* ev, std::vector<Value>& args)
+	{
+		assert(args.size() == 0);
+		auto style = TRY(ev->currentStyle());
+
+		return EvalResult::ofValue(BStyle::make(style));
+	}
+
+	ErrorOr<EvalResult> push_style(Evaluator* ev, std::vector<Value>& args)
+	{
+		assert(args.size() == 1);
+
+		ev->pushStyle(BStyle::unmake(args[0]));
+		return EvalResult::ofVoid();
+	}
+
+	ErrorOr<EvalResult> pop_style(Evaluator* ev, std::vector<Value>& args)
+	{
+		assert(args.size() == 0);
+		auto ret = TRY(ev->popStyle());
+
+		return EvalResult::ofValue(BStyle::make(ret));
+	}
+
+
+
+
+
+
 
 
 	ErrorOr<EvalResult> load_image(Evaluator* ev, std::vector<Value>& args)
@@ -128,11 +131,13 @@ namespace sap::interp::builtin
 		auto img_path = args[0].getUtf8String();
 		zpr::println("loading image '{}'", img_path);
 
-		auto img_width = sap::Length(args[1].getFloating());
-		std::optional<sap::Length> img_height {};
+		auto style = TRY(ev->currentStyle());
 
+		auto img_width = args[1].getLength().resolve(style->font(), style->font_size());
+
+		std::optional<sap::Length> img_height {};
 		if(auto tmp = std::move(args[2]).takeOptional(); tmp.has_value())
-			img_height = sap::Length(tmp->getFloating());
+			img_height = tmp->getLength().resolve(style->font(), style->font_size());
 
 		auto img_obj = tree::Image::fromImageFile(img_path, img_width, img_height);
 		return EvalResult::ofValue(Value::treeBlockObject(std::move(img_obj)));

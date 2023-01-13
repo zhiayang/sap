@@ -104,6 +104,29 @@ namespace sap::interp
 	}
 
 
+	ErrorOr<const Style*> Evaluator::currentStyle() const
+	{
+		if(m_style_stack.empty())
+			return ErrFmt("no style set!");
+
+		return Ok(m_style_stack.back());
+	}
+
+	void Evaluator::pushStyle(const Style* style)
+	{
+		m_style_stack.push_back(style);
+	}
+
+	ErrorOr<const Style*> Evaluator::popStyle()
+	{
+		if(m_style_stack.empty())
+			return ErrFmt("no style set!");
+
+		auto ret = m_style_stack.back();
+		m_style_stack.pop_back();
+		return Ok(ret);
+	}
+
 
 
 

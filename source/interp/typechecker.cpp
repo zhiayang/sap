@@ -104,6 +104,8 @@ namespace sap::interp
 					return Ok(Type::makeTreeInlineObj());
 				else if(nn == TYPE_TREE_BLOCK)
 					return Ok(Type::makeTreeBlockObj());
+				else if(nn == TYPE_LENGTH)
+					return Ok(Type::makeLength());
 			}
 
 			auto decl = TRY(this->current()->lookup(name));

@@ -34,7 +34,7 @@ namespace sap::interp
 			return "null";
 
 		else if(this->isLength())
-			return "length";
+			return "Length";
 
 		else if(this->isTreeInlineObj())
 			return "Inline";

@@ -2,6 +2,7 @@
 // Copyright (c) 2022, zhiayang
 // SPDX-License-Identifier: Apache-2.0
 
+#include "sap/style.h"
 #include "sap/frontend.h"
 
 #include "interp/ast.h"
@@ -21,6 +22,19 @@ namespace sap::interp
 		return std::make_unique<NullLit>();
 	}
 
+	template <typename T>
+	static std::optional<T> get_field(const Value& str, zst::str_view field)
+	{
+		auto& fields = str.getStructFields();
+		auto idx = str.type()->toStruct()->getFieldIndex(field);
+
+		auto& f = fields[idx];
+		if(not f.haveOptionalValue())
+			return std::nullopt;
+
+		return (*f.getOptional())->get<T>();
+	}
+
 	const Type* builtin::BStyle::type = nullptr;
 	std::vector<Field> builtin::BStyle::fields()
 	{
@@ -28,6 +42,37 @@ namespace sap::interp
 		    Field { .name = "font_size", .type = PT::optional(pt_float), .initialiser = get_null() }, //
 		    Field { .name = "line_spacing", .type = PT::optional(pt_float), .initialiser = get_null() });
 	}
+
+	Value builtin::BStyle::make(const Style* style)
+	{
+		return StructMaker(BStyle::type->toStruct()) //
+		    .set("font_size", Value::floating(style->font_size().value()))
+		    .set("line_spacing", Value::floating(style->line_spacing()))
+		    .make();
+	}
+
+	const Style* builtin::BStyle::unmake(const Value& value)
+	{
+		auto style = util::make<Style>();
+
+		auto get_scalar = [&value](zst::str_view field) -> std::optional<sap::Length> {
+			auto f = get_field<double>(value, field);
+			if(f.has_value())
+				return sap::Length(*f);
+
+			return std::nullopt;
+		};
+
+		style->set_font_size(get_scalar("font_size"));
+		style->set_line_spacing(get_field<double>(value, "line_spacing"));
+
+		return style;
+	}
+
+
+
+
+
 
 
 	template <typename T>
@@ -57,11 +102,12 @@ namespace sap::interp
 		auto t_str = PType::named(TYPE_STRING);
 		auto t_void = PType::named(TYPE_VOID);
 		auto t_float = PType::named(TYPE_FLOAT);
+		auto t_length = PType::named(TYPE_LENGTH);
 
 		auto t_tbo = PType::named(TYPE_TREE_BLOCK);
 		auto t_tio = PType::named(TYPE_TREE_INLINE);
 
-		auto bstyle_t = PType::named(builtin::BStyle::name);
+		auto t_bstyle = PType::named(builtin::BStyle::name);
 
 		auto define_builtin = [&](auto&&... xs) {
 			auto ret = std::make_unique<BFD>(std::forward<decltype(xs)>(xs)...);
@@ -76,16 +122,24 @@ namespace sap::interp
 
 		define_builtin("apply_style",
 		    makeParamList(                               //
-		        Param { .name = "1", .type = bstyle_t }, //
+		        Param { .name = "1", .type = t_bstyle }, //
 		        Param { .name = "2", .type = t_tio }),
 		    t_tio, &builtin::apply_style);
 
 		define_builtin("load_image",
-		    makeParamList(                              //
-		        Param { .name = "1", .type = t_str },   //
-		        Param { .name = "2", .type = t_float }, //
-		        Param { .name = "3", .type = PType::optional(t_float), .default_value = std::make_unique<interp::NullLit>() }),
+		    makeParamList(                               //
+		        Param { .name = "1", .type = t_str },    //
+		        Param { .name = "2", .type = t_length }, //
+		        Param { .name = "3", .type = PType::optional(t_length), .default_value = std::make_unique<interp::NullLit>() }),
 		    t_tbo, &builtin::load_image);
+
+		define_builtin("push_style",
+		    makeParamList( //
+		        Param { .name = "1", .type = t_bstyle }),
+		    t_void, &builtin::push_style);
+
+		define_builtin("pop_style", makeParamList(), t_bstyle, &builtin::pop_style);
+		define_builtin("current_style", makeParamList(), t_bstyle, &builtin::current_style);
 
 		define_builtin("centred_block", makeParamList(Param { .name = "1", .type = t_tbo }), t_tbo, &builtin::centred_block);
 

@@ -11,12 +11,12 @@ namespace sap::interp
 {
 	ErrorOr<TCResult> LengthExpr::typecheck_impl(Typechecker* ts, const Type* infer) const
 	{
-		return ErrFmt("unimplemented");
+		return TCResult::ofRValue(Type::makeLength());
 	}
 
 	ErrorOr<EvalResult> LengthExpr::evaluate(Evaluator* ev) const
 	{
-		return ErrFmt("unimplemented");
+		return EvalResult::ofValue(Value::length(this->length));
 	}
 
 
