@@ -24,8 +24,8 @@ namespace sap::layout
 		auto img_size = tree_img->size();
 
 		auto img = std::unique_ptr<Image>(new Image(tree_img->image()));
-		img->m_size = img_size;
-		img->m_position = cursor.position();
+		img->m_layout_position = cursor.position();
+		img->m_layout_size = img_size;
 		img->setStyle(parent_style);
 
 		layout->addObject(std::move(img));
@@ -39,12 +39,14 @@ namespace sap::layout
 
 	void Image::render(const LayoutBase* layout, std::vector<pdf::Page*>& pages) const
 	{
-		auto pos = layout->convertPosition(m_position);
+		auto pos = layout->convertPosition(m_layout_position);
+		zpr::println("img pos = {}", pos.pos);
+
 		auto page = pages[pos.page_num];
 
 		auto page_obj = util::make<pdf::Image>( //
 		    m_image,                            //
-		    m_size.into(),                      //
+		    m_layout_size.into(),               //
 		    page->convertVector2(pos.pos.into<pdf::Position2d_YDown>()));
 
 		page->addObject(page_obj);

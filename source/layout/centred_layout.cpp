@@ -29,12 +29,9 @@ namespace sap::layout
 	}
 
 
-	CentredLayout::CentredLayout(LayoutBase* parent, LineCursor parent_cursor)
-	    : m_parent(parent)
-	    , m_parent_cursor(parent_cursor)
-	    , m_content_width()
+	CentredLayout::CentredLayout(LayoutBase* parent, LineCursor parent_cursor) : m_parent(parent), m_parent_cursor(parent_cursor)
 	{
-		m_position = parent_cursor.position();
+		m_layout_position = parent_cursor.position();
 	}
 
 	CentredLayout::~CentredLayout()
@@ -102,7 +99,7 @@ namespace sap::layout
 
 	BasePayload CentredLayout::move_right(const BasePayload& payload, Length shift) const
 	{
-		m_content_width += shift;
+		// zpr::println("line width = {}", m_current_line_width);
 
 		auto& cst = get_cursor_state(payload);
 		return to_base_payload({
@@ -111,11 +108,21 @@ namespace sap::layout
 		});
 	}
 
+	void CentredLayout::computeLayoutSize()
+	{
+		// TODO: inter-object spacing!
+		for(auto& obj : m_objects)
+		{
+			m_layout_size.x() = std::max(m_layout_size.x(), obj->layoutSize().x());
+			m_layout_size.y() += obj->layoutSize().y();
+		}
+	}
+
 	AbsolutePagePos CentredLayout::convertPosition(RelativePos pos) const
 	{
-		auto pos_in_parent = m_parent->convertPosition(m_position);
+		auto pos_in_parent = m_parent->convertPosition(m_layout_position);
 
-		auto x = (m_parent->size().x() - m_content_width) / 2;
+		auto x = (m_parent->size().x() - m_layout_size.x()) / 2;
 
 		return AbsolutePagePos {
 			.pos = pos_in_parent.pos + Position(x + pos.pos.x(), pos.pos.y()),

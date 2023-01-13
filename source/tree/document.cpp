@@ -103,10 +103,13 @@ namespace sap::tree
 
 			return keep_any;
 		}
+		else if(auto cc = dynamic_cast<CentredContainer*>(obj); cc != nullptr)
+		{
+			return process_word_separators(&cc->inner());
+		}
 		else
 		{
-			// keep anything we don't know about, i guess.
-			return true;
+			sap::internal_error("?? unsupported");
 		}
 	}
 

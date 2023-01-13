@@ -999,20 +999,14 @@ namespace sap::frontend
 				auto obj = std::make_unique<interp::TreeBlockExpr>();
 				auto container = std::make_unique<tree::BlockContainer>();
 				auto inner = parse_top_level(lexer);
+
 				container->contents().insert(container->contents().end(), std::move_iterator(inner.begin()),
 				    std::move_iterator(inner.end()));
 
 				obj->object = std::move(container);
 
-#if 0
-				if(auto maybe_para = parse_paragraph(lexer); not maybe_para.has_value())
-					error(lexer.location(), "paragraph expression cannot be empty");
-				else
-					obj->object = std::move(*maybe_para);
-#endif
-
 				if(not lexer.expect(TT::RBrace))
-					error(lexer.location(), "expected closing '}'");
+					error(lexer.location(), "expected closing '}', got '{}'", lexer.peek().text);
 
 				sc->call->arguments.push_back(interp::FunctionCall::Arg {
 				    .name = std::nullopt,
@@ -1096,6 +1090,8 @@ namespace sap::frontend
 
 	static std::vector<std::unique_ptr<BlockObject>> parse_top_level(Lexer& lexer)
 	{
+		auto lm = LexerModer(lexer, Lexer::Mode::Text);
+
 		// this only needs to happen at the beginning
 		lexer.skipWhitespaceAndComments();
 

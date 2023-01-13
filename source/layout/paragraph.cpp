@@ -126,7 +126,8 @@ namespace sap::layout
 
 		auto para = std::make_unique<Paragraph>();
 		cursor = cursor.newLine(0);
-		para->m_position = cursor.position();
+
+		para->m_layout_position = cursor.position();
 
 		auto lines = breakLines(layout, cursor, parent_style, words_and_seps, cursor.widthAtCursor());
 
@@ -179,7 +180,7 @@ namespace sap::layout
 					    .end = new_cursor.position(),
 					});
 
-					cursor = new_cursor;
+					cursor = std::move(new_cursor);
 					prev_word_style = word.style();
 				};
 
@@ -193,12 +194,15 @@ namespace sap::layout
 					    .end = end_of_space_cursor.position(),
 					});
 
-					auto new_cursor = cursor.moveRight(word_width * space_width_factor);
-					cursor = new_cursor;
+					cursor = cursor.moveRight(word_width * space_width_factor);
 				};
 
 				std::visit(util::overloaded { word_visitor, sep_visitor }, words_and_seps[i + current_idx]);
 			}
+
+			para->m_layout_size.y() += line_metrics.line_height;
+			para->m_layout_size.x() = std::max(para->m_layout_size.x(),
+			    para->m_words.back().end.pos.x() - para->m_layout_position.pos.x());
 
 			current_idx += line1.numParts();
 			prev_space_width_factor = space_width_factor;
@@ -218,8 +222,8 @@ namespace sap::layout
 		auto current_curs = layout->convertPosition(m_words.front().start);
 
 		pdf::Text* cur_text = util::make<pdf::Text>();
-		cur_text->moveAbs(pages[m_words.front().start.page_num]->convertVector2( //
-		    current_curs.pos.into<pdf::Position2d_YDown>()));
+		pages[current_curs.page_num]->addObject(cur_text);
+		cur_text->moveAbs(pages[current_curs.page_num]->convertVector2(current_curs.pos.into<pdf::Position2d_YDown>()));
 
 		for(size_t i = 0; i < m_words.size(); i++)
 		{
@@ -228,12 +232,12 @@ namespace sap::layout
 			auto word_pos = layout->convertPosition(m_words[i].start);
 			auto space = (word_pos.pos - current_curs.pos).x();
 
-			if(current_curs.page_num != m_words[i].start.page_num)
+			if(current_curs.page_num != word_pos.page_num)
 			{
-				pages[m_words[i - 1].start.page_num]->addObject(cur_text);
-
 				cur_text = util::make<pdf::Text>();
 				cur_text->moveAbs(pages[word_pos.page_num]->convertVector2(word_pos.pos.into<pdf::Position2d_YDown>()));
+				pages[word_pos.page_num]->addObject(cur_text);
+
 				space = 0;
 			}
 			else if(current_curs.pos.y() != word_pos.pos.y())
@@ -242,7 +246,7 @@ namespace sap::layout
 				cur_text->nextLine(pdf::Offset2d(0, -1.0 * skip.into<pdf::PdfScalar>().value()));
 				space = 0;
 			}
-			else if(m_words[i].start.pos.x() != current_curs.pos.x())
+			else if(word_pos.pos.x() != current_curs.pos.x())
 			{
 				// Make sure pdf cursor agrees with our cursor
 				cur_text->offset(pdf::PdfFont::convertPDFScalarToTextSpaceForFontSize(
@@ -253,7 +257,5 @@ namespace sap::layout
 
 			current_curs = layout->convertPosition(m_words[i].end);
 		}
-
-		pages[m_words.back().start.page_num]->addObject(cur_text);
 	}
 }

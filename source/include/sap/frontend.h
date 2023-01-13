@@ -139,6 +139,8 @@ namespace sap::frontend
 		void pushMode(Mode mode);
 		void popMode(Mode mode);
 
+		zst::str_view stream() const { return m_stream; }
+
 		Location location() const { return m_location; }
 
 	private:

@@ -29,6 +29,7 @@ namespace sap::tree
 
 		virtual std::optional<LayoutFn> getLayoutFunction() const override;
 
+		BlockObject& inner() { return *m_inner.get(); }
 		const BlockObject& inner() const { return *m_inner.get(); }
 
 	private:

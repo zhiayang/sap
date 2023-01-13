@@ -19,10 +19,12 @@ namespace sap::tree
 		cursor = cursor.newLine(0);
 
 		auto centred_layout = std::make_unique<layout::CentredLayout>(layout, std::move(cursor));
-		auto tmp = centred_layout.get();
+		auto inner_cursor = (*layout_fn)(cs, centred_layout.get(), centred_layout->newCursor(), style, obj->m_inner.get());
 
+		centred_layout->computeLayoutSize();
+
+		auto tmp = centred_layout.get();
 		layout->addObject(std::move(centred_layout));
-		auto inner_cursor = (*layout_fn)(cs, tmp, tmp->newCursor(), style, obj->m_inner.get());
 
 		return tmp->parentCursor();
 	}

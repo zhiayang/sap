@@ -19,6 +19,7 @@ namespace sap::tree
 				continue;
 
 			cursor = (*layout_fn)(cs, layout, cursor, style, obj.get());
+			cursor = cursor.newLine(0);
 		}
 
 		return cursor;

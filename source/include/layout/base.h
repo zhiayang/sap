@@ -63,6 +63,9 @@ namespace sap::layout
 		LayoutObject(LayoutObject&&) = default;
 		virtual ~LayoutObject() = default;
 
+		RelativePos layoutPosition() const { return m_layout_position; }
+		Size2d layoutSize() const { return m_layout_size; }
+
 		/*
 		    Render (emit PDF commands) the object. Must be called after layout(). For now, we render directly to
 		    the PDF page (by construcitng and emitting PageObjects), instead of returning a pageobject -- some
@@ -71,7 +74,8 @@ namespace sap::layout
 		virtual void render(const LayoutBase* layout, std::vector<pdf::Page*>& pages) const = 0;
 
 	protected:
-		RelativePos m_position;
+		RelativePos m_layout_position;
+		Size2d m_layout_size;
 	};
 
 
@@ -171,6 +175,8 @@ namespace sap::layout
 		virtual void render(const LayoutBase* layout, std::vector<pdf::Page*>& pages) const override;
 		virtual Size2d size() const override;
 
+		void computeLayoutSize();
+
 		LineCursor parentCursor() const;
 
 	private:
@@ -187,6 +193,5 @@ namespace sap::layout
 	private:
 		LayoutBase* m_parent;
 		LineCursor m_parent_cursor;
-		mutable Length m_content_width;
 	};
 }

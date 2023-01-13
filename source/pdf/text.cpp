@@ -64,7 +64,7 @@ namespace pdf
 	{
 		// do this in two steps; first, replace the text matrix with the identity to get to (0, 0),
 		// then perform an offset to get to the desired position.
-		this->insertPDFCommand(zpr::sprint(" 1 0 0 1 0 0 Tm {} {} Td\n", pos.x(), pos.y()));
+		this->insertPDFCommand(zpr::sprint(" 1 0 0 1 0 0 Tm\n{} {} Td\n", pos.x(), pos.y()));
 	}
 
 	void Text::nextLine(Offset2d offset)
