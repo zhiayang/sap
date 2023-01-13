@@ -10,6 +10,7 @@
 #include "type.h" // for Type, FunctionType, ArrayType
 #include "util.h" // for u32StringFromUtf8
 
+#include "sap/units.h"
 #include "interp/basedefs.h" // for InlineObject
 
 namespace sap::tree
@@ -34,6 +35,7 @@ namespace sap::interp
 		double getFloating() const;
 		int64_t getInteger() const;
 		FnType getFunction() const;
+		DynLength getLength() const;
 
 		const InlineObjects& getTreeInlineObj() const;
 		InlineObjects takeTreeInlineObj() &&;
@@ -66,6 +68,7 @@ namespace sap::interp
 		bool isChar() const;
 		bool isArray() const;
 		bool isStruct() const;
+		bool isLength() const;
 		bool isInteger() const;
 		bool isPointer() const;
 		bool isFloating() const;
@@ -85,6 +88,8 @@ namespace sap::interp
 		Value(Value&& val);
 		Value& operator=(Value&& val);
 
+		static Value nullPointer();
+		static Value length(DynLength len);
 		static Value boolean(bool value);
 		static Value integer(int64_t num);
 		static Value floating(double num);
@@ -95,7 +100,6 @@ namespace sap::interp
 		static Value treeInlineObject(InlineObjects obj);
 		static Value treeBlockObject(std::unique_ptr<tree::BlockObject> obj);
 		static Value structure(const StructType* ty, std::vector<Value> fields);
-		static Value nullPointer();
 		static Value pointer(const Type* elm_type, const Value* value);
 		static Value mutablePointer(const Type* elm_type, Value* value);
 		static Value optional(const Type* type, std::optional<Value> value);
@@ -128,6 +132,7 @@ namespace sap::interp
 			std::unique_ptr<tree::BlockObject> v_block_obj;
 			std::vector<Value> v_array;
 			const Value* v_pointer;
+			DynLength v_length;
 		};
 	};
 }

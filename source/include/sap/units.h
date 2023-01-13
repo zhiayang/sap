@@ -33,6 +33,8 @@ namespace sap
 		explicit DynLength(double value, Unit unit) : m_value(value), m_unit(unit) { }
 
 		Unit unit() const { return m_unit; }
+		double value() const { return m_value; }
+
 		sap::Length resolve(const pdf::PdfFont* font, sap::Length font_size) const;
 
 		static std::optional<Unit> stringToUnit(zst::str_view sv);

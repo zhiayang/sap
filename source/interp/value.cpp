@@ -40,6 +40,12 @@ namespace sap::interp
 		return v_integer;
 	}
 
+	DynLength Value::getLength() const
+	{
+		assert(this->isLength());
+		return v_length;
+	}
+
 	auto Value::getFunction() const -> FnType
 	{
 		assert(this->isFunction());
@@ -196,6 +202,10 @@ namespace sap::interp
 		{
 			return v_bool ? U"true" : U"false";
 		}
+		else if(this->isLength())
+		{
+			return unicode::u32StringFromUtf8(zpr::sprint("{}{}", v_length.value(), DynLength::unitToString(v_length.unit())));
+		}
 		else if(this->isInteger())
 		{
 			return unicode::u32StringFromUtf8(std::to_string(v_integer));
@@ -265,6 +275,10 @@ namespace sap::interp
 	{
 		return m_type->isStruct();
 	}
+	bool Value::isLength() const
+	{
+		return m_type->isLength();
+	}
 	bool Value::isInteger() const
 	{
 		return m_type->isInteger();
@@ -296,7 +310,7 @@ namespace sap::interp
 
 	bool Value::isPrintable() const
 	{
-		return isBool() || isChar() || isArray() || isInteger() || isFloating();
+		return isBool() || isChar() || isArray() || isInteger() || isFloating() || isLength();
 	}
 
 	Value::Value() : m_type(Type::makeVoid())
@@ -322,6 +336,14 @@ namespace sap::interp
 		return *this;
 	}
 
+
+
+	Value Value::length(DynLength len)
+	{
+		auto ret = Value(Type::makeLength());
+		new(&ret.v_length) DynLength(len);
+		return ret;
+	}
 
 	Value Value::boolean(bool value)
 	{
@@ -468,6 +490,10 @@ namespace sap::interp
 		{
 			val.v_function = v_function;
 		}
+		else if(m_type->isLength())
+		{
+			new(&val.v_length) decltype(v_length)(v_length);
+		}
 		else if(m_type->isTreeBlockObj())
 		{
 			new(&val.v_block_obj) decltype(v_block_obj)();
@@ -530,6 +556,8 @@ namespace sap::interp
 			v_block_obj.~decltype(v_block_obj)();
 		else if(m_type->isArray() || m_type->isStruct() || m_type->isOptional())
 			v_array.~decltype(v_array)();
+		else if(m_type->isLength())
+			v_length.~decltype(v_length)();
 	}
 
 	void Value::steal_from(Value&& val)
@@ -553,6 +581,8 @@ namespace sap::interp
 			new(&v_inline_obj) decltype(v_inline_obj)(std::move(val.v_inline_obj));
 		else if(m_type->isArray() || m_type->isStruct() || m_type->isOptional())
 			new(&v_array) decltype(v_array)(std::move(val.v_array));
+		else if(m_type->isLength())
+			new(&v_length) decltype(v_length)(std::move(val.v_length));
 		else
 			assert(false && "unreachable!");
 	}
