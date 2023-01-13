@@ -50,7 +50,7 @@ namespace sap::layout
 	BasePayload CentredLayout::new_cursor_payload() const
 	{
 		return to_base_payload({
-		    .page_num = m_position.page_num,
+		    .page_num = 0,
 		    .pos_on_page = { 0, 0 },
 		});
 	}
