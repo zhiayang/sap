@@ -4,6 +4,7 @@
 
 #include "layout/base.h"
 
+#if 0
 namespace sap::layout
 {
 	using BasePayload = LayoutBase::Payload;
@@ -141,3 +142,4 @@ namespace sap::layout
 			obj->render(this, pages);
 	}
 }
+#endif

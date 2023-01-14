@@ -28,7 +28,7 @@ namespace sap::layout
 		virtual void render(const LayoutBase* layout, std::vector<pdf::Page*>& pages) const override;
 
 	private:
-		explicit Image(ImageBitmap m_image);
+		explicit Image(RelativePos pos, Size2d size, ImageBitmap m_image);
 		ImageBitmap m_image;
 	};
 }

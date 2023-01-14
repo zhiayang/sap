@@ -11,7 +11,7 @@
 
 namespace sap::layout
 {
-	Image::Image(ImageBitmap image) : m_image(std::move(image))
+	Image::Image(RelativePos pos, Size2d size, ImageBitmap image) : LayoutObject(pos, size), m_image(std::move(image))
 	{
 	}
 
@@ -23,9 +23,7 @@ namespace sap::layout
 		auto tree_img = static_cast<const tree::Image*>(doc_obj);
 		auto img_size = tree_img->size();
 
-		auto img = std::unique_ptr<Image>(new Image(tree_img->image()));
-		img->m_layout_position = cursor.position();
-		img->m_layout_size = img_size;
+		auto img = std::unique_ptr<Image>(new Image(cursor.position(), img_size, tree_img->image()));
 		img->setStyle(parent_style);
 
 		layout->addObject(std::move(img));

@@ -28,7 +28,7 @@ namespace sap::layout
 		    const Style* style, std::span<const std::unique_ptr<tree::InlineObject>> objs);
 
 	private:
-		explicit Line(std::vector<std::unique_ptr<LayoutObject>> objs, RelativePos position);
+		explicit Line(RelativePos position, Size2d size, std::vector<std::unique_ptr<LayoutObject>> objs);
 
 	private:
 		std::vector<std::unique_ptr<LayoutObject>> m_objects;

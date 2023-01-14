@@ -18,10 +18,10 @@
 
 namespace sap::layout
 {
-	Word::Word(zst::wstr_view text, const Style* style, RelativePos pos) : m_text(text)
+	Word::Word(zst::wstr_view text, const Style* style, RelativePos pos, Size2d size) //
+	    : LayoutObject(pos, size)
+	    , m_text(text)
 	{
-		m_layout_position = std::move(pos);
-
 		this->setStyle(style);
 
 		assert(m_style != nullptr);

@@ -11,6 +11,7 @@ namespace sap::tree
 	layout::LineCursor CentredContainer::layout_fn(interp::Interpreter* cs, layout::LayoutBase* layout, layout::LineCursor cursor,
 	    const Style* style, const DocumentObject* obj_)
 	{
+#if 0
 		auto obj = static_cast<CentredContainer*>(const_cast<DocumentObject*>(obj_));
 		auto layout_fn = obj->inner().getLayoutFunction();
 		if(not layout_fn.has_value())
@@ -27,6 +28,9 @@ namespace sap::tree
 		layout->addObject(std::move(centred_layout));
 
 		return tmp->parentCursor();
+#endif
+
+		return cursor;
 	}
 
 	CentredContainer::CentredContainer(std::unique_ptr<BlockObject> inner) : m_inner(std::move(inner))

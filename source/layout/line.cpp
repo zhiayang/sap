@@ -15,6 +15,7 @@ namespace sap::layout
 
 	struct LineMetrics
 	{
+		sap::Length total_width;
 		sap::Length total_space_width;
 		sap::Length total_word_width;
 		std::vector<sap::Length> widths;
@@ -92,8 +93,10 @@ namespace sap::layout
 
 				cur_chunk_begin = it + 1;
 
-				ret.total_word_width += it->get()->size().x();
+				ret.widths.push_back(it->get()->size().x());
 			}
+
+			ret.total_width += ret.widths.back();
 		}
 
 		ret.total_word_width += word_chunk.width;
@@ -101,9 +104,10 @@ namespace sap::layout
 	}
 
 
-	Line::Line(std::vector<std::unique_ptr<LayoutObject>> objs, RelativePos position) : m_objects(std::move(objs))
+	Line::Line(RelativePos pos, Size2d size, std::vector<std::unique_ptr<LayoutObject>> objs)
+	    : LayoutObject(pos, size)
+	    , m_objects(std::move(objs))
 	{
-		m_layout_position = std::move(position);
 	}
 
 	std::unique_ptr<Line> Line::fromInlineObjects(LineCursor cursor, const linebreak::BrokenLine& broken_line, const Style* style,
@@ -113,6 +117,7 @@ namespace sap::layout
 		auto start_position = cursor.position();
 
 		auto line_metrics = compute_line_metrics(objs, style);
+		auto line_height = line_metrics.line_height;
 
 		auto desired_space_width = cursor.widthAtCursor() - line_metrics.total_word_width;
 		double space_width_factor = desired_space_width / line_metrics.total_space_width;
@@ -128,7 +133,9 @@ namespace sap::layout
 
 			if(auto tree_word = dynamic_cast<const tree::Text*>(objs[i].get()); tree_word != nullptr)
 			{
-				auto word = std::make_unique<Word>(tree_word->contents(), tree_word->style(), cursor.position());
+				auto word = std::make_unique<Word>(tree_word->contents(), tree_word->style(), cursor.position(),
+				    Size2d(obj_width, line_height));
+
 				prev_word_style = word->style();
 				cursor = std::move(new_cursor);
 
@@ -137,7 +144,7 @@ namespace sap::layout
 			else if(auto tree_sep = dynamic_cast<const tree::Separator*>(objs[i].get()); tree_sep != nullptr)
 			{
 				auto sep = std::make_unique<Word>(i + 1 == objs.size() ? tree_sep->endOfLine() : tree_sep->middleOfLine(),
-				    tree_sep->style(), cursor.position());
+				    tree_sep->style(), cursor.position(), Size2d(obj_width, line_height));
 
 				prev_word_style = sep->style();
 				layout_objects.push_back(std::move(sep));
@@ -150,7 +157,8 @@ namespace sap::layout
 			}
 		}
 
-		return std::unique_ptr<Line>(new Line(std::move(layout_objects), start_position));
+		return std::unique_ptr<Line>(new Line(start_position, Size2d(line_metrics.total_width, line_metrics.line_height),
+		    std::move(layout_objects)));
 	}
 
 	void Line::render(const LayoutBase* layout, std::vector<pdf::Page*>& pages) const

@@ -52,10 +52,11 @@ namespace sap::layout
 	*/
 	struct LayoutObject : Stylable
 	{
-		LayoutObject() = default;
+		LayoutObject(RelativePos position, Size2d size) : m_layout_position(std::move(position)), m_layout_size(size) { }
+		virtual ~LayoutObject() = default;
+
 		LayoutObject& operator=(LayoutObject&&) = default;
 		LayoutObject(LayoutObject&&) = default;
-		virtual ~LayoutObject() = default;
 
 		Size2d layoutSize() const { return m_layout_size; }
 		RelativePos layoutPosition() const { return m_layout_position; }
@@ -68,8 +69,8 @@ namespace sap::layout
 		virtual void render(const LayoutBase* layout, std::vector<pdf::Page*>& pages) const = 0;
 
 	protected:
-		Size2d m_layout_size;
 		RelativePos m_layout_position;
+		Size2d m_layout_size;
 	};
 
 
@@ -159,7 +160,7 @@ namespace sap::layout
 		Length m_margin;
 		size_t m_num_pages = 1;
 	};
-
+#if 0
 	struct CentredLayout final : LayoutBase, LayoutObject
 	{
 		explicit CentredLayout(LayoutBase* parent, LineCursor parent_cursor);
@@ -188,4 +189,5 @@ namespace sap::layout
 		LayoutBase* m_parent;
 		LineCursor m_parent_cursor;
 	};
+#endif
 }

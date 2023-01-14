@@ -44,10 +44,11 @@ namespace sap::layout
 				words_and_seps.push_back(std::make_unique<Separator>(sep->kind(), sep->style(), sep->hyphenationCost()));
 		}
 #endif
-		auto para = std::make_unique<Paragraph>();
 		cursor = cursor.newLine(0);
 
-		para->m_layout_position = cursor.position();
+		std::vector<std::unique_ptr<Line>> layout_lines {};
+		auto para_pos = cursor.position();
+		Size2d para_size { 0, 0 };
 
 		auto& contents = treepara->contents();
 		auto lines = linebreak::breakLines(layout, cursor, parent_style, contents, cursor.widthAtCursor());
@@ -77,7 +78,10 @@ namespace sap::layout
 			cursor = cursor.newLine(broken_line.lineHeight());
 
 			auto layout_line = Line::fromInlineObjects(cursor, broken_line, parent_style, std::span(words_begin, words_end));
-			para->m_lines.push_back(std::move(layout_line));
+			para_size.x() = std::max(para_size.x(), layout_line->layoutSize().x());
+			para_size.y() += layout_line->layoutSize().y();
+
+			layout_lines.push_back(std::move(layout_line));
 
 #if 0
 			auto line_metrics = LineMetrics::computeLineMetrics(words_begin, words_end, parent_style);
@@ -134,9 +138,17 @@ namespace sap::layout
 #endif
 		}
 
-		layout->addObject(std::move(para));
+
+
+		layout->addObject(std::unique_ptr<Paragraph>(new Paragraph(para_pos, para_size, std::move(layout_lines))));
 		cursor = cursor.newLine(parent_style->paragraph_spacing());
 		return cursor;
+	}
+
+	Paragraph::Paragraph(RelativePos pos, Size2d size, std::vector<std::unique_ptr<Line>> lines)
+	    : LayoutObject(pos, size)
+	    , m_lines(std::move(lines))
+	{
 	}
 
 
