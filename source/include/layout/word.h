@@ -27,7 +27,8 @@ namespace sap::layout
 		zst::wstr_view text() const { return m_text; }
 
 	private:
-		void pdf_render(pdf::Text* text, Length space) const;
+		void line_render(pdf::Text* text) const;
+		friend struct Line;
 
 	private:
 		zst::wstr_view m_text {};

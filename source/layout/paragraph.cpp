@@ -154,6 +154,8 @@ namespace sap::layout
 
 	void Paragraph::render(const LayoutBase* layout, std::vector<pdf::Page*>& pages) const
 	{
+		for(auto& line : m_lines)
+			line->render(layout, pages);
 #if 0
 		if(m_words.empty())
 			return;

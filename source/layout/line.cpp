@@ -133,8 +133,8 @@ namespace sap::layout
 
 			if(auto tree_word = dynamic_cast<const tree::Text*>(objs[i].get()); tree_word != nullptr)
 			{
-				auto word = std::make_unique<Word>(tree_word->contents(), tree_word->style(), cursor.position(),
-				    Size2d(obj_width, line_height));
+				auto word = std::make_unique<Word>(tree_word->contents(), style->extendWith(tree_word->style()),
+				    cursor.position(), Size2d(obj_width, line_height));
 
 				prev_word_style = word->style();
 				cursor = std::move(new_cursor);
@@ -144,7 +144,7 @@ namespace sap::layout
 			else if(auto tree_sep = dynamic_cast<const tree::Separator*>(objs[i].get()); tree_sep != nullptr)
 			{
 				auto sep = std::make_unique<Word>(i + 1 == objs.size() ? tree_sep->endOfLine() : tree_sep->middleOfLine(),
-				    tree_sep->style(), cursor.position(), Size2d(obj_width, line_height));
+				    style->extendWith(tree_sep->style()), cursor.position(), Size2d(obj_width, line_height));
 
 				prev_word_style = sep->style();
 				layout_objects.push_back(std::move(sep));
@@ -163,5 +163,7 @@ namespace sap::layout
 
 	void Line::render(const LayoutBase* layout, std::vector<pdf::Page*>& pages) const
 	{
+		for(auto& obj : m_objects)
+			obj->render(layout, pages);
 	}
 }

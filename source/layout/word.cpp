@@ -6,6 +6,7 @@
 
 #include "pdf/font.h"  // for Font, Font::ENCODING_CID
 #include "pdf/text.h"  // for Text
+#include "pdf/page.h"  //
 #include "pdf/units.h" // for PdfScalar
 
 #include "sap/style.h" // for Style
@@ -29,9 +30,19 @@ namespace sap::layout
 
 	void Word::render(const LayoutBase* layout, std::vector<pdf::Page*>& pages) const
 	{
+		zpr::println("rendering '{}'", m_text);
+
+		auto text = util::make<pdf::Text>();
+
+		auto pos = layout->convertPosition(m_layout_position);
+		auto page = pages[pos.page_num];
+		text->moveAbs(page->convertVector2(pos.pos.into()));
+
+		this->line_render(text);
+		page->addObject(text);
 	}
 
-	void Word::pdf_render(pdf::Text* text, Length space) const
+	void Word::line_render(pdf::Text* text) const
 	{
 		const auto font = m_style->font();
 		const auto font_size = m_style->font_size();
@@ -51,11 +62,5 @@ namespace sap::layout
 			// TODO: handle placement as well
 			text->offset(font->scaleMetricForPDFTextSpace(glyph.adjustments.horz_advance));
 		}
-
-
-		/*
-		    TODO: here, we also want to handle kerning between the space and the start of the next word
-		    (see the longer explanation in layout/paragraph.cpp)
-		*/
 	}
 }
