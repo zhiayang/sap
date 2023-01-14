@@ -25,89 +25,6 @@
 
 namespace sap::layout
 {
-#if 0
-	static Size2d calculate_word_size(zst::wstr_view text, const Style* style)
-	{
-		return style->font()->getWordSize(text, style->font_size().into<pdf::PdfScalar>()).into<Size2d>();
-	}
-
-	struct LineMetrics
-	{
-		sap::Length total_space_width;
-		sap::Length total_word_width;
-		std::vector<sap::Length> word_widths;
-		sap::Length line_height;
-
-		template <typename It>
-		static LineMetrics computeLineMetrics(It words_begin, It words_end, const Style* parent_style)
-		{
-			LineMetrics ret;
-
-			struct WordChunk
-			{
-				Length width = 0;
-				std::u32string text;
-				const Style* style = nullptr;
-			};
-
-			WordChunk word_chunk {};
-			auto word_chunk_it = words_begin;
-
-			for(auto it = words_begin; it != words_end; ++it)
-			{
-				if(auto word = std::get_if<Word>(&*it); word)
-				{
-					auto style = parent_style->extendWith(word->style());
-					if(it != word_chunk_it && word_chunk.style != style)
-					{
-						ret.total_word_width += word_chunk.width;
-
-						word_chunk.width = 0;
-						word_chunk.style = style;
-						word_chunk.text.clear();
-						word_chunk_it = it;
-					}
-
-					word_chunk.text += word->text().sv();
-
-					auto chunk_size = calculate_word_size(word_chunk.text, style);
-					ret.word_widths.push_back(chunk_size.x() - word_chunk.width);
-
-					word_chunk.width = chunk_size.x();
-
-					ret.line_height = std::max(ret.line_height, chunk_size.y() * style->line_spacing());
-				}
-				else if(auto sep = std::get_if<Separator>(&*it); sep)
-				{
-					const auto& prev_word = std::get<Word>(*(it - 1));
-					const auto& next_word = std::get<Word>(*(it + 1));
-					ret.total_word_width += word_chunk.width;
-
-					word_chunk.width = 0;
-					word_chunk.style = nullptr;
-					word_chunk.text.clear();
-
-					word_chunk_it = it + 1;
-
-					auto sep_char = (it + 1 == words_end ? sep->endOfLine() : sep->middleOfLine());
-					auto sep_width = std::max(calculate_word_size(sep_char, prev_word.style()).x(),
-					    calculate_word_size(sep_char, next_word.style()).x());
-
-					if(sep->isSpace())
-						ret.total_space_width += sep_width;
-					else
-						ret.total_word_width += sep_width;
-
-					ret.word_widths.push_back(sep_width);
-				}
-			}
-
-			ret.total_word_width += word_chunk.width;
-			return ret;
-		}
-	};
-#endif
-
 	LineCursor Paragraph::fromTree(interp::Interpreter* cs, LayoutBase* layout, LineCursor cursor, const Style* parent_style,
 	    const tree::DocumentObject* doc_obj)
 	{
@@ -139,10 +56,10 @@ namespace sap::layout
 
 		for(auto line_it = lines.begin(); line_it != lines.end(); ++line_it)
 		{
-			auto& line = *line_it;
+			auto& broken_line = *line_it;
 
 			auto words_begin = contents.begin() + (ssize_t) current_idx;
-			auto words_end = contents.begin() + (ssize_t) current_idx + (ssize_t) line.numParts();
+			auto words_end = contents.begin() + (ssize_t) current_idx + (ssize_t) broken_line.numParts();
 
 			if(dynamic_cast<const tree::Separator*>((*words_begin).get()) != nullptr)
 			{
@@ -157,8 +74,10 @@ namespace sap::layout
 			if(auto sep = dynamic_cast<const tree::Separator*>(last_word.get()); sep && sep->isSpace())
 				--words_end;
 
-			cursor = cursor.newLine(line.lineHeight());
+			cursor = cursor.newLine(broken_line.lineHeight());
 
+			auto layout_line = Line::fromInlineObjects(cursor, broken_line, parent_style, std::span(words_begin, words_end));
+			para->m_lines.push_back(std::move(layout_line));
 
 #if 0
 			auto line_metrics = LineMetrics::computeLineMetrics(words_begin, words_end, parent_style);

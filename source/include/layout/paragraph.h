@@ -44,6 +44,6 @@ namespace sap::layout
 		virtual void render(const LayoutBase* layout, std::vector<pdf::Page*>& pages) const override;
 
 	private:
-		std::vector<Line> m_lines {};
+		std::vector<std::unique_ptr<Line>> m_lines {};
 	};
 }

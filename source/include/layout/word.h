@@ -71,18 +71,16 @@ namespace sap::layout
 		constexpr static char32_t s_hyphen = U'-';
 	};
 #endif
-	struct Word : Stylable
+	struct Word : LayoutObject
 	{
-		Word(zst::wstr_view text, const Style* style);
+		Word(zst::wstr_view text, const Style* style, RelativePos position);
 
-		/*
-		    this assumes that the container (typically a paragraph) has already moved the PDF cursor (ie. wrote
-		    some offset commands with TJ or Td), such that this method just needs to output the encoded glyph ids,
-		    and any styling effects.
-		*/
-		void render(pdf::Text* text, Length space) const;
+		virtual void render(const LayoutBase* layout, std::vector<pdf::Page*>& pages) const override;
 
 		zst::wstr_view text() const { return m_text; }
+
+	private:
+		void pdf_render(pdf::Text* text, Length space) const;
 
 	private:
 		zst::wstr_view m_text {};

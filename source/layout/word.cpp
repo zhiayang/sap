@@ -18,15 +18,20 @@
 
 namespace sap::layout
 {
-	Word::Word(zst::wstr_view text, const Style* style) : m_text(text)
+	Word::Word(zst::wstr_view text, const Style* style, RelativePos pos) : m_text(text)
 	{
+		m_layout_position = std::move(pos);
+
 		this->setStyle(style);
 
 		assert(m_style != nullptr);
 	}
 
+	void Word::render(const LayoutBase* layout, std::vector<pdf::Page*>& pages) const
+	{
+	}
 
-	void Word::render(pdf::Text* text, Length space) const
+	void Word::pdf_render(pdf::Text* text, Length space) const
 	{
 		const auto font = m_style->font();
 		const auto font_size = m_style->font_size();
