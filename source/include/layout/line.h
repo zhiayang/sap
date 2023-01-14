@@ -4,6 +4,11 @@
 
 #pragma once
 
+#include "layout/base.h"
+
 namespace sap::layout
 {
+	struct Line : LayoutObject
+	{
+	};
 }

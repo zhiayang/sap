@@ -14,10 +14,6 @@ namespace pdf
 
 namespace sap
 {
-	using Size2d = Vector2;
-	using Position = Vector2;
-	using Offset2d = Vector2;
-
 	namespace tree
 	{
 		struct Text;
@@ -50,8 +46,6 @@ namespace sap::layout
 		size_t page_num;
 	};
 
-
-
 	/*
 	    As mentioned in the overview above, a LayoutObject is some object that can be laid out and
 	    rendered into the document.
@@ -63,8 +57,8 @@ namespace sap::layout
 		LayoutObject(LayoutObject&&) = default;
 		virtual ~LayoutObject() = default;
 
-		RelativePos layoutPosition() const { return m_layout_position; }
 		Size2d layoutSize() const { return m_layout_size; }
+		RelativePos layoutPosition() const { return m_layout_position; }
 
 		/*
 		    Render (emit PDF commands) the object. Must be called after layout(). For now, we render directly to
@@ -74,8 +68,8 @@ namespace sap::layout
 		virtual void render(const LayoutBase* layout, std::vector<pdf::Page*>& pages) const = 0;
 
 	protected:
-		RelativePos m_layout_position;
 		Size2d m_layout_size;
+		RelativePos m_layout_position;
 	};
 
 

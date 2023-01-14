@@ -14,6 +14,10 @@ namespace sap
 	using Length = dim::Scalar<dim::units::mm>;
 	using Vector2 = dim::Vector2<dim::units::mm, BASE_COORD_SYSTEM>;
 
+	using Size2d = Vector2;
+	using Position = Vector2;
+	using Offset2d = Vector2;
+
 	struct DynLength
 	{
 		enum Unit

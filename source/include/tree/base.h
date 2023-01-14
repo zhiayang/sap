@@ -4,6 +4,7 @@
 
 #pragma once
 
+#include "sap/units.h"
 #include "sap/style.h" // for Stylable
 
 namespace sap::layout
@@ -56,12 +57,15 @@ namespace sap::tree
 	struct InlineObject : Stylable
 	{
 		virtual ~InlineObject() = 0;
+		Size2d size() const { return m_size; }
+
+	protected:
+		Size2d m_size { 0, 0 };
 	};
 
 	struct BlockObject : DocumentObject
 	{
 	};
-
 
 	/*
 	    Since inline objects are not document objects, we do not have a diamond problem by

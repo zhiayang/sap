@@ -9,6 +9,7 @@
 
 #include "layout/base.h" // for Cursor, LayoutObject, RectPageLayout, Inter...
 #include "layout/word.h" // for Word
+#include "layout/line.h"
 
 namespace sap
 {
@@ -22,6 +23,7 @@ namespace sap
 
 namespace sap::layout
 {
+#if 0
 	struct PositionedWord
 	{
 		Word word;
@@ -30,6 +32,7 @@ namespace sap::layout
 		RelativePos start;
 		RelativePos end;
 	};
+#endif
 
 	struct Paragraph : LayoutObject
 	{
@@ -41,6 +44,6 @@ namespace sap::layout
 		virtual void render(const LayoutBase* layout, std::vector<pdf::Page*>& pages) const override;
 
 	private:
-		std::vector<PositionedWord> m_words {};
+		std::vector<Line> m_lines {};
 	};
 }

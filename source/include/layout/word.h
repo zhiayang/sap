@@ -9,6 +9,8 @@
 
 #include "tree/paragraph.h"
 
+#include "layout/base.h"
+
 namespace pdf
 {
 	struct Text;
@@ -16,6 +18,7 @@ namespace pdf
 
 namespace sap::layout
 {
+#if 0
 	struct Separator : Stylable
 	{
 		Separator(tree::Separator::SeparatorKind kind, const Style* style, int hyphenation_cost)
@@ -67,7 +70,7 @@ namespace sap::layout
 		constexpr static char32_t s_space = U' ';
 		constexpr static char32_t s_hyphen = U'-';
 	};
-
+#endif
 	struct Word : Stylable
 	{
 		Word(zst::wstr_view text, const Style* style);

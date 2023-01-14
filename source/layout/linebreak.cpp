@@ -16,28 +16,30 @@
 
 namespace sap::layout::linebreak
 {
-	using WordOrSep = std::variant<Word, Separator>;
-	using WordVec = std::vector<WordOrSep>;
-	using WordVecIter = WordVec::const_iterator;
+	using InlineObjPtr = std::unique_ptr<tree::InlineObject>;
+	using InlineObjVec = std::vector<InlineObjPtr>;
+	using VecIter = InlineObjVec::const_iterator;
 
 	struct LineBreakNode
 	{
-		const WordVec* words;
+		const InlineObjVec* contents;
+
 		LayoutBase* layout;
 		const Style* parent_style;
 
 		// TODO: we should get the preferred line length from the layout and not fix it here
 		Length preferred_line_length;
-		WordVecIter broken_until;
-		WordVecIter end;
+		VecIter broken_until;
+		VecIter end;
+
 		std::optional<BrokenLine> line;
 
 		using Distance = double;
 
-		static LineBreakNode make_end(WordVecIter end)
+		static LineBreakNode make_end(VecIter end)
 		{
 			return LineBreakNode {
-				.words = nullptr,
+				.contents = nullptr,
 				.layout = nullptr,
 				.parent_style = nullptr,
 				.preferred_line_length = 0,
@@ -47,10 +49,10 @@ namespace sap::layout::linebreak
 			};
 		}
 
-		LineBreakNode make_neighbour(WordVecIter neighbour_broken_until, BrokenLine neighbour_line) const
+		LineBreakNode make_neighbour(VecIter neighbour_broken_until, BrokenLine neighbour_line) const
 		{
 			return LineBreakNode {
-				.words = words,
+				.contents = contents,
 				.layout = layout,
 				.parent_style = parent_style,
 				.preferred_line_length = preferred_line_length,
@@ -72,18 +74,15 @@ namespace sap::layout::linebreak
 				{
 					// last line cost calculation has 0 cost
 					Distance cost = 0;
-					ret.emplace_back(this->make_neighbour(neighbour_broken_until, neighbour_line), cost);
+					ret.emplace_back(this->make_neighbour(neighbour_broken_until, std::move(neighbour_line)), cost);
+
 					return ret;
 				}
 
 
 				// TODO: make it not ugly lol
-				auto wordorsep = *neighbour_broken_until++;
-				std::visit(
-				    [&](auto w) {
-					    neighbour_line.add(w);
-				    },
-				    wordorsep);
+				auto& wordorsep = *neighbour_broken_until++;
+				neighbour_line.add(wordorsep.get());
 
 				// TODO: allow shrinking of spaces by allowing lines to go past the end of the preferred_line_length
 				// by 10% of the space width * num_spaces
@@ -97,7 +96,7 @@ namespace sap::layout::linebreak
 					return ret;
 				}
 
-				if(auto sep = std::get_if<Separator>(&wordorsep); sep)
+				if(auto sep = dynamic_cast<const tree::Separator*>(wordorsep.get()); sep)
 				{
 					Distance cost = 0;
 					// If there are no spaces we pretend there's half a space,
@@ -130,24 +129,26 @@ namespace sap::layout::linebreak
 			}
 		}
 
-		size_t hash() const { return static_cast<size_t>(broken_until - words->begin()); }
+		size_t hash() const { return static_cast<size_t>(broken_until - contents->begin()); }
 		bool operator==(const LineBreakNode& other) const { return broken_until == other.broken_until; }
 	};
 
-	std::vector<BrokenLine> breakLines(LayoutBase* layout, LineCursor cursor, const Style* parent_style, const WordVec& words,
-	    Length preferred_line_length)
+
+
+	std::vector<BrokenLine> breakLines(LayoutBase* layout, LineCursor cursor, const Style* parent_style,
+	    const InlineObjVec& contents, Length preferred_line_length)
 	{
 		auto path = util::dijkstra_shortest_path(
 		    LineBreakNode {
-		        .words = &words,
+		        .contents = &contents,
 		        .layout = layout,
 		        .parent_style = parent_style,
 		        .preferred_line_length = preferred_line_length,
-		        .broken_until = words.begin(),
-		        .end = words.end(),
+		        .broken_until = contents.begin(),
+		        .end = contents.end(),
 		        .line = BrokenLine(parent_style, cursor),
 		    },
-		    LineBreakNode::make_end(words.end()));
+		    LineBreakNode::make_end(contents.end()));
 
 		std::vector<BrokenLine> ret;
 		ret.reserve(path.size());

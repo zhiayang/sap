@@ -25,6 +25,7 @@
 
 namespace sap::layout
 {
+#if 0
 	static Size2d calculate_word_size(zst::wstr_view text, const Style* style)
 	{
 		return style->font()->getWordSize(text, style->font_size().into<pdf::PdfScalar>()).into<Size2d>();
@@ -105,45 +106,45 @@ namespace sap::layout
 			return ret;
 		}
 	};
-
+#endif
 
 	LineCursor Paragraph::fromTree(interp::Interpreter* cs, LayoutBase* layout, LineCursor cursor, const Style* parent_style,
 	    const tree::DocumentObject* doc_obj)
 	{
 		auto treepara = static_cast<const tree::Paragraph*>(doc_obj);
 
-		using WordSepVec = std::vector<std::variant<Word, Separator>>;
+#if 0
+		using WordSepVec = std::vector<std::unique_ptr<SizedObject>>;
 		WordSepVec words_and_seps;
 
 		for(auto& wordorsep : treepara->contents())
 		{
 			auto style = parent_style->extendWith(wordorsep->style());
 			if(auto word = dynamic_cast<tree::Text*>(wordorsep.get()); word != nullptr)
-				words_and_seps.push_back(Word(word->contents(), style));
+				words_and_seps.push_back(std::make_unique<Word>(word->contents(), style));
 
 			else if(auto sep = dynamic_cast<tree::Separator*>(wordorsep.get()); sep != nullptr)
-				words_and_seps.push_back(Separator(sep->kind(), sep->style(), sep->hyphenationCost()));
+				words_and_seps.push_back(std::make_unique<Separator>(sep->kind(), sep->style(), sep->hyphenationCost()));
 		}
-
+#endif
 		auto para = std::make_unique<Paragraph>();
 		cursor = cursor.newLine(0);
 
 		para->m_layout_position = cursor.position();
 
-		auto lines = linebreak::breakLines(layout, cursor, parent_style, words_and_seps, cursor.widthAtCursor());
+		auto& contents = treepara->contents();
+		auto lines = linebreak::breakLines(layout, cursor, parent_style, contents, cursor.widthAtCursor());
 
 		size_t current_idx = 0;
 
-		// Justify and add words to region
-		double prev_space_width_factor = 1;
 		for(auto line_it = lines.begin(); line_it != lines.end(); ++line_it)
 		{
-			auto& line1 = *line_it;
+			auto& line = *line_it;
 
-			auto words_begin = words_and_seps.begin() + (ssize_t) current_idx;
-			auto words_end = words_and_seps.begin() + (ssize_t) current_idx + (ssize_t) line1.numParts();
+			auto words_begin = contents.begin() + (ssize_t) current_idx;
+			auto words_end = contents.begin() + (ssize_t) current_idx + (ssize_t) line.numParts();
 
-			if(not std::holds_alternative<Word>(*words_begin))
+			if(dynamic_cast<const tree::Separator*>((*words_begin).get()) != nullptr)
 			{
 				sap::internal_error(
 				    "line starting with non-Word found, "
@@ -153,9 +154,13 @@ namespace sap::layout
 
 			// Ignore space at end of line
 			const auto& last_word = *(words_end - 1);
-			if(auto sep = std::get_if<Separator>(&last_word); sep && sep->isSpace())
+			if(auto sep = dynamic_cast<const tree::Separator*>(last_word.get()); sep && sep->isSpace())
 				--words_end;
 
+			cursor = cursor.newLine(line.lineHeight());
+
+
+#if 0
 			auto line_metrics = LineMetrics::computeLineMetrics(words_begin, words_end, parent_style);
 
 			cursor = cursor.newLine(line_metrics.line_height);
@@ -198,15 +203,16 @@ namespace sap::layout
 					cursor = cursor.moveRight(word_width * space_width_factor);
 				};
 
-				std::visit(util::overloaded { word_visitor, sep_visitor }, words_and_seps[i + current_idx]);
+				// std::visit(util::overloaded { word_visitor, sep_visitor }, words_and_seps[i + current_idx]);
 			}
 
 			para->m_layout_size.y() += line_metrics.line_height;
 			para->m_layout_size.x() = std::max(para->m_layout_size.x(),
 			    para->m_words.back().end.pos.x() - para->m_layout_position.pos.x());
 
-			current_idx += line1.numParts();
+			current_idx += line.numParts();
 			prev_space_width_factor = space_width_factor;
+#endif
 		}
 
 		layout->addObject(std::move(para));
@@ -217,6 +223,7 @@ namespace sap::layout
 
 	void Paragraph::render(const LayoutBase* layout, std::vector<pdf::Page*>& pages) const
 	{
+#if 0
 		if(m_words.empty())
 			return;
 
@@ -258,5 +265,6 @@ namespace sap::layout
 
 			current_curs = layout->convertPosition(m_words[i].end);
 		}
+#endif
 	}
 }
