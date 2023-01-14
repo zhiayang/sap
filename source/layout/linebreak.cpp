@@ -9,11 +9,12 @@
 #include "sap/style.h" // for Style
 #include "sap/units.h" // for Length
 
-#include "layout/base.h" // for RectPageLayout, Cursor
-#include "layout/line.h" // for Line, breakLines
-#include "layout/word.h" // for Separator, Word
+#include "layout/base.h"      // for RectPageLayout, Cursor
+#include "layout/line.h"      // for Line, breakLines
+#include "layout/word.h"      // for Separator, Word
+#include "layout/linebreak.h" //
 
-namespace sap::layout
+namespace sap::layout::linebreak
 {
 	using WordOrSep = std::variant<Word, Separator>;
 	using WordVec = std::vector<WordOrSep>;
@@ -29,7 +30,7 @@ namespace sap::layout
 		Length preferred_line_length;
 		WordVecIter broken_until;
 		WordVecIter end;
-		std::optional<Line> line;
+		std::optional<BrokenLine> line;
 
 		using Distance = double;
 
@@ -46,7 +47,7 @@ namespace sap::layout
 			};
 		}
 
-		LineBreakNode make_neighbour(WordVecIter neighbour_broken_until, Line neighbour_line) const
+		LineBreakNode make_neighbour(WordVecIter neighbour_broken_until, BrokenLine neighbour_line) const
 		{
 			return LineBreakNode {
 				.words = words,
@@ -55,14 +56,14 @@ namespace sap::layout
 				.preferred_line_length = preferred_line_length,
 				.broken_until = neighbour_broken_until,
 				.end = end,
-				.line = neighbour_line,
+				.line = std::move(neighbour_line),
 			};
 		}
 
 		std::vector<std::pair<LineBreakNode, Distance>> neighbours()
 		{
 			auto neighbour_broken_until = broken_until;
-			auto neighbour_line = Line(parent_style, line->lineCursor());
+			auto neighbour_line = BrokenLine(parent_style, line->lineCursor());
 			std::vector<std::pair<LineBreakNode, Distance>> ret;
 
 			while(true)
@@ -133,7 +134,7 @@ namespace sap::layout
 		bool operator==(const LineBreakNode& other) const { return broken_until == other.broken_until; }
 	};
 
-	std::vector<Line> breakLines(LayoutBase* layout, LineCursor cursor, const Style* parent_style, const WordVec& words,
+	std::vector<BrokenLine> breakLines(LayoutBase* layout, LineCursor cursor, const Style* parent_style, const WordVec& words,
 	    Length preferred_line_length)
 	{
 		auto path = util::dijkstra_shortest_path(
@@ -144,11 +145,11 @@ namespace sap::layout
 		        .preferred_line_length = preferred_line_length,
 		        .broken_until = words.begin(),
 		        .end = words.end(),
-		        .line = Line(parent_style, cursor),
+		        .line = BrokenLine(parent_style, cursor),
 		    },
 		    LineBreakNode::make_end(words.end()));
 
-		std::vector<Line> ret;
+		std::vector<BrokenLine> ret;
 		ret.reserve(path.size());
 
 		for(auto& node : path)

@@ -21,6 +21,7 @@
 #include "layout/line.h"      // for Line, breakLines
 #include "layout/word.h"      // for Separator, Word
 #include "layout/paragraph.h" // for Paragraph, PositionedWord
+#include "layout/linebreak.h" //
 
 namespace sap::layout
 {
@@ -129,7 +130,7 @@ namespace sap::layout
 
 		para->m_layout_position = cursor.position();
 
-		auto lines = breakLines(layout, cursor, parent_style, words_and_seps, cursor.widthAtCursor());
+		auto lines = linebreak::breakLines(layout, cursor, parent_style, words_and_seps, cursor.widthAtCursor());
 
 		size_t current_idx = 0;
 
