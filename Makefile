@@ -51,9 +51,18 @@ PRECOMP_GCH         := $(PRECOMP_HDR:%.h=$(OUTPUT_DIR)/%.h.gch)
 PRECOMP_INCLUDE     := $(PRECOMP_HDR:%.h=$(OUTPUT_DIR)/%.h)
 PRECOMP_OBJ         := $(PRECOMP_HDR:%.h=$(OUTPUT_DIR)/%.h.gch.o)
 
-CLANG_PCH_FASTER    :=
-PCH_INCLUDE_FLAGS   := -include $(PRECOMP_INCLUDE)
-
+ifeq ("$(findstring clang,$(CXX))", "clang")
+	ifeq ("$(UNAME_IDENT)", "Darwin")
+		CLANG_PCH_FASTER    := -fpch-instantiate-templates -fpch-codegen
+		PCH_INCLUDE_FLAGS   := -include-pch $(PRECOMP_GCH)
+	else
+		CLANG_PCH_FASTER    :=
+		PCH_INCLUDE_FLAGS   := -include $(PRECOMP_INCLUDE)
+	endif
+else
+	CLANG_PCH_FASTER    :=
+	PCH_INCLUDE_FLAGS   := -include $(PRECOMP_INCLUDE)
+endif
 
 DEFINES             :=
 INCLUDES            := -Isource/include -Iexternal
