@@ -151,7 +151,7 @@ $(PRECOMP_OBJ): $(PRECOMP_GCH)
 	@$(CXX) $(CXXFLAGS) $(WARNINGS) $(INCLUDES) -include $(PRECOMP_HDR) -x c++-header -o /dev/null $<
 
 %.h.special_compile_db: %.h
-	@$(CXX) $(CXXFLAGS) $(WARNINGS) $(INCLUDES) -include $(PRECOMP_HDR) -x c++-header -o /dev/null $<
+	@$(CXX) $(CXXFLAGS) $(WARNINGS) $(INCLUDES) -x c++-header -o /dev/null $<
 
 %.cpp.compile_db: %.cpp
 	@$(CXX) $(CXXFLAGS) $(WARNINGS) $(INCLUDES) -include $(PRECOMP_HDR) -o /dev/null $<
