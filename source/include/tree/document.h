@@ -19,6 +19,7 @@ namespace sap::tree
 		void processWordSeparators();
 
 	private:
+		void evaluate_scripts(interp::Interpreter* cs, std::vector<DocumentObject*>& objs, DocumentObject* obj);
 		bool process_word_separators(DocumentObject* obj);
 
 		std::vector<DocumentObject*> m_objects {};

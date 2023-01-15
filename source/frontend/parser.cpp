@@ -1117,6 +1117,21 @@ namespace sap::frontend
 				lexer.next();
 				objs.push_back(parse_script_object(lexer));
 			}
+			else if(tok == TT::LBrace)
+			{
+				lexer.next();
+
+				auto container = std::make_unique<tree::BlockContainer>();
+				auto inner = parse_top_level(lexer);
+
+				container->contents().insert(container->contents().end(), std::move_iterator(inner.begin()),
+				    std::move_iterator(inner.end()));
+
+				if(not lexer.expect(TT::RBrace))
+					error(lexer.location(), "expected closing '}', got '{}'", lexer.peek().text);
+
+				objs.push_back(std::move(container));
+			}
 			else
 			{
 				break;

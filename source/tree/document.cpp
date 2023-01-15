@@ -21,63 +21,75 @@ namespace sap::tree
 		// TODO: do something with the result here.
 	}
 
+
+	void Document::evaluate_scripts(interp::Interpreter* cs, std::vector<DocumentObject*>& ret_objs, DocumentObject* obj)
+	{
+		if(auto blk = dynamic_cast<ScriptBlock*>(obj); blk != nullptr)
+		{
+			run_script_block(cs, blk);
+		}
+		else if(auto call = dynamic_cast<ScriptCall*>(obj); call != nullptr)
+		{
+			auto value_or_err = cs->run(call->call.get());
+
+			if(value_or_err.is_err())
+				error("interp", "evaluation failed: {}", value_or_err.error());
+
+			auto value_or_empty = value_or_err.take_value();
+			if(not value_or_empty.hasValue())
+				return;
+
+			if(value_or_empty.get().isTreeBlockObj())
+			{
+				auto obj = std::move(value_or_empty.get()).takeTreeBlockObj();
+				ret_objs.push_back(obj.get());
+				m_all_objects.push_back(std::move(obj));
+			}
+			else
+			{
+				auto tmp = cs->evaluator().convertValueToText(std::move(value_or_empty).take());
+				if(tmp.is_err())
+					error("interp", "convertion to text failed: {}", tmp.error());
+
+				auto objs = tmp.take_value();
+				auto new_para = std::make_unique<Paragraph>();
+				new_para->addObjects(std::move(objs));
+
+				ret_objs.push_back(new_para.get());
+				m_all_objects.push_back(std::move(new_para));
+			}
+		}
+		else if(auto para = dynamic_cast<Paragraph*>(obj); para != nullptr)
+		{
+			para->evaluateScripts(cs);
+			ret_objs.push_back(para);
+		}
+		else if(auto img = dynamic_cast<Image*>(obj); img != nullptr)
+		{
+			// do nothing
+			ret_objs.push_back(img);
+		}
+		else if(auto bc = dynamic_cast<BlockContainer*>(obj); bc != nullptr)
+		{
+			for(auto& obj : bc->contents())
+				this->evaluate_scripts(cs, ret_objs, obj.get());
+		}
+		else
+		{
+			sap::internal_error("unsupported! {}", typeid((obj)).name());
+		}
+	}
+
+
+
+
 	void Document::evaluateScripts(interp::Interpreter* cs)
 	{
 		std::vector<DocumentObject*> ret {};
 		ret.reserve(m_objects.size());
 
 		for(auto& obj : m_objects)
-		{
-			if(auto blk = dynamic_cast<ScriptBlock*>(obj); blk != nullptr)
-			{
-				run_script_block(cs, blk);
-			}
-			else if(auto call = dynamic_cast<ScriptCall*>(obj); call != nullptr)
-			{
-				auto value_or_err = cs->run(call->call.get());
-
-				if(value_or_err.is_err())
-					error("interp", "evaluation failed: {}", value_or_err.error());
-
-				auto value_or_empty = value_or_err.take_value();
-				if(not value_or_empty.hasValue())
-					continue;
-
-				if(value_or_empty.get().isTreeBlockObj())
-				{
-					auto obj = std::move(value_or_empty.get()).takeTreeBlockObj();
-					ret.push_back(obj.get());
-					m_all_objects.push_back(std::move(obj));
-				}
-				else
-				{
-					auto tmp = cs->evaluator().convertValueToText(std::move(value_or_empty).take());
-					if(tmp.is_err())
-						error("interp", "convertion to text failed: {}", tmp.error());
-
-					auto objs = tmp.take_value();
-					auto new_para = std::make_unique<Paragraph>();
-					new_para->addObjects(std::move(objs));
-
-					ret.push_back(new_para.get());
-					m_all_objects.push_back(std::move(new_para));
-				}
-			}
-			else if(auto para = dynamic_cast<Paragraph*>(obj); para != nullptr)
-			{
-				para->evaluateScripts(cs);
-				ret.push_back(para);
-			}
-			else if(auto img = dynamic_cast<Image*>(obj); img != nullptr)
-			{
-				// do nothing
-				ret.push_back(img);
-			}
-			else
-			{
-				sap::internal_error("unsupported! {}", typeid((obj)).name());
-			}
-		}
+			this->evaluate_scripts(cs, ret, obj);
 
 		m_objects.swap(ret);
 	}

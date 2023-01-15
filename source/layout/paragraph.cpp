@@ -61,7 +61,6 @@ namespace sap::layout
 			if(auto sep = dynamic_cast<const tree::Separator*>(last_word.get()); sep && sep->isSpace())
 				--words_end;
 
-			// zpr::println("[{02}] line height = {}", line_it - lines.begin(), broken_line.lineHeight());
 			cursor = cursor.newLine(broken_line.lineHeight());
 
 			auto layout_line = Line::fromInlineObjects(cursor, broken_line, parent_style, std::span(words_begin, words_end));
