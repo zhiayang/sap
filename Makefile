@@ -51,13 +51,8 @@ PRECOMP_GCH         := $(PRECOMP_HDR:%.h=$(OUTPUT_DIR)/%.h.gch)
 PRECOMP_INCLUDE     := $(PRECOMP_HDR:%.h=$(OUTPUT_DIR)/%.h)
 PRECOMP_OBJ         := $(PRECOMP_HDR:%.h=$(OUTPUT_DIR)/%.h.gch.o)
 
-ifeq ("$(findstring clang,$(CXX))", "clang")
-	CLANG_PCH_FASTER    := -fpch-instantiate-templates -fpch-codegen
-	PCH_INCLUDE_FLAGS   := -include-pch $(PRECOMP_GCH)
-else
-	CLANG_PCH_FASTER    :=
-	PCH_INCLUDE_FLAGS   := -include $(PRECOMP_INCLUDE)
-endif
+CLANG_PCH_FASTER    :=
+PCH_INCLUDE_FLAGS   := -include $(PRECOMP_INCLUDE)
 
 
 DEFINES             :=
@@ -74,7 +69,7 @@ endif
 
 ifeq ($(USE_FONTCONFIG), 1)
 	DEFINES  += -DUSE_FONTCONFIG=1
-	CXXFLAGS += $(shell pkg-config --cflags fontconfig)
+	NONGCH_CXXFLAGS += $(shell pkg-config --cflags fontconfig)
 	LDFLAGS  += $(shell pkg-config --libs fontconfig)
 endif
 
@@ -120,12 +115,12 @@ $(OUTPUT_BIN): $(PRECOMP_OBJ) $(CXXOBJ) $(UTF8PROC_OBJS) $(MINIZ_OBJS)
 $(TEST_DIR)/%: $(OUTPUT_DIR)/test/%.cpp.o $(CXXLIBOBJ) $(UTF8PROC_OBJS) $(MINIZ_OBJS) $(PRECOMP_OBJ)
 	@echo "  $(notdir $@)"
 	@mkdir -p $(shell dirname $@)
-	@$(CXX) $(CXXFLAGS) $(WARNINGS) $(DEFINES) $(LDFLAGS) -Iexternal -o $@ $^
+	@$(CXX) $(CXXFLAGS) $(NONGCH_CXXFLAGS) $(WARNINGS) $(DEFINES) $(LDFLAGS) -Iexternal -o $@ $^
 
 $(OUTPUT_DIR)/%.cpp.o: %.cpp $(PRECOMP_GCH)
 	@echo "  $<"
 	@mkdir -p $(shell dirname $@)
-	@$(CXX) $(PCH_INCLUDE_FLAGS) $(CXXFLAGS) $(WARNINGS) $(INCLUDES) $(DEFINES) -MMD -MP -c -o $@ $<
+	@$(CXX) $(PCH_INCLUDE_FLAGS) $(CXXFLAGS) $(NONGCH_CXXFLAGS) $(WARNINGS) $(INCLUDES) $(DEFINES) -MMD -MP -c -o $@ $<
 
 $(OUTPUT_DIR)/%.c.o: %.c
 	@echo "  $<"
@@ -135,14 +130,13 @@ $(OUTPUT_DIR)/%.c.o: %.c
 $(PRECOMP_GCH): $(PRECOMP_HDR)
 	@printf "# precompiling header $<\n"
 	@mkdir -p $(shell dirname $@)
-	@$(CXX) $(CXXFLAGS) $(WARNINGS) $(INCLUDES) $(CLANG_PCH_FASTER) -MMD -MP -x c++-header -o $@ $<
+	@$(CXX) $(CXXFLAGS) $(NONGCH_CXXFLAGS) $(WARNINGS) $(INCLUDES) $(CLANG_PCH_FASTER) -MMD -MP -x c++-header -o $@ $<
 	@cp $< $(@:%.gch=%)
 
 $(PRECOMP_OBJ): $(PRECOMP_GCH)
 	@printf "# compiling pch\n"
 	@mkdir -p $(shell dirname $@)
 	@$(CXX) $(CXXFLAGS) $(WARNINGS) -c -o $@ $<
-
 
 %.h.compile_db: %.h
 	@$(CXX) $(CXXFLAGS) $(WARNINGS) $(INCLUDES) -include $(PRECOMP_HDR) -x c++-header -o /dev/null $<
@@ -152,7 +146,6 @@ $(PRECOMP_OBJ): $(PRECOMP_GCH)
 
 %.cpp.compile_db: %.cpp
 	@$(CXX) $(CXXFLAGS) $(WARNINGS) $(INCLUDES) -include $(PRECOMP_HDR) -o /dev/null $<
-
 
 
 

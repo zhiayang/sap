@@ -309,7 +309,7 @@ namespace zst
 
 			inline size_t find_first_of(str_view sv)
 			{
-#if !ZST_FREESTANDING && ZST_USE_STD
+#if 0 && !ZST_FREESTANDING && ZST_USE_STD
 				auto ret = std::find_first_of(this->ptr, this->ptr + this->len, sv.ptr, sv.ptr + sv.len);
 				if(ret == this->ptr + this->len)
 					return static_cast<size_t>(-1);

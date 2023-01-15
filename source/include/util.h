@@ -218,9 +218,9 @@ namespace util
 		};
 	}
 
+	template <size_t STORAGE_SIZE = 16>
 	struct Defer
 	{
-		static constexpr size_t STORAGE_SIZE = 16;
 		struct Base
 		{
 			virtual ~Base() { }
@@ -256,6 +256,9 @@ namespace util
 		bool m_cancel;
 		uint8_t m_storage[STORAGE_SIZE];
 	};
+
+	template <typename Callback>
+	Defer(Callback cb) -> Defer<sizeof(std::tuple<bool, Callback>)>;
 
 
 

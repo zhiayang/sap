@@ -35,10 +35,10 @@ namespace sap::interp
 		return m_tree_stack.back();
 	}
 
-	[[nodiscard]] util::Defer Typechecker::pushTree(DefnTree* tree)
+	[[nodiscard]] util::Defer<> Typechecker::pushTree(DefnTree* tree)
 	{
 		m_tree_stack.push_back(tree);
-		return util::Defer([this]() {
+		return util::Defer<>([this]() {
 			this->popTree();
 		});
 	}
@@ -191,10 +191,10 @@ namespace sap::interp
 		return m_expected_return_types.back();
 	}
 
-	[[nodiscard]] util::Defer Typechecker::enterFunctionWithReturnType(const Type* t)
+	[[nodiscard]] util::Defer<> Typechecker::enterFunctionWithReturnType(const Type* t)
 	{
 		m_expected_return_types.push_back(t);
-		return util::Defer([this]() {
+		return util::Defer<>([this]() {
 			this->leaveFunctionWithReturnType();
 		});
 	}

@@ -82,11 +82,11 @@ namespace sap::interp
 		return *m_stack_frames.back();
 	}
 
-	[[nodiscard]] util::Defer Evaluator::pushFrame()
+	[[nodiscard]] util::Defer<> Evaluator::pushFrame()
 	{
 		auto cur = m_stack_frames.back().get();
 		m_stack_frames.push_back(std::unique_ptr<StackFrame>(new StackFrame(this, cur)));
-		return util::Defer([this]() {
+		return util::Defer<>([this]() {
 			this->popFrame();
 		});
 	}

@@ -52,7 +52,7 @@ namespace sap::interp
 		Evaluator();
 
 		StackFrame& frame();
-		[[nodiscard]] util::Defer pushFrame();
+		[[nodiscard]] util::Defer<> pushFrame();
 		void popFrame();
 
 		void dropValue(Value&& value);

@@ -62,14 +62,14 @@ namespace sap::interp
 		ErrorOr<const Definition*> getDefinitionForType(const Type* type);
 		ErrorOr<void> addTypeDefinition(const Type* type, const Definition* defn);
 
-		[[nodiscard]] util::Defer pushTree(DefnTree* tree);
+		[[nodiscard]] util::Defer<> pushTree(DefnTree* tree);
 		void popTree();
 
 		ErrorOr<EvalResult> run(const Stmt* stmt);
 
 		Definition* addBuiltinDefinition(std::unique_ptr<Definition> defn);
 
-		[[nodiscard]] util::Defer enterFunctionWithReturnType(const Type* t);
+		[[nodiscard]] util::Defer<> enterFunctionWithReturnType(const Type* t);
 		void leaveFunctionWithReturnType();
 		bool isCurrentlyInFunction() const;
 		const Type* getCurrentFunctionReturnType() const;
