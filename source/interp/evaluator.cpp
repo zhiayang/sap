@@ -49,6 +49,10 @@ namespace sap::interp
 			auto elm = to->optionalElement();
 			return Value::optional(elm, this->castValue(std::move(value), elm));
 		}
+		else if(from_type->isEnum() && from_type->toEnum()->elementType() == to)
+		{
+			return std::move(value).takeEnumerator();
+		}
 		else
 		{
 			return value;

@@ -8,6 +8,7 @@
 
 namespace sap::interp
 {
+	struct EnumType;
 	struct ArrayType;
 	struct StructType;
 	struct PointerType;
@@ -20,6 +21,7 @@ namespace sap::interp
 		bool isVoid() const { return m_kind == KIND_VOID; }
 		bool isBool() const { return m_kind == KIND_BOOL; }
 		bool isChar() const { return m_kind == KIND_CHAR; }
+		bool isEnum() const { return m_kind == KIND_ENUM; }
 		bool isArray() const { return m_kind == KIND_ARRAY; }
 		bool isStruct() const { return m_kind == KIND_STRUCT; }
 		bool isLength() const { return m_kind == KIND_LENGTH; }
@@ -39,6 +41,7 @@ namespace sap::interp
 		const PointerType* toPointer() const;
 		const StructType* toStruct() const;
 		const ArrayType* toArray() const;
+		const EnumType* toEnum() const;
 
 		virtual std::string str() const;
 		virtual bool sameAs(const Type* other) const;
@@ -72,6 +75,8 @@ namespace sap::interp
 		static const StructType* makeStruct(const std::string& name,
 		    const std::vector<std::pair<std::string, const Type*>>& fields);
 
+		static const EnumType* makeEnum(const std::string& name, const Type* enumerator_type);
+
 		virtual ~Type();
 
 
@@ -86,13 +91,14 @@ namespace sap::interp
 			KIND_FLOATING,
 			KIND_FUNCTION,
 
+			KIND_ENUM,
 			KIND_ARRAY,
 			KIND_STRUCT,
 			KIND_POINTER,
 			KIND_NULLPTR,
 			KIND_OPTIONAL,
-			KIND_LENGTH,
 
+			KIND_LENGTH,
 			KIND_TREE_BLOCK_OBJ,
 			KIND_TREE_INLINE_OBJ,
 		};
@@ -100,6 +106,23 @@ namespace sap::interp
 		Kind m_kind;
 
 		explicit Type(Kind kind) : m_kind(kind) { }
+	};
+
+	struct EnumType : Type
+	{
+		virtual std::string str() const override;
+		virtual bool sameAs(const Type* other) const override;
+
+		const std::string& name() const { return m_name; }
+		const Type* elementType() const { return m_element_type; }
+
+	private:
+		EnumType(std::string name, const Type* elm) : Type(KIND_ENUM), m_name(std::move(name)), m_element_type(elm) { }
+
+		std::string m_name;
+		const Type* m_element_type;
+
+		friend struct Type;
 	};
 
 	struct PointerType : Type

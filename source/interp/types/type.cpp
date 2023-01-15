@@ -161,6 +161,11 @@ namespace sap::interp
 		return obj_type;
 	}
 
+	const EnumType* Type::makeEnum(const std::string& name, const Type* element_type)
+	{
+		return get_or_add_type(new EnumType(name, element_type));
+	}
+
 	const PointerType* Type::makePointer(const Type* element_type, bool is_mutable)
 	{
 		return get_or_add_type(new PointerType(element_type, is_mutable));
@@ -229,6 +234,12 @@ namespace sap::interp
 	{
 		assert(this->isArray());
 		return static_cast<const ArrayType*>(this);
+	}
+
+	const EnumType* Type::toEnum() const
+	{
+		assert(this->isEnum());
+		return static_cast<const EnumType*>(this);
 	}
 
 	const StructType* Type::toStruct() const

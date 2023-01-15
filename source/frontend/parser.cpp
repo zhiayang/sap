@@ -849,7 +849,7 @@ namespace sap::frontend
 		if(not lexer.expect(TT::LBrace))
 			error(lexer.location(), "expected '{' for enum body");
 
-		std::vector<interp::EnumDefn::Enumerator> enumerators {};
+		std::vector<interp::EnumDefn::EnumeratorDefn> enumerators {};
 		while(not lexer.expect(TT::RBrace))
 		{
 			auto enum_name = lexer.match(TT::Identifier);
@@ -861,10 +861,7 @@ namespace sap::frontend
 			if(lexer.expect(TT::Equal))
 				enum_value = parse_expr(lexer);
 
-			enumerators.push_back({
-			    .name = enum_name->text.str(),
-			    .value = std::move(enum_value),
-			});
+			enumerators.push_back(interp::EnumDefn::EnumeratorDefn(enum_name->text.str(), std::move(enum_value)));
 
 			if(not lexer.match(TT::Semicolon))
 				error(lexer.location(), "expected ';' after enumerator");

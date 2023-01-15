@@ -49,6 +49,9 @@ namespace sap::interp
 		const std::vector<Value>& getArray() const;
 		std::vector<Value> takeArray() &&;
 
+		const Value& getEnumerator() const;
+		Value takeEnumerator() &&;
+
 		Value& getStructField(size_t idx);
 		const Value& getStructField(size_t idx) const;
 		std::vector<Value> takeStructFields() &&;
@@ -66,6 +69,7 @@ namespace sap::interp
 
 		bool isBool() const;
 		bool isChar() const;
+		bool isEnum() const;
 		bool isArray() const;
 		bool isStruct() const;
 		bool isLength() const;
@@ -94,6 +98,7 @@ namespace sap::interp
 		static Value integer(int64_t num);
 		static Value floating(double num);
 		static Value character(char32_t ch);
+		static Value enumerator(const EnumType* type, Value value);
 		static Value function(const FunctionType* fn_type, FnType fn);
 		static Value string(const std::u32string& str);
 		static Value array(const Type* elm, std::vector<Value> arr);

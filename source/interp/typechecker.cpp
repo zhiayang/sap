@@ -74,6 +74,9 @@ namespace sap::interp
 		else if(to->isOptional() && this->canImplicitlyConvert(from, to->optionalElement()))
 			return true;
 
+		else if(from->isEnum() && from->toEnum()->elementType() == to)
+			return true;
+
 		return false;
 	}
 

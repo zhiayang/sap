@@ -491,27 +491,47 @@ namespace sap::interp
 
 	struct EnumDefn : Definition
 	{
-		struct Enumerator
+		struct EnumeratorDecl : Declaration
 		{
-			std::string name;
-			std::unique_ptr<Expr> value;
+			EnumeratorDecl(const std::string& name) : Declaration(name) { }
+
+			virtual ErrorOr<EvalResult> evaluate(Evaluator* ev) const override;
+			virtual ErrorOr<TCResult> typecheck_impl(Typechecker* ts, const Type* infer = nullptr) const override;
 		};
 
-		EnumDefn(const std::string& name, frontend::PType type, std::vector<Enumerator> enumerators) //
+		struct EnumeratorDefn : Definition
+		{
+			EnumeratorDefn(const std::string& name, std::unique_ptr<Expr> value)
+			    : Definition(new EnumeratorDecl(name))
+			    , m_value(std::move(value))
+			{
+			}
+
+			ErrorOr<EvalResult> evaluate(Evaluator* ev, int64_t* prev_value) const;
+
+			virtual ErrorOr<EvalResult> evaluate(Evaluator* ev) const override;
+			virtual ErrorOr<TCResult> typecheck_impl(Typechecker* ts, const Type* infer = nullptr) const override;
+
+		private:
+			friend struct EnumDefn;
+
+			std::unique_ptr<Expr> m_value;
+		};
+
+		EnumDefn(const std::string& name, frontend::PType type, std::vector<EnumeratorDefn> enumerators) //
 		    : Definition(new EnumDecl(name))
 		    , m_enumerator_type(std::move(type))
 		    , m_enumerators(std::move(enumerators))
 		{
 		}
 
-		const std::vector<Enumerator>& enumerators() const { return m_enumerators; }
-
 		virtual ErrorOr<EvalResult> evaluate(Evaluator* ev) const override;
 		virtual ErrorOr<TCResult> typecheck_impl(Typechecker* ts, const Type* infer = nullptr) const override;
 
 	private:
 		frontend::PType m_enumerator_type;
-		std::vector<Enumerator> m_enumerators;
+		std::vector<EnumeratorDefn> m_enumerators;
+		mutable const EnumType* m_resolved_enumerator_type;
 	};
 }
 

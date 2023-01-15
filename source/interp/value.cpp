@@ -89,6 +89,21 @@ namespace sap::interp
 		return std::move(v_array);
 	}
 
+	const Value& Value::getEnumerator() const
+	{
+		assert(this->isEnum());
+		return v_array[0];
+	}
+
+	Value Value::takeEnumerator() &&
+	{
+		assert(this->isEnum());
+		return std::move(v_array[0]);
+	}
+
+
+
+
 	std::string Value::getUtf8String() const
 	{
 		assert(this->isArray());
@@ -268,6 +283,10 @@ namespace sap::interp
 	{
 		return m_type->isChar();
 	}
+	bool Value::isEnum() const
+	{
+		return m_type->isEnum();
+	}
 	bool Value::isArray() const
 	{
 		return m_type->isArray();
@@ -393,6 +412,15 @@ namespace sap::interp
 		return ret;
 	}
 
+	Value Value::enumerator(const EnumType* type, Value value)
+	{
+		auto ret = Value(type);
+		new(&ret.v_array) decltype(ret.v_array)();
+		ret.v_array.push_back(std::move(value));
+
+		return ret;
+	}
+
 	Value Value::array(const Type* elm, std::vector<Value> arr)
 	{
 		auto ret = Value(Type::makeArray(elm));
@@ -505,7 +533,7 @@ namespace sap::interp
 			new(&val.v_inline_obj) decltype(v_inline_obj)();
 			val.v_inline_obj = Value::clone_tios(v_inline_obj);
 		}
-		else if(m_type->isArray() || m_type->isStruct() || m_type->isOptional())
+		else if(m_type->isArray() || m_type->isStruct() || m_type->isOptional() || m_type->isEnum())
 		{
 			new(&val.v_array) decltype(v_array)();
 			for(auto& e : v_array)
@@ -555,7 +583,7 @@ namespace sap::interp
 			v_inline_obj.~decltype(v_inline_obj)();
 		else if(m_type->isTreeBlockObj())
 			v_block_obj.~decltype(v_block_obj)();
-		else if(m_type->isArray() || m_type->isStruct() || m_type->isOptional())
+		else if(m_type->isArray() || m_type->isStruct() || m_type->isOptional() || m_type->isEnum())
 			v_array.~decltype(v_array)();
 		else if(m_type->isLength())
 			v_length.~decltype(v_length)();
@@ -580,7 +608,7 @@ namespace sap::interp
 			new(&v_block_obj) decltype(v_block_obj)(std::move(val.v_block_obj));
 		else if(m_type->isTreeInlineObj())
 			new(&v_inline_obj) decltype(v_inline_obj)(std::move(val.v_inline_obj));
-		else if(m_type->isArray() || m_type->isStruct() || m_type->isOptional())
+		else if(m_type->isArray() || m_type->isStruct() || m_type->isOptional() || m_type->isEnum())
 			new(&v_array) decltype(v_array)(std::move(val.v_array));
 		else if(m_type->isLength())
 			new(&v_length) decltype(v_length)(std::move(val.v_length));
