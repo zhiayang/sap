@@ -49,6 +49,9 @@ namespace sap::frontend
 
 		~PType();
 
+		bool operator==(const PType& a) const = default;
+		bool operator!=(const PType& a) const = default;
+
 	private:
 		PType(interp::QualifiedId name, int kind, std::vector<PType> type_list);
 

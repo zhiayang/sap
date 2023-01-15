@@ -4,7 +4,7 @@
 
 #include <variant> // for holds_alternative, variant, visit
 
-#include "dijkstra.h" // for dijkstra_shortest_path
+#include "misc/dijkstra.h" // for dijkstra_shortest_path
 
 #include "sap/style.h" // for Style
 #include "sap/units.h" // for Length
@@ -135,8 +135,11 @@ namespace sap::layout::linebreak
 
 
 
-	std::vector<BrokenLine> breakLines(LayoutBase* layout, LineCursor cursor, const Style* parent_style,
-	    const InlineObjVec& contents, Length preferred_line_length)
+	std::vector<BrokenLine> breakLines(LayoutBase* layout,
+	    LineCursor cursor,
+	    const Style* parent_style,
+	    const InlineObjVec& contents,
+	    Length preferred_line_length)
 	{
 		auto path = util::dijkstra_shortest_path(
 		    LineBreakNode {

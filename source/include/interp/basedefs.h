@@ -11,5 +11,8 @@ namespace sap::interp
 		bool top_level = false;
 		std::vector<std::string> parents;
 		std::string name;
+
+		bool operator==(const QualifiedId&) const = default;
+		bool operator!=(const QualifiedId&) const = default;
 	};
 }

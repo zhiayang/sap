@@ -120,7 +120,9 @@ namespace sap::layout
 	{
 	}
 
-	std::unique_ptr<Line> Line::fromInlineObjects(LineCursor cursor, const linebreak::BrokenLine& broken_line, const Style* style,
+	std::unique_ptr<Line> Line::fromInlineObjects(LineCursor cursor,
+	    const linebreak::BrokenLine& broken_line,
+	    const Style* style,
 	    std::span<const std::unique_ptr<tree::InlineObject>> objs)
 	{
 		cursor = cursor.newLine(0);

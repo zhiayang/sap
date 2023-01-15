@@ -142,14 +142,4 @@ namespace sap::interp::builtin
 		auto img_obj = tree::Image::fromImageFile(img_path, img_width, img_height);
 		return EvalResult::ofValue(Value::treeBlockObject(std::move(img_obj)));
 	}
-
-
-	ErrorOr<EvalResult> centred_block(Evaluator* ev, std::vector<Value>& args)
-	{
-		// TODO: maybe don't assert?
-		assert(args.size() == 1);
-
-		auto container = std::make_unique<tree::CentredContainer>(std::move(args[0]).takeTreeBlockObj());
-		return EvalResult::ofValue(Value::treeBlockObject(std::move(container)));
-	}
 }

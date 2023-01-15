@@ -355,7 +355,9 @@ namespace sap::interp
 
 	struct VariableDefn : Definition
 	{
-		VariableDefn(const std::string& name, bool is_mutable, std::unique_ptr<Expr> init,
+		VariableDefn(const std::string& name,
+		    bool is_mutable,
+		    std::unique_ptr<Expr> init,
 		    std::optional<frontend::PType> explicit_type)
 		    : Definition(new VariableDecl(name, is_mutable))
 		    , initialiser(std::move(init))
@@ -427,7 +429,9 @@ namespace sap::interp
 	{
 		using FuncTy = std::function<ErrorOr<EvalResult>(Evaluator*, std::vector<Value>&)>;
 
-		BuiltinFunctionDefn(const std::string& name, std::vector<FunctionDecl::Param>&& params, frontend::PType return_type,
+		BuiltinFunctionDefn(const std::string& name,
+		    std::vector<FunctionDecl::Param>&& params,
+		    frontend::PType return_type,
 		    const FuncTy& fn)
 		    : Definition(new FunctionDecl(name, std::move(params), return_type))
 		    , function(fn)
@@ -471,6 +475,43 @@ namespace sap::interp
 
 	private:
 		mutable std::vector<Field> m_fields;
+	};
+
+
+
+
+
+	struct EnumDecl : Declaration
+	{
+		EnumDecl(const std::string& name) : Declaration(name) { }
+
+		virtual ErrorOr<EvalResult> evaluate(Evaluator* ev) const override;
+		virtual ErrorOr<TCResult> typecheck_impl(Typechecker* ts, const Type* infer = nullptr) const override;
+	};
+
+	struct EnumDefn : Definition
+	{
+		struct Enumerator
+		{
+			std::string name;
+			std::unique_ptr<Expr> value;
+		};
+
+		EnumDefn(const std::string& name, frontend::PType type, std::vector<Enumerator> enumerators) //
+		    : Definition(new EnumDecl(name))
+		    , m_enumerator_type(std::move(type))
+		    , m_enumerators(std::move(enumerators))
+		{
+		}
+
+		const std::vector<Enumerator>& enumerators() const { return m_enumerators; }
+
+		virtual ErrorOr<EvalResult> evaluate(Evaluator* ev) const override;
+		virtual ErrorOr<TCResult> typecheck_impl(Typechecker* ts, const Type* infer = nullptr) const override;
+
+	private:
+		frontend::PType m_enumerator_type;
+		std::vector<Enumerator> m_enumerators;
 	};
 }
 

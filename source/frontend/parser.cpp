@@ -352,8 +352,10 @@ namespace sap::frontend
 		error(lexer.peek().loc, "unexpected '{}' after expression", lexer.peek().text);
 	}
 
-	static std::unique_ptr<interp::FunctionCall> parse_ufcs(Lexer& lexer, std::unique_ptr<interp::Expr> first_arg,
-	    const std::string& method_name, bool is_optional)
+	static std::unique_ptr<interp::FunctionCall> parse_ufcs(Lexer& lexer,
+	    std::unique_ptr<interp::Expr> first_arg,
+	    const std::string& method_name,
+	    bool is_optional)
 	{
 		auto method = std::make_unique<interp::Ident>();
 		method->name.top_level = false;
@@ -828,6 +830,52 @@ namespace sap::frontend
 		return std::make_unique<interp::StructDefn>(name, std::move(fields));
 	}
 
+	static std::unique_ptr<interp::EnumDefn> parse_enum_defn(Lexer& lexer)
+	{
+		must_expect(lexer, TT::KW_Enum);
+
+		std::string name;
+		if(auto name_tok = lexer.match(TT::Identifier); not name_tok.has_value())
+			error(lexer.location(), "expected identifier after 'enum'");
+		else
+			name = name_tok->text.str();
+
+		const auto pt_int = PType::named(TYPE_INT);
+		auto enum_type = pt_int;
+
+		if(lexer.expect(TT::Colon))
+			enum_type = parse_type(lexer);
+
+		if(not lexer.expect(TT::LBrace))
+			error(lexer.location(), "expected '{' for enum body");
+
+		std::vector<interp::EnumDefn::Enumerator> enumerators {};
+		while(not lexer.expect(TT::RBrace))
+		{
+			auto enum_name = lexer.match(TT::Identifier);
+			if(not enum_name.has_value())
+				error(lexer.location(), "expected enumerator name");
+
+			std::unique_ptr<interp::Expr> enum_value {};
+
+			if(lexer.expect(TT::Equal))
+				enum_value = parse_expr(lexer);
+
+			enumerators.push_back({
+			    .name = enum_name->text.str(),
+			    .value = std::move(enum_value),
+			});
+
+			if(not lexer.match(TT::Semicolon))
+				error(lexer.location(), "expected ';' after enumerator");
+		}
+
+		return std::make_unique<interp::EnumDefn>(std::move(name), std::move(enum_type), std::move(enumerators));
+	}
+
+
+
+
 
 	static std::unique_ptr<interp::IfStmt> parse_if_stmt(Lexer& lexer)
 	{
@@ -892,6 +940,11 @@ namespace sap::frontend
 		else if(tok == TT::KW_Struct)
 		{
 			stmt = parse_struct_defn(lexer);
+			optional_semicolon = true;
+		}
+		else if(tok == TT::KW_Enum)
+		{
+			stmt = parse_enum_defn(lexer);
 			optional_semicolon = true;
 		}
 		else if(tok == TT::KW_If)

@@ -281,6 +281,8 @@ namespace sap::frontend
 				tt = TT::KW_Var;
 			else if(text == "else")
 				tt = TT::KW_Else;
+			else if(text == "enum")
+				tt = TT::KW_Enum;
 			else if(text == "struct")
 				tt = TT::KW_Struct;
 			else if(text == "return")

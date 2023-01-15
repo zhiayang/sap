@@ -23,21 +23,4 @@ namespace sap::tree
 		std::vector<std::unique_ptr<BlockObject>> m_objects;
 	};
 
-	struct CentredContainer : BlockObject
-	{
-		explicit CentredContainer(std::unique_ptr<BlockObject> inner);
-
-		virtual std::optional<LayoutFn> getLayoutFunction() const override;
-
-		BlockObject& inner() { return *m_inner.get(); }
-		const BlockObject& inner() const { return *m_inner.get(); }
-
-	private:
-		static layout::LineCursor layout_fn(interp::Interpreter* cs, layout::LayoutBase* layout, layout::LineCursor cursor,
-		    const Style* style, const DocumentObject* obj);
-
-	private:
-		std::unique_ptr<BlockObject> m_inner;
-	};
-
 }
