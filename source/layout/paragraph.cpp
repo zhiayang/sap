@@ -68,6 +68,8 @@ namespace sap::layout
 			para_size.y() += layout_line->layoutSize().y();
 
 			layout_lines.push_back(std::move(layout_line));
+
+			current_idx += broken_line.numParts();
 		}
 
 
