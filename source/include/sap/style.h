@@ -12,6 +12,16 @@
 
 namespace sap
 {
+	enum class Alignment
+	{
+		Left,
+		Centre,
+		Right,
+		Justified,
+	};
+
+
+
 	struct Style
 	{
 		inline Style() { }
@@ -33,6 +43,7 @@ namespace sap
 		DEFINE_ACCESSOR(Length, m_font_size, font_size);
 		DEFINE_ACCESSOR(double, m_line_spacing, line_spacing);
 		DEFINE_ACCESSOR(Length, m_paragraph_spacing, paragraph_spacing);
+		DEFINE_ACCESSOR(Alignment, m_alignment, alignment);
 #undef DEFINE_ACCESSOR
 
 #define DEFINE_SETTER(field_type, field_name, method_name)         \
@@ -47,6 +58,7 @@ namespace sap
 		DEFINE_SETTER(Length, m_font_size, set_font_size);
 		DEFINE_SETTER(double, m_line_spacing, set_line_spacing);
 		DEFINE_SETTER(Length, m_paragraph_spacing, set_paragraph_spacing);
+		DEFINE_SETTER(Alignment, m_alignment, set_alignment);
 
 #undef DEFINE_SETTER
 
@@ -69,6 +81,7 @@ namespace sap
 		std::optional<Length> m_font_size;
 		std::optional<double> m_line_spacing;
 		std::optional<Length> m_paragraph_spacing;
+		std::optional<Alignment> m_alignment;
 
 		static Style s_empty_style;
 	};

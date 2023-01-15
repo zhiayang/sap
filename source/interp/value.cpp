@@ -5,6 +5,7 @@
 #include <utf8proc/utf8proc.h>
 
 #include "tree/image.h"
+#include "tree/container.h"
 #include "tree/paragraph.h"
 
 #include "interp/value.h"
@@ -621,6 +622,17 @@ namespace sap::interp
 		else if(auto scr = dynamic_cast<const tree::ScriptBlock*>(&from); scr != nullptr)
 		{
 			sap::internal_error("???? script TBO leaked out!");
+		}
+		else if(auto blk = dynamic_cast<const tree::BlockContainer*>(&from); blk != nullptr)
+		{
+			auto ret = std::make_unique<tree::BlockContainer>();
+			for(auto& inner : blk->contents())
+				ret->contents().push_back(clone_tbos(*inner));
+			return ret;
+		}
+		else
+		{
+			sap::internal_error("?? unknown TBO type");
 		}
 
 		// TODO

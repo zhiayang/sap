@@ -121,7 +121,7 @@ namespace sap::tree
 		}
 		else
 		{
-			sap::internal_error("?? unsupported");
+			sap::internal_error("?? unsupported: {}", typeid(*obj).name());
 		}
 	}
 

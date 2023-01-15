@@ -1110,6 +1110,8 @@ namespace sap::frontend
 			else if(tok == TT::ParagraphBreak)
 			{
 				lexer.next();
+				lexer.skipWhitespaceAndComments();
+
 				continue;
 			}
 			else if(tok == TT::Backslash)

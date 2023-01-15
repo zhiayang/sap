@@ -11,24 +11,14 @@ namespace sap::tree
 	layout::LineCursor CentredContainer::layout_fn(interp::Interpreter* cs, layout::LayoutBase* layout, layout::LineCursor cursor,
 	    const Style* style, const DocumentObject* obj_)
 	{
-#if 0
-		auto obj = static_cast<CentredContainer*>(const_cast<DocumentObject*>(obj_));
-		auto layout_fn = obj->inner().getLayoutFunction();
+		auto container = static_cast<CentredContainer*>(const_cast<DocumentObject*>(obj_));
+		auto layout_fn = container->inner().getLayoutFunction();
 		if(not layout_fn.has_value())
 			return cursor;
 
+		// TODO: inter-object margin!
+		cursor = (*layout_fn)(cs, layout, cursor, style, &container->inner());
 		cursor = cursor.newLine(0);
-
-		auto centred_layout = std::make_unique<layout::CentredLayout>(layout, std::move(cursor));
-		auto inner_cursor = (*layout_fn)(cs, centred_layout.get(), centred_layout->newCursor(), style, obj->m_inner.get());
-
-		centred_layout->computeLayoutSize();
-
-		auto tmp = centred_layout.get();
-		layout->addObject(std::move(centred_layout));
-
-		return tmp->parentCursor();
-#endif
 
 		return cursor;
 	}
