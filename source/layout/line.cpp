@@ -72,9 +72,19 @@ namespace sap::layout
 
 				auto sep_char = (it + 1 == objs.end() ? sep->endOfLine() : sep->middleOfLine());
 
-				auto sep_width = std::max(                                                             //
-				    calculate_word_size(sep_char, parent_style->extendWith((*(it - 1))->style())).x(), //
-				    calculate_word_size(sep_char, parent_style->extendWith((*(it + 1))->style())).x());
+				auto sep_width = [&]() {
+					if(it == objs.begin() && it + 1 == objs.end())
+						sap::internal_error("??? line with only separator");
+
+					if(it == objs.begin())
+						return calculate_word_size(sep_char, parent_style->extendWith((*(it + 1))->style())).x();
+					else if(it + 1 == objs.end())
+						return calculate_word_size(sep_char, parent_style->extendWith((*(it - 1))->style())).x();
+
+					return std::max(                                                                       //
+					    calculate_word_size(sep_char, parent_style->extendWith((*(it - 1))->style())).x(), //
+					    calculate_word_size(sep_char, parent_style->extendWith((*(it + 1))->style())).x());
+				}();
 
 				if(sep->isSpace())
 					ret.total_space_width += sep_width;

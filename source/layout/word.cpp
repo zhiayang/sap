@@ -30,8 +30,6 @@ namespace sap::layout
 
 	void Word::render(const LayoutBase* layout, std::vector<pdf::Page*>& pages) const
 	{
-		zpr::println("rendering '{}'", m_text);
-
 		auto text = util::make<pdf::Text>();
 
 		auto pos = layout->convertPosition(m_layout_position);

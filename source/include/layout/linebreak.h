@@ -140,7 +140,8 @@ namespace sap::layout::linebreak
 			auto word_style = m_parent_style->extendWith(word->style());
 
 			// TODO: suspicious; should this use `prev_word_style` instead of `word_style`?
-			m_line_height = std::max(m_line_height, get_size_of_last_thing(word_style).y() * word_style->line_spacing());
+			auto this_line_height = calculateWordSize(word->contents(), word_style).y() * word_style->line_spacing();
+			m_line_height = std::max(m_line_height, this_line_height);
 
 			if(m_last_sep != nullptr && m_last_sep->isSpace())
 			{
