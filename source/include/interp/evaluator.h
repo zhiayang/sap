@@ -34,14 +34,23 @@ namespace sap::interp
 		Value* createTemporary(Value init);
 
 		void dropTemporaries();
+		size_t callDepth() const { return m_call_depth; }
+
+		bool containsValue(const Value& value) const;
 
 	private:
-		explicit StackFrame(Evaluator* ev, StackFrame* parent) : m_evaluator(ev), m_parent(parent) { }
+		explicit StackFrame(Evaluator* ev, StackFrame* parent, size_t call_depth)
+		    : m_evaluator(ev)
+		    , m_parent(parent)
+		    , m_call_depth(call_depth)
+		{
+		}
 
 		friend struct Evaluator;
 
 		Evaluator* m_evaluator;
 		StackFrame* m_parent = nullptr;
+		size_t m_call_depth;
 		std::unordered_map<const Definition*, Value> m_values;
 		std::deque<Value> m_temporaries;
 	};
@@ -53,6 +62,7 @@ namespace sap::interp
 
 		StackFrame& frame();
 		[[nodiscard]] util::Defer<> pushFrame();
+		[[nodiscard]] util::Defer<> pushCallFrame();
 		void popFrame();
 
 		void dropValue(Value&& value);

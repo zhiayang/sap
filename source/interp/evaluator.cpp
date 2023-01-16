@@ -12,7 +12,7 @@ namespace sap::interp
 	Evaluator::Evaluator()
 	{
 		// always start with a top level frame.
-		m_stack_frames.push_back(std::unique_ptr<StackFrame>(new StackFrame(this, nullptr)));
+		m_stack_frames.push_back(std::unique_ptr<StackFrame>(new StackFrame(this, nullptr, 0)));
 	}
 
 	Value Evaluator::castValue(Value value, const Type* to) const
@@ -89,7 +89,16 @@ namespace sap::interp
 	[[nodiscard]] util::Defer<> Evaluator::pushFrame()
 	{
 		auto cur = m_stack_frames.back().get();
-		m_stack_frames.push_back(std::unique_ptr<StackFrame>(new StackFrame(this, cur)));
+		m_stack_frames.push_back(std::unique_ptr<StackFrame>(new StackFrame(this, cur, cur->callDepth())));
+		return util::Defer<>([this]() {
+			this->popFrame();
+		});
+	}
+
+	[[nodiscard]] util::Defer<> Evaluator::pushCallFrame()
+	{
+		auto cur = m_stack_frames.back().get();
+		m_stack_frames.push_back(std::unique_ptr<StackFrame>(new StackFrame(this, cur, 1 + cur->callDepth())));
 		return util::Defer<>([this]() {
 			this->popFrame();
 		});
@@ -145,6 +154,17 @@ namespace sap::interp
 	void StackFrame::setValue(const Definition* defn, Value value)
 	{
 		m_values[defn] = std::move(value);
+	}
+
+	bool StackFrame::containsValue(const Value& value) const
+	{
+		for(auto& [defn, val] : m_values)
+		{
+			if(&val == &value)
+				return true;
+		}
+
+		return false;
 	}
 
 	Value* StackFrame::createTemporary(Value init)

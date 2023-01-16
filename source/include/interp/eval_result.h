@@ -66,6 +66,12 @@ namespace sap::interp
 			return std::move(*m_lvalue);
 		}
 
+		Value* lValuePointer() const
+		{
+			assert(this->isLValue());
+			return m_lvalue;
+		}
+
 		static ErrorOr<EvalResult> ofVoid() { return Ok(EvalResult(Normal, {})); }
 		static ErrorOr<EvalResult> ofValue(Value value) { return Ok(EvalResult(Normal, std::move(value))); }
 

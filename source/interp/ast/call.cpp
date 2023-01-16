@@ -38,7 +38,8 @@ namespace sap::interp
 		}
 	}
 
-	static ErrorOr<int> get_calling_cost(Typechecker* ts, const Declaration* decl,
+	static ErrorOr<int> get_calling_cost(Typechecker* ts,
+	    const Declaration* decl,
 	    const std::vector<ArrangeArg<const Type*>>& arguments)
 	{
 		auto params = TRY(convert_params(decl));
@@ -49,7 +50,8 @@ namespace sap::interp
 	}
 
 
-	static ErrorOr<const Declaration*> resolve_overload_set(Typechecker* ts, const std::vector<const Declaration*>& decls,
+	static ErrorOr<const Declaration*> resolve_overload_set(Typechecker* ts,
+	    const std::vector<const Declaration*>& decls,
 	    const std::vector<ArrangeArg<const Type*>>& arguments)
 	{
 		std::vector<const Declaration*> best_decls {};
@@ -187,6 +189,7 @@ namespace sap::interp
 
 
 		std::vector<Value> final_args {};
+		auto _ = ev->pushCallFrame();
 
 		if(auto ident = dynamic_cast<const Ident*>(this->callee.get()); ident != nullptr)
 		{
