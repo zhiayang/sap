@@ -186,6 +186,8 @@ namespace sap::layout::linebreak
 		}
 	};
 
-	std::vector<BrokenLine> breakLines(LayoutBase* layout, LineCursor cursor, const Style* parent_style,
-	    const std::vector<std::unique_ptr<tree::InlineObject>>& contents, Length preferred_line_length);
+	std::vector<BrokenLine> breakLines(LineCursor cursor,
+	    const Style* parent_style,
+	    const std::vector<std::unique_ptr<tree::InlineObject>>& contents,
+	    Length preferred_line_length);
 }

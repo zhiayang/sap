@@ -24,7 +24,7 @@ namespace sap::layout::linebreak
 	{
 		const InlineObjVec* contents;
 
-		LayoutBase* layout;
+		// LayoutBase* layout;
 		const Style* parent_style;
 
 		// TODO: we should get the preferred line length from the layout and not fix it here
@@ -40,7 +40,7 @@ namespace sap::layout::linebreak
 		{
 			return LineBreakNode {
 				.contents = nullptr,
-				.layout = nullptr,
+				// .layout = nullptr,
 				.parent_style = nullptr,
 				.preferred_line_length = 0,
 				.broken_until = end,
@@ -53,7 +53,7 @@ namespace sap::layout::linebreak
 		{
 			return LineBreakNode {
 				.contents = contents,
-				.layout = layout,
+				// .layout = layout,
 				.parent_style = parent_style,
 				.preferred_line_length = preferred_line_length,
 				.broken_until = neighbour_broken_until,
@@ -135,8 +135,7 @@ namespace sap::layout::linebreak
 
 
 
-	std::vector<BrokenLine> breakLines(LayoutBase* layout,
-	    LineCursor cursor,
+	std::vector<BrokenLine> breakLines(LineCursor cursor,
 	    const Style* parent_style,
 	    const InlineObjVec& contents,
 	    Length preferred_line_length)
@@ -144,7 +143,7 @@ namespace sap::layout::linebreak
 		auto path = util::dijkstra_shortest_path(
 		    LineBreakNode {
 		        .contents = &contents,
-		        .layout = layout,
+		        // .layout = layout,
 		        .parent_style = parent_style,
 		        .preferred_line_length = preferred_line_length,
 		        .broken_until = contents.begin(),

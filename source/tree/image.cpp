@@ -77,9 +77,4 @@ namespace sap::tree
 
 		return std::make_unique<Image>(std::move(image), sap::Vector2(width, *height));
 	}
-
-	auto Image::getLayoutFunction() const -> std::optional<LayoutFn>
-	{
-		return &layout::Image::fromTree;
-	}
 }

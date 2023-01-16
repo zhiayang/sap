@@ -232,9 +232,4 @@ namespace sap::tree
 	{
 		m_contents.insert(m_contents.end(), std::move_iterator(objs.begin()), std::move_iterator(objs.end()));
 	}
-
-	auto Paragraph::getLayoutFunction() const -> std::optional<LayoutFn>
-	{
-		return &layout::Paragraph::fromTree;
-	}
 }

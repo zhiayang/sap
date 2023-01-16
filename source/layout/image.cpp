@@ -15,29 +15,6 @@ namespace sap::layout
 	{
 	}
 
-	LineCursor Image::fromTree(interp::Interpreter* cs,
-	    LayoutBase* layout,
-	    LineCursor cursor,
-	    const Style* parent_style,
-	    const tree::DocumentObject* doc_obj)
-	{
-		cursor = cursor.newLine(0);
-
-		auto tree_img = static_cast<const tree::Image*>(doc_obj);
-		auto img_size = tree_img->size();
-
-		auto img = std::unique_ptr<Image>(new Image(cursor.position(), img_size, tree_img->image()));
-		img->setStyle(parent_style);
-
-		layout->addObject(std::move(img));
-
-		// move right so that the layout can track the amount of used horizontal space
-		cursor = cursor.moveRight(img_size.x());
-
-		// and down as well.
-		return cursor.newLine(img_size.y());
-	}
-
 	void Image::render(const LayoutBase* layout, std::vector<pdf::Page*>& pages) const
 	{
 		auto pos = layout->convertPosition(m_layout_position);
@@ -51,5 +28,21 @@ namespace sap::layout
 		    page->convertVector2(pos.pos.into<pdf::Position2d_YDown>()));
 
 		page->addObject(page_obj);
+	}
+}
+
+
+namespace sap::tree
+{
+	auto Image::createLayoutObject(interp::Interpreter* cs, layout::LineCursor cursor, const Style* parent_style) const
+	    -> LayoutResult
+	{
+		auto img = std::unique_ptr<layout::Image>(new layout::Image(cursor.position(), this->size(), this->image()));
+		img->setStyle(parent_style);
+
+		// cursor = cursor.newLine(this->size().y());
+		cursor = cursor.moveRight(this->size().x());
+
+		return { cursor, std::move(img) };
 	}
 }

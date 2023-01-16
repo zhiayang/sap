@@ -69,9 +69,11 @@ namespace sap::layout
 		LineCursor cursor = m_page_layout.newCursor();
 		for(const auto& obj : treedoc.objects())
 		{
-			auto layout_fn = obj->getLayoutFunction();
-			if(layout_fn.has_value())
-				cursor = (*layout_fn)(cs, &m_page_layout, cursor, m_style, obj);
+			auto [new_cursor, layout_obj] = obj->createLayoutObject(cs, cursor, m_style);
+			cursor = std::move(new_cursor);
+
+			if(layout_obj.has_value())
+				m_page_layout.addObject(std::move(*layout_obj));
 		}
 	}
 

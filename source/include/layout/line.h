@@ -31,11 +31,10 @@ namespace sap::layout
 		    const Style* style,
 		    std::span<const std::unique_ptr<tree::InlineObject>> objs);
 
-		static std::unique_ptr<Line> fromBlockObjects(interp::Interpreter* cs,
-		    LayoutBase* layout,
+		static std::pair<LineCursor, std::unique_ptr<Line>> fromBlockObjects(interp::Interpreter* cs,
 		    LineCursor cursor,
 		    const Style* style,
-		    std::span<const std::unique_ptr<tree::BlockObject>> objs);
+		    std::span<const tree::BlockObject*> objs);
 
 	private:
 		explicit Line(RelativePos position, Size2d size, const Style* style, std::vector<std::unique_ptr<LayoutObject>> objs);

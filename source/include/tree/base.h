@@ -11,6 +11,7 @@ namespace sap::layout
 {
 	struct LineCursor;
 	struct LayoutBase;
+	struct LayoutObject;
 }
 
 namespace sap::interp
@@ -48,13 +49,10 @@ namespace sap::tree
 	{
 		virtual ~DocumentObject() = 0;
 
-		using LayoutFn = layout::LineCursor (*)(interp::Interpreter*,
-		    layout::LayoutBase*,
-		    layout::LineCursor,
-		    const Style*,
-		    const tree::DocumentObject*);
+		using LayoutResult = std::pair<layout::LineCursor, std::optional<std::unique_ptr<layout::LayoutObject>>>;
 
-		virtual std::optional<LayoutFn> getLayoutFunction() const = 0;
+		virtual LayoutResult createLayoutObject(interp::Interpreter* cs, layout::LineCursor cursor, const Style* parent_style)
+		    const = 0;
 	};
 
 	struct InlineObject : Stylable
@@ -81,7 +79,8 @@ namespace sap::tree
 	*/
 	struct ScriptObject : InlineObject, BlockObject
 	{
-		virtual std::optional<LayoutFn> getLayoutFunction() const override;
+		virtual LayoutResult createLayoutObject(interp::Interpreter* cs, layout::LineCursor cursor, const Style* parent_style)
+		    const override;
 	};
 
 	struct ScriptBlock : ScriptObject

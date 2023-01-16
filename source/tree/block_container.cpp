@@ -5,32 +5,27 @@
 #include "tree/container.h"
 
 #include "layout/base.h"
+#include "layout/line.h"
+#include "layout/paragraph.h"
 
 namespace sap::tree
 {
-	layout::LineCursor BlockContainer::layout_fn(interp::Interpreter* cs,
-	    layout::LayoutBase* layout,
-	    layout::LineCursor cursor,
-	    const Style* style,
-	    const DocumentObject* obj_)
+	auto BlockContainer::createLayoutObject(interp::Interpreter* cs, layout::LineCursor cursor, const Style* parent_style) const
+	    -> LayoutResult
 	{
-		auto container = static_cast<BlockContainer*>(const_cast<DocumentObject*>(obj_));
-		for(auto& obj : container->contents())
-		{
-			auto layout_fn = obj->getLayoutFunction();
-			if(not layout_fn.has_value())
-				continue;
+		auto start_cursor = cursor;
+		auto style = parent_style->extendWith(m_style);
 
-			// TODO: inter-object margin!
-			cursor = (*layout_fn)(cs, layout, cursor, style, obj.get());
-			cursor = cursor.newLine(0);
+		std::vector<std::unique_ptr<layout::Line>> lines {};
+		for(auto& obj : m_objects)
+		{
+			std::array<const BlockObject*, 1> aoeu { obj.get() };
+			auto [new_cursor, line] = layout::Line::fromBlockObjects(cs, cursor, style, aoeu);
+
+			cursor = new_cursor.newLine(style->paragraph_spacing());
+			lines.push_back(std::move(line));
 		}
 
-		return cursor;
-	}
-
-	auto BlockContainer::getLayoutFunction() const -> std::optional<LayoutFn>
-	{
-		return &BlockContainer::layout_fn;
+		return { cursor, layout::Paragraph::fromLines(cs, start_cursor, style, std::move(lines)) };
 	}
 }

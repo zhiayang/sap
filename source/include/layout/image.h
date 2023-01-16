@@ -22,12 +22,11 @@ namespace sap::layout
 	{
 		using LayoutObject::LayoutObject;
 
-		static LineCursor fromTree(interp::Interpreter* cs, LayoutBase* layout, LineCursor cursor, const Style* parent_style,
-		    const tree::DocumentObject* obj);
-
 		virtual void render(const LayoutBase* layout, std::vector<pdf::Page*>& pages) const override;
 
 	private:
+		friend struct tree::Image;
+
 		explicit Image(RelativePos pos, Size2d size, ImageBitmap m_image);
 		ImageBitmap m_image;
 	};

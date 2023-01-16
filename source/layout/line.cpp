@@ -189,11 +189,10 @@ namespace sap::layout
 		    std::move(layout_objects)));
 	}
 
-	std::unique_ptr<Line> Line::fromBlockObjects(interp::Interpreter* cs,
-	    LayoutBase* layout,
+	std::pair<LineCursor, std::unique_ptr<Line>> Line::fromBlockObjects(interp::Interpreter* cs, //
 	    LineCursor cursor,
 	    const Style* style,
-	    std::span<const std::unique_ptr<tree::BlockObject>> objs)
+	    std::span<const tree::BlockObject*> objs)
 	{
 		cursor = cursor.newLine(0);
 		auto start_position = cursor.position();
@@ -202,7 +201,7 @@ namespace sap::layout
 			return a->size().y() < b->size().y();
 		});
 
-		auto line_height = (*tallest_obj).get()->size().y();
+		auto line_height = (*tallest_obj)->size().y();
 		auto total_width = std::accumulate(objs.begin(), objs.end(), Length(0), [](Length a, const auto& b) {
 			return a + b->size().x();
 		});
@@ -222,25 +221,26 @@ namespace sap::layout
 
 		for(size_t i = 0; i < objs.size(); i++)
 		{
-			auto obj_width = objs[i]->size().x();
-			auto new_cursor = cursor.moveRight(obj_width);
+			auto new_cursor = cursor.moveRight(objs[i]->size().x());
 
-			auto layout_fn = objs[i]->getLayoutFunction();
-			if(not layout_fn.has_value())
-			{
-				cursor = std::move(new_cursor);
+			auto layout_obj = objs[i]->createLayoutObject(cs, cursor, style);
+			if(not layout_obj.second.has_value())
 				continue;
-			}
 
-			(void) (*layout_fn)(cs, layout, cursor, style, objs[i].get());
+			layout_objects.push_back(std::move(*layout_obj.second));
+
+			cursor = std::move(new_cursor);
 		}
 
-		return std::unique_ptr<Line>(new Line(start_position, Size2d(total_width, line_height), style,
-		    std::move(layout_objects)));
+		cursor = cursor.newLine(line_height);
+
+		return {
+			cursor,
+			std::unique_ptr<Line>(new Line(start_position, //
+			    Size2d(total_width, line_height),          //
+			    style, std::move(layout_objects))),
+		};
 	}
-
-
-
 
 	void Line::render(const LayoutBase* layout, std::vector<pdf::Page*>& pages) const
 	{

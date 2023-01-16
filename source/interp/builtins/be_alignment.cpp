@@ -28,12 +28,12 @@ namespace sap::interp::builtin
 		};
 
 		using ED = EnumDefn::EnumeratorDefn;
-		return util::vectorOf(           //
-		    ED("Left", make_int(0)),     //
-		    ED("Right", make_int(1)),    //
-		    ED("Centred", make_int(2)),  //
-		    ED("Centered", make_int(2)), //
-		    ED("Justified", make_int(3)));
+		return util::vectorOf(                                 //
+		    ED("Left", make_int((int) Alignment::Left)),       //
+		    ED("Right", make_int((int) Alignment::Right)),     //
+		    ED("Centred", make_int((int) Alignment::Centre)),  //
+		    ED("Centered", make_int((int) Alignment::Centre)), //
+		    ED("Justified", make_int((int) Alignment::Justified)));
 	}
 
 	Value builtin::BE_Alignment::make(Alignment alignment)

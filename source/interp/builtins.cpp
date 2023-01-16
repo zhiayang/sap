@@ -83,7 +83,7 @@ namespace sap::interp
 		    makeParamList(                               //
 		        Param { .name = "1", .type = t_bstyle }, //
 		        Param { .name = "2", .type = t_tbo }),
-		    t_tio, &builtin::apply_style_tbo);
+		    t_tbo, &builtin::apply_style_tbo);
 
 		define_builtin("load_image",
 		    makeParamList(                               //

@@ -25,22 +25,50 @@
 
 namespace sap::layout
 {
-	LineCursor Paragraph::fromTree(interp::Interpreter* cs,
-	    LayoutBase* layout,
+	std::unique_ptr<Paragraph> Paragraph::fromLines(interp::Interpreter* cs, //
 	    LineCursor cursor,
 	    const Style* parent_style,
-	    const tree::DocumentObject* doc_obj)
+	    std::vector<std::unique_ptr<Line>> lines)
 	{
-		auto treepara = static_cast<const tree::Paragraph*>(doc_obj);
+		auto widest_line = std::max_element(lines.begin(), lines.end(), [](auto& a, auto& b) {
+			return a->layoutSize().x() < b->layoutSize().x();
+		});
 
+		auto line_width = (*widest_line).get()->layoutSize().x();
+		auto total_height = std::accumulate(lines.begin(), lines.end(), Length(0), [](Length a, const auto& b) {
+			return a + b->layoutSize().y();
+		});
+
+		return std::unique_ptr<Paragraph>(new Paragraph(cursor.position(), { line_width, total_height }, std::move(lines)));
+	}
+
+	Paragraph::Paragraph(RelativePos pos, Size2d size, std::vector<std::unique_ptr<Line>> lines)
+	    : LayoutObject(pos, size)
+	    , m_lines(std::move(lines))
+	{
+	}
+
+
+	void Paragraph::render(const LayoutBase* layout, std::vector<pdf::Page*>& pages) const
+	{
+		for(auto& line : m_lines)
+			line->render(layout, pages);
+	}
+}
+
+
+namespace sap::tree
+{
+	auto Paragraph::createLayoutObject(interp::Interpreter* cs, layout::LineCursor cursor, const Style* parent_style) const
+	    -> LayoutResult
+	{
 		cursor = cursor.newLine(0);
 
-		std::vector<std::unique_ptr<Line>> layout_lines {};
+		std::vector<std::unique_ptr<layout::Line>> layout_lines {};
 		auto para_pos = cursor.position();
 		Size2d para_size { 0, 0 };
 
-		auto& contents = treepara->contents();
-		auto lines = linebreak::breakLines(layout, cursor, parent_style, contents, cursor.widthAtCursor());
+		auto lines = layout::linebreak::breakLines(cursor, parent_style, m_contents, cursor.widthAtCursor());
 
 		size_t current_idx = 0;
 
@@ -48,8 +76,8 @@ namespace sap::layout
 		{
 			auto& broken_line = *line_it;
 
-			auto words_begin = contents.begin() + (ssize_t) current_idx;
-			auto words_end = contents.begin() + (ssize_t) current_idx + (ssize_t) broken_line.numParts();
+			auto words_begin = m_contents.begin() + (ssize_t) current_idx;
+			auto words_end = m_contents.begin() + (ssize_t) current_idx + (ssize_t) broken_line.numParts();
 
 			if(dynamic_cast<const tree::Separator*>((*words_begin).get()) != nullptr)
 			{
@@ -64,9 +92,11 @@ namespace sap::layout
 			if(auto sep = dynamic_cast<const tree::Separator*>(last_word.get()); sep && sep->isSpace())
 				--words_end;
 
+			auto layout_line = layout::Line::fromInlineObjects(cs, cursor, broken_line, parent_style,
+			    std::span(words_begin, words_end));
+
 			cursor = cursor.newLine(broken_line.lineHeight());
 
-			auto layout_line = Line::fromInlineObjects(cs, cursor, broken_line, parent_style, std::span(words_begin, words_end));
 			para_size.x() = std::max(para_size.x(), layout_line->layoutSize().x());
 			para_size.y() += layout_line->layoutSize().y();
 
@@ -75,23 +105,9 @@ namespace sap::layout
 			current_idx += broken_line.numParts();
 		}
 
-
-
-		layout->addObject(std::unique_ptr<Paragraph>(new Paragraph(para_pos, para_size, std::move(layout_lines))));
-		cursor = cursor.newLine(parent_style->paragraph_spacing());
-		return cursor;
-	}
-
-	Paragraph::Paragraph(RelativePos pos, Size2d size, std::vector<std::unique_ptr<Line>> lines)
-	    : LayoutObject(pos, size)
-	    , m_lines(std::move(lines))
-	{
-	}
-
-
-	void Paragraph::render(const LayoutBase* layout, std::vector<pdf::Page*>& pages) const
-	{
-		for(auto& line : m_lines)
-			line->render(layout, pages);
+		return {
+			cursor,
+			std::unique_ptr<layout::Paragraph>(new layout::Paragraph(para_pos, para_size, std::move(layout_lines))),
+		};
 	}
 }
