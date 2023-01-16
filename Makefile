@@ -89,7 +89,7 @@ endif
 
 OUTPUT_BIN      := $(OUTPUT_DIR)/sap
 
-.PHONY: all clean build test format iwyu %.pdf.gdb %.pdf.lldb
+.PHONY: all clean build test format iwyu %.pdf.gdb %.pdf.lldb compile_commands.json
 .PRECIOUS: $(PRECOMP_GCH) $(OUTPUT_DIR)/%.cpp.o
 .DEFAULT_GOAL = all
 
@@ -115,6 +115,19 @@ check: test
 		echo Running test $$test; \
 		$$test; \
 	done
+
+compile_commands.json:
+	@echo "  $@"
+	@# first build list of commands
+	@echo -n > $(OUTPUT_DIR)/cmds
+	@for f in $(MINIZ_SRCS); do echo $(CC) $(CFLAGS) -MMD -MP -c -o $(OUTPUT_DIR)/$$f.o $(OUTPUT_DIR)/$$f; done >> $(OUTPUT_DIR)/cmds
+	@for f in $(UTF8PROC_SRCS); do echo $(CC) $(CFLAGS) -MMD -MP -c -o $(OUTPUT_DIR)/$$f.o $(OUTPUT_DIR)/$$f; done >> $(OUTPUT_DIR)/cmds
+	@for f in $(CXXSRC); do echo $(CXX) -include $(PRECOMP_HDR) $(CXXFLAGS) $(NONGCH_CXXFLAGS) $(WARNINGS) $(INCLUDES) $(DEFINES) -MMD -MP -c -o $(OUTPUT_DIR)/$$f $$f; done >> $(OUTPUT_DIR)/cmds
+	@# now convert cmd list to compile_commands.json
+	@cat $(OUTPUT_DIR)/cmds | awk -v CWD=$$(pwd) 'BEGIN { print "[" } END { print "]"} { print "{\"arguments\": ["; for (i = 1; i <= NF; i++) { print "\"" $$i "\"," } print "], \"directory\": \"" CWD "\", \"file\": \"" $$NF "\", \"output\": \"" $$(NF - 1) "\"}, " }' > $@
+	@# do some cleaning
+	@cat $@ | tr '\n' ' ' | sed -e 's/ \+/ /g' | sed -e 's/, *]/]/g' -e 's/, *]/}/g' -e 's/},/},\n/g' -e 's/ *$$/\n/' > $@.new
+	@mv $@.new $@
 
 $(OUTPUT_BIN): $(PRECOMP_OBJ) $(CXXOBJ) $(UTF8PROC_OBJS) $(MINIZ_OBJS)
 	@echo "  $(notdir $@)"

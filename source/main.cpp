@@ -94,3 +94,11 @@ int main(int argc, char** argv)
 	layout_doc.write(&writer);
 	writer.close();
 }
+
+
+extern "C" const char* __asan_default_options()
+{
+	// The way we do together-compilation (i.e. un-separated compilation)
+	// means that this will trigger for a bunch of vtables. no idea why though.
+	return "detect_odr_violation=0";
+}
