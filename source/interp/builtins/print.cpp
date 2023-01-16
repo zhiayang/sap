@@ -9,6 +9,7 @@
 #include "interp/value.h"       // for Value
 #include "interp/interp.h"      // for Interpreter
 #include "interp/eval_result.h" // for EvalResult
+#include "interp/builtin_fns.h"
 
 namespace sap::interp::builtin
 {
@@ -18,13 +19,13 @@ namespace sap::interp::builtin
 			zpr::print("{}{}", i == 0 ? "" : " ", unicode::stringFromU32String(values[i].toString()));
 	}
 
-	StrErrorOr<EvalResult> print(Evaluator* ev, std::vector<Value>& args)
+	ErrorOr<EvalResult> print(Evaluator* ev, std::vector<Value>& args)
 	{
 		print_values(args);
 		return EvalResult::ofVoid();
 	}
 
-	StrErrorOr<EvalResult> println(Evaluator* ev, std::vector<Value>& args)
+	ErrorOr<EvalResult> println(Evaluator* ev, std::vector<Value>& args)
 	{
 		print_values(args);
 		zpr::println("");

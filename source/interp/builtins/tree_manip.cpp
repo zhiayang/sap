@@ -39,7 +39,7 @@ namespace sap::interp::builtin
 		return style;
 	}();
 
-	static StrErrorOr<EvalResult> do_apply_style(Evaluator* ev, Value& value, const Style* style)
+	static ErrorOr<EvalResult> do_apply_style(Evaluator* ev, Value& value, const Style* style)
 	{
 		if(value.isTreeInlineObj())
 		{
@@ -68,7 +68,7 @@ namespace sap::interp::builtin
 		}
 	}
 
-	StrErrorOr<EvalResult> apply_style_tio(Evaluator* ev, std::vector<Value>& args)
+	ErrorOr<EvalResult> apply_style_tio(Evaluator* ev, std::vector<Value>& args)
 	{
 		assert(args.size() == 2);
 		assert(args[0].type() == BS_Style::type);
@@ -76,7 +76,7 @@ namespace sap::interp::builtin
 		return do_apply_style(ev, args[1], BS_Style::unmake(args[0]));
 	}
 
-	StrErrorOr<EvalResult> apply_style_tbo(Evaluator* ev, std::vector<Value>& args)
+	ErrorOr<EvalResult> apply_style_tbo(Evaluator* ev, std::vector<Value>& args)
 	{
 		assert(args.size() == 2);
 		assert(args[0].type() == BS_Style::type);
@@ -85,21 +85,21 @@ namespace sap::interp::builtin
 	}
 
 
-	StrErrorOr<EvalResult> bold1(Evaluator* ev, std::vector<Value>& args)
+	ErrorOr<EvalResult> bold1(Evaluator* ev, std::vector<Value>& args)
 	{
 		// TODO: maybe don't assert?
 		assert(args.size() == 1);
 		return do_apply_style(ev, args[0], &g_bold_style);
 	}
 
-	StrErrorOr<EvalResult> italic1(Evaluator* ev, std::vector<Value>& args)
+	ErrorOr<EvalResult> italic1(Evaluator* ev, std::vector<Value>& args)
 	{
 		// TODO: maybe don't assert?
 		assert(args.size() == 1);
 		return do_apply_style(ev, args[0], &g_italic_style);
 	}
 
-	StrErrorOr<EvalResult> bold_italic1(Evaluator* ev, std::vector<Value>& args)
+	ErrorOr<EvalResult> bold_italic1(Evaluator* ev, std::vector<Value>& args)
 	{
 		// TODO: maybe don't assert?
 		assert(args.size() == 1);
@@ -107,7 +107,7 @@ namespace sap::interp::builtin
 	}
 
 
-	StrErrorOr<EvalResult> current_style(Evaluator* ev, std::vector<Value>& args)
+	ErrorOr<EvalResult> current_style(Evaluator* ev, std::vector<Value>& args)
 	{
 		assert(args.size() == 0);
 		auto style = TRY(ev->currentStyle());
@@ -115,7 +115,7 @@ namespace sap::interp::builtin
 		return EvalResult::ofValue(BS_Style::make(style));
 	}
 
-	StrErrorOr<EvalResult> push_style(Evaluator* ev, std::vector<Value>& args)
+	ErrorOr<EvalResult> push_style(Evaluator* ev, std::vector<Value>& args)
 	{
 		assert(args.size() == 1);
 
@@ -123,7 +123,7 @@ namespace sap::interp::builtin
 		return EvalResult::ofVoid();
 	}
 
-	StrErrorOr<EvalResult> pop_style(Evaluator* ev, std::vector<Value>& args)
+	ErrorOr<EvalResult> pop_style(Evaluator* ev, std::vector<Value>& args)
 	{
 		assert(args.size() == 0);
 		auto ret = TRY(ev->popStyle());
@@ -138,7 +138,7 @@ namespace sap::interp::builtin
 
 
 
-	StrErrorOr<EvalResult> load_image(Evaluator* ev, std::vector<Value>& args)
+	ErrorOr<EvalResult> load_image(Evaluator* ev, std::vector<Value>& args)
 	{
 		// TODO: maybe don't assert?
 		assert(args.size() == 3);

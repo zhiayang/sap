@@ -19,8 +19,9 @@ namespace sap::interp
 		T value;
 	};
 
-	template <typename T, bool MoveValue>
-	StrErrorOr<std::unordered_map<size_t, T>> arrange_arguments(                                                //
+	template <typename TsEv, typename T, bool MoveValue>
+	ErrorOr<std::unordered_map<size_t, T>> arrange_arguments( //
+	    const TsEv* ts_ev,
 	    const std::vector<std::tuple<std::string, const Type*, const Expr*>>& expected,                      //
 	    std::conditional_t<MoveValue, std::vector<ArrangeArg<T>>&&, const std::vector<ArrangeArg<T>>&> args, //
 	    const char* fn_or_struct,                                                                            //
@@ -29,7 +30,7 @@ namespace sap::interp
 	{
 		// because of optional arguments, we can have fewer arguments than parameters, but not the other way around
 		if(args.size() > expected.size())
-			return ErrFmt("wrong number of {}: got {}, expected at most {}", thing_name, args.size(), expected.size());
+			return ErrMsg(ts_ev, "wrong number of {}: got {}, expected at most {}", thing_name, args.size(), expected.size());
 
 		std::unordered_map<size_t, T> ordered_args {};
 
@@ -46,12 +47,12 @@ namespace sap::interp
 				have_named = true;
 				if(auto it = param_names.find(*arg.name); it == param_names.end())
 				{
-					return ErrFmt("{} has no {} named '{}'", fn_or_struct, thing_name, *arg.name);
+					return ErrMsg(ts_ev, "{} has no {} named '{}'", fn_or_struct, thing_name, *arg.name);
 				}
 				else
 				{
 					if(auto tmp = ordered_args.find(it->second); tmp != ordered_args.end())
-						return ErrFmt("{} '{}' already specified", thing_name2, *arg.name);
+						return ErrMsg(ts_ev, "{} '{}' already specified", thing_name2, *arg.name);
 
 					if constexpr(MoveValue)
 						ordered_args[it->second] = std::move(arg.value);
@@ -63,7 +64,7 @@ namespace sap::interp
 			{
 				// NOTE: this should have been caught in the parser, but just in case...
 				if(have_named)
-					return ErrFmt("positional {} not allowed after named {}s", thing_name, thing_name);
+					return ErrMsg(ts_ev, "positional {} not allowed after named {}s", thing_name, thing_name);
 
 				if constexpr(MoveValue)
 					ordered_args[cur_idx++] = std::move(arg.value);
@@ -76,11 +77,11 @@ namespace sap::interp
 	}
 
 
-	inline constexpr auto arrange_argument_types = arrange_arguments<const Type*, /* move: */ false>;
-	inline constexpr auto arrange_argument_values = arrange_arguments<Value, /* move: */ true>;
+	inline constexpr auto arrange_argument_types = arrange_arguments<Typechecker, const Type*, /* move: */ false>;
+	inline constexpr auto arrange_argument_values = arrange_arguments<Evaluator, Value, /* move: */ true>;
 
 
-	inline StrErrorOr<int> get_calling_cost(                                               //
+	inline ErrorOr<int> get_calling_cost(                                               //
 	    Typechecker* ts,                                                                //
 	    const std::vector<std::tuple<std::string, const Type*, const Expr*>>& expected, //
 	    std::unordered_map<size_t, const Type*>& ordered_args,                          //
@@ -95,7 +96,7 @@ namespace sap::interp
 			if(arg_type == nullptr)
 			{
 				if(auto default_value = std::get<2>(expected[i]); default_value == nullptr)
-					return ErrFmt("missing {} '{}'", thing_name2, std::get<0>(expected[i]));
+					return ErrMsg(ts, "missing {} '{}'", thing_name2, std::get<0>(expected[i]));
 				else
 					arg_type = TRY(default_value->typecheck(ts)).type();
 			}
@@ -113,7 +114,7 @@ namespace sap::interp
 				}
 				else
 				{
-					return ErrFmt("mismatched types for {} {}: got '{}', expected '{}'", //
+					return ErrMsg(ts, "mismatched types for {} {}: got '{}', expected '{}'", //
 					    thing_name, 1 + i, arg_type, param_type);
 				}
 			}

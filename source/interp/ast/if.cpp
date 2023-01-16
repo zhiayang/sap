@@ -8,11 +8,11 @@
 
 namespace sap::interp
 {
-	StrErrorOr<TCResult> IfStmt::typecheck_impl(Typechecker* ts, const Type* infer) const
+	ErrorOr<TCResult> IfStmt::typecheck_impl(Typechecker* ts, const Type* infer) const
 	{
 		auto cond = TRY(this->if_cond->typecheck(ts, Type::makeBool()));
 		if(not cond.type()->isBool())
-			return ErrFmt("cannot convert '{}' to boolean condition", cond.type());
+			return ErrMsg(ts, "cannot convert '{}' to boolean condition", cond.type());
 
 		TRY(this->if_body->typecheck(ts));
 		if(this->else_body)
@@ -21,7 +21,7 @@ namespace sap::interp
 		return TCResult::ofVoid();
 	}
 
-	StrErrorOr<EvalResult> IfStmt::evaluate(Evaluator* ev) const
+	ErrorOr<EvalResult> IfStmt::evaluate(Evaluator* ev) const
 	{
 		auto cond = TRY_VALUE(this->if_cond->evaluate(ev));
 		cond = ev->castValue(std::move(cond), Type::makeBool());

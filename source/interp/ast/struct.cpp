@@ -8,7 +8,7 @@
 
 namespace sap::interp
 {
-	StrErrorOr<TCResult> StructDecl::typecheck_impl(Typechecker* ts, const Type* infer) const
+	ErrorOr<TCResult> StructDecl::typecheck_impl(Typechecker* ts, const Type* infer) const
 	{
 		TRY(ts->current()->declare(this));
 
@@ -17,7 +17,7 @@ namespace sap::interp
 		return TCResult::ofRValue(Type::makeStruct(this->name, {}));
 	}
 
-	StrErrorOr<TCResult> StructDefn::typecheck_impl(Typechecker* ts, const Type* infer) const
+	ErrorOr<TCResult> StructDefn::typecheck_impl(Typechecker* ts, const Type* infer) const
 	{
 		this->declaration->resolve(this);
 		auto struct_type = TRY(this->declaration->typecheck(ts)).type()->toStruct();
@@ -28,21 +28,22 @@ namespace sap::interp
 		for(auto& [name, type, init_value] : m_fields)
 		{
 			if(seen_names.contains(name))
-				return ErrFmt("duplicate field '{}' in struct '{}'", name, struct_type->name());
+				return ErrMsg(ts, "duplicate field '{}' in struct '{}'", name, struct_type->name());
 
 			seen_names.insert(name);
 
 			auto field_type = TRY(ts->resolveType(type));
 			if(field_type == struct_type)
-				return ErrFmt("recursive struct not allowed");
+				return ErrMsg(ts, "recursive struct not allowed");
 			else if(field_type->isVoid())
-				return ErrFmt("field cannot have type 'void'");
+				return ErrMsg(ts, "field cannot have type 'void'");
 
 			if(init_value != nullptr)
 			{
 				auto initialiser_type = TRY(init_value->typecheck(ts)).type();
 				if(not ts->canImplicitlyConvert(initialiser_type, field_type))
-					return ErrFmt("cannot initialise field of type '{}' with value of type '{}'", field_type, initialiser_type);
+					return ErrMsg(ts, "cannot initialise field of type '{}' with value of type '{}'", field_type,
+					    initialiser_type);
 			}
 
 			field_types.push_back(StructType::Field {
@@ -59,13 +60,13 @@ namespace sap::interp
 
 
 
-	StrErrorOr<EvalResult> StructDecl::evaluate(Evaluator* ev) const
+	ErrorOr<EvalResult> StructDecl::evaluate(Evaluator* ev) const
 	{
 		// do nothing
 		return EvalResult::ofVoid();
 	}
 
-	StrErrorOr<EvalResult> StructDefn::evaluate(Evaluator* ev) const
+	ErrorOr<EvalResult> StructDefn::evaluate(Evaluator* ev) const
 	{
 		// this also doesn't do anything
 		return EvalResult::ofVoid();

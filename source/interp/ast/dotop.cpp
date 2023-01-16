@@ -7,7 +7,7 @@
 
 namespace sap::interp
 {
-	StrErrorOr<TCResult> DotOp::typecheck_impl(Typechecker* ts, const Type* infer) const
+	ErrorOr<TCResult> DotOp::typecheck_impl(Typechecker* ts, const Type* infer) const
 	{
 		auto lhs_res = TRY(this->lhs->typecheck(ts));
 		auto ltype = lhs_res.type();
@@ -15,25 +15,25 @@ namespace sap::interp
 		if(this->is_optional)
 		{
 			if(not ltype->isOptional() && not ltype->isPointer())
-				return ErrFmt("invalid use of '?.' operator on a non-pointer, non-optional type '{}'", ltype);
+				return ErrMsg(ts, "invalid use of '?.' operator on a non-pointer, non-optional type '{}'", ltype);
 
 			auto lelm_type = ltype->isPointer() ? ltype->pointerElement() : ltype->optionalElement();
 			if(not lelm_type->isStruct())
-				return ErrFmt("invalid use of '?.' operator on a non-struct type '{}'", lelm_type);
+				return ErrMsg(ts, "invalid use of '?.' operator on a non-struct type '{}'", lelm_type);
 
 			m_struct_type = lelm_type->toStruct();
 		}
 		else
 		{
 			if(not ltype->isStruct())
-				return ErrFmt("invalid use of '.' operator on a non-struct type '{}'", ltype);
+				return ErrMsg(ts, "invalid use of '.' operator on a non-struct type '{}'", ltype);
 
 			m_struct_type = ltype->toStruct();
 		}
 
 		assert(m_struct_type != nullptr);
 		if(not m_struct_type->hasFieldNamed(this->rhs))
-			return ErrFmt("type '{}' has no field named '{}'", ltype, this->rhs);
+			return ErrMsg(ts, "type '{}' has no field named '{}'", ltype, this->rhs);
 
 		auto field_type = m_struct_type->getFieldNamed(this->rhs);
 		if(this->is_optional)
@@ -52,7 +52,7 @@ namespace sap::interp
 		}
 	}
 
-	StrErrorOr<EvalResult> DotOp::evaluate(Evaluator* ev) const
+	ErrorOr<EvalResult> DotOp::evaluate(Evaluator* ev) const
 	{
 		assert(m_struct_type->hasFieldNamed(this->rhs));
 		auto field_idx = m_struct_type->getFieldIndex(this->rhs);
@@ -60,7 +60,7 @@ namespace sap::interp
 
 		auto lhs_res = TRY(this->lhs->evaluate(ev));
 		if(not lhs_res.hasValue())
-			return ErrFmt("unexpected void value");
+			return ErrMsg(ev, "unexpected void value");
 
 		auto& lhs_value = lhs_res.get();
 		auto ltype = lhs_value.type();

@@ -13,7 +13,9 @@
 
 namespace sap::interp
 {
-	static StrErrorOr<std::vector<std::tuple<std::string, const Type*, const Expr*>>> convert_params(const Declaration* decl)
+	template <typename TsEv>
+	static ErrorOr<std::vector<std::tuple<std::string, const Type*, const Expr*>>> convert_params(const TsEv* ts_ev,
+	    const Declaration* decl)
 	{
 		if(auto fdecl = dynamic_cast<const FunctionDecl*>(decl); fdecl != nullptr)
 		{
@@ -34,23 +36,23 @@ namespace sap::interp
 		}
 		else
 		{
-			return ErrFmt("?!");
+			return ErrMsg(ts_ev, "?!");
 		}
 	}
 
-	static StrErrorOr<int> get_calling_cost(Typechecker* ts,
+	static ErrorOr<int> get_calling_cost(Typechecker* ts,
 	    const Declaration* decl,
 	    const std::vector<ArrangeArg<const Type*>>& arguments)
 	{
-		auto params = TRY(convert_params(decl));
-		auto ordered = TRY(arrange_argument_types(params, arguments, //
+		auto params = TRY(convert_params(ts, decl));
+		auto ordered = TRY(arrange_argument_types(ts, params, arguments, //
 		    "function", "argument", "argument for parameter"));
 
 		return get_calling_cost(ts, params, ordered, "function", "argument", "argument for parameter");
 	}
 
 
-	static StrErrorOr<const Declaration*> resolve_overload_set(Typechecker* ts,
+	static ErrorOr<const Declaration*> resolve_overload_set(Typechecker* ts,
 	    const std::vector<const Declaration*>& decls,
 	    const std::vector<ArrangeArg<const Type*>>& arguments)
 	{
@@ -79,14 +81,14 @@ namespace sap::interp
 			return Ok(best_decls[0]);
 
 		if(best_decls.empty())
-			return ErrFmt("no matching function for call");
+			return ErrMsg(ts, "no matching function for call");
 
-		return ErrFmt("ambiguous call");
+		return ErrMsg(ts, "ambiguous call");
 	}
 
 
 
-	StrErrorOr<TCResult> FunctionCall::typecheck_impl(Typechecker* ts, const Type* infer) const
+	ErrorOr<TCResult> FunctionCall::typecheck_impl(Typechecker* ts, const Type* infer) const
 	{
 		std::vector<ArrangeArg<const Type*>> processed_args {};
 
@@ -142,13 +144,13 @@ namespace sap::interp
 		}
 
 		if(not fn_type->isFunction())
-			return ErrFmt("callee of function call must be a function type, got '{}'", fn_type);
+			return ErrMsg(ts, "callee of function call must be a function type, got '{}'", fn_type);
 
 		return TCResult::ofRValue(fn_type->toFunction()->returnType());
 	}
 
 
-	StrErrorOr<EvalResult> FunctionCall::evaluate(Evaluator* ev) const
+	ErrorOr<EvalResult> FunctionCall::evaluate(Evaluator* ev) const
 	{
 		// TODO: maybe do this only once (instead of twice, once while typechecking and one for eval)
 		// again, if this is an identifier, we do the separate thing.
@@ -196,9 +198,9 @@ namespace sap::interp
 			assert(m_resolved_func_decl != nullptr);
 
 			auto decl = m_resolved_func_decl;
-			auto params = TRY(convert_params(decl));
+			auto params = TRY(convert_params(ev, decl));
 
-			auto ordered_args = TRY(arrange_argument_values(params, std::move(processed_args), "function", "argument",
+			auto ordered_args = TRY(arrange_argument_values(ev, params, std::move(processed_args), "function", "argument",
 			    "argument for parameter"));
 
 			for(size_t i = 0; i < params.size(); i++)
@@ -207,7 +209,7 @@ namespace sap::interp
 				if(auto it = ordered_args.find(i); it == ordered_args.end())
 				{
 					if(std::get<2>(params[i]) == nullptr)
-						return ErrFmt("missing argument for parameter '{}'", std::get<0>(params[i]));
+						return ErrMsg(ev, "missing argument for parameter '{}'", std::get<0>(params[i]));
 
 					auto tmp = TRY_VALUE(std::get<2>(params[i])->evaluate(ev));
 					final_args.push_back(ev->castValue(std::move(tmp), param_type));
@@ -231,13 +233,13 @@ namespace sap::interp
 			}
 			else
 			{
-				return ErrFmt("not implemented");
+				return ErrMsg(ev, "not implemented");
 			}
 		}
 		else
 		{
 			// TODO:
-			return ErrFmt("not implemented");
+			return ErrMsg(ev, "not implemented");
 		}
 	}
 }

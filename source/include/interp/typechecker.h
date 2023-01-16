@@ -21,19 +21,24 @@ namespace sap::interp
 		std::string_view name() const { return m_name; }
 		DefnTree* parent() const { return m_parent; }
 
-		StrErrorOr<DefnTree*> lookupNamespace(std::string_view name) const;
+		ErrorOr<DefnTree*> lookupNamespace(std::string_view name) const;
 		DefnTree* lookupOrDeclareNamespace(std::string_view name);
 
 		DefnTree* lookupOrDeclareScope(const std::vector<std::string>& scope, bool is_top_level);
 
 		DefnTree* declareAnonymousNamespace();
 
-		StrErrorOr<std::vector<const Declaration*>> lookup(QualifiedId id) const;
+		ErrorOr<std::vector<const Declaration*>> lookup(QualifiedId id) const;
 
-		StrErrorOr<void> declare(const Declaration* decl);
+		ErrorOr<void> declare(const Declaration* decl);
 
 	private:
-		explicit DefnTree(std::string name, DefnTree* parent) : m_name(std::move(name)), m_parent(parent) { }
+		explicit DefnTree(const Typechecker* ts, std::string name, DefnTree* parent)
+		    : m_name(std::move(name))
+		    , m_parent(parent)
+		    , m_typechecker(ts)
+		{
+		}
 
 		size_t m_anon_namespace_count = 0;
 
@@ -42,9 +47,9 @@ namespace sap::interp
 		util::hashmap<std::string, std::vector<const Declaration*>> m_decls;
 
 		std::vector<Definition*> m_definitions;
-
 		DefnTree* m_parent = nullptr;
 
+		const Typechecker* m_typechecker;
 		friend struct Typechecker;
 	};
 
@@ -58,14 +63,18 @@ namespace sap::interp
 		DefnTree* current();
 		const DefnTree* current() const;
 
-		StrErrorOr<const Type*> resolveType(const frontend::PType& ptype);
-		StrErrorOr<const Definition*> getDefinitionForType(const Type* type);
-		StrErrorOr<void> addTypeDefinition(const Type* type, const Definition* defn);
+		ErrorOr<const Type*> resolveType(const frontend::PType& ptype);
+		ErrorOr<const Definition*> getDefinitionForType(const Type* type);
+		ErrorOr<void> addTypeDefinition(const Type* type, const Definition* defn);
+
+		[[nodiscard]] Location loc() const;
+		[[nodiscard]] util::Defer<> pushLocation(const Location& loc);
+		void popLocation();
 
 		[[nodiscard]] util::Defer<> pushTree(DefnTree* tree);
 		void popTree();
 
-		StrErrorOr<EvalResult> run(const Stmt* stmt);
+		ErrorOr<EvalResult> run(const Stmt* stmt);
 
 		Definition* addBuiltinDefinition(std::unique_ptr<Definition> defn);
 
@@ -84,5 +93,7 @@ namespace sap::interp
 
 		std::vector<std::unique_ptr<Definition>> m_builtin_defns;
 		std::unordered_map<const Type*, const Definition*> m_type_definitions;
+
+		std::vector<Location> m_location_stack;
 	};
 }

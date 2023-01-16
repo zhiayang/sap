@@ -8,7 +8,7 @@
 
 namespace sap::interp
 {
-	StrErrorOr<TCResult> Block::typecheck_impl(Typechecker* ts, const Type* infer) const
+	ErrorOr<TCResult> Block::typecheck_impl(Typechecker* ts, const Type* infer) const
 	{
 		DefnTree* tree = nullptr;
 
@@ -28,7 +28,7 @@ namespace sap::interp
 		return TCResult::ofVoid();
 	}
 
-	StrErrorOr<EvalResult> Block::evaluate(Evaluator* ev) const
+	ErrorOr<EvalResult> Block::evaluate(Evaluator* ev) const
 	{
 		auto _ = ev->pushFrame();
 

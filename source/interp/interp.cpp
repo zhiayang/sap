@@ -17,10 +17,13 @@ namespace sap::interp
 
 	Interpreter::Interpreter() : m_typechecker(new Typechecker()), m_evaluator(new Evaluator())
 	{
+		m_typechecker->pushLocation(Location::builtin()).cancel();
+		m_evaluator->pushLocation(Location::builtin()).cancel();
+
 		defineBuiltins(this, m_typechecker->top()->lookupOrDeclareNamespace("builtin"));
 	}
 
-	StrErrorOr<EvalResult> Interpreter::run(const Stmt* stmt)
+	ErrorOr<EvalResult> Interpreter::run(const Stmt* stmt)
 	{
 		if(auto res = stmt->typecheck(m_typechecker.get()); res.is_err())
 			error(stmt->loc(), "{}", res.take_error());

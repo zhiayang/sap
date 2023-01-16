@@ -7,16 +7,16 @@
 
 namespace sap::interp
 {
-	StrErrorOr<TCResult> OptionalCheckOp::typecheck_impl(Typechecker* ts, const Type* infer) const
+	ErrorOr<TCResult> OptionalCheckOp::typecheck_impl(Typechecker* ts, const Type* infer) const
 	{
 		auto inside = TRY(this->expr->typecheck(ts, infer));
 		if(not inside.type()->isOptional())
-			return ErrFmt("invalid use of '?' on non-optional type '{}'", inside.type());
+			return ErrMsg(ts, "invalid use of '?' on non-optional type '{}'", inside.type());
 
 		return TCResult::ofRValue(Type::makeBool());
 	}
 
-	StrErrorOr<EvalResult> OptionalCheckOp::evaluate(Evaluator* ev) const
+	ErrorOr<EvalResult> OptionalCheckOp::evaluate(Evaluator* ev) const
 	{
 		auto inside = TRY_VALUE(this->expr->evaluate(ev));
 		assert(inside.isOptional());
@@ -29,14 +29,14 @@ namespace sap::interp
 
 
 
-	StrErrorOr<TCResult> NullCoalesceOp::typecheck_impl(Typechecker* ts, const Type* infer) const
+	ErrorOr<TCResult> NullCoalesceOp::typecheck_impl(Typechecker* ts, const Type* infer) const
 	{
 		auto ltype = TRY(this->lhs->typecheck(ts)).type();
 		auto rtype = TRY(this->rhs->typecheck(ts)).type();
 
 		// this is a little annoying because while we don't want "?int + &int", "?&int and &int" should still work
 		if(not ltype->isOptional() && not ltype->isPointer())
-			return ErrFmt("invalid use of '??' with non-pointer, non-optional type '{}' on the left", ltype);
+			return ErrMsg(ts, "invalid use of '??' with non-pointer, non-optional type '{}' on the left", ltype);
 
 		// the rhs type is either the same as the lhs, or it's the element of the lhs optional/ptr
 		auto lelm_type = ltype->isOptional() ? ltype->optionalElement() : ltype->pointerElement();
@@ -45,7 +45,7 @@ namespace sap::interp
 		bool is_valueor = (lelm_type == rtype || ts->canImplicitlyConvert(lelm_type, rtype));
 
 		if(not(is_flatmap || is_valueor))
-			return ErrFmt("invalid use of '??' with mismatching types '{}' and '{}'", ltype, rtype);
+			return ErrMsg(ts, "invalid use of '??' with mismatching types '{}' and '{}'", ltype, rtype);
 
 		m_kind = is_flatmap ? Flatmap : ValueOr;
 
@@ -53,7 +53,7 @@ namespace sap::interp
 		return TCResult::ofRValue(rtype);
 	}
 
-	StrErrorOr<EvalResult> NullCoalesceOp::evaluate(Evaluator* ev) const
+	ErrorOr<EvalResult> NullCoalesceOp::evaluate(Evaluator* ev) const
 	{
 		// short circuit -- don't evaluate rhs eagerly
 		auto lval = TRY_VALUE(this->lhs->evaluate(ev));

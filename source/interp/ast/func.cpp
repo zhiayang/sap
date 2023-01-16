@@ -10,7 +10,7 @@
 
 namespace sap::interp
 {
-	StrErrorOr<TCResult> FunctionDecl::typecheck_impl(Typechecker* ts, const Type* infer) const
+	ErrorOr<TCResult> FunctionDecl::typecheck_impl(Typechecker* ts, const Type* infer) const
 	{
 		std::vector<const Type*> param_types {};
 		for(auto& param : m_params)
@@ -23,13 +23,13 @@ namespace sap::interp
 		return Ok(*m_tc_result);
 	}
 
-	StrErrorOr<TCResult> BuiltinFunctionDefn::typecheck_impl(Typechecker* ts, const Type* infer) const
+	ErrorOr<TCResult> BuiltinFunctionDefn::typecheck_impl(Typechecker* ts, const Type* infer) const
 	{
 		return this->declaration->typecheck(ts);
 	}
 
 
-	StrErrorOr<TCResult> FunctionDefn::typecheck_impl(Typechecker* ts, const Type* infer) const
+	ErrorOr<TCResult> FunctionDefn::typecheck_impl(Typechecker* ts, const Type* infer) const
 	{
 		this->declaration->resolve(this);
 		auto decl_type = TRY(this->declaration->typecheck(ts)).type();
@@ -47,8 +47,9 @@ namespace sap::interp
 				auto ty = TRY(param.default_value->typecheck(ts)).type();
 				if(not ts->canImplicitlyConvert(ty, resolved_type))
 				{
-					return ErrFmt("default value for parameter '{}' has type '{}', "
-					              "which is incompatible with parameter type '{}'",
+					return ErrMsg(ts,
+					    "default value for parameter '{}' has type '{}', "
+					    "which is incompatible with parameter type '{}'",
 					    param.name, resolved_type, ty);
 				}
 			}
@@ -67,19 +68,19 @@ namespace sap::interp
 		if(not return_type->isVoid())
 		{
 			if(not this->body->checkAllPathsReturn(return_type))
-				return ErrFmt("not all control paths return a value");
+				return ErrMsg(ts, "not all control paths return a value");
 		}
 
 		return TCResult::ofRValue(decl_type);
 	}
 
-	StrErrorOr<EvalResult> FunctionDefn::call(Evaluator* ev, std::vector<Value>& args) const
+	ErrorOr<EvalResult> FunctionDefn::call(Evaluator* ev, std::vector<Value>& args) const
 	{
 		auto _ = ev->pushFrame();
 		auto& frame = ev->frame();
 
 		if(args.size() != this->param_defns.size())
-			return ErrFmt("function call arity mismatch");
+			return ErrMsg(ev, "function call arity mismatch");
 
 		for(size_t i = 0; i < args.size(); i++)
 			frame.setValue(this->param_defns[i].get(), std::move(args[i]));
@@ -94,17 +95,17 @@ namespace sap::interp
 
 
 	// evaluating these don't do anything
-	StrErrorOr<EvalResult> FunctionDefn::evaluate(Evaluator* ev) const
+	ErrorOr<EvalResult> FunctionDefn::evaluate(Evaluator* ev) const
 	{
 		return EvalResult::ofVoid();
 	}
 
-	StrErrorOr<EvalResult> FunctionDecl::evaluate(Evaluator* ev) const
+	ErrorOr<EvalResult> FunctionDecl::evaluate(Evaluator* ev) const
 	{
 		return EvalResult::ofVoid();
 	}
 
-	StrErrorOr<EvalResult> BuiltinFunctionDefn::evaluate(Evaluator* ev) const
+	ErrorOr<EvalResult> BuiltinFunctionDefn::evaluate(Evaluator* ev) const
 	{
 		return EvalResult::ofVoid();
 	}

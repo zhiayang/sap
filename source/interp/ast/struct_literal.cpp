@@ -26,15 +26,15 @@ namespace sap::interp
 		return fields;
 	}
 
-	StrErrorOr<TCResult> StructLit::typecheck_impl(Typechecker* ts, const Type* infer) const
+	ErrorOr<TCResult> StructLit::typecheck_impl(Typechecker* ts, const Type* infer) const
 	{
 		const StructType* struct_type = nullptr;
 		if(struct_name.name.empty())
 		{
 			if(infer == nullptr)
-				return ErrFmt("cannot infer type of struct literal");
+				return ErrMsg(ts, "cannot infer type of struct literal");
 			else if(not infer->isStruct())
-				return ErrFmt("inferred non-struct type '{}' for struct literal", infer);
+				return ErrMsg(ts, "inferred non-struct type '{}' for struct literal", infer);
 
 			struct_type = infer->toStruct();
 		}
@@ -42,7 +42,7 @@ namespace sap::interp
 		{
 			auto t = TRY(ts->resolveType(frontend::PType::named(this->struct_name)));
 			if(not t->isStruct())
-				return ErrFmt("invalid non-struct type '{}' for struct literal", t);
+				return ErrMsg(ts, "invalid non-struct type '{}' for struct literal", t);
 
 			struct_type = t->toStruct();
 		}
@@ -61,14 +61,14 @@ namespace sap::interp
 		}
 
 		auto fields = get_field_things(m_struct_defn, struct_type);
-		auto ordered = TRY(arrange_argument_types(fields, processed_fields, "struct", "field", "field"));
+		auto ordered = TRY(arrange_argument_types(ts, fields, processed_fields, "struct", "field", "field"));
 
 		TRY(get_calling_cost(ts, fields, ordered, "struct", "field", "field"));
 
 		return TCResult::ofRValue(struct_type);
 	}
 
-	StrErrorOr<EvalResult> StructLit::evaluate(Evaluator* ev) const
+	ErrorOr<EvalResult> StructLit::evaluate(Evaluator* ev) const
 	{
 		assert(this->get_type()->isStruct());
 		auto struct_type = this->get_type()->toStruct();
@@ -86,7 +86,7 @@ namespace sap::interp
 		}
 
 		auto fields = get_field_things(m_struct_defn, struct_type);
-		auto ordered = TRY(arrange_argument_values(fields, std::move(processed_fields), //
+		auto ordered = TRY(arrange_argument_values(ev, fields, std::move(processed_fields), //
 		    "struct", "field", "field"));
 
 		std::vector<Value> field_values {};
@@ -98,7 +98,7 @@ namespace sap::interp
 			if(auto it = ordered.find(i); it == ordered.end())
 			{
 				if(defn_fields[i].initialiser == nullptr)
-					return ErrFmt("missing value for field '{}'", defn_fields[i].name);
+					return ErrMsg(ev, "missing value for field '{}'", defn_fields[i].name);
 
 				field = TRY_VALUE(defn_fields[i].initialiser->evaluate(ev));
 			}

@@ -15,6 +15,26 @@ namespace sap::interp
 		m_stack_frames.push_back(std::unique_ptr<StackFrame>(new StackFrame(this, nullptr, 0)));
 	}
 
+	[[nodiscard]] Location Evaluator::loc() const
+	{
+		return m_location_stack.back();
+	}
+
+	[[nodiscard]] util::Defer<> Evaluator::pushLocation(const Location& loc)
+	{
+		m_location_stack.push_back(loc);
+		return util::Defer([this]() {
+			this->popLocation();
+		});
+	}
+
+	void Evaluator::popLocation()
+	{
+		assert(m_location_stack.size() > 0);
+		m_location_stack.pop_back();
+	}
+
+
 	Value Evaluator::castValue(Value value, const Type* to) const
 	{
 		if(value.type() == to)
@@ -59,7 +79,7 @@ namespace sap::interp
 		}
 	}
 
-	StrErrorOr<std::vector<std::unique_ptr<tree::InlineObject>>> Evaluator::convertValueToText(Value&& value)
+	ErrorOr<std::vector<std::unique_ptr<tree::InlineObject>>> Evaluator::convertValueToText(Value&& value)
 	{
 		std::vector<std::unique_ptr<tree::InlineObject>> ret {};
 
@@ -74,7 +94,7 @@ namespace sap::interp
 		}
 		else
 		{
-			return ErrFmt("cannot convert value of type '{}' into text", value.type());
+			return ErrMsg(this, "cannot convert value of type '{}' into text", value.type());
 		}
 
 		return Ok(std::move(ret));
@@ -117,10 +137,10 @@ namespace sap::interp
 	}
 
 
-	StrErrorOr<const Style*> Evaluator::currentStyle() const
+	ErrorOr<const Style*> Evaluator::currentStyle() const
 	{
 		if(m_style_stack.empty())
-			return ErrFmt("no style set!");
+			return ErrMsg(this, "no style set!");
 
 		return Ok(m_style_stack.back());
 	}
@@ -130,10 +150,10 @@ namespace sap::interp
 		m_style_stack.push_back(style);
 	}
 
-	StrErrorOr<const Style*> Evaluator::popStyle()
+	ErrorOr<const Style*> Evaluator::popStyle()
 	{
 		if(m_style_stack.empty())
-			return ErrFmt("no style set!");
+			return ErrMsg(this, "no style set!");
 
 		auto ret = m_style_stack.back();
 		m_style_stack.pop_back();

@@ -108,7 +108,7 @@ namespace sap::interp
 
 
 
-	StrErrorOr<TCResult> ComparisonOp::typecheck_impl(Typechecker* ts, const Type* infer) const
+	ErrorOr<TCResult> ComparisonOp::typecheck_impl(Typechecker* ts, const Type* infer) const
 	{
 		assert(not this->rest.empty());
 
@@ -120,7 +120,7 @@ namespace sap::interp
 		for(size_t i = 0;;)
 		{
 			if(not can_compare(op, lhs, rhs))
-				return ErrFmt("types '{}' and '{}' are not comparable with operator '{}'", lhs, rhs, op_to_string(op));
+				return ErrMsg(ts, "types '{}' and '{}' are not comparable with operator '{}'", lhs, rhs, op_to_string(op));
 
 			if(i + 1 == this->rest.size())
 				break;
@@ -134,7 +134,7 @@ namespace sap::interp
 		return TCResult::ofRValue(Type::makeBool());
 	}
 
-	StrErrorOr<EvalResult> ComparisonOp::evaluate(Evaluator* ev) const
+	ErrorOr<EvalResult> ComparisonOp::evaluate(Evaluator* ev) const
 	{
 		assert(not this->rest.empty());
 

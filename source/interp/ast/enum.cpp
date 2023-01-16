@@ -8,7 +8,7 @@
 
 namespace sap::interp
 {
-	StrErrorOr<TCResult> EnumDefn::EnumeratorDecl::typecheck_impl(Typechecker* ts, const Type* infer) const
+	ErrorOr<TCResult> EnumDefn::EnumeratorDecl::typecheck_impl(Typechecker* ts, const Type* infer) const
 	{
 		assert(infer != nullptr && infer->isEnum());
 
@@ -16,7 +16,7 @@ namespace sap::interp
 		return TCResult::ofRValue(infer);
 	}
 
-	StrErrorOr<TCResult> EnumDefn::EnumeratorDefn::typecheck_impl(Typechecker* ts, const Type* infer) const
+	ErrorOr<TCResult> EnumDefn::EnumeratorDefn::typecheck_impl(Typechecker* ts, const Type* infer) const
 	{
 		assert(infer != nullptr && infer->isEnum());
 
@@ -28,11 +28,11 @@ namespace sap::interp
 		{
 			auto ty = TRY(m_value->typecheck(ts, elm_type)).type();
 			if(not ts->canImplicitlyConvert(ty, elm_type))
-				return ErrFmt("cannot use value of type '{}' as enumerator for enum type '{}'", ty, (const Type*) enum_type);
+				return ErrMsg(ts, "cannot use value of type '{}' as enumerator for enum type '{}'", ty, (const Type*) enum_type);
 		}
 		else if(not elm_type->isInteger())
 		{
-			ErrFmt("non-integral enumerators must explicitly specify a value");
+			return ErrMsg(ts, "non-integral enumerators must explicitly specify a value");
 		}
 
 		return TCResult::ofRValue(enum_type);
@@ -41,7 +41,7 @@ namespace sap::interp
 
 
 
-	StrErrorOr<TCResult> EnumDecl::typecheck_impl(Typechecker* ts, const Type* infer) const
+	ErrorOr<TCResult> EnumDecl::typecheck_impl(Typechecker* ts, const Type* infer) const
 	{
 		assert(infer != nullptr);
 
@@ -51,7 +51,7 @@ namespace sap::interp
 		return TCResult::ofRValue(enum_type);
 	}
 
-	StrErrorOr<TCResult> EnumDefn::typecheck_impl(Typechecker* ts, const Type* infer) const
+	ErrorOr<TCResult> EnumDefn::typecheck_impl(Typechecker* ts, const Type* infer) const
 	{
 		auto enum_elm_type = TRY(ts->resolveType(m_enumerator_type));
 		this->declaration->resolve(this);
@@ -67,7 +67,7 @@ namespace sap::interp
 		for(auto& enumerator : m_enumerators)
 		{
 			if(enum_names.contains(enumerator.declaration->name))
-				return ErrFmt("duplicate enumerator '{}'", enumerator.declaration->name);
+				return ErrMsg(ts, "duplicate enumerator '{}'", enumerator.declaration->name);
 
 			enum_names.insert(enumerator.declaration->name);
 			TRY(enumerator.typecheck(ts, enum_type));
@@ -81,12 +81,12 @@ namespace sap::interp
 
 
 
-	StrErrorOr<EvalResult> EnumDecl::evaluate(Evaluator* ev) const
+	ErrorOr<EvalResult> EnumDecl::evaluate(Evaluator* ev) const
 	{
 		return EvalResult::ofVoid();
 	}
 
-	StrErrorOr<EvalResult> EnumDefn::evaluate(Evaluator* ev) const
+	ErrorOr<EvalResult> EnumDefn::evaluate(Evaluator* ev) const
 	{
 		if(m_resolved_enumerator_type->elementType()->isInteger())
 		{
@@ -105,12 +105,12 @@ namespace sap::interp
 
 
 
-	StrErrorOr<EvalResult> EnumDefn::EnumeratorDecl::evaluate(Evaluator* ev) const
+	ErrorOr<EvalResult> EnumDefn::EnumeratorDecl::evaluate(Evaluator* ev) const
 	{
 		return EvalResult::ofVoid();
 	}
 
-	StrErrorOr<EvalResult> EnumDefn::EnumeratorDefn::evaluate(Evaluator* ev) const
+	ErrorOr<EvalResult> EnumDefn::EnumeratorDefn::evaluate(Evaluator* ev) const
 	{
 		assert(m_value != nullptr);
 
@@ -120,7 +120,7 @@ namespace sap::interp
 		return EvalResult::ofVoid();
 	}
 
-	StrErrorOr<EvalResult> EnumDefn::EnumeratorDefn::evaluate(Evaluator* ev, int64_t* prev_value) const
+	ErrorOr<EvalResult> EnumDefn::EnumeratorDefn::evaluate(Evaluator* ev, int64_t* prev_value) const
 	{
 		auto et = this->get_type()->toEnum();
 		if(m_value == nullptr)

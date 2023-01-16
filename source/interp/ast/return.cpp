@@ -7,10 +7,10 @@
 
 namespace sap::interp
 {
-	StrErrorOr<TCResult> ReturnStmt::typecheck_impl(Typechecker* ts, const Type* infer) const
+	ErrorOr<TCResult> ReturnStmt::typecheck_impl(Typechecker* ts, const Type* infer) const
 	{
 		if(not ts->isCurrentlyInFunction())
-			return ErrFmt("invalid use of 'return' outside of a function body");
+			return ErrMsg(ts, "invalid use of 'return' outside of a function body");
 
 		auto ret_type = ts->getCurrentFunctionReturnType();
 		this->return_value_type = ret_type;
@@ -20,12 +20,12 @@ namespace sap::interp
 			expr_type = TRY(this->expr->typecheck(ts, ret_type)).type();
 
 		if(not ts->canImplicitlyConvert(expr_type, ret_type))
-			return ErrFmt("cannot return value of type '{}' in function returning '{}'", expr_type, ret_type);
+			return ErrMsg(ts, "cannot return value of type '{}' in function returning '{}'", expr_type, ret_type);
 
 		return TCResult::ofVoid();
 	}
 
-	StrErrorOr<EvalResult> ReturnStmt::evaluate(Evaluator* ev) const
+	ErrorOr<EvalResult> ReturnStmt::evaluate(Evaluator* ev) const
 	{
 		if(this->expr == nullptr)
 			return EvalResult::ofReturnVoid();

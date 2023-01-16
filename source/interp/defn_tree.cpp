@@ -9,12 +9,12 @@
 
 namespace sap::interp
 {
-	StrErrorOr<DefnTree*> DefnTree::lookupNamespace(std::string_view name) const
+	ErrorOr<DefnTree*> DefnTree::lookupNamespace(std::string_view name) const
 	{
 		if(auto it = m_children.find(name); it != m_children.end())
 			return Ok(it->second.get());
 
-		return ErrFmt("namespace '{}' was not found in {}", name, m_name);
+		return ErrMsg(m_typechecker->loc(), "namespace '{}' was not found in {}", name, m_name);
 	}
 
 	DefnTree* DefnTree::lookupOrDeclareNamespace(std::string_view name)
@@ -22,7 +22,7 @@ namespace sap::interp
 		if(auto it = m_children.find(name); it != m_children.end())
 			return it->second.get();
 
-		auto ret = std::unique_ptr<DefnTree>(new DefnTree(std::string(name), /* parent: */ this));
+		auto ret = std::unique_ptr<DefnTree>(new DefnTree(m_typechecker, std::string(name), /* parent: */ this));
 		return m_children.insert_or_assign(std::string(name), std::move(ret)).first->second.get();
 	}
 
@@ -48,7 +48,7 @@ namespace sap::interp
 		return current;
 	}
 
-	StrErrorOr<std::vector<const Declaration*>> DefnTree::lookup(QualifiedId id) const
+	ErrorOr<std::vector<const Declaration*>> DefnTree::lookup(QualifiedId id) const
 	{
 		auto current = this;
 
@@ -68,7 +68,7 @@ namespace sap::interp
 
 				current = current->parent();
 				if(current == nullptr)
-					return ErrFmt("no such namespace '{}'", id.parents[0]);
+					return ErrMsg(m_typechecker->loc(), "no such namespace '{}'", id.parents[0]);
 			}
 		}
 
@@ -94,7 +94,7 @@ namespace sap::interp
 			current = current->parent();
 		}
 
-		return ErrFmt("no declaration named '{}' (search started at '{}')", id.name, m_name);
+		return ErrMsg(m_typechecker->loc(), "no declaration named '{}' (search started at '{}')", id.name, m_name);
 	}
 
 	static bool function_decls_conflict(const FunctionDecl* a, const FunctionDecl* b)
@@ -106,7 +106,7 @@ namespace sap::interp
 	}
 
 
-	StrErrorOr<void> DefnTree::declare(const Declaration* new_decl)
+	ErrorOr<void> DefnTree::declare(const Declaration* new_decl)
 	{
 		auto& name = new_decl->name;
 
@@ -125,13 +125,13 @@ namespace sap::interp
 				if(af == nullptr || bf == nullptr)
 				{
 					// otherwise, if at least one of them is not a function, they conflict
-					return ErrFmt("redeclaration of '{}'", name);
+					return ErrMsg(m_typechecker->loc(), "redeclaration of '{}'", name);
 				}
 				else if(function_decls_conflict(af, bf))
 				{
 					// otherwise, they are both functions, but we must make sure they are not redefinitions
 					// TODO: print the previous one
-					return ErrFmt("conflicting declarations of '{}'", name);
+					return ErrMsg(m_typechecker->loc(), "conflicting declarations of '{}'", name);
 				}
 
 				// otherwise, we're ok

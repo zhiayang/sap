@@ -68,14 +68,20 @@ namespace sap::interp
 		void dropValue(Value&& value);
 		Value castValue(Value value, const Type* to) const;
 
-		StrErrorOr<const Style*> currentStyle() const;
-		void pushStyle(const Style* style);
-		StrErrorOr<const Style*> popStyle();
+		[[nodiscard]] Location loc() const;
+		[[nodiscard]] util::Defer<> pushLocation(const Location& loc);
+		void popLocation();
 
-		StrErrorOr<std::vector<std::unique_ptr<tree::InlineObject>>> convertValueToText(Value&& value);
+		ErrorOr<const Style*> currentStyle() const;
+		void pushStyle(const Style* style);
+		ErrorOr<const Style*> popStyle();
+
+		ErrorOr<std::vector<std::unique_ptr<tree::InlineObject>>> convertValueToText(Value&& value);
 
 	private:
 		std::vector<std::unique_ptr<StackFrame>> m_stack_frames;
 		std::vector<const Style*> m_style_stack;
+
+		std::vector<Location> m_location_stack;
 	};
 }

@@ -7,11 +7,11 @@
 
 namespace sap::interp
 {
-	StrErrorOr<TCResult> DereferenceOp::typecheck_impl(Typechecker* ts, const Type* infer) const
+	ErrorOr<TCResult> DereferenceOp::typecheck_impl(Typechecker* ts, const Type* infer) const
 	{
 		auto inside = TRY(this->expr->typecheck(ts, infer)).type();
 		if(not inside->isOptional() && not inside->isPointer())
-			return ErrFmt("invalid use of '!' on non-pointer, non-optional type '{}'", inside);
+			return ErrMsg(ts, "invalid use of '!' on non-pointer, non-optional type '{}'", inside);
 
 		if(inside->isOptional())
 			return TCResult::ofRValue(inside->optionalElement());
@@ -19,7 +19,7 @@ namespace sap::interp
 			return TCResult::ofLValue(inside->pointerElement(), inside->isMutablePointer());
 	}
 
-	StrErrorOr<EvalResult> DereferenceOp::evaluate(Evaluator* ev) const
+	ErrorOr<EvalResult> DereferenceOp::evaluate(Evaluator* ev) const
 	{
 		auto expr_res = TRY(this->expr->evaluate(ev));
 		assert(expr_res.hasValue());
@@ -33,13 +33,13 @@ namespace sap::interp
 			if(opt.has_value())
 				return EvalResult::ofValue(std::move(*opt));
 			else
-				return ErrFmt("dereferencing empty optional");
+				return ErrMsg(ev, "dereferencing empty optional");
 		}
 		else
 		{
 			auto ptr = inside.getPointer();
 			if(ptr == nullptr)
-				return ErrFmt("dereferencing null pointer");
+				return ErrMsg(ev, "dereferencing null pointer");
 
 			return EvalResult::ofLValue(const_cast<Value&>(*ptr));
 		}
@@ -50,19 +50,19 @@ namespace sap::interp
 
 
 
-	StrErrorOr<TCResult> AddressOfOp::typecheck_impl(Typechecker* ts, const Type* infer) const
+	ErrorOr<TCResult> AddressOfOp::typecheck_impl(Typechecker* ts, const Type* infer) const
 	{
 		auto inside = TRY(this->expr->typecheck(ts, infer));
 		if(not inside.isLValue())
-			return ErrFmt("cannot take the address of a non-lvalue");
+			return ErrMsg(ts, "cannot take the address of a non-lvalue");
 
 		if(this->is_mutable && not inside.isMutable())
-			return ErrFmt("cannot create a mutable pointer to an immutable value");
+			return ErrMsg(ts, "cannot create a mutable pointer to an immutable value");
 
 		return TCResult::ofRValue(inside.type()->pointerTo(/* mutable: */ this->is_mutable));
 	}
 
-	StrErrorOr<EvalResult> AddressOfOp::evaluate(Evaluator* ev) const
+	ErrorOr<EvalResult> AddressOfOp::evaluate(Evaluator* ev) const
 	{
 		auto expr_res = TRY(this->expr->evaluate(ev));
 		assert(expr_res.hasValue());

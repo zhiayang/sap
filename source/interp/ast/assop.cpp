@@ -20,13 +20,13 @@ namespace sap::interp
 		}
 	}
 
-	StrErrorOr<TCResult> AssignOp::typecheck_impl(Typechecker* ts, const Type* infer) const
+	ErrorOr<TCResult> AssignOp::typecheck_impl(Typechecker* ts, const Type* infer) const
 	{
 		auto lres = TRY(this->lhs->typecheck(ts));
 		if(not lres.isLValue())
-			return ErrFmt("cannot assign to non-lvalue");
+			return ErrMsg(ts, "cannot assign to non-lvalue");
 		else if(not lres.isMutable())
-			return ErrFmt("cannot assign to immutable lvalue");
+			return ErrMsg(ts, "cannot assign to immutable lvalue");
 
 		auto ltype = lres.type();
 		auto rtype = TRY(this->rhs->typecheck(ts)).type();
@@ -52,17 +52,17 @@ namespace sap::interp
 		}
 
 		if(this->op == Op::None)
-			return ErrFmt("cannot assign to '{}' from incompatible type '{}'", ltype, rtype);
+			return ErrMsg(ts, "cannot assign to '{}' from incompatible type '{}'", ltype, rtype);
 		else
-			return ErrFmt("unsupported operation '{}' between types '{}' and '{}'", op_to_string(this->op), ltype, rtype);
+			return ErrMsg(ts, "unsupported operation '{}' between types '{}' and '{}'", op_to_string(this->op), ltype, rtype);
 	}
 
-	StrErrorOr<EvalResult> AssignOp::evaluate(Evaluator* ev) const
+	ErrorOr<EvalResult> AssignOp::evaluate(Evaluator* ev) const
 	{
 		auto lval_result = TRY(this->lhs->evaluate(ev));
 
 		if(not lval_result.isLValue())
-			return ErrFmt("cannot assign to non-lvalue");
+			return ErrMsg(ev, "cannot assign to non-lvalue");
 
 		auto rval = TRY_VALUE(this->rhs->evaluate(ev));
 		auto rtype = rval.type();
@@ -142,7 +142,7 @@ namespace sap::interp
 		// TODO: 'any' might need work here
 		auto value = ev->castValue(std::move(rval), ltype);
 		if(value.type() != ltype)
-			return ErrFmt("cannot assign to '{}' from incompatible type '{}'", ltype, value.type());
+			return ErrMsg(ev, "cannot assign to '{}' from incompatible type '{}'", ltype, value.type());
 
 		lval_result.get() = std::move(value);
 		return EvalResult::ofVoid();

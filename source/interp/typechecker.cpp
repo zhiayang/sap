@@ -9,9 +9,29 @@
 
 namespace sap::interp
 {
-	Typechecker::Typechecker() : m_top(new DefnTree("__top_level", /* parent: */ nullptr))
+	Typechecker::Typechecker() : m_top(new DefnTree(this, "__top_level", /* parent: */ nullptr))
 	{
 		this->pushTree(m_top.get()).cancel();
+	}
+
+
+	[[nodiscard]] Location Typechecker::loc() const
+	{
+		return m_location_stack.back();
+	}
+
+	[[nodiscard]] util::Defer<> Typechecker::pushLocation(const Location& loc)
+	{
+		m_location_stack.push_back(loc);
+		return util::Defer([this]() {
+			this->popLocation();
+		});
+	}
+
+	void Typechecker::popLocation()
+	{
+		assert(m_location_stack.size() > 0);
+		m_location_stack.pop_back();
 	}
 
 	DefnTree* Typechecker::top()
@@ -79,7 +99,7 @@ namespace sap::interp
 		return false;
 	}
 
-	StrErrorOr<const Type*> Typechecker::resolveType(const frontend::PType& ptype)
+	ErrorOr<const Type*> Typechecker::resolveType(const frontend::PType& ptype)
 	{
 		using namespace sap::frontend;
 		if(ptype.isNamed())
@@ -112,7 +132,7 @@ namespace sap::interp
 
 			auto decl = TRY(this->current()->lookup(name));
 			if(decl.size() > 1)
-				return ErrFmt("ambiguous type '{}'", name);
+				return ErrMsg(this->loc(), "ambiguous type '{}'", name);
 
 			if(auto struct_decl = dynamic_cast<const StructDecl*>(decl[0]); struct_decl)
 				return Ok(struct_decl->get_type());
@@ -146,11 +166,11 @@ namespace sap::interp
 		}
 
 
-		return ErrFmt("unknown type");
+		return ErrMsg(this->loc(), "unknown type");
 	}
 
 
-	StrErrorOr<const Definition*> Typechecker::getDefinitionForType(const Type* type)
+	ErrorOr<const Definition*> Typechecker::getDefinitionForType(const Type* type)
 	{
 		// first, reduce the type to its base.
 		while(true)
@@ -165,15 +185,15 @@ namespace sap::interp
 
 		auto it = m_type_definitions.find(type);
 		if(it == m_type_definitions.end())
-			return ErrFmt("no definition for type '{}'", type);
+			return ErrMsg(this->loc(), "no definition for type '{}'", type);
 		else
 			return Ok(it->second);
 	}
 
-	StrErrorOr<void> Typechecker::addTypeDefinition(const Type* type, const Definition* defn)
+	ErrorOr<void> Typechecker::addTypeDefinition(const Type* type, const Definition* defn)
 	{
 		if(m_type_definitions.contains(type))
-			return ErrFmt("type '{}' was already defined", type);
+			return ErrMsg(this->loc(), "type '{}' was already defined", type);
 
 		m_type_definitions[type] = defn;
 		return Ok();

@@ -11,7 +11,7 @@
 
 namespace sap::interp
 {
-	StrErrorOr<TCResult> Ident::typecheck_impl(Typechecker* ts, const Type* infer) const
+	ErrorOr<TCResult> Ident::typecheck_impl(Typechecker* ts, const Type* infer) const
 	{
 		auto tree = ts->current();
 
@@ -19,7 +19,7 @@ namespace sap::interp
 		if(auto result = tree->lookup(this->name); result.ok())
 			decls = result.take_value();
 		else
-			return ErrFmt("{}", result.take_error());
+			return ErrMsg(ts, "{}", result.take_error());
 
 		assert(decls.size() > 0);
 		if(decls.size() == 1)
@@ -32,11 +32,11 @@ namespace sap::interp
 		else
 		{
 			// TODO: use 'infer' to disambiguate references to functions
-			return ErrFmt("ambiguous '{}'", this->name);
+			return ErrMsg(ts, "ambiguous '{}'", this->name);
 		}
 	}
 
-	StrErrorOr<EvalResult> Ident::evaluate(Evaluator* ev) const
+	ErrorOr<EvalResult> Ident::evaluate(Evaluator* ev) const
 	{
 		// this should have been set by typechecking!
 		assert(m_resolved_decl != nullptr);
@@ -51,7 +51,7 @@ namespace sap::interp
 			if(frame->parent())
 				frame = frame->parent();
 			else
-				return ErrFmt("use of uninitialised variable '{}'", this->name);
+				return ErrMsg(ev, "use of uninitialised variable '{}'", this->name);
 		}
 	}
 }
