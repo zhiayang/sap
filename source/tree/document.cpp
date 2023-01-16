@@ -16,7 +16,7 @@ namespace sap::tree
 	static void run_script_block(interp::Interpreter* cs, ScriptBlock* script_block)
 	{
 		if(auto ret = cs->run(script_block->body.get()); ret.is_err())
-			error("interp", "{}", ret.take_error());
+			ret.error().showAndExit();
 
 		// TODO: do something with the result here.
 	}

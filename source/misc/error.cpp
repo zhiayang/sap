@@ -7,25 +7,32 @@
 
 namespace sap
 {
-	ErrorMessage::ErrorMessage(Location loc, std::string msg) : m_location(std::move(loc)), m_message(std::move(msg))
+	ErrorMessage::ErrorMessage(Location loc, const std::string& msg) : m_location(std::move(loc))
+	{
+		m_message = zpr::sprint("{}:{}:{}: error: {}", m_location.file, m_location.line + 1, m_location.column + 1, msg);
+	}
+
+	ErrorMessage::ErrorMessage(const interp::Typechecker* ts, const std::string& msg) : ErrorMessage(ts->loc(), msg)
 	{
 	}
 
-	ErrorMessage::ErrorMessage(const interp::Typechecker* ts, std::string msg) : m_location(ts->loc()), m_message(std::move(msg))
+	ErrorMessage::ErrorMessage(const interp::Evaluator* ev, const std::string& msg) : ErrorMessage(ev->loc(), msg)
 	{
 	}
 
-	ErrorMessage::ErrorMessage(const interp::Evaluator* ev, std::string msg) : m_location(ev->loc()), m_message(std::move(msg))
+	const std::string& ErrorMessage::string() const
 	{
-	}
-
-	std::string ErrorMessage::string() const
-	{
-		return zpr::sprint("{}:{}:{}: error: {}", m_location.file, m_location.line + 1, m_location.column + 1, m_message);
+		return m_message;
 	}
 
 	void ErrorMessage::display() const
 	{
-		zpr::fprintln(stderr, "{}", this->string());
+		zpr::fprintln(stderr, "{}", m_message);
+	}
+
+	[[noreturn]] void ErrorMessage::showAndExit() const
+	{
+		this->display();
+		abort();
 	}
 }

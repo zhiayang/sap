@@ -23,12 +23,13 @@ namespace sap
 	struct ErrorMessage
 	{
 		ErrorMessage() = default;
-		explicit ErrorMessage(Location loc, std::string msg);
-		explicit ErrorMessage(const interp::Typechecker* ts, std::string msg);
-		explicit ErrorMessage(const interp::Evaluator* ev, std::string msg);
+		explicit ErrorMessage(Location loc, const std::string& msg);
+		explicit ErrorMessage(const interp::Typechecker* ts, const std::string& msg);
+		explicit ErrorMessage(const interp::Evaluator* ev, const std::string& msg);
 
 		void display() const;
-		std::string string() const;
+		const std::string& string() const;
+		[[noreturn]] void showAndExit() const;
 
 	private:
 		Location m_location;

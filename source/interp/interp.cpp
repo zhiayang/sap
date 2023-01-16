@@ -25,9 +25,7 @@ namespace sap::interp
 
 	ErrorOr<EvalResult> Interpreter::run(const Stmt* stmt)
 	{
-		if(auto res = stmt->typecheck(m_typechecker.get()); res.is_err())
-			error(stmt->loc(), "{}", res.take_error());
-
+		TRY(stmt->typecheck(m_typechecker.get()));
 		return stmt->evaluate(m_evaluator.get());
 	}
 }

@@ -19,7 +19,7 @@ namespace sap::interp
 		if(auto result = tree->lookup(this->name); result.ok())
 			decls = result.take_value();
 		else
-			return ErrMsg(ts, "{}", result.take_error());
+			return Err(result.take_error());
 
 		assert(decls.size() > 0);
 		if(decls.size() == 1)
