@@ -20,6 +20,13 @@ namespace sap::frontend
 		return tok;
 	}
 
+	static Token advance_and_return2(zst::str_view& stream, const Location& loc, Token tok, size_t n)
+	{
+		tok.loc.length = util::checked_cast<uint32_t>(n);
+		stream.remove_prefix(n);
+		return tok;
+	}
+
 	static bool parse_comment(zst::str_view& stream, Location& loc)
 	{
 		if(stream.starts_with("#:"))
@@ -136,24 +143,23 @@ namespace sap::frontend
 			size_t num = 0;
 			while(num < stream.size())
 			{
-				if(stream.drop(num).starts_with("\n"))
-					lines++, num += 1;
-				else if(stream.drop(num).starts_with("\r\n"))
+				if(stream.drop(num).starts_with("\r\n"))
 					lines++, num += 2;
+				else if(stream.drop(num).starts_with("\n"))
+					lines++, num += 1;
 				else
 					break;
 			}
 
-			auto ret = advance_and_return(stream, loc,
+			loc.column = 0;
+			loc.line += lines;
+
+			return advance_and_return2(stream, loc,
 			    Token { //
 			        .loc = loc,
 			        .type = TT::ParagraphBreak,
 			        .text = stream.take(num) },
 			    num);
-
-			loc.column = 0;
-			loc.line += lines;
-			return ret;
 		}
 		else if(stream[0] == '{' || stream[0] == '}')
 		{
@@ -179,7 +185,7 @@ namespace sap::frontend
 		else
 		{
 			auto finish_and_return = [&](size_t n) -> Token {
-				return advance_and_return(stream, loc,
+				return advance_and_return2(stream, loc,
 				    Token { //
 				        .loc = loc,
 				        .type = TT::Text,
@@ -223,7 +229,12 @@ namespace sap::frontend
 				}
 				else
 				{
-					n++;
+					if(stream.drop(n).starts_with("\r\n"))
+						n += 2, loc.line++, loc.column = 0;
+					else if(stream.drop(n).starts_with("\n"))
+						n += 1, loc.line++, loc.column = 0;
+					else
+						n += 1;
 				}
 			}
 
@@ -238,10 +249,24 @@ namespace sap::frontend
 		// skip whitespace
 		while(stream.size() > 0)
 		{
-			if(stream[0] == ' ' || stream[0] == '\t' || stream[0] == '\r' || stream[0] == '\n')
-				loc.column++, stream.remove_prefix(1);
+			if(stream[0] == ' ' || stream[0] == '\t')
+			{
+				loc.column++;
+				stream.remove_prefix(1);
+			}
+			else if(stream[0] == '\r' || stream[0] == '\n')
+			{
+				loc.column = 0;
+				loc.line++;
+				if(stream.starts_with("\r\n"))
+					stream.remove_prefix(2);
+				else
+					stream.remove_prefix(1);
+			}
 			else
+			{
 				break;
+			}
 		}
 
 		if(stream.empty())
