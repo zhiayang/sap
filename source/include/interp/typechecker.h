@@ -21,16 +21,16 @@ namespace sap::interp
 		std::string_view name() const { return m_name; }
 		DefnTree* parent() const { return m_parent; }
 
-		ErrorOr<DefnTree*> lookupNamespace(std::string_view name) const;
+		StrErrorOr<DefnTree*> lookupNamespace(std::string_view name) const;
 		DefnTree* lookupOrDeclareNamespace(std::string_view name);
 
 		DefnTree* lookupOrDeclareScope(const std::vector<std::string>& scope, bool is_top_level);
 
 		DefnTree* declareAnonymousNamespace();
 
-		ErrorOr<std::vector<const Declaration*>> lookup(QualifiedId id) const;
+		StrErrorOr<std::vector<const Declaration*>> lookup(QualifiedId id) const;
 
-		ErrorOr<void> declare(const Declaration* decl);
+		StrErrorOr<void> declare(const Declaration* decl);
 
 	private:
 		explicit DefnTree(std::string name, DefnTree* parent) : m_name(std::move(name)), m_parent(parent) { }
@@ -58,14 +58,14 @@ namespace sap::interp
 		DefnTree* current();
 		const DefnTree* current() const;
 
-		ErrorOr<const Type*> resolveType(const frontend::PType& ptype);
-		ErrorOr<const Definition*> getDefinitionForType(const Type* type);
-		ErrorOr<void> addTypeDefinition(const Type* type, const Definition* defn);
+		StrErrorOr<const Type*> resolveType(const frontend::PType& ptype);
+		StrErrorOr<const Definition*> getDefinitionForType(const Type* type);
+		StrErrorOr<void> addTypeDefinition(const Type* type, const Definition* defn);
 
 		[[nodiscard]] util::Defer<> pushTree(DefnTree* tree);
 		void popTree();
 
-		ErrorOr<EvalResult> run(const Stmt* stmt);
+		StrErrorOr<EvalResult> run(const Stmt* stmt);
 
 		Definition* addBuiltinDefinition(std::unique_ptr<Definition> defn);
 

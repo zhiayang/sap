@@ -79,7 +79,7 @@ namespace sap::interp
 		return false;
 	}
 
-	ErrorOr<const Type*> Typechecker::resolveType(const frontend::PType& ptype)
+	StrErrorOr<const Type*> Typechecker::resolveType(const frontend::PType& ptype)
 	{
 		using namespace sap::frontend;
 		if(ptype.isNamed())
@@ -150,7 +150,7 @@ namespace sap::interp
 	}
 
 
-	ErrorOr<const Definition*> Typechecker::getDefinitionForType(const Type* type)
+	StrErrorOr<const Definition*> Typechecker::getDefinitionForType(const Type* type)
 	{
 		// first, reduce the type to its base.
 		while(true)
@@ -170,7 +170,7 @@ namespace sap::interp
 			return Ok(it->second);
 	}
 
-	ErrorOr<void> Typechecker::addTypeDefinition(const Type* type, const Definition* defn)
+	StrErrorOr<void> Typechecker::addTypeDefinition(const Type* type, const Definition* defn)
 	{
 		if(m_type_definitions.contains(type))
 			return ErrFmt("type '{}' was already defined", type);

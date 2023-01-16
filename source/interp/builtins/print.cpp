@@ -18,13 +18,13 @@ namespace sap::interp::builtin
 			zpr::print("{}{}", i == 0 ? "" : " ", unicode::stringFromU32String(values[i].toString()));
 	}
 
-	ErrorOr<EvalResult> print(Evaluator* ev, std::vector<Value>& args)
+	StrErrorOr<EvalResult> print(Evaluator* ev, std::vector<Value>& args)
 	{
 		print_values(args);
 		return EvalResult::ofVoid();
 	}
 
-	ErrorOr<EvalResult> println(Evaluator* ev, std::vector<Value>& args)
+	StrErrorOr<EvalResult> println(Evaluator* ev, std::vector<Value>& args)
 	{
 		print_values(args);
 		zpr::println("");

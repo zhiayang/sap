@@ -16,7 +16,7 @@ namespace font::fontconfig
 	using sap::Ok;
 	using sap::Err;
 	using sap::ErrFmt;
-	using sap::ErrorOr;
+	using sap::StrErrorOr;
 
 
 	static FcConfig* get_fontconfig_config()
@@ -26,7 +26,7 @@ namespace font::fontconfig
 	}
 
 	template <typename T>
-	static ErrorOr<T> get_value(FcPattern* pattern, const char* key)
+	static StrErrorOr<T> get_value(FcPattern* pattern, const char* key)
 	{
 		if constexpr(std::is_same_v<T, bool>)
 		{
@@ -71,7 +71,7 @@ namespace font::fontconfig
 	}
 
 
-	static ErrorOr<FontHandle> get_handle_from_pattern(FcPattern* pattern)
+	static StrErrorOr<FontHandle> get_handle_from_pattern(FcPattern* pattern)
 	{
 		auto display_name = TRY(get_value<std::string>(pattern, FC_FULLNAME));
 		auto postscript_name = TRY(get_value<std::string>(pattern, FC_POSTSCRIPT_NAME));

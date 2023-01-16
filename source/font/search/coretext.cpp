@@ -21,7 +21,7 @@ namespace font::coretext
 	using sap::Ok;
 	using sap::Err;
 	using sap::ErrFmt;
-	using sap::ErrorOr;
+	using sap::StrErrorOr;
 
 	struct dont_retain_again
 	{
@@ -150,7 +150,7 @@ namespace font::coretext
 	}
 
 	template <typename T>
-	static ErrorOr<CFWrapper<T>> get_font_attribute(CTFontDescriptorRef font, CFStringRef attribute)
+	static StrErrorOr<CFWrapper<T>> get_font_attribute(CTFontDescriptorRef font, CFStringRef attribute)
 	{
 		auto value = CTFontDescriptorCopyAttribute(font, attribute);
 		if(value == nullptr)
@@ -160,7 +160,7 @@ namespace font::coretext
 	}
 
 	template <typename T>
-	static ErrorOr<CFWrapper<T>> get_font_trait(CTFontDescriptorRef font, CFStringRef trait)
+	static StrErrorOr<CFWrapper<T>> get_font_trait(CTFontDescriptorRef font, CFStringRef trait)
 	{
 		auto traits = TRY(get_font_attribute<CFDictionaryRef>(font, kCTFontTraitsAttribute));
 
@@ -171,7 +171,7 @@ namespace font::coretext
 		return Ok(cf_retain(trait_value));
 	}
 
-	static ErrorOr<std::filesystem::path> get_font_path(CTFontDescriptorRef font)
+	static StrErrorOr<std::filesystem::path> get_font_path(CTFontDescriptorRef font)
 	{
 		auto url = TRY(get_font_attribute<CFURLRef>(font, kCTFontURLAttribute));
 
@@ -183,13 +183,13 @@ namespace font::coretext
 		return Ok(std::filesystem::path(&buf[0], &buf[strlen(buf)]));
 	}
 
-	static ErrorOr<FontHandle> get_handle_from_descriptor(CTFontDescriptorRef font)
+	static StrErrorOr<FontHandle> get_handle_from_descriptor(CTFontDescriptorRef font)
 	{
 		auto path = TRY(get_font_path(font));
 		auto display_name = cf_to_string(TRY(get_font_attribute<CFStringRef>(font, kCTFontDisplayNameAttribute)));
 		auto postscript_name = cf_to_string(TRY(get_font_attribute<CFStringRef>(font, kCTFontNameAttribute)));
 
-		int font_weight = static_cast<int>(TRY([font]() -> ErrorOr<double> {
+		int font_weight = static_cast<int>(TRY([font]() -> StrErrorOr<double> {
 			auto ct_weight = cf_to_double(TRY(get_font_trait<CFNumberRef>(font, kCTFontWeightTrait)));
 			/*
 			    -0.7    -> 100

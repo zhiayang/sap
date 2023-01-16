@@ -20,7 +20,7 @@ namespace sap::interp
 		defineBuiltins(this, m_typechecker->top()->lookupOrDeclareNamespace("builtin"));
 	}
 
-	ErrorOr<EvalResult> Interpreter::run(const Stmt* stmt)
+	StrErrorOr<EvalResult> Interpreter::run(const Stmt* stmt)
 	{
 		if(auto res = stmt->typecheck(m_typechecker.get()); res.is_err())
 			error(stmt->loc(), "{}", res.take_error());

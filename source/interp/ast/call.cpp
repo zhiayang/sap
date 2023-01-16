@@ -13,7 +13,7 @@
 
 namespace sap::interp
 {
-	static ErrorOr<std::vector<std::tuple<std::string, const Type*, const Expr*>>> convert_params(const Declaration* decl)
+	static StrErrorOr<std::vector<std::tuple<std::string, const Type*, const Expr*>>> convert_params(const Declaration* decl)
 	{
 		if(auto fdecl = dynamic_cast<const FunctionDecl*>(decl); fdecl != nullptr)
 		{
@@ -38,7 +38,7 @@ namespace sap::interp
 		}
 	}
 
-	static ErrorOr<int> get_calling_cost(Typechecker* ts,
+	static StrErrorOr<int> get_calling_cost(Typechecker* ts,
 	    const Declaration* decl,
 	    const std::vector<ArrangeArg<const Type*>>& arguments)
 	{
@@ -50,7 +50,7 @@ namespace sap::interp
 	}
 
 
-	static ErrorOr<const Declaration*> resolve_overload_set(Typechecker* ts,
+	static StrErrorOr<const Declaration*> resolve_overload_set(Typechecker* ts,
 	    const std::vector<const Declaration*>& decls,
 	    const std::vector<ArrangeArg<const Type*>>& arguments)
 	{
@@ -86,7 +86,7 @@ namespace sap::interp
 
 
 
-	ErrorOr<TCResult> FunctionCall::typecheck_impl(Typechecker* ts, const Type* infer) const
+	StrErrorOr<TCResult> FunctionCall::typecheck_impl(Typechecker* ts, const Type* infer) const
 	{
 		std::vector<ArrangeArg<const Type*>> processed_args {};
 
@@ -148,7 +148,7 @@ namespace sap::interp
 	}
 
 
-	ErrorOr<EvalResult> FunctionCall::evaluate(Evaluator* ev) const
+	StrErrorOr<EvalResult> FunctionCall::evaluate(Evaluator* ev) const
 	{
 		// TODO: maybe do this only once (instead of twice, once while typechecking and one for eval)
 		// again, if this is an identifier, we do the separate thing.

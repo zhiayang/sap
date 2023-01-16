@@ -13,7 +13,7 @@
 
 namespace sap::interp
 {
-	static ErrorOr<void> typecheck_list_of_tios(Typechecker* ts, //
+	static StrErrorOr<void> typecheck_list_of_tios(Typechecker* ts, //
 	    const std::vector<std::unique_ptr<tree::InlineObject>>& tios)
 	{
 		for(auto& obj : tios)
@@ -31,7 +31,7 @@ namespace sap::interp
 		return Ok();
 	}
 
-	static ErrorOr<std::vector<std::unique_ptr<tree::InlineObject>>> evaluate_list_of_tios(Evaluator* ev,
+	static StrErrorOr<std::vector<std::unique_ptr<tree::InlineObject>>> evaluate_list_of_tios(Evaluator* ev,
 	    const std::vector<std::unique_ptr<tree::InlineObject>>& tios)
 	{
 		std::vector<std::unique_ptr<tree::InlineObject>> ret {};
@@ -58,13 +58,13 @@ namespace sap::interp
 
 
 
-	ErrorOr<TCResult> TreeInlineExpr::typecheck_impl(Typechecker* ts, const Type* infer) const
+	StrErrorOr<TCResult> TreeInlineExpr::typecheck_impl(Typechecker* ts, const Type* infer) const
 	{
 		TRY(typecheck_list_of_tios(ts, this->objects));
 		return TCResult::ofRValue(Type::makeTreeInlineObj());
 	}
 
-	ErrorOr<EvalResult> TreeInlineExpr::evaluate(Evaluator* ev) const
+	StrErrorOr<EvalResult> TreeInlineExpr::evaluate(Evaluator* ev) const
 	{
 		auto tios = TRY(evaluate_list_of_tios(ev, this->objects));
 		return EvalResult::ofValue(Value::treeInlineObject(std::move(tios)));
@@ -73,7 +73,7 @@ namespace sap::interp
 
 
 
-	static ErrorOr<void> typecheck_block_obj(Typechecker* ts, tree::BlockObject* obj)
+	static StrErrorOr<void> typecheck_block_obj(Typechecker* ts, tree::BlockObject* obj)
 	{
 		if(auto para = dynamic_cast<const tree::Paragraph*>(obj); para)
 		{
@@ -100,7 +100,7 @@ namespace sap::interp
 		return Ok();
 	}
 
-	static ErrorOr<EvalResult> evaluate_block_obj(Evaluator* ev, tree::BlockObject* obj)
+	static StrErrorOr<EvalResult> evaluate_block_obj(Evaluator* ev, tree::BlockObject* obj)
 	{
 		auto make_para_from_tios = [](std::vector<std::unique_ptr<tree::InlineObject>> tios) {
 			auto new_para = std::make_unique<tree::Paragraph>(std::move(tios));
@@ -140,13 +140,13 @@ namespace sap::interp
 
 
 
-	ErrorOr<TCResult> TreeBlockExpr::typecheck_impl(Typechecker* ts, const Type* infer) const
+	StrErrorOr<TCResult> TreeBlockExpr::typecheck_impl(Typechecker* ts, const Type* infer) const
 	{
 		TRY(typecheck_block_obj(ts, this->object.get()));
 		return TCResult::ofRValue(Type::makeTreeBlockObj());
 	}
 
-	ErrorOr<EvalResult> TreeBlockExpr::evaluate(Evaluator* ev) const
+	StrErrorOr<EvalResult> TreeBlockExpr::evaluate(Evaluator* ev) const
 	{
 		return evaluate_block_obj(ev, this->object.get());
 	}

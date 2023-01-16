@@ -20,7 +20,7 @@ namespace sap::interp
 		}
 	}
 
-	ErrorOr<TCResult> AssignOp::typecheck_impl(Typechecker* ts, const Type* infer) const
+	StrErrorOr<TCResult> AssignOp::typecheck_impl(Typechecker* ts, const Type* infer) const
 	{
 		auto lres = TRY(this->lhs->typecheck(ts));
 		if(not lres.isLValue())
@@ -57,7 +57,7 @@ namespace sap::interp
 			return ErrFmt("unsupported operation '{}' between types '{}' and '{}'", op_to_string(this->op), ltype, rtype);
 	}
 
-	ErrorOr<EvalResult> AssignOp::evaluate(Evaluator* ev) const
+	StrErrorOr<EvalResult> AssignOp::evaluate(Evaluator* ev) const
 	{
 		auto lval_result = TRY(this->lhs->evaluate(ev));
 

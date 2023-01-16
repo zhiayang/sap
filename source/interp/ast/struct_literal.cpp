@@ -26,7 +26,7 @@ namespace sap::interp
 		return fields;
 	}
 
-	ErrorOr<TCResult> StructLit::typecheck_impl(Typechecker* ts, const Type* infer) const
+	StrErrorOr<TCResult> StructLit::typecheck_impl(Typechecker* ts, const Type* infer) const
 	{
 		const StructType* struct_type = nullptr;
 		if(struct_name.name.empty())
@@ -68,7 +68,7 @@ namespace sap::interp
 		return TCResult::ofRValue(struct_type);
 	}
 
-	ErrorOr<EvalResult> StructLit::evaluate(Evaluator* ev) const
+	StrErrorOr<EvalResult> StructLit::evaluate(Evaluator* ev) const
 	{
 		assert(this->get_type()->isStruct());
 		auto struct_type = this->get_type()->toStruct();

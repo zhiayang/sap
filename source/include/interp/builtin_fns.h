@@ -21,20 +21,20 @@ namespace sap::interp
 
 	namespace builtin
 	{
-		ErrorOr<EvalResult> bold1(Evaluator* cs, std::vector<Value>& args);
-		ErrorOr<EvalResult> italic1(Evaluator* cs, std::vector<Value>& args);
-		ErrorOr<EvalResult> bold_italic1(Evaluator* cs, std::vector<Value>& args);
+		StrErrorOr<EvalResult> bold1(Evaluator* cs, std::vector<Value>& args);
+		StrErrorOr<EvalResult> italic1(Evaluator* cs, std::vector<Value>& args);
+		StrErrorOr<EvalResult> bold_italic1(Evaluator* cs, std::vector<Value>& args);
 
-		ErrorOr<EvalResult> apply_style_tio(Evaluator* cs, std::vector<Value>& args);
-		ErrorOr<EvalResult> apply_style_tbo(Evaluator* cs, std::vector<Value>& args);
+		StrErrorOr<EvalResult> apply_style_tio(Evaluator* cs, std::vector<Value>& args);
+		StrErrorOr<EvalResult> apply_style_tbo(Evaluator* cs, std::vector<Value>& args);
 
-		ErrorOr<EvalResult> print(Evaluator* cs, std::vector<Value>& args);
-		ErrorOr<EvalResult> println(Evaluator* cs, std::vector<Value>& args);
+		StrErrorOr<EvalResult> print(Evaluator* cs, std::vector<Value>& args);
+		StrErrorOr<EvalResult> println(Evaluator* cs, std::vector<Value>& args);
 
-		ErrorOr<EvalResult> load_image(Evaluator* cs, std::vector<Value>& args);
+		StrErrorOr<EvalResult> load_image(Evaluator* cs, std::vector<Value>& args);
 
-		ErrorOr<EvalResult> current_style(Evaluator* cs, std::vector<Value>& args);
-		ErrorOr<EvalResult> push_style(Evaluator* cs, std::vector<Value>& args);
-		ErrorOr<EvalResult> pop_style(Evaluator* cs, std::vector<Value>& args);
+		StrErrorOr<EvalResult> current_style(Evaluator* cs, std::vector<Value>& args);
+		StrErrorOr<EvalResult> push_style(Evaluator* cs, std::vector<Value>& args);
+		StrErrorOr<EvalResult> pop_style(Evaluator* cs, std::vector<Value>& args);
 	}
 }

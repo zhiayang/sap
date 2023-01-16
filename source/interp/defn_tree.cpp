@@ -9,7 +9,7 @@
 
 namespace sap::interp
 {
-	ErrorOr<DefnTree*> DefnTree::lookupNamespace(std::string_view name) const
+	StrErrorOr<DefnTree*> DefnTree::lookupNamespace(std::string_view name) const
 	{
 		if(auto it = m_children.find(name); it != m_children.end())
 			return Ok(it->second.get());
@@ -48,7 +48,7 @@ namespace sap::interp
 		return current;
 	}
 
-	ErrorOr<std::vector<const Declaration*>> DefnTree::lookup(QualifiedId id) const
+	StrErrorOr<std::vector<const Declaration*>> DefnTree::lookup(QualifiedId id) const
 	{
 		auto current = this;
 
@@ -106,7 +106,7 @@ namespace sap::interp
 	}
 
 
-	ErrorOr<void> DefnTree::declare(const Declaration* new_decl)
+	StrErrorOr<void> DefnTree::declare(const Declaration* new_decl)
 	{
 		auto& name = new_decl->name;
 

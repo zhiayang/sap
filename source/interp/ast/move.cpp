@@ -7,7 +7,7 @@
 
 namespace sap::interp
 {
-	ErrorOr<TCResult> MoveExpr::typecheck_impl(Typechecker* ts, const Type* infer) const
+	StrErrorOr<TCResult> MoveExpr::typecheck_impl(Typechecker* ts, const Type* infer) const
 	{
 		auto ret = TRY(this->expr->typecheck(ts, infer));
 		if(not ret.isLValue())
@@ -16,7 +16,7 @@ namespace sap::interp
 		return TCResult::ofRValue(ret.type());
 	}
 
-	ErrorOr<EvalResult> MoveExpr::evaluate(Evaluator* ev) const
+	StrErrorOr<EvalResult> MoveExpr::evaluate(Evaluator* ev) const
 	{
 		auto inside = TRY(this->expr->evaluate(ev));
 		if(not inside.isLValue())

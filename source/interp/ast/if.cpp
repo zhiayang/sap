@@ -8,7 +8,7 @@
 
 namespace sap::interp
 {
-	ErrorOr<TCResult> IfStmt::typecheck_impl(Typechecker* ts, const Type* infer) const
+	StrErrorOr<TCResult> IfStmt::typecheck_impl(Typechecker* ts, const Type* infer) const
 	{
 		auto cond = TRY(this->if_cond->typecheck(ts, Type::makeBool()));
 		if(not cond.type()->isBool())
@@ -21,7 +21,7 @@ namespace sap::interp
 		return TCResult::ofVoid();
 	}
 
-	ErrorOr<EvalResult> IfStmt::evaluate(Evaluator* ev) const
+	StrErrorOr<EvalResult> IfStmt::evaluate(Evaluator* ev) const
 	{
 		auto cond = TRY_VALUE(this->if_cond->evaluate(ev));
 		cond = ev->castValue(std::move(cond), Type::makeBool());

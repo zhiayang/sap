@@ -24,7 +24,7 @@ namespace sap::interp
 		}
 	}
 
-	ErrorOr<TCResult> BinaryOp::typecheck_impl(Typechecker* ts, const Type* infer) const
+	StrErrorOr<TCResult> BinaryOp::typecheck_impl(Typechecker* ts, const Type* infer) const
 	{
 		auto ltype = TRY(this->lhs->typecheck(ts)).type();
 		auto rtype = TRY(this->rhs->typecheck(ts)).type();
@@ -48,7 +48,7 @@ namespace sap::interp
 		return ErrFmt("unsupported operation '{}' between types '{}' and '{}'", op_to_string(this->op), ltype, rtype);
 	}
 
-	ErrorOr<EvalResult> BinaryOp::evaluate(Evaluator* ev) const
+	StrErrorOr<EvalResult> BinaryOp::evaluate(Evaluator* ev) const
 	{
 		auto lval = TRY_VALUE(this->lhs->evaluate(ev));
 		auto ltype = lval.type();

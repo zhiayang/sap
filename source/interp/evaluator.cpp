@@ -59,7 +59,7 @@ namespace sap::interp
 		}
 	}
 
-	ErrorOr<std::vector<std::unique_ptr<tree::InlineObject>>> Evaluator::convertValueToText(Value&& value)
+	StrErrorOr<std::vector<std::unique_ptr<tree::InlineObject>>> Evaluator::convertValueToText(Value&& value)
 	{
 		std::vector<std::unique_ptr<tree::InlineObject>> ret {};
 
@@ -117,7 +117,7 @@ namespace sap::interp
 	}
 
 
-	ErrorOr<const Style*> Evaluator::currentStyle() const
+	StrErrorOr<const Style*> Evaluator::currentStyle() const
 	{
 		if(m_style_stack.empty())
 			return ErrFmt("no style set!");
@@ -130,7 +130,7 @@ namespace sap::interp
 		m_style_stack.push_back(style);
 	}
 
-	ErrorOr<const Style*> Evaluator::popStyle()
+	StrErrorOr<const Style*> Evaluator::popStyle()
 	{
 		if(m_style_stack.empty())
 			return ErrFmt("no style set!");

@@ -16,9 +16,9 @@ namespace sap::interp
 
 		TCResult replacingType(const Type* type) const { return TCResult(type, m_is_mutable, m_is_lvalue); }
 
-		static ErrorOr<TCResult> ofVoid() { return Ok(TCResult(Type::makeVoid(), false, false)); }
-		static ErrorOr<TCResult> ofRValue(const Type* type) { return Ok(TCResult(type, false, false)); }
-		static ErrorOr<TCResult> ofLValue(const Type* type, bool is_mutable) { return Ok(TCResult(type, is_mutable, true)); }
+		static StrErrorOr<TCResult> ofVoid() { return Ok(TCResult(Type::makeVoid(), false, false)); }
+		static StrErrorOr<TCResult> ofRValue(const Type* type) { return Ok(TCResult(type, false, false)); }
+		static StrErrorOr<TCResult> ofLValue(const Type* type, bool is_mutable) { return Ok(TCResult(type, is_mutable, true)); }
 
 	private:
 		explicit TCResult(const Type* type, bool is_mutable, bool is_lvalue)

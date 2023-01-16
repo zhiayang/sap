@@ -20,7 +20,7 @@ namespace sap::interp
 	};
 
 	template <typename T, bool MoveValue>
-	ErrorOr<std::unordered_map<size_t, T>> arrange_arguments(                                                //
+	StrErrorOr<std::unordered_map<size_t, T>> arrange_arguments(                                                //
 	    const std::vector<std::tuple<std::string, const Type*, const Expr*>>& expected,                      //
 	    std::conditional_t<MoveValue, std::vector<ArrangeArg<T>>&&, const std::vector<ArrangeArg<T>>&> args, //
 	    const char* fn_or_struct,                                                                            //
@@ -80,7 +80,7 @@ namespace sap::interp
 	inline constexpr auto arrange_argument_values = arrange_arguments<Value, /* move: */ true>;
 
 
-	inline ErrorOr<int> get_calling_cost(                                               //
+	inline StrErrorOr<int> get_calling_cost(                                               //
 	    Typechecker* ts,                                                                //
 	    const std::vector<std::tuple<std::string, const Type*, const Expr*>>& expected, //
 	    std::unordered_map<size_t, const Type*>& ordered_args,                          //

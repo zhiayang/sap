@@ -9,7 +9,7 @@
 
 namespace sap::interp
 {
-	ErrorOr<TCResult> VariableDecl::typecheck_impl(Typechecker* ts, const Type* infer) const
+	StrErrorOr<TCResult> VariableDecl::typecheck_impl(Typechecker* ts, const Type* infer) const
 	{
 		assert(infer != nullptr);
 		if(infer->isVoid())
@@ -21,7 +21,7 @@ namespace sap::interp
 		return TCResult::ofLValue(infer, this->is_mutable);
 	}
 
-	ErrorOr<EvalResult> VariableDecl::evaluate(Evaluator* ev) const
+	StrErrorOr<EvalResult> VariableDecl::evaluate(Evaluator* ev) const
 	{
 		// this does nothing
 		return EvalResult::ofVoid();
@@ -30,7 +30,7 @@ namespace sap::interp
 
 
 
-	ErrorOr<TCResult> VariableDefn::typecheck_impl(Typechecker* ts, const Type* infer) const
+	StrErrorOr<TCResult> VariableDefn::typecheck_impl(Typechecker* ts, const Type* infer) const
 	{
 		this->declaration->resolve(this);
 
@@ -38,7 +38,7 @@ namespace sap::interp
 		if(not this->explicit_type.has_value() && this->initialiser == nullptr)
 			return ErrFmt("variable without explicit type must have an initialiser");
 
-		auto the_type = TRY([&]() -> ErrorOr<TCResult> {
+		auto the_type = TRY([&]() -> StrErrorOr<TCResult> {
 			if(this->explicit_type.has_value())
 			{
 				auto resolved_type = TRY(ts->resolveType(*this->explicit_type));
@@ -68,7 +68,7 @@ namespace sap::interp
 		return this->declaration->typecheck(ts, the_type.type());
 	}
 
-	ErrorOr<EvalResult> VariableDefn::evaluate(Evaluator* ev) const
+	StrErrorOr<EvalResult> VariableDefn::evaluate(Evaluator* ev) const
 	{
 		if(this->initialiser != nullptr)
 		{

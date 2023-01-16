@@ -7,7 +7,7 @@
 
 namespace sap::interp
 {
-	ErrorOr<TCResult> DotOp::typecheck_impl(Typechecker* ts, const Type* infer) const
+	StrErrorOr<TCResult> DotOp::typecheck_impl(Typechecker* ts, const Type* infer) const
 	{
 		auto lhs_res = TRY(this->lhs->typecheck(ts));
 		auto ltype = lhs_res.type();
@@ -52,7 +52,7 @@ namespace sap::interp
 		}
 	}
 
-	ErrorOr<EvalResult> DotOp::evaluate(Evaluator* ev) const
+	StrErrorOr<EvalResult> DotOp::evaluate(Evaluator* ev) const
 	{
 		assert(m_struct_type->hasFieldNamed(this->rhs));
 		auto field_idx = m_struct_type->getFieldIndex(this->rhs);

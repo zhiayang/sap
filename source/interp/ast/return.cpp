@@ -7,7 +7,7 @@
 
 namespace sap::interp
 {
-	ErrorOr<TCResult> ReturnStmt::typecheck_impl(Typechecker* ts, const Type* infer) const
+	StrErrorOr<TCResult> ReturnStmt::typecheck_impl(Typechecker* ts, const Type* infer) const
 	{
 		if(not ts->isCurrentlyInFunction())
 			return ErrFmt("invalid use of 'return' outside of a function body");
@@ -25,7 +25,7 @@ namespace sap::interp
 		return TCResult::ofVoid();
 	}
 
-	ErrorOr<EvalResult> ReturnStmt::evaluate(Evaluator* ev) const
+	StrErrorOr<EvalResult> ReturnStmt::evaluate(Evaluator* ev) const
 	{
 		if(this->expr == nullptr)
 			return EvalResult::ofReturnVoid();

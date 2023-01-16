@@ -10,7 +10,7 @@
 
 namespace sap::interp
 {
-	ErrorOr<TCResult> FunctionDecl::typecheck_impl(Typechecker* ts, const Type* infer) const
+	StrErrorOr<TCResult> FunctionDecl::typecheck_impl(Typechecker* ts, const Type* infer) const
 	{
 		std::vector<const Type*> param_types {};
 		for(auto& param : m_params)
@@ -23,13 +23,13 @@ namespace sap::interp
 		return Ok(*m_tc_result);
 	}
 
-	ErrorOr<TCResult> BuiltinFunctionDefn::typecheck_impl(Typechecker* ts, const Type* infer) const
+	StrErrorOr<TCResult> BuiltinFunctionDefn::typecheck_impl(Typechecker* ts, const Type* infer) const
 	{
 		return this->declaration->typecheck(ts);
 	}
 
 
-	ErrorOr<TCResult> FunctionDefn::typecheck_impl(Typechecker* ts, const Type* infer) const
+	StrErrorOr<TCResult> FunctionDefn::typecheck_impl(Typechecker* ts, const Type* infer) const
 	{
 		this->declaration->resolve(this);
 		auto decl_type = TRY(this->declaration->typecheck(ts)).type();
@@ -73,7 +73,7 @@ namespace sap::interp
 		return TCResult::ofRValue(decl_type);
 	}
 
-	ErrorOr<EvalResult> FunctionDefn::call(Evaluator* ev, std::vector<Value>& args) const
+	StrErrorOr<EvalResult> FunctionDefn::call(Evaluator* ev, std::vector<Value>& args) const
 	{
 		auto _ = ev->pushFrame();
 		auto& frame = ev->frame();
@@ -94,17 +94,17 @@ namespace sap::interp
 
 
 	// evaluating these don't do anything
-	ErrorOr<EvalResult> FunctionDefn::evaluate(Evaluator* ev) const
+	StrErrorOr<EvalResult> FunctionDefn::evaluate(Evaluator* ev) const
 	{
 		return EvalResult::ofVoid();
 	}
 
-	ErrorOr<EvalResult> FunctionDecl::evaluate(Evaluator* ev) const
+	StrErrorOr<EvalResult> FunctionDecl::evaluate(Evaluator* ev) const
 	{
 		return EvalResult::ofVoid();
 	}
 
-	ErrorOr<EvalResult> BuiltinFunctionDefn::evaluate(Evaluator* ev) const
+	StrErrorOr<EvalResult> BuiltinFunctionDefn::evaluate(Evaluator* ev) const
 	{
 		return EvalResult::ofVoid();
 	}

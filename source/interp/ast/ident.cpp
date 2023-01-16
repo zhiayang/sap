@@ -11,7 +11,7 @@
 
 namespace sap::interp
 {
-	ErrorOr<TCResult> Ident::typecheck_impl(Typechecker* ts, const Type* infer) const
+	StrErrorOr<TCResult> Ident::typecheck_impl(Typechecker* ts, const Type* infer) const
 	{
 		auto tree = ts->current();
 
@@ -36,7 +36,7 @@ namespace sap::interp
 		}
 	}
 
-	ErrorOr<EvalResult> Ident::evaluate(Evaluator* ev) const
+	StrErrorOr<EvalResult> Ident::evaluate(Evaluator* ev) const
 	{
 		// this should have been set by typechecking!
 		assert(m_resolved_decl != nullptr);

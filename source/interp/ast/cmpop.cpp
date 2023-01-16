@@ -108,7 +108,7 @@ namespace sap::interp
 
 
 
-	ErrorOr<TCResult> ComparisonOp::typecheck_impl(Typechecker* ts, const Type* infer) const
+	StrErrorOr<TCResult> ComparisonOp::typecheck_impl(Typechecker* ts, const Type* infer) const
 	{
 		assert(not this->rest.empty());
 
@@ -134,7 +134,7 @@ namespace sap::interp
 		return TCResult::ofRValue(Type::makeBool());
 	}
 
-	ErrorOr<EvalResult> ComparisonOp::evaluate(Evaluator* ev) const
+	StrErrorOr<EvalResult> ComparisonOp::evaluate(Evaluator* ev) const
 	{
 		assert(not this->rest.empty());
 

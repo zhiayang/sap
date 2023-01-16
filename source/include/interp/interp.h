@@ -22,7 +22,7 @@ namespace sap::interp
 	struct Interpreter
 	{
 		Interpreter();
-		ErrorOr<EvalResult> run(const Stmt* stmt);
+		StrErrorOr<EvalResult> run(const Stmt* stmt);
 
 		Evaluator& evaluator() { return *m_evaluator; }
 		Typechecker& typechecker() { return *m_typechecker; }

@@ -72,15 +72,15 @@ namespace sap::interp
 			return m_lvalue;
 		}
 
-		static ErrorOr<EvalResult> ofVoid() { return Ok(EvalResult(Normal, {})); }
-		static ErrorOr<EvalResult> ofValue(Value value) { return Ok(EvalResult(Normal, std::move(value))); }
+		static StrErrorOr<EvalResult> ofVoid() { return Ok(EvalResult(Normal, {})); }
+		static StrErrorOr<EvalResult> ofValue(Value value) { return Ok(EvalResult(Normal, std::move(value))); }
 
-		static ErrorOr<EvalResult> ofLoopBreak() { return Ok(EvalResult(LoopBreak, {})); }
-		static ErrorOr<EvalResult> ofLoopContinue() { return Ok(EvalResult(LoopContinue, {})); }
-		static ErrorOr<EvalResult> ofReturnVoid() { return Ok(EvalResult(Return, {})); }
-		static ErrorOr<EvalResult> ofReturnValue(Value value) { return Ok(EvalResult(Return, std::move(value))); }
+		static StrErrorOr<EvalResult> ofLoopBreak() { return Ok(EvalResult(LoopBreak, {})); }
+		static StrErrorOr<EvalResult> ofLoopContinue() { return Ok(EvalResult(LoopContinue, {})); }
+		static StrErrorOr<EvalResult> ofReturnVoid() { return Ok(EvalResult(Return, {})); }
+		static StrErrorOr<EvalResult> ofReturnValue(Value value) { return Ok(EvalResult(Return, std::move(value))); }
 
-		static ErrorOr<EvalResult> ofLValue(Value& lvalue)
+		static StrErrorOr<EvalResult> ofLValue(Value& lvalue)
 		{
 			auto ret = EvalResult(Normal, {});
 			ret.m_lvalue = &lvalue;

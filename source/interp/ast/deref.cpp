@@ -7,7 +7,7 @@
 
 namespace sap::interp
 {
-	ErrorOr<TCResult> DereferenceOp::typecheck_impl(Typechecker* ts, const Type* infer) const
+	StrErrorOr<TCResult> DereferenceOp::typecheck_impl(Typechecker* ts, const Type* infer) const
 	{
 		auto inside = TRY(this->expr->typecheck(ts, infer)).type();
 		if(not inside->isOptional() && not inside->isPointer())
@@ -19,7 +19,7 @@ namespace sap::interp
 			return TCResult::ofLValue(inside->pointerElement(), inside->isMutablePointer());
 	}
 
-	ErrorOr<EvalResult> DereferenceOp::evaluate(Evaluator* ev) const
+	StrErrorOr<EvalResult> DereferenceOp::evaluate(Evaluator* ev) const
 	{
 		auto expr_res = TRY(this->expr->evaluate(ev));
 		assert(expr_res.hasValue());
@@ -50,7 +50,7 @@ namespace sap::interp
 
 
 
-	ErrorOr<TCResult> AddressOfOp::typecheck_impl(Typechecker* ts, const Type* infer) const
+	StrErrorOr<TCResult> AddressOfOp::typecheck_impl(Typechecker* ts, const Type* infer) const
 	{
 		auto inside = TRY(this->expr->typecheck(ts, infer));
 		if(not inside.isLValue())
@@ -62,7 +62,7 @@ namespace sap::interp
 		return TCResult::ofRValue(inside.type()->pointerTo(/* mutable: */ this->is_mutable));
 	}
 
-	ErrorOr<EvalResult> AddressOfOp::evaluate(Evaluator* ev) const
+	StrErrorOr<EvalResult> AddressOfOp::evaluate(Evaluator* ev) const
 	{
 		auto expr_res = TRY(this->expr->evaluate(ev));
 		assert(expr_res.hasValue());

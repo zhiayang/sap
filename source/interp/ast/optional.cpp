@@ -7,7 +7,7 @@
 
 namespace sap::interp
 {
-	ErrorOr<TCResult> OptionalCheckOp::typecheck_impl(Typechecker* ts, const Type* infer) const
+	StrErrorOr<TCResult> OptionalCheckOp::typecheck_impl(Typechecker* ts, const Type* infer) const
 	{
 		auto inside = TRY(this->expr->typecheck(ts, infer));
 		if(not inside.type()->isOptional())
@@ -16,7 +16,7 @@ namespace sap::interp
 		return TCResult::ofRValue(Type::makeBool());
 	}
 
-	ErrorOr<EvalResult> OptionalCheckOp::evaluate(Evaluator* ev) const
+	StrErrorOr<EvalResult> OptionalCheckOp::evaluate(Evaluator* ev) const
 	{
 		auto inside = TRY_VALUE(this->expr->evaluate(ev));
 		assert(inside.isOptional());
@@ -29,7 +29,7 @@ namespace sap::interp
 
 
 
-	ErrorOr<TCResult> NullCoalesceOp::typecheck_impl(Typechecker* ts, const Type* infer) const
+	StrErrorOr<TCResult> NullCoalesceOp::typecheck_impl(Typechecker* ts, const Type* infer) const
 	{
 		auto ltype = TRY(this->lhs->typecheck(ts)).type();
 		auto rtype = TRY(this->rhs->typecheck(ts)).type();
@@ -53,7 +53,7 @@ namespace sap::interp
 		return TCResult::ofRValue(rtype);
 	}
 
-	ErrorOr<EvalResult> NullCoalesceOp::evaluate(Evaluator* ev) const
+	StrErrorOr<EvalResult> NullCoalesceOp::evaluate(Evaluator* ev) const
 	{
 		// short circuit -- don't evaluate rhs eagerly
 		auto lval = TRY_VALUE(this->lhs->evaluate(ev));

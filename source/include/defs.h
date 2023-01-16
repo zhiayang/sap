@@ -17,7 +17,7 @@
 namespace sap
 {
 	template <typename T>
-	using ErrorOr = zst::Result<T, std::string>;
+	using StrErrorOr = zst::Result<T, std::string>;
 
 	using zst::Ok;
 	using zst::Err;
