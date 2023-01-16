@@ -4,6 +4,8 @@
 
 #include "util.h" // for is_one_of
 
+#include "tree/base.h"
+
 #include "interp/ast.h"         // for ComparisonOp, ComparisonOp::Op, Expr
 #include "interp/type.h"        // for Type, ArrayType
 #include "interp/value.h"       // for Value

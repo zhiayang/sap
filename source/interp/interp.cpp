@@ -4,6 +4,8 @@
 
 #include "location.h" // for error
 
+#include "tree/base.h"
+
 #include "interp/ast.h"         // for Definition, makeParamList, Expr, Stmt
 #include "interp/type.h"        // for Type
 #include "interp/interp.h"      // for StackFrame, Interpreter, DefnTree
@@ -21,7 +23,7 @@ namespace sap::interp
 	ErrorOr<EvalResult> Interpreter::run(const Stmt* stmt)
 	{
 		if(auto res = stmt->typecheck(m_typechecker.get()); res.is_err())
-			error(stmt->location, "{}", res.take_error());
+			error(stmt->loc(), "{}", res.take_error());
 
 		return stmt->evaluate(m_evaluator.get());
 	}

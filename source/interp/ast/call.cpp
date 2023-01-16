@@ -142,7 +142,7 @@ namespace sap::interp
 		}
 
 		if(not fn_type->isFunction())
-			error(this->location, "callee of function call must be a function type, got '{}'", fn_type);
+			return ErrFmt("callee of function call must be a function type, got '{}'", fn_type);
 
 		return TCResult::ofRValue(fn_type->toFunction()->returnType());
 	}

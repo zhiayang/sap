@@ -15,6 +15,16 @@ namespace sap
 		uint32_t column;
 		uint32_t length;
 		zst::str_view file;
+
+		static inline Location builtin()
+		{
+			return Location {
+				.line = 0,
+				.column = 0,
+				.length = 1,
+				.file = "builtin",
+			};
+		}
 	};
 
 	template <typename... Args>

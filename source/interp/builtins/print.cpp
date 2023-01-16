@@ -4,6 +4,8 @@
 
 #include "util.h" // for stringFromU32String
 
+#include "tree/base.h"
+
 #include "interp/value.h"       // for Value
 #include "interp/interp.h"      // for Interpreter
 #include "interp/eval_result.h" // for EvalResult

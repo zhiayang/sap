@@ -53,7 +53,7 @@ namespace sap::interp
 				}
 			}
 
-			this->param_defns.push_back(std::make_unique<VariableDefn>(param.name, //
+			this->param_defns.push_back(std::make_unique<VariableDefn>(param.loc, param.name, //
 			    /* mutable: */ false, /* init: */ nullptr, param.type));
 
 			TRY(this->param_defns.back()->typecheck(ts));

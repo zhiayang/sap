@@ -3,7 +3,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #include "sap/style.h"
-
+#include "tree/base.h"
 #include "interp/value.h"
 #include "interp/builtin_types.h"
 
@@ -20,20 +20,27 @@ namespace sap::interp::builtin
 
 	std::vector<EnumDefn::EnumeratorDefn> BE_Alignment::enumerators()
 	{
-		auto make_int = [](int value) {
-			auto ret = std::make_unique<NumberLit>();
+		auto builtin_loc = Location {
+			.line = 0,
+			.column = 0,
+			.length = 1,
+			.file = "builtin",
+		};
+
+		auto make_int = [&builtin_loc](int value) {
+			auto ret = std::make_unique<NumberLit>(builtin_loc);
 			ret->is_floating = false;
 			ret->int_value = value;
 			return ret;
 		};
 
 		using ED = EnumDefn::EnumeratorDefn;
-		return util::vectorOf(                                 //
-		    ED("Left", make_int((int) Alignment::Left)),       //
-		    ED("Right", make_int((int) Alignment::Right)),     //
-		    ED("Centred", make_int((int) Alignment::Centre)),  //
-		    ED("Centered", make_int((int) Alignment::Centre)), //
-		    ED("Justified", make_int((int) Alignment::Justified)));
+		return util::vectorOf(                                              //
+		    ED(builtin_loc, "Left", make_int((int) Alignment::Left)),       //
+		    ED(builtin_loc, "Right", make_int((int) Alignment::Right)),     //
+		    ED(builtin_loc, "Centred", make_int((int) Alignment::Centre)),  //
+		    ED(builtin_loc, "Centered", make_int((int) Alignment::Centre)), //
+		    ED(builtin_loc, "Justified", make_int((int) Alignment::Justified)));
 	}
 
 	Value builtin::BE_Alignment::make(Alignment alignment)

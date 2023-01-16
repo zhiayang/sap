@@ -3,7 +3,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #include "sap/style.h"
-
+#include "tree/base.h"
 #include "interp/value.h"
 #include "interp/builtin_types.h"
 
@@ -17,7 +17,7 @@ namespace sap::interp::builtin
 
 	static auto get_null()
 	{
-		return std::make_unique<NullLit>();
+		return std::make_unique<NullLit>(Location::builtin());
 	}
 
 	template <typename T>

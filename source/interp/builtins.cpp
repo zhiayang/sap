@@ -15,7 +15,7 @@ namespace sap::interp
 	template <typename T>
 	void define_builtin_struct(Interpreter* interp)
 	{
-		auto s = std::make_unique<StructDefn>(T::name, T::fields());
+		auto s = std::make_unique<StructDefn>(Location::builtin(), T::name, T::fields());
 		auto defn = s.get();
 
 		T::type = interp->typechecker().addBuiltinDefinition(std::move(s))->typecheck(&interp->typechecker()).unwrap().type();
@@ -25,7 +25,7 @@ namespace sap::interp
 	template <typename T>
 	void define_builtin_enum(Interpreter* interp)
 	{
-		auto e = std::make_unique<EnumDefn>(T::name, T::enumeratorType(), T::enumerators());
+		auto e = std::make_unique<EnumDefn>(Location::builtin(), T::name, T::enumeratorType(), T::enumerators());
 		auto defn = e.get();
 
 		T::type = interp->typechecker().addBuiltinDefinition(std::move(e))->typecheck(&interp->typechecker()).unwrap().type();
@@ -63,7 +63,7 @@ namespace sap::interp
 		auto t_bstyle = PType::named(builtin::BS_Style::name);
 
 		auto define_builtin = [&](auto&&... xs) {
-			auto ret = std::make_unique<BFD>(std::forward<decltype(xs)>(xs)...);
+			auto ret = std::make_unique<BFD>(Location::builtin(), std::forward<decltype(xs)>(xs)...);
 			ts->addBuiltinDefinition(std::move(ret))->typecheck(ts);
 		};
 
@@ -89,7 +89,11 @@ namespace sap::interp
 		    makeParamList(                               //
 		        Param { .name = "1", .type = t_str },    //
 		        Param { .name = "2", .type = t_length }, //
-		        Param { .name = "3", .type = PType::optional(t_length), .default_value = std::make_unique<interp::NullLit>() }),
+		        Param {
+		            .name = "3",
+		            .type = PType::optional(t_length),
+		            .default_value = std::make_unique<interp::NullLit>(Location::builtin()),
+		        }),
 		    t_tbo, &builtin::load_image);
 
 		define_builtin("push_style",

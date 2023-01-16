@@ -2,6 +2,8 @@
 // Copyright (c) 2022, zhiayang
 // SPDX-License-Identifier: Apache-2.0
 
+#include "tree/base.h"
+
 #include "interp/ast.h"
 #include "interp/typechecker.h"
 
