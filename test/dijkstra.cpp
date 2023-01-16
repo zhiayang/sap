@@ -1,7 +1,7 @@
 #include <numeric>
 #include <ranges>
 
-#include "dijkstra.h"
+#include "misc/dijkstra.h"
 #include "util.h"
 
 namespace test
