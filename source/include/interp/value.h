@@ -114,15 +114,17 @@ namespace sap::interp
 		T get() const;
 
 	private:
-		explicit Value(const Type* type) : m_type(type) { }
+		explicit Value(const Type* type) : m_type(type), m_moved_from(false) { }
 
 		void destroy();
 		void steal_from(Value&& val);
+		void ensure_not_moved_from() const;
 
 		static InlineObjects clone_tios(const InlineObjects& from);
 		static std::unique_ptr<tree::BlockObject> clone_tbos(const tree::BlockObject& from);
 
 		const Type* m_type;
+		bool m_moved_from = false;
 
 		union
 		{

@@ -592,6 +592,12 @@ namespace sap::frontend
 			ret->is_mutable = is_mutable;
 			return ret;
 		}
+		else if(lexer.expect(TT::Asterisk))
+		{
+			auto ret = std::make_unique<interp::MoveExpr>();
+			ret->expr = parse_unary(lexer);
+			return ret;
+		}
 
 		return parse_primary(lexer);
 	}

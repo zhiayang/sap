@@ -273,6 +273,14 @@ namespace sap::interp
 		DynLength length;
 	};
 
+	struct MoveExpr : Expr
+	{
+		virtual ErrorOr<EvalResult> evaluate(Evaluator* ev) const override;
+		virtual ErrorOr<TCResult> typecheck_impl(Typechecker* ts, const Type* infer = nullptr) const override;
+
+		std::unique_ptr<Expr> expr;
+	};
+
 
 
 

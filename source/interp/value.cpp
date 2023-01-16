@@ -19,84 +19,98 @@ namespace sap::interp
 
 	bool Value::getBool() const
 	{
+		this->ensure_not_moved_from();
 		assert(this->isBool());
 		return v_bool;
 	}
 
 	char32_t Value::getChar() const
 	{
+		this->ensure_not_moved_from();
 		assert(this->isChar());
 		return v_char;
 	}
 
 	double Value::getFloating() const
 	{
+		this->ensure_not_moved_from();
 		assert(this->isFloating());
 		return v_floating;
 	}
 
 	int64_t Value::getInteger() const
 	{
+		this->ensure_not_moved_from();
 		assert(this->isInteger());
 		return v_integer;
 	}
 
 	DynLength Value::getLength() const
 	{
+		this->ensure_not_moved_from();
 		assert(this->isLength());
 		return v_length;
 	}
 
 	auto Value::getFunction() const -> FnType
 	{
+		this->ensure_not_moved_from();
 		assert(this->isFunction());
 		return v_function;
 	}
 
 	auto Value::getTreeInlineObj() const -> const InlineObjects&
 	{
+		this->ensure_not_moved_from();
 		assert(this->isTreeInlineObj());
 		return v_inline_obj;
 	}
 
 	auto Value::takeTreeInlineObj() && -> InlineObjects
 	{
+		this->ensure_not_moved_from();
 		assert(this->isTreeInlineObj());
 		return std::move(v_inline_obj);
 	}
 
 	auto Value::getTreeBlockObj() const -> const tree::BlockObject&
 	{
+		this->ensure_not_moved_from();
 		assert(this->isTreeBlockObj());
 		return *v_block_obj;
 	}
 
 	auto Value::takeTreeBlockObj() && -> std::unique_ptr<tree::BlockObject>
 	{
+		this->ensure_not_moved_from();
 		assert(this->isTreeBlockObj());
 		return std::move(v_block_obj);
 	}
 
 	const std::vector<Value>& Value::getArray() const
 	{
+		this->ensure_not_moved_from();
 		assert(this->isArray());
 		return v_array;
 	}
 
 	std::vector<Value> Value::takeArray() &&
 	{
+		this->ensure_not_moved_from();
 		assert(this->isArray());
 		return std::move(v_array);
 	}
 
 	const Value& Value::getEnumerator() const
 	{
+		this->ensure_not_moved_from();
 		assert(this->isEnum());
 		return v_array[0];
 	}
 
 	Value Value::takeEnumerator() &&
 	{
+		this->ensure_not_moved_from();
 		assert(this->isEnum());
 		return std::move(v_array[0]);
 	}
@@ -106,6 +120,7 @@ namespace sap::interp
 
 	std::string Value::getUtf8String() const
 	{
+		this->ensure_not_moved_from();
 		assert(this->isArray());
 
 		std::string ret {};
@@ -123,6 +138,7 @@ namespace sap::interp
 
 	std::u32string Value::getUtf32String() const
 	{
+		this->ensure_not_moved_from();
 		assert(this->isArray());
 
 		std::u32string ret {};
@@ -137,42 +153,49 @@ namespace sap::interp
 
 	Value& Value::getStructField(size_t idx)
 	{
+		this->ensure_not_moved_from();
 		assert(this->isStruct());
 		return v_array[idx];
 	}
 
 	const Value& Value::getStructField(size_t idx) const
 	{
+		this->ensure_not_moved_from();
 		assert(this->isStruct());
 		return v_array[idx];
 	}
 
 	std::vector<Value> Value::takeStructFields() &&
 	{
+		this->ensure_not_moved_from();
 		assert(this->isStruct());
 		return std::move(v_array);
 	}
 
 	const std::vector<Value>& Value::getStructFields() const
 	{
+		this->ensure_not_moved_from();
 		assert(this->isStruct());
 		return v_array;
 	}
 
 	const Value* Value::getPointer() const
 	{
+		this->ensure_not_moved_from();
 		assert(this->isPointer());
 		return v_pointer;
 	}
 
 	Value* Value::getMutablePointer() const
 	{
+		this->ensure_not_moved_from();
 		assert(m_type->isMutablePointer());
 		return const_cast<Value*>(v_pointer);
 	}
 
 	std::optional<const Value*> Value::getOptional() const
 	{
+		this->ensure_not_moved_from();
 		assert(m_type->isOptional());
 		if(v_array.empty())
 			return std::nullopt;
@@ -182,6 +205,7 @@ namespace sap::interp
 
 	std::optional<Value*> Value::getOptional()
 	{
+		this->ensure_not_moved_from();
 		assert(m_type->isOptional());
 		if(v_array.empty())
 			return std::nullopt;
@@ -191,6 +215,7 @@ namespace sap::interp
 
 	std::optional<Value> Value::takeOptional() &&
 	{
+		this->ensure_not_moved_from();
 		assert(m_type->isOptional());
 		if(v_array.empty())
 			return std::nullopt;
@@ -202,6 +227,7 @@ namespace sap::interp
 
 	bool Value::haveOptionalValue() const
 	{
+		this->ensure_not_moved_from();
 		assert(m_type->isOptional());
 		return v_array.size() > 0;
 	}
@@ -210,6 +236,7 @@ namespace sap::interp
 
 	std::u32string Value::toString() const
 	{
+		this->ensure_not_moved_from();
 		if(this->isChar())
 		{
 			return &v_char;
@@ -333,15 +360,16 @@ namespace sap::interp
 		return isBool() || isChar() || isArray() || isInteger() || isFloating() || isLength();
 	}
 
-	Value::Value() : m_type(Type::makeVoid())
+	Value::Value() : m_type(Type::makeVoid()), m_moved_from(false)
 	{
 	}
+
 	Value::~Value()
 	{
 		this->destroy();
 	}
 
-	Value::Value(Value&& val) : m_type(val.m_type)
+	Value::Value(Value&& val) : m_type(val.m_type), m_moved_from(false)
 	{
 		this->steal_from(std::move(val));
 	}
@@ -353,7 +381,16 @@ namespace sap::interp
 
 		this->destroy();
 		this->steal_from(std::move(val));
+
+		m_moved_from = false;
 		return *this;
+	}
+
+	void Value::ensure_not_moved_from() const
+	{
+		// TODO: make this emit location information
+		if(m_moved_from)
+			sap::internal_error("use of moved-from value!");
 	}
 
 
@@ -494,6 +531,8 @@ namespace sap::interp
 
 	Value Value::clone() const
 	{
+		this->ensure_not_moved_from();
+
 		auto val = Value(m_type);
 		if(m_type->isBool())
 		{
@@ -614,6 +653,9 @@ namespace sap::interp
 			new(&v_length) decltype(v_length)(std::move(val.v_length));
 		else
 			assert(false && "unreachable!");
+
+		m_moved_from = false;
+		val.m_moved_from = true;
 	}
 
 	auto Value::clone_tios(const InlineObjects& from) -> InlineObjects
