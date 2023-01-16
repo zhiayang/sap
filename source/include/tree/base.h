@@ -48,7 +48,10 @@ namespace sap::tree
 	{
 		virtual ~DocumentObject() = 0;
 
-		using LayoutFn = layout::LineCursor (*)(interp::Interpreter*, layout::LayoutBase*, layout::LineCursor, const Style*,
+		using LayoutFn = layout::LineCursor (*)(interp::Interpreter*,
+		    layout::LayoutBase*,
+		    layout::LineCursor,
+		    const Style*,
 		    const tree::DocumentObject*);
 
 		virtual std::optional<LayoutFn> getLayoutFunction() const = 0;
@@ -63,8 +66,12 @@ namespace sap::tree
 		Size2d m_size { 0, 0 };
 	};
 
-	struct BlockObject : DocumentObject
+	struct BlockObject : Stylable, DocumentObject
 	{
+		Size2d size() const { return m_size; }
+
+	protected:
+		Size2d m_size { 0, 0 };
 	};
 
 	/*

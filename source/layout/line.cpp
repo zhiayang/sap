@@ -15,7 +15,6 @@ namespace sap::layout
 
 	struct LineMetrics
 	{
-		sap::Length total_width;
 		sap::Length total_space_width;
 		sap::Length total_word_width;
 		std::vector<sap::Length> widths;
@@ -105,8 +104,6 @@ namespace sap::layout
 
 				ret.widths.push_back(it->get()->size().x());
 			}
-
-			ret.total_width += ret.widths.back();
 		}
 
 		ret.total_word_width += word_chunk.width;
@@ -114,13 +111,15 @@ namespace sap::layout
 	}
 
 
-	Line::Line(RelativePos pos, Size2d size, std::vector<std::unique_ptr<LayoutObject>> objs)
+	Line::Line(RelativePos pos, Size2d size, const Style* style, std::vector<std::unique_ptr<LayoutObject>> objs)
 	    : LayoutObject(pos, size)
 	    , m_objects(std::move(objs))
 	{
+		this->setStyle(style);
 	}
 
-	std::unique_ptr<Line> Line::fromInlineObjects(LineCursor cursor,
+	std::unique_ptr<Line> Line::fromInlineObjects(interp::Interpreter* cs,
+	    LineCursor cursor,
 	    const linebreak::BrokenLine& broken_line,
 	    const Style* style,
 	    std::span<const std::unique_ptr<tree::InlineObject>> objs)
@@ -131,12 +130,26 @@ namespace sap::layout
 		auto line_metrics = compute_line_metrics(objs, style);
 		auto line_height = line_metrics.line_height;
 
+		auto total_width = line_metrics.total_word_width + line_metrics.total_space_width;
+
 		auto desired_space_width = cursor.widthAtCursor() - line_metrics.total_word_width;
 		double space_width_factor = desired_space_width / line_metrics.total_space_width;
 
 		const Style* prev_word_style = Style::empty();
 
 		std::vector<std::unique_ptr<LayoutObject>> layout_objects {};
+
+		if(style->alignment() == Alignment::Centre)
+		{
+			auto left_offset = (cursor.widthAtCursor() - total_width) / 2;
+			cursor = cursor.moveRight(left_offset);
+		}
+		else if(style->alignment() == Alignment::Right)
+		{
+			auto left_offset = cursor.widthAtCursor() - total_width;
+			cursor = cursor.moveRight(left_offset);
+		}
+
 
 		for(size_t i = 0; i < objs.size(); i++)
 		{
@@ -161,7 +174,10 @@ namespace sap::layout
 				prev_word_style = sep->style();
 				layout_objects.push_back(std::move(sep));
 
-				cursor = cursor.moveRight(obj_width * space_width_factor);
+				if(style->alignment() == Alignment::Justified)
+					cursor = cursor.moveRight(obj_width * space_width_factor);
+				else
+					cursor = cursor.moveRight(obj_width);
 			}
 			else
 			{
@@ -169,9 +185,62 @@ namespace sap::layout
 			}
 		}
 
-		return std::unique_ptr<Line>(new Line(start_position, Size2d(line_metrics.total_width, line_metrics.line_height),
+		return std::unique_ptr<Line>(new Line(start_position, Size2d(total_width, line_metrics.line_height), style,
 		    std::move(layout_objects)));
 	}
+
+	std::unique_ptr<Line> Line::fromBlockObjects(interp::Interpreter* cs,
+	    LayoutBase* layout,
+	    LineCursor cursor,
+	    const Style* style,
+	    std::span<const std::unique_ptr<tree::BlockObject>> objs)
+	{
+		cursor = cursor.newLine(0);
+		auto start_position = cursor.position();
+
+		auto tallest_obj = std::max_element(objs.begin(), objs.end(), [](auto& a, auto& b) {
+			return a->size().y() < b->size().y();
+		});
+
+		auto line_height = (*tallest_obj).get()->size().y();
+		auto total_width = std::accumulate(objs.begin(), objs.end(), Length(0), [](Length a, const auto& b) {
+			return a + b->size().x();
+		});
+
+		std::vector<std::unique_ptr<LayoutObject>> layout_objects {};
+		if(style->alignment() == Alignment::Centre)
+		{
+			auto left_offset = (cursor.widthAtCursor() - total_width) / 2;
+			cursor = cursor.moveRight(left_offset);
+		}
+		else if(style->alignment() == Alignment::Right)
+		{
+			auto left_offset = cursor.widthAtCursor() - total_width;
+			cursor = cursor.moveRight(left_offset);
+		}
+
+
+		for(size_t i = 0; i < objs.size(); i++)
+		{
+			auto obj_width = objs[i]->size().x();
+			auto new_cursor = cursor.moveRight(obj_width);
+
+			auto layout_fn = objs[i]->getLayoutFunction();
+			if(not layout_fn.has_value())
+			{
+				cursor = std::move(new_cursor);
+				continue;
+			}
+
+			(void) (*layout_fn)(cs, layout, cursor, style, objs[i].get());
+		}
+
+		return std::unique_ptr<Line>(new Line(start_position, Size2d(total_width, line_height), style,
+		    std::move(layout_objects)));
+	}
+
+
+
 
 	void Line::render(const LayoutBase* layout, std::vector<pdf::Page*>& pages) const
 	{

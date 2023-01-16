@@ -18,8 +18,9 @@
 
 namespace sap::tree
 {
-	Image::Image(OwnedImageBitmap image, sap::Vector2 size) : m_image(std::move(image)), m_size(size)
+	Image::Image(OwnedImageBitmap image, sap::Vector2 size) : m_image(std::move(image))
 	{
+		m_size = size;
 	}
 
 	// TODO: make ErrorOr<>

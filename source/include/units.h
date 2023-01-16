@@ -105,7 +105,11 @@ namespace dim
 		static_assert(scale_factor != 0);
 
 		constexpr Scalar() : _x(0) { }
-		constexpr explicit Scalar(value_type x) : _x(x) { }
+
+		template <std::convertible_to<value_type> T>
+		constexpr explicit Scalar(T x) : _x(x)
+		{
+		}
 
 		constexpr Scalar(self_type&&) = default;
 		constexpr Scalar(const self_type&) = default;

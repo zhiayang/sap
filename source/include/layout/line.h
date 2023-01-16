@@ -10,6 +10,7 @@
 
 namespace sap::tree
 {
+	struct BlockObject;
 	struct InlineObject;
 }
 
@@ -24,11 +25,20 @@ namespace sap::layout
 	{
 		virtual void render(const LayoutBase* layout, std::vector<pdf::Page*>& pages) const override;
 
-		static std::unique_ptr<Line> fromInlineObjects(LineCursor cursor, const linebreak::BrokenLine& broken_line,
-		    const Style* style, std::span<const std::unique_ptr<tree::InlineObject>> objs);
+		static std::unique_ptr<Line> fromInlineObjects(interp::Interpreter* cs,
+		    LineCursor cursor,
+		    const linebreak::BrokenLine& broken_line,
+		    const Style* style,
+		    std::span<const std::unique_ptr<tree::InlineObject>> objs);
+
+		static std::unique_ptr<Line> fromBlockObjects(interp::Interpreter* cs,
+		    LayoutBase* layout,
+		    LineCursor cursor,
+		    const Style* style,
+		    std::span<const std::unique_ptr<tree::BlockObject>> objs);
 
 	private:
-		explicit Line(RelativePos position, Size2d size, std::vector<std::unique_ptr<LayoutObject>> objs);
+		explicit Line(RelativePos position, Size2d size, const Style* style, std::vector<std::unique_ptr<LayoutObject>> objs);
 
 	private:
 		std::vector<std::unique_ptr<LayoutObject>> m_objects;

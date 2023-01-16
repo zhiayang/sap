@@ -8,8 +8,11 @@
 
 namespace sap::tree
 {
-	layout::LineCursor BlockContainer::layout_fn(interp::Interpreter* cs, layout::LayoutBase* layout, layout::LineCursor cursor,
-	    const Style* style, const DocumentObject* obj_)
+	layout::LineCursor BlockContainer::layout_fn(interp::Interpreter* cs,
+	    layout::LayoutBase* layout,
+	    layout::LineCursor cursor,
+	    const Style* style,
+	    const DocumentObject* obj_)
 	{
 		auto container = static_cast<BlockContainer*>(const_cast<DocumentObject*>(obj_));
 		for(auto& obj : container->contents())

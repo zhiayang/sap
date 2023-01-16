@@ -14,14 +14,13 @@ namespace sap::tree
 
 		virtual std::optional<LayoutFn> getLayoutFunction() const override;
 
-		static std::unique_ptr<Image> fromImageFile(zst::str_view file_path, sap::Length width,
+		static std::unique_ptr<Image> fromImageFile(zst::str_view file_path,
+		    sap::Length width,
 		    std::optional<sap::Length> height = std::nullopt);
 
 		ImageBitmap image() const { return m_image.span(); }
-		sap::Vector2 size() const { return m_size; }
 
 	private:
 		OwnedImageBitmap m_image;
-		sap::Vector2 m_size;
 	};
 }

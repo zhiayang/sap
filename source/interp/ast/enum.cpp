@@ -122,10 +122,11 @@ namespace sap::interp
 
 	ErrorOr<EvalResult> EnumDefn::EnumeratorDefn::evaluate(Evaluator* ev, int64_t* prev_value) const
 	{
+		auto et = this->get_type()->toEnum();
 		if(m_value == nullptr)
 		{
-			assert(this->get_type()->toEnum()->elementType()->isInteger());
-			ev->frame().setValue(this, Value::enumerator(this->get_type()->toEnum(), Value::integer(++(*prev_value))));
+			assert(et->elementType()->isInteger());
+			ev->frame().setValue(this, Value::enumerator(et, Value::integer(++(*prev_value))));
 		}
 		else
 		{
@@ -133,7 +134,7 @@ namespace sap::interp
 			if(tmp.isInteger())
 				(*prev_value) = tmp.getInteger();
 
-			auto value = ev->castValue(std::move(tmp), this->get_type());
+			auto value = Value::enumerator(et, ev->castValue(std::move(tmp), et->elementType()));
 			ev->frame().setValue(this, std::move(value));
 		}
 

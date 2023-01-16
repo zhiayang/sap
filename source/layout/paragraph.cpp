@@ -25,7 +25,10 @@
 
 namespace sap::layout
 {
-	LineCursor Paragraph::fromTree(interp::Interpreter* cs, LayoutBase* layout, LineCursor cursor, const Style* parent_style,
+	LineCursor Paragraph::fromTree(interp::Interpreter* cs,
+	    LayoutBase* layout,
+	    LineCursor cursor,
+	    const Style* parent_style,
 	    const tree::DocumentObject* doc_obj)
 	{
 		auto treepara = static_cast<const tree::Paragraph*>(doc_obj);
@@ -63,7 +66,7 @@ namespace sap::layout
 
 			cursor = cursor.newLine(broken_line.lineHeight());
 
-			auto layout_line = Line::fromInlineObjects(cursor, broken_line, parent_style, std::span(words_begin, words_end));
+			auto layout_line = Line::fromInlineObjects(cs, cursor, broken_line, parent_style, std::span(words_begin, words_end));
 			para_size.x() = std::max(para_size.x(), layout_line->layoutSize().x());
 			para_size.y() += layout_line->layoutSize().y();
 

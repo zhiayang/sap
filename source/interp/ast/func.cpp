@@ -16,8 +16,11 @@ namespace sap::interp
 		for(auto& param : m_params)
 			param_types.push_back(TRY(ts->resolveType(param.type)));
 
+		auto fn_type = Type::makeFunction(std::move(param_types), TRY(ts->resolveType(m_return_type)));
+		m_tc_result = TCResult::ofRValue(fn_type).unwrap();
+
 		TRY(ts->current()->declare(this));
-		return TCResult::ofRValue(Type::makeFunction(std::move(param_types), TRY(ts->resolveType(m_return_type))));
+		return Ok(*m_tc_result);
 	}
 
 	ErrorOr<TCResult> BuiltinFunctionDefn::typecheck_impl(Typechecker* ts, const Type* infer) const

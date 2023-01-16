@@ -7,12 +7,9 @@
 
 namespace sap::interp
 {
-	extern void defineBuiltins(Typechecker* cs, DefnTree* builtin_ns);
-
 	Typechecker::Typechecker() : m_top(new DefnTree("__top_level", /* parent: */ nullptr))
 	{
 		this->pushTree(m_top.get()).cancel();
-		defineBuiltins(this, m_top->lookupOrDeclareNamespace("builtin"));
 	}
 
 	DefnTree* Typechecker::top()
@@ -117,6 +114,9 @@ namespace sap::interp
 
 			if(auto struct_decl = dynamic_cast<const StructDecl*>(decl[0]); struct_decl)
 				return Ok(struct_decl->get_type());
+
+			else if(auto enum_decl = dynamic_cast<const EnumDecl*>(decl[0]); enum_decl)
+				return Ok(enum_decl->get_type());
 		}
 		else if(ptype.isArray())
 		{

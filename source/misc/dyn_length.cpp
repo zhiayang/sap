@@ -23,7 +23,8 @@ namespace sap
 		{
 			case EX: {
 				auto x_height = font->getFontMetrics().x_height;
-				return font->scaleMetricForFontSize(font::FontScalar(x_height == 0 ? 400 : x_height), font_size.into()).into();
+				return font->scaleMetricForFontSize(font::FontScalar(x_height == 0.0 ? 400.0 : x_height), font_size.into())
+				    .into();
 			}
 
 			case EM:

@@ -15,7 +15,10 @@ namespace sap::layout
 	{
 	}
 
-	LineCursor Image::fromTree(interp::Interpreter* cs, LayoutBase* layout, LineCursor cursor, const Style* parent_style,
+	LineCursor Image::fromTree(interp::Interpreter* cs,
+	    LayoutBase* layout,
+	    LineCursor cursor,
+	    const Style* parent_style,
 	    const tree::DocumentObject* doc_obj)
 	{
 		cursor = cursor.newLine(0);

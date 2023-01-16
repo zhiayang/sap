@@ -49,6 +49,13 @@ namespace sap::interp::builtin
 
 			return EvalResult::ofValue(Value::treeInlineObject(std::move(tios)));
 		}
+		else if(value.isTreeBlockObj())
+		{
+			auto tbo = std::move(value).takeTreeBlockObj();
+			tbo->setStyle(style);
+
+			return EvalResult::ofValue(Value::treeBlockObject(std::move(tbo)));
+		}
 		else
 		{
 			auto word = std::make_unique<tree::Text>(value.toString());
@@ -61,12 +68,20 @@ namespace sap::interp::builtin
 		}
 	}
 
-	ErrorOr<EvalResult> apply_style(Evaluator* ev, std::vector<Value>& args)
+	ErrorOr<EvalResult> apply_style_tio(Evaluator* ev, std::vector<Value>& args)
 	{
 		assert(args.size() == 2);
-		assert(args[0].type() == BStyle::type);
+		assert(args[0].type() == BS_Style::type);
 
-		return do_apply_style(ev, args[1], BStyle::unmake(args[0]));
+		return do_apply_style(ev, args[1], BS_Style::unmake(args[0]));
+	}
+
+	ErrorOr<EvalResult> apply_style_tbo(Evaluator* ev, std::vector<Value>& args)
+	{
+		assert(args.size() == 2);
+		assert(args[0].type() == BS_Style::type);
+
+		return do_apply_style(ev, args[1], BS_Style::unmake(args[0]));
 	}
 
 
@@ -97,14 +112,14 @@ namespace sap::interp::builtin
 		assert(args.size() == 0);
 		auto style = TRY(ev->currentStyle());
 
-		return EvalResult::ofValue(BStyle::make(style));
+		return EvalResult::ofValue(BS_Style::make(style));
 	}
 
 	ErrorOr<EvalResult> push_style(Evaluator* ev, std::vector<Value>& args)
 	{
 		assert(args.size() == 1);
 
-		ev->pushStyle(BStyle::unmake(args[0]));
+		ev->pushStyle(BS_Style::unmake(args[0]));
 		return EvalResult::ofVoid();
 	}
 
@@ -113,7 +128,7 @@ namespace sap::interp::builtin
 		assert(args.size() == 0);
 		auto ret = TRY(ev->popStyle());
 
-		return EvalResult::ofValue(BStyle::make(ret));
+		return EvalResult::ofValue(BS_Style::make(ret));
 	}
 
 

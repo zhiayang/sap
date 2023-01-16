@@ -12,6 +12,8 @@
 namespace sap
 {
 	struct Style;
+	enum class Alignment;
+
 	namespace interp
 	{
 		struct Value;
@@ -20,7 +22,10 @@ namespace sap
 
 namespace sap::interp::builtin
 {
-	struct BStyle
+	// BS: builtin struct
+	// BE: builtin enum
+
+	struct BS_Style
 	{
 		static constexpr auto name = "Style";
 
@@ -31,6 +36,18 @@ namespace sap::interp::builtin
 		static const Style* unmake(const Value& value);
 	};
 
+	struct BE_Alignment
+	{
+		static constexpr auto name = "Alignment";
+
+		static const Type* type;
+
+		static frontend::PType enumeratorType();
+		static std::vector<EnumDefn::EnumeratorDefn> enumerators();
+
+		static Value make(Alignment alignment);
+		static Alignment unmake(const Value& value);
+	};
 
 	// o no builder pattern
 	struct StructMaker

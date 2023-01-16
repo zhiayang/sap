@@ -11,10 +11,11 @@
 
 namespace sap::interp
 {
-	extern void defineBuiltins(Interpreter* cs, DefnTree* builtin_ns);
+	extern void defineBuiltins(Interpreter* interp, DefnTree* builtin_ns);
 
 	Interpreter::Interpreter() : m_typechecker(new Typechecker()), m_evaluator(new Evaluator())
 	{
+		defineBuiltins(this, m_typechecker->top()->lookupOrDeclareNamespace("builtin"));
 	}
 
 	ErrorOr<EvalResult> Interpreter::run(const Stmt* stmt)
