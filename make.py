@@ -445,10 +445,10 @@ def main():
                 shell(f"mkdir -p {opt.OUTPUT_DIR}")
                 for i in range(num_lib_objs):
                     shell(
-                        f"objconv -fELF {opt.OUTPUT_DIR}/{i}.o {opt.OUTPUT_DIR}/{i}.o.elf"
+                        f"objconv -felf64 {opt.OUTPUT_DIR}/{i}.o {opt.OUTPUT_DIR}/{i}.o.elf"
                     )
                 if os.path.isfile(opt.SAP_LIB):
-                    shell(f"objconv -fELF {opt.SAP_LIB} {opt.SAP_LIB}.elf")
+                    shell(f"objconv -felf64 {opt.SAP_LIB} {opt.SAP_LIB}.elf")
 
                 cmd = f"{opt.LLD} --allow-multiple-definition -r -o {opt.SAP_LIB}.merged --start-group"
                 for i in range(num_lib_objs):
@@ -461,9 +461,9 @@ def main():
                 shell(f"llvm-objcopy --weaken {opt.SAP_LIB}.merged {opt.SAP_LIB}.weak")
 
                 if opt.UNAME_IDENT == "Darwin":
-                    shell(f"objconv -fMACHO {opt.SAP_LIB}.weak {opt.SAP_LIB}.new")
+                    shell(f"objconv -fmac64 {opt.SAP_LIB}.weak {opt.SAP_LIB}.new")
                 else:
-                    shell(f"objconv -fELF {opt.SAP_LIB}.weak {opt.SAP_LIB}.new")
+                    shell(f"objconv -felf64 {opt.SAP_LIB}.weak {opt.SAP_LIB}.new")
 
         return job
 
@@ -479,7 +479,6 @@ def main():
                     *opt.WERROR,
                     *opt.DEFINES,
                     *opt.LDFLAGS,
-                    "-Wl,--allow-multiple-definition",
                     "-o",
                     opt.OUTPUT_BIN,
                     *[f"{opt.OUTPUT_DIR}/{i}.o" for i in range(num_lib_objs)],
@@ -552,18 +551,16 @@ def main():
             run_jobs([link_new_sap_lib_job(num_lib_objs)]) if obj_threads else []
         )
         join_jobs(lib_threads)
-        if not os.path.isfile(opt.SAP_LIB):
-            join_jobs(sap_lib_threads)
+        join_jobs(sap_lib_threads)
+        if sap_lib_threads and os.path.isfile(opt.SAP_LIB + ".new"):
             shell(f"mv {opt.SAP_LIB}.new {opt.SAP_LIB}")
         sap_threads = (
-            run_jobs([link_sap_job(num_lib_objs)]) if lib_threads or obj_threads else []
+            run_jobs([link_sap_job(0)]) if lib_threads or obj_threads else []
         )
         if obj_threads:
             log("compile_commands.json")
             shell("make compile_commands.json")
         join_jobs(sap_lib_threads)
-        if sap_lib_threads and os.path.isfile(opt.SAP_LIB + ".new"):
-            shell(f"mv {opt.SAP_LIB}.new {opt.SAP_LIB}")
         join_jobs(gch_threads)
         join_jobs(sap_threads)
         join_jobs(dep_threads)
