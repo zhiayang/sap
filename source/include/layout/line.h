@@ -29,7 +29,8 @@ namespace sap::layout
 		    LineCursor cursor,
 		    const linebreak::BrokenLine& broken_line,
 		    const Style* style,
-		    std::span<const std::unique_ptr<tree::InlineObject>> objs);
+		    std::span<const std::unique_ptr<tree::InlineObject>> objs,
+		    bool is_last_line);
 
 		static std::pair<LineCursor, std::unique_ptr<Line>> fromBlockObjects(interp::Interpreter* cs,
 		    LineCursor cursor,

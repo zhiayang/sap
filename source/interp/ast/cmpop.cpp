@@ -134,7 +134,7 @@ namespace sap::interp
 		return TCResult::ofRValue(Type::makeBool());
 	}
 
-	ErrorOr<EvalResult> ComparisonOp::evaluate(Evaluator* ev) const
+	ErrorOr<EvalResult> ComparisonOp::evaluate_impl(Evaluator* ev) const
 	{
 		assert(not this->rest.empty());
 

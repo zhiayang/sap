@@ -64,7 +64,7 @@ namespace sap::interp
 		return TCResult::ofRValue(Type::makeTreeInlineObj());
 	}
 
-	ErrorOr<EvalResult> TreeInlineExpr::evaluate(Evaluator* ev) const
+	ErrorOr<EvalResult> TreeInlineExpr::evaluate_impl(Evaluator* ev) const
 	{
 		auto tios = TRY(evaluate_list_of_tios(ev, this->objects));
 		return EvalResult::ofValue(Value::treeInlineObject(std::move(tios)));
@@ -146,7 +146,7 @@ namespace sap::interp
 		return TCResult::ofRValue(Type::makeTreeBlockObj());
 	}
 
-	ErrorOr<EvalResult> TreeBlockExpr::evaluate(Evaluator* ev) const
+	ErrorOr<EvalResult> TreeBlockExpr::evaluate_impl(Evaluator* ev) const
 	{
 		return evaluate_block_obj(ev, this->object.get());
 	}

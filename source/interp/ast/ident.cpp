@@ -36,7 +36,7 @@ namespace sap::interp
 		}
 	}
 
-	ErrorOr<EvalResult> Ident::evaluate(Evaluator* ev) const
+	ErrorOr<EvalResult> Ident::evaluate_impl(Evaluator* ev) const
 	{
 		// this should have been set by typechecking!
 		assert(m_resolved_decl != nullptr);

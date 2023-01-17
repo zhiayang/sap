@@ -150,7 +150,7 @@ namespace sap::interp
 	}
 
 
-	ErrorOr<EvalResult> FunctionCall::evaluate(Evaluator* ev) const
+	ErrorOr<EvalResult> FunctionCall::evaluate_impl(Evaluator* ev) const
 	{
 		// TODO: maybe do this only once (instead of twice, once while typechecking and one for eval)
 		// again, if this is an identifier, we do the separate thing.

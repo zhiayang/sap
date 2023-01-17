@@ -21,7 +21,7 @@ namespace sap::interp
 		return TCResult::ofLValue(infer, this->is_mutable);
 	}
 
-	ErrorOr<EvalResult> VariableDecl::evaluate(Evaluator* ev) const
+	ErrorOr<EvalResult> VariableDecl::evaluate_impl(Evaluator* ev) const
 	{
 		// this does nothing
 		return EvalResult::ofVoid();
@@ -68,7 +68,7 @@ namespace sap::interp
 		return this->declaration->typecheck(ts, the_type.type());
 	}
 
-	ErrorOr<EvalResult> VariableDefn::evaluate(Evaluator* ev) const
+	ErrorOr<EvalResult> VariableDefn::evaluate_impl(Evaluator* ev) const
 	{
 		if(this->initialiser != nullptr)
 		{

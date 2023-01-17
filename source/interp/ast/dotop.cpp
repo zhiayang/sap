@@ -52,7 +52,7 @@ namespace sap::interp
 		}
 	}
 
-	ErrorOr<EvalResult> DotOp::evaluate(Evaluator* ev) const
+	ErrorOr<EvalResult> DotOp::evaluate_impl(Evaluator* ev) const
 	{
 		assert(m_struct_type->hasFieldNamed(this->rhs));
 		auto field_idx = m_struct_type->getFieldIndex(this->rhs);

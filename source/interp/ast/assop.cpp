@@ -57,7 +57,7 @@ namespace sap::interp
 			return ErrMsg(ts, "unsupported operation '{}' between types '{}' and '{}'", op_to_string(this->op), ltype, rtype);
 	}
 
-	ErrorOr<EvalResult> AssignOp::evaluate(Evaluator* ev) const
+	ErrorOr<EvalResult> AssignOp::evaluate_impl(Evaluator* ev) const
 	{
 		auto lval_result = TRY(this->lhs->evaluate(ev));
 

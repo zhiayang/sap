@@ -16,7 +16,7 @@ namespace sap::interp
 		return TCResult::ofRValue(ret.type());
 	}
 
-	ErrorOr<EvalResult> MoveExpr::evaluate(Evaluator* ev) const
+	ErrorOr<EvalResult> MoveExpr::evaluate_impl(Evaluator* ev) const
 	{
 		auto inside = TRY(this->expr->evaluate(ev));
 		if(not inside.isLValue())

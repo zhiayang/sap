@@ -21,7 +21,7 @@ namespace sap::interp
 		return TCResult::ofVoid();
 	}
 
-	ErrorOr<EvalResult> IfStmt::evaluate(Evaluator* ev) const
+	ErrorOr<EvalResult> IfStmt::evaluate_impl(Evaluator* ev) const
 	{
 		auto cond = TRY_VALUE(this->if_cond->evaluate(ev));
 		cond = ev->castValue(std::move(cond), Type::makeBool());

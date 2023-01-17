@@ -14,6 +14,7 @@ namespace sap
 		uint32_t line;
 		uint32_t column;
 		uint32_t length;
+		size_t byte_offset;
 		zst::str_view file;
 
 		static inline Location builtin()

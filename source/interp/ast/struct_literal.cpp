@@ -68,7 +68,7 @@ namespace sap::interp
 		return TCResult::ofRValue(struct_type);
 	}
 
-	ErrorOr<EvalResult> StructLit::evaluate(Evaluator* ev) const
+	ErrorOr<EvalResult> StructLit::evaluate_impl(Evaluator* ev) const
 	{
 		assert(this->get_type()->isStruct());
 		auto struct_type = this->get_type()->toStruct();

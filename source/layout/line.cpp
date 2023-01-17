@@ -122,7 +122,8 @@ namespace sap::layout
 	    LineCursor cursor,
 	    const linebreak::BrokenLine& broken_line,
 	    const Style* style,
-	    std::span<const std::unique_ptr<tree::InlineObject>> objs)
+	    std::span<const std::unique_ptr<tree::InlineObject>> objs,
+	    bool is_last_line)
 	{
 		cursor = cursor.newLine(0);
 		auto start_position = cursor.position();
@@ -175,9 +176,24 @@ namespace sap::layout
 				layout_objects.push_back(std::move(sep));
 
 				if(style->alignment() == Alignment::Justified)
-					cursor = cursor.moveRight(obj_width * space_width_factor);
+				{
+					auto justified_shift = obj_width * space_width_factor;
+					if(is_last_line)
+					{
+						if(0.95 <= space_width_factor && space_width_factor <= 1.05)
+							cursor = cursor.moveRight(justified_shift);
+						else
+							cursor = cursor.moveRight(obj_width);
+					}
+					else
+					{
+						cursor = cursor.moveRight(justified_shift);
+					}
+				}
 				else
+				{
 					cursor = cursor.moveRight(obj_width);
+				}
 			}
 			else
 			{

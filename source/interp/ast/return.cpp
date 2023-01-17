@@ -25,7 +25,7 @@ namespace sap::interp
 		return TCResult::ofVoid();
 	}
 
-	ErrorOr<EvalResult> ReturnStmt::evaluate(Evaluator* ev) const
+	ErrorOr<EvalResult> ReturnStmt::evaluate_impl(Evaluator* ev) const
 	{
 		if(this->expr == nullptr)
 			return EvalResult::ofReturnVoid();

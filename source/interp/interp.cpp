@@ -28,4 +28,21 @@ namespace sap::interp
 		TRY(stmt->typecheck(m_typechecker.get()));
 		return stmt->evaluate(m_evaluator.get());
 	}
+
+
+	ErrorOr<EvalResult> Stmt::evaluate(Evaluator* ev) const
+	{
+		auto _ = ev->pushLocation(m_location);
+		return this->evaluate_impl(ev);
+	}
+
+	ErrorOr<TCResult> Stmt::typecheck(Typechecker* ts, const Type* infer) const
+	{
+		auto _ = ts->pushLocation(m_location);
+
+		if(not m_tc_result.has_value())
+			m_tc_result = TRY(this->typecheck_impl(ts, infer));
+
+		return Ok(*m_tc_result);
+	}
 }

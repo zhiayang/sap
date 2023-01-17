@@ -81,18 +81,18 @@ namespace sap::interp
 
 
 
-	ErrorOr<EvalResult> EnumDecl::evaluate(Evaluator* ev) const
+	ErrorOr<EvalResult> EnumDecl::evaluate_impl(Evaluator* ev) const
 	{
 		return EvalResult::ofVoid();
 	}
 
-	ErrorOr<EvalResult> EnumDefn::evaluate(Evaluator* ev) const
+	ErrorOr<EvalResult> EnumDefn::evaluate_impl(Evaluator* ev) const
 	{
 		if(m_resolved_enumerator_type->elementType()->isInteger())
 		{
 			int64_t prev_value = -1;
 			for(auto& e : m_enumerators)
-				TRY(e.evaluate(ev, &prev_value));
+				TRY(e.evaluate_impl(ev, &prev_value));
 		}
 		else
 		{
@@ -105,12 +105,12 @@ namespace sap::interp
 
 
 
-	ErrorOr<EvalResult> EnumDefn::EnumeratorDecl::evaluate(Evaluator* ev) const
+	ErrorOr<EvalResult> EnumDefn::EnumeratorDecl::evaluate_impl(Evaluator* ev) const
 	{
 		return EvalResult::ofVoid();
 	}
 
-	ErrorOr<EvalResult> EnumDefn::EnumeratorDefn::evaluate(Evaluator* ev) const
+	ErrorOr<EvalResult> EnumDefn::EnumeratorDefn::evaluate_impl(Evaluator* ev) const
 	{
 		assert(m_value != nullptr);
 
@@ -120,7 +120,7 @@ namespace sap::interp
 		return EvalResult::ofVoid();
 	}
 
-	ErrorOr<EvalResult> EnumDefn::EnumeratorDefn::evaluate(Evaluator* ev, int64_t* prev_value) const
+	ErrorOr<EvalResult> EnumDefn::EnumeratorDefn::evaluate_impl(Evaluator* ev, int64_t* prev_value) const
 	{
 		auto et = this->get_type()->toEnum();
 		if(m_value == nullptr)

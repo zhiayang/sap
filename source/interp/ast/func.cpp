@@ -95,17 +95,17 @@ namespace sap::interp
 
 
 	// evaluating these don't do anything
-	ErrorOr<EvalResult> FunctionDefn::evaluate(Evaluator* ev) const
+	ErrorOr<EvalResult> FunctionDefn::evaluate_impl(Evaluator* ev) const
 	{
 		return EvalResult::ofVoid();
 	}
 
-	ErrorOr<EvalResult> FunctionDecl::evaluate(Evaluator* ev) const
+	ErrorOr<EvalResult> FunctionDecl::evaluate_impl(Evaluator* ev) const
 	{
 		return EvalResult::ofVoid();
 	}
 
-	ErrorOr<EvalResult> BuiltinFunctionDefn::evaluate(Evaluator* ev) const
+	ErrorOr<EvalResult> BuiltinFunctionDefn::evaluate_impl(Evaluator* ev) const
 	{
 		return EvalResult::ofVoid();
 	}

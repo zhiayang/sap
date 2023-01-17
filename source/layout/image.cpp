@@ -18,8 +18,6 @@ namespace sap::layout
 	void Image::render(const LayoutBase* layout, std::vector<pdf::Page*>& pages) const
 	{
 		auto pos = layout->convertPosition(m_layout_position);
-		zpr::println("img pos = {}", pos.pos);
-
 		auto page = pages[pos.page_num];
 
 		auto page_obj = util::make<pdf::Image>( //

@@ -14,7 +14,7 @@ namespace sap::interp
 		return TCResult::ofRValue(Type::makeLength());
 	}
 
-	ErrorOr<EvalResult> LengthExpr::evaluate(Evaluator* ev) const
+	ErrorOr<EvalResult> LengthExpr::evaluate_impl(Evaluator* ev) const
 	{
 		return EvalResult::ofValue(Value::length(this->length));
 	}
@@ -30,7 +30,7 @@ namespace sap::interp
 			return TCResult::ofRValue(Type::makeInteger());
 	}
 
-	ErrorOr<EvalResult> NumberLit::evaluate(Evaluator* ev) const
+	ErrorOr<EvalResult> NumberLit::evaluate_impl(Evaluator* ev) const
 	{
 		if(this->is_floating)
 			return EvalResult::ofValue(Value::floating(float_value));
@@ -43,7 +43,7 @@ namespace sap::interp
 		return TCResult::ofRValue(Type::makeString());
 	}
 
-	ErrorOr<EvalResult> StringLit::evaluate(Evaluator* ev) const
+	ErrorOr<EvalResult> StringLit::evaluate_impl(Evaluator* ev) const
 	{
 		return EvalResult::ofValue(Value::string(this->string));
 	}
@@ -55,7 +55,7 @@ namespace sap::interp
 		return TCResult::ofRValue(Type::makeNullPtr());
 	}
 
-	ErrorOr<EvalResult> NullLit::evaluate(Evaluator* ev) const
+	ErrorOr<EvalResult> NullLit::evaluate_impl(Evaluator* ev) const
 	{
 		return EvalResult::ofValue(Value::nullPointer());
 	}

@@ -16,7 +16,7 @@ namespace sap::interp
 		return TCResult::ofRValue(Type::makeBool());
 	}
 
-	ErrorOr<EvalResult> OptionalCheckOp::evaluate(Evaluator* ev) const
+	ErrorOr<EvalResult> OptionalCheckOp::evaluate_impl(Evaluator* ev) const
 	{
 		auto inside = TRY_VALUE(this->expr->evaluate(ev));
 		assert(inside.isOptional());
@@ -53,7 +53,7 @@ namespace sap::interp
 		return TCResult::ofRValue(rtype);
 	}
 
-	ErrorOr<EvalResult> NullCoalesceOp::evaluate(Evaluator* ev) const
+	ErrorOr<EvalResult> NullCoalesceOp::evaluate_impl(Evaluator* ev) const
 	{
 		// short circuit -- don't evaluate rhs eagerly
 		auto lval = TRY_VALUE(this->lhs->evaluate(ev));

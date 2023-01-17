@@ -28,7 +28,7 @@ namespace sap::interp
 		return TCResult::ofVoid();
 	}
 
-	ErrorOr<EvalResult> Block::evaluate(Evaluator* ev) const
+	ErrorOr<EvalResult> Block::evaluate_impl(Evaluator* ev) const
 	{
 		auto _ = ev->pushFrame();
 

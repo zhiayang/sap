@@ -10,6 +10,7 @@
 namespace sap::frontend
 {
 	using TT = TokenType;
+	constexpr size_t TAB_WIDTH = 4;
 
 	static Token advance_and_return(zst::str_view& stream, Location& loc, Token tok, size_t n)
 	{
@@ -70,6 +71,11 @@ namespace sap::frontend
 
 					loc.column = 0;
 					loc.line += 1;
+				}
+				else if(stream[0] == '\t')
+				{
+					stream.remove_prefix(1);
+					loc.column += TAB_WIDTH;
 				}
 				else
 				{
@@ -233,8 +239,10 @@ namespace sap::frontend
 						n += 2, loc.line++, loc.column = 0;
 					else if(stream.drop(n).starts_with("\n"))
 						n += 1, loc.line++, loc.column = 0;
+					else if(stream.drop(n).starts_with("\t"))
+						n += 1, loc.column += TAB_WIDTH;
 					else
-						n += 1;
+						n += 1, loc.column++;
 				}
 			}
 
@@ -249,9 +257,14 @@ namespace sap::frontend
 		// skip whitespace
 		while(stream.size() > 0)
 		{
-			if(stream[0] == ' ' || stream[0] == '\t')
+			if(stream[0] == ' ')
 			{
 				loc.column++;
+				stream.remove_prefix(1);
+			}
+			else if(stream[0] == '\t')
+			{
+				loc.column += TAB_WIDTH;
 				stream.remove_prefix(1);
 			}
 			else if(stream[0] == '\r' || stream[0] == '\n')

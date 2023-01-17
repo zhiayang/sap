@@ -60,13 +60,13 @@ namespace sap::interp
 
 
 
-	ErrorOr<EvalResult> StructDecl::evaluate(Evaluator* ev) const
+	ErrorOr<EvalResult> StructDecl::evaluate_impl(Evaluator* ev) const
 	{
 		// do nothing
 		return EvalResult::ofVoid();
 	}
 
-	ErrorOr<EvalResult> StructDefn::evaluate(Evaluator* ev) const
+	ErrorOr<EvalResult> StructDefn::evaluate_impl(Evaluator* ev) const
 	{
 		// this also doesn't do anything
 		return EvalResult::ofVoid();
