@@ -13,9 +13,9 @@ namespace sap::interp
 		{
 			if(auto expr = std::get_if<std::unique_ptr<Expr>>(&part); expr != nullptr)
 			{
-				auto call = std::make_unique<FunctionCall>(expr->get()->loc());
-
 				auto loc = expr->get()->loc();
+				auto call = std::make_unique<FunctionCall>(loc);
+
 				auto name = std::make_unique<Ident>(loc);
 				name->name.name = "to_string";
 

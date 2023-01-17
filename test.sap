@@ -120,8 +120,7 @@ fi fl Bсички хора се раждат свободни и равни по
 	};
 
 	builtin::println("------");
-	builtin::print("juice = ");
-	builtin::println(asdf?.juice);
+	builtin::println(f"juice = {asdf?.juice}");
 }
 
 
@@ -136,8 +135,7 @@ fi fl Bсички хора се раждат свободни и равни по
 		return fib(n - 1) + fib(n - 2);
 	}
 
-	builtin::print("fib(15) = ");
-	builtin::println(fib(15));
+	builtin::println(f"fib(15) = {fib(15)}");
 
 
 	let f1: ?int = null;
@@ -148,8 +146,7 @@ fi fl Bсички хора се раждат свободни и равни по
 	if(f1?) builtin::println("f1!");
 	if(f2?) builtin::println("f2!");
 
-	builtin::print("f3 = ");
-	builtin::println(f3);
+	builtin::println(f"f3 = {f3}");
 
 
 	fn foozle(n: int) -> int

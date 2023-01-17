@@ -537,7 +537,7 @@ namespace sap::frontend
 		return ret;
 	}
 
-	static std::unique_ptr<interp::FStringExpr> parse_fstring(const Token& tok)
+	static std::unique_ptr<interp::FStringExpr> parse_fstring(Lexer& main_lexer, const Token& tok)
 	{
 		auto fstr = tok.text.bytes();
 
@@ -563,7 +563,16 @@ namespace sap::frontend
 				auto tmp_lexer = Lexer(tok.loc.file, fstr.chars());
 				tmp_lexer.pushMode(Lexer::Mode::Script);
 
-				fstring_parts.push_back(parse_expr(tmp_lexer));
+				auto expr = parse_expr(tmp_lexer);
+				auto tmp = tok.loc;
+
+				auto diff = (size_t) (fstr.chars().data() - main_lexer.stream().data());
+				tmp.byte_offset += diff;
+				tmp.column += diff;
+
+				expr->setLocation(std::move(tmp));
+
+				fstring_parts.push_back(std::move(expr));
 
 				fstr.remove_prefix((size_t) (tmp_lexer.stream().bytes().data() - fstr.data()));
 				if(not fstr.starts_with('}'))
@@ -662,7 +671,7 @@ namespace sap::frontend
 		}
 		else if(auto fstr = lexer.match(TT::FString); fstr)
 		{
-			return parse_fstring(*fstr);
+			return parse_fstring(lexer, *fstr);
 		}
 		else if(lexer.expect(TT::LParen))
 		{
