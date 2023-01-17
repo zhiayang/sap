@@ -443,15 +443,27 @@ def main():
             with semaphore:
                 log(opt.SAP_LIB)
                 shell(f"mkdir -p {opt.OUTPUT_DIR}")
-
-                cmd = f"{opt.LLD} --allow-multiple-definition -r -o {opt.SAP_LIB}.new --start-group"
                 for i in range(num_lib_objs):
-                    cmd += f" {opt.OUTPUT_DIR}/{i}.o"
+                    shell(
+                        f"objconv -fELF {opt.OUTPUT_DIR}/{i}.o {opt.OUTPUT_DIR}/{i}.o.elf"
+                    )
+                if os.path.isfile(opt.SAP_LIB):
+                    shell(f"objconv -fELF {opt.SAP_LIB} {opt.SAP_LIB}.elf")
+
+                cmd = f"{opt.LLD} --allow-multiple-definition -r -o {opt.SAP_LIB}.merged --start-group"
+                for i in range(num_lib_objs):
+                    cmd += f" {opt.OUTPUT_DIR}/{i}.o.elf"
                 cmd += " --end-group"
                 if os.path.isfile(opt.SAP_LIB):
-                    cmd += f" {opt.SAP_LIB}"
-
+                    cmd += f" {opt.SAP_LIB}.elf"
                 shell(cmd)
+
+                shell(f"llvm-objcopy --weaken {opt.SAP_LIB}.merged {opt.SAP_LIB}.weak")
+
+                if opt.UNAME_IDENT == "Darwin":
+                    shell(f"objconv -fMACHO {opt.SAP_LIB}.weak {opt.SAP_LIB}.new")
+                else:
+                    shell(f"objconv -fELF {opt.SAP_LIB}.weak {opt.SAP_LIB}.new")
 
         return job
 
