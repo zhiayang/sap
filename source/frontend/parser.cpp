@@ -561,18 +561,10 @@ namespace sap::frontend
 				string.clear();
 
 				auto tmp_lexer = Lexer(tok.loc.file, fstr.chars());
+				tmp_lexer.setLocation(tok.loc);
 				tmp_lexer.pushMode(Lexer::Mode::Script);
 
-				auto expr = parse_expr(tmp_lexer);
-				auto tmp = tok.loc;
-
-				auto diff = (size_t) (fstr.chars().data() - main_lexer.stream().data());
-				tmp.byte_offset += diff;
-				tmp.column += diff;
-
-				expr->setLocation(std::move(tmp));
-
-				fstring_parts.push_back(std::move(expr));
+				fstring_parts.push_back(parse_expr(tmp_lexer));
 
 				fstr.remove_prefix((size_t) (tmp_lexer.stream().bytes().data() - fstr.data()));
 				if(not fstr.starts_with('}'))

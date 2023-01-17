@@ -45,7 +45,6 @@ namespace sap::interp
 		virtual ErrorOr<TCResult> typecheck(Typechecker* ts, const Type* infer = nullptr) const;
 
 		const Location& loc() const { return m_location; }
-		void setLocation(Location loc) { m_location = std::move(loc); }
 
 		const Type* get_type() const
 		{

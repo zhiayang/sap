@@ -144,6 +144,7 @@ namespace sap::frontend
 		zst::str_view stream() const { return m_stream; }
 
 		Location location() const { return m_location; }
+		void setLocation(Location loc) { m_location = std::move(loc); }
 
 	private:
 		std::vector<Mode> m_mode_stack {};
