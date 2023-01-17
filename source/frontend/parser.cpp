@@ -73,17 +73,20 @@ namespace sap::frontend
 		return ret;
 	}
 
-	static std::u32string unescape_string(const Location& loc, zst::str_view sv)
+	static std::pair<std::u32string, size_t> unescape_string_part(const Location& loc, zst::byte_span orig)
 	{
 		std::u32string ret {};
-		ret.reserve(sv.size());
 
-		auto bs = sv.bytes();
+		auto bs = orig;
 		while(bs.size() > 0)
 		{
-			auto cp = unicode::consumeCodepointFromUtf8(bs);
+			auto copy = bs;
+			auto cp = unicode::consumeCodepointFromUtf8(copy);
+
 			if(cp == U'\\')
 			{
+				bs = copy;
+
 				auto is_hex = [](uint8_t c) -> bool {
 					return ('0' <= c && c <= '9') || ('a' <= c && c <= 'f') || ('A' <= c && c <= 'F');
 				};
@@ -106,6 +109,8 @@ namespace sap::frontend
 					case U'n': ret += U'\n'; break;
 					case U't': ret += U'\t'; break;
 					case U'b': ret += U'\b'; break;
+					case U'{': ret += U'{'; break;
+					case U'}': ret += U'}'; break;
 					case U'x':
 						assert(bs.size() >= 2);
 						assert(is_hex(bs[0]) && is_hex(bs[1]));
@@ -133,17 +138,47 @@ namespace sap::frontend
 						     + 16u * convert_hex(bs[6])                                     //
 						     + convert_hex(bs[7]);
 						break;
-					default: sap::error(loc, "invalid escape sequence starting with '{}'", cp); break;
+					default: //
+						sap::error(loc, "invalid escape sequence starting with '{}'", cp);
+						break;
 				}
 			}
 			else
 			{
-				ret += cp;
+				break;
+			}
+		}
+
+		return { ret, orig.size() - bs.size() };
+	}
+
+
+
+	static std::u32string unescape_string(const Location& loc, zst::str_view sv)
+	{
+		std::u32string ret {};
+		ret.reserve(sv.size());
+
+		auto bs = sv.bytes();
+		while(not bs.empty())
+		{
+			auto [e, n] = unescape_string_part(loc, bs);
+			if(n > 0)
+			{
+				bs.remove_prefix(n);
+				ret += e;
+			}
+			else
+			{
+				ret += unicode::consumeCodepointFromUtf8(bs);
 			}
 		}
 
 		return ret;
 	}
+
+
+
 
 	static int get_front_token_precedence(Lexer& lexer)
 	{
@@ -502,6 +537,63 @@ namespace sap::frontend
 		return ret;
 	}
 
+	static std::unique_ptr<interp::FStringExpr> parse_fstring(const Token& tok)
+	{
+		auto fstr = tok.text.bytes();
+
+		std::u32string string {};
+		string.reserve(fstr.size());
+
+		std::vector<std::variant<std::u32string, std::unique_ptr<interp::Expr>>> fstring_parts;
+
+		while(fstr.size() > 0)
+		{
+			if(fstr.starts_with("\\{"_bs))
+			{
+				fstr.remove_prefix(2);
+				string += U"{";
+			}
+			else if(fstr.starts_with("{"_bs))
+			{
+				fstr.remove_prefix(1);
+
+				fstring_parts.push_back(std::move(string));
+				string.clear();
+
+				auto tmp_lexer = Lexer(tok.loc.file, fstr.chars());
+				tmp_lexer.pushMode(Lexer::Mode::Script);
+
+				fstring_parts.push_back(parse_expr(tmp_lexer));
+
+				fstr.remove_prefix((size_t) (tmp_lexer.stream().bytes().data() - fstr.data()));
+				if(not fstr.starts_with('}'))
+					error(tmp_lexer.location(), "expected '}' to end f-string expression");
+
+				fstr.remove_prefix(1);
+			}
+			else
+			{
+				auto [e, n] = unescape_string_part(tok.loc, fstr);
+				if(n > 0)
+				{
+					fstr.remove_prefix(n);
+					string += e;
+				}
+				else
+				{
+					string += unicode::consumeCodepointFromUtf8(fstr);
+				}
+			}
+		}
+
+		if(not string.empty())
+			fstring_parts.push_back(std::move(string));
+
+		auto ret = std::make_unique<interp::FStringExpr>(tok.loc);
+		ret->parts = std::move(fstring_parts);
+
+		return ret;
+	}
 
 
 	static std::unique_ptr<interp::Expr> parse_primary(Lexer& lexer)
@@ -567,6 +659,10 @@ namespace sap::frontend
 			ret->string = unescape_string(str->loc, str->text);
 
 			return ret;
+		}
+		else if(auto fstr = lexer.match(TT::FString); fstr)
+		{
+			return parse_fstring(*fstr);
 		}
 		else if(lexer.expect(TT::LParen))
 		{

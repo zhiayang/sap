@@ -237,9 +237,9 @@ namespace sap::layout
 
 		for(size_t i = 0; i < objs.size(); i++)
 		{
-			auto new_cursor = cursor.moveRight(objs[i]->size().x());
-
 			auto layout_obj = objs[i]->createLayoutObject(cs, cursor, style);
+			auto new_cursor = layout_obj.first;
+
 			if(not layout_obj.second.has_value())
 				continue;
 
@@ -248,7 +248,6 @@ namespace sap::layout
 			cursor = std::move(new_cursor);
 		}
 
-		cursor = cursor.newLine(line_height);
 
 		return {
 			cursor,

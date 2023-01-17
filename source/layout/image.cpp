@@ -38,7 +38,7 @@ namespace sap::tree
 		auto img = std::unique_ptr<layout::Image>(new layout::Image(cursor.position(), this->size(), this->image()));
 		img->setStyle(parent_style);
 
-		// cursor = cursor.newLine(this->size().y());
+		cursor = cursor.newLine(this->size().y());
 		cursor = cursor.moveRight(this->size().x());
 
 		return { cursor, std::move(img) };

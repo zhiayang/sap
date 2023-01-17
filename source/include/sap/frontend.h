@@ -32,6 +32,7 @@ namespace sap::frontend
 		Identifier,
 		Number,
 		String,
+		FString,
 
 		LParen,
 		RParen,

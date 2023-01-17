@@ -252,6 +252,85 @@ namespace sap::frontend
 		}
 	}
 
+	static Token consume_string(zst::str_view& stream, Location& loc, size_t start, TokenType tt)
+	{
+		size_t n = start;
+		while(true)
+		{
+			if(n == stream.size())
+				sap::error(loc, "unterminated string literal");
+
+			// while we don't unescape these escape sequences, we still need to accept them.
+			if(stream[n] == '\\')
+			{
+				if(n + 1 == stream.size())
+					sap::error(loc, "unterminated escape sequence");
+
+				auto is_hex = [](char c) -> bool {
+					return ('0' <= c && c <= '9') || ('a' <= c && c <= 'f') || ('A' <= c && c <= 'F');
+				};
+
+				// it doesn't actually matter what the next character is (since we're not
+				// actually unescaping them). just need to make sure that if it's '\\', we
+				// skip the next '\' as well
+				if(stream[n + 1] == '\\' || stream[n + 1] == '\n')
+				{
+					n++;
+				}
+				else if(stream[n + 1] == '\r')
+				{
+					n++;
+					// handle \r\n
+					if(n + 1 < stream.size() && stream[n + 1] == '\n')
+						n++;
+				}
+				else if(stream[n + 1] == 'x')
+				{
+					if(n + 3 <= stream.size())
+						sap::error(loc, "insufficient chars for \\x escape (need 2)");
+
+					if(not std::all_of(&stream.data()[n + 2], &stream.data()[n + 4], is_hex))
+						sap::error(loc, "invalid non-hex character in \\x escape");
+				}
+				else if(stream[n + 1] == 'u')
+				{
+					if(n + 5 <= stream.size())
+						sap::error(loc, "insufficient chars for \\u escape (need 4)");
+
+					if(not std::all_of(&stream.data()[n + 2], &stream.data()[n + 6], is_hex))
+						sap::error(loc, "invalid non-hex character in \\u escape");
+				}
+				else if(stream[n + 1] == 'U')
+				{
+					if(n + 9 <= stream.size())
+						sap::error(loc, "insufficient chars for \\U escape (need 8)");
+
+					if(not std::all_of(&stream.data()[n + 2], &stream.data()[n + 10], is_hex))
+						sap::error(loc, "invalid non-hex character in \\U escape");
+				}
+			}
+			else if(stream[n] == '\r' || stream[n] == '\n')
+			{
+				sap::error(loc, "unescaped newline in string literal");
+			}
+			else if(stream[n] == '"')
+			{
+				n++;
+				break;
+			}
+
+			n++;
+		}
+
+		return advance_and_return(stream, loc,
+		    Token { //
+		        .loc = loc,
+		        .type = tt,
+		        .text = stream.drop(start).take(n - 1 - start) },
+		    n);
+	}
+
+
 	static Token consume_script_token(zst::str_view& stream, Location& loc)
 	{
 		// skip whitespace
@@ -297,53 +376,6 @@ namespace sap::frontend
 			sap::error(loc, "unexpected end of block comment");
 		}
 
-		// TODO: unicode identifiers
-		else if(isascii(stream[0]) && (isalpha(stream[0]) || stream[0] == '_'))
-		{
-			size_t n = 0;
-			while(isascii(stream[n]) && (isdigit(stream[n]) || isalpha(stream[n]) || stream[n] == '_'))
-				n++;
-
-			auto text = stream.take(n);
-			auto tt = TT::Identifier;
-
-			if(text == "if")
-				tt = TT::KW_If;
-			else if(text == "fn")
-				tt = TT::KW_Fn;
-			else if(text == "mut")
-				tt = TT::KW_Mut;
-			else if(text == "let")
-				tt = TT::KW_Let;
-			else if(text == "var")
-				tt = TT::KW_Var;
-			else if(text == "else")
-				tt = TT::KW_Else;
-			else if(text == "enum")
-				tt = TT::KW_Enum;
-			else if(text == "struct")
-				tt = TT::KW_Struct;
-			else if(text == "return")
-				tt = TT::KW_Return;
-
-			return advance_and_return(stream, loc, Token { .loc = loc, .type = tt, .text = text }, n);
-		}
-		else if(isascii(stream[0]) && isdigit(stream[0]))
-		{
-			size_t n = 0;
-			while(n < stream.size() && isascii(stream[n]) && isdigit(stream[n]))
-				n++;
-
-			if(n < stream.size() && stream[n] == '.')
-			{
-				n++;
-				while(n < stream.size() && isascii(stream[n]) && isdigit(stream[n]))
-					n++;
-			}
-
-			return advance_and_return(stream, loc, //
-			    Token { .loc = loc, .type = TT::Number, .text = stream.take(n) }, n);
-		}
 		else if(stream.starts_with("::"))
 		{
 			return advance_and_return(stream, loc, //
@@ -414,82 +446,60 @@ namespace sap::frontend
 			return advance_and_return(stream, loc, //
 			    Token { .loc = loc, .type = TT::Ellipsis, .text = stream.take(3) }, 3);
 		}
+		else if(stream.starts_with("f\""))
+		{
+			return consume_string(stream, loc, /* start: */ 2, TT::FString);
+		}
 		else if(stream[0] == '"')
 		{
-			size_t n = 1;
-			while(true)
-			{
-				if(n == stream.size())
-					sap::error(loc, "unterminated string literal");
-
-				// while we don't unescape these escape sequences, we still need to accept them.
-				if(stream[n] == '\\')
-				{
-					if(n + 1 == stream.size())
-						sap::error(loc, "unterminated escape sequence");
-
-					auto is_hex = [](char c) -> bool {
-						return ('0' <= c && c <= '9') || ('a' <= c && c <= 'f') || ('A' <= c && c <= 'F');
-					};
-
-					// it doesn't actually matter what the next character is (since we're not
-					// actually unescaping them). just need to make sure that if it's '\\', we
-					// skip the next '\' as well
-					if(stream[n + 1] == '\\' || stream[n + 1] == '\n')
-					{
-						n++;
-					}
-					else if(stream[n + 1] == '\r')
-					{
-						n++;
-						// handle \r\n
-						if(n + 1 < stream.size() && stream[n + 1] == '\n')
-							n++;
-					}
-					else if(stream[n + 1] == 'x')
-					{
-						if(n + 3 <= stream.size())
-							sap::error(loc, "insufficient chars for \\x escape (need 2)");
-
-						if(not std::all_of(&stream.data()[n + 2], &stream.data()[n + 4], is_hex))
-							sap::error(loc, "invalid non-hex character in \\x escape");
-					}
-					else if(stream[n + 1] == 'u')
-					{
-						if(n + 5 <= stream.size())
-							sap::error(loc, "insufficient chars for \\u escape (need 4)");
-
-						if(not std::all_of(&stream.data()[n + 2], &stream.data()[n + 6], is_hex))
-							sap::error(loc, "invalid non-hex character in \\u escape");
-					}
-					else if(stream[n + 1] == 'U')
-					{
-						if(n + 9 <= stream.size())
-							sap::error(loc, "insufficient chars for \\U escape (need 8)");
-
-						if(not std::all_of(&stream.data()[n + 2], &stream.data()[n + 10], is_hex))
-							sap::error(loc, "invalid non-hex character in \\U escape");
-					}
-				}
-				else if(stream[n] == '\r' || stream[n] == '\n')
-				{
-					sap::error(loc, "unescaped newline in string literal");
-				}
-				else if(stream[n] == '"')
-				{
-					n++;
-					break;
-				}
-
+			return consume_string(stream, loc, /* start: */ 1, TT::String);
+		}
+		// TODO: unicode identifiers
+		else if(isascii(stream[0]) && (isalpha(stream[0]) || stream[0] == '_'))
+		{
+			size_t n = 0;
+			while(isascii(stream[n]) && (isdigit(stream[n]) || isalpha(stream[n]) || stream[n] == '_'))
 				n++;
+
+			auto text = stream.take(n);
+			auto tt = TT::Identifier;
+
+			if(text == "if")
+				tt = TT::KW_If;
+			else if(text == "fn")
+				tt = TT::KW_Fn;
+			else if(text == "mut")
+				tt = TT::KW_Mut;
+			else if(text == "let")
+				tt = TT::KW_Let;
+			else if(text == "var")
+				tt = TT::KW_Var;
+			else if(text == "else")
+				tt = TT::KW_Else;
+			else if(text == "enum")
+				tt = TT::KW_Enum;
+			else if(text == "struct")
+				tt = TT::KW_Struct;
+			else if(text == "return")
+				tt = TT::KW_Return;
+
+			return advance_and_return(stream, loc, Token { .loc = loc, .type = tt, .text = text }, n);
+		}
+		else if(isascii(stream[0]) && isdigit(stream[0]))
+		{
+			size_t n = 0;
+			while(n < stream.size() && isascii(stream[n]) && isdigit(stream[n]))
+				n++;
+
+			if(n < stream.size() && stream[n] == '.')
+			{
+				n++;
+				while(n < stream.size() && isascii(stream[n]) && isdigit(stream[n]))
+					n++;
 			}
 
-			return advance_and_return(stream, loc,
-			    Token { //
-			        .loc = loc,
-			        .type = TT::String,
-			        .text = stream.drop(1).take(n - 2) },
-			    n);
+			return advance_and_return(stream, loc, //
+			    Token { .loc = loc, .type = TT::Number, .text = stream.take(n) }, n);
 		}
 		else
 		{
@@ -525,9 +535,6 @@ namespace sap::frontend
 
 			return advance_and_return(stream, loc, Token { .loc = loc, .type = tt, .text = stream.take(1) }, 1);
 		}
-
-
-		return {};
 	}
 
 
@@ -618,13 +625,27 @@ namespace sap::frontend
 		while(not m_stream.empty())
 		{
 			if(util::is_one_of(m_stream[0], ' ', '\t', '\r', '\n'))
+			{
+				if(m_stream[0] == ' ')
+					m_location.column++;
+				else if(m_stream[0] == '\t')
+					m_location.column += TAB_WIDTH;
+				else if(m_stream.starts_with("\r\n"))
+					m_location.column = 0, m_location.line++, m_stream.remove_prefix(1);
+				else if(m_stream[0] == '\n')
+					m_location.column = 0, m_location.line++;
+
 				m_stream.remove_prefix(1);
-
+			}
 			else if(parse_comment(m_stream, m_location))
-				; // do nothing
-
+			{
+				// do nothing
+			}
 			else
-				break; // neither comment nor whitespace
+			{
+				// neither comment nor whitespace
+				break;
+			}
 		}
 	}
 

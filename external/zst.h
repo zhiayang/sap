@@ -1278,6 +1278,16 @@ namespace zst::impl
 
 #endif
 
+constexpr inline zst::str_view operator""_sv(const char* s, size_t n)
+{
+	return zst::str_view(s, n);
+}
+
+constexpr inline zst::byte_span operator""_bs(const char* s, size_t n)
+{
+	return zst::str_view(s, n).bytes();
+}
+
 
 
 /*
@@ -1288,6 +1298,7 @@ namespace zst::impl
 	------------------
 	- add endianness support to str_view
 	- add transfer_suffix
+	- add _bs and _sv literals
 
 
 	1.4.2 - 26/09/2022

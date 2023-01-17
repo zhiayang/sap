@@ -20,8 +20,6 @@ namespace sap::interp
 	}
 
 
-
-
 	ErrorOr<TCResult> NumberLit::typecheck_impl(Typechecker* ts, const Type* infer) const
 	{
 		if(this->is_floating)
