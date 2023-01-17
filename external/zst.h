@@ -1294,10 +1294,11 @@ constexpr inline zst::byte_span operator""_bs(const char* s, size_t n)
 	Version History
 	===============
 
-	1.4.3 - 03/01/2023
+	1.4.3 - 18/01/2023
 	------------------
 	- add endianness support to str_view
 	- add transfer_suffix
+	- add unique_span
 	- add _bs and _sv literals
 
 

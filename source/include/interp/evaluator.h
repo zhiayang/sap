@@ -78,10 +78,17 @@ namespace sap::interp
 
 		ErrorOr<std::vector<std::unique_ptr<tree::InlineObject>>> convertValueToText(Value&& value);
 
+		// this is necessary to keep the strings around...
+		std::u32string& keepStringAlive(zst::wstr_view str);
+		std::string& keepStringAlive(zst::str_view str);
+
 	private:
 		std::vector<std::unique_ptr<StackFrame>> m_stack_frames;
 		std::vector<const Style*> m_style_stack;
 
 		std::vector<Location> m_location_stack;
+
+		std::vector<std::string> m_leaked_strings;
+		std::vector<std::u32string> m_leaked_strings32;
 	};
 }

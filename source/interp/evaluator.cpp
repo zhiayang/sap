@@ -34,6 +34,16 @@ namespace sap::interp
 		m_location_stack.pop_back();
 	}
 
+	std::u32string& Evaluator::keepStringAlive(zst::wstr_view str)
+	{
+		return m_leaked_strings32.emplace_back(str.str());
+	}
+
+	std::string& Evaluator::keepStringAlive(zst::str_view str)
+	{
+		return m_leaked_strings.emplace_back(str.str());
+	}
+
 
 	Value Evaluator::castValue(Value value, const Type* to) const
 	{

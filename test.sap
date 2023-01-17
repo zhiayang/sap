@@ -1,41 +1,6 @@
 # test.sap
 
-\script std::{
-	fn centre(b: Block) -> Block
-	{
-		let ret = builtin::apply_style(builtin::Style {
-			.alignment = builtin::Alignment::Centred,
-		}, *b);
-
-		return ret;
-	}
-}
-
-\script std::{
-	fn set_style(s: builtin::Style) -> void
-	{
-		# builtin::set_current_style(s);
-	}
-
-	fn style(s: builtin::Style, obj: Inline) -> Inline
-	{
-		return builtin::apply_style(s, obj);
-	}
-
-	fn bold(x: Inline) -> Inline
-	{
-		return builtin::bold1(x);
-	}
-
-	fn asdf()
-	{
-		builtin::println("hello!");
-	}
-
-	struct UWU { x: int; }
-
-	fn uwu(x: &UWU) { builtin::println("uwu"); }
-}
+\builtin::include("prelude.sap");
 
 ffi ffl ff hello aP. asdf no no no
 
@@ -43,122 +8,6 @@ this     is     a    aoeu bsdf, fill me up flour
 
 
 fi fl Bсички хора се раждат свободни и равни по \{ \}
-
-\script {
-	let u = std::UWU { .x = 10 };
-	u.uwu();
-
-	std::asdf();
-
-	var foo = 10;
-	builtin::println(f"foo = {foo}");
-
-	foo = 20;
-	builtin::println(f"foo = {foo + 1}");
-
-	builtin::bold1(69);
-	builtin::bold1("420");
-
-	fn foozle(a: int) -> void
-	{
-		builtin::println(f"a = {a}");
-
-		if(a > 10)
-			builtin::println("a > 10");
-		else
-			builtin::println("a ≤ 10");
-	}
-
-	foozle(foo);
-	foo = 69;
-	foozle(foo);
-
-	struct Cactus
-	{
-		thorns: int = 100;
-		juice: int;
-	}
-
-	fn kek(c: &Cactus)
-	{
-		builtin::println(f"thorns = {c!.thorns}");
-		builtin::println(f"juice = {c!.juice}");
-	}
-
-	var bar = Cactus {
-		.juice = 420,
-	};
-
-	bar.juice = 69420;
-	bar.kek();
-
-	fn tus(c: &mut Cactus)
-	{
-		c!.juice = 0;
-	}
-
-	tus(&mut bar);
-
-	let kekw: (int)->int;
-
-	builtin::print("------\njuice = ");
-	builtin::println(bar.juice);
-	builtin::println("------");
-
-	Cactus {
-		.thorns = 999,
-		.juice = 333
-	}.kek();
-
-	let p1: &mut int = null;
-	let p2: &mut int = p1;
-	let p3: &int = p2;
-
-
-	let asdf: ?Cactus = Cactus {
-		.juice = 6969
-	};
-
-	builtin::println("------");
-	builtin::println(f"juice = {asdf?.juice}");
-}
-
-
-\script {
-	fn fib(n: int) -> int
-	{
-		if(n == 0)
-			return 0;
-		else if(n <= 2)
-			return 1;
-
-		return fib(n - 1) + fib(n - 2);
-	}
-
-	builtin::println(f"fib(15) = {fib(15)}");
-
-
-	let f1: ?int = null;
-	let f2: ?int = 10;
-
-	let f3 = f1 ?? f2 ?? 69;
-
-	if(f1?) builtin::println("f1!");
-	if(f2?) builtin::println("f2!");
-
-	builtin::println(f"f3 = {f3}");
-
-
-	fn foozle(n: int) -> int
-	{
-		if(n < 0)
-			return 69;
-		else
-			return 420;
-	}
-
-	builtin::println(f"hello {10mm} world");
-}
 
 
 hello \std::style(builtin::Style { .font_size = 6 }) { world } asdf
@@ -211,7 +60,7 @@ Praesent est augue, varius in turpis ut, pretium ultrices risus. Aliquam libero 
 Sed non leo nunc. Mauris condimentum dapibus iaculis. Phasellus ullamcorper pellentesque nisl, vel viverra tortor consequat ac. Nulla venenatis, tortor at tincidunt varius, arcu eros tempus sem, ac maximus elit sapien in urna. Sed pellentesque mauris eget lorem lacinia, ut auctor augue ornare. Maecenas at facilisis lorem. Aliquam rhoncus in ipsum a pretium. Maecenas non tempor quam, iaculis fermentum felis. Morbi porttitor tellus a mollis scelerisque. Nullam sit amet pharetra nunc. In consectetur sapien vitae tortor tincidunt lobortis. Nulla malesuada mauris vitae velit commodo, ac ultricies nisl lobortis. Nam commodo odio accumsan lacus viverra, in egestas mi convallis. Sed non leo nunc. Sed non leo nunc.
 
 \std::centre() \p {
-	\builtin::load_image("asdf.png", 5.0cm)
+	\builtin::load_image("asdf.png", 5.0cm);
 
 	Aenean condimentum. Quisque sit amet turpis hendrerit, commodo libero sed, pellentesque felis.
 }

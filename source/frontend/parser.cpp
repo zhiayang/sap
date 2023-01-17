@@ -1124,7 +1124,7 @@ namespace sap::frontend
 	static std::optional<std::unique_ptr<Paragraph>> parse_paragraph(Lexer& lexer);
 	static std::vector<std::unique_ptr<BlockObject>> parse_top_level(Lexer& lexer);
 
-	static std::unique_ptr<ScriptCall> parse_inline_script_call(Lexer& lexer)
+	static std::unique_ptr<ScriptCall> parse_inline_script_call(Lexer& lexer, bool is_top_level)
 	{
 		auto lm = LexerModer(lexer, Lexer::Mode::Script);
 
@@ -1143,6 +1143,10 @@ namespace sap::frontend
 		// check if we have trailing things
 		// TODO: support manually specifying inline \t
 		bool is_block = false;
+
+		if(is_top_level && lexer.expect(TT::Semicolon))
+			return sc;
+
 		if(lexer.expect(TT::Backslash))
 		{
 			if(auto n = lexer.match(TT::Identifier); not n.has_value() || n->text != KW_PARA_BLOCK)
@@ -1188,11 +1192,18 @@ namespace sap::frontend
 				});
 			}
 		}
+		else if(is_block)
+		{
+			error(lexer.location(), "expected '{' after \\p in script call");
+		}
+
+		if(is_top_level && not is_block && not lexer.expect(TT::Semicolon))
+			error(lexer.location(), "expected semicolon after top-level script call");
 
 		return sc;
 	}
 
-	static std::unique_ptr<ScriptObject> parse_script_object(Lexer& lexer)
+	static std::unique_ptr<ScriptObject> parse_script_object(Lexer& lexer, bool is_top_level)
 	{
 		auto next = lexer.peekWithMode(Lexer::Mode::Script);
 		if(next == TT::Identifier)
@@ -1200,7 +1211,7 @@ namespace sap::frontend
 			if(next.text == KW_SCRIPT_BLOCK)
 				return parse_script_block(lexer);
 			else
-				return parse_inline_script_call(lexer);
+				return parse_inline_script_call(lexer, is_top_level);
 		}
 		else
 		{
@@ -1219,7 +1230,7 @@ namespace sap::frontend
 			return std::make_unique<Text>(escape_word_text(tok.loc, tok.text));
 
 		else if(tok == TT::Backslash)
-			return parse_script_object(lexer);
+			return parse_script_object(lexer, /* is_top_level: */ false);
 
 		else
 			error(lexer.location(), "unexpected token '{}' in inline object", tok.text);
@@ -1279,7 +1290,7 @@ namespace sap::frontend
 			else if(tok == TT::Backslash)
 			{
 				lexer.next();
-				objs.push_back(parse_script_object(lexer));
+				objs.push_back(parse_script_object(lexer, /* is_top_level: */ true));
 			}
 			else if(tok == TT::LBrace)
 			{

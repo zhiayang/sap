@@ -170,6 +170,9 @@ namespace sap::tree
 		bool seen_whitespace = false;
 		for(auto& uwu : m_contents)
 		{
+			// auto& tmp = *uwu.get();
+			// zpr::println("contents @ {} = {}", (void*) uwu.get(), typeid(tmp).name());
+
 			auto tree_text = dynamic_cast<tree::Text*>(uwu.get());
 			assert(tree_text != nullptr);
 

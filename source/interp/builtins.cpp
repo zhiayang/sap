@@ -99,6 +99,8 @@ namespace sap::interp
 		        }),
 		    t_tbo, &builtin::load_image);
 
+		define_builtin("include", makeParamList(Param { .name = "1", .type = t_str }), t_tbo, &builtin::include_file);
+
 		define_builtin("push_style",
 		    makeParamList( //
 		        Param { .name = "1", .type = t_bstyle }),
