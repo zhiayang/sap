@@ -157,7 +157,7 @@ fi fl Bсички хора се раждат свободни и равни по
 			return 420;
 	}
 
-	builtin::println(f"hello {10} world");
+	builtin::println(f"hello {10mm} world");
 }
 
 

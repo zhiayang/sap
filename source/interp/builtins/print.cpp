@@ -51,7 +51,7 @@ namespace sap::interp::builtin
 		}
 		else if(t->isFloating())
 		{
-			return get_str("{.6f}", v.getFloating());
+			return get_str("{.4f}", v.getFloating());
 		}
 		else if(t->isBool())
 		{
@@ -65,7 +65,7 @@ namespace sap::interp::builtin
 		else if(t->isLength())
 		{
 			auto len = v.getLength();
-			return get_str("{.3f}{}", len.value(), DynLength::unitToString(len.unit()));
+			return get_str("{.2f}{}", len.value(), DynLength::unitToString(len.unit()));
 		}
 		else if(t->isOptional())
 		{
