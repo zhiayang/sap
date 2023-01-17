@@ -71,6 +71,7 @@ namespace sap::interp
 		bool isChar() const;
 		bool isEnum() const;
 		bool isArray() const;
+		bool isString() const;
 		bool isStruct() const;
 		bool isLength() const;
 		bool isInteger() const;

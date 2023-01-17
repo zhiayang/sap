@@ -124,7 +124,9 @@ namespace sap::interp
 		{
 			const DefnTree* lookup_in = ts->current();
 			if(this->rewritten_ufcs)
-				lookup_in = TRY(ts->getDefinitionForType(processed_args[0].value))->declaration->declaredTree();
+			{
+				lookup_in = TRY(ts->getDefnTreeForType(processed_args[0].value));
+			}
 
 			auto decls = TRY(lookup_in->lookup(ident->name));
 			assert(decls.size() > 0);

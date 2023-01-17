@@ -52,7 +52,10 @@ namespace sap::interp
 		using Param = FunctionDecl::Param;
 
 		auto t_any = PType::named(TYPE_ANY);
+		auto t_int = PType::named(TYPE_INT);
 		auto t_str = PType::named(TYPE_STRING);
+		auto t_bool = PType::named(TYPE_BOOL);
+		auto t_char = PType::named(TYPE_CHAR);
 		auto t_void = PType::named(TYPE_VOID);
 		auto t_float = PType::named(TYPE_FLOAT);
 		auto t_length = PType::named(TYPE_LENGTH);
@@ -107,6 +110,18 @@ namespace sap::interp
 		// TODO: make these variadic
 		define_builtin("print", makeParamList(Param { .name = "_", .type = t_any }), t_void, &builtin::print);
 		define_builtin("println", makeParamList(Param { .name = "_", .type = t_any }), t_void, &builtin::println);
+
+
+		auto make_ptr = [](const auto& type) {
+			return PType::pointer(type, false);
+		};
+
+		define_builtin("to_string", makeParamList(Param { .name = "_", .type = make_ptr(t_int) }), t_str, &builtin::to_string);
+		define_builtin("to_string", makeParamList(Param { .name = "_", .type = make_ptr(t_str) }), t_str, &builtin::to_string);
+		define_builtin("to_string", makeParamList(Param { .name = "_", .type = make_ptr(t_char) }), t_str, &builtin::to_string);
+		define_builtin("to_string", makeParamList(Param { .name = "_", .type = make_ptr(t_bool) }), t_str, &builtin::to_string);
+		define_builtin("to_string", makeParamList(Param { .name = "_", .type = make_ptr(t_float) }), t_str, &builtin::to_string);
+		define_builtin("to_string", makeParamList(Param { .name = "_", .type = make_ptr(t_length) }), t_str, &builtin::to_string);
 	}
 
 	void defineBuiltins(Interpreter* interp, DefnTree* ns)

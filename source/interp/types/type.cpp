@@ -46,6 +46,11 @@ namespace sap::interp
 			return "?????";
 	}
 
+	bool Type::isString() const
+	{
+		return this->isArray() && this->toArray()->elementType()->isChar();
+	}
+
 	bool Type::sameAs(const Type* other) const
 	{
 		if(m_kind != other->m_kind)

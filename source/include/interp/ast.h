@@ -162,9 +162,8 @@ namespace sap::interp
 		virtual ErrorOr<EvalResult> evaluate_impl(Evaluator* ev) const override;
 		virtual ErrorOr<TCResult> typecheck_impl(Typechecker* ts, const Type* infer = nullptr) const override;
 
-
 		using Part = std::variant<std::u32string, std::unique_ptr<Expr>>;
-		std::vector<Part> parts;
+		mutable std::vector<Part> parts;
 	};
 
 

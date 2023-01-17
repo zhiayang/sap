@@ -172,22 +172,27 @@ namespace sap::interp
 
 	ErrorOr<const Definition*> Typechecker::getDefinitionForType(const Type* type)
 	{
-		// first, reduce the type to its base.
-		while(true)
-		{
-			if(type->isPointer())
-				type = type->pointerElement();
-			else if(type->isOptional())
-				type = type->optionalElement();
-			else
-				break;
-		}
-
 		auto it = m_type_definitions.find(type);
 		if(it == m_type_definitions.end())
 			return ErrMsg(this->loc(), "no definition for type '{}'", type);
 		else
 			return Ok(it->second);
+	}
+
+	ErrorOr<const DefnTree*> Typechecker::getDefnTreeForType(const Type* type) const
+	{
+		if(type->isPointer())
+			return this->getDefnTreeForType(type->pointerElement());
+		else if(type->isOptional())
+			return this->getDefnTreeForType(type->optionalElement());
+		else if(type->isArray())
+			return this->getDefnTreeForType(type->toArray()->elementType());
+
+		auto it = m_type_definitions.find(type);
+		if(it != m_type_definitions.end())
+			return Ok(it->second->declaration->declaredTree());
+		else
+			return this->top()->lookupNamespace("builtin");
 	}
 
 	ErrorOr<void> Typechecker::addTypeDefinition(const Type* type, const Definition* defn)

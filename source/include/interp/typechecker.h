@@ -67,6 +67,8 @@ namespace sap::interp
 		ErrorOr<const Definition*> getDefinitionForType(const Type* type);
 		ErrorOr<void> addTypeDefinition(const Type* type, const Definition* defn);
 
+		ErrorOr<const DefnTree*> getDefnTreeForType(const Type* type) const;
+
 		[[nodiscard]] Location loc() const;
 		[[nodiscard]] util::Defer<> pushLocation(const Location& loc);
 		void popLocation();

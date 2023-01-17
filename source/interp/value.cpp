@@ -318,6 +318,10 @@ namespace sap::interp
 	{
 		return m_type->isArray();
 	}
+	bool Value::isString() const
+	{
+		return m_type->isArray() && m_type->toArray()->elementType()->isChar();
+	}
 	bool Value::isStruct() const
 	{
 		return m_type->isStruct();

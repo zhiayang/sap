@@ -51,20 +51,17 @@ fi fl Bсички хора се раждат свободни и равни по
 	std::asdf();
 
 	var foo = 10;
-	builtin::print("foo = ");
-	builtin::println(foo);
+	builtin::println(f"foo = {foo}");
 
-	foo = 10;
-	builtin::print("foo = ");
-	builtin::println(foo);
+	foo = 20;
+	builtin::println(f"foo = {foo + 1}");
 
 	builtin::bold1(69);
 	builtin::bold1("420");
 
 	fn foozle(a: int) -> void
 	{
-		builtin::print("a = ");
-		builtin::println(a);
+		builtin::println(f"a = {a}");
 
 		if(a > 10)
 			builtin::println("a > 10");
@@ -84,10 +81,8 @@ fi fl Bсички хора се раждат свободни и равни по
 
 	fn kek(c: &Cactus)
 	{
-		builtin::print("thorns = ");
-		builtin::println(c!.thorns);
-		builtin::print("juice = ");
-		builtin::println(c!.juice);
+		builtin::println(f"thorns = {c!.thorns}");
+		builtin::println(f"juice = {c!.juice}");
 	}
 
 	var bar = Cactus {
@@ -165,7 +160,7 @@ fi fl Bсички хора се раждат свободни и равни по
 			return 420;
 	}
 
-	builtin::println(f"hello world");
+	builtin::println(f"hello {10} world");
 }
 
 

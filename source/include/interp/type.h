@@ -46,6 +46,7 @@ namespace sap::interp
 		virtual std::string str() const;
 		virtual bool sameAs(const Type* other) const;
 
+		bool isString() const;
 		bool isMutablePointer() const;
 		const OptionalType* optionalOf() const { return makeOptional(this); }
 		const PointerType* pointerTo(bool mut = false) const { return makePointer(this, mut); }

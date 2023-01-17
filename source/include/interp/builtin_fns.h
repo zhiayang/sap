@@ -36,5 +36,7 @@ namespace sap::interp
 		ErrorOr<EvalResult> current_style(Evaluator* cs, std::vector<Value>& args);
 		ErrorOr<EvalResult> push_style(Evaluator* cs, std::vector<Value>& args);
 		ErrorOr<EvalResult> pop_style(Evaluator* cs, std::vector<Value>& args);
+
+		ErrorOr<EvalResult> to_string(Evaluator* cs, std::vector<Value>& args);
 	}
 }
