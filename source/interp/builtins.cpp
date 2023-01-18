@@ -37,6 +37,10 @@ namespace sap::interp
 		auto _ = interp->typechecker().pushTree(builtin_ns);
 
 		define_builtin_enum<builtin::BE_Alignment>(interp);
+
+		// this needs a careful ordering
+		define_builtin_struct<builtin::BS_Font>(interp);
+		define_builtin_struct<builtin::BS_FontFamily>(interp);
 		define_builtin_struct<builtin::BS_Style>(interp);
 	}
 
@@ -63,7 +67,22 @@ namespace sap::interp
 		auto t_tbo = PType::named(TYPE_TREE_BLOCK);
 		auto t_tio = PType::named(TYPE_TREE_INLINE);
 
-		auto t_bstyle = PType::named(builtin::BS_Style::name);
+		auto make_builtin_name = [](const char* name) -> QualifiedId {
+			return QualifiedId {
+				.top_level = true,
+				.parents = { "builtin" },
+				.name = name,
+			};
+		};
+
+		auto make_null = []() {
+			return std::make_unique<interp::NullLit>(Location::builtin());
+		};
+
+
+		auto t_bfont = PType::named(make_builtin_name(builtin::BS_Font::name));
+		auto t_bstyle = PType::named(make_builtin_name(builtin::BS_Style::name));
+		auto t_bfontfamily = PType::named(make_builtin_name(builtin::BS_FontFamily::name));
 
 		auto define_builtin = [&](auto&&... xs) {
 			auto ret = std::make_unique<BFD>(Location::builtin(), std::forward<decltype(xs)>(xs)...);
@@ -95,7 +114,7 @@ namespace sap::interp
 		        Param {
 		            .name = "3",
 		            .type = PType::optional(t_length),
-		            .default_value = std::make_unique<interp::NullLit>(Location::builtin()),
+		            .default_value = make_null(),
 		        }),
 		    t_tbo, &builtin::load_image);
 
@@ -112,10 +131,20 @@ namespace sap::interp
 		define_builtin("print", makeParamList(Param { .name = "_", .type = t_any }), t_void, &builtin::print);
 		define_builtin("println", makeParamList(Param { .name = "_", .type = t_any }), t_void, &builtin::println);
 
-		// define_builtin("find_font", makeParamList(Param { .name = "1", .type = t_str }));
-
-
 		define_builtin("to_string", makeParamList(Param { .name = "_", .type = t_any }), t_str, &builtin::to_string);
+
+		define_builtin("find_font",
+		    makeParamList(                                                                                    //
+		        Param { .name = "names", .type = PType::array(t_str, false) },                                //
+		        Param { .name = "weight", .type = PType::optional(t_int), .default_value = make_null() },     //
+		        Param { .name = "italic", .type = PType::optional(t_bool), .default_value = make_null() },    //
+		        Param { .name = "stretch", .type = PType::optional(t_float), .default_value = make_null() }), //
+		    PType::optional(t_bfont), &builtin::find_font);
+
+		define_builtin("find_font_family",
+		    makeParamList( //
+		        Param { .name = "names", .type = PType::array(t_str, false) }),
+		    PType::optional(t_bfontfamily), &builtin::find_font_family);
 	}
 
 	void defineBuiltins(Interpreter* interp, DefnTree* ns)

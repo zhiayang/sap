@@ -5,10 +5,72 @@
 #include "interp/ast.h"
 #include "interp/type.h"
 #include "interp/value.h"
+#include "interp/interp.h"
 #include "interp/eval_result.h"
 
 namespace sap::interp
 {
+	ErrorOr<TCResult> ArrayLit::typecheck_impl(Typechecker* ts, const Type* infer) const
+	{
+		if(elem_type.has_value())
+		{
+			auto ty = TRY(ts->resolveType(*elem_type));
+			if(ty->isVoid())
+				return ErrMsg(ts, "cannot make an array with element type 'void'");
+
+			for(auto& elm : this->elements)
+			{
+				auto et = TRY(elm->typecheck(ts, ty)).type();
+				if(et != ty)
+					return ErrMsg(elm->loc(), "mismatched types in array literal: expected '{}', got '{}'", ty, et);
+			}
+
+			return TCResult::ofRValue(Type::makeArray(ty));
+		}
+		else
+		{
+			// note: void array is a special case.
+			if(this->elements.empty())
+				return TCResult::ofRValue(Type::makeArray(Type::makeVoid()));
+
+			auto t1 = TRY(this->elements[0]->typecheck(ts)).type();
+			for(size_t i = 1; i < this->elements.size(); i++)
+			{
+				auto t2 = TRY(this->elements[i]->typecheck(ts, t1)).type();
+				if(t2 != t1)
+					return ErrMsg(this->elements[i]->loc(), "mismatched types in array literal: expected '{}', got '{}'", t1, t2);
+			}
+
+			return TCResult::ofRValue(Type::makeArray(t1));
+		}
+	}
+
+	ErrorOr<EvalResult> ArrayLit::evaluate_impl(Evaluator* ev) const
+	{
+		std::vector<Value> values {};
+		for(auto& elm : this->elements)
+			values.push_back(TRY_VALUE(elm->evaluate(ev)));
+
+		return EvalResult::ofValue(Value::array(this->get_type()->toArray()->elementType(), std::move(values)));
+	}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 	ErrorOr<TCResult> LengthExpr::typecheck_impl(Typechecker* ts, const Type* infer) const
 	{
 		return TCResult::ofRValue(Type::makeLength());

@@ -54,6 +54,10 @@ namespace sap::interp
 
 		Value& getStructField(size_t idx);
 		const Value& getStructField(size_t idx) const;
+
+		Value& getStructField(zst::str_view name);
+		const Value& getStructField(zst::str_view name) const;
+
 		std::vector<Value> takeStructFields() &&;
 		const std::vector<Value>& getStructFields() const;
 

@@ -10,6 +10,11 @@
 #include "interp/value.h"
 #include "interp/parser_type.h"
 
+namespace pdf
+{
+	struct PdfFont;
+}
+
 namespace sap
 {
 	struct Style;
@@ -44,9 +49,21 @@ namespace sap::interp::builtin
 		static const Type* type;
 		static std::vector<StructDefn::Field> fields();
 
-		static ErrorOr<Value> make(Evaluator* ev, int64_t font_id);
-		static ErrorOr<int64_t> unmake(Evaluator* ev, const Value& value);
+		static ErrorOr<Value> make(Evaluator* ev, pdf::PdfFont* font);
+		static ErrorOr<pdf::PdfFont*> unmake(Evaluator* ev, const Value& value);
 	};
+
+	struct BS_FontFamily
+	{
+		static constexpr auto name = "FontFamily";
+
+		static const Type* type;
+		static std::vector<StructDefn::Field> fields();
+
+		static ErrorOr<Value> make(Evaluator* ev, sap::FontFamily font);
+		static ErrorOr<sap::FontFamily> unmake(Evaluator* ev, const Value& value);
+	};
+
 
 
 	struct BE_Alignment
@@ -77,12 +94,17 @@ namespace sap::interp::builtin
 
 
 	template <typename T>
-	std::optional<T> get_struct_field(const Value& str, zst::str_view field)
+	T get_struct_field(const Value& str, zst::str_view field)
 	{
-		auto& fields = str.getStructFields();
-		auto idx = str.type()->toStruct()->getFieldIndex(field);
+		auto& f = str.getStructField(field);
+		return f.get<T>();
+	}
 
-		auto& f = fields[idx];
+
+	template <typename T>
+	std::optional<T> get_optional_struct_field(const Value& str, zst::str_view field)
+	{
+		auto& f = str.getStructField(field);
 		if(not f.haveOptionalValue())
 			return std::nullopt;
 
@@ -90,15 +112,32 @@ namespace sap::interp::builtin
 	}
 
 	template <typename T>
-	std::optional<T> get_struct_field(const Value& str, zst::str_view field, T (Value::*getter_method)() const)
+	std::optional<T> get_optional_struct_field(const Value& str, zst::str_view field, T (Value::*getter_method)() const)
 	{
-		auto& fields = str.getStructFields();
-		auto idx = str.type()->toStruct()->getFieldIndex(field);
-
-		auto& f = fields[idx];
+		auto& f = str.getStructField(field);
 		if(not f.haveOptionalValue())
 			return std::nullopt;
 
 		return ((*f.getOptional())->*getter_method)();
+	}
+
+	template <typename T>
+	T unwrap_optional(const Value& val, const T& default_value)
+	{
+		assert(val.isOptional());
+		if(val.haveOptionalValue())
+			return val.get<T>();
+		else
+			return default_value;
+	}
+
+	template <typename T>
+	T unwrap_optional(Value&& val, const T& default_value)
+	{
+		assert(val.isOptional());
+		if(std::move(val).haveOptionalValue())
+			return std::move(val).get<T>();
+		else
+			return default_value;
 	}
 };

@@ -29,18 +29,61 @@ namespace sap::interp::builtin
 		    Field { .name = "font_id", .type = pt_int });
 	}
 
-	ErrorOr<Value> builtin::BS_Font::make(Evaluator* ev, int64_t font_id)
+	ErrorOr<Value> builtin::BS_Font::make(Evaluator* ev, pdf::PdfFont* font)
 	{
-		auto pdf_font = TRY(ev->interpreter()->getLoadedFontById(font_id));
 		return StructMaker(BS_Font::type->toStruct()) //
-		    .set("name", Value::string(unicode::u32StringFromUtf8(pdf_font->source().name())))
-		    .set("font_id", Value::integer(font_id))
+		    .set("name", Value::string(unicode::u32StringFromUtf8(font->source().name())))
+		    .set("font_id", Value::integer(font->fontId()))
 		    .make();
 	}
 
-	ErrorOr<int64_t> builtin::BS_Font::unmake(Evaluator* ev, const Value& value)
+	ErrorOr<pdf::PdfFont*> builtin::BS_Font::unmake(Evaluator* ev, const Value& value)
 	{
-		auto font_id = *get_struct_field<int64_t>(value, "font_id");
-		return Ok(font_id);
+		auto font_id = get_struct_field<int64_t>(value, "font_id");
+		return ev->interpreter()->getLoadedFontById(font_id);
+	}
+
+
+
+
+
+	const Type* builtin::BS_FontFamily::type = nullptr;
+	std::vector<Field> builtin::BS_FontFamily::fields()
+	{
+		auto pt_font = PT::named(QualifiedId {
+		    .top_level = true,
+		    .parents = { "builtin" },
+		    .name = BS_Font::name,
+		});
+
+		return util::vectorOf(                                 //
+		    Field { .name = "regular_font", .type = pt_font }, //
+		    Field { .name = "italic_font", .type = pt_font },  //
+		    Field { .name = "bold_font", .type = pt_font },    //
+		    Field { .name = "bold_italic_font", .type = pt_font });
+	}
+
+	ErrorOr<Value> builtin::BS_FontFamily::make(Evaluator* ev, FontFamily font)
+	{
+		return StructMaker(BS_FontFamily::type->toStruct()) //
+		    .set("regular_font", TRY(BS_Font::make(ev, font.regular())))
+		    .set("italic_font", TRY(BS_Font::make(ev, font.italic())))
+		    .set("bold_font", TRY(BS_Font::make(ev, font.bold())))
+		    .set("bold_italic_font", TRY(BS_Font::make(ev, font.boldItalic())))
+		    .make();
+	}
+
+	ErrorOr<FontFamily> builtin::BS_FontFamily::unmake(Evaluator* ev, const Value& value)
+	{
+		auto& rg = value.getStructField("regular_font");
+		auto& it = value.getStructField("italic_font");
+		auto& bd = value.getStructField("bold_font");
+		auto& bi = value.getStructField("bold_italic_font");
+
+		return Ok(FontFamily(             //
+		    TRY(BS_Font::unmake(ev, rg)), //
+		    TRY(BS_Font::unmake(ev, it)), //
+		    TRY(BS_Font::unmake(ev, bd)), //
+		    TRY(BS_Font::unmake(ev, bi))));
 	}
 }

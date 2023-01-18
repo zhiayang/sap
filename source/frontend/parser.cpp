@@ -596,6 +596,7 @@ namespace sap::frontend
 		return ret;
 	}
 
+	static PType parse_type(Lexer& lexer);
 
 	static std::unique_ptr<interp::Expr> parse_primary(Lexer& lexer)
 	{
@@ -673,6 +674,26 @@ namespace sap::frontend
 
 			return inside;
 		}
+		else if(lexer.expect(TT::LSquare))
+		{
+			auto array = std::make_unique<interp::ArrayLit>(lexer.location());
+			if(lexer.expect(TT::Colon))
+				array->elem_type = parse_type(lexer);
+
+			while(lexer.peek() != TT::RSquare)
+			{
+				array->elements.push_back(parse_expr(lexer));
+				if(lexer.expect(TT::Comma))
+					continue;
+				else if(lexer.peek() == TT::RSquare)
+					break;
+				else
+					error(lexer.location(), "expected ']' or ',' in array literal, found '{}'", lexer.peek().text);
+			}
+
+			must_expect(lexer, TT::RSquare);
+			return array;
+		}
 		else
 		{
 			error(lexer.location(), "invalid start of expression '{}'", lexer.peek().text);
@@ -722,7 +743,7 @@ namespace sap::frontend
 	}
 
 
-	static const PType parse_type(Lexer& lexer)
+	static PType parse_type(Lexer& lexer)
 	{
 		if(lexer.eof())
 			error(lexer.location(), "unexpected end of file");

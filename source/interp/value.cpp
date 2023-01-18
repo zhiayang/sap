@@ -165,6 +165,22 @@ namespace sap::interp
 		return v_array[idx];
 	}
 
+	Value& Value::getStructField(zst::str_view name)
+	{
+		this->ensure_not_moved_from();
+		assert(this->isStruct());
+
+		return v_array[m_type->toStruct()->getFieldIndex(name)];
+	}
+
+	const Value& Value::getStructField(zst::str_view name) const
+	{
+		this->ensure_not_moved_from();
+		assert(this->isStruct());
+		return v_array[m_type->toStruct()->getFieldIndex(name)];
+	}
+
+
 	std::vector<Value> Value::takeStructFields() &&
 	{
 		this->ensure_not_moved_from();

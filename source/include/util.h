@@ -176,6 +176,28 @@ namespace util
 		{
 			return std::hash<std::remove_cvref_t<decltype(a)>>()(a);
 		}
+
+		template <typename T>
+		static size_t combine(size_t seed)
+		{
+			return seed;
+		}
+
+		template <typename... Ts>
+		static size_t combine(size_t seed, Ts&&... vs)
+		{
+			auto xorshift = [](size_t x, int i) -> size_t {
+				return x ^ (x >> i);
+			};
+
+			auto distribute = [&xorshift](uint64_t n) -> uint64_t {
+				uint64_t p = 0x5555555555555555ull;   // pattern of alternating 0 and 1
+				uint64_t c = 17316035218449499591ull; // random uneven integer constant;
+				return c * xorshift(p * xorshift(n, 32), 32);
+			};
+
+			return (std::rotl(seed, std::numeric_limits<size_t>::digits / 3) ^ ... ^ distribute(hasher()(vs)));
+		}
 	};
 
 	// Convert type of `shared_ptr`, via `dynamic_cast`

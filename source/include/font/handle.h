@@ -43,6 +43,9 @@ namespace font
 		FontStyle style = FontStyle::NORMAL;
 		FontWeight weight = FontWeight::NORMAL;
 		double stretch = FontStretch::NORMAL;
+
+		bool operator==(const FontProperties&) const = default;
+		size_t hash() const { return util::hasher::combine(0, this->style, this->weight, this->stretch); }
 	};
 
 	struct FontHandle
@@ -52,6 +55,13 @@ namespace font
 		FontProperties properties;
 
 		std::filesystem::path path;
+
+		size_t hash() const
+		{
+			return util::hasher::combine(0, this->display_name, this->postscript_name, this->properties, this->path);
+		}
+
+		bool operator==(const FontHandle&) const = default;
 	};
 
 	struct FontFamily
