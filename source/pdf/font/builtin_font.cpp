@@ -158,12 +158,12 @@ namespace pdf
 			}
 			else if(auto x = get_value("Ascender"); x.has_value())
 			{
-				m_metrics.typo_ascent = to<int>(*x);
+				m_metrics.typo_ascent = FontScalar(to<int>(*x));
 				m_metrics.hhea_ascent = m_metrics.typo_ascent;
 			}
 			else if(auto x = get_value("Descender"); x.has_value())
 			{
-				m_metrics.typo_descent = to<int>(*x);
+				m_metrics.typo_descent = FontScalar(to<int>(*x));
 				m_metrics.hhea_descent = m_metrics.typo_descent;
 			}
 			else if(auto x = get_value("StdVW"); x.has_value())
@@ -290,8 +290,8 @@ namespace pdf
 
 		// see the comment in font/loader.cpp about this 1.2x
 		m_metrics.units_per_em = 1000;
-		m_metrics.default_line_spacing = FontScalar(std::max((m_metrics.units_per_em * 12) / 10,
-		    m_metrics.typo_ascent - m_metrics.typo_descent));
+		m_metrics.default_line_spacing = std::max(FontScalar(m_metrics.units_per_em * 12) / 10,
+		    m_metrics.typo_ascent - m_metrics.typo_descent);
 	}
 
 

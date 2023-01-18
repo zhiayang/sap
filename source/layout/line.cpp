@@ -8,9 +8,15 @@
 
 namespace sap::layout
 {
-	static Size2d calculate_word_size(zst::wstr_view text, const Style* style)
+	static std::tuple<Length, Length, Length> calculate_word_size(zst::wstr_view text, const Style* style)
 	{
-		return style->font()->getWordSize(text, style->font_size().into<pdf::PdfScalar>()).into<Size2d>();
+		auto x = style->font()->getWordSize(text, style->font_size().into()).x();
+
+		auto& fm = style->font()->getFontMetrics();
+		auto asc = style->font()->scaleMetricForFontSize(fm.typo_ascent, style->font_size().into());
+		auto dsc = style->font()->scaleMetricForFontSize(fm.typo_descent, style->font_size().into());
+
+		return { x.into(), asc.into(), dsc.into() };
 	}
 
 	struct LineMetrics
@@ -18,7 +24,8 @@ namespace sap::layout
 		sap::Length total_space_width;
 		sap::Length total_word_width;
 		std::vector<sap::Length> widths;
-		sap::Length line_height;
+		sap::Length ascent_height;
+		sap::Length descent_height;
 	};
 
 	static LineMetrics compute_line_metrics(std::span<const std::unique_ptr<tree::InlineObject>> objs, const Style* parent_style)
@@ -52,12 +59,12 @@ namespace sap::layout
 
 				word_chunk.text += word->contents();
 
-				auto chunk_size = calculate_word_size(word_chunk.text, style);
-				ret.widths.push_back(chunk_size.x() - word_chunk.width);
+				auto [chunk_x, chunk_asc, chunk_dsc] = calculate_word_size(word_chunk.text, style);
+				ret.widths.push_back(chunk_x - word_chunk.width);
 
-				word_chunk.width = chunk_size.x();
-
-				ret.line_height = std::max(ret.line_height, chunk_size.y() * style->line_spacing());
+				word_chunk.width = chunk_x;
+				ret.ascent_height = std::max(ret.ascent_height, chunk_asc * style->line_spacing());
+				ret.descent_height = std::max(ret.descent_height, chunk_dsc * style->line_spacing());
 			}
 			else if(auto sep = dynamic_cast<const tree::Separator*>(it->get()); sep)
 			{
@@ -76,13 +83,13 @@ namespace sap::layout
 						sap::internal_error("??? line with only separator");
 
 					if(it == objs.begin())
-						return calculate_word_size(sep_char, parent_style->extendWith((*(it + 1))->style())).x();
+						return std::get<0>(calculate_word_size(sep_char, parent_style->extendWith((*(it + 1))->style())));
 					else if(it + 1 == objs.end())
-						return calculate_word_size(sep_char, parent_style->extendWith((*(it - 1))->style())).x();
+						return std::get<0>(calculate_word_size(sep_char, parent_style->extendWith((*(it - 1))->style())));
 
-					return std::max(                                                                       //
-					    calculate_word_size(sep_char, parent_style->extendWith((*(it - 1))->style())).x(), //
-					    calculate_word_size(sep_char, parent_style->extendWith((*(it + 1))->style())).x());
+					return std::max(                                                                                //
+					    std::get<0>(calculate_word_size(sep_char, parent_style->extendWith((*(it - 1))->style()))), //
+					    std::get<0>(calculate_word_size(sep_char, parent_style->extendWith((*(it + 1))->style()))));
 				}();
 
 				if(sep->isSpace())
@@ -125,11 +132,11 @@ namespace sap::layout
 	    std::span<const std::unique_ptr<tree::InlineObject>> objs,
 	    bool is_last_line)
 	{
-		cursor = cursor.newLine(0);
-		auto start_position = cursor.position();
-
 		auto line_metrics = compute_line_metrics(objs, style);
-		auto line_height = line_metrics.line_height;
+		auto line_height = line_metrics.ascent_height + line_metrics.descent_height;
+
+		cursor = cursor.newLine(line_metrics.ascent_height);
+		auto start_position = cursor.position();
 
 		auto total_width = line_metrics.total_word_width + line_metrics.total_space_width;
 
@@ -201,7 +208,7 @@ namespace sap::layout
 			}
 		}
 
-		return std::unique_ptr<Line>(new Line(start_position, Size2d(total_width, line_metrics.line_height), style,
+		return std::unique_ptr<Line>(new Line(start_position, Size2d(total_width, line_height), style,
 		    std::move(layout_objects)));
 	}
 

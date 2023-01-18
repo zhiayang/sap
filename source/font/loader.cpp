@@ -356,9 +356,9 @@ namespace font
 		// we should have already parsed the head table, so this value should be present.
 		assert(m_metrics.units_per_em != 0);
 
-		m_metrics.hhea_ascent = consume_i16(buf);
-		m_metrics.hhea_descent = consume_i16(buf);
-		m_metrics.hhea_linegap = consume_i16(buf);
+		m_metrics.hhea_ascent = FontScalar(consume_i16(buf));
+		m_metrics.hhea_descent = FontScalar(consume_i16(buf));
+		m_metrics.hhea_linegap = FontScalar(consume_i16(buf));
 
 		// skip all the nonsense
 		buf.remove_prefix(24);
@@ -374,19 +374,19 @@ namespace font
 		auto version = peek_u16(buf);
 
 		// the sTypo things are always available, even at version 0
-		m_metrics.typo_ascent = peek_i16(buf.drop(68));
-		m_metrics.typo_descent = peek_i16(buf.drop(70));
-		m_metrics.typo_linegap = peek_i16(buf.drop(72));
+		m_metrics.typo_ascent = FontScalar(peek_i16(buf.drop(68)));
+		m_metrics.typo_descent = FontScalar(peek_i16(buf.drop(70)));
+		m_metrics.typo_linegap = FontScalar(peek_i16(buf.drop(72)));
 
 		// "it is strongly recommended to use OS/2.sTypoAscender - OS/2.sTypoDescender+ OS/2.sTypoLineGap
 		// as a value for default line spacing for this font."
 
 		// note that FreeType also does this x1.2 "magic factor", and it seems to line up with
 		// what other programs (eg. word, pages) use.
-		m_metrics.default_line_spacing = FontScalar(std::max( //
-		    (m_metrics.units_per_em * 12) / 10,
+		m_metrics.default_line_spacing = std::max( //
+		    FontScalar(m_metrics.units_per_em * 12) / 10,
 		    m_metrics.typo_ascent - m_metrics.typo_descent + m_metrics.typo_linegap //
-		    ));
+		);
 
 		if(version >= 2)
 		{
@@ -569,7 +569,8 @@ namespace font
 	}
 
 	std::optional<std::unique_ptr<FontFile>> FontFile::from_postscript_name_in_collection( //
-	    zst::unique_span<uint8_t[]> file_buf, zst::str_view postscript_name)
+	    zst::unique_span<uint8_t[]> file_buf,
+	    zst::str_view postscript_name)
 	{
 		assert(memcmp(file_buf.get(), "ttcf", 4) == 0);
 

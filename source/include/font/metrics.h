@@ -17,17 +17,17 @@ namespace font
 		int xmax;
 		int ymax;
 
-		int hhea_ascent;
-		int hhea_descent;
-		int hhea_linegap;
+		FontScalar hhea_ascent;
+		FontScalar hhea_descent;
+		FontScalar hhea_linegap;
 		int units_per_em;
 
 		int x_height;
 		int cap_height;
 
-		int typo_ascent;
-		int typo_descent;
-		int typo_linegap;
+		FontScalar typo_ascent;
+		FontScalar typo_descent;
+		FontScalar typo_linegap;
 
 		FontScalar default_line_spacing;
 
