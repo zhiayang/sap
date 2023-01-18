@@ -7,6 +7,7 @@
 
 	builtin::push_style(builtin::Style {
 		.font_family = font_family,
+		.font_size = 13pt,
 		.paragraph_spacing = 1em
 	});
 }
@@ -22,7 +23,7 @@ this     is     a    aoeu bsdf, fill me up flour
 fi fl Bсички хора се раждат свободни и равни по \{ \}
 
 
-hello \std::style(builtin::Style { .font_size = 6 }) { world } asdf
+hello \std::style(builtin::Style { .font_size = 15pt }) { world } asdf
 
 
 My name is Yoshikage Kira. I'm\builtin::bold_italic1(1 < 2 < 5 > 7)years old. My house is in the northeast section of Morioh,
