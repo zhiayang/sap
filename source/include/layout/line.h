@@ -32,10 +32,12 @@ namespace sap::layout
 		    std::span<const std::unique_ptr<tree::InlineObject>> objs,
 		    bool is_last_line);
 
-		static std::pair<LineCursor, std::unique_ptr<Line>> fromBlockObjects(interp::Interpreter* cs,
+		static std::pair<LineCursor, std::optional<std::unique_ptr<Line>>> fromBlockObjects(interp::Interpreter* cs,
 		    LineCursor cursor,
 		    const Style* style,
-		    std::span<const tree::BlockObject*> objs);
+		    std::span<tree::BlockObject*> objs);
+
+		const std::vector<std::unique_ptr<LayoutObject>>& objects() const { return m_objects; }
 
 	private:
 		explicit Line(RelativePos position, Size2d size, const Style* style, std::vector<std::unique_ptr<LayoutObject>> objs);

@@ -19,12 +19,18 @@ namespace sap::tree
 		std::vector<std::unique_ptr<layout::Line>> lines {};
 		for(auto& obj : m_objects)
 		{
-			std::array<const BlockObject*, 1> aoeu { obj.get() };
-			auto [new_cursor, line] = layout::Line::fromBlockObjects(cs, cursor, style, aoeu);
+			std::array<BlockObject*, 1> aoeu { obj.get() };
+			auto [new_cursor, maybe_line] = layout::Line::fromBlockObjects(cs, cursor, style, aoeu);
+
+			if(not maybe_line.has_value())
+				continue;
 
 			cursor = new_cursor.newLine(style->paragraph_spacing());
-			lines.push_back(std::move(line));
+			lines.push_back(std::move(*maybe_line));
 		}
+
+		if(lines.empty())
+			return { cursor, std::nullopt };
 
 		return { cursor, layout::Paragraph::fromLines(cs, start_cursor, style, std::move(lines)) };
 	}

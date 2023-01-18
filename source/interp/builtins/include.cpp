@@ -24,7 +24,7 @@ namespace sap::interp::builtin
 		auto doc = frontend::parse(ev->keepStringAlive(file_path), file_contents.span().chars());
 
 		std::vector<std::unique_ptr<tree::BlockObject>> objs {};
-		for(auto& obj : doc.allObjects())
+		for(auto& obj : doc.objects())
 		{
 			if(auto blk = dynamic_cast<tree::BlockObject*>(obj.get()); blk != nullptr)
 			{

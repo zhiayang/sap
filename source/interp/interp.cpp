@@ -30,6 +30,12 @@ namespace sap::interp
 	}
 
 
+	tree::BlockObject& Interpreter::leakBlockObject(std::unique_ptr<tree::BlockObject> obj)
+	{
+		return *m_leaked_tbos.emplace_back(std::move(obj)).get();
+	}
+
+
 	ErrorOr<EvalResult> Stmt::evaluate(Evaluator* ev) const
 	{
 		auto _ = ev->pushLocation(m_location);

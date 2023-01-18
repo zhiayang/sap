@@ -79,17 +79,21 @@ namespace sap::tree
 	*/
 	struct ScriptObject : InlineObject, BlockObject
 	{
-		virtual LayoutResult createLayoutObject(interp::Interpreter* cs, layout::LineCursor cursor, const Style* parent_style)
-		    const override;
 	};
 
 	struct ScriptBlock : ScriptObject
 	{
+		virtual LayoutResult createLayoutObject(interp::Interpreter* cs, layout::LineCursor cursor, const Style* parent_style)
+		    const override;
+
 		std::unique_ptr<interp::Block> body;
 	};
 
 	struct ScriptCall : ScriptObject
 	{
+		virtual LayoutResult createLayoutObject(interp::Interpreter* cs, layout::LineCursor cursor, const Style* parent_style)
+		    const override;
+
 		std::unique_ptr<interp::FunctionCall> call;
 	};
 }

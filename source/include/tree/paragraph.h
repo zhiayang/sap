@@ -91,11 +91,12 @@ namespace sap::tree
 		std::vector<std::unique_ptr<InlineObject>>& contents() { return m_contents; }
 		const std::vector<std::unique_ptr<InlineObject>>& contents() const { return m_contents; }
 
+		void processWordSeparators();
+
 	private:
 		std::vector<std::unique_ptr<InlineObject>> m_contents {};
 
 		friend struct Document;
 		void evaluateScripts(interp::Interpreter* cs);
-		void processWordSeparators();
 	};
 }

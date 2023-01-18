@@ -205,10 +205,10 @@ namespace sap::layout
 		    std::move(layout_objects)));
 	}
 
-	std::pair<LineCursor, std::unique_ptr<Line>> Line::fromBlockObjects(interp::Interpreter* cs, //
+	std::pair<LineCursor, std::optional<std::unique_ptr<Line>>> Line::fromBlockObjects(interp::Interpreter* cs, //
 	    LineCursor cursor,
 	    const Style* style,
-	    std::span<const tree::BlockObject*> objs)
+	    std::span<tree::BlockObject*> objs)
 	{
 		cursor = cursor.newLine(0);
 		auto start_position = cursor.position();
@@ -244,10 +244,11 @@ namespace sap::layout
 				continue;
 
 			layout_objects.push_back(std::move(*layout_obj.second));
-
 			cursor = std::move(new_cursor);
 		}
 
+		if(layout_objects.empty())
+			return { cursor, std::nullopt };
 
 		return {
 			cursor,

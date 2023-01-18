@@ -73,7 +73,7 @@ namespace sap::interp::builtin
 		assert(args.size() == 2);
 		assert(args[0].type() == BS_Style::type);
 
-		return do_apply_style(ev, args[1], BS_Style::unmake(args[0]));
+		return do_apply_style(ev, args[1], BS_Style::unmake(ev, args[0]));
 	}
 
 	ErrorOr<EvalResult> apply_style_tbo(Evaluator* ev, std::vector<Value>& args)
@@ -81,7 +81,7 @@ namespace sap::interp::builtin
 		assert(args.size() == 2);
 		assert(args[0].type() == BS_Style::type);
 
-		return do_apply_style(ev, args[1], BS_Style::unmake(args[0]));
+		return do_apply_style(ev, args[1], BS_Style::unmake(ev, args[0]));
 	}
 
 
@@ -119,7 +119,7 @@ namespace sap::interp::builtin
 	{
 		assert(args.size() == 1);
 
-		ev->pushStyle(BS_Style::unmake(args[0]));
+		ev->pushStyle(BS_Style::unmake(ev, args[0]));
 		return EvalResult::ofVoid();
 	}
 

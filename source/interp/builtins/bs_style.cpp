@@ -5,6 +5,7 @@
 #include "sap/style.h"
 #include "tree/base.h"
 #include "interp/value.h"
+#include "interp/evaluator.h"
 #include "interp/builtin_types.h"
 
 namespace sap::interp::builtin
@@ -13,6 +14,7 @@ namespace sap::interp::builtin
 	using Field = StructDefn::Field;
 
 	static auto pt_float = PT::named(frontend::TYPE_FLOAT);
+	static auto pt_length = PT::named(frontend::TYPE_LENGTH);
 	static auto pt_alignment = PT::named(BE_Alignment::name);
 
 	static auto get_null()
@@ -32,6 +34,23 @@ namespace sap::interp::builtin
 
 		return (*f.getOptional())->get<T>();
 	}
+
+
+	template <typename T>
+	static std::optional<T> get_field(const Value& str, zst::str_view field, T (Value::*getter_method)() const)
+	{
+		auto& fields = str.getStructFields();
+		auto idx = str.type()->toStruct()->getFieldIndex(field);
+
+		auto& f = fields[idx];
+		if(not f.haveOptionalValue())
+			return std::nullopt;
+
+		return ((*f.getOptional())->*getter_method)();
+	}
+
+
+
 
 	template <typename T>
 	static std::optional<T> get_enumerator_field(const Value& val, zst::str_view field)
@@ -54,6 +73,7 @@ namespace sap::interp::builtin
 		return util::vectorOf(                                                                        //
 		    Field { .name = "font_size", .type = PT::optional(pt_float), .initialiser = get_null() }, //
 		    Field { .name = "line_spacing", .type = PT::optional(pt_float), .initialiser = get_null() },
+		    Field { .name = "paragraph_spacing", .type = PT::optional(pt_length), .initialiser = get_null() },
 		    Field { .name = "alignment", .type = PT::optional(pt_alignment), .initialiser = get_null() });
 	}
 
@@ -62,6 +82,7 @@ namespace sap::interp::builtin
 		return StructMaker(BS_Style::type->toStruct()) //
 		    .set("font_size", Value::floating(style->font_size().value()))
 		    .set("line_spacing", Value::floating(style->line_spacing()))
+		    .set("paragraph_spacing", Value::length(DynLength(style->paragraph_spacing())))
 		    .set("alignment",
 		        Value::enumerator(BE_Alignment::type->toEnum(), Value::integer(static_cast<int64_t>(style->alignment()))))
 		    .make();
@@ -69,8 +90,10 @@ namespace sap::interp::builtin
 
 
 
-	const Style* builtin::BS_Style::unmake(const Value& value)
+	const Style* builtin::BS_Style::unmake(Evaluator* ev, const Value& value)
 	{
+		auto cur_style = ev->currentStyle().unwrap();
+
 		auto style = util::make<Style>();
 
 		auto get_scalar = [&value](zst::str_view field) -> std::optional<sap::Length> {
@@ -80,9 +103,13 @@ namespace sap::interp::builtin
 
 			return std::nullopt;
 		};
+
 		style->set_font_size(get_scalar("font_size"));
 		style->set_line_spacing(get_field<double>(value, "line_spacing"));
 		style->set_alignment(get_enumerator_field<Alignment>(value, "alignment"));
+
+		if(auto x = get_field<DynLength>(value, "paragraph_spacing", &Value::getLength); x.has_value())
+			style->set_paragraph_spacing(x->resolve(cur_style->font(), cur_style->font_size()));
 
 		return style;
 	}

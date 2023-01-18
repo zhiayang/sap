@@ -9,7 +9,6 @@
 #include "pdf/writer.h" // for Writer
 
 #include "sap/style.h"       // for Style
-#include "sap/document.h"    // for Document
 #include "sap/frontend.h"    // for parse
 #include "sap/font_family.h" // for FontSet, FontStyle, FontStyle::Regular
 
@@ -20,16 +19,20 @@
 #include "font/search.h"    // for findFont, GENERIC_SERIF
 #include "font/font_file.h" // for FontFile
 
+#include "layout/document.h" // for Document
+
 #include "interp/interp.h" // for Interpreter
 
 #if 0
 CLEANUP:
-
 - maybe wrapper around (const Style*)
 - smart quotes
 - dijkstra linebreaking might accidentally make an extra page;
 	- when rendering, use some mechanism (eg. proxy object) to only make the page if
 		someone tried to actually put stuff in it (or access it)
+
+TODO:
+- pushing styles in script-land does literally nothing, we need to translate that to layout-land somehow
 
 #endif
 
@@ -85,9 +88,8 @@ int main(int argc, char** argv)
 
 	interpreter.evaluator().pushStyle(layout_doc.style());
 
-	document.evaluateScripts(&interpreter);
-	document.processWordSeparators();
-	layout_doc.layout(&interpreter, document);
+	document.layout(&interpreter, &layout_doc);
+	// layout_doc.layout(&interpreter, document);
 
 	auto out_path = std::filesystem::path(filename).replace_extension(".pdf");
 	auto writer = pdf::Writer(out_path.string());

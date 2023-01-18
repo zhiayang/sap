@@ -33,7 +33,7 @@ namespace sap::interp::builtin
 		static std::vector<StructDefn::Field> fields();
 
 		static Value make(const Style* style);
-		static const Style* unmake(const Value& value);
+		static const Style* unmake(Evaluator* ev, const Value& value);
 	};
 
 	struct BE_Alignment

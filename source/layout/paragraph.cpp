@@ -62,6 +62,12 @@ namespace sap::tree
 	auto Paragraph::createLayoutObject(interp::Interpreter* cs, layout::LineCursor cursor, const Style* parent_style) const
 	    -> LayoutResult
 	{
+		const_cast<Paragraph*>(this)->evaluateScripts(cs);
+		const_cast<Paragraph*>(this)->processWordSeparators();
+
+		if(m_contents.empty())
+			return { std::move(cursor), std::nullopt };
+
 		cursor = cursor.newLine(0);
 
 		std::vector<std::unique_ptr<layout::Line>> layout_lines {};

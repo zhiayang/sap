@@ -10,7 +10,6 @@
 
 #include "sap/style.h"       // for Style
 #include "sap/units.h"       // for Length
-#include "sap/document.h"    // for Document
 #include "sap/font_family.h" // for FontSet, FontStyle, FontStyle::Regular
 
 #include "tree/document.h"
@@ -19,6 +18,7 @@
 
 #include "layout/base.h"      // for Cursor, LayoutObject, Interpreter, Rec...
 #include "layout/image.h"     //
+#include "layout/document.h"  // for Document
 #include "layout/paragraph.h" // for Paragraph
 
 namespace sap::layout

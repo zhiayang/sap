@@ -17,6 +17,11 @@
 #include "interp/evaluator.h"
 #include "interp/typechecker.h"
 
+namespace sap::tree
+{
+	struct BlockObject;
+}
+
 namespace sap::interp
 {
 	struct Interpreter
@@ -27,8 +32,12 @@ namespace sap::interp
 		Evaluator& evaluator() { return *m_evaluator; }
 		Typechecker& typechecker() { return *m_typechecker; }
 
+		tree::BlockObject& leakBlockObject(std::unique_ptr<tree::BlockObject> obj);
+
 	private:
 		std::unique_ptr<Typechecker> m_typechecker;
 		std::unique_ptr<Evaluator> m_evaluator;
+
+		std::vector<std::unique_ptr<tree::BlockObject>> m_leaked_tbos;
 	};
 }

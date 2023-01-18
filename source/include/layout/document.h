@@ -113,6 +113,9 @@ namespace sap::layout
 		void layout(interp::Interpreter* cs, const tree::Document& document);
 		void write(pdf::Writer* stream);
 
+		PageLayout& pageLayout() { return m_page_layout; }
+		const PageLayout& pageLayout() const { return m_page_layout; }
+
 	private:
 		pdf::File& pdf();
 		const pdf::File& pdf() const;
