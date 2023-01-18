@@ -14,6 +14,7 @@
 
 #include "tree/document.h"
 
+#include "interp/interp.h"
 #include "interp/basedefs.h" // for DocumentObject
 
 #include "layout/base.h"      // for Cursor, LayoutObject, Interpreter, Rec...
@@ -23,19 +24,19 @@
 
 namespace sap::layout
 {
-	Document::Document() : m_page_layout(PageLayout(dim::mm(210, 297).into<Size2d>(), dim::mm(25)))
+	Document::Document(interp::Interpreter* cs) : m_page_layout(PageLayout(dim::mm(210, 297).into<Size2d>(), dim::mm(25)))
 	{
-		static auto default_font_family = sap::FontFamily(                       //
-		    this->addFont(pdf::BuiltinFont::get(pdf::BuiltinFont::TimesRoman)),  //
-		    this->addFont(pdf::BuiltinFont::get(pdf::BuiltinFont::TimesItalic)), //
-		    this->addFont(pdf::BuiltinFont::get(pdf::BuiltinFont::TimesBold)),   //
-		    this->addFont(pdf::BuiltinFont::get(pdf::BuiltinFont::TimesBoldItalic)));
+		static auto default_font_family = sap::FontFamily(                                //
+		    &cs->addLoadedFont(pdf::PdfFont::fromBuiltin(pdf::BuiltinFont::TimesRoman)),  //
+		    &cs->addLoadedFont(pdf::PdfFont::fromBuiltin(pdf::BuiltinFont::TimesItalic)), //
+		    &cs->addLoadedFont(pdf::PdfFont::fromBuiltin(pdf::BuiltinFont::TimesBold)),   //
+		    &cs->addLoadedFont(pdf::PdfFont::fromBuiltin(pdf::BuiltinFont::TimesBoldItalic)));
 
 		static auto default_style = //
 		    sap::Style()
 		        .set_font_family(default_font_family)
 		        .set_font_style(sap::FontStyle::Regular)
-		        .set_font_size(pdf::PdfScalar(12.0).into<sap::Length>())
+		        .set_font_size(pdf::PdfScalar(12.0).into())
 		        .set_line_spacing(1.0)
 		        .set_alignment(Alignment::Justified)
 		        .set_paragraph_spacing(sap::Length(1.0));
@@ -56,12 +57,6 @@ namespace sap::layout
 	void Document::addObject(std::unique_ptr<LayoutObject> obj)
 	{
 		m_objects.push_back(std::move(obj));
-	}
-
-	pdf::PdfFont* Document::addFont(std::unique_ptr<font::FontSource> font)
-	{
-		auto f = pdf::PdfFont::fromSource(std::move(font));
-		return m_fonts.emplace_back(std::move(f)).get();
 	}
 
 	void Document::write(pdf::Writer* stream)

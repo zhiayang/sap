@@ -9,7 +9,7 @@
 
 namespace sap::interp
 {
-	Evaluator::Evaluator()
+	Evaluator::Evaluator(Interpreter* cs) : m_interp(cs)
 	{
 		// always start with a top level frame.
 		m_stack_frames.push_back(std::unique_ptr<StackFrame>(new StackFrame(this, nullptr, 0)));

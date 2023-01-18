@@ -76,11 +76,13 @@ namespace pdf
 		return font_desc;
 	}
 
+	static int64_t g_font_ids = 0;
 	PdfFont::PdfFont(std::unique_ptr<pdf::BuiltinFont> source_)
 	    : Resource(KIND_FONT)
 	    , m_source(std::move(source_))
 	    , m_font_dictionary(Dictionary::createIndirect(names::Font, {}))
 	    , m_glyph_widths_array(Array::createIndirect())
+	    , m_font_id(++g_font_ids)
 	{
 		auto* builtin_src = static_cast<BuiltinFont*>(m_source.get());
 
@@ -103,6 +105,7 @@ namespace pdf
 	    , m_source(std::move(font_file_))
 	    , m_font_dictionary(Dictionary::createIndirect(names::Font, {}))
 	    , m_glyph_widths_array(Array::createIndirect())
+	    , m_font_id(++g_font_ids)
 	{
 		auto file_src = static_cast<font::FontFile*>(m_source.get());
 
@@ -327,5 +330,37 @@ namespace pdf
 	Object* PdfFont::resourceObject() const
 	{
 		return m_font_dictionary;
+	}
+
+
+	GlyphSpace1d PdfFont::scaleFontMetricForPDFGlyphSpace(font::FontScalar metric) const
+	{
+		return GlyphSpace1d((metric / this->getFontMetrics().units_per_em).value());
+	}
+
+	// abstracts away the scaling by units_per_em, to go from font units to pdf units
+	// this converts the metric to a **concrete size** (in pdf units, aka 1/72 inches)
+	PdfScalar PdfFont::scaleMetricForFontSize(font::FontScalar metric, PdfScalar font_size) const
+	{
+		auto gs = this->scaleFontMetricForPDFGlyphSpace(metric);
+		return PdfScalar((gs * font_size.value()).value());
+	}
+
+	// this converts the metric to an **abstract size**, which is the text space. when
+	// drawing text, the /Tf directive already specifies the font scale!
+	TextSpace1d PdfFont::scaleMetricForPDFTextSpace(font::FontScalar metric) const
+	{
+		auto gs = this->scaleFontMetricForPDFGlyphSpace(metric);
+		return gs.into<TextSpace1d>();
+	}
+
+	std::vector<font::GlyphInfo> PdfFont::getGlyphInfosForString(zst::wstr_view text) const
+	{
+		return m_source->getGlyphInfosForString(text);
+	}
+
+	TextSpace1d PdfFont::convertPDFScalarToTextSpaceForFontSize(PdfScalar scalar, PdfScalar font_size)
+	{
+		return GlyphSpace1d(scalar / font_size).into<TextSpace1d>();
 	}
 }

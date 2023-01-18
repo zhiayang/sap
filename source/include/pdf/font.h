@@ -37,14 +37,15 @@ namespace pdf
 		Dictionary* dictionary() const { return m_font_dictionary; }
 		bool isCIDFont() const { return not m_source->isBuiltin(); }
 
+		const font::FontSource& source() const { return *m_source; }
+
 		const font::FontMetrics& getFontMetrics() const { return m_source->metrics(); }
 		font::GlyphMetrics getMetricsForGlyph(GlyphId glyph) const { return m_source->getGlyphMetrics(glyph); }
 		GlyphId getGlyphIdFromCodepoint(char32_t codepoint) const { return m_source->getGlyphIndexForCodepoint(codepoint); }
 
-		std::vector<font::GlyphInfo> getGlyphInfosForString(zst::wstr_view text) const
-		{
-			return m_source->getGlyphInfosForString(text);
-		}
+		int64_t fontId() const { return m_font_id; }
+
+		std::vector<font::GlyphInfo> getGlyphInfosForString(zst::wstr_view text) const;
 
 		Size2d_YDown getWordSize(zst::wstr_view text, PdfScalar font_size) const;
 
@@ -55,31 +56,19 @@ namespace pdf
 		std::optional<std::vector<GlyphId>> performSubstitutionsForGlyphSequence(zst::span<GlyphId> glyphs,
 		    const font::FeatureSet& features) const;
 
-
 		// add an explicit mapping from glyph id to a list of codepoints. This is useful for
 		// ligature substitutions (eg. 'ffi' -> 'f', 'f', 'i') and for single replacements.
 		void addGlyphUnicodeMapping(GlyphId glyph, std::vector<char32_t> codepoints) const;
 
-		GlyphSpace1d scaleFontMetricForPDFGlyphSpace(font::FontScalar metric) const
-		{
-			return GlyphSpace1d((metric / this->getFontMetrics().units_per_em).value());
-		}
+		GlyphSpace1d scaleFontMetricForPDFGlyphSpace(font::FontScalar metric) const;
 
 		// abstracts away the scaling by units_per_em, to go from font units to pdf units
 		// this converts the metric to a **concrete size** (in pdf units, aka 1/72 inches)
-		PdfScalar scaleMetricForFontSize(font::FontScalar metric, PdfScalar font_size) const
-		{
-			auto gs = this->scaleFontMetricForPDFGlyphSpace(metric);
-			return PdfScalar((gs * font_size.value()).value());
-		}
+		PdfScalar scaleMetricForFontSize(font::FontScalar metric, PdfScalar font_size) const;
 
 		// this converts the metric to an **abstract size**, which is the text space. when
 		// drawing text, the /Tf directive already specifies the font scale!
-		TextSpace1d scaleMetricForPDFTextSpace(font::FontScalar metric) const
-		{
-			auto gs = this->scaleFontMetricForPDFGlyphSpace(metric);
-			return gs.into<TextSpace1d>();
-		}
+		TextSpace1d scaleMetricForPDFTextSpace(font::FontScalar metric) const;
 
 		int font_type = 0;
 
@@ -91,10 +80,7 @@ namespace pdf
 		static constexpr int FONT_CFF_CID = 3;
 		static constexpr int FONT_TRUETYPE_CID = 4;
 
-		static TextSpace1d convertPDFScalarToTextSpaceForFontSize(PdfScalar scalar, PdfScalar font_size)
-		{
-			return GlyphSpace1d(scalar / font_size).into<TextSpace1d>();
-		}
+		static TextSpace1d convertPDFScalarToTextSpaceForFontSize(PdfScalar scalar, PdfScalar font_size);
 
 	private:
 		PdfFont(std::unique_ptr<pdf::BuiltinFont> builtin_font);
@@ -116,6 +102,8 @@ namespace pdf
 
 		// what goes in BaseName. for subsets, this includes the ABCDEF+ part.
 		std::string m_pdf_font_name;
+
+		int64_t m_font_id;
 
 		// pool needs to be a friend because it needs the constructor
 		template <typename>

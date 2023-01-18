@@ -21,6 +21,8 @@ namespace font
 	{
 		virtual ~FontSource() { }
 
+		virtual std::string name() const = 0;
+
 		size_t numGlyphs() const { return m_num_glyphs; }
 		const FontMetrics& metrics() const { return m_metrics; }
 		const CharacterMapping& characterMapping() const { return m_character_mapping; }

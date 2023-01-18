@@ -4,6 +4,8 @@
 
 #include "location.h" // for error
 
+#include "pdf/font.h"
+
 #include "tree/base.h"
 
 #include "interp/ast.h"         // for Definition, makeParamList, Expr, Stmt
@@ -15,7 +17,7 @@ namespace sap::interp
 {
 	extern void defineBuiltins(Interpreter* interp, DefnTree* builtin_ns);
 
-	Interpreter::Interpreter() : m_typechecker(new Typechecker()), m_evaluator(new Evaluator())
+	Interpreter::Interpreter() : m_typechecker(new Typechecker()), m_evaluator(new Evaluator(this))
 	{
 		m_typechecker->pushLocation(Location::builtin()).cancel();
 		m_evaluator->pushLocation(Location::builtin()).cancel();
@@ -33,6 +35,23 @@ namespace sap::interp
 	tree::BlockObject& Interpreter::leakBlockObject(std::unique_ptr<tree::BlockObject> obj)
 	{
 		return *m_leaked_tbos.emplace_back(std::move(obj)).get();
+	}
+
+	pdf::PdfFont& Interpreter::addLoadedFont(std::unique_ptr<pdf::PdfFont> font)
+	{
+		if(auto it = m_loaded_fonts.find(font->fontId()); it != m_loaded_fonts.end())
+			return *it->second;
+
+		auto id = font->fontId();
+		return *m_loaded_fonts.emplace(id, std::move(font)).first->second;
+	}
+
+	ErrorOr<pdf::PdfFont*> Interpreter::getLoadedFontById(int64_t font_id)
+	{
+		if(auto it = m_loaded_fonts.find(font_id); it != m_loaded_fonts.end())
+			return Ok(it->second.get());
+
+		return ErrMsg(m_evaluator.get(), "font with id {} was not loaded", font_id);
 	}
 
 

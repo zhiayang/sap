@@ -98,15 +98,13 @@ namespace sap::layout
 
 	struct Document : Stylable
 	{
-		Document();
+		explicit Document(interp::Interpreter* interp);
 
 		Document(const Document&) = delete;
 		Document& operator=(const Document&) = delete;
 
 		Document(Document&&) = default;
 		Document& operator=(Document&&) = default;
-
-		pdf::PdfFont* addFont(std::unique_ptr<font::FontSource> font);
 
 		void addObject(std::unique_ptr<LayoutObject> obj);
 
@@ -122,7 +120,6 @@ namespace sap::layout
 		pdf::File m_pdf_document {};
 		PageLayout m_page_layout;
 
-		std::vector<std::unique_ptr<pdf::PdfFont>> m_fonts {};
 		std::vector<std::unique_ptr<LayoutObject>> m_objects {};
 	};
 }

@@ -21,23 +21,25 @@ namespace sap::interp
 
 	namespace builtin
 	{
-		ErrorOr<EvalResult> bold1(Evaluator* cs, std::vector<Value>& args);
-		ErrorOr<EvalResult> italic1(Evaluator* cs, std::vector<Value>& args);
-		ErrorOr<EvalResult> bold_italic1(Evaluator* cs, std::vector<Value>& args);
+		ErrorOr<EvalResult> bold1(Evaluator* ev, std::vector<Value>& args);
+		ErrorOr<EvalResult> italic1(Evaluator* ev, std::vector<Value>& args);
+		ErrorOr<EvalResult> bold_italic1(Evaluator* ev, std::vector<Value>& args);
 
-		ErrorOr<EvalResult> apply_style_tio(Evaluator* cs, std::vector<Value>& args);
-		ErrorOr<EvalResult> apply_style_tbo(Evaluator* cs, std::vector<Value>& args);
+		ErrorOr<EvalResult> apply_style_tio(Evaluator* ev, std::vector<Value>& args);
+		ErrorOr<EvalResult> apply_style_tbo(Evaluator* ev, std::vector<Value>& args);
 
-		ErrorOr<EvalResult> print(Evaluator* cs, std::vector<Value>& args);
-		ErrorOr<EvalResult> println(Evaluator* cs, std::vector<Value>& args);
+		ErrorOr<EvalResult> print(Evaluator* ev, std::vector<Value>& args);
+		ErrorOr<EvalResult> println(Evaluator* ev, std::vector<Value>& args);
 
-		ErrorOr<EvalResult> load_image(Evaluator* cs, std::vector<Value>& args);
-		ErrorOr<EvalResult> include_file(Evaluator* cs, std::vector<Value>& args);
+		ErrorOr<EvalResult> load_image(Evaluator* ev, std::vector<Value>& args);
+		ErrorOr<EvalResult> include_file(Evaluator* ev, std::vector<Value>& args);
 
-		ErrorOr<EvalResult> current_style(Evaluator* cs, std::vector<Value>& args);
-		ErrorOr<EvalResult> push_style(Evaluator* cs, std::vector<Value>& args);
-		ErrorOr<EvalResult> pop_style(Evaluator* cs, std::vector<Value>& args);
+		ErrorOr<EvalResult> current_style(Evaluator* ev, std::vector<Value>& args);
+		ErrorOr<EvalResult> push_style(Evaluator* ev, std::vector<Value>& args);
+		ErrorOr<EvalResult> pop_style(Evaluator* ev, std::vector<Value>& args);
 
-		ErrorOr<EvalResult> to_string(Evaluator* cs, std::vector<Value>& args);
+		ErrorOr<EvalResult> to_string(Evaluator* ev, std::vector<Value>& args);
+
+		ErrorOr<EvalResult> find_font(Evaluator* ev, std::vector<Value>& args);
 	}
 }

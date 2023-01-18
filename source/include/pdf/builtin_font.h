@@ -42,7 +42,7 @@ namespace pdf
 			ZapfDingbats,
 		};
 
-		const std::string& name() const { return m_name; }
+		virtual std::string name() const override { return m_name; }
 		Core14 kind() const { return m_kind; }
 
 		GlyphId getFirstGlyphId() const { return m_first_glyph_id; }

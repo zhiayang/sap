@@ -34,10 +34,15 @@ namespace sap::interp
 
 		tree::BlockObject& leakBlockObject(std::unique_ptr<tree::BlockObject> obj);
 
+		pdf::PdfFont& addLoadedFont(std::unique_ptr<pdf::PdfFont> font);
+		ErrorOr<pdf::PdfFont*> getLoadedFontById(int64_t font_id);
+
 	private:
 		std::unique_ptr<Typechecker> m_typechecker;
 		std::unique_ptr<Evaluator> m_evaluator;
 
 		std::vector<std::unique_ptr<tree::BlockObject>> m_leaked_tbos;
+
+		util::hashmap<int64_t, std::unique_ptr<pdf::PdfFont>> m_loaded_fonts;
 	};
 }

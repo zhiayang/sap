@@ -33,31 +33,31 @@ CLEANUP:
 
 #endif
 
-int main(int argc, char** argv)
+namespace sap
 {
-	if(argc != 2)
-	{
-		zpr::println("Usage: {} <input file>", argv[0]);
-		return 1;
-	}
+	void compile(zst::str_view filename);
+}
 
-	auto filename = std::string(argv[1]);
-	auto entire_file = util::readEntireFile(filename);
+void sap::compile(zst::str_view filename)
+{
+	auto entire_file = util::readEntireFile(filename.str());
 
-	auto interpreter = sap::interp::Interpreter();
+	auto interpreter = interp::Interpreter();
 
-	auto document = sap::frontend::parse(filename, zst::str_view((char*) entire_file.get(), entire_file.size()));
-	auto layout_doc = sap::layout::Document();
+	auto document = frontend::parse(filename, zst::str_view((char*) entire_file.get(), entire_file.size()));
+	auto layout_doc = layout::Document(&interpreter);
 
+#if 0
 	auto font_family = [&]() {
 		using namespace font;
 
 		std::vector<std::string> prefs = { "Source Serif 4", "Helvetica", GENERIC_SERIF };
 
 		auto regular_handle = font::findFont(prefs, FontProperties {});
-		auto italic_handle = font::findFont(prefs, FontProperties { .style = FontStyle::ITALIC });
-		auto bold_handle = font::findFont(prefs, FontProperties { .weight = FontWeight::BOLD });
-		auto boldit_handle = font::findFont(prefs, FontProperties { .style = FontStyle::ITALIC, .weight = FontWeight::BOLD });
+		auto italic_handle = font::findFont(prefs, FontProperties { .style = font::FontStyle::ITALIC });
+		auto bold_handle = font::findFont(prefs, FontProperties { .weight = font::FontWeight::BOLD });
+		auto boldit_handle = font::findFont(prefs,
+		    FontProperties { .style = font::FontStyle::ITALIC, .weight = FontWeight::BOLD });
 
 		assert(regular_handle.has_value());
 		assert(italic_handle.has_value());
@@ -69,26 +69,38 @@ int main(int argc, char** argv)
 		auto bold = layout_doc.addFont(*FontFile::fromHandle(*bold_handle));
 		auto boldit = layout_doc.addFont(*FontFile::fromHandle(*boldit_handle));
 
-		return sap::FontFamily(regular, italic, bold, boldit);
+		return FontFamily(regular, italic, bold, boldit);
 	}();
 
-	auto main_style = sap::Style {};
+	auto main_style = Style {};
 	main_style //
 	    .set_font_family(font_family)
-	    .set_font_style(sap::FontStyle::Regular)
+	    .set_font_style(FontStyle::Regular)
 	    .set_line_spacing(1)
 	    .set_font_size(pdf::PdfScalar(13).into());
 
 	auto actual_style = layout_doc.style()->extendWith(&main_style);
 	layout_doc.setStyle(actual_style);
+#endif
 
 	interpreter.evaluator().pushStyle(layout_doc.style());
 	document.layout(&interpreter, &layout_doc);
 
-	auto out_path = std::filesystem::path(filename).replace_extension(".pdf");
+	auto out_path = std::filesystem::path(filename.str()).replace_extension(".pdf");
 	auto writer = pdf::Writer(out_path.string());
 	layout_doc.write(&writer);
 	writer.close();
+}
+
+int main(int argc, char** argv)
+{
+	if(argc != 2)
+	{
+		zpr::println("Usage: {} <input file>", argv[0]);
+		return 1;
+	}
+
+	sap::compile(argv[1]);
 }
 
 

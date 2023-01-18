@@ -24,6 +24,8 @@ namespace sap::tree
 namespace sap::interp
 {
 	struct Evaluator;
+	struct Interpreter;
+
 	struct StackFrame
 	{
 		StackFrame* parent() const { return m_parent; }
@@ -58,7 +60,8 @@ namespace sap::interp
 
 	struct Evaluator
 	{
-		Evaluator();
+		explicit Evaluator(Interpreter* cs);
+		Interpreter* interpreter() { return m_interp; }
 
 		StackFrame& frame();
 		[[nodiscard]] util::Defer<> pushFrame();
@@ -83,6 +86,8 @@ namespace sap::interp
 		std::string& keepStringAlive(zst::str_view str);
 
 	private:
+		Interpreter* m_interp;
+
 		std::vector<std::unique_ptr<StackFrame>> m_stack_frames;
 		std::vector<const Style*> m_style_stack;
 

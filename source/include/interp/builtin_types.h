@@ -7,6 +7,7 @@
 #include "util.h"
 
 #include "interp/ast.h"
+#include "interp/value.h"
 #include "interp/parser_type.h"
 
 namespace sap
@@ -32,9 +33,21 @@ namespace sap::interp::builtin
 		static const Type* type;
 		static std::vector<StructDefn::Field> fields();
 
-		static Value make(const Style* style);
-		static const Style* unmake(Evaluator* ev, const Value& value);
+		static ErrorOr<Value> make(Evaluator* ev, const Style* style);
+		static ErrorOr<const Style*> unmake(Evaluator* ev, const Value& value);
 	};
+
+	struct BS_Font
+	{
+		static constexpr auto name = "Font";
+
+		static const Type* type;
+		static std::vector<StructDefn::Field> fields();
+
+		static ErrorOr<Value> make(Evaluator* ev, int64_t font_id);
+		static ErrorOr<int64_t> unmake(Evaluator* ev, const Value& value);
+	};
+
 
 	struct BE_Alignment
 	{
@@ -54,11 +67,38 @@ namespace sap::interp::builtin
 	{
 		explicit StructMaker(const StructType* type);
 
-		Value make();
+		ErrorOr<Value> make();
 		StructMaker& set(zst::str_view field, Value value);
 
 	private:
 		const StructType* m_type;
 		std::vector<Value> m_fields;
 	};
+
+
+	template <typename T>
+	std::optional<T> get_struct_field(const Value& str, zst::str_view field)
+	{
+		auto& fields = str.getStructFields();
+		auto idx = str.type()->toStruct()->getFieldIndex(field);
+
+		auto& f = fields[idx];
+		if(not f.haveOptionalValue())
+			return std::nullopt;
+
+		return (*f.getOptional())->get<T>();
+	}
+
+	template <typename T>
+	std::optional<T> get_struct_field(const Value& str, zst::str_view field, T (Value::*getter_method)() const)
+	{
+		auto& fields = str.getStructFields();
+		auto idx = str.type()->toStruct()->getFieldIndex(field);
+
+		auto& f = fields[idx];
+		if(not f.haveOptionalValue())
+			return std::nullopt;
+
+		return ((*f.getOptional())->*getter_method)();
+	}
 };

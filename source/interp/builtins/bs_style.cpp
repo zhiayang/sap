@@ -23,36 +23,6 @@ namespace sap::interp::builtin
 	}
 
 	template <typename T>
-	static std::optional<T> get_field(const Value& str, zst::str_view field)
-	{
-		auto& fields = str.getStructFields();
-		auto idx = str.type()->toStruct()->getFieldIndex(field);
-
-		auto& f = fields[idx];
-		if(not f.haveOptionalValue())
-			return std::nullopt;
-
-		return (*f.getOptional())->get<T>();
-	}
-
-
-	template <typename T>
-	static std::optional<T> get_field(const Value& str, zst::str_view field, T (Value::*getter_method)() const)
-	{
-		auto& fields = str.getStructFields();
-		auto idx = str.type()->toStruct()->getFieldIndex(field);
-
-		auto& f = fields[idx];
-		if(not f.haveOptionalValue())
-			return std::nullopt;
-
-		return ((*f.getOptional())->*getter_method)();
-	}
-
-
-
-
-	template <typename T>
 	static std::optional<T> get_enumerator_field(const Value& val, zst::str_view field)
 	{
 		auto& fields = val.getStructFields();
@@ -77,7 +47,7 @@ namespace sap::interp::builtin
 		    Field { .name = "alignment", .type = PT::optional(pt_alignment), .initialiser = get_null() });
 	}
 
-	Value builtin::BS_Style::make(const Style* style)
+	ErrorOr<Value> builtin::BS_Style::make(Evaluator* ev, const Style* style)
 	{
 		return StructMaker(BS_Style::type->toStruct()) //
 		    .set("font_size", Value::floating(style->font_size().value()))
@@ -90,14 +60,14 @@ namespace sap::interp::builtin
 
 
 
-	const Style* builtin::BS_Style::unmake(Evaluator* ev, const Value& value)
+	ErrorOr<const Style*> builtin::BS_Style::unmake(Evaluator* ev, const Value& value)
 	{
 		auto cur_style = ev->currentStyle().unwrap();
 
 		auto style = util::make<Style>();
 
 		auto get_scalar = [&value](zst::str_view field) -> std::optional<sap::Length> {
-			auto f = get_field<double>(value, field);
+			auto f = get_struct_field<double>(value, field);
 			if(f.has_value())
 				return sap::Length(*f);
 
@@ -105,12 +75,12 @@ namespace sap::interp::builtin
 		};
 
 		style->set_font_size(get_scalar("font_size"));
-		style->set_line_spacing(get_field<double>(value, "line_spacing"));
+		style->set_line_spacing(get_struct_field<double>(value, "line_spacing"));
 		style->set_alignment(get_enumerator_field<Alignment>(value, "alignment"));
 
-		if(auto x = get_field<DynLength>(value, "paragraph_spacing", &Value::getLength); x.has_value())
+		if(auto x = get_struct_field<DynLength>(value, "paragraph_spacing", &Value::getLength); x.has_value())
 			style->set_paragraph_spacing(x->resolve(cur_style->font(), cur_style->font_size()));
 
-		return style;
+		return Ok(style);
 	}
 }

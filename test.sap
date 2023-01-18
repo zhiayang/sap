@@ -2,7 +2,7 @@
 
 \builtin::include("prelude.sap");
 
-\builtin::push_style(builtin::Style { .paragraph_spacing = 20mm });
+\builtin::push_style(builtin::Style { .paragraph_spacing = 1em });
 
 
 
