@@ -27,7 +27,6 @@ namespace sap::layout
 {
 	std::unique_ptr<Paragraph> Paragraph::fromLines(interp::Interpreter* cs, //
 	    LineCursor cursor,
-	    const Style* parent_style,
 	    std::vector<std::unique_ptr<Line>> lines)
 	{
 		auto widest_line = std::max_element(lines.begin(), lines.end(), [](auto& a, auto& b) {

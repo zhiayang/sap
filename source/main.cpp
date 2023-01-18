@@ -31,9 +31,6 @@ CLEANUP:
 	- when rendering, use some mechanism (eg. proxy object) to only make the page if
 		someone tried to actually put stuff in it (or access it)
 
-TODO:
-- pushing styles in script-land does literally nothing, we need to translate that to layout-land somehow
-
 #endif
 
 int main(int argc, char** argv)
@@ -80,16 +77,13 @@ int main(int argc, char** argv)
 	    .set_font_family(font_family)
 	    .set_font_style(sap::FontStyle::Regular)
 	    .set_line_spacing(1)
-	    .set_paragraph_spacing(sap::Length(5))
 	    .set_font_size(pdf::PdfScalar(13).into());
 
 	auto actual_style = layout_doc.style()->extendWith(&main_style);
 	layout_doc.setStyle(actual_style);
 
 	interpreter.evaluator().pushStyle(layout_doc.style());
-
 	document.layout(&interpreter, &layout_doc);
-	// layout_doc.layout(&interpreter, document);
 
 	auto out_path = std::filesystem::path(filename).replace_extension(".pdf");
 	auto writer = pdf::Writer(out_path.string());

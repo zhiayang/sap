@@ -110,7 +110,6 @@ namespace sap::layout
 
 		void addObject(std::unique_ptr<LayoutObject> obj);
 
-		void layout(interp::Interpreter* cs, const tree::Document& document);
 		void write(pdf::Writer* stream);
 
 		PageLayout& pageLayout() { return m_page_layout; }

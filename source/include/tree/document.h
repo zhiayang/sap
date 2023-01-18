@@ -24,8 +24,6 @@ namespace sap::tree
 		void layout(interp::Interpreter* cs, layout::Document* layout_doc);
 
 	private:
-		bool process_word_separators(DocumentObject* obj);
-
 		std::vector<std::unique_ptr<DocumentObject>> m_objects {};
 	};
 }

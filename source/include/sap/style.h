@@ -49,7 +49,8 @@ namespace sap
 #define DEFINE_SETTER(field_type, field_name, method_name)         \
 	inline Style& method_name(std::optional<field_type> new_value) \
 	{                                                              \
-		field_name = std::move(new_value);                         \
+		if(new_value.has_value())                                  \
+			field_name = std::move(new_value);                     \
 		return *this;                                              \
 	}
 

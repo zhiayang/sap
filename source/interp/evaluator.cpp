@@ -160,8 +160,6 @@ namespace sap::interp
 		if(not m_style_stack.empty())
 			style = m_style_stack.back()->extendWith(style);
 
-		zpr::println("pushing {}", style->paragraph_spacing());
-
 		m_style_stack.push_back(style);
 	}
 

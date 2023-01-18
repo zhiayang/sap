@@ -64,19 +64,6 @@ namespace sap::layout
 		return m_fonts.emplace_back(std::move(f)).get();
 	}
 
-	void Document::layout(interp::Interpreter* cs, const tree::Document& treedoc)
-	{
-		LineCursor cursor = m_page_layout.newCursor();
-		for(const auto& obj : treedoc.objects())
-		{
-			auto [new_cursor, layout_obj] = obj->createLayoutObject(cs, cursor, m_style);
-			cursor = std::move(new_cursor);
-
-			if(layout_obj.has_value())
-				m_page_layout.addObject(std::move(*layout_obj));
-		}
-	}
-
 	void Document::write(pdf::Writer* stream)
 	{
 		auto pages = m_page_layout.render();
