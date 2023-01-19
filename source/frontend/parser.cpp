@@ -111,6 +111,8 @@ namespace sap::frontend
 					case U'b': ret += U'\b'; break;
 					case U'{': ret += U'{'; break;
 					case U'}': ret += U'}'; break;
+					case U'"': ret += U'"'; break;
+					case U'\'': ret += U'\''; break;
 					case U'x':
 						assert(bs.size() >= 2);
 						assert(is_hex(bs[0]) && is_hex(bs[1]));
