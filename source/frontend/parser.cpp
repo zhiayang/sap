@@ -273,11 +273,11 @@ namespace sap::frontend
 		switch(tok)
 		{
 			case TT::Equal: return interp::AssignOp::None;
-			case TT::Plus: return interp::AssignOp::Add;
-			case TT::Minus: return interp::AssignOp::Subtract;
-			case TT::Asterisk: return interp::AssignOp::Multiply;
-			case TT::Slash: return interp::AssignOp::Divide;
-			case TT::Percent: return interp::AssignOp::Modulo;
+			case TT::PlusEqual: return interp::AssignOp::Add;
+			case TT::MinusEqual: return interp::AssignOp::Subtract;
+			case TT::AsteriskEqual: return interp::AssignOp::Multiply;
+			case TT::SlashEqual: return interp::AssignOp::Divide;
+			case TT::PercentEqual: return interp::AssignOp::Modulo;
 			default: assert(false && "unreachable!");
 		}
 	}
