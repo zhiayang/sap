@@ -4,13 +4,10 @@
 
 #include "util.h" // for readEntireFile
 
-#include "pdf/font.h"   // for Font
-#include "pdf/units.h"  // for PdfScalar
+#include "pdf/font.h"   //
 #include "pdf/writer.h" // for Writer
 
-#include "sap/style.h"       // for Style
-#include "sap/frontend.h"    // for parse
-#include "sap/font_family.h" // for FontSet, FontStyle, FontStyle::Regular
+#include "sap/frontend.h" // for parse
 
 #include "tree/document.h"
 #include "layout/document.h" // for Document
