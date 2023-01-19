@@ -29,8 +29,12 @@ namespace font
 
 		GlyphId getGlyphIndexForCodepoint(char32_t codepoint) const;
 		GlyphMetrics getGlyphMetrics(GlyphId glyphId) const;
-		FontVector2d getWordSize(zst::wstr_view word) const;
-		std::vector<GlyphInfo> getGlyphInfosForString(zst::wstr_view text) const;
+
+		// returns the GlyphInfos for the given glyph string. note that this *DOES NOT* perform GSUB/morx, ie.
+		// ligatures and/or language-specific glyphs are not done here -- they are handled by the PDF layer.
+		// this only looks up positioning stuff, eg. GPOS and kern.
+		std::vector<GlyphInfo> getGlyphInfosForSubstitutedString(zst::span<GlyphId> glyphs, const FeatureSet& features) const;
+
 
 		bool isGlyphUsed(GlyphId glyph_id) const;
 		void markGlyphAsUsed(GlyphId glyph_id) const;
@@ -52,7 +56,5 @@ namespace font
 
 		mutable util::hashset<GlyphId> m_used_glyphs {};
 		mutable util::hashmap<GlyphId, GlyphMetrics> m_glyph_metrics {};
-		mutable util::hashmap<std::u32string, FontVector2d> m_word_size_cache {};
-		mutable util::hashmap<std::u32string, std::vector<GlyphInfo>> m_glyph_infos_cache {};
 	};
 }

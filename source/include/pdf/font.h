@@ -45,7 +45,7 @@ namespace pdf
 
 		int64_t fontId() const { return m_font_id; }
 
-		std::vector<font::GlyphInfo> getGlyphInfosForString(zst::wstr_view text) const;
+		const std::vector<font::GlyphInfo>& getGlyphInfosForString(zst::wstr_view text) const;
 
 		Size2d_YDown getWordSize(zst::wstr_view text, PdfScalar font_size) const;
 
@@ -88,6 +88,9 @@ namespace pdf
 
 		void writeUnicodeCMap() const;
 		void writeCIDSet() const;
+
+		mutable util::hashmap<std::u32string, font::FontVector2d> m_word_size_cache {};
+		mutable util::hashmap<std::u32string, std::vector<font::GlyphInfo>> m_glyph_infos_cache {};
 
 		mutable std::map<GlyphId, std::vector<char32_t>> m_extra_unicode_mappings {};
 		mutable bool m_did_serialise = false;

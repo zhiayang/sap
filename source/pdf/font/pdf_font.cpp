@@ -211,10 +211,23 @@ namespace pdf
 
 	Size2d_YDown PdfFont::getWordSize(zst::wstr_view text, PdfScalar font_size) const
 	{
-		auto sz = m_source->getWordSize(text);
-		return Size2d_YDown(                                 //
-		    this->scaleMetricForFontSize(sz.x(), font_size), //
-		    this->scaleMetricForFontSize(sz.y(), font_size));
+		auto make_vec = [this, font_size](font::FontVector2d vec) -> Size2d_YDown {
+			return Size2d_YDown(                                  //
+			    this->scaleMetricForFontSize(vec.x(), font_size), //
+			    this->scaleMetricForFontSize(vec.y(), font_size));
+		};
+
+		if(auto it = m_word_size_cache.find(text); it != m_word_size_cache.end())
+			return make_vec(it->second);
+
+		font::FontScalar width = 0;
+		for(auto& g : this->getGlyphInfosForString(text))
+			width += g.metrics.horz_advance + g.adjustments.horz_advance;
+
+		auto size = font::FontVector2d(width, this->getFontMetrics().default_line_spacing);
+
+		m_word_size_cache.emplace(text.str(), size);
+		return make_vec(size);
 	}
 
 	void PdfFont::addGlyphUnicodeMapping(GlyphId glyph, std::vector<char32_t> codepoints) const
@@ -227,6 +240,39 @@ namespace pdf
 
 		m_extra_unicode_mappings[glyph] = std::move(codepoints);
 	}
+
+
+	const std::vector<font::GlyphInfo>& PdfFont::getGlyphInfosForString(zst::wstr_view text) const
+	{
+		if(auto it = m_glyph_infos_cache.find(text); it != m_glyph_infos_cache.end())
+			return it->second;
+
+		using font::Tag;
+		font::FeatureSet features {};
+
+		// REMOVE: this is just for testing!
+		features.script = Tag("cyrl");
+		features.language = Tag("BGR ");
+		features.enabled_features = { Tag("kern"), Tag("liga"), Tag("locl") };
+
+		std::vector<GlyphId> glyphs {};
+		glyphs.reserve(text.size());
+
+		for(char32_t cp : text)
+			glyphs.push_back(this->getGlyphIdFromCodepoint(cp));
+
+		auto glyph_span = zst::span<GlyphId>(glyphs.data(), glyphs.size());
+
+		// run substitution
+		if(auto subst = this->performSubstitutionsForGlyphSequence(glyph_span, features); subst.has_value())
+			glyphs = std::move(*subst);
+
+		glyph_span = zst::span<GlyphId>(glyphs.data(), glyphs.size());
+
+		auto glyph_infos = m_source->getGlyphInfosForSubstitutedString(glyph_span, features);
+		return m_glyph_infos_cache.emplace(text.str(), std::move(glyph_infos)).first->second;
+	}
+
 
 
 	std::map<size_t, font::GlyphAdjustment> PdfFont::getPositioningAdjustmentsForGlyphSequence(zst::span<GlyphId> glyphs,
@@ -352,11 +398,6 @@ namespace pdf
 	{
 		auto gs = this->scaleFontMetricForPDFGlyphSpace(metric);
 		return gs.into<TextSpace1d>();
-	}
-
-	std::vector<font::GlyphInfo> PdfFont::getGlyphInfosForString(zst::wstr_view text) const
-	{
-		return m_source->getGlyphInfosForString(text);
 	}
 
 	TextSpace1d PdfFont::convertPDFScalarToTextSpaceForFontSize(PdfScalar scalar, PdfScalar font_size)
