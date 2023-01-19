@@ -1,3 +1,7 @@
+# SBNF file for sap.
+# needs to be compiled to a sublime-syntax file using https://github.com/BenjaminSchaaf/sbnf
+# this works with version 0.6.0 (released 2022-11-22)
+
 NAME = `sap`
 
 IDENTIFIER = '[A-Za-z_][[:word:]]*'
@@ -94,7 +98,10 @@ struct-defn: 'struct'{storage.type} IDENTIFIER{entity.name.struct}
 
 
 
-function-call-arg: expr;
+function-call-arg: '([A-Za-z_][[:word:]]*)\s*(:)\s*(?!:)'{
+        1: variable.parameter,
+        2: punctuation.colon
+    }? expr;
 
 function-call:
     '(::)?\s*([A-Za-z_][[:word:]]*)(?:\s*(::)\s*([A-Za-z_][[:word:]]*))*\s*(\()'{
@@ -231,6 +238,7 @@ type: '\b(any|int|bool|char|void|float|string|Inline|Block|Length)\b'{support.ty
             (type? (`,`{punctuation.comma} type)*)
         `)`{punctuation.paren.fn-type-start}
     ) `->`{punctuation.arrow} type
+    | ( `[`{punctuation.bracket.array-type-start} type `]`{punctuation.bracket.array-type-end} )
     ;
 
 
@@ -242,10 +250,6 @@ length-literal: '\b([[:digit:]]+(\.([[:digit:]]+))?)(\s*(ex|em|rem|mm|cm|in|pt|p
 
 constant-literal: '\b(true|false|null)\b'{constant.language};
 
-string-literal {string.quoted.double}:
-    '"'{punctuation.quote}
-    ~'"'{punctuation.quote};
-
 array-literal:
     (`[`{punctuation.bracket})
     (`:`{punctuation.colon} type)?
@@ -256,11 +260,20 @@ array-literal:
     (`]`{punctuation.bracket})
     ;
 
-fstring-contents
-    : '\\\{|\\\}|\\\\|\\n|\\t|\\b'{constant.character.escape}
+string-escapes
+    : '\\\{|\\\}|\\\\|\\n|\\t|\\b|\\"\\\''{constant.character.escape}
     | '\\x[[:xdigit:]]{2}'{constant.character.escape}
     | '\\u[[:xdigit:]]{4}'{constant.character.escape}
     | '\\U[[:xdigit:]]{8}'{constant.character.escape}
+    ;
+
+string-literal {string.quoted.double}:
+    '"'{punctuation.quote}
+        (string-escapes | '[^"]')*
+    '"'{punctuation.quote};
+
+fstring-contents
+    : string-escapes
     | `{`{punctuation.brace.fstring-expr-start} expr `}`{punctuation.brace.fstring-expr-end}
     | '[^"]'{string.quoted.double}
     ;
