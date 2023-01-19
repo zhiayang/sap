@@ -45,12 +45,13 @@ namespace sap::interp::builtin
 		{
 			auto tios = std::move(value).takeTreeInlineObj();
 			for(auto& obj : tios)
-				obj->setStyle(style->extendWith(obj->style()));
+				obj->setStyle(obj->style()->extendWith(style));
 
 			return EvalResult::ofValue(Value::treeInlineObject(std::move(tios)));
 		}
 		else if(value.isTreeBlockObj())
 		{
+			zpr::println("styling block");
 			auto tbo = std::move(value).takeTreeBlockObj();
 			tbo->setStyle(style);
 
@@ -156,5 +157,40 @@ namespace sap::interp::builtin
 
 		auto img_obj = tree::Image::fromImageFile(img_path, img_width, img_height);
 		return EvalResult::ofValue(Value::treeBlockObject(std::move(img_obj)));
+	}
+
+
+
+
+	ErrorOr<EvalResult> make_text(Evaluator* ev, std::vector<Value>& args)
+	{
+		assert(args.size() == 1);
+
+		std::vector<std::unique_ptr<tree::InlineObject>> inline_objs {};
+
+		auto strings = std::move(args[0]).takeArray();
+		for(size_t i = 0; i < strings.size(); i++)
+		{
+			if(i != 0)
+				inline_objs.push_back(std::make_unique<tree::Separator>(tree::Separator::SPACE));
+
+			inline_objs.push_back(std::make_unique<tree::Text>(strings[i].getUtf32String()));
+		}
+
+		return EvalResult::ofValue(Value::treeInlineObject(std::move(inline_objs)));
+	}
+
+
+	ErrorOr<EvalResult> make_paragraph(Evaluator* ev, std::vector<Value>& args)
+	{
+		assert(args.size() == 1);
+
+		auto para = std::make_unique<tree::Paragraph>();
+
+		auto objs = std::move(args[0]).takeArray();
+		for(size_t i = 0; i < objs.size(); i++)
+			para->addObjects(std::move(objs[i]).takeTreeInlineObj());
+
+		return EvalResult::ofValue(Value::treeBlockObject(std::move(para)));
 	}
 }

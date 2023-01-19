@@ -1,6 +1,9 @@
 # std.sap
 \script std::{
 
+fn style(s: builtin::Style, obj: Block) -> Block { return builtin::apply_style(s, *obj); }
+fn style(s: builtin::Style, obj: Inline) -> Inline { return builtin::apply_style(s, *obj); }
+
 fn centre(b: Block) -> Block
 {
 	let ret = builtin::apply_style(builtin::Style {
@@ -10,16 +13,17 @@ fn centre(b: Block) -> Block
 	return ret;
 }
 
-fn style(s: builtin::Style, obj: Inline) -> Inline
+fn section(name: string) -> Block
 {
-	return builtin::apply_style(s, *obj);
+	let inlines = builtin::make_text([f"section {name}"]);
+
+	return std::style(builtin::Style {
+		.font_size = 24pt,
+	}, builtin::make_paragraph([inlines]));
 }
 
-fn style(s: builtin::Style, obj: Block) -> Block
-{
-	return builtin::apply_style(s, *obj);
 }
-}
+
 
 
 # testing

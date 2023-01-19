@@ -95,6 +95,13 @@ namespace sap::interp
 		define_builtin("italic1", makeParamList(Param { .name = "_", .type = t_any }), t_tio, &builtin::italic1);
 		define_builtin("bold_italic1", makeParamList(Param { .name = "_", .type = t_any }), t_tio, &builtin::bold_italic1);
 
+		define_builtin("make_text", makeParamList(Param { .name = "1", .type = PType::array(t_str, false) }), t_tio,
+		    &builtin::make_text);
+
+		define_builtin("make_paragraph", makeParamList(Param { .name = "1", .type = PType::array(t_tio, false) }), t_tbo,
+		    &builtin::make_paragraph);
+
+
 		define_builtin("apply_style",
 		    makeParamList(                               //
 		        Param { .name = "1", .type = t_bstyle }, //

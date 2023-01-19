@@ -42,5 +42,8 @@ namespace sap::interp
 
 		ErrorOr<EvalResult> find_font(Evaluator* ev, std::vector<Value>& args);
 		ErrorOr<EvalResult> find_font_family(Evaluator* ev, std::vector<Value>& args);
+
+		ErrorOr<EvalResult> make_text(Evaluator* ev, std::vector<Value>& args);
+		ErrorOr<EvalResult> make_paragraph(Evaluator* ev, std::vector<Value>& args);
 	}
 }
