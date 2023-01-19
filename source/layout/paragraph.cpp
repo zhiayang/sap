@@ -69,11 +69,13 @@ namespace sap::tree
 
 		cursor = cursor.newLine(0);
 
+		auto style = parent_style->extendWith(this->style());
+
 		std::vector<std::unique_ptr<layout::Line>> layout_lines {};
 		auto para_pos = cursor.position();
 		Size2d para_size { 0, 0 };
 
-		auto lines = layout::linebreak::breakLines(cursor, parent_style, m_contents, cursor.widthAtCursor());
+		auto lines = layout::linebreak::breakLines(cursor, style, m_contents, cursor.widthAtCursor());
 
 		size_t current_idx = 0;
 
@@ -98,12 +100,11 @@ namespace sap::tree
 				--words_end;
 
 			auto [new_cursor, layout_line] = layout::Line::fromInlineObjects(cs, //
-			    cursor, broken_line, parent_style,                               //
+			    cursor, broken_line, style,                                      //
 			    std::span(words_begin, words_end),
 			    /* is_last_line: */ line_it + 1 == lines.end());
 
 			cursor = std::move(new_cursor);
-			// cursor = cursor.newLine(broken_line.lineHeight());
 
 			para_size.x() = std::max(para_size.x(), layout_line->layoutSize().x());
 			para_size.y() += layout_line->layoutSize().y();
