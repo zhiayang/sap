@@ -79,6 +79,10 @@ namespace sap::interp
 		void pushStyle(const Style* style);
 		ErrorOr<const Style*> popStyle();
 
+		bool isGlobalValue(const Definition* defn) const;
+		void setGlobalValue(const Definition* defn, Value val);
+		Value* getGlobalValue(const Definition* defn);
+
 		ErrorOr<std::vector<std::unique_ptr<tree::InlineObject>>> convertValueToText(Value&& value);
 
 		// this is necessary to keep the strings around...
@@ -92,6 +96,8 @@ namespace sap::interp
 		std::vector<const Style*> m_style_stack;
 
 		std::vector<Location> m_location_stack;
+
+		std::unordered_map<const Definition*, Value> m_global_values;
 
 		std::vector<std::string> m_leaked_strings;
 		std::vector<std::u32string> m_leaked_strings32;

@@ -51,7 +51,6 @@ namespace sap::interp::builtin
 		}
 		else if(value.isTreeBlockObj())
 		{
-			zpr::println("styling block");
 			auto tbo = std::move(value).takeTreeBlockObj();
 			tbo->setStyle(style);
 

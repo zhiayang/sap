@@ -13,9 +13,12 @@ fn centre(b: Block) -> Block
 	return ret;
 }
 
+var g_section_counter: int = 0;
+
 fn section(name: string) -> Block
 {
-	let inlines = builtin::make_text([f"section {name}"]);
+	let inlines = builtin::make_text([f"{1 + g_section_counter} {name}"]);
+	g_section_counter += 1;
 
 	return std::style(builtin::Style {
 		.font_size = 24pt,
@@ -24,7 +27,7 @@ fn section(name: string) -> Block
 
 }
 
-
+#/
 
 # testing
 \script {
@@ -138,3 +141,4 @@ fn section(name: string) -> Block
 
 	builtin::println(f"hello {10mm} world");
 }
+/#

@@ -3,7 +3,6 @@
 \builtin::include("std.sap");
 
 \script {
-	let foo = true;
 	let font_family = builtin::find_font_family(["Source Serif 4", "Helvetica", "serif"]);
 
 	builtin::push_style(builtin::Style {
@@ -28,6 +27,7 @@ fi fl Bсички хора се раждат свободни и равни по
 
 hello \std::style(builtin::Style { .font_size = 15pt }) { world } asdf
 
+\std::section("goodbye");
 
 My name is Yoshikage Kira. I'm\builtin::bold_italic1(1 < 2 < 5 > 7)years old. My house is in the northeast section of Morioh,
 where all the villas are, and I am not married. I work as an employee for the Kame Yu department
@@ -60,6 +60,8 @@ fucker. As we 話します, 私 am contacting 私の secret ネット of オタ�
 and あなたの IP is being traced right now so you better 準備します for the ame, ウジ虫. The 雨
 that 殺す’s the pathetic 小さい thing あなた calls あなたの life. You’re fucking 死にました’d, 赤ちゃん.
 /#
+
+\std::section("lorem ipsum");
 
 Contrary to popular belief, Lorem Ipsum is not simply random text. It has roots in a piece of classical Latin literature from 45 BC, making it over 2000 years old. Richard McClintock, a Latin professor at Hampden-Sydney College in Virginia, looked up one of the more obscure Latin words, consectetur, from a Lorem Ipsum passage, and going through the cites of the word in classical literature, discovered the undoubtable source. Lorem Ipsum comes from sections 1.10.32 and 1.10.33 of "de Finibus Bonorum et Malorum" (The Extremes of Good and Evil) by Cicero, written in 45 BC. This book is a treatise on the theory of ethics, very popular during the Renaissance. The first line of Lorem Ipsum, "Lorem ipsum dolor sit amet..", comes from a line in section 1.10.32.
 

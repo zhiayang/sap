@@ -3,41 +3,7 @@
 
 ### language design
 
-The goal is to keep the number of "special" character as small as possible. Currently, we have 4: `\`, `{`, `}`, and `#`.
-It is probably a good idea to enforce that the scripting context is always introduced by `\`. I'm not sure if we want
-'bare' `{` and `}` to have special meaning (like in latex).
-
-Part of the issue is that we have a few different kinds of "things":
-
-1. string literals, in the context of the scripting language (eg. `"foobar"`)
-2. user text, as in paragraphs, words, titles, etc.
-3. code blocks, ie. a list of statements
-
-For denoting (1), it's very easy -- just use double quotes in a scripting context. For (3), it is convenient to use
-`\{ ... }` since we already want `\` to unambiguously introduce a script block. The issue here is (2), beacuse
-usertext will most likely have spaces.
-
-We could do `{` without `\` to mean a text block, but then we need to escape `{` itself, which would be `\{`... An
-alternative is to do something like `\script{...}` to create a script block, then bare `{` and `}` for text blocks,
-letting us escape them with `\{`.
-
-
-There's also something we probably want like swift's "trailing closures", except that the block isn't a script block
-but a text block. For example we could have something like this:
-
-```
-\style(weight: "bold") {
-	this is some bold text
-}
-```
-
-there's some additional considerations wrt. the semantics of text blocks, eg. whether they are considered inline or
-paragraphs by default. We could have them be inline by default and introduce a `\p { ... }` construct for explicit paragraphs;
-this does mean that the parser must be (somewhat) flexible in how it parses the trailing block.
-
 Not sure if we want to support multiple trailing blocks... probably? might be useful for certain "environment" situations.
-
-
 
 some care is needed for verbatim environments; I think there's no alternative to explicit begin/end tokens. we can
 have something like `\rawbegin_foo ... \rawend_foo` where `foo` is just any alphanumeric thing.
@@ -98,7 +64,3 @@ since we want to prefer an "actual" glyph eg. for an accented character if that 
 we should try the decomposed version, and if that also fails, `.notdef` time.
 
 
-
-## references
-
-[Global Multiple Objective Line Breaking (Holkner, 2006)](http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.585.8487&rep=rep1&type=pdf)

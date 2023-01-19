@@ -73,7 +73,10 @@ namespace sap::interp
 		if(this->initialiser != nullptr)
 		{
 			auto value = ev->castValue(TRY_VALUE(this->initialiser->evaluate(ev)), this->get_type());
-			ev->frame().setValue(this, std::move(value));
+			if(ev->frame().callDepth() > 0)
+				ev->frame().setValue(this, std::move(value));
+			else
+				ev->setGlobalValue(this, std::move(value));
 		}
 
 		return EvalResult::ofVoid();

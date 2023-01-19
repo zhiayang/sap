@@ -43,15 +43,18 @@ namespace sap::interp
 		assert(m_resolved_decl->definition());
 
 		auto* frame = &ev->frame();
-		while(true)
+		while(frame != nullptr)
 		{
 			if(auto value = frame->valueOf(m_resolved_decl->definition()); value != nullptr)
 				return EvalResult::ofLValue(*value);
 
-			if(frame->parent())
-				frame = frame->parent();
-			else
-				return ErrMsg(ev, "use of uninitialised variable '{}'", this->name);
+			frame = frame->parent();
 		}
+
+		// we didn't find any locals -- check globals.
+		if(auto value = ev->getGlobalValue(m_resolved_decl->definition()); value != nullptr)
+			return EvalResult::ofLValue(*value);
+
+		return ErrMsg(ev, "use of uninitialised variable '{}'", this->name);
 	}
 }

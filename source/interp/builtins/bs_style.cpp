@@ -75,13 +75,13 @@ namespace sap::interp::builtin
 
 		auto style = util::make<Style>();
 
-		auto get_scalar = [&value](zst::str_view field) -> std::optional<sap::Length> {
-			auto f = get_optional_struct_field<double>(value, field);
-			if(f.has_value())
-				return sap::Length(*f);
+		// auto get_scalar = [&value](zst::str_view field) -> std::optional<sap::Length> {
+		// 	auto f = get_optional_struct_field<double>(value, field);
+		// 	if(f.has_value())
+		// 		return sap::Length(*f);
 
-			return std::nullopt;
-		};
+		// 	return std::nullopt;
+		// };
 
 		auto resolve_length_field = [&cur_style](const Value& str, zst::str_view field_name) -> std::optional<Length> {
 			if(auto x = get_optional_struct_field<DynLength>(str, field_name, &Value::getLength); x.has_value())
