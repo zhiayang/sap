@@ -195,7 +195,7 @@ namespace sap::layout
 					auto justified_shift = obj_width * space_width_factor;
 					if(is_last_line)
 					{
-						if(0.95 <= space_width_factor && space_width_factor <= 1.05)
+						if(0.9 <= space_width_factor && space_width_factor <= 1.1)
 							cursor = cursor.moveRight(justified_shift);
 						else
 							cursor = cursor.moveRight(obj_width);
