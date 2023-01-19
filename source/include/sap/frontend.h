@@ -81,6 +81,8 @@ namespace sap::frontend
 		KW_Var,
 		KW_Else,
 		KW_Enum,
+		KW_True,
+		KW_False,
 		KW_Struct,
 		KW_Return,
 	};

@@ -666,6 +666,14 @@ namespace sap::frontend
 		{
 			return parse_fstring(lexer, *fstr);
 		}
+		else if(auto bool_true = lexer.match(TT::KW_True); bool_true)
+		{
+			return std::make_unique<interp::BooleanLit>(bool_true->loc, true);
+		}
+		else if(auto bool_false = lexer.match(TT::KW_False); bool_false)
+		{
+			return std::make_unique<interp::BooleanLit>(bool_true->loc, false);
+		}
 		else if(lexer.expect(TT::LParen))
 		{
 			auto inside = parse_expr(lexer);

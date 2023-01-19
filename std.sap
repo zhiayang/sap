@@ -1,4 +1,4 @@
-# prelude.sap
+# std.sap
 \script std::{
 
 fn centre(b: Block) -> Block

@@ -30,13 +30,13 @@ namespace sap::frontend
 
 	static bool parse_comment(zst::str_view& stream, Location& loc)
 	{
-		if(stream.starts_with("#:"))
+		if(stream.starts_with("#/"))
 		{
 			std::vector<Location> start_locs {};
 
 			while(true)
 			{
-				auto i = stream.find_first_of("\r\n:#");
+				auto i = stream.find_first_of("\r\n/#");
 				if(i == (size_t) -1)
 				{
 					sap::error(start_locs.back(), "unterminated block comment (reached end of file) '{}', {}, {}",
@@ -48,13 +48,13 @@ namespace sap::frontend
 				stream.remove_prefix(i);
 
 				assert(not stream.empty());
-				if(stream.starts_with("#:"))
+				if(stream.starts_with("#/"))
 				{
 					start_locs.push_back(loc);
 					stream.remove_prefix(2);
 					loc.column += 2;
 				}
-				else if(stream.starts_with(":#"))
+				else if(stream.starts_with("/#"))
 				{
 					stream.remove_prefix(2);
 					loc.column += 2;
@@ -139,7 +139,7 @@ namespace sap::frontend
 			(void) parse_comment(stream, loc);
 			return consume_text_token(stream, loc);
 		}
-		else if(stream.starts_with(":#"))
+		else if(stream.starts_with("/#"))
 		{
 			sap::error(loc, "unexpected end of block comment");
 		}
@@ -371,7 +371,7 @@ namespace sap::frontend
 			(void) parse_comment(stream, loc);
 			return consume_script_token(stream, loc);
 		}
-		else if(stream.starts_with(":#"))
+		else if(stream.starts_with("/#"))
 		{
 			sap::error(loc, "unexpected end of block comment");
 		}
@@ -478,6 +478,10 @@ namespace sap::frontend
 				tt = TT::KW_Else;
 			else if(text == "enum")
 				tt = TT::KW_Enum;
+			else if(text == "true")
+				tt = TT::KW_True;
+			else if(text == "false")
+				tt = TT::KW_False;
 			else if(text == "struct")
 				tt = TT::KW_Struct;
 			else if(text == "return")

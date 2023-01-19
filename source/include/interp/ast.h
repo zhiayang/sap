@@ -132,6 +132,16 @@ namespace sap::interp
 		virtual ErrorOr<TCResult> typecheck_impl(Typechecker* ts, const Type* infer = nullptr) const override;
 	};
 
+	struct BooleanLit : Expr
+	{
+		explicit BooleanLit(Location loc, bool value) : Expr(std::move(loc)), value(value) { }
+
+		virtual ErrorOr<EvalResult> evaluate_impl(Evaluator* ev) const override;
+		virtual ErrorOr<TCResult> typecheck_impl(Typechecker* ts, const Type* infer = nullptr) const override;
+
+		bool value;
+	};
+
 	struct NumberLit : Expr
 	{
 		explicit NumberLit(Location loc) : Expr(std::move(loc)) { }

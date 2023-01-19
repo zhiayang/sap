@@ -1,14 +1,15 @@
 # test.sap
 
-\builtin::include("prelude.sap");
+\builtin::include("std.sap");
 
 \script {
+	let foo = true;
 	let font_family = builtin::find_font_family(["Source Serif 4", "Helvetica", "serif"]);
 
 	builtin::push_style(builtin::Style {
+		.font_size = 12pt,
 		.font_family = font_family,
-		.font_size = 13pt,
-		.paragraph_spacing = 1em
+		.paragraph_spacing = 1em,
 	});
 }
 
@@ -45,7 +46,7 @@ and vital system components comprising a full OS as defined by POSIX.
 AVAYAYA V. Vo P. r.
 
 
-#:
+#/
 何 the fuck did you just fucking 言います about 私, you 小さい bitch ですか? 私'll
 have あなた know that 私 graduated top of my class in 日本語 3, and 私’ve been involved
 in 色々な 日本語 tutoring sessions, and 私 have over ３００ perfect test scores. 私
@@ -56,7 +57,7 @@ the likes of which has never been 見ます’d before on this continent, mark �
 fucker. As we 話します, 私 am contacting 私の secret ネット of オタクs across the USA,
 and あなたの IP is being traced right now so you better 準備します for the ame, ウジ虫. The 雨
 that 殺す’s the pathetic 小さい thing あなた calls あなたの life. You’re fucking 死にました’d, 赤ちゃん.
-:#
+/#
 
 Contrary to popular belief, Lorem Ipsum is not simply random text. It has roots in a piece of classical Latin literature from 45 BC, making it over 2000 years old. Richard McClintock, a Latin professor at Hampden-Sydney College in Virginia, looked up one of the more obscure Latin words, consectetur, from a Lorem Ipsum passage, and going through the cites of the word in classical literature, discovered the undoubtable source. Lorem Ipsum comes from sections 1.10.32 and 1.10.33 of "de Finibus Bonorum et Malorum" (The Extremes of Good and Evil) by Cicero, written in 45 BC. This book is a treatise on the theory of ethics, very popular during the Renaissance. The first line of Lorem Ipsum, "Lorem ipsum dolor sit amet..", comes from a line in section 1.10.32.
 
@@ -79,8 +80,11 @@ Sed non leo nunc. Mauris condimentum dapibus iaculis. Phasellus ullamcorper pell
 }
 
 
+
+
 In hac habitasse platea dictumst. Praesent egestas odio nulla, vitae viverra massa scelerisque eu. Vestibulum auctor ligula nec eleifend facilisis. Aliquam vitae tortor eu mauris lobortis consectetur. Vestibulum venenatis eleifend suscipit. Donec placerat nunc sed velit porta, quis interdum arcu eleifend. Etiam vitae semper nibh, sit amet tempor nibh. Vivamus vel facilisis lacus, vitae vulputate augue.
-#:
+
+#/ #/
 thisisalongtestwordforhyphenation
 thisisalongtestwordforhyphenation
 thisisalongtestwordforhyphenation
@@ -97,4 +101,4 @@ thisisalongtestwordforhyphenation
 thisisalongtestwordforhyphenation
 thisisalongtestwordforhyphenation
 thisisalongtestwordforhyphenationaaoeu
-:#
+/# /#

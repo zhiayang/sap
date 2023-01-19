@@ -70,7 +70,6 @@ namespace sap::interp
 
 
 
-
 	ErrorOr<TCResult> LengthExpr::typecheck_impl(Typechecker* ts, const Type* infer) const
 	{
 		return TCResult::ofRValue(Type::makeLength());
@@ -79,6 +78,17 @@ namespace sap::interp
 	ErrorOr<EvalResult> LengthExpr::evaluate_impl(Evaluator* ev) const
 	{
 		return EvalResult::ofValue(Value::length(this->length));
+	}
+
+
+	ErrorOr<TCResult> BooleanLit::typecheck_impl(Typechecker* ts, const Type* infer) const
+	{
+		return TCResult::ofRValue(Type::makeBool());
+	}
+
+	ErrorOr<EvalResult> BooleanLit::evaluate_impl(Evaluator* ev) const
+	{
+		return EvalResult::ofValue(Value::boolean(this->value));
 	}
 
 

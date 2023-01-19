@@ -25,8 +25,6 @@ CLEANUP:
 	- when rendering, use some mechanism (eg. proxy object) to only make the page if
 		someone tried to actually put stuff in it (or access it)
 
-- line height should move the first line, not the second line.
-
 #endif
 
 namespace sap
