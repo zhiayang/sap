@@ -25,7 +25,7 @@ namespace sap::layout
 	{
 		virtual void render(const LayoutBase* layout, std::vector<pdf::Page*>& pages) const override;
 
-		static std::unique_ptr<Line> fromInlineObjects(interp::Interpreter* cs,
+		static std::pair<LineCursor, std::unique_ptr<Line>> fromInlineObjects(interp::Interpreter* cs,
 		    LineCursor cursor,
 		    const linebreak::BrokenLine& broken_line,
 		    const Style* style,

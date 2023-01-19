@@ -97,12 +97,13 @@ namespace sap::tree
 			if(auto sep = dynamic_cast<const tree::Separator*>(last_word.get()); sep && sep->isSpace())
 				--words_end;
 
-			auto layout_line = layout::Line::fromInlineObjects(cs, //
-			    cursor, broken_line, parent_style,                 //
+			auto [new_cursor, layout_line] = layout::Line::fromInlineObjects(cs, //
+			    cursor, broken_line, parent_style,                               //
 			    std::span(words_begin, words_end),
 			    /* is_last_line: */ line_it + 1 == lines.end());
 
-			cursor = cursor.newLine(broken_line.lineHeight());
+			cursor = std::move(new_cursor);
+			// cursor = cursor.newLine(broken_line.lineHeight());
 
 			para_size.x() = std::max(para_size.x(), layout_line->layoutSize().x());
 			para_size.y() += layout_line->layoutSize().y();

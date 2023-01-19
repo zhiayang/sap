@@ -24,8 +24,10 @@ namespace sap::layout
 		sap::Length total_space_width;
 		sap::Length total_word_width;
 		std::vector<sap::Length> widths;
+
 		sap::Length ascent_height;
 		sap::Length descent_height;
+		sap::Length default_line_spacing;
 	};
 
 	static LineMetrics compute_line_metrics(std::span<const std::unique_ptr<tree::InlineObject>> objs, const Style* parent_style)
@@ -63,8 +65,14 @@ namespace sap::layout
 				ret.widths.push_back(chunk_x - word_chunk.width);
 
 				word_chunk.width = chunk_x;
+
 				ret.ascent_height = std::max(ret.ascent_height, chunk_asc * style->line_spacing());
 				ret.descent_height = std::max(ret.descent_height, chunk_dsc * style->line_spacing());
+
+				auto style_line_spacing = style->font()->scaleMetricForFontSize(
+				    style->font()->getFontMetrics().default_line_spacing, style->font_size().into());
+
+				ret.default_line_spacing = std::max(ret.default_line_spacing, style_line_spacing.into<Length>());
 			}
 			else if(auto sep = dynamic_cast<const tree::Separator*>(it->get()); sep)
 			{
@@ -125,7 +133,7 @@ namespace sap::layout
 		this->setStyle(style);
 	}
 
-	std::unique_ptr<Line> Line::fromInlineObjects(interp::Interpreter* cs,
+	std::pair<LineCursor, std::unique_ptr<Line>> Line::fromInlineObjects(interp::Interpreter* cs,
 	    LineCursor cursor,
 	    const linebreak::BrokenLine& broken_line,
 	    const Style* style,
@@ -208,8 +216,11 @@ namespace sap::layout
 			}
 		}
 
-		return std::unique_ptr<Line>(new Line(start_position, Size2d(total_width, line_height), style,
-		    std::move(layout_objects)));
+		auto vert_offset = line_metrics.default_line_spacing - line_metrics.ascent_height;
+		return {
+			cursor.newLine(vert_offset),
+			std::unique_ptr<Line>(new Line(start_position, Size2d(total_width, line_height), style, std::move(layout_objects))),
+		};
 	}
 
 	std::pair<LineCursor, std::optional<std::unique_ptr<Line>>> Line::fromBlockObjects(interp::Interpreter* cs, //
