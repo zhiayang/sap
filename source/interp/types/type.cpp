@@ -51,6 +51,11 @@ namespace sap::interp
 		return this->isArray() && this->toArray()->elementType()->isChar();
 	}
 
+	bool Type::isVariadicArray() const
+	{
+		return this->isArray() && this->toArray()->isVariadic();
+	}
+
 	bool Type::sameAs(const Type* other) const
 	{
 		if(m_kind != other->m_kind)
@@ -198,6 +203,12 @@ namespace sap::interp
 			fields.push_back(StructType::Field { .name = n, .type = t });
 
 		return get_or_add_type(new StructType(name, std::move(fields)));
+	}
+
+	const Type* Type::arrayElement() const
+	{
+		assert(this->isArray());
+		return this->toArray()->elementType();
 	}
 
 	const Type* Type::pointerElement() const

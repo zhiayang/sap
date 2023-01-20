@@ -164,6 +164,7 @@ postfix-expr2
       `}`{punctuation.paren.struct-end}
     | `!`{keyword.operator.deref}
     | '\?(?!\?)'{keyword.operator.qn}
+    | `...`{keyword.operator.ellipsis}
     | `.`{punctuation.operator.dot} IDENTIFIER{meta.name.field}
     ;
 
@@ -238,7 +239,7 @@ type: '\b(any|int|bool|char|void|float|string|Inline|Block|Length)\b'{support.ty
             (type? (`,`{punctuation.comma} type)*)
         `)`{punctuation.paren.fn-type-start}
     ) `->`{punctuation.arrow} type
-    | ( `[`{punctuation.bracket.array-type-start} type `]`{punctuation.bracket.array-type-end} )
+    | ( `[`{punctuation.bracket.array-type-start} type (`...`{keyword.operator.ellipsis})? `]`{punctuation.bracket.array-type-end} )
     ;
 
 

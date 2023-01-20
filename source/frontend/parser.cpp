@@ -189,6 +189,7 @@ namespace sap::frontend
 			case TT::LParen:
 			case TT::LSquare:
 			case TT::Question:
+			case TT::Ellipsis:
 			case TT::Exclamation: return 1000000;
 
 			case TT::Period: return 900;
@@ -221,7 +222,7 @@ namespace sap::frontend
 
 	static bool is_postfix_unary(Lexer& lexer)
 	{
-		return util::is_one_of(lexer.peek().type, TT::LParen, TT::LSquare, TT::Question, TT::Exclamation);
+		return util::is_one_of(lexer.peek().type, TT::LParen, TT::LSquare, TT::Question, TT::Exclamation, TT::Ellipsis);
 	}
 
 	static bool is_assignment_op(TokenType tok)
@@ -323,7 +324,6 @@ namespace sap::frontend
 		call->callee = std::move(callee);
 
 		// parse arguments.
-		bool saw_named_arg = false;
 		for(bool first = true; not lexer.expect(TT::RParen); first = false)
 		{
 			if(not first && not lexer.expect(TT::Comma))
@@ -342,7 +342,6 @@ namespace sap::frontend
 					arg.value = parse_expr(lexer);
 					arg.name = name.text.str();
 
-					saw_named_arg = true;
 					is_arg_named = true;
 				}
 				else
@@ -353,9 +352,6 @@ namespace sap::frontend
 
 			if(not is_arg_named)
 			{
-				if(saw_named_arg)
-					error(lexer.peek().loc, "positional arguments are not allowed after named arguments");
-
 				arg.name = {};
 				arg.value = parse_expr(lexer);
 			}
@@ -384,6 +380,10 @@ namespace sap::frontend
 			auto ret = std::make_unique<interp::DereferenceOp>(t->loc);
 			ret->expr = std::move(lhs);
 			return ret;
+		}
+		else if(auto t = lexer.match(TT::Ellipsis); t.has_value())
+		{
+			return std::make_unique<interp::ArraySpreadOp>(t->loc, std::move(lhs));
 		}
 
 		error(lexer.peek().loc, "unexpected '{}' after expression", lexer.peek().text);
@@ -794,10 +794,12 @@ namespace sap::frontend
 			lexer.next();
 
 			auto elm = parse_type(lexer);
+			bool is_variadic = lexer.expect(TT::Ellipsis);
+
 			if(not lexer.expect(TT::RSquare))
 				error(lexer.location(), "expected ']' in array type");
 
-			return PType::array(std::move(elm), /* is_variadic: */ lexer.match(TT::Ellipsis).has_value());
+			return PType::array(std::move(elm), is_variadic);
 		}
 		else if(fst == TT::LParen)
 		{

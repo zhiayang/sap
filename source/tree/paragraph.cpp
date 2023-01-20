@@ -23,7 +23,7 @@ namespace sap::tree
 
 		for(auto& obj : m_contents)
 		{
-			if(auto word = dynamic_cast<tree::Text*>(obj.get()); word != nullptr)
+			if(dynamic_cast<tree::Text*>(obj.get()) || dynamic_cast<tree::Separator*>(obj.get()))
 			{
 				ret.push_back(std::move(obj));
 			}
@@ -170,6 +170,12 @@ namespace sap::tree
 		bool seen_whitespace = false;
 		for(auto& uwu : m_contents)
 		{
+			if(dynamic_cast<tree::Separator*>(uwu.get()))
+			{
+				ret.push_back(std::move(uwu));
+				continue;
+			}
+
 			auto tree_text = dynamic_cast<tree::Text*>(uwu.get());
 			assert(tree_text != nullptr);
 

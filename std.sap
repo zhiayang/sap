@@ -17,12 +17,12 @@ var g_section_counter: int = 0;
 
 fn section(name: string) -> Block
 {
-	let inlines = builtin::make_text([f"{1 + g_section_counter} {name}"]);
+	let inlines = builtin::make_text([f"{1 + g_section_counter}", name]...);
 	g_section_counter += 1;
 
 	return std::style(builtin::Style {
 		.font_size = 24pt,
-	}, builtin::make_paragraph([inlines]));
+	}, builtin::make_paragraph(inlines));
 }
 
 }

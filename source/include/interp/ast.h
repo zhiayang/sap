@@ -351,7 +351,15 @@ namespace sap::interp
 		std::unique_ptr<Expr> expr;
 	};
 
+	struct ArraySpreadOp : Expr
+	{
+		explicit ArraySpreadOp(Location loc, std::unique_ptr<Expr> expr) : Expr(std::move(loc)), expr(std::move(expr)) { }
 
+		virtual ErrorOr<EvalResult> evaluate_impl(Evaluator* ev) const override;
+		virtual ErrorOr<TCResult> typecheck_impl(Typechecker* ts, const Type* infer = nullptr) const override;
+
+		std::unique_ptr<Expr> expr;
+	};
 
 
 

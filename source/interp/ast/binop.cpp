@@ -34,7 +34,7 @@ namespace sap::interp
 			if(util::is_one_of(this->op, Op::Add, Op::Subtract, Op::Multiply, Op::Divide, Op::Modulo))
 				return TCResult::ofRValue(ltype);
 		}
-		else if(ltype->isArray() && rtype->isArray() && ltype->toArray()->elementType() == rtype->toArray()->elementType())
+		else if(ltype->isArray() && rtype->isArray() && ltype->arrayElement() == rtype->arrayElement())
 		{
 			if(this->op == Op::Add)
 				return TCResult::ofRValue(ltype);
@@ -85,7 +85,7 @@ namespace sap::interp
 					return EvalResult::ofValue(Value::floating(do_arith(this->op, lval.getFloating(), rval.getFloating())));
 			}
 		}
-		else if(ltype->isArray() && rtype->isArray() && ltype->toArray()->elementType() == rtype->toArray()->elementType())
+		else if(ltype->isArray() && rtype->isArray() && ltype->arrayElement() == rtype->arrayElement())
 		{
 			if(this->op == Op::Add)
 			{
@@ -95,14 +95,14 @@ namespace sap::interp
 				for(auto& x : rhs)
 					lhs.push_back(std::move(x));
 
-				return EvalResult::ofValue(Value::array(ltype->toArray()->elementType(), std::move(lhs)));
+				return EvalResult::ofValue(Value::array(ltype->arrayElement(), std::move(lhs)));
 			}
 		}
 		else if((ltype->isArray() && rtype->isInteger()) || (ltype->isInteger() && rtype->isArray()))
 		{
 			if(this->op == Op::Multiply)
 			{
-				auto elm = (ltype->isArray() ? ltype : rtype)->toArray()->elementType();
+				auto elm = (ltype->isArray() ? ltype : rtype)->arrayElement();
 				auto arr = ltype->isArray() ? std::move(lval) : std::move(rval);
 				auto num = (ltype->isArray() ? std::move(rval) : std::move(lval)).getInteger();
 

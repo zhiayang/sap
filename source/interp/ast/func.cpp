@@ -12,9 +12,26 @@ namespace sap::interp
 {
 	ErrorOr<TCResult> FunctionDecl::typecheck_impl(Typechecker* ts, const Type* infer) const
 	{
+		bool saw_variadic = false;
+
 		std::vector<const Type*> param_types {};
 		for(auto& param : m_params)
-			param_types.push_back(TRY(ts->resolveType(param.type)));
+		{
+			auto type = TRY(ts->resolveType(param.type));
+			param_types.push_back(type);
+
+			if(type->isVariadicArray())
+			{
+				if(saw_variadic)
+					return ErrMsg(ts, "only one variadic array parameter is allowed per function");
+
+				saw_variadic = true;
+			}
+			else if(saw_variadic)
+			{
+				return ErrMsg(ts, "variadic array parameter must be the last parameter");
+			}
+		}
 
 		auto fn_type = Type::makeFunction(std::move(param_types), TRY(ts->resolveType(m_return_type)));
 		m_tc_result = TCResult::ofRValue(fn_type).unwrap();
@@ -54,8 +71,13 @@ namespace sap::interp
 				}
 			}
 
+			// make variadic arrays into non-variadic ones inside the function
+			auto param_type = param.type;
+			if(param_type.isVariadicArray())
+				param_type = frontend::PType::array(param_type.getArrayElement());
+
 			this->param_defns.push_back(std::make_unique<VariableDefn>(param.loc, param.name, //
-			    /* mutable: */ false, /* init: */ nullptr, param.type));
+			    /* mutable: */ false, /* init: */ nullptr, param_type));
 
 			TRY(this->param_defns.back()->typecheck(ts));
 		}

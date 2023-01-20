@@ -95,10 +95,10 @@ namespace sap::interp
 		define_builtin("italic1", makeParamList(Param { .name = "_", .type = t_any }), t_tio, &builtin::italic1);
 		define_builtin("bold_italic1", makeParamList(Param { .name = "_", .type = t_any }), t_tio, &builtin::bold_italic1);
 
-		define_builtin("make_text", makeParamList(Param { .name = "1", .type = PType::array(t_str, false) }), t_tio,
+		define_builtin("make_text", makeParamList(Param { .name = "1", .type = PType::variadicArray(t_str) }), t_tio,
 		    &builtin::make_text);
 
-		define_builtin("make_paragraph", makeParamList(Param { .name = "1", .type = PType::array(t_tio, false) }), t_tbo,
+		define_builtin("make_paragraph", makeParamList(Param { .name = "1", .type = PType::variadicArray(t_tio) }), t_tbo,
 		    &builtin::make_paragraph);
 
 
@@ -142,7 +142,7 @@ namespace sap::interp
 
 		define_builtin("find_font",
 		    makeParamList(                                                                                    //
-		        Param { .name = "names", .type = PType::array(t_str, false) },                                //
+		        Param { .name = "names", .type = PType::array(t_str) },                                       //
 		        Param { .name = "weight", .type = PType::optional(t_int), .default_value = make_null() },     //
 		        Param { .name = "italic", .type = PType::optional(t_bool), .default_value = make_null() },    //
 		        Param { .name = "stretch", .type = PType::optional(t_float), .default_value = make_null() }), //
@@ -150,7 +150,7 @@ namespace sap::interp
 
 		define_builtin("find_font_family",
 		    makeParamList( //
-		        Param { .name = "names", .type = PType::array(t_str, false) }),
+		        Param { .name = "names", .type = PType::array(t_str) }),
 		    PType::optional(t_bfontfamily), &builtin::find_font_family);
 	}
 

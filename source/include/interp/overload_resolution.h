@@ -1,4 +1,4 @@
-// misc.h
+// overload_resolution.h
 // Copyright (c) 2022, zhiayang
 // SPDX-License-Identifier: Apache-2.0
 
@@ -28,10 +28,8 @@ namespace sap::interp
 	    const char* thing_name,                                                                              //
 	    const char* thing_name2)
 	{
-		// because of optional arguments, we can have fewer arguments than parameters, but not the other way around
-		if(args.size() > expected.size())
-			return ErrMsg(ts_ev, "wrong number of {}: got {}, expected at most {}", thing_name, args.size(), expected.size());
-
+		// note: we can't really assume anything about the number of arguments, since we might have less
+		// than expected (due to optional args), but also more than expected (due to variadic arrays)
 		std::unordered_map<size_t, T> ordered_args {};
 
 		std::unordered_map<std::string, size_t> param_names {};
@@ -62,14 +60,34 @@ namespace sap::interp
 			}
 			else
 			{
-				// NOTE: this should have been caught in the parser, but just in case...
 				if(have_named)
 					return ErrMsg(ts_ev, "positional {} not allowed after named {}s", thing_name, thing_name);
 
-				if constexpr(MoveValue)
-					ordered_args[cur_idx++] = std::move(arg.value);
+				// variadics are never specified by name. here, check the index of the current argument
+				if(cur_idx + 1 > expected.size())
+				{
+					auto param_type = std::get<1>(expected.back());
+
+					if(param_type->isVariadicArray())
+					{
+						if constexpr(MoveValue)
+							ordered_args[cur_idx++] = std::move(arg.value);
+						else
+							ordered_args[cur_idx++] = arg.value;
+					}
+					else
+					{
+						return ErrMsg(ts_ev, "too many arguments specified; expected at most {}, got {}", expected.size(),
+						    cur_idx);
+					}
+				}
 				else
-					ordered_args[cur_idx++] = arg.value;
+				{
+					if constexpr(MoveValue)
+						ordered_args[cur_idx++] = std::move(arg.value);
+					else
+						ordered_args[cur_idx++] = arg.value;
+				}
 			}
 		}
 
@@ -90,6 +108,12 @@ namespace sap::interp
 	    const char* thing_name2)
 	{
 		int cost = 0;
+
+		const Type* variadic_element_type = nullptr;
+		if(auto t = std::get<1>(expected.back()); t->isVariadicArray())
+			variadic_element_type = t->arrayElement();
+
+		int variadic_cost = 0;
 		for(size_t i = 0; i < ordered_args.size(); i++)
 		{
 			auto arg_type = ordered_args[i];
@@ -101,30 +125,48 @@ namespace sap::interp
 					arg_type = TRY(default_value->typecheck(ts)).type();
 			}
 
-			// if the param is an any, we can just do it, but with extra cost.
-			if(auto param_type = std::get<1>(expected[i]); arg_type != param_type)
+			if(i >= expected.size())
 			{
-				if(param_type->isAny())
-				{
-					cost += 2;
-				}
-				else if(ts->canImplicitlyConvert(arg_type, param_type))
-				{
-					cost += 1;
-				}
-				else
-				{
-					return ErrMsg(ts, "mismatched types for {} {}: got '{}', expected '{}'", //
-					    thing_name, 1 + i, arg_type, param_type);
-				}
+				if(variadic_element_type == nullptr)
+					return ErrMsg(ts, "too many arguments (expected {})", expected.size());
+
+				if(arg_type == variadic_element_type)
+					variadic_cost += 1;
+				else if(variadic_element_type->isAny())
+					variadic_cost += 3;
+				else if(ts->canImplicitlyConvert(arg_type, variadic_element_type))
+					variadic_cost += 2;
+
+				continue;
+			}
+
+			// if the param is an any, we can just do it, but with extra cost.
+			auto param_type = std::get<1>(expected[i]);
+
+			// no conversion = no cost
+			if(arg_type == param_type)
+				continue;
+
+			if(param_type->isAny())
+			{
+				cost += 2;
+			}
+			else if(param_type->isVariadicArray() && ts->canImplicitlyConvert(arg_type, param_type->arrayElement()))
+			{
+				cost += 1;
+			}
+			else if(ts->canImplicitlyConvert(arg_type, param_type))
+			{
+				cost += 1;
 			}
 			else
 			{
-				cost += 0;
+				return ErrMsg(ts, "mismatched types for {} {}: got '{}', expected '{}'", //
+				    thing_name, 1 + i, arg_type, param_type);
 			}
 		}
 
-		return Ok(cost);
+		return Ok(cost + variadic_cost);
 	}
 
 }

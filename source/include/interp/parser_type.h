@@ -43,7 +43,8 @@ namespace sap::frontend
 		static PType named(const char* name);
 
 		static PType function(std::vector<PType> params, PType ret);
-		static PType array(PType elm, bool variadic);
+		static PType array(PType elm, bool variadic = false);
+		static PType variadicArray(PType elm);
 		static PType pointer(PType elm, bool is_mut);
 		static PType optional(PType elm);
 

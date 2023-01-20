@@ -61,6 +61,13 @@ namespace sap::frontend
 		return ret;
 	}
 
+	PType PType::variadicArray(PType elm)
+	{
+		auto ret = PType({}, PT_ARRAY, { elm });
+		ret.m_array_variadic = true;
+		return ret;
+	}
+
 	PType PType::pointer(PType elm, bool is_mut)
 	{
 		auto ret = PType({}, PT_POINTER, { elm });

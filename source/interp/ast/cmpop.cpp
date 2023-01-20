@@ -30,7 +30,7 @@ namespace sap::interp
 	static bool can_compare(ComparisonOp::Op op, const Type* lhs, const Type* rhs)
 	{
 		if(lhs->isArray() && rhs->isArray())
-			return can_compare(op, lhs->toArray()->elementType(), rhs->toArray()->elementType());
+			return can_compare(op, lhs->arrayElement(), rhs->arrayElement());
 
 		if(util::is_one_of(op, ComparisonOp::Op::EQ, ComparisonOp::Op::NE))
 			return lhs == rhs;

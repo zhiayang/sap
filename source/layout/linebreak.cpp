@@ -114,7 +114,7 @@ namespace sap::layout::linebreak
 						auto tmp = std::max((double) neighbour_line.numSpaces() - 1, 0.5);
 						auto avg_space_width = neighbour_line.totalSpaceWidth().mm() / tmp;
 
-						cost += 0.7 * (1 + sep->hyphenationCost()) * (avg_space_width * avg_space_width);
+						cost += 0.3 * (1 + sep->hyphenationCost()) * (avg_space_width * avg_space_width);
 
 						double extra_space_size = (preferred_line_length - neighbour_line.width()).mm() / tmp;
 						cost += extra_space_size * extra_space_size;

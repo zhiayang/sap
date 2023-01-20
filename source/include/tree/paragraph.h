@@ -61,6 +61,8 @@ namespace sap::tree
 			return m_middle_of_line_char == 0 ? zst::wstr_view() : zst::wstr_view(m_middle_of_line_char, 1);
 		}
 
+		SeparatorKind kind() const { return m_kind; }
+
 		bool isSpace() const { return m_kind == SPACE; }
 		bool isHyphenationPoint() const { return m_kind == HYPHENATION_POINT; }
 		bool isExplicitBreakPoint() const { return m_kind == BREAK_POINT; }

@@ -4,12 +4,12 @@
 
 #include "location.h" // for error
 
-#include "interp/ast.h" // for Declaration, FunctionCall, Expr, Fun...
-#include "interp/misc.h"
+#include "interp/ast.h"         // for Declaration, FunctionCall, Expr, Fun...
 #include "interp/type.h"        // for Type, FunctionType
 #include "interp/value.h"       // for Value
 #include "interp/interp.h"      // for Interpreter, DefnTree
 #include "interp/eval_result.h" // for EvalResult, TRY_VALUE
+#include "interp/overload_resolution.h"
 
 namespace sap::interp
 {
@@ -191,7 +191,6 @@ namespace sap::interp
 			}
 		}
 
-
 		std::vector<Value> final_args {};
 		auto _ = ev->pushCallFrame();
 
@@ -205,20 +204,55 @@ namespace sap::interp
 			auto ordered_args = TRY(arrange_argument_values(ev, params, std::move(processed_args), "function", "argument",
 			    "argument for parameter"));
 
+			bool is_variadic = not params.empty() && std::get<1>(params.back())->isVariadicArray();
+
 			for(size_t i = 0; i < params.size(); i++)
 			{
 				auto param_type = std::get<1>(params[i]);
-				if(auto it = ordered_args.find(i); it == ordered_args.end())
+				if(i + 1 == params.size() && is_variadic)
+				{
+					auto variadic_elm = param_type->arrayElement();
+
+					std::vector<Value> vararg_array {};
+					for(size_t k = i;; k++)
+					{
+						if(auto it = ordered_args.find(k); it != ordered_args.end())
+						{
+							auto value = std::move(it->second);
+
+							// if the value itself is variadic, it means it's a spread op
+							if(value.type()->isVariadicArray())
+							{
+								auto arr = std::move(value).takeArray();
+								for(auto& val : arr)
+									vararg_array.push_back(ev->castValue(std::move(val), variadic_elm));
+							}
+							else
+							{
+								vararg_array.push_back(ev->castValue(std::move(value), variadic_elm));
+							}
+						}
+						else
+						{
+							break;
+						}
+					}
+
+					final_args.push_back(Value::array(param_type->arrayElement(), std::move(vararg_array)));
+					break;
+				}
+
+				if(auto it = ordered_args.find(i); it != ordered_args.end())
+				{
+					final_args.push_back(ev->castValue(std::move(it->second), param_type));
+				}
+				else
 				{
 					if(std::get<2>(params[i]) == nullptr)
 						return ErrMsg(ev, "missing argument for parameter '{}'", std::get<0>(params[i]));
 
 					auto tmp = TRY_VALUE(std::get<2>(params[i])->evaluate(ev));
 					final_args.push_back(ev->castValue(std::move(tmp), param_type));
-				}
-				else
-				{
-					final_args.push_back(ev->castValue(std::move(it->second), param_type));
 				}
 			}
 

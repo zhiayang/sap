@@ -186,7 +186,7 @@ namespace sap::interp
 		else if(type->isOptional())
 			return this->getDefnTreeForType(type->optionalElement());
 		else if(type->isArray())
-			return this->getDefnTreeForType(type->toArray()->elementType());
+			return this->getDefnTreeForType(type->arrayElement());
 
 		auto it = m_type_definitions.find(type);
 		if(it != m_type_definitions.end())

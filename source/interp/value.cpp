@@ -336,7 +336,7 @@ namespace sap::interp
 	}
 	bool Value::isString() const
 	{
-		return m_type->isArray() && m_type->toArray()->elementType()->isChar();
+		return m_type->isArray() && m_type->arrayElement()->isChar();
 	}
 	bool Value::isStruct() const
 	{
@@ -478,9 +478,9 @@ namespace sap::interp
 		return ret;
 	}
 
-	Value Value::array(const Type* elm, std::vector<Value> arr)
+	Value Value::array(const Type* elm, std::vector<Value> arr, bool variadic)
 	{
-		auto ret = Value(Type::makeArray(elm));
+		auto ret = Value(Type::makeArray(elm, variadic));
 		new(&ret.v_array) decltype(ret.v_array)();
 		ret.v_array.resize(arr.size());
 
@@ -688,9 +688,14 @@ namespace sap::interp
 			// whatever is left here should only be text!
 			if(auto txt = dynamic_cast<const tree::Text*>(tio.get()); txt)
 				ret.emplace_back(new tree::Text(txt->contents(), txt->style()));
+			else if(auto sep = dynamic_cast<const tree::Separator*>(tio.get()); sep)
+				ret.emplace_back(new tree::Separator(sep->kind(), sep->hyphenationCost()));
 
 			else
-				sap::internal_error("????? non-text TIOs leaked out!");
+			{
+				auto& tmp = *tio.get();
+				sap::internal_error("????? non-text TIOs leaked out: {}, {}", (void*) tio.get(), typeid(tmp).name());
+			}
 		}
 
 		return ret;

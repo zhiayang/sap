@@ -3,7 +3,6 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #include "interp/ast.h"
-#include "interp/misc.h"
 #include "interp/interp.h"
 
 namespace sap::interp

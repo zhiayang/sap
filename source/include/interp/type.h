@@ -47,12 +47,15 @@ namespace sap::interp
 		virtual bool sameAs(const Type* other) const;
 
 		bool isString() const;
+		bool isVariadicArray() const;
 		bool isMutablePointer() const;
+
 		const OptionalType* optionalOf() const { return makeOptional(this); }
 		const PointerType* pointerTo(bool mut = false) const { return makePointer(this, mut); }
 		const PointerType* mutablePointerTo() const { return makePointer(this, true); }
 
 		// convenience functions
+		const Type* arrayElement() const;
 		const Type* pointerElement() const;
 		const Type* optionalElement() const;
 
