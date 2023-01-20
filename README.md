@@ -58,11 +58,12 @@ While I appreciate the vast ecosystem that LaTeX has, having any kind of compati
 This also acts as a sort of TODO; as time goes on completed features may be removed from this list if they are deemed "trivial".
 
 - [ ] Layout integration with scripting language
-- [ ] Graphical output
 - [ ] Unicode substitution (eg. codepoint (de)composition)
 - [ ] More advanced typography support (`BASE`, `MATH`, `JSTF`, AAT `kerx`)
 - [ ] Further size optimisation for embedded fonts
 - [ ] Optimising bytecode compiler for the scripting language
+- [x] Embedding images
+- [x] Automatic hyphenation (English only, parsed from `hyph-en-gb.tex`)
 - [x] OpenType font (otf/ttf) loading and embedding
 - [x] Embedded font subsetting for TrueType fonts (CFF fonts are a little iffy)
 - [x] Glyph positioning (`kern` & GPOS lookups 1, 2, 7, 8, 9)
