@@ -74,7 +74,7 @@ namespace sap::layout
 	};
 
 
-	struct LineCursor;
+	struct PageCursor;
 
 	struct LayoutBase
 	{
@@ -83,14 +83,14 @@ namespace sap::layout
 			uint8_t payload[32];
 		};
 
-		friend struct LineCursor;
+		friend struct PageCursor;
 
 		virtual ~LayoutBase() = default;
 
-		LineCursor newCursor();
+		PageCursor newCursor();
 		void addObject(std::unique_ptr<LayoutObject> obj);
 
-		virtual Size2d size() const = 0;
+		// virtual Size2d size() const = 0;
 		virtual AbsolutePagePos convertPosition(RelativePos pos) const = 0;
 
 		virtual Payload new_cursor_payload() const = 0;
@@ -107,20 +107,20 @@ namespace sap::layout
 		std::vector<std::unique_ptr<LayoutObject>> m_objects {};
 	};
 
-	struct LineCursor
+	struct PageCursor
 	{
-		LineCursor(LayoutBase* layout, LayoutBase::Payload payload);
-		~LineCursor();
+		PageCursor(LayoutBase* layout, LayoutBase::Payload payload);
+		~PageCursor();
 
-		LineCursor(const LineCursor& other);
-		LineCursor& operator=(const LineCursor& other);
+		PageCursor(const PageCursor& other);
+		PageCursor& operator=(const PageCursor& other);
 
-		LineCursor(LineCursor&& other);
-		LineCursor& operator=(LineCursor&& other);
+		PageCursor(PageCursor&& other);
+		PageCursor& operator=(PageCursor&& other);
 
 		Length widthAtCursor() const;
-		[[nodiscard]] LineCursor moveRight(Length shift) const;
-		[[nodiscard]] LineCursor newLine(Length line_height, bool* made_new_page = nullptr) const;
+		[[nodiscard]] PageCursor moveRight(Length shift) const;
+		[[nodiscard]] PageCursor newLine(Length line_height, bool* made_new_page = nullptr) const;
 
 		RelativePos position() const;
 		LayoutBase* layout() const { return m_layout; }
@@ -130,18 +130,15 @@ namespace sap::layout
 		LayoutBase::Payload m_payload;
 	};
 
-
-
-
 	struct PageLayout final : LayoutBase
 	{
 		explicit PageLayout(Size2d size, Length margin);
 		~PageLayout();
 
-		LineCursor newCursor() const;
+		PageCursor newCursor() const;
 		std::vector<pdf::Page*> render() const;
 
-		virtual Size2d size() const override;
+		// virtual Size2d size() const override;
 		virtual AbsolutePagePos convertPosition(RelativePos pos) const override;
 
 	private:

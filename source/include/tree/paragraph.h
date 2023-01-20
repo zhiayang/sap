@@ -87,7 +87,7 @@ namespace sap::tree
 		void addObject(std::unique_ptr<InlineObject> obj);
 		void addObjects(std::vector<std::unique_ptr<InlineObject>> obj);
 
-		virtual LayoutResult createLayoutObject(interp::Interpreter* cs, layout::LineCursor cursor, const Style* parent_style)
+		virtual LayoutResult createLayoutObject(interp::Interpreter* cs, layout::PageCursor cursor, const Style* parent_style)
 		    const override;
 
 		std::vector<std::unique_ptr<InlineObject>>& contents() { return m_contents; }

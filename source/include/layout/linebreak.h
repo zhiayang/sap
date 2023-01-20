@@ -17,7 +17,7 @@ namespace sap::layout::linebreak
 {
 	struct BrokenLine
 	{
-		BrokenLine(const Style* parent_style, LineCursor m_prev_cursor)
+		BrokenLine(const Style* parent_style, PageCursor m_prev_cursor)
 		    : m_parent_style(parent_style)
 		    , m_prev_cursor(std::move(m_prev_cursor))
 		{
@@ -25,7 +25,7 @@ namespace sap::layout::linebreak
 
 	private:
 		const Style* m_parent_style;
-		LineCursor m_prev_cursor;
+		PageCursor m_prev_cursor;
 
 		enum
 		{
@@ -83,7 +83,7 @@ namespace sap::layout::linebreak
 		size_t numSpaces() const { return m_num_spaces; }
 		size_t numParts() const { return m_num_parts; }
 		Length lineHeight() const { return m_line_height; }
-		LineCursor lineCursor() const { return m_prev_cursor.newLine(m_line_height); }
+		PageCursor PageCursor() const { return m_prev_cursor.newLine(m_line_height); }
 
 		void add(const tree::InlineObject* obj)
 		{
@@ -186,7 +186,7 @@ namespace sap::layout::linebreak
 		}
 	};
 
-	std::vector<BrokenLine> breakLines(LineCursor cursor,
+	std::vector<BrokenLine> breakLines(PageCursor cursor,
 	    const Style* parent_style,
 	    const std::vector<std::unique_ptr<tree::InlineObject>>& contents,
 	    Length preferred_line_length);

@@ -76,6 +76,20 @@ namespace sap::interp::builtin
 		static ErrorOr<DynLength2d> unmake(Evaluator* ev, const Value& value);
 	};
 
+	struct BS_Cursor
+	{
+		static constexpr auto name = "Cursor";
+
+		static const Type* type;
+		static std::vector<StructDefn::Field> fields();
+
+		static ErrorOr<Value> make(Evaluator* ev, DynLength2d pos);
+		static ErrorOr<DynLength2d> unmake(Evaluator* ev, const Value& value);
+	};
+
+
+
+
 
 
 	struct BE_Alignment

@@ -12,7 +12,7 @@ namespace sap::tree
 	{
 		explicit Image(OwnedImageBitmap image, sap::Vector2 size);
 
-		virtual LayoutResult createLayoutObject(interp::Interpreter* cs, layout::LineCursor cursor, const Style* parent_style)
+		virtual LayoutResult createLayoutObject(interp::Interpreter* cs, layout::PageCursor cursor, const Style* parent_style)
 		    const override;
 
 		static std::unique_ptr<Image> fromImageFile(zst::str_view file_path,

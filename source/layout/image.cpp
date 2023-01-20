@@ -32,7 +32,7 @@ namespace sap::layout
 
 namespace sap::tree
 {
-	auto Image::createLayoutObject(interp::Interpreter* cs, layout::LineCursor cursor, const Style* parent_style) const
+	auto Image::createLayoutObject(interp::Interpreter* cs, layout::PageCursor cursor, const Style* parent_style) const
 	    -> LayoutResult
 	{
 		auto img = std::unique_ptr<layout::Image>(new layout::Image(cursor.position(), this->size(), this->image()));

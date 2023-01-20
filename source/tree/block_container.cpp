@@ -12,7 +12,7 @@
 
 namespace sap::tree
 {
-	auto BlockContainer::createLayoutObject(interp::Interpreter* cs, layout::LineCursor cursor, const Style* parent_style) const
+	auto BlockContainer::createLayoutObject(interp::Interpreter* cs, layout::PageCursor cursor, const Style* parent_style) const
 	    -> LayoutResult
 	{
 		auto start_cursor = cursor;

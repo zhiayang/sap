@@ -25,6 +25,7 @@ paragraph{meta.para.contents}
     : special-token-escape
     | block-comment
     | line-comment
+    | `{`{keyword.brace} paragraph* `}`{keyword.brace}
     | ~(script-block | script-call)
     | '\w*'
     ;

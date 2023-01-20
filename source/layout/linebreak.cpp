@@ -65,7 +65,7 @@ namespace sap::layout::linebreak
 		std::vector<std::pair<LineBreakNode, Distance>> neighbours()
 		{
 			auto neighbour_broken_until = broken_until;
-			auto neighbour_line = BrokenLine(parent_style, line->lineCursor());
+			auto neighbour_line = BrokenLine(parent_style, line->PageCursor());
 			std::vector<std::pair<LineBreakNode, Distance>> ret;
 
 			while(true)
@@ -135,7 +135,7 @@ namespace sap::layout::linebreak
 
 
 
-	std::vector<BrokenLine> breakLines(LineCursor cursor,
+	std::vector<BrokenLine> breakLines(PageCursor cursor,
 	    const Style* parent_style,
 	    const InlineObjVec& contents,
 	    Length preferred_line_length)

@@ -9,7 +9,7 @@
 
 namespace sap::layout
 {
-	struct LineCursor;
+	struct PageCursor;
 	struct LayoutBase;
 	struct LayoutObject;
 }
@@ -49,9 +49,9 @@ namespace sap::tree
 	{
 		virtual ~DocumentObject() = 0;
 
-		using LayoutResult = std::pair<layout::LineCursor, std::optional<std::unique_ptr<layout::LayoutObject>>>;
+		using LayoutResult = std::pair<layout::PageCursor, std::optional<std::unique_ptr<layout::LayoutObject>>>;
 
-		virtual LayoutResult createLayoutObject(interp::Interpreter* cs, layout::LineCursor cursor, const Style* parent_style)
+		virtual LayoutResult createLayoutObject(interp::Interpreter* cs, layout::PageCursor cursor, const Style* parent_style)
 		    const = 0;
 	};
 
@@ -83,7 +83,7 @@ namespace sap::tree
 
 	struct ScriptBlock : ScriptObject
 	{
-		virtual LayoutResult createLayoutObject(interp::Interpreter* cs, layout::LineCursor cursor, const Style* parent_style)
+		virtual LayoutResult createLayoutObject(interp::Interpreter* cs, layout::PageCursor cursor, const Style* parent_style)
 		    const override;
 
 		std::unique_ptr<interp::Block> body;
@@ -91,7 +91,7 @@ namespace sap::tree
 
 	struct ScriptCall : ScriptObject
 	{
-		virtual LayoutResult createLayoutObject(interp::Interpreter* cs, layout::LineCursor cursor, const Style* parent_style)
+		virtual LayoutResult createLayoutObject(interp::Interpreter* cs, layout::PageCursor cursor, const Style* parent_style)
 		    const override;
 
 		std::unique_ptr<interp::FunctionCall> call;

@@ -10,7 +10,7 @@
 
 namespace sap::tree
 {
-	auto ScriptCall::createLayoutObject(interp::Interpreter* cs, layout::LineCursor cursor, const Style* parent_style) const
+	auto ScriptCall::createLayoutObject(interp::Interpreter* cs, layout::PageCursor cursor, const Style* parent_style) const
 	    -> LayoutResult
 	{
 		auto value_or_err = cs->run(this->call.get());
@@ -44,7 +44,7 @@ namespace sap::tree
 
 
 
-	auto ScriptBlock::createLayoutObject(interp::Interpreter* cs, layout::LineCursor cursor, const Style* parent_style) const
+	auto ScriptBlock::createLayoutObject(interp::Interpreter* cs, layout::PageCursor cursor, const Style* parent_style) const
 	    -> LayoutResult
 	{
 		if(auto ret = cs->run(this->body.get()); ret.is_err())

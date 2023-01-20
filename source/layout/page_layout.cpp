@@ -40,9 +40,9 @@ namespace sap::layout
 		m_objects.push_back(std::move(obj));
 	}
 
-	LineCursor LayoutBase::newCursor()
+	PageCursor LayoutBase::newCursor()
 	{
-		return LineCursor(this, this->new_cursor_payload());
+		return PageCursor(this, this->new_cursor_payload());
 	}
 
 	PageLayout::PageLayout(Size2d size, Length margin) : m_size(size), m_margin(margin)
@@ -54,14 +54,14 @@ namespace sap::layout
 		m_objects.clear();
 	}
 
-	Size2d PageLayout::size() const
-	{
-		return Size2d(m_size.x() - 2 * m_margin, m_size.y() - 2 * m_margin);
-	}
+	// Size2d PageLayout::size() const
+	// {
+	// 	return Size2d(m_size.x() - 2 * m_margin, m_size.y() - 2 * m_margin);
+	// }
 
-	LineCursor PageLayout::newCursor() const
+	PageCursor PageLayout::newCursor() const
 	{
-		return LineCursor(const_cast<PageLayout*>(this), this->new_cursor_payload());
+		return PageCursor(const_cast<PageLayout*>(this), this->new_cursor_payload());
 	}
 
 	BasePayload PageLayout::new_cursor_payload() const

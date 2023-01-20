@@ -6,52 +6,52 @@
 
 namespace sap::layout
 {
-	LineCursor::~LineCursor()
+	PageCursor::~PageCursor()
 	{
 		m_layout->delete_cursor_payload(m_payload);
 	}
 
-	LineCursor::LineCursor(const LineCursor& other)
+	PageCursor::PageCursor(const PageCursor& other)
 	    : m_layout(other.m_layout)
 	    , m_payload(m_layout->copy_cursor_payload(other.m_payload))
 	{
 	}
 
-	LineCursor::LineCursor(LayoutBase* layout, LayoutBase::Payload payload) : m_layout(layout), m_payload(std::move(payload))
+	PageCursor::PageCursor(LayoutBase* layout, LayoutBase::Payload payload) : m_layout(layout), m_payload(std::move(payload))
 	{
 	}
 
-	LineCursor::LineCursor(LineCursor&& other) : m_layout(other.m_layout), m_payload(std::move(other.m_payload))
+	PageCursor::PageCursor(PageCursor&& other) : m_layout(other.m_layout), m_payload(std::move(other.m_payload))
 	{
 	}
 
-	LineCursor& LineCursor::operator=(const LineCursor& other)
+	PageCursor& PageCursor::operator=(const PageCursor& other)
 	{
-		LineCursor copy { other };
+		PageCursor copy { other };
 		std::swap(m_payload, copy.m_payload);
 
 		return *this;
 	}
 
-	LineCursor& LineCursor::operator=(LineCursor&& other)
+	PageCursor& PageCursor::operator=(PageCursor&& other)
 	{
-		LineCursor copy { std::move(other) };
+		PageCursor copy { std::move(other) };
 		std::swap(m_payload, copy.m_payload);
 
 		return *this;
 	}
 
-	RelativePos LineCursor::position() const
+	RelativePos PageCursor::position() const
 	{
 		return m_layout->get_position_on_page(m_payload);
 	}
 
-	Length LineCursor::widthAtCursor() const
+	Length PageCursor::widthAtCursor() const
 	{
 		return m_layout->get_width_at_cursor_payload(m_payload);
 	}
 
-	LineCursor LineCursor::newLine(Length line_height, bool* made_new_page2) const
+	PageCursor PageCursor::newLine(Length line_height, bool* made_new_page2) const
 	{
 		bool made_new_page = false;
 		auto payload = m_layout->new_line(m_payload, line_height, &made_new_page);
@@ -59,11 +59,11 @@ namespace sap::layout
 		if(made_new_page2)
 			*made_new_page2 = made_new_page;
 
-		return LineCursor(m_layout, std::move(payload));
+		return PageCursor(m_layout, std::move(payload));
 	}
 
-	LineCursor LineCursor::moveRight(Length shift) const
+	PageCursor PageCursor::moveRight(Length shift) const
 	{
-		return LineCursor(m_layout, m_layout->move_right(m_payload, shift));
+		return PageCursor(m_layout, m_layout->move_right(m_payload, shift));
 	}
 }

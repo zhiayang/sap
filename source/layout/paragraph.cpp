@@ -26,7 +26,7 @@
 namespace sap::layout
 {
 	std::unique_ptr<Paragraph> Paragraph::fromLines(interp::Interpreter* cs, //
-	    LineCursor cursor,
+	    PageCursor cursor,
 	    std::vector<std::unique_ptr<Line>> lines)
 	{
 		auto widest_line = std::max_element(lines.begin(), lines.end(), [](auto& a, auto& b) {
@@ -58,7 +58,7 @@ namespace sap::layout
 
 namespace sap::tree
 {
-	auto Paragraph::createLayoutObject(interp::Interpreter* cs, layout::LineCursor cursor, const Style* parent_style) const
+	auto Paragraph::createLayoutObject(interp::Interpreter* cs, layout::PageCursor cursor, const Style* parent_style) const
 	    -> LayoutResult
 	{
 		const_cast<Paragraph*>(this)->evaluateScripts(cs);

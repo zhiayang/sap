@@ -25,15 +25,15 @@ namespace sap::layout
 	{
 		virtual void render(const LayoutBase* layout, std::vector<pdf::Page*>& pages) const override;
 
-		static std::pair<LineCursor, std::unique_ptr<Line>> fromInlineObjects(interp::Interpreter* cs,
-		    LineCursor cursor,
+		static std::pair<PageCursor, std::unique_ptr<Line>> fromInlineObjects(interp::Interpreter* cs,
+		    PageCursor cursor,
 		    const linebreak::BrokenLine& broken_line,
 		    const Style* style,
 		    std::span<const std::unique_ptr<tree::InlineObject>> objs,
 		    bool is_last_line);
 
-		static std::pair<LineCursor, std::optional<std::unique_ptr<Line>>> fromBlockObjects(interp::Interpreter* cs,
-		    LineCursor cursor,
+		static std::pair<PageCursor, std::optional<std::unique_ptr<Line>>> fromBlockObjects(interp::Interpreter* cs,
+		    PageCursor cursor,
 		    const Style* style,
 		    std::span<tree::BlockObject*> objs);
 

@@ -9,7 +9,7 @@
 namespace sap::layout
 {
 	struct Document;
-	struct LineCursor;
+	struct PageCursor;
 }
 
 namespace sap::tree

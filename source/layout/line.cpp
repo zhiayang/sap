@@ -133,8 +133,8 @@ namespace sap::layout
 		this->setStyle(style);
 	}
 
-	std::pair<LineCursor, std::unique_ptr<Line>> Line::fromInlineObjects(interp::Interpreter* cs,
-	    LineCursor cursor,
+	std::pair<PageCursor, std::unique_ptr<Line>> Line::fromInlineObjects(interp::Interpreter* cs,
+	    PageCursor cursor,
 	    const linebreak::BrokenLine& broken_line,
 	    const Style* style,
 	    std::span<const std::unique_ptr<tree::InlineObject>> objs,
@@ -223,8 +223,8 @@ namespace sap::layout
 		};
 	}
 
-	std::pair<LineCursor, std::optional<std::unique_ptr<Line>>> Line::fromBlockObjects(interp::Interpreter* cs, //
-	    LineCursor cursor,
+	std::pair<PageCursor, std::optional<std::unique_ptr<Line>>> Line::fromBlockObjects(interp::Interpreter* cs, //
+	    PageCursor cursor,
 	    const Style* style,
 	    std::span<tree::BlockObject*> objs)
 	{

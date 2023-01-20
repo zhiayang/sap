@@ -10,7 +10,7 @@ namespace sap::tree
 {
 	struct BlockContainer : BlockObject
 	{
-		virtual LayoutResult createLayoutObject(interp::Interpreter* cs, layout::LineCursor cursor, const Style* parent_style)
+		virtual LayoutResult createLayoutObject(interp::Interpreter* cs, layout::PageCursor cursor, const Style* parent_style)
 		    const override;
 
 		std::vector<std::unique_ptr<BlockObject>>& contents() { return m_objects; }

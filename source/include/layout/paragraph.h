@@ -28,7 +28,7 @@ namespace sap::layout
 		using LayoutObject::LayoutObject;
 
 		static std::unique_ptr<Paragraph> fromLines(interp::Interpreter* cs,
-		    LineCursor cursor,
+		    PageCursor cursor,
 		    std::vector<std::unique_ptr<Line>> lines);
 
 		virtual void render(const LayoutBase* layout, std::vector<pdf::Page*>& pages) const override;
