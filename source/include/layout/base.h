@@ -7,6 +7,8 @@
 #include "sap/style.h" // for Stylable
 #include "sap/units.h" // for Length, Vector2
 
+#include "layout/cursor.h"
+
 namespace pdf
 {
 	struct Page;
@@ -30,21 +32,6 @@ namespace sap
 namespace sap::layout
 {
 	struct LayoutBase;
-
-
-	struct RelativePos
-	{
-		struct TAG_RELATIVE;
-		using Pos = dim::Vector2<sap::Length::unit_system, TAG_RELATIVE>;
-		Pos pos;
-		size_t page_num;
-	};
-
-	struct AbsolutePagePos
-	{
-		Position pos;
-		size_t page_num;
-	};
 
 	/*
 	    As mentioned in the overview above, a LayoutObject is some object that can be laid out and
@@ -78,11 +65,7 @@ namespace sap::layout
 
 	struct LayoutBase
 	{
-		struct Payload
-		{
-			uint8_t payload[32];
-		};
-
+		using Payload = CursorPayload;
 		friend struct PageCursor;
 
 		virtual ~LayoutBase() = default;
@@ -105,29 +88,6 @@ namespace sap::layout
 
 	protected:
 		std::vector<std::unique_ptr<LayoutObject>> m_objects {};
-	};
-
-	struct PageCursor
-	{
-		PageCursor(LayoutBase* layout, LayoutBase::Payload payload);
-		~PageCursor();
-
-		PageCursor(const PageCursor& other);
-		PageCursor& operator=(const PageCursor& other);
-
-		PageCursor(PageCursor&& other);
-		PageCursor& operator=(PageCursor&& other);
-
-		Length widthAtCursor() const;
-		[[nodiscard]] PageCursor moveRight(Length shift) const;
-		[[nodiscard]] PageCursor newLine(Length line_height, bool* made_new_page = nullptr) const;
-
-		RelativePos position() const;
-		LayoutBase* layout() const { return m_layout; }
-
-	private:
-		LayoutBase* m_layout;
-		LayoutBase::Payload m_payload;
 	};
 
 	struct PageLayout final : LayoutBase

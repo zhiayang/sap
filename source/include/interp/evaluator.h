@@ -11,6 +11,8 @@
 #include "interp/ast.h"
 #include "interp/value.h"
 
+#include "layout/cursor.h"
+
 namespace sap
 {
 	struct Style;
@@ -18,13 +20,27 @@ namespace sap
 
 namespace sap::tree
 {
+	struct BlockObject;
 	struct InlineObject;
+}
+
+namespace sap::layout
+{
+	struct PageCursor;
 }
 
 namespace sap::interp
 {
 	struct Evaluator;
 	struct Interpreter;
+
+
+	// for tracking layout hierarchy in the evaluator
+	struct BlockContext
+	{
+		layout::PageCursor origin;
+		std::optional<const tree::BlockObject*> parent;
+	};
 
 	struct StackFrame
 	{
@@ -75,10 +91,6 @@ namespace sap::interp
 		[[nodiscard]] util::Defer<> pushLocation(const Location& loc);
 		void popLocation();
 
-		ErrorOr<const Style*> currentStyle() const;
-		void pushStyle(const Style* style);
-		ErrorOr<const Style*> popStyle();
-
 		bool isGlobalValue(const Definition* defn) const;
 		void setGlobalValue(const Definition* defn, Value val);
 		Value* getGlobalValue(const Definition* defn);
@@ -89,11 +101,22 @@ namespace sap::interp
 		std::u32string& keepStringAlive(zst::wstr_view str);
 		std::string& keepStringAlive(zst::str_view str);
 
+
+		ErrorOr<const Style*> currentStyle() const;
+		void pushStyle(const Style* style);
+		ErrorOr<const Style*> popStyle();
+
+		const BlockContext& getBlockContext() const;
+		[[nodiscard]] util::Defer<> pushBlockContext(BlockContext ctx);
+		void popBlockContext();
+
 	private:
 		Interpreter* m_interp;
 
 		std::vector<std::unique_ptr<StackFrame>> m_stack_frames;
+
 		std::vector<const Style*> m_style_stack;
+		std::vector<BlockContext> m_block_context_stack;
 
 		std::vector<Location> m_location_stack;
 

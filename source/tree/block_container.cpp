@@ -5,6 +5,7 @@
 #include "tree/container.h"
 
 #include "interp/interp.h"
+#include "interp/evaluator.h"
 
 #include "layout/base.h"
 #include "layout/line.h"
@@ -15,6 +16,8 @@ namespace sap::tree
 	auto BlockContainer::createLayoutObject(interp::Interpreter* cs, layout::PageCursor cursor, const Style* parent_style) const
 	    -> LayoutResult
 	{
+		auto _ = cs->evaluator().pushBlockContext({ .origin = cursor, .parent = this });
+
 		auto start_cursor = cursor;
 		auto this_style = parent_style->extendWith(m_style);
 

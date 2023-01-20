@@ -14,8 +14,9 @@
 #include "sap/style.h" // for Style
 #include "sap/units.h" // for Length
 
-#include "interp/value.h"    // for Interpreter
+#include "interp/interp.h"
 #include "interp/basedefs.h" // for InlineObject
+#include "interp/evaluator.h"
 
 #include "layout/base.h"      // for Cursor, Size2d, RectPageLayout, Position
 #include "layout/line.h"      // for Line, breakLines
@@ -68,6 +69,7 @@ namespace sap::tree
 			return { std::move(cursor), std::nullopt };
 
 		cursor = cursor.newLine(0);
+		auto _ = cs->evaluator().pushBlockContext({ .origin = cursor, .parent = this });
 
 		auto style = parent_style->extendWith(this->style());
 

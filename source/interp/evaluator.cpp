@@ -173,6 +173,25 @@ namespace sap::interp
 		return Ok(ret);
 	}
 
+	const BlockContext& Evaluator::getBlockContext() const
+	{
+		return m_block_context_stack.back();
+	}
+
+	util::Defer<> Evaluator::pushBlockContext(BlockContext ctx)
+	{
+		m_block_context_stack.push_back(std::move(ctx));
+		return util::Defer([this]() {
+			this->popBlockContext();
+		});
+	}
+
+	void Evaluator::popBlockContext()
+	{
+		m_block_context_stack.pop_back();
+	}
+
+
 
 
 	bool Evaluator::isGlobalValue(const Definition* defn) const
