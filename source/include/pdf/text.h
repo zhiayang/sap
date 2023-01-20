@@ -32,6 +32,9 @@ namespace pdf
 		// must be called before the first text item is inserted (addText).
 		void setFont(const PdfFont* font, PdfScalar height);
 
+		PdfScalar currentFontSize() const;
+
+
 		void moveAbs(Position2d pos);
 		void nextLine(Offset2d offset);
 

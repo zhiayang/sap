@@ -50,6 +50,11 @@ namespace pdf
 		m_current_font.height = height;
 	}
 
+	PdfScalar Text::currentFontSize() const
+	{
+		return m_current_font.height;
+	}
+
 	void Text::insertPDFCommand(zst::str_view sv)
 	{
 		// if we have no groups yet, *OR* the last group has text in it, we must create a new group.
@@ -64,7 +69,7 @@ namespace pdf
 	{
 		// do this in two steps; first, replace the text matrix with the identity to get to (0, 0),
 		// then perform an offset to get to the desired position.
-		this->insertPDFCommand(zpr::sprint(" 1 0 0 1 0 0 Tm\n{} {} Td\n", pos.x(), pos.y()));
+		this->insertPDFCommand(zpr::sprint(" 1 0 0 1 0 0 Tm {} {} Td\n", pos.x(), pos.y()));
 	}
 
 	void Text::nextLine(Offset2d offset)

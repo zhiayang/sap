@@ -2,6 +2,8 @@
 // Copyright (c) 2022, zhiayang
 // SPDX-License-Identifier: Apache-2.0
 
+#include "pdf/text.h"
+
 #include "layout/base.h"
 #include "layout/line.h"
 #include "layout/linebreak.h"
@@ -278,7 +280,43 @@ namespace sap::layout
 
 	void Line::render(const LayoutBase* layout, std::vector<pdf::Page*>& pages) const
 	{
+		// optimise for words, so we don't make new PDF text objects (TJ) for every word
+		struct PrevWord
+		{
+			pdf::Text* pdf_text;
+			Position word_end;
+		};
+
+		std::optional<PrevWord> prev_word {};
+
 		for(auto& obj : m_objects)
-			obj->render(layout, pages);
+		{
+			if(auto word = dynamic_cast<const Word*>(obj.get()); word != nullptr)
+			{
+				bool is_first = not prev_word.has_value();
+				if(is_first || word->layoutPosition().pos.y() != prev_word->word_end.y())
+				{
+					is_first = true;
+					prev_word = PrevWord {
+						.pdf_text = util::make<pdf::Text>(),
+						.word_end = {},
+					};
+				}
+
+				auto offset_from_prev = word->layoutPosition().pos.x() - prev_word->word_end.x();
+				word->render(layout, pages, prev_word->pdf_text, is_first, offset_from_prev);
+
+				prev_word->word_end = {
+					word->layoutPosition().pos.x() + word->layoutSize().x(),
+					word->layoutPosition().pos.y(),
+				};
+			}
+			else
+			{
+				// if we encountered a non-word, reset the text (we can't go back to the same text!)
+				prev_word = std::nullopt;
+				obj->render(layout, pages);
+			}
+		}
 	}
 }

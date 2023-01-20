@@ -36,11 +36,35 @@ namespace sap::layout
 		auto page = pages[pos.page_num];
 		text->moveAbs(page->convertVector2(pos.pos.into()));
 
-		this->line_render(text);
+		this->render_to_text(text);
 		page->addObject(text);
 	}
 
-	void Word::line_render(pdf::Text* text) const
+	void Word::render(const LayoutBase* layout,
+	    std::vector<pdf::Page*>& pages,
+	    pdf::Text* text,
+	    bool is_first_in_text,
+	    Length offset_from_prev) const
+	{
+		auto pos = layout->convertPosition(m_layout_position);
+		auto page = pages[pos.page_num];
+
+		if(not is_first_in_text)
+		{
+			text->offset(pdf::PdfFont::convertPDFScalarToTextSpaceForFontSize(offset_from_prev.into(), text->currentFontSize()));
+		}
+		else
+		{
+			text->moveAbs(page->convertVector2(pos.pos.into()));
+		}
+
+		this->render_to_text(text);
+
+		if(is_first_in_text)
+			page->addObject(text);
+	}
+
+	void Word::render_to_text(pdf::Text* text) const
 	{
 		const auto font = m_style->font();
 		const auto font_size = m_style->font_size();
