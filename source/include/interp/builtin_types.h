@@ -18,6 +18,7 @@ namespace pdf
 namespace sap
 {
 	struct Style;
+	struct DynLength;
 	enum class Alignment;
 
 	namespace interp
@@ -64,6 +65,17 @@ namespace sap::interp::builtin
 		static ErrorOr<sap::FontFamily> unmake(Evaluator* ev, const Value& value);
 	};
 
+	struct BS_Position
+	{
+		static constexpr auto name = "Position";
+
+		static const Type* type;
+		static std::vector<StructDefn::Field> fields();
+
+		static ErrorOr<Value> make(Evaluator* ev, DynLength2d pos);
+		static ErrorOr<DynLength2d> unmake(Evaluator* ev, const Value& value);
+	};
+
 
 
 	struct BE_Alignment
@@ -99,6 +111,15 @@ namespace sap::interp::builtin
 		auto& f = str.getStructField(field);
 		return f.get<T>();
 	}
+
+	template <typename T>
+	T get_struct_field(const Value& str, zst::str_view field, T (Value::*getter_method)() const)
+	{
+		auto& f = str.getStructField(field);
+
+		return (f.*getter_method)();
+	}
+
 
 
 	template <typename T>

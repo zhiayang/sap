@@ -39,7 +39,7 @@ namespace sap
 		Unit unit() const { return m_unit; }
 		double value() const { return m_value; }
 
-		sap::Length resolve(const pdf::PdfFont* font, sap::Length font_size) const;
+		sap::Length resolve(const pdf::PdfFont* font, sap::Length font_size, sap::Length root_font_size) const;
 
 		static std::optional<Unit> stringToUnit(zst::str_view sv);
 		static const char* unitToString(Unit unit);
@@ -47,5 +47,11 @@ namespace sap
 	private:
 		double m_value;
 		Unit m_unit;
+	};
+
+	struct DynLength2d
+	{
+		DynLength x;
+		DynLength y;
 	};
 }

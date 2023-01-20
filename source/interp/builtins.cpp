@@ -39,6 +39,7 @@ namespace sap::interp
 		define_builtin_enum<builtin::BE_Alignment>(interp);
 
 		// this needs a careful ordering
+		define_builtin_struct<builtin::BS_Position>(interp);
 		define_builtin_struct<builtin::BS_Font>(interp);
 		define_builtin_struct<builtin::BS_FontFamily>(interp);
 		define_builtin_struct<builtin::BS_Style>(interp);

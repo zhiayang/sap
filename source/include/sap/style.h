@@ -41,6 +41,7 @@ namespace sap
 		DEFINE_ACCESSOR(FontFamily, m_font_family, font_family);
 		DEFINE_ACCESSOR(FontStyle, m_font_style, font_style);
 		DEFINE_ACCESSOR(Length, m_font_size, font_size);
+		DEFINE_ACCESSOR(Length, m_root_font_size, root_font_size);
 		DEFINE_ACCESSOR(double, m_line_spacing, line_spacing);
 		DEFINE_ACCESSOR(Length, m_paragraph_spacing, paragraph_spacing);
 		DEFINE_ACCESSOR(Alignment, m_alignment, alignment);
@@ -57,6 +58,7 @@ namespace sap
 		DEFINE_SETTER(FontFamily, m_font_family, set_font_family);
 		DEFINE_SETTER(FontStyle, m_font_style, set_font_style);
 		DEFINE_SETTER(Length, m_font_size, set_font_size);
+		DEFINE_SETTER(Length, m_root_font_size, set_root_font_size);
 		DEFINE_SETTER(double, m_line_spacing, set_line_spacing);
 		DEFINE_SETTER(Length, m_paragraph_spacing, set_paragraph_spacing);
 		DEFINE_SETTER(Alignment, m_alignment, set_alignment);
@@ -80,6 +82,7 @@ namespace sap
 		std::optional<FontFamily> m_font_family;
 		std::optional<FontStyle> m_font_style;
 		std::optional<Length> m_font_size;
+		std::optional<Length> m_root_font_size;
 		std::optional<double> m_line_spacing;
 		std::optional<Length> m_paragraph_spacing;
 		std::optional<Alignment> m_alignment;

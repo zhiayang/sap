@@ -32,11 +32,13 @@ namespace sap::layout
 		    &cs->addLoadedFont(pdf::PdfFont::fromBuiltin(pdf::BuiltinFont::TimesBold)),   //
 		    &cs->addLoadedFont(pdf::PdfFont::fromBuiltin(pdf::BuiltinFont::TimesBoldItalic)));
 
+		// TODO: set root font size based on some preamble
 		static auto default_style = //
 		    sap::Style()
 		        .set_font_family(default_font_family)
 		        .set_font_style(sap::FontStyle::Regular)
 		        .set_font_size(pdf::PdfScalar(12.0).into())
+		        .set_root_font_size(pdf::PdfScalar(12.0).into())
 		        .set_line_spacing(1.0)
 		        .set_alignment(Alignment::Justified)
 		        .set_paragraph_spacing(sap::Length(1.0));

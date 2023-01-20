@@ -17,7 +17,7 @@ namespace sap
 	{
 	}
 
-	sap::Length DynLength::resolve(const pdf::PdfFont* font, sap::Length font_size) const
+	sap::Length DynLength::resolve(const pdf::PdfFont* font, sap::Length font_size, sap::Length root_font_size) const
 	{
 		switch(m_unit)
 		{
@@ -27,12 +27,8 @@ namespace sap
 				    .into();
 			}
 
-			case EM:
-			case REM:
-				// ez. note that for `rem` we just require the caller to sort out their shit
-				// before calling us. I don't want to store the documetnnt font size here or anything.
-				return font_size;
-
+			case REM: return m_value * root_font_size;
+			case EM: return m_value * font_size;
 			case MM: return dim::mm(m_value);
 			case CM: return dim::cm(m_value).into();
 			case IN: return inches(m_value);
