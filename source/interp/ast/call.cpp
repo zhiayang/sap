@@ -45,10 +45,10 @@ namespace sap::interp
 	    const std::vector<ArrangeArg<const Type*>>& arguments)
 	{
 		auto params = TRY(convert_params(ts, decl));
-		auto ordered = TRY(arrange_argument_types(ts, params, arguments, //
+		auto ordered = TRY(arrangeArgumentTypes(ts, params, arguments, //
 		    "function", "argument", "argument for parameter"));
 
-		return get_calling_cost(ts, params, ordered, "function", "argument", "argument for parameter");
+		return getCallingCost(ts, params, ordered, "function", "argument", "argument for parameter");
 	}
 
 
@@ -201,7 +201,7 @@ namespace sap::interp
 			auto decl = m_resolved_func_decl;
 			auto params = TRY(convert_params(ev, decl));
 
-			auto ordered_args = TRY(arrange_argument_values(ev, params, std::move(processed_args), "function", "argument",
+			auto ordered_args = TRY(arrangeArgumentValues(ev, params, std::move(processed_args), "function", "argument",
 			    "argument for parameter"));
 
 			bool is_variadic = not params.empty() && std::get<1>(params.back())->isVariadicArray();

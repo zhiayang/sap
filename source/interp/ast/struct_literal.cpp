@@ -61,9 +61,9 @@ namespace sap::interp
 		}
 
 		auto fields = get_field_things(m_struct_defn, struct_type);
-		auto ordered = TRY(arrange_argument_types(ts, fields, processed_fields, "struct", "field", "field"));
+		auto ordered = TRY(arrangeArgumentTypes(ts, fields, processed_fields, "struct", "field", "field"));
 
-		TRY(get_calling_cost(ts, fields, ordered, "struct", "field", "field"));
+		TRY(getCallingCost(ts, fields, ordered, "struct", "field", "field"));
 
 		return TCResult::ofRValue(struct_type);
 	}
@@ -86,7 +86,7 @@ namespace sap::interp
 		}
 
 		auto fields = get_field_things(m_struct_defn, struct_type);
-		auto ordered = TRY(arrange_argument_values(ev, fields, std::move(processed_fields), //
+		auto ordered = TRY(arrangeArgumentValues(ev, fields, std::move(processed_fields), //
 		    "struct", "field", "field"));
 
 		std::vector<Value> field_values {};
