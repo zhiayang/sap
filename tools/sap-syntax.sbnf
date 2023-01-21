@@ -229,7 +229,7 @@ stmt: block-comment
     | `;`{punctuation.terminator}
     ;
 
-type: '\b(any|int|bool|char|void|float|string|Inline|Block|Length)\b'{support.type.builtin}
+type: '\b(any|int|bool|char|void|float|string|Inline|Block|Length|Position)\b'{support.type.builtin}
     | `?`{keyword.operator.type} type
     | `&`{keyword.operator.type} `mut`{storage.modifier.mut}? type
     | '([A-Za-z_][[:word:]]*)(?:\s*(::)\s*([A-Za-z_][[:word:]]*))*'{

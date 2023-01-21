@@ -139,6 +139,25 @@ namespace sap::interp
 
 		define_builtin("current_layout_position", makeParamList(), t_bposition, &builtin::current_layout_position);
 
+		define_builtin("output_at_current", makeParamList(Param { .name = "obj", .type = t_tio }), t_void,
+		    &builtin::output_at_current_tio);
+
+		define_builtin("output_at_current", makeParamList(Param { .name = "obj", .type = t_tbo }), t_void,
+		    &builtin::output_at_current_tbo);
+
+		define_builtin("output_at_position",
+		    makeParamList(                                    //
+		        Param { .name = "pos", .type = t_bposition }, //
+		        Param { .name = "obj", .type = t_tio }),
+		    t_void, &builtin::output_at_position_tio);
+
+		define_builtin("output_at_position",
+		    makeParamList(                                    //
+		        Param { .name = "pos", .type = t_bposition }, //
+		        Param { .name = "obj", .type = t_tbo }),
+		    t_void, &builtin::output_at_position_tbo);
+
+
 		define_builtin("print", makeParamList(Param { .name = "_", .type = t_any }), t_void, &builtin::print);
 		define_builtin("println", makeParamList(Param { .name = "_", .type = t_any }), t_void, &builtin::println);
 

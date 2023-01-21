@@ -41,6 +41,6 @@ namespace sap::tree
 		cursor = cursor.newLine(this->size().y());
 		cursor = cursor.moveRight(this->size().x());
 
-		return { cursor, std::move(img) };
+		return { cursor, util::vectorOf<std::unique_ptr<layout::LayoutObject>>(std::move(img)) };
 	}
 }

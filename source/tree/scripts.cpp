@@ -14,7 +14,8 @@ namespace sap::tree
 	auto ScriptCall::createLayoutObject(interp::Interpreter* cs, layout::PageCursor cursor, const Style* parent_style) const
 	    -> LayoutResult
 	{
-		auto _ = cs->evaluator().pushBlockContext(cursor, this);
+		// steal the parent output context (since we don't actually contain stuff)
+		auto _ = cs->evaluator().pushBlockContext(cursor, this, cs->evaluator().getBlockContext().output_context);
 
 		auto value_or_err = cs->run(this->call.get());
 
@@ -23,7 +24,7 @@ namespace sap::tree
 
 		auto value_or_empty = value_or_err.take_value();
 		if(not value_or_empty.hasValue())
-			return { cursor, std::nullopt };
+			return { cursor, util::vectorOf<std::unique_ptr<layout::LayoutObject>>() };
 
 		auto style = cs->evaluator().currentStyle().unwrap()->extendWith(parent_style);
 		if(value_or_empty.get().isTreeBlockObj())
@@ -53,7 +54,7 @@ namespace sap::tree
 		if(auto ret = cs->run(this->body.get()); ret.is_err())
 			ret.error().showAndExit();
 
-		return { cursor, std::nullopt };
+		return { cursor, util::vectorOf<std::unique_ptr<layout::LayoutObject>>() };
 	}
 
 

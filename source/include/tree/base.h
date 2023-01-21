@@ -49,7 +49,7 @@ namespace sap::tree
 	{
 		virtual ~DocumentObject() = 0;
 
-		using LayoutResult = std::pair<layout::PageCursor, std::optional<std::unique_ptr<layout::LayoutObject>>>;
+		using LayoutResult = std::pair<layout::PageCursor, std::vector<std::unique_ptr<layout::LayoutObject>>>;
 
 		virtual LayoutResult createLayoutObject(interp::Interpreter* cs, layout::PageCursor cursor, const Style* parent_style)
 		    const = 0;

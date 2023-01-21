@@ -98,7 +98,6 @@ namespace sap::tree
 	private:
 		std::vector<std::unique_ptr<InlineObject>> m_contents {};
 
-		friend struct Document;
-		void evaluateScripts(interp::Interpreter* cs);
+		void evaluate_scripts(interp::Interpreter* cs, std::vector<std::unique_ptr<InlineObject>>& output_vec);
 	};
 }

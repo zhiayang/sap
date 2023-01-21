@@ -1,4 +1,5 @@
 # std.sap
+
 \script std::{
 
 fn style(s: builtin::Style, obj: Block) -> Block { return builtin::apply_style(s, *obj); }

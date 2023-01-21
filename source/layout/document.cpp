@@ -76,26 +76,45 @@ namespace sap::tree
 	void Document::layout(interp::Interpreter* cs, layout::Document* layout_doc)
 	{
 		auto cursor = layout_doc->pageLayout().newCursor();
-		auto _ = cs->evaluator().pushBlockContext(cursor, std::nullopt);
+
+		auto layout_an_object_please = [&](tree::DocumentObject* obj) -> const Style* {
+			auto cur_style = layout_doc->style()->extendWith(cs->evaluator().currentStyle().unwrap());
+
+			auto [new_cursor, layout_objs] = obj->createLayoutObject(cs, cursor, cur_style);
+			cursor = std::move(new_cursor);
+
+			if(layout_objs.empty())
+				return cur_style;
+
+			for(auto& layout_obj : layout_objs)
+				layout_doc->pageLayout().addObject(std::move(layout_obj));
+
+			return cur_style;
+		};
+
+		auto _ = cs->evaluator().pushBlockContext(cursor, std::nullopt,
+		    {
+		        .add_block_object = [&](auto obj) -> ErrorOr<void> {
+			        auto ptr = &cs->leakBlockObject(std::move(obj));
+			        layout_an_object_please(ptr);
+
+			        return Ok();
+		        },
+		        .add_inline_object = [cs](auto obj) -> ErrorOr<void> {
+			        return ErrMsg(&cs->evaluator(), "inline object not allowed at top level");
+		        },
+		    });
 
 		for(size_t i = 0; i < m_objects.size(); i++)
 		{
 			auto& obj = m_objects[i];
 
-			auto cur_style = layout_doc->style()->extendWith(cs->evaluator().currentStyle().unwrap());
+			auto cur_style = layout_an_object_please(obj.get());
 
-			auto [new_cursor, layout_obj] = obj->createLayoutObject(cs, cursor, cur_style);
-			cursor = std::move(new_cursor);
-
-			if(layout_obj.has_value())
-			{
-				layout_doc->pageLayout().addObject(std::move(*layout_obj));
-
-				// only add spacing after objects that actually have content.
-				// otherwise, script blocks that don't return values will introduce phantom spaces
-				if(i + 1 < m_objects.size())
-					cursor = cursor.newLine(cur_style->paragraph_spacing());
-			}
+			// only add spacing after objects that actually have content.
+			// otherwise, script blocks that don't return values will introduce phantom spaces
+			if(i + 1 < m_objects.size())
+				cursor = cursor.newLine(cur_style->paragraph_spacing());
 		}
 	}
 }

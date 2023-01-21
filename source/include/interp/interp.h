@@ -20,6 +20,7 @@
 namespace sap::tree
 {
 	struct BlockObject;
+	struct InlineObject;
 }
 
 namespace sap::interp

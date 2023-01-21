@@ -250,7 +250,7 @@ namespace util
 		};
 
 		template <typename Callback>
-		Defer(Callback cb) : m_cancel(false)
+		[[nodiscard]] Defer(Callback cb) : m_cancel(false)
 		{
 			struct Derived : Base
 			{
@@ -320,6 +320,12 @@ namespace util
 
 
 
+
+	template <typename T>
+	std::vector<T> vectorOf()
+	{
+		return std::vector<T>();
+	}
 
 	template <typename T, std::same_as<T>... Ts>
 	std::vector<T> vectorOf(T&& x, Ts&&... xs)

@@ -16,16 +16,15 @@
 
 namespace sap::tree
 {
-	void Paragraph::evaluateScripts(interp::Interpreter* cs)
+	void Paragraph::evaluate_scripts(interp::Interpreter* cs, std::vector<std::unique_ptr<InlineObject>>& output_vec)
 	{
-		std::vector<std::unique_ptr<InlineObject>> ret {};
-		ret.reserve(m_contents.size());
+		output_vec.reserve(m_contents.size());
 
 		for(auto& obj : m_contents)
 		{
 			if(dynamic_cast<tree::Text*>(obj.get()) || dynamic_cast<tree::Separator*>(obj.get()))
 			{
-				ret.push_back(std::move(obj));
+				output_vec.push_back(std::move(obj));
 			}
 			else if(auto iscr = dynamic_cast<tree::ScriptCall*>(obj.get()); iscr != nullptr)
 			{
@@ -36,7 +35,8 @@ namespace sap::tree
 				auto value_or_empty = value_or_err.take_value();
 				if(not value_or_empty.hasValue())
 				{
-					ret.emplace_back(new tree::Text(U"", obj->style()));
+					// TODO: wtf is this? might be to avoid having two separators in a row?
+					output_vec.emplace_back(new tree::Text(U"", obj->style()));
 					continue;
 				}
 
@@ -48,7 +48,7 @@ namespace sap::tree
 					error("interp", "convertion to text failed: {}", tmp.error());
 
 				auto objs = tmp.take_value();
-				ret.insert(ret.end(), std::move_iterator(objs.begin()), std::move_iterator(objs.end()));
+				output_vec.insert(output_vec.end(), std::move_iterator(objs.begin()), std::move_iterator(objs.end()));
 			}
 			else if(auto iscb = dynamic_cast<tree::ScriptBlock*>(obj.get()); iscb != nullptr)
 			{
@@ -60,7 +60,7 @@ namespace sap::tree
 			}
 		}
 
-		m_contents.swap(ret);
+		m_contents.swap(output_vec);
 	}
 
 	static bool is_letter(char32_t c)

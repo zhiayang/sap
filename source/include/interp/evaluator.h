@@ -34,7 +34,14 @@ namespace sap::interp
 {
 	struct Evaluator;
 	struct Interpreter;
+	struct OutputContext;
 
+
+	struct OutputContext
+	{
+		std::optional<std::function<ErrorOr<void>(std::unique_ptr<tree::BlockObject>)>> add_block_object;
+		std::optional<std::function<ErrorOr<void>(std::unique_ptr<tree::InlineObject>)>> add_inline_object;
+	};
 
 	// for tracking layout hierarchy in the evaluator
 	struct BlockContext
@@ -42,6 +49,7 @@ namespace sap::interp
 		layout::PageCursor cursor;
 		layout::RelativePos parent_pos;
 		std::optional<const tree::BlockObject*> obj;
+		OutputContext output_context;
 	};
 
 	struct StackFrame
@@ -110,9 +118,11 @@ namespace sap::interp
 
 		const BlockContext& getBlockContext() const;
 		[[nodiscard]] util::Defer<> pushBlockContext(const layout::PageCursor& cursor,
-		    std::optional<const tree::BlockObject*> obj);
+		    std::optional<const tree::BlockObject*> obj,
+		    OutputContext output_ctx);
 
 		void popBlockContext();
+
 
 	private:
 		Interpreter* m_interp;

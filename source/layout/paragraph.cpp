@@ -63,13 +63,25 @@ namespace sap::tree
 	    -> LayoutResult
 	{
 		cursor = cursor.newLine(0);
-		auto _ = cs->evaluator().pushBlockContext(cursor, this);
 
-		const_cast<Paragraph*>(this)->evaluateScripts(cs);
+		std::vector<std::unique_ptr<InlineObject>> para_objects {};
+
+		auto _ = cs->evaluator().pushBlockContext(cursor, this,
+		    {
+		        .add_block_object = std::nullopt,
+		        .add_inline_object = [&para_objects](auto obj) -> ErrorOr<void> {
+			        para_objects.push_back(std::move(obj));
+			        return Ok();
+		        },
+		    });
+
+
+		const_cast<Paragraph*>(this)->evaluate_scripts(cs, para_objects);
 		const_cast<Paragraph*>(this)->processWordSeparators();
 
+		using Tmp = std::unique_ptr<layout::LayoutObject>;
 		if(m_contents.empty())
-			return { std::move(cursor), std::nullopt };
+			return { std::move(cursor), util::vectorOf<Tmp>() };
 
 		auto style = parent_style->extendWith(this->style());
 
@@ -116,9 +128,9 @@ namespace sap::tree
 			current_idx += broken_line.numParts();
 		}
 
-		return {
-			cursor,
-			std::unique_ptr<layout::Paragraph>(new layout::Paragraph(para_pos, para_size, std::move(layout_lines))),
-		};
+		auto layout_para = std::unique_ptr<layout::Paragraph>(new layout::Paragraph(para_pos, para_size,
+		    std::move(layout_lines)));
+
+		return { cursor, util::vectorOf<Tmp>(std::move(layout_para)) };
 	}
 }

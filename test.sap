@@ -31,6 +31,19 @@ hello \std::style(builtin::Style { .font_size = 15pt }) { world } asdf
 
 \script ::{
 	fn hmm(a: int) { builtin::println(f"[{a}]: {builtin::current_layout_position()}"); }
+
+	fn omegalul()
+	{
+		let text = builtin::make_text(f"OMEGALUL");
+		builtin::output_at_current(*text);
+	}
+
+	fn omegalul2()
+	{
+		let text = builtin::make_text((10 * [f"ha"])...);
+		let para = builtin::make_paragraph(*text);
+		builtin::output_at_current(*para);
+	}
 }
 
 My name is Yoshikage Kira. I'm\builtin::bold_italic1(1 < 2 < 5 > 7)years old. My house is in the northeast section of Morioh,
@@ -42,10 +55,12 @@ have no problems sleeping until morning. Just like a baby, I wake up without any
 in the morning. I was told there were no issues at my last check-up. I'm trying to explain that \hmm(1)
 I'm a person who wishes to live a very quiet life. I take care not to trouble myself with any enemies,
 like winning and losing, that would cause me to lose sleep at night. That is how I deal with society,
-and I know that is what brings me happiness. Although, if I were to fight I wouldn't lose to anyone.
+and I know that is what brings me \omegalul() happiness. Although, if I were to fight I wouldn't lose to anyone.
 
 {{{{{{{
 	hello world
+
+	\omegalul2();
 
 	This is another paragraph. I'd just like to interject for moment. What you're referring to as Linux, is in fact,
 	GNU/Linux, or as I've recently taken to calling it, GNU plus Linux. Linux is not an operating system unto itself,

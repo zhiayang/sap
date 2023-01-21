@@ -16,12 +16,32 @@ namespace sap::tree
 	auto BlockContainer::createLayoutObject(interp::Interpreter* cs, layout::PageCursor cursor, const Style* parent_style) const
 	    -> LayoutResult
 	{
-		auto _ = cs->evaluator().pushBlockContext(cursor, this);
-
 		auto start_cursor = cursor;
 		auto this_style = parent_style->extendWith(m_style);
 
 		std::vector<std::unique_ptr<layout::Line>> lines {};
+
+		auto _ = cs->evaluator().pushBlockContext(cursor, this,
+		    {
+		        .add_block_object = [&lines, &cursor, &this_style, cs](auto obj) -> ErrorOr<void> {
+			        auto ptr = &cs->leakBlockObject(std::move(obj));
+
+			        std::array<BlockObject*, 1> aoeu { ptr };
+			        auto style = cs->evaluator().currentStyle().unwrap()->extendWith(this_style);
+			        auto [new_cursor, maybe_line] = layout::Line::fromBlockObjects(cs, cursor, style, aoeu);
+
+			        if(not maybe_line.has_value())
+				        return ErrMsg(&cs->evaluator(), "invalid object?!");
+
+			        lines.push_back(std::move(*maybe_line));
+
+			        cursor = new_cursor.newLine(style->paragraph_spacing());
+			        return Ok();
+		        },
+		        .add_inline_object = std::nullopt,
+		    });
+
+
 		for(size_t i = 0; i < m_objects.size(); i++)
 		{
 			auto& obj = m_objects[i];
@@ -42,9 +62,11 @@ namespace sap::tree
 				cursor = std::move(new_cursor);
 		}
 
-		if(lines.empty())
-			return { cursor, std::nullopt };
+		using Foo = std::unique_ptr<layout::LayoutObject>;
 
-		return { cursor, layout::Paragraph::fromLines(cs, start_cursor, std::move(lines)) };
+		if(lines.empty())
+			return { cursor, util::vectorOf<Foo>() };
+
+		return { cursor, util::vectorOf<Foo>(layout::Paragraph::fromLines(cs, start_cursor, std::move(lines))) };
 	}
 }
