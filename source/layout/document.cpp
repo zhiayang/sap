@@ -92,18 +92,12 @@ namespace sap::tree
 			return { true, cur_style };
 		};
 
-		auto _ = cs->evaluator().pushBlockContext(cursor, std::nullopt,
-		    {
-		        .add_block_object = [&](auto obj) -> ErrorOr<void> {
-			        auto ptr = &cs->leakBlockObject(std::move(obj));
-			        layout_an_object_please(ptr);
+		auto _ = cs->evaluator().pushBlockContext(cursor, std::nullopt, { .add_block_object = [&](auto obj) -> ErrorOr<void> {
+			auto ptr = &cs->leakBlockObject(std::move(obj));
+			layout_an_object_please(ptr);
 
-			        return Ok();
-		        },
-		        .add_inline_object = [cs](auto obj) -> ErrorOr<void> {
-			        return ErrMsg(&cs->evaluator(), "inline object not allowed at top level");
-		        },
-		    });
+			return Ok();
+		} });
 
 		for(size_t i = 0; i < m_objects.size(); i++)
 		{

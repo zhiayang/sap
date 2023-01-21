@@ -39,8 +39,8 @@ namespace sap::interp
 
 	struct OutputContext
 	{
-		std::optional<std::function<ErrorOr<void>(std::unique_ptr<tree::BlockObject>)>> add_block_object;
-		std::optional<std::function<ErrorOr<void>(std::unique_ptr<tree::InlineObject>)>> add_inline_object;
+		std::optional<std::function<ErrorOr<void>(std::unique_ptr<tree::BlockObject>)>> add_block_object = std::nullopt;
+		std::optional<std::function<ErrorOr<void>(std::unique_ptr<tree::InlineObject>)>> add_inline_object = std::nullopt;
 	};
 
 	// for tracking layout hierarchy in the evaluator

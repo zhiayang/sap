@@ -67,13 +67,10 @@ namespace sap::tree
 		std::vector<std::unique_ptr<InlineObject>> para_objects {};
 
 		auto _ = cs->evaluator().pushBlockContext(cursor, this,
-		    {
-		        .add_block_object = std::nullopt,
-		        .add_inline_object = [&para_objects](auto obj) -> ErrorOr<void> {
-			        para_objects.push_back(std::move(obj));
-			        return Ok();
-		        },
-		    });
+		    { .add_inline_object = [&para_objects](auto obj) -> ErrorOr<void> {
+			    para_objects.push_back(std::move(obj));
+			    return Ok();
+		    } });
 
 
 		const_cast<Paragraph*>(this)->evaluate_scripts(cs, para_objects);

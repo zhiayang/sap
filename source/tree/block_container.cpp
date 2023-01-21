@@ -37,15 +37,12 @@ namespace sap::tree
 		};
 
 		auto _ = cs->evaluator().pushBlockContext(cursor, this,
-		    {
-		        .add_block_object = [&layout_an_object_please, cs](auto obj) -> ErrorOr<void> {
-			        auto ptr = &cs->leakBlockObject(std::move(obj));
+		    { .add_block_object = [&layout_an_object_please, cs](auto obj) -> ErrorOr<void> {
+			    auto ptr = &cs->leakBlockObject(std::move(obj));
 
-			        layout_an_object_please(ptr);
-			        return Ok();
-		        },
-		        .add_inline_object = std::nullopt,
-		    });
+			    layout_an_object_please(ptr);
+			    return Ok();
+		    } });
 
 
 		for(size_t i = 0; i < m_objects.size(); i++)
