@@ -87,7 +87,7 @@ namespace sap::interp
 		{
 			TRY(sb->body->typecheck(ts));
 		}
-		else if(auto bc = dynamic_cast<const tree::BlockContainer*>(obj); bc)
+		else if(auto bc = dynamic_cast<const tree::VertBox*>(obj); bc)
 		{
 			for(auto& inner : bc->contents())
 				TRY(typecheck_block_obj(ts, inner.get()));
@@ -121,9 +121,9 @@ namespace sap::interp
 			else
 				return EvalResult::ofValue(make_para_from_tios(TRY(ev->convertValueToText(std::move(value)))));
 		}
-		else if(auto bc = dynamic_cast<const tree::BlockContainer*>(obj); bc)
+		else if(auto bc = dynamic_cast<const tree::VertBox*>(obj); bc)
 		{
-			auto container = std::make_unique<tree::BlockContainer>();
+			auto container = std::make_unique<tree::VertBox>();
 			for(auto& inner : bc->contents())
 				container->contents().push_back(TRY_VALUE(evaluate_block_obj(ev, inner.get())).takeTreeBlockObj());
 

@@ -1197,7 +1197,7 @@ namespace sap::frontend
 			if(is_block)
 			{
 				auto obj = std::make_unique<interp::TreeBlockExpr>(loc);
-				auto container = std::make_unique<tree::BlockContainer>();
+				auto container = std::make_unique<tree::VertBox>();
 				auto inner = parse_top_level(lexer);
 
 				container->contents().insert(container->contents().end(), std::move_iterator(inner.begin()),
@@ -1327,7 +1327,7 @@ namespace sap::frontend
 			{
 				lexer.next();
 
-				auto container = std::make_unique<tree::BlockContainer>();
+				auto container = std::make_unique<tree::VertBox>();
 				auto inner = parse_top_level(lexer);
 
 				container->contents().insert(container->contents().end(), std::move_iterator(inner.begin()),

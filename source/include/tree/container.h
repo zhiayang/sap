@@ -8,7 +8,7 @@
 
 namespace sap::tree
 {
-	struct BlockContainer : BlockObject
+	struct VertBox : BlockObject
 	{
 		virtual LayoutResult createLayoutObject(interp::Interpreter* cs, layout::PageCursor cursor, const Style* parent_style)
 		    const override;

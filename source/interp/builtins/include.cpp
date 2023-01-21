@@ -36,7 +36,7 @@ namespace sap::interp::builtin
 			}
 		}
 
-		auto blk_container = std::make_unique<tree::BlockContainer>();
+		auto blk_container = std::make_unique<tree::VertBox>();
 		blk_container->contents().swap(objs);
 
 		return EvalResult::ofValue(Value::treeBlockObject(std::move(blk_container)));

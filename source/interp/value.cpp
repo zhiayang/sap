@@ -718,9 +718,9 @@ namespace sap::interp
 		{
 			sap::internal_error("???? script TBO leaked out!");
 		}
-		else if(auto blk = dynamic_cast<const tree::BlockContainer*>(&from); blk != nullptr)
+		else if(auto blk = dynamic_cast<const tree::VertBox*>(&from); blk != nullptr)
 		{
-			auto ret = std::make_unique<tree::BlockContainer>();
+			auto ret = std::make_unique<tree::VertBox>();
 			for(auto& inner : blk->contents())
 				ret->contents().push_back(clone_tbos(*inner));
 			return ret;
