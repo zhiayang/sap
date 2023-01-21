@@ -77,19 +77,19 @@ namespace sap::tree
 	{
 		auto cursor = layout_doc->pageLayout().newCursor();
 
-		auto layout_an_object_please = [&](tree::DocumentObject* obj) -> const Style* {
+		auto layout_an_object_please = [&](tree::DocumentObject* obj) -> std::pair<bool, const Style*> {
 			auto cur_style = layout_doc->style()->extendWith(cs->evaluator().currentStyle().unwrap());
 
 			auto [new_cursor, layout_objs] = obj->createLayoutObject(cs, cursor, cur_style);
 			cursor = std::move(new_cursor);
 
 			if(layout_objs.empty())
-				return cur_style;
+				return { false, cur_style };
 
 			for(auto& layout_obj : layout_objs)
 				layout_doc->pageLayout().addObject(std::move(layout_obj));
 
-			return cur_style;
+			return { true, cur_style };
 		};
 
 		auto _ = cs->evaluator().pushBlockContext(cursor, std::nullopt,
@@ -109,11 +109,11 @@ namespace sap::tree
 		{
 			auto& obj = m_objects[i];
 
-			auto cur_style = layout_an_object_please(obj.get());
+			auto [not_empty, cur_style] = layout_an_object_please(obj.get());
 
 			// only add spacing after objects that actually have content.
 			// otherwise, script blocks that don't return values will introduce phantom spaces
-			if(i + 1 < m_objects.size())
+			if(not_empty && i + 1 < m_objects.size())
 				cursor = cursor.newLine(cur_style->paragraph_spacing());
 		}
 	}
