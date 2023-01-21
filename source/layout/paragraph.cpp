@@ -79,9 +79,8 @@ namespace sap::tree
 		const_cast<Paragraph*>(this)->evaluate_scripts(cs, para_objects);
 		const_cast<Paragraph*>(this)->processWordSeparators();
 
-		using Tmp = std::unique_ptr<layout::LayoutObject>;
 		if(m_contents.empty())
-			return { std::move(cursor), util::vectorOf<Tmp>() };
+			return LayoutResult::make(cursor);
 
 		auto style = parent_style->extendWith(this->style());
 
@@ -131,6 +130,6 @@ namespace sap::tree
 		auto layout_para = std::unique_ptr<layout::Paragraph>(new layout::Paragraph(para_pos, para_size,
 		    std::move(layout_lines)));
 
-		return { cursor, util::vectorOf<Tmp>(std::move(layout_para)) };
+		return LayoutResult::make(cursor, std::move(layout_para));
 	}
 }

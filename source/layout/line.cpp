@@ -258,12 +258,12 @@ namespace sap::layout
 		for(size_t i = 0; i < objs.size(); i++)
 		{
 			auto layout_objs = objs[i]->createLayoutObject(cs, cursor, style);
-			auto new_cursor = layout_objs.first;
+			auto new_cursor = layout_objs.cursor;
 
-			if(layout_objs.second.empty())
+			if(layout_objs.objects.empty())
 				continue;
 
-			for(auto& obj : layout_objs.second)
+			for(auto& obj : layout_objs.objects)
 				layout_objects.push_back(std::move(obj));
 
 			cursor = std::move(new_cursor);

@@ -8,6 +8,7 @@
 #include "sap/units.h" // for Length, Vector2
 
 #include "layout/cursor.h"
+#include "layout/layout_object.h"
 
 namespace pdf
 {
@@ -32,34 +33,6 @@ namespace sap
 namespace sap::layout
 {
 	struct LayoutBase;
-
-	/*
-	    As mentioned in the overview above, a LayoutObject is some object that can be laid out and
-	    rendered into the document.
-	*/
-	struct LayoutObject : Stylable
-	{
-		LayoutObject(RelativePos position, Size2d size) : m_layout_position(std::move(position)), m_layout_size(size) { }
-		virtual ~LayoutObject() = default;
-
-		LayoutObject& operator=(LayoutObject&&) = default;
-		LayoutObject(LayoutObject&&) = default;
-
-		Size2d layoutSize() const { return m_layout_size; }
-		RelativePos layoutPosition() const { return m_layout_position; }
-
-		/*
-		    Render (emit PDF commands) the object. Must be called after layout(). For now, we render directly to
-		    the PDF page (by construcitng and emitting PageObjects), instead of returning a pageobject -- some
-		    layout objects might require multiple pdf page objects, so this is a more flexible design.
-		*/
-		virtual void render(const LayoutBase* layout, std::vector<pdf::Page*>& pages) const = 0;
-
-	protected:
-		RelativePos m_layout_position;
-		Size2d m_layout_size;
-	};
-
 
 	struct PageCursor;
 

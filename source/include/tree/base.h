@@ -7,6 +7,8 @@
 #include "sap/units.h"
 #include "sap/style.h" // for Stylable
 
+#include "layout/layout_object.h"
+
 namespace sap::layout
 {
 	struct PageCursor;
@@ -45,11 +47,32 @@ namespace sap::tree
 	    after layout.
 	*/
 
+	struct LayoutResult
+	{
+		layout::PageCursor cursor;
+		std::vector<std::unique_ptr<layout::LayoutObject>> objects;
+
+		template <typename... Objs>
+		static LayoutResult make(layout::PageCursor cursor, Objs&&... objs)
+		{
+			return LayoutResult {
+				.cursor = std::move(cursor),
+				.objects = util::vectorOf<std::unique_ptr<layout::LayoutObject>>(std::move(objs)...),
+			};
+		}
+
+		static LayoutResult make(layout::PageCursor cursor, std::vector<std::unique_ptr<layout::LayoutObject>> objs)
+		{
+			return LayoutResult {
+				.cursor = std::move(cursor),
+				.objects = std::move(objs),
+			};
+		}
+	};
+
 	struct DocumentObject
 	{
 		virtual ~DocumentObject() = 0;
-
-		using LayoutResult = std::pair<layout::PageCursor, std::vector<std::unique_ptr<layout::LayoutObject>>>;
 
 		virtual LayoutResult createLayoutObject(interp::Interpreter* cs, layout::PageCursor cursor, const Style* parent_style)
 		    const = 0;

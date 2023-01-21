@@ -5,6 +5,8 @@
 #include "sap/style.h"
 #include "sap/frontend.h"
 
+#include "layout/base.h"
+
 #include "interp/ast.h"
 #include "interp/interp.h"
 #include "interp/builtin_fns.h"

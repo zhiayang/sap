@@ -12,6 +12,7 @@
 #include "interp/basedefs.h"    // for InlineObject
 #include "interp/eval_result.h" // for EvalResult
 
+#include "layout/base.h"
 #include "layout/paragraph.h"
 
 namespace sap::tree

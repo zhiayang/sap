@@ -21,21 +21,27 @@ namespace sap::tree
 
 		std::vector<std::unique_ptr<layout::Line>> lines {};
 
+		auto layout_an_object_please = [&](BlockObject* obj) -> std::pair<bool, const Style*> {
+			auto cur_style = cs->evaluator().currentStyle().unwrap()->extendWith(this_style);
+
+			std::array<BlockObject*, 1> aoeu { obj };
+			auto [new_cursor, maybe_line] = layout::Line::fromBlockObjects(cs, cursor, cur_style, aoeu);
+
+			if(not maybe_line.has_value())
+				return { false, cur_style };
+
+			lines.push_back(std::move(*maybe_line));
+			cursor = std::move(new_cursor);
+
+			return { true, cur_style };
+		};
+
 		auto _ = cs->evaluator().pushBlockContext(cursor, this,
 		    {
-		        .add_block_object = [&lines, &cursor, &this_style, cs](auto obj) -> ErrorOr<void> {
+		        .add_block_object = [&layout_an_object_please, cs](auto obj) -> ErrorOr<void> {
 			        auto ptr = &cs->leakBlockObject(std::move(obj));
 
-			        std::array<BlockObject*, 1> aoeu { ptr };
-			        auto style = cs->evaluator().currentStyle().unwrap()->extendWith(this_style);
-			        auto [new_cursor, maybe_line] = layout::Line::fromBlockObjects(cs, cursor, style, aoeu);
-
-			        if(not maybe_line.has_value())
-				        return ErrMsg(&cs->evaluator(), "invalid object?!");
-
-			        lines.push_back(std::move(*maybe_line));
-
-			        cursor = new_cursor.newLine(style->paragraph_spacing());
+			        layout_an_object_please(ptr);
 			        return Ok();
 		        },
 		        .add_inline_object = std::nullopt,
@@ -46,27 +52,16 @@ namespace sap::tree
 		{
 			auto& obj = m_objects[i];
 
-			auto style = cs->evaluator().currentStyle().unwrap()->extendWith(this_style);
+			auto [not_empty, style] = layout_an_object_please(obj.get());
 
-			std::array<BlockObject*, 1> aoeu { obj.get() };
-			auto [new_cursor, maybe_line] = layout::Line::fromBlockObjects(cs, cursor, style, aoeu);
-
-			if(not maybe_line.has_value())
-				continue;
-
-			lines.push_back(std::move(*maybe_line));
-
-			if(i + 1 < m_objects.size())
-				cursor = new_cursor.newLine(style->paragraph_spacing());
-			else
-				cursor = std::move(new_cursor);
+			if(not_empty && i + 1 < m_objects.size())
+				cursor = cursor.newLine(style->paragraph_spacing());
 		}
 
-		using Foo = std::unique_ptr<layout::LayoutObject>;
 
 		if(lines.empty())
-			return { cursor, util::vectorOf<Foo>() };
+			return LayoutResult::make(cursor);
 
-		return { cursor, util::vectorOf<Foo>(layout::Paragraph::fromLines(cs, start_cursor, std::move(lines))) };
+		return LayoutResult::make(cursor, layout::Paragraph::fromLines(cs, start_cursor, std::move(lines)));
 	}
 }

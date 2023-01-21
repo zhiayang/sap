@@ -3,6 +3,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #include "tree/base.h"
+#include "layout/base.h"
 
 #include "interp/ast.h"
 #include "interp/value.h"

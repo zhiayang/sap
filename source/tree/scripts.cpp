@@ -24,7 +24,7 @@ namespace sap::tree
 
 		auto value_or_empty = value_or_err.take_value();
 		if(not value_or_empty.hasValue())
-			return { cursor, util::vectorOf<std::unique_ptr<layout::LayoutObject>>() };
+			return LayoutResult::make(cursor);
 
 		auto style = cs->evaluator().currentStyle().unwrap()->extendWith(parent_style);
 		if(value_or_empty.get().isTreeBlockObj())
@@ -54,7 +54,7 @@ namespace sap::tree
 		if(auto ret = cs->run(this->body.get()); ret.is_err())
 			ret.error().showAndExit();
 
-		return { cursor, util::vectorOf<std::unique_ptr<layout::LayoutObject>>() };
+		return LayoutResult::make(cursor);
 	}
 
 
