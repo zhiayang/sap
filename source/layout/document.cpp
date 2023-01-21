@@ -88,10 +88,14 @@ namespace sap::tree
 			cursor = std::move(new_cursor);
 
 			if(layout_obj.has_value())
+			{
 				layout_doc->pageLayout().addObject(std::move(*layout_obj));
 
-			if(i + 1 < m_objects.size())
-				cursor = cursor.newLine(cur_style->paragraph_spacing());
+				// only add spacing after objects that actually have content.
+				// otherwise, script blocks that don't return values will introduce phantom spaces
+				if(i + 1 < m_objects.size())
+					cursor = cursor.newLine(cur_style->paragraph_spacing());
+			}
 		}
 	}
 }

@@ -30,11 +30,7 @@ hello \std::style(builtin::Style { .font_size = 15pt }) { world } asdf
 \std::section("goodbye");
 
 \script ::{
-	fn hmm(a: int)
-	{
-		let pos = builtin::current_layout_position();
-		builtin::println(f"[{a}] pos = ({pos.x}, {pos.y}), page={pos.page}");
-	}
+	fn hmm(a: int) { builtin::println(f"[{a}]: {builtin::current_layout_position()}"); }
 }
 
 My name is Yoshikage Kira. I'm\builtin::bold_italic1(1 < 2 < 5 > 7)years old. My house is in the northeast section of Morioh,
