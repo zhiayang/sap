@@ -6,6 +6,8 @@
 
 #include "util.h"
 
+#include "layout/cursor.h"
+
 #include "interp/ast.h"
 #include "interp/value.h"
 #include "interp/parser_type.h"
@@ -72,21 +74,9 @@ namespace sap::interp::builtin
 		static const Type* type;
 		static std::vector<StructDefn::Field> fields();
 
-		static ErrorOr<Value> make(Evaluator* ev, DynLength2d pos);
-		static ErrorOr<DynLength2d> unmake(Evaluator* ev, const Value& value);
+		static ErrorOr<Value> make(Evaluator* ev, layout::RelativePos pos);
+		static ErrorOr<layout::RelativePos> unmake(Evaluator* ev, const Value& value);
 	};
-
-	struct BS_Cursor
-	{
-		static constexpr auto name = "Cursor";
-
-		static const Type* type;
-		static std::vector<StructDefn::Field> fields();
-
-		static ErrorOr<Value> make(Evaluator* ev, DynLength2d pos);
-		static ErrorOr<DynLength2d> unmake(Evaluator* ev, const Value& value);
-	};
-
 
 
 

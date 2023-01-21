@@ -2,7 +2,8 @@
 # needs to be compiled to a sublime-syntax file using https://github.com/BenjaminSchaaf/sbnf
 # this works with version 0.6.0 (released 2022-11-22)
 
-NAME = `sap`
+NAME = 'sap'
+EXTENSIONS = 'sap'
 
 IDENTIFIER = '[A-Za-z_][[:word:]]*'
 

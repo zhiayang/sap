@@ -29,25 +29,34 @@ hello \std::style(builtin::Style { .font_size = 15pt }) { world } asdf
 
 \std::section("goodbye");
 
+\script ::{
+	fn hmm(a: int)
+	{
+		let pos = builtin::current_layout_position();
+		builtin::println(f"[{a}] pos = ({pos.x}, {pos.y}), page={pos.page}");
+	}
+}
+
 My name is Yoshikage Kira. I'm\builtin::bold_italic1(1 < 2 < 5 > 7)years old. My house is in the northeast section of Morioh,
 where all the villas are, and I am not married. I work as an employee for the Kame Yu department
 stores, and I get home every day by 8 PM at the latest. I don't smoke, but I occasionally drink.
 I'm in bed by 11 PM, and make sure I get eight hours of sleep, no matter what. After having a
 glass of warm milk and doing about twenty minutes of stretches before going to bed, I usually
 have no problems sleeping until morning. Just like a baby, I wake up without any fatigue or stress
-in the morning. I was told there were no issues at my last check-up. I'm trying to explain that
+in the morning. I was told there were no issues at my last check-up. I'm trying to explain that \hmm(1)
 I'm a person who wishes to live a very quiet life. I take care not to trouble myself with any enemies,
 like winning and losing, that would cause me to lose sleep at night. That is how I deal with society,
 and I know that is what brings me happiness. Although, if I were to fight I wouldn't lose to anyone.
 
 {{{
+	\hmm(2)
 	This is another paragraph. I'd just like to interject for moment. What you're referring to as Linux, is in fact,
 	GNU/Linux, or as I've recently taken to calling it, GNU plus Linux. Linux is not an operating system unto itself,
 	but rather another free component of a fully functioning GNU system made useful by the GNU corelibs, shell utilities
 	and vital system components comprising a full OS as defined by POSIX.
 }}}
 
-AVAYAYA V. Vo P. r.aaa
+AVAYAYA V. Vo P. r.aaa \hmm(3)
 
 
 #/
@@ -63,7 +72,7 @@ and あなたの IP is being traced right now so you better 準備します for 
 that 殺す’s the pathetic 小さい thing あなた calls あなたの life. You’re fucking 死にました’d, 赤ちゃん.
 /#
 
-\std::section("lorem ipsum");
+\std::section("lorem ipsum")
 
 Contrary to popular belief, Lorem Ipsum is not simply random text. It has roots in a piece of classical Latin literature from 45 BC, making it over 2000 years old. Richard McClintock, a Latin professor at Hampden-Sydney College in Virginia, looked up one of the more obscure Latin words, consectetur, from a Lorem Ipsum passage, and going through the cites of the word in classical literature, discovered the undoubtable source. Lorem Ipsum comes from sections 1.10.32 and 1.10.33 of "de Finibus Bonorum et Malorum" (The Extremes of Good and Evil) by Cicero, written in 45 BC. This book is a treatise on the theory of ethics, very popular during the Renaissance. The first line of Lorem Ipsum, "Lorem ipsum dolor sit amet..", comes from a line in section 1.10.32.
 
@@ -89,7 +98,7 @@ Sed non leo nunc. Mauris condimentum dapibus iaculis. Phasellus ullamcorper pell
 
 
 
-In hac habitasse platea dictumst. Praesent egestas odio nulla, vitae viverra massa scelerisque eu. Vestibulum auctor ligula nec eleifend facilisis. Aliquam vitae tortor eu mauris lobortis consectetur. Vestibulum venenatis eleifend suscipit. Donec placerat nunc sed velit porta, quis interdum arcu eleifend. Etiam vitae semper nibh, sit amet tempor nibh. Vivamus vel facilisis lacus, vitae vulputate augue.
+In hac habitasse platea dictumst. Praesent egestas odio nulla, vitae viverra massa scelerisque eu. Vestibulum auctor ligula nec eleifend facilisis. Aliquam vitae tortor eu mauris lobortis consectetur. Vestibulum venenatis eleifend suscipit. Donec placerat nunc sed velit porta, quis interdum arcu eleifend. Etiam vitae semper nibh, sit amet tempor nibh. Vivamus vel facilisis lacus, vitae vulputate augue. \hmm(4)
 
 #/ #/
 thisisalongtestwordforhyphenation

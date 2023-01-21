@@ -121,8 +121,12 @@ namespace sap::interp
 		int cost = 0;
 
 		const Type* variadic_element_type = nullptr;
-		if(auto t = std::get<1>(expected.back()); t->isVariadicArray())
-			variadic_element_type = t->arrayElement();
+		if(expected.size() > 0)
+		{
+			if(auto t = std::get<1>(expected.back()); t->isVariadicArray())
+				variadic_element_type = t->arrayElement();
+		}
+
 
 		int variadic_cost = 0;
 		for(size_t i = 0; i < ordered_args.size(); i++)

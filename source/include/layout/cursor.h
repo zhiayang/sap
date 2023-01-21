@@ -14,6 +14,7 @@ namespace sap::layout
 	{
 		struct TAG_RELATIVE;
 		using Pos = dim::Vector2<sap::Length::unit_system, TAG_RELATIVE>;
+
 		Pos pos;
 		size_t page_num;
 	};

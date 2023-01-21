@@ -83,6 +83,7 @@ namespace sap::interp
 
 		auto t_bfont = PType::named(make_builtin_name(builtin::BS_Font::name));
 		auto t_bstyle = PType::named(make_builtin_name(builtin::BS_Style::name));
+		auto t_bposition = PType::named(make_builtin_name(builtin::BS_Position::name));
 		auto t_bfontfamily = PType::named(make_builtin_name(builtin::BS_FontFamily::name));
 
 		auto define_builtin = [&](auto&&... xs) {
@@ -135,6 +136,8 @@ namespace sap::interp
 
 		define_builtin("pop_style", makeParamList(), t_bstyle, &builtin::pop_style);
 		define_builtin("current_style", makeParamList(), t_bstyle, &builtin::current_style);
+
+		define_builtin("current_layout_position", makeParamList(), t_bposition, &builtin::current_layout_position);
 
 		define_builtin("print", makeParamList(Param { .name = "_", .type = t_any }), t_void, &builtin::print);
 		define_builtin("println", makeParamList(Param { .name = "_", .type = t_any }), t_void, &builtin::println);

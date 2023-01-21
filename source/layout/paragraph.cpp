@@ -62,14 +62,14 @@ namespace sap::tree
 	auto Paragraph::createLayoutObject(interp::Interpreter* cs, layout::PageCursor cursor, const Style* parent_style) const
 	    -> LayoutResult
 	{
+		cursor = cursor.newLine(0);
+		auto _ = cs->evaluator().pushBlockContext({ .origin = cursor, .parent = this });
+
 		const_cast<Paragraph*>(this)->evaluateScripts(cs);
 		const_cast<Paragraph*>(this)->processWordSeparators();
 
 		if(m_contents.empty())
 			return { std::move(cursor), std::nullopt };
-
-		cursor = cursor.newLine(0);
-		auto _ = cs->evaluator().pushBlockContext({ .origin = cursor, .parent = this });
 
 		auto style = parent_style->extendWith(this->style());
 

@@ -20,25 +20,42 @@ namespace sap::interp::builtin
 	const Type* builtin::BS_Position::type = nullptr;
 	std::vector<Field> builtin::BS_Position::fields()
 	{
+		auto pt_int = PT::named(frontend::TYPE_INT);
 		auto pt_len = PT::named(frontend::TYPE_LENGTH);
-		return util::vectorOf(                     //
-		    Field { .name = "x", .type = pt_len }, //
-		    Field { .name = "y", .type = pt_len });
+		return util::vectorOf(                       //
+		    Field { .name = "x", .type = pt_len },   //
+		    Field { .name = "y", .type = pt_len },   //
+		    Field { .name = "page", .type = pt_int } //
+		);
 	}
 
-	ErrorOr<Value> builtin::BS_Position::make(Evaluator* ev, DynLength2d pos)
+	ErrorOr<Value> builtin::BS_Position::make(Evaluator* ev, layout::RelativePos pos)
 	{
 		return StructMaker(BS_Position::type->toStruct()) //
-		    .set("x", Value::length(pos.x))
-		    .set("y", Value::length(pos.y))
+		    .set("x", Value::length(DynLength(pos.pos.x())))
+		    .set("y", Value::length(DynLength(pos.pos.y())))
+		    .set("page", Value::integer(checked_cast<int64_t>(pos.page_num)))
 		    .make();
 	}
 
-	ErrorOr<DynLength2d> builtin::BS_Position::unmake(Evaluator* ev, const Value& value)
+	ErrorOr<layout::RelativePos> builtin::BS_Position::unmake(Evaluator* ev, const Value& value)
 	{
-		auto x = get_struct_field<DynLength>(value, "x", &Value::getLength);
-		auto y = get_struct_field<DynLength>(value, "y", &Value::getLength);
+		auto sty = TRY(ev->currentStyle());
 
-		return Ok(DynLength2d { .x = x, .y = y });
+		auto x = get_struct_field<DynLength>(value, "x", &Value::getLength)
+		             .resolve(sty->font(), sty->font_size(), sty->root_font_size());
+
+		auto y = get_struct_field<DynLength>(value, "y", &Value::getLength)
+		             .resolve(sty->font(), sty->font_size(), sty->root_font_size());
+
+		auto p = get_struct_field<int64_t>(value, "page");
+
+		return Ok(layout::RelativePos {
+		    .pos = { x, y },
+		    .page_num = checked_cast<size_t>(p),
+		});
 	}
+
+
+
 }

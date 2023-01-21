@@ -192,4 +192,13 @@ namespace sap::interp::builtin
 
 		return EvalResult::ofValue(Value::treeBlockObject(std::move(para)));
 	}
+
+
+	ErrorOr<EvalResult> current_layout_position(Evaluator* ev, std::vector<Value>& args)
+	{
+		assert(args.size() == 0);
+
+		auto pos = ev->getBlockContext().origin;
+		return EvalResult::ofValue(TRY(BS_Position::make(ev, pos.position())));
+	}
 }

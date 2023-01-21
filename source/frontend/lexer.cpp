@@ -570,12 +570,12 @@ namespace sap::frontend
 		auto foo = m_stream;
 		auto bar = m_location;
 
-		if(mode == Mode::Text)
-			return consume_text_token(foo, bar);
-		else if(mode == Mode::Script)
-			return consume_script_token(foo, bar);
-		else
-			assert(false);
+		switch(mode)
+		{
+			using enum Mode;
+			case Text: return consume_text_token(foo, bar);
+			case Script: return consume_script_token(foo, bar);
+		}
 	}
 
 	Token Lexer::peek() const
@@ -590,12 +590,12 @@ namespace sap::frontend
 
 	Token Lexer::next()
 	{
-		if(this->mode() == Mode::Text)
-			return consume_text_token(m_stream, m_location);
-		else if(this->mode() == Mode::Script)
-			return consume_script_token(m_stream, m_location);
-		else
-			assert(false);
+		switch(this->mode())
+		{
+			using enum Mode;
+			case Text: return consume_text_token(m_stream, m_location);
+			case Script: return consume_script_token(m_stream, m_location);
+		}
 	}
 
 	bool Lexer::expect(TokenType type)
