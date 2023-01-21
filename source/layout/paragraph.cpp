@@ -63,7 +63,7 @@ namespace sap::tree
 	    -> LayoutResult
 	{
 		cursor = cursor.newLine(0);
-		auto _ = cs->evaluator().pushBlockContext({ .origin = cursor, .parent = this });
+		auto _ = cs->evaluator().pushBlockContext(cursor, this);
 
 		const_cast<Paragraph*>(this)->evaluateScripts(cs);
 		const_cast<Paragraph*>(this)->processWordSeparators();

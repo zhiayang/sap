@@ -16,7 +16,7 @@ namespace sap::tree
 	auto BlockContainer::createLayoutObject(interp::Interpreter* cs, layout::PageCursor cursor, const Style* parent_style) const
 	    -> LayoutResult
 	{
-		auto _ = cs->evaluator().pushBlockContext({ .origin = cursor, .parent = this });
+		auto _ = cs->evaluator().pushBlockContext(cursor, this);
 
 		auto start_cursor = cursor;
 		auto this_style = parent_style->extendWith(m_style);

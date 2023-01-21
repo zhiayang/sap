@@ -198,7 +198,6 @@ namespace sap::interp::builtin
 	{
 		assert(args.size() == 0);
 
-		auto pos = ev->getBlockContext().origin;
-		return EvalResult::ofValue(TRY(BS_Position::make(ev, pos.position())));
+		return EvalResult::ofValue(TRY(BS_Position::make(ev, ev->getBlockContext().parent_pos)));
 	}
 }

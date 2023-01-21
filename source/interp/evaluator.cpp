@@ -178,8 +178,24 @@ namespace sap::interp
 		return m_block_context_stack.back();
 	}
 
-	util::Defer<> Evaluator::pushBlockContext(BlockContext ctx)
+	util::Defer<> Evaluator::pushBlockContext(const layout::PageCursor& cursor, std::optional<const tree::BlockObject*> obj)
 	{
+		auto ctx = BlockContext {
+			.cursor = cursor,
+			.parent_pos = cursor.position(),
+			.obj = std::move(obj),
+		};
+
+		if(not m_block_context_stack.empty())
+		{
+			auto parent_pos = m_block_context_stack.back().cursor.position();
+
+			// zpr::println("parent pos = {}, my pos = {}", parent_pos.pos, ctx.parent_pos.pos);
+			ctx.parent_pos.pos -= parent_pos.pos;
+			ctx.parent_pos.page_num -= parent_pos.page_num;
+			// zpr::println("final pos = {}", ctx.parent_pos.pos);
+		}
+
 		m_block_context_stack.push_back(std::move(ctx));
 		return util::Defer([this]() {
 			this->popBlockContext();

@@ -116,5 +116,6 @@ namespace sap::layout
 		Size2d m_size;
 		Length m_margin;
 		size_t m_num_pages = 1;
+		Size2d m_content_size;
 	};
 }

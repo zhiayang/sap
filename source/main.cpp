@@ -22,6 +22,11 @@ CLEANUP:
 	- when rendering, use some mechanism (eg. proxy object) to only make the page if
 		someone tried to actually put stuff in it (or access it)
 
+TODO:
+- microtype-like stuff (hanging punctuation)
+- spaces after the end of a sentence should be slightly longer than spaces between words
+
+
 #endif
 
 namespace sap

@@ -27,6 +27,7 @@ namespace sap::tree
 namespace sap::layout
 {
 	struct PageCursor;
+	struct RelativePos;
 }
 
 namespace sap::interp
@@ -38,8 +39,9 @@ namespace sap::interp
 	// for tracking layout hierarchy in the evaluator
 	struct BlockContext
 	{
-		layout::PageCursor origin;
-		std::optional<const tree::BlockObject*> parent;
+		layout::PageCursor cursor;
+		layout::RelativePos parent_pos;
+		std::optional<const tree::BlockObject*> obj;
 	};
 
 	struct StackFrame
@@ -107,7 +109,9 @@ namespace sap::interp
 		ErrorOr<const Style*> popStyle();
 
 		const BlockContext& getBlockContext() const;
-		[[nodiscard]] util::Defer<> pushBlockContext(BlockContext ctx);
+		[[nodiscard]] util::Defer<> pushBlockContext(const layout::PageCursor& cursor,
+		    std::optional<const tree::BlockObject*> obj);
+
 		void popBlockContext();
 
 	private:

@@ -7,12 +7,15 @@
 
 #include "layout/base.h"
 #include "interp/interp.h"
+#include "interp/evaluator.h"
 
 namespace sap::tree
 {
 	auto ScriptCall::createLayoutObject(interp::Interpreter* cs, layout::PageCursor cursor, const Style* parent_style) const
 	    -> LayoutResult
 	{
+		auto _ = cs->evaluator().pushBlockContext(cursor, this);
+
 		auto value_or_err = cs->run(this->call.get());
 
 		if(value_or_err.is_err())

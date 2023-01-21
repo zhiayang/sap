@@ -45,19 +45,18 @@ namespace sap::layout
 		return PageCursor(this, this->new_cursor_payload());
 	}
 
+
+
+
 	PageLayout::PageLayout(Size2d size, Length margin) : m_size(size), m_margin(margin)
 	{
+		m_content_size = { size.x() - 2 * margin, size.y() - 2 * margin };
 	}
 
 	PageLayout::~PageLayout()
 	{
 		m_objects.clear();
 	}
-
-	// Size2d PageLayout::size() const
-	// {
-	// 	return Size2d(m_size.x() - 2 * m_margin, m_size.y() - 2 * m_margin);
-	// }
 
 	PageCursor PageLayout::newCursor() const
 	{
@@ -68,7 +67,7 @@ namespace sap::layout
 	{
 		return to_base_payload({
 		    .page_num = 0,
-		    .pos_on_page = { m_margin, m_margin },
+		    .pos_on_page = { 0, 0 },
 		});
 	}
 
@@ -84,7 +83,7 @@ namespace sap::layout
 
 	Length PageLayout::get_width_at_cursor_payload(const BasePayload& curs) const
 	{
-		return m_size.x() - m_margin - get_cursor_state(curs).pos_on_page.x();
+		return m_content_size.x() - get_cursor_state(curs).pos_on_page.x();
 	}
 
 	BasePayload PageLayout::move_right(const BasePayload& payload, Length shift) const
@@ -99,14 +98,14 @@ namespace sap::layout
 	BasePayload PageLayout::new_line(const BasePayload& payload, Length line_height, bool* made_new_page)
 	{
 		auto& cst = get_cursor_state(payload);
-		if(cst.pos_on_page.y() + line_height >= m_size.y() - m_margin)
+		if(cst.pos_on_page.y() + line_height >= m_content_size.y())
 		{
 			m_num_pages = std::max(m_num_pages, cst.page_num + 1 + 1);
 
 			*made_new_page = true;
 			return to_base_payload({
 			    .page_num = cst.page_num + 1,
-			    .pos_on_page = RelativePos::Pos(m_margin, m_margin),
+			    .pos_on_page = { 0, 0 },
 			});
 		}
 		else
@@ -114,7 +113,7 @@ namespace sap::layout
 			*made_new_page = false;
 			return to_base_payload({
 			    .page_num = cst.page_num,
-			    .pos_on_page = RelativePos::Pos(m_margin, cst.pos_on_page.y() + line_height),
+			    .pos_on_page = RelativePos::Pos(0, cst.pos_on_page.y() + line_height),
 			});
 		}
 	}
@@ -132,7 +131,7 @@ namespace sap::layout
 	{
 		// PageLayout doesn't do anything with the size.
 		return AbsolutePagePos {
-			.pos = Position(pos.pos.x(), pos.pos.y()),
+			.pos = Position(m_margin + pos.pos.x(), m_margin + pos.pos.y()),
 			.page_num = pos.page_num,
 		};
 	}

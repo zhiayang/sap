@@ -76,7 +76,7 @@ namespace sap::tree
 	void Document::layout(interp::Interpreter* cs, layout::Document* layout_doc)
 	{
 		auto cursor = layout_doc->pageLayout().newCursor();
-		auto _ = cs->evaluator().pushBlockContext({ .origin = cursor, .parent = std::nullopt });
+		auto _ = cs->evaluator().pushBlockContext(cursor, std::nullopt);
 
 		for(size_t i = 0; i < m_objects.size(); i++)
 		{
