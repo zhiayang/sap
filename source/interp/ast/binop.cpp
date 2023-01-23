@@ -44,6 +44,21 @@ namespace sap::interp
 			if(this->op == Op::Multiply)
 				return TCResult::ofRValue(ltype->isArray() ? ltype : rtype);
 		}
+		else if(ltype->isLength() && rtype->isLength())
+		{
+			if(this->op == Op::Add || this->op == Op::Subtract)
+				return TCResult::ofRValue(Type::makeLength());
+		}
+		else if((ltype->isFloating() || ltype->isInteger()) && rtype->isLength())
+		{
+			if(this->op == Op::Multiply)
+				return TCResult::ofRValue(Type::makeLength());
+		}
+		else if(ltype->isLength() && (rtype->isFloating() || rtype->isInteger()))
+		{
+			if(this->op == Op::Multiply || this->op == Op::Divide)
+				return TCResult::ofRValue(Type::makeLength());
+		}
 
 		return ErrMsg(ts, "unsupported operation '{}' between types '{}' and '{}'", op_to_string(this->op), ltype, rtype);
 	}
@@ -120,6 +135,52 @@ namespace sap::interp
 
 				return EvalResult::ofValue(Value::array(elm, std::move(ret)));
 			}
+		}
+		else if(ltype->isLength() && rtype->isLength())
+		{
+			assert(this->op == Op::Add || this->op == Op::Subtract);
+
+			auto style = ev->currentStyle();
+
+			auto left = lval.getLength().resolve(style->font(), style->font_size(), style->root_font_size());
+			auto right = rval.getLength().resolve(style->font(), style->font_size(), style->root_font_size());
+
+			sap::Length result = 0;
+			if(this->op == Op::Add)
+				result = left + right;
+			else
+				result = left - right;
+
+			return EvalResult::ofValue(Value::length(DynLength(result)));
+		}
+		else if((ltype->isFloating() || ltype->isInteger()) && rtype->isLength())
+		{
+			assert(this->op == Op::Multiply);
+			auto len = lval.getLength();
+
+			double multiplier = 0;
+			if(lval.isFloating())
+				multiplier = lval.getFloating();
+			else
+				multiplier = static_cast<double>(lval.getInteger());
+
+			return EvalResult::ofValue(Value::length(DynLength(len.value() * multiplier, len.unit())));
+		}
+		else if(ltype->isLength() && (rtype->isFloating() || rtype->isInteger()))
+		{
+			assert(this->op == Op::Multiply || this->op == Op::Divide);
+			auto len = lval.getLength();
+
+			double multiplier = 0;
+			if(lval.isFloating())
+				multiplier = lval.getFloating();
+			else
+				multiplier = static_cast<double>(lval.getInteger());
+
+			if(this->op == Op::Divide)
+				multiplier = 1.0 / multiplier;
+
+			return EvalResult::ofValue(Value::length(DynLength(len.value() * multiplier, len.unit())));
 		}
 
 		assert(false && "unreachable!");

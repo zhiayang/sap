@@ -14,16 +14,18 @@ namespace sap::layout
 
 namespace sap::tree
 {
+	struct VertBox;
+
 	struct Document
 	{
-		void addObject(std::unique_ptr<DocumentObject> obj);
+		Document();
 
-		std::vector<std::unique_ptr<DocumentObject>>& objects() { return m_objects; }
-		const std::vector<std::unique_ptr<DocumentObject>>& objects() const { return m_objects; }
-
+		void addObject(std::unique_ptr<BlockObject> obj);
 		void layout(interp::Interpreter* cs, layout::Document* layout_doc);
 
+		std::unique_ptr<tree::VertBox> takeContainer() &&;
+
 	private:
-		std::vector<std::unique_ptr<DocumentObject>> m_objects {};
+		std::unique_ptr<tree::VertBox> m_container;
 	};
 }

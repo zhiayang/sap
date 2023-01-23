@@ -71,6 +71,15 @@ namespace sap::layout
 		});
 	}
 
+	BasePayload PageLayout::move_to_position(const Payload& payload, RelativePos pos) const
+	{
+		return to_base_payload({
+		    .page_num = pos.page_num,
+		    .pos_on_page = pos.pos,
+		});
+	}
+
+
 	void PageLayout::delete_cursor_payload(Payload& payload) const
 	{
 		get_cursor_state(payload).~CursorState();
@@ -95,6 +104,15 @@ namespace sap::layout
 		});
 	}
 
+	BasePayload PageLayout::carriage_return(const BasePayload& payload) const
+	{
+		auto& cst = get_cursor_state(payload);
+		return to_base_payload({
+		    .page_num = cst.page_num,
+		    .pos_on_page = { 0, cst.pos_on_page.y() },
+		});
+	}
+
 	BasePayload PageLayout::new_line(const BasePayload& payload, Length line_height, bool* made_new_page)
 	{
 		auto& cst = get_cursor_state(payload);
@@ -105,7 +123,7 @@ namespace sap::layout
 			*made_new_page = true;
 			return to_base_payload({
 			    .page_num = cst.page_num + 1,
-			    .pos_on_page = { 0, 0 },
+			    .pos_on_page = { cst.pos_on_page.x(), 0 },
 			});
 		}
 		else
@@ -113,7 +131,7 @@ namespace sap::layout
 			*made_new_page = false;
 			return to_base_payload({
 			    .page_num = cst.page_num,
-			    .pos_on_page = RelativePos::Pos(0, cst.pos_on_page.y() + line_height),
+			    .pos_on_page = RelativePos::Pos(cst.pos_on_page.x(), cst.pos_on_page.y() + line_height),
 			});
 		}
 	}

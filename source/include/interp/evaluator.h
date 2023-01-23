@@ -39,8 +39,14 @@ namespace sap::interp
 
 	struct OutputContext
 	{
-		std::optional<std::function<ErrorOr<void>(std::unique_ptr<tree::BlockObject>)>> add_block_object = std::nullopt;
-		std::optional<std::function<ErrorOr<void>(std::unique_ptr<tree::InlineObject>)>> add_inline_object = std::nullopt;
+		using TioPtr = std::unique_ptr<tree::InlineObject>;
+		using LayoutInlineObjectFn = std::function<ErrorOr<void>(TioPtr)>;
+
+		using TboPtr = std::unique_ptr<tree::BlockObject>;
+		using LayoutBlockObjectFn = std::function<ErrorOr<layout::LayoutObject*>(TboPtr, std::optional<layout::PageCursor>)>;
+
+		std::optional<LayoutBlockObjectFn> add_block_object = std::nullopt;
+		std::optional<LayoutInlineObjectFn> add_inline_object = std::nullopt;
 	};
 
 	// for tracking layout hierarchy in the evaluator
@@ -50,6 +56,7 @@ namespace sap::interp
 		layout::RelativePos parent_pos;
 		std::optional<const tree::BlockObject*> obj;
 		OutputContext output_context;
+		const layout::PageCursor* cursor_ref;
 	};
 
 	struct StackFrame
@@ -112,9 +119,9 @@ namespace sap::interp
 		std::string& keepStringAlive(zst::str_view str);
 
 
-		ErrorOr<const Style*> currentStyle() const;
+		const Style* currentStyle() const;
 		void pushStyle(const Style* style);
-		ErrorOr<const Style*> popStyle();
+		const Style* popStyle();
 
 		const BlockContext& getBlockContext() const;
 		[[nodiscard]] util::Defer<> pushBlockContext(const layout::PageCursor& cursor,

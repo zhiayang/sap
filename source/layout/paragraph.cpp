@@ -59,11 +59,14 @@ namespace sap::layout
 
 namespace sap::tree
 {
+	Size2d Paragraph::size(const layout::PageCursor& cursor) const
+	{
+		return { cursor.widthAtCursor(), 0 };
+	}
+
 	auto Paragraph::createLayoutObject(interp::Interpreter* cs, layout::PageCursor cursor, const Style* parent_style) const
 	    -> LayoutResult
 	{
-		cursor = cursor.newLine(0);
-
 		std::vector<std::unique_ptr<InlineObject>> para_objects {};
 
 		auto _ = cs->evaluator().pushBlockContext(cursor, this,
@@ -82,20 +85,15 @@ namespace sap::tree
 		auto style = parent_style->extendWith(this->style());
 
 		std::vector<std::unique_ptr<layout::Line>> layout_lines {};
-		auto para_pos = cursor.position();
 		Size2d para_size { 0, 0 };
-
-		auto lines = layout::linebreak::breakLines(cursor, style, m_contents, cursor.widthAtCursor());
 
 		size_t current_idx = 0;
 
-		for(auto line_it = lines.begin(); line_it != lines.end(); ++line_it)
-		{
-			auto& broken_line = *line_it;
+		// precompute line metrics (and the line bounds)
+		using WordSpan = std::span<const std::unique_ptr<tree::InlineObject>>;
+		std::vector<std::tuple<layout::LineMetrics, WordSpan>> the_lines {};
 
-			auto words_begin = m_contents.begin() + (ssize_t) current_idx;
-			auto words_end = m_contents.begin() + (ssize_t) current_idx + (ssize_t) broken_line.numParts();
-
+		auto add_one_line = [&the_lines](auto words_begin, auto words_end, const Style* style) {
 			if(dynamic_cast<const tree::Separator*>((*words_begin).get()) != nullptr)
 			{
 				sap::internal_error(
@@ -109,22 +107,66 @@ namespace sap::tree
 			if(auto sep = dynamic_cast<const tree::Separator*>(last_word.get()); sep && sep->isSpace())
 				--words_end;
 
+			auto words_span = std::span(words_begin, words_end);
+			the_lines.push_back({
+			    layout::computeLineMetrics(words_span, style),
+			    words_span,
+			});
+		};
+
+
+		if(not m_single_line_mode)
+		{
+			auto broken_lines = layout::linebreak::breakLines(cursor, style, m_contents, cursor.widthAtCursor());
+			for(auto line_it = broken_lines.begin(); line_it != broken_lines.end(); ++line_it)
+			{
+				auto& broken_line = *line_it;
+
+				auto words_begin = m_contents.begin() + (ssize_t) current_idx;
+				auto words_end = m_contents.begin() + (ssize_t) current_idx + (ssize_t) broken_line.numParts();
+
+				add_one_line(words_begin, words_end, style);
+
+				current_idx += broken_line.numParts();
+			}
+		}
+		else
+		{
+			add_one_line(m_contents.begin(), m_contents.end(), style);
+		}
+
+
+
+		for(size_t i = 0; i < the_lines.size(); i++)
+		{
+			bool is_last_line = i + 1 == the_lines.size();
+			auto& [metrics, word_span] = the_lines[i];
+
+			/*
+			    Line typesets its words assuming the cursor is at the baseline;
+			    we need to reserve vertical space to account for that.
+
+			    however, if we are in "single line mode", then we typeset ourselves at the
+			    baseline instead.
+			*/
+			if(i > 0 || not m_single_line_mode)
+				cursor = cursor.newLine(metrics.ascent_height);
+
+
 			auto [new_cursor, layout_line] = layout::Line::fromInlineObjects(cs, //
-			    cursor, broken_line, style,                                      //
-			    std::span(words_begin, words_end),
-			    /* is_last_line: */ line_it + 1 == lines.end());
+			    cursor, style, word_span, metrics, /* is_first: */ i == 0, is_last_line);
 
 			cursor = std::move(new_cursor);
+			cursor = cursor.carriageReturn();
 
 			para_size.x() = std::max(para_size.x(), layout_line->layoutSize().x());
 			para_size.y() += layout_line->layoutSize().y();
 
 			layout_lines.push_back(std::move(layout_line));
-
-			current_idx += broken_line.numParts();
 		}
 
-		auto layout_para = std::unique_ptr<layout::Paragraph>(new layout::Paragraph(para_pos, para_size,
+		auto para_pos2 = layout_lines.front()->layoutPosition();
+		auto layout_para = std::unique_ptr<layout::Paragraph>(new layout::Paragraph(para_pos2, para_size,
 		    std::move(layout_lines)));
 
 		return LayoutResult::make(cursor, std::move(layout_para));

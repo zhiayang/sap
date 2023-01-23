@@ -8,7 +8,7 @@
 	builtin::push_style(builtin::Style {
 		.font_size = 12pt,
 		.font_family = font_family,
-		.paragraph_spacing = 1em,
+		.paragraph_spacing = 0em,
 		.line_spacing = 1.0,
 	});
 }
@@ -57,16 +57,16 @@ I'm a person who wishes to live a very quiet life. I take care not to trouble my
 like winning and losing, that would cause me to lose sleep at night. That is how I deal with society,
 and I know that is what brings me \omegalul() happiness. Although, if I were to fight I wouldn't lose to anyone.
 
-{{{{{{{
-	hello world
+\omegalul2();
 
-	\omegalul2();
+{{{{{{{{
+	hello world
 
 	This is another paragraph. I'd just like to interject for moment. What you're referring to as Linux, is in fact,
 	GNU/Linux, or as I've recently taken to calling it, GNU plus Linux. Linux is not an operating system unto itself,
 	but rather another free component of a fully functioning GNU system made useful by the GNU corelibs, shell utilities
 	and vital system components comprising a full OS as defined by POSIX.
-}}}}}}}
+}}}}}}}}
 
 AVAYAYA V. Vo P. r.aaa \hmm(3)
 

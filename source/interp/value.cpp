@@ -712,7 +712,7 @@ namespace sap::interp
 		}
 		else if(auto img = dynamic_cast<const tree::Image*>(&from); img != nullptr)
 		{
-			return std::make_unique<tree::Image>(img->image().clone(), img->size());
+			return std::make_unique<tree::Image>(img->image().clone(), img->raw_size());
 		}
 		else if(auto scr = dynamic_cast<const tree::ScriptBlock*>(&from); scr != nullptr)
 		{
@@ -729,8 +729,5 @@ namespace sap::interp
 		{
 			sap::internal_error("?? unknown TBO type");
 		}
-
-		// TODO
-		return nullptr;
 	}
 }

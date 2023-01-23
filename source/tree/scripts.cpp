@@ -26,7 +26,7 @@ namespace sap::tree
 		if(not value_or_empty.hasValue())
 			return LayoutResult::make(cursor);
 
-		auto style = cs->evaluator().currentStyle().unwrap()->extendWith(parent_style);
+		auto style = cs->evaluator().currentStyle()->extendWith(parent_style);
 		if(value_or_empty.get().isTreeBlockObj())
 		{
 			return cs->leakBlockObject(std::move(value_or_empty.get()).takeTreeBlockObj())
@@ -58,10 +58,6 @@ namespace sap::tree
 	}
 
 
-	// just throw these here
-	DocumentObject::~DocumentObject()
-	{
-	}
 
 	InlineObject::~InlineObject()
 	{

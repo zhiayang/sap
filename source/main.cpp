@@ -10,6 +10,8 @@
 #include "sap/frontend.h" // for parse
 
 #include "tree/document.h"
+#include "tree/container.h"
+
 #include "layout/document.h" // for Document
 
 #include "interp/interp.h" // for Interpreter
@@ -23,10 +25,12 @@ CLEANUP:
 		someone tried to actually put stuff in it (or access it)
 
 TODO:
+- get rid of leakBlockObject where possible
+- x= should be synthesised from x and = if possible (for x in [+, -, *, /, %])
+	- there's a **LOT** of code dupe between binop.cpp and assop.cpp
 - make layout::Document use BlockContainer for layout (code is duplicated rn)
 - microtype-like stuff (hanging punctuation)
 - spaces after the end of a sentence should be slightly longer than spaces between words
-
 
 #endif
 

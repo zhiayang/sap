@@ -21,18 +21,7 @@ namespace sap::layout
 		return { x.into(), asc.into(), dsc.into() };
 	}
 
-	struct LineMetrics
-	{
-		sap::Length total_space_width;
-		sap::Length total_word_width;
-		std::vector<sap::Length> widths;
-
-		sap::Length ascent_height;
-		sap::Length descent_height;
-		sap::Length default_line_spacing;
-	};
-
-	static LineMetrics compute_line_metrics(std::span<const std::unique_ptr<tree::InlineObject>> objs, const Style* parent_style)
+	LineMetrics computeLineMetrics(std::span<const std::unique_ptr<tree::InlineObject>> objs, const Style* parent_style)
 	{
 		LineMetrics ret {};
 
@@ -111,6 +100,13 @@ namespace sap::layout
 			}
 			else
 			{
+				// NOTE: decide how inline objects should be laid out -- is (0, 0) at the baseline? does this mean that
+				// images "drop down" from the line, instead of going up? weirdge idk.
+				sap::internal_error("unsupported inline object!");
+			}
+#if 0
+			else
+			{
 				ret.total_word_width += word_chunk.width;
 
 				word_chunk.width = 0;
@@ -121,6 +117,7 @@ namespace sap::layout
 
 				ret.widths.push_back(it->get()->size().x());
 			}
+#endif
 		}
 
 		ret.total_word_width += word_chunk.width;
@@ -137,17 +134,15 @@ namespace sap::layout
 
 	std::pair<PageCursor, std::unique_ptr<Line>> Line::fromInlineObjects(interp::Interpreter* cs,
 	    PageCursor cursor,
-	    const linebreak::BrokenLine& broken_line,
 	    const Style* style,
 	    std::span<const std::unique_ptr<tree::InlineObject>> objs,
+	    const LineMetrics& line_metrics,
+	    bool is_first_line,
 	    bool is_last_line)
 	{
-		auto line_metrics = compute_line_metrics(objs, style);
-		auto line_height = line_metrics.ascent_height + line_metrics.descent_height;
-
-		cursor = cursor.newLine(line_metrics.ascent_height);
 		auto start_position = cursor.position();
 
+		auto line_height = line_metrics.ascent_height + line_metrics.descent_height;
 		auto total_width = line_metrics.total_word_width + line_metrics.total_space_width;
 
 		auto desired_space_width = cursor.widthAtCursor() - line_metrics.total_word_width;
@@ -220,7 +215,7 @@ namespace sap::layout
 
 		auto vert_offset = line_metrics.default_line_spacing - line_metrics.ascent_height;
 		return {
-			cursor.newLine(vert_offset),
+			cursor.newLine(vert_offset).carriageReturn(),
 			std::unique_ptr<Line>(new Line(start_position, Size2d(total_width, line_height), style, std::move(layout_objects))),
 		};
 	}
@@ -230,16 +225,8 @@ namespace sap::layout
 	    const Style* style,
 	    std::span<tree::BlockObject*> objs)
 	{
-		cursor = cursor.newLine(0);
-		auto start_position = cursor.position();
-
-		auto tallest_obj = std::max_element(objs.begin(), objs.end(), [](auto& a, auto& b) {
-			return a->size().y() < b->size().y();
-		});
-
-		auto line_height = (*tallest_obj)->size().y();
-		auto total_width = std::accumulate(objs.begin(), objs.end(), Length(0), [](Length a, const auto& b) {
-			return a + b->size().x();
+		auto total_width = std::accumulate(objs.begin(), objs.end(), Length(0), [&cursor](Length a, const auto& b) {
+			return a + b->size(cursor).x();
 		});
 
 		std::vector<std::unique_ptr<LayoutObject>> layout_objects {};
@@ -254,7 +241,7 @@ namespace sap::layout
 			cursor = cursor.moveRight(left_offset);
 		}
 
-
+		Length total_height = 0;
 		for(size_t i = 0; i < objs.size(); i++)
 		{
 			auto layout_objs = objs[i]->createLayoutObject(cs, cursor, style);
@@ -264,7 +251,10 @@ namespace sap::layout
 				continue;
 
 			for(auto& obj : layout_objs.objects)
+			{
+				total_height = std::max(total_height, obj->layoutSize().y());
 				layout_objects.push_back(std::move(obj));
+			}
 
 			cursor = std::move(new_cursor);
 		}
@@ -274,8 +264,8 @@ namespace sap::layout
 
 		return {
 			cursor,
-			std::unique_ptr<Line>(new Line(start_position, //
-			    Size2d(total_width, line_height),          //
+			std::unique_ptr<Line>(new Line(layout_objects.front()->layoutPosition(), //
+			    Size2d(total_width, total_height),                                   //
 			    style, std::move(layout_objects))),
 		};
 	}

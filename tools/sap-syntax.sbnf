@@ -14,7 +14,7 @@ line-comment: '(#+).*\n?'{
 
 block-comment {comment.block} :
     '(#/)'{punctuation.definition.comment}
-     (block-comment)?
+     (block-comment | '(?!/#).')*
     ~'(/#)'{punctuation.definition.comment}
     ;
 

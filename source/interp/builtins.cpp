@@ -102,6 +102,9 @@ namespace sap::interp
 		define_builtin("make_text", makeParamList(Param { .name = "1", .type = PType::variadicArray(t_str) }), t_tio,
 		    &builtin::make_text);
 
+		define_builtin("make_line", makeParamList(Param { .name = "1", .type = PType::variadicArray(t_tio) }), t_tbo,
+		    &builtin::make_line);
+
 		define_builtin("make_paragraph", makeParamList(Param { .name = "1", .type = PType::variadicArray(t_tio) }), t_tbo,
 		    &builtin::make_paragraph);
 
@@ -144,7 +147,7 @@ namespace sap::interp
 		define_builtin("output_at_current", makeParamList(Param { .name = "obj", .type = t_tio }), t_void,
 		    &builtin::output_at_current_tio);
 
-		define_builtin("output_at_current", makeParamList(Param { .name = "obj", .type = t_tbo }), t_void,
+		define_builtin("output_at_current", makeParamList(Param { .name = "obj", .type = t_tbo }), t_bposition,
 		    &builtin::output_at_current_tbo);
 
 		define_builtin("output_at_position",

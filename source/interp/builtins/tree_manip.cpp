@@ -110,9 +110,7 @@ namespace sap::interp::builtin
 	ErrorOr<EvalResult> current_style(Evaluator* ev, std::vector<Value>& args)
 	{
 		assert(args.size() == 0);
-		auto style = TRY(ev->currentStyle());
-
-		return EvalResult::ofValue(TRY(BS_Style::make(ev, style)));
+		return EvalResult::ofValue(TRY(BS_Style::make(ev, ev->currentStyle())));
 	}
 
 	ErrorOr<EvalResult> push_style(Evaluator* ev, std::vector<Value>& args)
@@ -126,9 +124,7 @@ namespace sap::interp::builtin
 	ErrorOr<EvalResult> pop_style(Evaluator* ev, std::vector<Value>& args)
 	{
 		assert(args.size() == 0);
-		auto ret = TRY(ev->popStyle());
-
-		return EvalResult::ofValue(TRY(BS_Style::make(ev, ret)));
+		return EvalResult::ofValue(TRY(BS_Style::make(ev, ev->popStyle())));
 	}
 
 
@@ -146,7 +142,7 @@ namespace sap::interp::builtin
 		auto img_path = args[0].getUtf8String();
 		zpr::println("loading image '{}'", img_path);
 
-		auto style = TRY(ev->currentStyle());
+		auto style = ev->currentStyle();
 
 		auto img_width = args[1].getLength().resolve(style->font(), style->font_size(), style->root_font_size());
 
@@ -180,6 +176,7 @@ namespace sap::interp::builtin
 	}
 
 
+
 	ErrorOr<EvalResult> make_paragraph(Evaluator* ev, std::vector<Value>& args)
 	{
 		assert(args.size() == 1);
@@ -192,6 +189,22 @@ namespace sap::interp::builtin
 
 		return EvalResult::ofValue(Value::treeBlockObject(std::move(para)));
 	}
+
+	ErrorOr<EvalResult> make_line(Evaluator* ev, std::vector<Value>& args)
+	{
+		assert(args.size() == 1);
+
+		auto para = std::make_unique<tree::Paragraph>();
+
+		auto objs = std::move(args[0]).takeArray();
+		for(size_t i = 0; i < objs.size(); i++)
+			para->addObjects(std::move(objs[i]).takeTreeInlineObj());
+
+		para->setSingleLineMode(true);
+		return EvalResult::ofValue(Value::treeBlockObject(std::move(para)));
+	}
+
+
 
 
 	ErrorOr<EvalResult> current_layout_position(Evaluator* ev, std::vector<Value>& args)

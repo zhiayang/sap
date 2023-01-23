@@ -66,11 +66,14 @@ namespace sap
 #undef DEFINE_SETTER
 
 		/*
-		    basically, make a style that uses the fields from "main" if it exists (or any of its parents)
-		    or from the backup style (or any of its parents). if both input styles are null, then the
-		    default style is used.
+		    with the current style as the reference, change all of our fields to those that `main` has.
 		*/
 		const Style* extendWith(const Style* main) const;
+
+		/*
+		    use `fallback` to fill in any fields that the current style does not have.
+		*/
+		const Style* useDefaultsFrom(const Style* fallback) const;
 
 		constexpr bool operator==(const Style& other) const = default;
 

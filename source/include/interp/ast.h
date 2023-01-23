@@ -235,7 +235,7 @@ namespace sap::interp
 		virtual ErrorOr<TCResult> typecheck_impl(Typechecker* ts, const Type* infer = nullptr) const override;
 
 		std::unique_ptr<Expr> lhs;
-		std::unique_ptr<Expr> rhs;
+		mutable std::unique_ptr<Expr> rhs;
 
 		enum Op
 		{

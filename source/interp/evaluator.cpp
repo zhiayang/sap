@@ -147,12 +147,12 @@ namespace sap::interp
 	}
 
 
-	ErrorOr<const Style*> Evaluator::currentStyle() const
+	const Style* Evaluator::currentStyle() const
 	{
 		if(m_style_stack.empty())
-			return ErrMsg(this, "no style set!");
+			return Style::empty();
 
-		return Ok(m_style_stack.back());
+		return m_style_stack.back();
 	}
 
 	void Evaluator::pushStyle(const Style* style)
@@ -163,14 +163,14 @@ namespace sap::interp
 		m_style_stack.push_back(style);
 	}
 
-	ErrorOr<const Style*> Evaluator::popStyle()
+	const Style* Evaluator::popStyle()
 	{
 		if(m_style_stack.empty())
-			return ErrMsg(this, "no style set!");
+			return Style::empty();
 
 		auto ret = m_style_stack.back();
 		m_style_stack.pop_back();
-		return Ok(ret);
+		return ret;
 	}
 
 	const BlockContext& Evaluator::getBlockContext() const
@@ -186,6 +186,7 @@ namespace sap::interp
 			.parent_pos = cursor.position(),
 			.obj = std::move(obj),
 			.output_context = std::move(output_ctx),
+			.cursor_ref = &cursor,
 		};
 
 		if(not m_block_context_stack.empty())

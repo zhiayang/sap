@@ -70,26 +70,24 @@ namespace sap::tree
 		}
 	};
 
-	struct DocumentObject
-	{
-		virtual ~DocumentObject() = 0;
-
-		virtual LayoutResult createLayoutObject(interp::Interpreter* cs, layout::PageCursor cursor, const Style* parent_style)
-		    const = 0;
-	};
-
 	struct InlineObject : Stylable
 	{
 		virtual ~InlineObject() = 0;
-		Size2d size() const { return m_size; }
+		virtual Size2d size() const { return m_size; }
 
 	protected:
 		Size2d m_size { 0, 0 };
 	};
 
-	struct BlockObject : Stylable, DocumentObject
+	struct BlockObject : Stylable
 	{
-		Size2d size() const { return m_size; }
+		virtual ~BlockObject() = 0;
+
+		virtual LayoutResult createLayoutObject(interp::Interpreter* cs, layout::PageCursor cursor, const Style* parent_style)
+		    const = 0;
+
+		Size2d raw_size() const { return m_size; }
+		virtual Size2d size(const layout::PageCursor&) const { return m_size; }
 
 	protected:
 		Size2d m_size { 0, 0 };

@@ -1,5 +1,12 @@
 # std.sap
 
+\script builtin::{
+	fn to_string(pos: &Position) -> string
+	{
+		return f"\{xy: ({pos!.x}, {pos!.y}), page: {pos!.page}\}";
+	}
+}
+
 \script std::{
 
 fn style(s: builtin::Style, obj: Block) -> Block { return builtin::apply_style(s, *obj); }
@@ -16,23 +23,25 @@ fn centre(b: Block) -> Block
 
 var g_section_counter: int = 0;
 
-fn section(name: string) -> Block
+fn section(name: string) -> void
 {
-	let inline = builtin::make_text([f"{1 + g_section_counter}", name]...);
+	let name_tbo = std::style(builtin::Style {
+		.font_size = 2em,
+	}, builtin::make_line(builtin::make_text(name)));
+
+	let counter_tbo = std::style(builtin::Style {
+		.alignment = builtin::Alignment::Left,
+	}, builtin::make_line(builtin::make_text(f"{1 + g_section_counter}")));
 	g_section_counter += 1;
 
-	return std::style(builtin::Style {
-		.font_size = 2em,
-	}, builtin::make_paragraph(*inline));
+
+	var pos = builtin::output_at_current(*name_tbo);
+	pos.x -= 2em;
+
+	builtin::output_at_position(pos, *counter_tbo);
 }
 }
 
-\script builtin::{
-	fn to_string(pos: &Position) -> string
-	{
-		return f"\{xy: ({pos!.x}, {pos!.y}), page: {pos!.page}\}";
-	}
-}
 
 #/
 

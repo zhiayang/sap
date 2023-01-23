@@ -40,7 +40,7 @@ namespace sap::interp::builtin
 
 	ErrorOr<layout::RelativePos> builtin::BS_Position::unmake(Evaluator* ev, const Value& value)
 	{
-		auto sty = TRY(ev->currentStyle());
+		auto sty = ev->currentStyle();
 
 		auto x = get_struct_field<DynLength>(value, "x", &Value::getLength)
 		             .resolve(sty->font(), sty->font_size(), sty->root_font_size());

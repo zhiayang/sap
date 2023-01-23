@@ -11,50 +11,54 @@
 #include "layout/line.h"
 #include "layout/paragraph.h"
 
+#include "pdf/font.h"
+
 namespace sap::tree
 {
 	auto VertBox::createLayoutObject(interp::Interpreter* cs, layout::PageCursor cursor, const Style* parent_style) const
 	    -> LayoutResult
 	{
-		auto start_cursor = cursor;
-		auto this_style = parent_style->extendWith(m_style);
+		bool is_first = true;
 
+		auto start_cursor = cursor;
 		std::vector<std::unique_ptr<layout::Line>> lines {};
 
-		auto layout_an_object_please = [&](BlockObject* obj) -> std::pair<bool, const Style*> {
-			auto cur_style = cs->evaluator().currentStyle().unwrap()->extendWith(this_style);
+		auto layout_an_object_please =
+		    [&](BlockObject* obj, std::optional<layout::PageCursor> req_cursor) -> layout::LayoutObject* {
+			auto cur_style = m_style->useDefaultsFrom(cs->evaluator().currentStyle())->useDefaultsFrom(parent_style);
+			bool should_update_cursor = not req_cursor.has_value();
+
+			auto at_cursor = req_cursor.value_or(cursor);
+			if(not is_first && should_update_cursor)
+				at_cursor = cursor.newLine(cur_style->paragraph_spacing()).carriageReturn();
+
+			is_first = false;
 
 			std::array<BlockObject*, 1> aoeu { obj };
-			auto [new_cursor, maybe_line] = layout::Line::fromBlockObjects(cs, cursor, cur_style, aoeu);
+			auto [new_cursor, maybe_line] = layout::Line::fromBlockObjects(cs, at_cursor, cur_style, aoeu);
 
 			if(not maybe_line.has_value())
-				return { false, cur_style };
+				return nullptr;
 
-			lines.push_back(std::move(*maybe_line));
-			cursor = std::move(new_cursor);
+			auto line_ptr = lines.emplace_back(std::move(*maybe_line)).get();
 
-			return { true, cur_style };
+			if(should_update_cursor)
+				cursor = std::move(new_cursor);
+
+			return line_ptr;
 		};
 
 		auto _ = cs->evaluator().pushBlockContext(cursor, this,
-		    { .add_block_object = [&layout_an_object_please, cs](auto obj) -> ErrorOr<void> {
+		    { .add_block_object = [&](auto obj, auto at_cursor) -> ErrorOr<layout::LayoutObject*> {
 			    auto ptr = &cs->leakBlockObject(std::move(obj));
 
-			    layout_an_object_please(ptr);
-			    return Ok();
+			    auto layout_obj_ptr = layout_an_object_please(ptr, std::move(at_cursor));
+			    return Ok(layout_obj_ptr);
 		    } });
 
 
 		for(size_t i = 0; i < m_objects.size(); i++)
-		{
-			auto& obj = m_objects[i];
-
-			auto [not_empty, style] = layout_an_object_please(obj.get());
-
-			if(not_empty && i + 1 < m_objects.size())
-				cursor = cursor.newLine(style->paragraph_spacing());
-		}
-
+			layout_an_object_please(m_objects[i].get(), std::nullopt);
 
 		if(lines.empty())
 			return LayoutResult::make(cursor);

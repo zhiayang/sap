@@ -35,11 +35,15 @@ namespace sap::tree
 	auto Image::createLayoutObject(interp::Interpreter* cs, layout::PageCursor cursor, const Style* parent_style) const
 	    -> LayoutResult
 	{
-		auto img = std::unique_ptr<layout::Image>(new layout::Image(cursor.position(), this->size(), this->image()));
+		auto sz = this->size(cursor);
+
+		cursor = cursor.ensureVerticalSpace(sz.y());
+
+		auto img = std::unique_ptr<layout::Image>(new layout::Image(cursor.position(), sz, this->image()));
 		img->setStyle(parent_style);
 
-		cursor = cursor.newLine(this->size().y());
-		cursor = cursor.moveRight(this->size().x());
+		cursor = cursor.newLine(sz.y());
+		cursor = cursor.moveRight(sz.x());
 
 		return LayoutResult::make(cursor, std::move(img));
 	}

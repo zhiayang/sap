@@ -23,22 +23,6 @@ namespace sap::interp::builtin
 		auto file = ev->interpreter()->loadFile(file_path);
 		auto doc = frontend::parse(ev->keepStringAlive(file_path), file.chars());
 
-		std::vector<std::unique_ptr<tree::BlockObject>> objs {};
-		for(auto& obj : doc.objects())
-		{
-			if(auto blk = dynamic_cast<tree::BlockObject*>(obj.get()); blk != nullptr)
-			{
-				objs.push_back(util::static_pointer_cast<tree::BlockObject>(std::move(obj)));
-			}
-			else
-			{
-				return ErrMsg(ev, "unsupported object at top-level of included file");
-			}
-		}
-
-		auto blk_container = std::make_unique<tree::VertBox>();
-		blk_container->contents().swap(objs);
-
-		return EvalResult::ofValue(Value::treeBlockObject(std::move(blk_container)));
+		return EvalResult::ofValue(Value::treeBlockObject(std::move(doc).takeContainer()));
 	}
 }

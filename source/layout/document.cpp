@@ -13,6 +13,7 @@
 #include "sap/font_family.h" // for FontSet, FontStyle, FontStyle::Regular
 
 #include "tree/document.h"
+#include "tree/container.h"
 
 #include "interp/interp.h"
 #include "interp/basedefs.h" // for DocumentObject
@@ -76,39 +77,28 @@ namespace sap::tree
 	void Document::layout(interp::Interpreter* cs, layout::Document* layout_doc)
 	{
 		auto cursor = layout_doc->pageLayout().newCursor();
+		auto objs = m_container->createLayoutObject(cs, cursor, layout_doc->style());
 
-		auto layout_an_object_please = [&](tree::DocumentObject* obj) -> std::pair<bool, const Style*> {
-			auto cur_style = layout_doc->style()->extendWith(cs->evaluator().currentStyle().unwrap());
+		for(auto& obj : objs.objects)
+			layout_doc->pageLayout().addObject(std::move(obj));
+	}
 
-			auto [new_cursor, layout_objs] = obj->createLayoutObject(cs, cursor, cur_style);
-			cursor = std::move(new_cursor);
 
-			if(layout_objs.empty())
-				return { false, cur_style };
+	void Document::addObject(std::unique_ptr<BlockObject> obj)
+	{
+		m_container->contents().push_back(std::move(obj));
+	}
 
-			for(auto& layout_obj : layout_objs)
-				layout_doc->pageLayout().addObject(std::move(layout_obj));
+	std::unique_ptr<tree::VertBox> Document::takeContainer() &&
+	{
+		return std::move(m_container);
+	}
 
-			return { true, cur_style };
-		};
+	Document::Document() : m_container(std::make_unique<tree::VertBox>())
+	{
+	}
 
-		auto _ = cs->evaluator().pushBlockContext(cursor, std::nullopt, { .add_block_object = [&](auto obj) -> ErrorOr<void> {
-			auto ptr = &cs->leakBlockObject(std::move(obj));
-			layout_an_object_please(ptr);
-
-			return Ok();
-		} });
-
-		for(size_t i = 0; i < m_objects.size(); i++)
-		{
-			auto& obj = m_objects[i];
-
-			auto [not_empty, cur_style] = layout_an_object_please(obj.get());
-
-			// only add spacing after objects that actually have content.
-			// otherwise, script blocks that don't return values will introduce phantom spaces
-			if(not_empty && i + 1 < m_objects.size())
-				cursor = cursor.newLine(cur_style->paragraph_spacing());
-		}
+	BlockObject::~BlockObject()
+	{
 	}
 }

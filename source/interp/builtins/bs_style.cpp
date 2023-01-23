@@ -71,8 +71,7 @@ namespace sap::interp::builtin
 
 	ErrorOr<const Style*> builtin::BS_Style::unmake(Evaluator* ev, const Value& value)
 	{
-		auto cur_style = ev->currentStyle().unwrap();
-
+		auto cur_style = ev->currentStyle();
 		auto style = util::make<Style>();
 
 		auto resolve_length_field = [&cur_style](const Value& str, zst::str_view field_name) -> std::optional<Length> {
