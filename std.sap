@@ -34,6 +34,9 @@ fn section(name: string) -> void
 	}, builtin::make_line(builtin::make_text(f"{1 + g_section_counter}")));
 	g_section_counter += 1;
 
+	var tmp = builtin::current_layout_position();
+	tmp.y += 2em;
+	builtin::set_layout_cursor(*tmp);
 
 	var pos = builtin::output_at_current(*name_tbo);
 	pos.x -= 2em;

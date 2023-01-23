@@ -207,6 +207,22 @@ namespace sap::interp::builtin
 
 
 
+	ErrorOr<EvalResult> set_layout_cursor(Evaluator* ev, std::vector<Value>& args)
+	{
+		assert(args.size() == 1);
+
+		auto& blk_context = ev->getBlockContext();
+		auto fn = blk_context.output_context.set_layout_cursor;
+		if(not fn.has_value())
+			return ErrMsg(ev, "cannot set layout cursor in this context");
+
+		auto user_pos = TRY(BS_Position::unmake(ev, args[0]));
+		auto cursor = blk_context.cursor.moveToPosition(user_pos);
+		TRY((*fn)(cursor));
+
+		return EvalResult::ofVoid();
+	}
+
 	ErrorOr<EvalResult> current_layout_position(Evaluator* ev, std::vector<Value>& args)
 	{
 		assert(args.size() == 0);

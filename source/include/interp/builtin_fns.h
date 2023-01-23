@@ -48,6 +48,7 @@ namespace sap::interp
 		ErrorOr<EvalResult> make_paragraph(Evaluator* ev, std::vector<Value>& args);
 
 		ErrorOr<EvalResult> current_layout_position(Evaluator* ev, std::vector<Value>& args);
+		ErrorOr<EvalResult> set_layout_cursor(Evaluator* ev, std::vector<Value>& args);
 
 		ErrorOr<EvalResult> output_at_current_tio(Evaluator* ev, std::vector<Value>& args);
 		ErrorOr<EvalResult> output_at_current_tbo(Evaluator* ev, std::vector<Value>& args);

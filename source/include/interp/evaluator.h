@@ -45,8 +45,11 @@ namespace sap::interp
 		using TboPtr = std::unique_ptr<tree::BlockObject>;
 		using LayoutBlockObjectFn = std::function<ErrorOr<layout::LayoutObject*>(TboPtr, std::optional<layout::PageCursor>)>;
 
+		using SetLayoutCursorFn = std::function<ErrorOr<void>(layout::PageCursor)>;
+
 		std::optional<LayoutBlockObjectFn> add_block_object = std::nullopt;
 		std::optional<LayoutInlineObjectFn> add_inline_object = std::nullopt;
+		std::optional<SetLayoutCursorFn> set_layout_cursor = std::nullopt;
 	};
 
 	// for tracking layout hierarchy in the evaluator

@@ -178,8 +178,9 @@ namespace sap::interp
 		return m_block_context_stack.back();
 	}
 
-	util::Defer<> Evaluator::
-	    pushBlockContext(const layout::PageCursor& cursor, std::optional<const tree::BlockObject*> obj, OutputContext output_ctx)
+	util::Defer<> Evaluator::pushBlockContext(const layout::PageCursor& cursor, //
+	    std::optional<const tree::BlockObject*> obj,
+	    OutputContext output_ctx)
 	{
 		auto ctx = BlockContext {
 			.cursor = cursor,

@@ -143,6 +143,8 @@ namespace sap::interp
 		define_builtin("current_style", makeParamList(), t_bstyle, &builtin::current_style);
 
 		define_builtin("current_layout_position", makeParamList(), t_bposition, &builtin::current_layout_position);
+		define_builtin("set_layout_cursor", makeParamList(Param { .name = "_", .type = t_bposition }), t_void,
+		    &builtin::set_layout_cursor);
 
 		define_builtin("output_at_current", makeParamList(Param { .name = "obj", .type = t_tio }), t_void,
 		    &builtin::output_at_current_tio);

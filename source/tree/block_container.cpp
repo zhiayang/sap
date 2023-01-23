@@ -49,12 +49,18 @@ namespace sap::tree
 		};
 
 		auto _ = cs->evaluator().pushBlockContext(cursor, this,
-		    { .add_block_object = [&](auto obj, auto at_cursor) -> ErrorOr<layout::LayoutObject*> {
-			    auto ptr = m_created_block_objects.emplace_back(std::move(obj)).get();
+		    {
+		        .add_block_object = [&](auto obj, auto at_cursor) -> ErrorOr<layout::LayoutObject*> {
+			        auto ptr = m_created_block_objects.emplace_back(std::move(obj)).get();
 
-			    auto layout_obj_ptr = layout_an_object_please(ptr, std::move(at_cursor));
-			    return Ok(layout_obj_ptr);
-		    } });
+			        auto layout_obj_ptr = layout_an_object_please(ptr, std::move(at_cursor));
+			        return Ok(layout_obj_ptr);
+		        },
+		        .set_layout_cursor = [&](auto new_cursor) -> ErrorOr<void> {
+			        cursor = std::move(new_cursor);
+			        return Ok();
+		        },
+		    });
 
 
 		for(size_t i = 0; i < m_objects.size(); i++)
