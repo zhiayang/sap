@@ -25,6 +25,12 @@ namespace sap::interp
 		defineBuiltins(this, m_typechecker->top()->lookupOrDeclareNamespace("builtin"));
 	}
 
+	zst::byte_span Interpreter::loadFile(zst::str_view filename)
+	{
+		auto file = util::readEntireFile(filename.str());
+		return m_file_contents.emplace_back(std::move(file)).span();
+	}
+
 	ErrorOr<EvalResult> Interpreter::run(const Stmt* stmt)
 	{
 		TRY(stmt->typecheck(m_typechecker.get()));

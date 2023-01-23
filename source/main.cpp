@@ -37,15 +37,14 @@ namespace sap
 
 void sap::compile(zst::str_view filename)
 {
-	auto entire_file = util::readEntireFile(filename.str());
+	auto interp = interp::Interpreter();
+	auto file = interp.loadFile(filename);
 
-	auto interpreter = interp::Interpreter();
+	auto document = frontend::parse(filename, file.chars());
+	auto layout_doc = layout::Document(&interp);
 
-	auto document = frontend::parse(filename, zst::str_view((char*) entire_file.get(), entire_file.size()));
-	auto layout_doc = layout::Document(&interpreter);
-
-	interpreter.evaluator().pushStyle(layout_doc.style());
-	document.layout(&interpreter, &layout_doc);
+	interp.evaluator().pushStyle(layout_doc.style());
+	document.layout(&interp, &layout_doc);
 
 	auto out_path = std::filesystem::path(filename.str()).replace_extension(".pdf");
 	auto writer = pdf::Writer(out_path.string());

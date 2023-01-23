@@ -20,27 +20,20 @@ namespace sap::interp::builtin
 
 	std::vector<EnumDefn::EnumeratorDefn> BE_Alignment::enumerators()
 	{
-		auto builtin_loc = Location {
-			.line = 0,
-			.column = 0,
-			.length = 1,
-			.file = "builtin",
-		};
-
-		auto make_int = [&builtin_loc](int value) {
-			auto ret = std::make_unique<NumberLit>(builtin_loc);
+		auto make_int = [](int value) {
+			auto ret = std::make_unique<NumberLit>(Location::builtin());
 			ret->is_floating = false;
 			ret->int_value = value;
 			return ret;
 		};
 
 		using ED = EnumDefn::EnumeratorDefn;
-		return util::vectorOf(                                              //
-		    ED(builtin_loc, "Left", make_int((int) Alignment::Left)),       //
-		    ED(builtin_loc, "Right", make_int((int) Alignment::Right)),     //
-		    ED(builtin_loc, "Centred", make_int((int) Alignment::Centre)),  //
-		    ED(builtin_loc, "Centered", make_int((int) Alignment::Centre)), //
-		    ED(builtin_loc, "Justified", make_int((int) Alignment::Justified)));
+		return util::vectorOf(                                                      //
+		    ED(Location::builtin(), "Left", make_int((int) Alignment::Left)),       //
+		    ED(Location::builtin(), "Right", make_int((int) Alignment::Right)),     //
+		    ED(Location::builtin(), "Centred", make_int((int) Alignment::Centre)),  //
+		    ED(Location::builtin(), "Centered", make_int((int) Alignment::Centre)), //
+		    ED(Location::builtin(), "Justified", make_int((int) Alignment::Justified)));
 	}
 
 	Value builtin::BE_Alignment::make(Alignment alignment)

@@ -16,14 +16,15 @@ namespace sap::frontend
 	{
 		loc.column += n;
 		tok.loc.length = util::checked_cast<uint32_t>(n);
-
+		tok.loc.byte_offset = checked_cast<size_t>(tok.text.data() - tok.loc.file_contents.data());
 		stream.remove_prefix(n);
 		return tok;
 	}
 
 	static Token advance_and_return2(zst::str_view& stream, const Location& loc, Token tok, size_t n)
 	{
-		tok.loc.length = util::checked_cast<uint32_t>(n);
+		tok.loc.length = checked_cast<uint32_t>(n);
+		tok.loc.byte_offset = checked_cast<size_t>(tok.text.data() - tok.loc.file_contents.data());
 		stream.remove_prefix(n);
 		return tok;
 	}
@@ -39,7 +40,7 @@ namespace sap::frontend
 				auto i = stream.find_first_of("\r\n/#");
 				if(i == (size_t) -1)
 				{
-					sap::error(start_locs.back(), "unterminated block comment (reached end of file) '{}', {}, {}",
+					parse_error(start_locs.back(), "unterminated block comment (reached end of file) '{}', {}, {}",
 					    stream.take(10), loc.column, loc.line);
 				}
 
@@ -131,7 +132,7 @@ namespace sap::frontend
 			return Token {
 				.loc = loc,
 				.type = TT::EndOfFile,
-				.text = "",
+				.text = stream.take_last(1),
 			};
 		}
 		else if(stream.starts_with("#"))
@@ -141,7 +142,7 @@ namespace sap::frontend
 		}
 		else if(stream.starts_with("/#"))
 		{
-			sap::error(loc, "unexpected end of block comment");
+			parse_error(loc, "unexpected end of block comment");
 		}
 		else if(stream.starts_with("\n\n") || stream.starts_with("\r\n\r\n"))
 		{
@@ -206,7 +207,7 @@ namespace sap::frontend
 				if(stream[n] == '\\')
 				{
 					if(n + 1 >= stream.size())
-						sap::error(loc, "unterminated '\\' escape sequence");
+						parse_error(loc, "unterminated '\\' escape sequence");
 					else if(stream[n + 1] == '\\')
 						n += 2;
 					else if(stream[n + 1] == '#')
@@ -258,13 +259,13 @@ namespace sap::frontend
 		while(true)
 		{
 			if(n == stream.size())
-				sap::error(loc, "unterminated string literal");
+				parse_error(loc, "unterminated string literal");
 
 			// while we don't unescape these escape sequences, we still need to accept them.
 			if(stream[n] == '\\')
 			{
 				if(n + 1 == stream.size())
-					sap::error(loc, "unterminated escape sequence");
+					parse_error(loc, "unterminated escape sequence");
 
 				auto is_hex = [](char c) -> bool {
 					return ('0' <= c && c <= '9') || ('a' <= c && c <= 'f') || ('A' <= c && c <= 'F');
@@ -287,31 +288,31 @@ namespace sap::frontend
 				else if(stream[n + 1] == 'x')
 				{
 					if(n + 3 <= stream.size())
-						sap::error(loc, "insufficient chars for \\x escape (need 2)");
+						parse_error(loc, "insufficient chars for \\x escape (need 2)");
 
 					if(not std::all_of(&stream.data()[n + 2], &stream.data()[n + 4], is_hex))
-						sap::error(loc, "invalid non-hex character in \\x escape");
+						parse_error(loc, "invalid non-hex character in \\x escape");
 				}
 				else if(stream[n + 1] == 'u')
 				{
 					if(n + 5 <= stream.size())
-						sap::error(loc, "insufficient chars for \\u escape (need 4)");
+						parse_error(loc, "insufficient chars for \\u escape (need 4)");
 
 					if(not std::all_of(&stream.data()[n + 2], &stream.data()[n + 6], is_hex))
-						sap::error(loc, "invalid non-hex character in \\u escape");
+						parse_error(loc, "invalid non-hex character in \\u escape");
 				}
 				else if(stream[n + 1] == 'U')
 				{
 					if(n + 9 <= stream.size())
-						sap::error(loc, "insufficient chars for \\U escape (need 8)");
+						parse_error(loc, "insufficient chars for \\U escape (need 8)");
 
 					if(not std::all_of(&stream.data()[n + 2], &stream.data()[n + 10], is_hex))
-						sap::error(loc, "invalid non-hex character in \\U escape");
+						parse_error(loc, "invalid non-hex character in \\U escape");
 				}
 			}
 			else if(stream[n] == '\r' || stream[n] == '\n')
 			{
-				sap::error(loc, "unescaped newline in string literal");
+				parse_error(loc, "unescaped newline in string literal");
 			}
 			else if(stream[n] == '"')
 			{
@@ -363,7 +364,7 @@ namespace sap::frontend
 
 		if(stream.empty())
 		{
-			return Token { .loc = loc, .type = TT::EndOfFile, .text = "" };
+			return Token { .loc = loc, .type = TT::EndOfFile, .text = stream.take_last(1) };
 		}
 
 		else if(stream.starts_with("#"))
@@ -373,7 +374,7 @@ namespace sap::frontend
 		}
 		else if(stream.starts_with("/#"))
 		{
-			sap::error(loc, "unexpected end of block comment");
+			parse_error(loc, "unexpected end of block comment");
 		}
 
 		else if(stream.starts_with("::"))
@@ -534,7 +535,7 @@ namespace sap::frontend
 				case '!': tt = TT::Exclamation; break;
 				case '\\': tt = TT::Backslash; break;
 
-				default: sap::error(loc, "unknown token '{}'", stream[0]); break;
+				default: parse_error(loc, "unknown token '{}'", stream[0]); break;
 			}
 
 			return advance_and_return(stream, loc, Token { .loc = loc, .type = tt, .text = stream.take(1) }, 1);
@@ -561,7 +562,13 @@ namespace sap::frontend
 	Lexer::Lexer(zst::str_view filename, zst::str_view contents) : m_stream(contents)
 	{
 		m_mode_stack.push_back(Mode::Text);
-		m_location = Location { .line = 0, .column = 0, .file = filename };
+		m_location = Location {
+			.line = 0,
+			.column = 0,
+			.byte_offset = 0,
+			.filename = filename,
+			.file_contents = contents,
+		};
 	}
 
 	Token Lexer::peekWithMode(Lexer::Mode mode) const
@@ -590,11 +597,24 @@ namespace sap::frontend
 
 	Token Lexer::next()
 	{
+		m_previous_token = this->save();
 		switch(this->mode())
 		{
 			using enum Mode;
 			case Text: return consume_text_token(m_stream, m_location);
 			case Script: return consume_script_token(m_stream, m_location);
+		}
+	}
+
+	Token Lexer::previous() const
+	{
+		auto tmp1 = m_previous_token.stream;
+		auto tmp2 = m_previous_token.location;
+		switch(this->mode())
+		{
+			using enum Mode;
+			case Text: return consume_text_token(tmp1, tmp2);
+			case Script: return consume_script_token(tmp1, tmp2);
 		}
 	}
 
@@ -626,6 +646,7 @@ namespace sap::frontend
 		if(m_stream.empty())
 			return;
 
+		m_previous_token = this->save();
 		while(not m_stream.empty())
 		{
 			if(util::is_one_of(m_stream[0], ' ', '\t', '\r', '\n'))
@@ -666,6 +687,11 @@ namespace sap::frontend
 		if(m_mode_stack.empty())
 			sap::internal_error("lexer entered invalid mode");
 		return m_mode_stack.back();
+	}
+
+	Location Lexer::location() const
+	{
+		return this->peek().loc;
 	}
 
 	void Lexer::pushMode(Lexer::Mode mode)

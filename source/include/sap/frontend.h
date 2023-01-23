@@ -123,6 +123,7 @@ namespace sap::frontend
 
 		Lexer(zst::str_view filename, zst::str_view contents);
 
+		Token previous() const;
 		Token peek() const;
 		Token next();
 		bool eof() const;
@@ -145,13 +146,15 @@ namespace sap::frontend
 
 		zst::str_view stream() const { return m_stream; }
 
-		Location location() const { return m_location; }
+		Location location() const;
 		void setLocation(Location loc) { m_location = std::move(loc); }
 
 	private:
 		std::vector<Mode> m_mode_stack {};
 		zst::str_view m_stream {};
 		Location m_location {};
+
+		SaveState m_previous_token {};
 	};
 
 	struct LexerModer

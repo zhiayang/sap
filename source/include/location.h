@@ -15,7 +15,9 @@ namespace sap
 		uint32_t column;
 		uint32_t length;
 		size_t byte_offset;
-		zst::str_view file;
+
+		zst::str_view filename;
+		zst::str_view file_contents;
 
 		static inline Location builtin()
 		{
@@ -23,31 +25,17 @@ namespace sap
 				.line = 0,
 				.column = 0,
 				.length = 1,
-				.file = "builtin",
+				.filename = "builtin",
 			};
 		}
 	};
 
-	template <typename... Args>
-	[[noreturn]] void error(const Location& loc, const char* fmt, Args&&... args)
-	{
-		zpr::fprintln(stderr, "{}:{}:{}: error: {}", loc.file, loc.line + 1, loc.column + 1,
-		    zpr::fwd(fmt, static_cast<Args&&>(args)...));
-		abort();
-		// exit(1);
-	}
+	void showErrorMessage(const Location& loc, const std::string& message);
 
 	template <typename... Args>
-	[[noreturn]] void error(const std::optional<Location>& loc, const char* fmt, Args&&... args)
+	[[noreturn]] void parse_error(const Location& loc, const char* fmt, Args&&... args)
 	{
-		if(loc.has_value())
-		{
-			error(*loc, fmt, static_cast<Args&&>(args)...);
-		}
-		else
-		{
-			zpr::fprintln(stderr, "<no location>: error: {}", zpr::fwd(fmt, static_cast<Args&&>(args)...));
-			exit(1);
-		}
+		showErrorMessage(loc, zpr::sprint(fmt, static_cast<Args&&>(args)...));
+		abort();
 	}
 }

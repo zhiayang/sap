@@ -347,6 +347,22 @@ namespace zst
 					: cnt);
 			}
 
+			[[nodiscard]] inline str_view drop_until(char c) const
+			{
+				auto n = this->find(c);
+				if(n == size_t(-1))
+					return *this;
+				return this->drop(n);
+			}
+
+			[[nodiscard]] inline str_view take_until(char c) const
+			{
+				auto n = this->find(c);
+				if(n == size_t(-1))
+					return *this;
+				return this->take(n);
+			}
+
 			inline bool starts_with(str_view sv) const { return this->take(sv.size()) == sv; }
 			inline bool ends_with(str_view sv) const   { return this->take_last(sv.size()) == sv; }
 
@@ -1300,6 +1316,7 @@ constexpr inline zst::byte_span operator""_bs(const char* s, size_t n)
 	- add transfer_suffix
 	- add unique_span
 	- add _bs and _sv literals
+	- add `drop_until` and `take_until` for str_view
 
 
 	1.4.2 - 26/09/2022

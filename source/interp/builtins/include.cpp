@@ -20,8 +20,8 @@ namespace sap::interp::builtin
 		auto file_path = args[0].getUtf8String();
 		zpr::println("including file '{}'", file_path);
 
-		auto file_contents = util::readEntireFile(file_path);
-		auto doc = frontend::parse(ev->keepStringAlive(file_path), file_contents.span().chars());
+		auto file = ev->interpreter()->loadFile(file_path);
+		auto doc = frontend::parse(ev->keepStringAlive(file_path), file.chars());
 
 		std::vector<std::unique_ptr<tree::BlockObject>> objs {};
 		for(auto& obj : doc.objects())

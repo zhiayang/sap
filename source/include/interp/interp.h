@@ -28,6 +28,9 @@ namespace sap::interp
 	struct Interpreter
 	{
 		Interpreter();
+
+		zst::byte_span loadFile(zst::str_view filename);
+
 		ErrorOr<EvalResult> run(const Stmt* stmt);
 
 		Evaluator& evaluator() { return *m_evaluator; }
@@ -42,6 +45,7 @@ namespace sap::interp
 		std::unique_ptr<Typechecker> m_typechecker;
 		std::unique_ptr<Evaluator> m_evaluator;
 
+		std::vector<zst::unique_span<uint8_t[]>> m_file_contents;
 		std::vector<std::unique_ptr<tree::BlockObject>> m_leaked_tbos;
 
 		util::hashmap<int64_t, std::unique_ptr<pdf::PdfFont>> m_loaded_fonts;

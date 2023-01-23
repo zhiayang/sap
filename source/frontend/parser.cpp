@@ -32,7 +32,7 @@ namespace sap::frontend
 	static void must_expect(Lexer& lexer, T&& x)
 	{
 		if(not lexer.expect(static_cast<T&&>(x)))
-			error(lexer.location(), "?????");
+			parse_error(lexer.location(), "?????");
 	}
 
 
@@ -60,7 +60,7 @@ namespace sap::frontend
 				else if(text[1] == '#')
 					ret.push_back(U'#');
 				else
-					error(loc, "unrecognised escape sequence '\\{}'", text[1]);
+					parse_error(loc, "unrecognised escape sequence '\\{}'", text[1]);
 
 				text.remove_prefix(2);
 			}
@@ -141,7 +141,7 @@ namespace sap::frontend
 						     + convert_hex(bs[7]);
 						break;
 					default: //
-						sap::error(loc, "invalid escape sequence starting with '{}'", cp);
+						parse_error(loc, "invalid escape sequence starting with '{}'", cp);
 						break;
 				}
 			}
@@ -289,20 +289,27 @@ namespace sap::frontend
 	static std::unique_ptr<interp::Expr> parse_unary(Lexer& lexer);
 
 
-	static interp::QualifiedId parse_qualified_id(Lexer& lexer)
+	static std::pair<interp::QualifiedId, uint32_t> parse_qualified_id(Lexer& lexer)
 	{
+		uint32_t len = 0;
+
 		interp::QualifiedId qid {};
 		while(not lexer.eof())
 		{
 			if(lexer.expect(TT::ColonColon))
+			{
+				len += 2;
 				qid.top_level = true;
+			}
 
 			auto tok = lexer.next();
 			if(tok != TT::Identifier)
-				error(tok.loc, "expected identifier, got '{}'", tok.text);
+				parse_error(tok.loc, "expected identifier, got '{}'", tok.text);
 
+			len += checked_cast<uint32_t>(tok.loc.length);
 			if(lexer.expect(TT::ColonColon))
 			{
+				len += 2;
 				qid.parents.push_back(tok.text.str());
 			}
 			else
@@ -312,22 +319,22 @@ namespace sap::frontend
 			}
 		}
 
-		return qid;
+		return { std::move(qid), len };
 	}
 
 	static std::unique_ptr<interp::FunctionCall> parse_function_call(Lexer& lexer, std::unique_ptr<interp::Expr> callee)
 	{
 		if(not lexer.expect(TT::LParen))
-			error(lexer.peek().loc, "expected '(' to begin function call");
+			parse_error(lexer.peek().loc, "expected '(' to begin function call");
 
-		auto call = std::make_unique<interp::FunctionCall>(lexer.location());
+		auto call = std::make_unique<interp::FunctionCall>(callee->loc());
 		call->callee = std::move(callee);
 
 		// parse arguments.
 		for(bool first = true; not lexer.expect(TT::RParen); first = false)
 		{
 			if(not first && not lexer.expect(TT::Comma))
-				error(lexer.peek().loc, "expected ',' or ')' in call argument list, got '{}'", lexer.peek().text);
+				parse_error(lexer.peek().loc, "expected ',' or ')' in call argument list, got '{}'", lexer.peek().text);
 
 			bool is_arg_named = false;
 
@@ -386,7 +393,7 @@ namespace sap::frontend
 			return std::make_unique<interp::ArraySpreadOp>(t->loc, std::move(lhs));
 		}
 
-		error(lexer.peek().loc, "unexpected '{}' after expression", lexer.peek().text);
+		parse_error(lexer.peek().loc, "unexpected '{}' after expression", lexer.peek().text);
 	}
 
 	static std::unique_ptr<interp::FunctionCall> parse_ufcs(Lexer& lexer,
@@ -441,7 +448,7 @@ namespace sap::frontend
 				// TODO: maybe support .0, .1 syntax for tuples
 				auto field_name = lexer.match(TT::Identifier);
 				if(not field_name.has_value())
-					error(lexer.location(), "expected field name after '.'");
+					parse_error(lexer.location(), "expected field name after '.'");
 
 				auto newlhs = std::make_unique<interp::DotOp>(op_tok.loc);
 				newlhs->is_optional = (op_tok == TT::QuestionPeriod);
@@ -501,7 +508,7 @@ namespace sap::frontend
 			}
 			else
 			{
-				error(lexer.peek().loc, "unknown operator token '{}'", lexer.peek().text);
+				parse_error(lexer.peek().loc, "unknown operator token '{}'", lexer.peek().text);
 			}
 		}
 	}
@@ -509,7 +516,7 @@ namespace sap::frontend
 	static std::unique_ptr<interp::StructLit> parse_struct_literal(Lexer& lexer, interp::QualifiedId id)
 	{
 		if(not lexer.expect(TT::LBrace))
-			error(lexer.location(), "expected '{' for struct literal");
+			parse_error(lexer.location(), "expected '{' for struct literal");
 
 		auto ret = std::make_unique<interp::StructLit>(lexer.location());
 		ret->struct_name = std::move(id);
@@ -517,14 +524,14 @@ namespace sap::frontend
 		while(not lexer.expect(TT::RBrace))
 		{
 			if(not lexer.expect(TT::Period))
-				error(lexer.location(), "expected '.' to begin designated struct initialiser, found '{}'");
+				parse_error(lexer.location(), "expected '.' to begin designated struct initialiser, found '{}'");
 
 			auto field_name = lexer.match(TT::Identifier);
 			if(not field_name.has_value())
-				error(lexer.location(), "expected identifier after '.' for field name");
+				parse_error(lexer.location(), "expected identifier after '.' for field name");
 
 			if(not lexer.expect(TT::Equal))
-				error(lexer.location(), "expected '=' after field name");
+				parse_error(lexer.location(), "expected '=' after field name");
 
 			auto value = parse_expr(lexer);
 			ret->field_inits.push_back(interp::StructLit::Arg {
@@ -533,7 +540,7 @@ namespace sap::frontend
 			});
 
 			if(not lexer.expect(TT::Comma) && lexer.peek() != TT::RBrace)
-				error(lexer.location(), "expected ',' in struct initialiser list");
+				parse_error(lexer.location(), "expected ',' in struct initialiser list");
 		}
 
 		return ret;
@@ -562,7 +569,7 @@ namespace sap::frontend
 				fstring_parts.push_back(std::move(string));
 				string.clear();
 
-				auto tmp_lexer = Lexer(tok.loc.file, fstr.chars());
+				auto tmp_lexer = Lexer(tok.loc.filename, fstr.chars());
 				tmp_lexer.setLocation(tok.loc);
 				tmp_lexer.pushMode(Lexer::Mode::Script);
 
@@ -570,7 +577,7 @@ namespace sap::frontend
 
 				fstr.remove_prefix((size_t) (tmp_lexer.stream().bytes().data() - fstr.data()));
 				if(not fstr.starts_with('}'))
-					error(tmp_lexer.location(), "expected '}' to end f-string expression");
+					parse_error(tmp_lexer.location(), "expected '}' to end f-string expression");
 
 				fstr.remove_prefix(1);
 			}
@@ -607,8 +614,10 @@ namespace sap::frontend
 			if(lexer.peek().text == KW_NULL)
 				return std::make_unique<interp::NullLit>(lexer.next().loc);
 
-			auto loc = lexer.location();
-			auto qid = parse_qualified_id(lexer);
+			auto loc = lexer.peek().loc;
+			auto [qid, len] = parse_qualified_id(lexer);
+
+			loc.length = len;
 			auto ident = std::make_unique<interp::Ident>(loc);
 			ident->name = std::move(qid);
 
@@ -634,7 +643,7 @@ namespace sap::frontend
 			{
 				auto maybe_unit = DynLength::stringToUnit(unit->text);
 				if(not maybe_unit.has_value())
-					error(lexer.location(), "unknown unit '{}' following number literal", unit->text);
+					parse_error(lexer.location(), "unknown unit '{}' following number literal", unit->text);
 
 				auto ret = std::make_unique<interp::LengthExpr>(num->loc);
 				ret->length = DynLength(std::stod(num->text.str()), *maybe_unit);
@@ -680,7 +689,7 @@ namespace sap::frontend
 		{
 			auto inside = parse_expr(lexer);
 			if(not lexer.expect(TT::RParen))
-				error(lexer.location(), "expected closing ')'");
+				parse_error(lexer.location(), "expected closing ')'");
 
 			return inside;
 		}
@@ -698,7 +707,7 @@ namespace sap::frontend
 				else if(lexer.peek() == TT::RSquare)
 					break;
 				else
-					error(lexer.location(), "expected ']' or ',' in array literal, found '{}'", lexer.peek().text);
+					parse_error(lexer.location(), "expected ']' or ',' in array literal, found '{}'", lexer.peek().text);
 			}
 
 			must_expect(lexer, TT::RSquare);
@@ -706,7 +715,7 @@ namespace sap::frontend
 		}
 		else
 		{
-			error(lexer.location(), "invalid start of expression '{}'", lexer.peek().text);
+			parse_error(lexer.location(), "invalid start of expression '{}'", lexer.peek().text);
 		}
 	}
 
@@ -756,18 +765,18 @@ namespace sap::frontend
 	static PType parse_type(Lexer& lexer)
 	{
 		if(lexer.eof())
-			error(lexer.location(), "unexpected end of file");
+			parse_error(lexer.location(), "unexpected end of file");
 
 		using namespace interp;
 
 		auto fst = lexer.peek();
 		if(fst == TT::Identifier)
 		{
-			return PType::named(parse_qualified_id(lexer));
+			return PType::named(parse_qualified_id(lexer).first);
 		}
 		else if(fst == TT::ColonColon)
 		{
-			return PType::named(parse_qualified_id(lexer));
+			return PType::named(parse_qualified_id(lexer).first);
 		}
 		else if(fst == TT::Ampersand)
 		{
@@ -797,7 +806,7 @@ namespace sap::frontend
 			bool is_variadic = lexer.expect(TT::Ellipsis);
 
 			if(not lexer.expect(TT::RSquare))
-				error(lexer.location(), "expected ']' in array type");
+				parse_error(lexer.location(), "expected ']' in array type");
 
 			return PType::array(std::move(elm), is_variadic);
 		}
@@ -809,20 +818,20 @@ namespace sap::frontend
 			for(bool first = true; not lexer.expect(TT::RParen); first = false)
 			{
 				if(not first && not lexer.expect(TT::Comma))
-					error(lexer.location(), "expected ',' or ')' in type specifier");
+					parse_error(lexer.location(), "expected ',' or ')' in type specifier");
 
 				types.push_back(parse_type(lexer));
 			}
 
 			// TODO: support tuples
 			if(not lexer.expect(TT::RArrow))
-				error(lexer.location(), "TODO: tuples not implemented");
+				parse_error(lexer.location(), "TODO: tuples not implemented");
 
 			auto return_type = parse_type(lexer);
 			return PType::function(std::move(types), return_type);
 		}
 
-		error(lexer.location(), "invalid start of type specifier '{}'", lexer.peek().text);
+		parse_error(lexer.location(), "invalid start of type specifier '{}'", lexer.peek().text);
 	}
 
 	static std::unique_ptr<interp::VariableDefn> parse_var_defn(Lexer& lexer)
@@ -833,7 +842,7 @@ namespace sap::frontend
 		// expect a name
 		auto maybe_name = lexer.match(TT::Identifier);
 		if(not maybe_name.has_value())
-			error(lexer.location(), "expected identifier after '{}'", kw.text);
+			parse_error(lexer.location(), "expected identifier after '{}'", kw.text);
 
 		std::unique_ptr<interp::Expr> initialiser {};
 		std::optional<PType> explicit_type {};
@@ -852,10 +861,10 @@ namespace sap::frontend
 	{
 		auto name = lexer.match(TT::Identifier);
 		if(not name.has_value())
-			error(lexer.location(), "expected parameter name");
+			parse_error(lexer.location(), "expected parameter name");
 
 		if(not lexer.expect(TT::Colon))
-			error(lexer.location(), "expected ':' after parameter name");
+			parse_error(lexer.location(), "expected ':' after parameter name");
 
 		auto type = parse_type(lexer);
 		std::unique_ptr<interp::Expr> default_value = nullptr;
@@ -882,7 +891,7 @@ namespace sap::frontend
 		else
 		{
 			if(mandatory_braces)
-				error(lexer.location(), "expected '{' to begin a block");
+				parse_error(lexer.location(), "expected '{' to begin a block");
 
 			block->body.push_back(parse_stmt(lexer));
 		}
@@ -898,18 +907,18 @@ namespace sap::frontend
 
 		std::string name;
 		if(auto name_tok = lexer.match(TT::Identifier); not name_tok.has_value())
-			error(lexer.location(), "expected identifier after 'fn'");
+			parse_error(lexer.location(), "expected identifier after 'fn'");
 		else
 			name = name_tok->text.str();
 
 		if(not lexer.expect(TT::LParen))
-			error(lexer.location(), "expected '(' in function definition");
+			parse_error(lexer.location(), "expected '(' in function definition");
 
 		std::vector<FunctionDecl::Param> params {};
 		for(bool first = true; not lexer.expect(TT::RParen); first = false)
 		{
 			if(not first && not lexer.expect(TT::Comma))
-				error(lexer.location(), "expected ',' or ')' in function parameter list");
+				parse_error(lexer.location(), "expected ',' or ')' in function parameter list");
 
 			params.push_back(parse_param(lexer));
 		}
@@ -920,7 +929,7 @@ namespace sap::frontend
 
 		auto defn = std::make_unique<interp::FunctionDefn>(loc, name, std::move(params), return_type);
 		if(lexer.peek() != TT::LBrace)
-			error(lexer.location(), "expected '{' to begin function body");
+			parse_error(lexer.location(), "expected '{' to begin function body");
 
 		defn->body = parse_block_or_stmt(lexer);
 		return defn;
@@ -933,23 +942,23 @@ namespace sap::frontend
 
 		std::string name;
 		if(auto name_tok = lexer.match(TT::Identifier); not name_tok.has_value())
-			error(lexer.location(), "expected identifier after 'struct'");
+			parse_error(lexer.location(), "expected identifier after 'struct'");
 		else
 			name = name_tok->text.str();
 
 
 		if(not lexer.expect(TT::LBrace))
-			error(lexer.location(), "expected '{' in struct body");
+			parse_error(lexer.location(), "expected '{' in struct body");
 
 		std::vector<interp::StructDefn::Field> fields {};
 		while(not lexer.expect(TT::RBrace))
 		{
 			auto field_name = lexer.match(TT::Identifier);
 			if(not field_name.has_value())
-				error(lexer.location(), "expected field name in struct");
+				parse_error(lexer.location(), "expected field name in struct");
 
 			if(not lexer.expect(TT::Colon))
-				error(lexer.location(), "expected ':' after field name");
+				parse_error(lexer.location(), "expected ':' after field name");
 
 			auto field_type = parse_type(lexer);
 			std::unique_ptr<interp::Expr> field_initialiser {};
@@ -964,7 +973,7 @@ namespace sap::frontend
 			});
 
 			if(not lexer.match(TT::Semicolon) && lexer.peek() != TT::RBrace)
-				error(lexer.location(), "expected ';' or '}' in struct body");
+				parse_error(lexer.location(), "expected ';' or '}' in struct body");
 		}
 
 		return std::make_unique<interp::StructDefn>(loc, name, std::move(fields));
@@ -977,7 +986,7 @@ namespace sap::frontend
 
 		std::string name;
 		if(auto name_tok = lexer.match(TT::Identifier); not name_tok.has_value())
-			error(lexer.location(), "expected identifier after 'enum'");
+			parse_error(lexer.location(), "expected identifier after 'enum'");
 		else
 			name = name_tok->text.str();
 
@@ -988,14 +997,14 @@ namespace sap::frontend
 			enum_type = parse_type(lexer);
 
 		if(not lexer.expect(TT::LBrace))
-			error(lexer.location(), "expected '{' for enum body");
+			parse_error(lexer.location(), "expected '{' for enum body");
 
 		std::vector<interp::EnumDefn::EnumeratorDefn> enumerators {};
 		while(not lexer.expect(TT::RBrace))
 		{
 			auto enum_name = lexer.match(TT::Identifier);
 			if(not enum_name.has_value())
-				error(lexer.location(), "expected enumerator name");
+				parse_error(lexer.location(), "expected enumerator name");
 
 			std::unique_ptr<interp::Expr> enum_value {};
 
@@ -1005,7 +1014,7 @@ namespace sap::frontend
 			enumerators.push_back(interp::EnumDefn::EnumeratorDefn(enum_name->loc, enum_name->text.str(), std::move(enum_value)));
 
 			if(not lexer.match(TT::Semicolon))
-				error(lexer.location(), "expected ';' after enumerator");
+				parse_error(lexer.location(), "expected ';' after enumerator");
 		}
 
 		return std::make_unique<interp::EnumDefn>(std::move(loc), std::move(name), std::move(enum_type), std::move(enumerators));
@@ -1021,13 +1030,13 @@ namespace sap::frontend
 		must_expect(lexer, TT::KW_If);
 
 		if(not lexer.expect(TT::LParen))
-			error(lexer.location(), "expected '(' after 'if'");
+			parse_error(lexer.location(), "expected '(' after 'if'");
 
 		auto if_stmt = std::make_unique<interp::IfStmt>(loc);
 
 		if_stmt->if_cond = parse_expr(lexer);
 		if(not lexer.expect(TT::RParen))
-			error(lexer.location(), "expected ')' after condition");
+			parse_error(lexer.location(), "expected ')' after condition");
 
 		if_stmt->if_body = parse_block_or_stmt(lexer);
 
@@ -1057,7 +1066,7 @@ namespace sap::frontend
 		auto lm = LexerModer(lexer, Lexer::Mode::Script);
 
 		if(lexer.eof())
-			error(lexer.location(), "unexpected end of file");
+			parse_error(lexer.location(), "unexpected end of file");
 
 		// just consume empty statements
 		while(lexer.expect(TT::Semicolon))
@@ -1102,7 +1111,7 @@ namespace sap::frontend
 		}
 
 		if(not stmt)
-			error(tok.loc, "invalid start of statement");
+			parse_error(tok.loc, "invalid start of statement");
 
 		// check for assignment
 		if(is_assignment_op(lexer.peek()))
@@ -1112,7 +1121,7 @@ namespace sap::frontend
 		}
 
 		if(not lexer.expect(TT::Semicolon) && not optional_semicolon)
-			error(lexer.peek().loc, "expected ';' after statement, found '{}'", lexer.peek().text);
+			parse_error(lexer.previous().loc, "expected ';' after statement, found '{}'", lexer.peek().text);
 
 		return stmt;
 	}
@@ -1136,11 +1145,11 @@ namespace sap::frontend
 			{
 				auto id = lexer.match(TT::Identifier);
 				if(not id.has_value())
-					error(lexer.location(), "expected identifier in scope before '{'");
+					parse_error(lexer.location(), "expected identifier in scope before '{'");
 
 				qid.parents.push_back(id->text.str());
 				if(not lexer.expect(TT::ColonColon))
-					error(lexer.location(), "expected '::' after identifier");
+					parse_error(lexer.location(), "expected '::' after identifier");
 			}
 
 			target_scope = std::move(qid);
@@ -1161,14 +1170,16 @@ namespace sap::frontend
 	{
 		auto lm = LexerModer(lexer, Lexer::Mode::Script);
 
-		auto loc = lexer.location();
-		auto qid = parse_qualified_id(lexer);
+		auto loc = lexer.peek().loc;
+		auto [qid, len] = parse_qualified_id(lexer);
+		loc.length = len;
+
 		auto lhs = std::make_unique<interp::Ident>(loc);
 		lhs->name = std::move(qid);
 
 		auto open_paren = lexer.peek();
 		if(open_paren != TT::LParen)
-			error(open_paren.loc, "expected '(' after qualified-id in inline script call");
+			parse_error(open_paren.loc, "expected '(' after qualified-id in inline script call");
 
 		auto sc = std::make_unique<ScriptCall>();
 		sc->call = parse_function_call(lexer, std::move(lhs));
@@ -1184,11 +1195,12 @@ namespace sap::frontend
 		if(lexer.expect(TT::Backslash))
 		{
 			if(auto n = lexer.match(TT::Identifier); not n.has_value() || n->text != KW_PARA_BLOCK)
-				error(lexer.location(), "expected 'p' after '\\' in script call, got '{}'", n ? n->text : lexer.peek().text);
+				parse_error(lexer.location(), "expected 'p' after '\\' in script call, got '{}'",
+				    n ? n->text : lexer.peek().text);
 
 			is_block = true;
 			if(lexer.peek() != TT::LBrace)
-				error(lexer.location(), "expected '{' after '\\p'");
+				parse_error(lexer.location(), "expected '{' after '\\p'");
 		}
 
 		if(lexer.expect(TT::LBrace))
@@ -1206,7 +1218,7 @@ namespace sap::frontend
 				obj->object = std::move(container);
 
 				if(not lexer.expect(TT::RBrace))
-					error(lexer.location(), "expected closing '}', got '{}'", lexer.peek().text);
+					parse_error(lexer.location(), "expected closing '}', got '{}'", lexer.peek().text);
 
 				sc->call->arguments.push_back(interp::FunctionCall::Arg {
 				    .name = std::nullopt,
@@ -1228,7 +1240,7 @@ namespace sap::frontend
 		}
 		else if(is_block)
 		{
-			error(lexer.location(), "expected '{' after \\p in script call");
+			parse_error(lexer.location(), "expected '{' after \\p in script call");
 		}
 
 		return sc;
@@ -1246,7 +1258,7 @@ namespace sap::frontend
 		}
 		else
 		{
-			error(next.loc, "unexpected token '{}' after '\\'", next.text);
+			parse_error(next.loc, "unexpected token '{}' after '\\'", next.text);
 		}
 	}
 
@@ -1264,7 +1276,7 @@ namespace sap::frontend
 			return parse_script_object(lexer);
 
 		else
-			error(lexer.location(), "unexpected token '{}' in inline object", tok.text);
+			parse_error(lexer.location(), "unexpected token '{}' in inline object", tok.text);
 	}
 
 
@@ -1281,7 +1293,7 @@ namespace sap::frontend
 			else if(peek != TT::Backslash && peek != TT::Text)
 			{
 				if(para->contents().size() == 0)
-					error(lexer.location(), "unexpected token '{}' in inline object", peek.text);
+					parse_error(lexer.location(), "unexpected token '{}' in inline object", peek.text);
 				else
 					break;
 			}
@@ -1334,7 +1346,7 @@ namespace sap::frontend
 				    std::move_iterator(inner.end()));
 
 				if(not lexer.expect(TT::RBrace))
-					error(lexer.location(), "expected closing '}', got '{}'", lexer.peek().text);
+					parse_error(lexer.location(), "expected closing '}', got '{}'", lexer.peek().text);
 
 				objs.push_back(std::move(container));
 			}
@@ -1363,7 +1375,7 @@ namespace sap::frontend
 				document.addObject(std::move(obj));
 
 			if(not lexer.eof())
-				error(lexer.location(), "unexpected token '{}'", lexer.peek().text);
+				parse_error(lexer.location(), "unexpected token '{}'", lexer.peek().text);
 			else
 				break;
 		}
