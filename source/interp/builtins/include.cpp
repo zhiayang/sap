@@ -18,11 +18,11 @@ namespace sap::interp::builtin
 		assert(args.size() == 1);
 
 		auto file_path = args[0].getUtf8String();
-		zpr::println("including file '{}'", file_path);
 
 		auto file = ev->interpreter()->loadFile(file_path);
 		auto doc = frontend::parse(ev->keepStringAlive(file_path), file.chars());
 
+		util::log("included file '{}'", file_path);
 		return EvalResult::ofValue(Value::treeBlockObject(std::move(doc).takeContainer()));
 	}
 }

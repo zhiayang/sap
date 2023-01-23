@@ -75,6 +75,7 @@ namespace sap::tree
 			image.alpha = std::move(alpha_data);
 		}
 
+		util::log("loaded image '{}'", file_path);
 		return std::make_unique<Image>(std::move(image), sap::Vector2(width, *height));
 	}
 }

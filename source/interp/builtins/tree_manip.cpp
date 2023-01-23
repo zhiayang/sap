@@ -140,7 +140,6 @@ namespace sap::interp::builtin
 		assert(args.size() == 3);
 
 		auto img_path = args[0].getUtf8String();
-		zpr::println("loading image '{}'", img_path);
 
 		auto style = ev->currentStyle();
 

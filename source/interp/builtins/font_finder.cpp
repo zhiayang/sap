@@ -42,7 +42,7 @@ namespace sap::interp::builtin
 		auto pdf_font = pdf::PdfFont::fromSource(std::move(*font_file));
 		auto font_ptr = &ev->interpreter()->addLoadedFont(std::move(pdf_font));
 
-		zpr::println("loaded font {}", maybe_handle->postscript_name);
+		util::log("loaded font {}", maybe_handle->postscript_name);
 		return Ok(font_ptr);
 	}
 

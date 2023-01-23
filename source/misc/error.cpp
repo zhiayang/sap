@@ -2,6 +2,8 @@
 // Copyright (c) 2022, zhiayang
 // SPDX-License-Identifier: Apache-2.0
 
+#include <unistd.h>
+
 #include "error.h"
 #include "interp/interp.h"
 
@@ -29,9 +31,16 @@ namespace sap
 
 	void showErrorMessage(const Location& loc, const std::string& message)
 	{
-		zpr::println("{}error:{} {}{}{}", COLOUR_RED_BOLD, COLOUR_RESET, COLOUR_BLACK_BOLD, message, COLOUR_RESET);
-		zpr::println("{} at:{} {}{}:{}:{}{}", COLOUR_BLUE, COLOUR_RESET, COLOUR_BLACK_BOLD, loc.filename, loc.line + 1,
-		    loc.column + 1, COLOUR_RESET);
+		bool coloured = isatty(STDERR_FILENO);
+
+		const char* colour_red_bold = coloured ? COLOUR_RED_BOLD : "";
+		const char* colour_black_bold = coloured ? COLOUR_BLACK_BOLD : "";
+		const char* colour_blue = coloured ? COLOUR_BLUE : "";
+		const char* colour_reset = coloured ? COLOUR_RESET : "";
+
+		zpr::fprintln(stderr, "{}error:{} {}{}{}", colour_red_bold, colour_reset, colour_black_bold, message, colour_reset);
+		zpr::fprintln(stderr, "{} at:{} {}{}:{}:{}{}", colour_blue, colour_reset, colour_black_bold, loc.filename, loc.line + 1,
+		    loc.column + 1, colour_reset);
 
 		// search backwards from the token to find the newline
 		size_t tmp = loc.file_contents.take(loc.byte_offset).rfind('\n');
@@ -54,10 +63,10 @@ namespace sap
 				break;
 		}
 
-		zpr::println("{}{} |{}", COLOUR_BLUE, line_num_padding, COLOUR_RESET);
-		zpr::println("{}{} |  {} {}", COLOUR_BLUE, line_num, COLOUR_RESET, current_line);
-		zpr::println("{}{} |{}", COLOUR_BLUE, line_num_padding, COLOUR_RESET);
-		zpr::println("");
+		zpr::fprintln(stderr, "{}{} |{}", colour_blue, line_num_padding, colour_reset);
+		zpr::fprintln(stderr, "{}{} |  {} {}", colour_blue, line_num, colour_reset, current_line);
+		zpr::fprintln(stderr, "{}{} |{}", colour_blue, line_num_padding, colour_reset);
+		zpr::fprintln(stderr, "");
 	}
 
 
@@ -93,5 +102,19 @@ namespace sap
 	{
 		this->display();
 		abort();
+	}
+}
+
+namespace util::impl
+{
+	void log_impl(const std::string& msg)
+	{
+		using namespace sap;
+		bool coloured = isatty(STDOUT_FILENO);
+
+		const char* colour_grey_bold = coloured ? COLOUR_GREY_BOLD : "";
+		const char* colour_reset = coloured ? COLOUR_RESET : "";
+
+		zpr::fprintln(stderr, "{}[log]:{} {}", colour_grey_bold, colour_reset, msg);
 	}
 }

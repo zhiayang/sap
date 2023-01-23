@@ -363,6 +363,17 @@ namespace util
 		else
 			return zst::byteswap(x);
 	}
+
+	namespace impl
+	{
+		void log_impl(const std::string& msg);
+	}
+
+	template <typename... Args>
+	void log(const char* fmt, Args&&... args)
+	{
+		impl::log_impl(zpr::sprint(fmt, static_cast<Args&&>(args)...));
+	}
 }
 
 namespace unicode

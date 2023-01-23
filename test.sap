@@ -8,7 +8,7 @@
 	builtin::push_style(builtin::Style {
 		.font_size = 12pt,
 		.font_family = font_family,
-		.paragraph_spacing = 0em,
+		.paragraph_spacing = 1em,
 		.line_spacing = 1.0,
 	});
 }
