@@ -37,12 +37,6 @@ namespace sap::interp
 		return stmt->evaluate(m_evaluator.get());
 	}
 
-
-	tree::BlockObject& Interpreter::leakBlockObject(std::unique_ptr<tree::BlockObject> obj)
-	{
-		return *m_leaked_tbos.emplace_back(std::move(obj)).get();
-	}
-
 	pdf::PdfFont& Interpreter::addLoadedFont(std::unique_ptr<pdf::PdfFont> font)
 	{
 		if(auto it = m_loaded_fonts.find(font->fontId()); it != m_loaded_fonts.end())

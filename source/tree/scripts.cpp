@@ -29,8 +29,8 @@ namespace sap::tree
 		auto style = cs->evaluator().currentStyle()->extendWith(parent_style);
 		if(value_or_empty.get().isTreeBlockObj())
 		{
-			return cs->leakBlockObject(std::move(value_or_empty.get()).takeTreeBlockObj())
-			    .createLayoutObject(cs, std::move(cursor), style);
+			return m_created_block_objects.emplace_back(std::move(value_or_empty.get()).takeTreeBlockObj())
+			    ->createLayoutObject(cs, std::move(cursor), style);
 		}
 		else
 		{
@@ -42,7 +42,7 @@ namespace sap::tree
 			auto new_para = std::make_unique<Paragraph>();
 			new_para->addObjects(std::move(objs));
 
-			return cs->leakBlockObject(std::move(new_para)).createLayoutObject(cs, std::move(cursor), style);
+			return m_created_block_objects.emplace_back(std::move(new_para))->createLayoutObject(cs, std::move(cursor), style);
 		}
 	}
 

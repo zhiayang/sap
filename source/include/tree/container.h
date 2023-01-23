@@ -18,6 +18,7 @@ namespace sap::tree
 
 	private:
 		std::vector<std::unique_ptr<BlockObject>> m_objects;
+		mutable std::vector<std::unique_ptr<BlockObject>> m_created_block_objects;
 	};
 
 }

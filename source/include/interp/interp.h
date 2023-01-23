@@ -36,8 +36,6 @@ namespace sap::interp
 		Evaluator& evaluator() { return *m_evaluator; }
 		Typechecker& typechecker() { return *m_typechecker; }
 
-		tree::BlockObject& leakBlockObject(std::unique_ptr<tree::BlockObject> obj);
-
 		pdf::PdfFont& addLoadedFont(std::unique_ptr<pdf::PdfFont> font);
 		ErrorOr<pdf::PdfFont*> getLoadedFontById(int64_t font_id);
 
@@ -46,7 +44,6 @@ namespace sap::interp
 		std::unique_ptr<Evaluator> m_evaluator;
 
 		std::vector<zst::unique_span<uint8_t[]>> m_file_contents;
-		std::vector<std::unique_ptr<tree::BlockObject>> m_leaked_tbos;
 
 		util::hashmap<int64_t, std::unique_ptr<pdf::PdfFont>> m_loaded_fonts;
 	};

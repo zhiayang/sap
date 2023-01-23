@@ -116,5 +116,8 @@ namespace sap::tree
 		    const override;
 
 		std::unique_ptr<interp::FunctionCall> call;
+
+	private:
+		mutable std::vector<std::unique_ptr<BlockObject>> m_created_block_objects;
 	};
 }

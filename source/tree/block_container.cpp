@@ -50,7 +50,7 @@ namespace sap::tree
 
 		auto _ = cs->evaluator().pushBlockContext(cursor, this,
 		    { .add_block_object = [&](auto obj, auto at_cursor) -> ErrorOr<layout::LayoutObject*> {
-			    auto ptr = &cs->leakBlockObject(std::move(obj));
+			    auto ptr = m_created_block_objects.emplace_back(std::move(obj)).get();
 
 			    auto layout_obj_ptr = layout_an_object_please(ptr, std::move(at_cursor));
 			    return Ok(layout_obj_ptr);

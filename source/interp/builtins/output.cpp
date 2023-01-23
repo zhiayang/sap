@@ -67,7 +67,6 @@ namespace sap::interp::builtin
 
 		// the cursor from userspace is a relative cursor.
 		auto user_pos = TRY(BS_Position::unmake(ev, args[0]));
-		zpr::println("user_pos = {}", user_pos.pos);
 		auto cursor = blk_context.cursor.moveToPosition(user_pos);
 
 		(*tbo_output_fn)(std::move(args[1]).takeTreeBlockObj(), std::move(cursor));
