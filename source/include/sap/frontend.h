@@ -170,6 +170,6 @@ namespace sap::frontend
 	};
 
 
-
+	constexpr inline size_t TAB_WIDTH = 4;
 	tree::Document parse(zst::str_view filename, zst::str_view contents);
 }

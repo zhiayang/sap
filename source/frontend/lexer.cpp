@@ -10,7 +10,6 @@
 namespace sap::frontend
 {
 	using TT = TokenType;
-	constexpr size_t TAB_WIDTH = 4;
 
 	static Token advance_and_return(zst::str_view& stream, Location& loc, Token tok, size_t n)
 	{

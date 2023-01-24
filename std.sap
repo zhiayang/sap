@@ -13,11 +13,11 @@ namespace std
 	fn style(s: builtin::Style, obj: Block) -> Block { return builtin::apply_style(s, *obj); }
 	fn style(s: builtin::Style, obj: Inline) -> Inline { return builtin::apply_style(s, *obj); }
 
-	fn centre(b: Block) -> Block
+	fn centre(blk: Block) -> Block
 	{
 		let ret = builtin::apply_style(builtin::Style {
 			.alignment = builtin::Alignment::Centred,
-		}, *b);
+		}, *blk);
 
 		return ret;
 	}

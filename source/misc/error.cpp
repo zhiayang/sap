@@ -4,6 +4,8 @@
 
 #include <unistd.h>
 
+#include "sap/frontend.h"
+
 #include "error.h"
 #include "interp/interp.h"
 
@@ -55,16 +57,25 @@ namespace sap
 		auto line_num = std::to_string(loc.line + 1);
 		auto line_num_padding = std::string(line_num.size(), ' ');
 
+		size_t col = loc.column;
+		size_t stripped_spaces = 0;
 		while(not current_line.empty())
 		{
-			if(util::is_one_of(current_line[0], ' ', '\t'))
-				current_line.remove_prefix(1);
+			if(current_line[0] == ' ')
+				col -= 1, stripped_spaces += 1, current_line.remove_prefix(1);
+			else if(current_line[0] == '\t')
+				col -= frontend::TAB_WIDTH, stripped_spaces += 1, current_line.remove_prefix(1);
 			else
 				break;
 		}
 
+		auto caret_spaces = std::string(col + 1, ' ');
+		auto carets = std::string(loc.length, '^');
+
 		zpr::fprintln(stderr, "{}{} |{}", colour_blue, line_num_padding, colour_reset);
 		zpr::fprintln(stderr, "{}{} |  {} {}", colour_blue, line_num, colour_reset, current_line);
+		zpr::fprintln(stderr, "{}{} |  {}{}{}{}{}", colour_blue, line_num_padding, colour_reset, colour_red_bold, caret_spaces,
+		    carets, colour_reset);
 		zpr::fprintln(stderr, "{}{} |{}", colour_blue, line_num_padding, colour_reset);
 		zpr::fprintln(stderr, "");
 	}
