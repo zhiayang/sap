@@ -7,7 +7,7 @@
 
 namespace sap::interp
 {
-	ErrorOr<TCResult> ArraySpreadOp::typecheck_impl(Typechecker* ts, const Type* infer) const
+	ErrorOr<TCResult> ArraySpreadOp::typecheck_impl(Typechecker* ts, const Type* infer, bool moving) const
 	{
 		auto type = TRY(this->expr->typecheck(ts, infer)).type();
 		if(not type->isArray())

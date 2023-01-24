@@ -7,7 +7,7 @@
 
 namespace sap::interp
 {
-	ErrorOr<TCResult> EnumDefn::EnumeratorDecl::typecheck_impl(Typechecker* ts, const Type* infer) const
+	ErrorOr<TCResult> EnumDefn::EnumeratorDecl::typecheck_impl(Typechecker* ts, const Type* infer, bool moving) const
 	{
 		assert(infer != nullptr && infer->isEnum());
 
@@ -15,7 +15,7 @@ namespace sap::interp
 		return TCResult::ofRValue(infer);
 	}
 
-	ErrorOr<TCResult> EnumDefn::EnumeratorDefn::typecheck_impl(Typechecker* ts, const Type* infer) const
+	ErrorOr<TCResult> EnumDefn::EnumeratorDefn::typecheck_impl(Typechecker* ts, const Type* infer, bool moving) const
 	{
 		assert(infer != nullptr && infer->isEnum());
 
@@ -40,7 +40,7 @@ namespace sap::interp
 
 
 
-	ErrorOr<TCResult> EnumDecl::typecheck_impl(Typechecker* ts, const Type* infer) const
+	ErrorOr<TCResult> EnumDecl::typecheck_impl(Typechecker* ts, const Type* infer, bool moving) const
 	{
 		assert(infer != nullptr);
 
@@ -50,7 +50,7 @@ namespace sap::interp
 		return TCResult::ofRValue(enum_type);
 	}
 
-	ErrorOr<TCResult> EnumDefn::typecheck_impl(Typechecker* ts, const Type* infer) const
+	ErrorOr<TCResult> EnumDefn::typecheck_impl(Typechecker* ts, const Type* infer, bool moving) const
 	{
 		auto enum_elm_type = TRY(ts->resolveType(m_enumerator_type));
 		this->declaration->resolve(this);

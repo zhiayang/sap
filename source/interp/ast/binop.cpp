@@ -24,7 +24,7 @@ namespace sap::interp
 		}
 	}
 
-	ErrorOr<TCResult> BinaryOp::typecheck_impl(Typechecker* ts, const Type* infer) const
+	ErrorOr<TCResult> BinaryOp::typecheck_impl(Typechecker* ts, const Type* infer, bool moving) const
 	{
 		auto ltype = TRY(this->lhs->typecheck(ts)).type();
 		auto rtype = TRY(this->rhs->typecheck(ts)).type();

@@ -7,7 +7,7 @@
 
 namespace sap::interp
 {
-	ErrorOr<TCResult> ReturnStmt::typecheck_impl(Typechecker* ts, const Type* infer) const
+	ErrorOr<TCResult> ReturnStmt::typecheck_impl(Typechecker* ts, const Type* infer, bool moving) const
 	{
 		if(not ts->isCurrentlyInFunction())
 			return ErrMsg(ts, "invalid use of 'return' outside of a function body");
@@ -17,7 +17,7 @@ namespace sap::interp
 
 		auto expr_type = Type::makeVoid();
 		if(this->expr != nullptr)
-			expr_type = TRY(this->expr->typecheck(ts, ret_type)).type();
+			expr_type = TRY(this->expr->typecheck(ts, ret_type, /* move: */ true)).type();
 
 		if(not ts->canImplicitlyConvert(expr_type, ret_type))
 			return ErrMsg(ts, "cannot return value of type '{}' in function returning '{}'", expr_type, ret_type);

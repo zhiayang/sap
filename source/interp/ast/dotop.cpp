@@ -7,7 +7,7 @@
 
 namespace sap::interp
 {
-	ErrorOr<TCResult> DotOp::typecheck_impl(Typechecker* ts, const Type* infer) const
+	ErrorOr<TCResult> DotOp::typecheck_impl(Typechecker* ts, const Type* infer, bool moving) const
 	{
 		auto lhs_res = TRY(this->lhs->typecheck(ts));
 		auto ltype = lhs_res.type();

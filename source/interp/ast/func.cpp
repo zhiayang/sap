@@ -10,7 +10,7 @@
 
 namespace sap::interp
 {
-	ErrorOr<TCResult> FunctionDecl::typecheck_impl(Typechecker* ts, const Type* infer) const
+	ErrorOr<TCResult> FunctionDecl::typecheck_impl(Typechecker* ts, const Type* infer, bool moving) const
 	{
 		bool saw_variadic = false;
 
@@ -40,13 +40,13 @@ namespace sap::interp
 		return Ok(*m_tc_result);
 	}
 
-	ErrorOr<TCResult> BuiltinFunctionDefn::typecheck_impl(Typechecker* ts, const Type* infer) const
+	ErrorOr<TCResult> BuiltinFunctionDefn::typecheck_impl(Typechecker* ts, const Type* infer, bool moving) const
 	{
 		return this->declaration->typecheck(ts);
 	}
 
 
-	ErrorOr<TCResult> FunctionDefn::typecheck_impl(Typechecker* ts, const Type* infer) const
+	ErrorOr<TCResult> FunctionDefn::typecheck_impl(Typechecker* ts, const Type* infer, bool moving) const
 	{
 		this->declaration->resolve(this);
 		auto decl_type = TRY(this->declaration->typecheck(ts)).type();

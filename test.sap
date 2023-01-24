@@ -5,7 +5,7 @@ import "std.sap";
 let font_family = builtin::find_font_family(["Source Serif 4", "XCharter", "Times New Roman", "serif"]);
 
 
-let settings: builtin::DocumentSettings = {
+let settings = builtin::DocumentSettings {
 	.font_size = 12pt,
 	.font_family = *font_family,
 	.paper_size = std::paper_size::A4,

@@ -58,7 +58,7 @@ namespace sap::interp
 
 
 
-	ErrorOr<TCResult> TreeInlineExpr::typecheck_impl(Typechecker* ts, const Type* infer) const
+	ErrorOr<TCResult> TreeInlineExpr::typecheck_impl(Typechecker* ts, const Type* infer, bool moving) const
 	{
 		TRY(typecheck_list_of_tios(ts, this->objects));
 		return TCResult::ofRValue(Type::makeTreeInlineObj());
@@ -140,7 +140,7 @@ namespace sap::interp
 
 
 
-	ErrorOr<TCResult> TreeBlockExpr::typecheck_impl(Typechecker* ts, const Type* infer) const
+	ErrorOr<TCResult> TreeBlockExpr::typecheck_impl(Typechecker* ts, const Type* infer, bool moving) const
 	{
 		TRY(typecheck_block_obj(ts, this->object.get()));
 		return TCResult::ofRValue(Type::makeTreeBlockObj());

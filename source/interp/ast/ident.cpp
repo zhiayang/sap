@@ -11,7 +11,7 @@
 
 namespace sap::interp
 {
-	ErrorOr<TCResult> Ident::typecheck_impl(Typechecker* ts, const Type* infer) const
+	ErrorOr<TCResult> Ident::typecheck_impl(Typechecker* ts, const Type* infer, bool moving) const
 	{
 		auto tree = ts->current();
 
@@ -26,6 +26,9 @@ namespace sap::interp
 		{
 			auto ret = TRY(decls[0]->typecheck(ts));
 			m_resolved_decl = decls[0];
+
+			if(ret.isLValue() && not moving && (ret.type()->isTreeBlockObj() || ret.type()->isTreeInlineObj()))
+				return ErrMsg(ts, "{} cannot be copied; use '*' to move or '.clone()' to explicitly clone", ret.type());
 
 			return Ok(ret);
 		}

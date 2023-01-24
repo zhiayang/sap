@@ -8,7 +8,7 @@
 
 namespace sap::interp
 {
-	ErrorOr<TCResult> Block::typecheck_impl(Typechecker* ts, const Type* infer) const
+	ErrorOr<TCResult> Block::typecheck_impl(Typechecker* ts, const Type* infer, bool moving) const
 	{
 		DefnTree* tree = nullptr;
 

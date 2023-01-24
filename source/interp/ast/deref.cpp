@@ -7,7 +7,7 @@
 
 namespace sap::interp
 {
-	ErrorOr<TCResult> DereferenceOp::typecheck_impl(Typechecker* ts, const Type* infer) const
+	ErrorOr<TCResult> DereferenceOp::typecheck_impl(Typechecker* ts, const Type* infer, bool moving) const
 	{
 		auto inside = TRY(this->expr->typecheck(ts, infer)).type();
 		if(not inside->isOptional() && not inside->isPointer())
@@ -50,7 +50,7 @@ namespace sap::interp
 
 
 
-	ErrorOr<TCResult> AddressOfOp::typecheck_impl(Typechecker* ts, const Type* infer) const
+	ErrorOr<TCResult> AddressOfOp::typecheck_impl(Typechecker* ts, const Type* infer, bool moving) const
 	{
 		auto inside = TRY(this->expr->typecheck(ts, infer));
 		if(not inside.isLValue())

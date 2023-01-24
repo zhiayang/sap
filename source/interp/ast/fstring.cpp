@@ -7,7 +7,7 @@
 
 namespace sap::interp
 {
-	ErrorOr<TCResult> FStringExpr::typecheck_impl(Typechecker* ts, const Type* infer) const
+	ErrorOr<TCResult> FStringExpr::typecheck_impl(Typechecker* ts, const Type* infer, bool moving) const
 	{
 		for(auto& part : this->parts)
 		{

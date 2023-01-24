@@ -108,7 +108,7 @@ namespace sap::interp
 
 
 
-	ErrorOr<TCResult> ComparisonOp::typecheck_impl(Typechecker* ts, const Type* infer) const
+	ErrorOr<TCResult> ComparisonOp::typecheck_impl(Typechecker* ts, const Type* infer, bool moving) const
 	{
 		assert(not this->rest.empty());
 

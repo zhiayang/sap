@@ -88,7 +88,7 @@ namespace sap::interp
 
 
 
-	ErrorOr<TCResult> FunctionCall::typecheck_impl(Typechecker* ts, const Type* infer) const
+	ErrorOr<TCResult> FunctionCall::typecheck_impl(Typechecker* ts, const Type* infer, bool moving) const
 	{
 		std::vector<ArrangeArg<const Type*>> processed_args {};
 

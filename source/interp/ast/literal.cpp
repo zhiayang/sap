@@ -10,7 +10,7 @@
 
 namespace sap::interp
 {
-	ErrorOr<TCResult> ArrayLit::typecheck_impl(Typechecker* ts, const Type* infer) const
+	ErrorOr<TCResult> ArrayLit::typecheck_impl(Typechecker* ts, const Type* infer, bool moving) const
 	{
 		if(elem_type.has_value())
 		{
@@ -70,7 +70,7 @@ namespace sap::interp
 
 
 
-	ErrorOr<TCResult> LengthExpr::typecheck_impl(Typechecker* ts, const Type* infer) const
+	ErrorOr<TCResult> LengthExpr::typecheck_impl(Typechecker* ts, const Type* infer, bool moving) const
 	{
 		return TCResult::ofRValue(Type::makeLength());
 	}
@@ -81,7 +81,7 @@ namespace sap::interp
 	}
 
 
-	ErrorOr<TCResult> BooleanLit::typecheck_impl(Typechecker* ts, const Type* infer) const
+	ErrorOr<TCResult> BooleanLit::typecheck_impl(Typechecker* ts, const Type* infer, bool moving) const
 	{
 		return TCResult::ofRValue(Type::makeBool());
 	}
@@ -92,7 +92,7 @@ namespace sap::interp
 	}
 
 
-	ErrorOr<TCResult> NumberLit::typecheck_impl(Typechecker* ts, const Type* infer) const
+	ErrorOr<TCResult> NumberLit::typecheck_impl(Typechecker* ts, const Type* infer, bool moving) const
 	{
 		if(this->is_floating)
 			return TCResult::ofRValue(Type::makeFloating());
@@ -108,7 +108,7 @@ namespace sap::interp
 			return EvalResult::ofValue(Value::integer(int_value));
 	}
 
-	ErrorOr<TCResult> StringLit::typecheck_impl(Typechecker* ts, const Type* infer) const
+	ErrorOr<TCResult> StringLit::typecheck_impl(Typechecker* ts, const Type* infer, bool moving) const
 	{
 		return TCResult::ofRValue(Type::makeString());
 	}
@@ -120,7 +120,7 @@ namespace sap::interp
 
 
 
-	ErrorOr<TCResult> NullLit::typecheck_impl(Typechecker* ts, const Type* infer) const
+	ErrorOr<TCResult> NullLit::typecheck_impl(Typechecker* ts, const Type* infer, bool moving) const
 	{
 		return TCResult::ofRValue(Type::makeNullPtr());
 	}

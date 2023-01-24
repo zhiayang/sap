@@ -8,7 +8,7 @@
 
 namespace sap::interp
 {
-	ErrorOr<TCResult> StructDecl::typecheck_impl(Typechecker* ts, const Type* infer) const
+	ErrorOr<TCResult> StructDecl::typecheck_impl(Typechecker* ts, const Type* infer, bool moving) const
 	{
 		TRY(ts->current()->declare(this));
 
@@ -17,7 +17,7 @@ namespace sap::interp
 		return TCResult::ofRValue(Type::makeStruct(this->name, {}));
 	}
 
-	ErrorOr<TCResult> StructDefn::typecheck_impl(Typechecker* ts, const Type* infer) const
+	ErrorOr<TCResult> StructDefn::typecheck_impl(Typechecker* ts, const Type* infer, bool moving) const
 	{
 		this->declaration->resolve(this);
 		auto struct_type = TRY(this->declaration->typecheck(ts)).type()->toStruct();

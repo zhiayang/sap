@@ -71,12 +71,12 @@ namespace sap::interp
 		return this->evaluate_impl(ev);
 	}
 
-	ErrorOr<TCResult> Stmt::typecheck(Typechecker* ts, const Type* infer) const
+	ErrorOr<TCResult> Stmt::typecheck(Typechecker* ts, const Type* infer, bool moving) const
 	{
 		auto _ = ts->pushLocation(m_location);
 
 		if(not m_tc_result.has_value())
-			m_tc_result = TRY(this->typecheck_impl(ts, infer));
+			m_tc_result = TRY(this->typecheck_impl(ts, infer, moving));
 
 		return Ok(*m_tc_result);
 	}

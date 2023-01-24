@@ -26,7 +26,7 @@ namespace sap::interp
 		return fields;
 	}
 
-	ErrorOr<TCResult> StructLit::typecheck_impl(Typechecker* ts, const Type* infer) const
+	ErrorOr<TCResult> StructLit::typecheck_impl(Typechecker* ts, const Type* infer, bool moving) const
 	{
 		const StructType* struct_type = nullptr;
 		if(struct_name.name.empty())

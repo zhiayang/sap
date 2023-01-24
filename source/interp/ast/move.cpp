@@ -7,9 +7,9 @@
 
 namespace sap::interp
 {
-	ErrorOr<TCResult> MoveExpr::typecheck_impl(Typechecker* ts, const Type* infer) const
+	ErrorOr<TCResult> MoveExpr::typecheck_impl(Typechecker* ts, const Type* infer, bool moving) const
 	{
-		auto ret = TRY(this->expr->typecheck(ts, infer));
+		auto ret = TRY(this->expr->typecheck(ts, infer, /* moving: */ true));
 		if(not ret.isLValue())
 			return ErrMsg(ts, "invalid use of move-expression on rvalue");
 

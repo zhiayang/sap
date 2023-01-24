@@ -9,7 +9,7 @@
 
 namespace sap::interp
 {
-	ErrorOr<TCResult> VariableDecl::typecheck_impl(Typechecker* ts, const Type* infer) const
+	ErrorOr<TCResult> VariableDecl::typecheck_impl(Typechecker* ts, const Type* infer, bool moving) const
 	{
 		assert(infer != nullptr);
 		if(infer->isVoid())
@@ -30,7 +30,7 @@ namespace sap::interp
 
 
 
-	ErrorOr<TCResult> VariableDefn::typecheck_impl(Typechecker* ts, const Type* infer) const
+	ErrorOr<TCResult> VariableDefn::typecheck_impl(Typechecker* ts, const Type* infer, bool moving) const
 	{
 		this->declaration->resolve(this);
 

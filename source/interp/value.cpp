@@ -584,13 +584,15 @@ namespace sap::interp
 		}
 		else if(m_type->isTreeBlockObj())
 		{
-			new(&val.v_block_obj) decltype(v_block_obj)();
-			val.v_block_obj = Value::clone_tbos(*v_block_obj);
+			sap::internal_error("cannot clone 'Block' objects");
+			// new(&val.v_block_obj) decltype(v_block_obj)();
+			// val.v_block_obj = Value::clone_tbos(*v_block_obj);
 		}
 		else if(m_type->isTreeInlineObj())
 		{
-			new(&val.v_inline_obj) decltype(v_inline_obj)();
-			val.v_inline_obj = Value::clone_tios(v_inline_obj);
+			sap::internal_error("cannot clone 'Inline' objects");
+			// new(&val.v_inline_obj) decltype(v_inline_obj)();
+			// val.v_inline_obj = Value::clone_tios(v_inline_obj);
 		}
 		else if(m_type->isArray() || m_type->isStruct() || m_type->isOptional() || m_type->isEnum())
 		{
@@ -678,6 +680,9 @@ namespace sap::interp
 		val.m_moved_from = true;
 	}
 
+
+
+#if 0
 	auto Value::clone_tios(const InlineObjects& from) -> InlineObjects
 	{
 		InlineObjects ret {};
@@ -730,4 +735,5 @@ namespace sap::interp
 			sap::internal_error("?? unknown TBO type");
 		}
 	}
+#endif
 }
