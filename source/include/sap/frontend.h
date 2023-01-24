@@ -85,6 +85,7 @@ namespace sap::frontend
 		KW_False,
 		KW_Struct,
 		KW_Return,
+		KW_Import,
 		KW_Namespace,
 	};
 

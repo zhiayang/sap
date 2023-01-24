@@ -17,7 +17,7 @@ namespace sap::interp
 {
 	extern void defineBuiltins(Interpreter* interp, DefnTree* builtin_ns);
 
-	Interpreter::Interpreter() : m_typechecker(new Typechecker()), m_evaluator(new Evaluator(this))
+	Interpreter::Interpreter() : m_typechecker(new Typechecker(this)), m_evaluator(new Evaluator(this))
 	{
 		m_typechecker->pushLocation(Location::builtin()).cancel();
 		m_evaluator->pushLocation(Location::builtin()).cancel();
@@ -29,6 +29,16 @@ namespace sap::interp
 	{
 		auto file = util::readEntireFile(filename.str());
 		return m_file_contents.emplace_back(std::move(file)).span();
+	}
+
+	std::u32string& Interpreter::keepStringAlive(zst::wstr_view str)
+	{
+		return m_leaked_strings32.emplace_back(str.str());
+	}
+
+	std::string& Interpreter::keepStringAlive(zst::str_view str)
+	{
+		return m_leaked_strings.emplace_back(str.str());
 	}
 
 	ErrorOr<EvalResult> Interpreter::run(const Stmt* stmt)

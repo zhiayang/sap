@@ -41,8 +41,8 @@ namespace sap::interp
 
 		virtual ErrorOr<EvalResult> evaluate_impl(Evaluator* ev) const = 0;
 
-		virtual ErrorOr<EvalResult> evaluate(Evaluator* ev) const;
-		virtual ErrorOr<TCResult> typecheck(Typechecker* ts, const Type* infer = nullptr) const;
+		[[nodiscard]] virtual ErrorOr<EvalResult> evaluate(Evaluator* ev) const;
+		[[nodiscard]] virtual ErrorOr<TCResult> typecheck(Typechecker* ts, const Type* infer = nullptr) const;
 
 		const Location& loc() const { return m_location; }
 
@@ -399,6 +399,20 @@ namespace sap::interp
 		std::unique_ptr<Expr> expr;
 		mutable const Type* return_value_type;
 	};
+
+
+	struct ImportStmt : Stmt
+	{
+		explicit ImportStmt(Location loc) : Stmt(std::move(loc)) { }
+
+		virtual ErrorOr<EvalResult> evaluate_impl(Evaluator* ev) const override;
+		virtual ErrorOr<TCResult> typecheck_impl(Typechecker* ts, const Type* infer = nullptr) const override;
+
+		std::string file_path;
+		mutable std::unique_ptr<Block> imported_block;
+	};
+
+
 
 
 

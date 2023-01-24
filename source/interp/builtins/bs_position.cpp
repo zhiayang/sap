@@ -29,7 +29,7 @@ namespace sap::interp::builtin
 		);
 	}
 
-	ErrorOr<Value> builtin::BS_Position::make(Evaluator* ev, layout::RelativePos pos)
+	Value builtin::BS_Position::make(Evaluator* ev, layout::RelativePos pos)
 	{
 		return StructMaker(BS_Position::type->toStruct()) //
 		    .set("x", Value::length(DynLength(pos.pos.x())))

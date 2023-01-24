@@ -1,6 +1,6 @@
 # test.sap
 
-builtin::import("std.sap");
+import "std.sap";
 
 let font_family = builtin::find_font_family(["Source Serif 4", "Helvetica", "serif"]);
 
@@ -11,11 +11,11 @@ builtin::push_style(builtin::Style {
 	.line_spacing = 1.0,
 });
 
-# let settings = builtin::DocumentSettings {
-# 	.font_size = 12pt,
-# 	.paper_size = builtin::Paper_A4,
-# 	.margins = builtin::Margins { .left = 15mm, .right = 15mm, .top = 15mm, .bottom = 15mm },
-# };
+let settings = builtin::DocumentSettings {
+	.font_size = 12pt,
+	.paper_size = std::paper_size::A4,
+	.margins = builtin::DocumentMargins { .left = 15mm, .right = 15mm, .top = 15mm, .bottom = 15mm },
+};
 
 \start_document();
 

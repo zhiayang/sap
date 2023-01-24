@@ -29,7 +29,7 @@ namespace sap::interp::builtin
 		    Field { .name = "font_id", .type = pt_int });
 	}
 
-	ErrorOr<Value> builtin::BS_Font::make(Evaluator* ev, pdf::PdfFont* font)
+	Value builtin::BS_Font::make(Evaluator* ev, pdf::PdfFont* font)
 	{
 		return StructMaker(BS_Font::type->toStruct()) //
 		    .set("name", Value::string(unicode::u32StringFromUtf8(font->source().name())))
@@ -63,13 +63,13 @@ namespace sap::interp::builtin
 		    Field { .name = "bold_italic_font", .type = pt_font });
 	}
 
-	ErrorOr<Value> builtin::BS_FontFamily::make(Evaluator* ev, FontFamily font)
+	Value builtin::BS_FontFamily::make(Evaluator* ev, FontFamily font)
 	{
 		return StructMaker(BS_FontFamily::type->toStruct()) //
-		    .set("regular_font", TRY(BS_Font::make(ev, font.regular())))
-		    .set("italic_font", TRY(BS_Font::make(ev, font.italic())))
-		    .set("bold_font", TRY(BS_Font::make(ev, font.bold())))
-		    .set("bold_italic_font", TRY(BS_Font::make(ev, font.boldItalic())))
+		    .set("regular_font", BS_Font::make(ev, font.regular()))
+		    .set("italic_font", BS_Font::make(ev, font.italic()))
+		    .set("bold_font", BS_Font::make(ev, font.bold()))
+		    .set("bold_italic_font", BS_Font::make(ev, font.boldItalic()))
 		    .make();
 	}
 

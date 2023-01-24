@@ -39,6 +39,10 @@ namespace sap::interp
 		pdf::PdfFont& addLoadedFont(std::unique_ptr<pdf::PdfFont> font);
 		ErrorOr<pdf::PdfFont*> getLoadedFontById(int64_t font_id);
 
+		// this is necessary to keep the strings around...
+		std::u32string& keepStringAlive(zst::wstr_view str);
+		std::string& keepStringAlive(zst::str_view str);
+
 	private:
 		std::unique_ptr<Typechecker> m_typechecker;
 		std::unique_ptr<Evaluator> m_evaluator;
@@ -46,5 +50,8 @@ namespace sap::interp
 		std::vector<zst::unique_span<uint8_t[]>> m_file_contents;
 
 		util::hashmap<int64_t, std::unique_ptr<pdf::PdfFont>> m_loaded_fonts;
+
+		std::vector<std::string> m_leaked_strings;
+		std::vector<std::u32string> m_leaked_strings32;
 	};
 }

@@ -110,7 +110,7 @@ namespace sap::interp::builtin
 	ErrorOr<EvalResult> current_style(Evaluator* ev, std::vector<Value>& args)
 	{
 		assert(args.size() == 0);
-		return EvalResult::ofValue(TRY(BS_Style::make(ev, ev->currentStyle())));
+		return EvalResult::ofValue(BS_Style::make(ev, ev->currentStyle()));
 	}
 
 	ErrorOr<EvalResult> push_style(Evaluator* ev, std::vector<Value>& args)
@@ -124,7 +124,7 @@ namespace sap::interp::builtin
 	ErrorOr<EvalResult> pop_style(Evaluator* ev, std::vector<Value>& args)
 	{
 		assert(args.size() == 0);
-		return EvalResult::ofValue(TRY(BS_Style::make(ev, ev->popStyle())));
+		return EvalResult::ofValue(BS_Style::make(ev, ev->popStyle()));
 	}
 
 
@@ -226,6 +226,6 @@ namespace sap::interp::builtin
 	{
 		assert(args.size() == 0);
 
-		return EvalResult::ofValue(TRY(BS_Position::make(ev, ev->getBlockContext().parent_pos)));
+		return EvalResult::ofValue(BS_Position::make(ev, ev->getBlockContext().parent_pos));
 	}
 }

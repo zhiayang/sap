@@ -64,7 +64,7 @@ namespace sap::interp::builtin
 		auto stretch = unwrap_optional<double>(std::move(args[3]), font::FontStretch::NORMAL);
 
 		auto pdf_font = TRY(find_font(ev, font_names, weight, is_italic, stretch));
-		return EvalResult::ofValue(Value::optional(BS_Font::type, TRY(BS_Font::make(ev, pdf_font))));
+		return EvalResult::ofValue(Value::optional(BS_Font::type, BS_Font::make(ev, pdf_font)));
 	}
 
 
@@ -93,6 +93,6 @@ namespace sap::interp::builtin
 
 		auto fam = sap::FontFamily(regular_font, italic_font, bold_font, bold_italic_font);
 
-		return EvalResult::ofValue(Value::optional(BS_FontFamily::type, TRY(BS_FontFamily::make(ev, std::move(fam)))));
+		return EvalResult::ofValue(Value::optional(BS_FontFamily::type, BS_FontFamily::make(ev, std::move(fam))));
 	}
 }

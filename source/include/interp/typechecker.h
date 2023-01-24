@@ -55,7 +55,8 @@ namespace sap::interp
 
 	struct Typechecker
 	{
-		Typechecker();
+		explicit Typechecker(Interpreter* interp);
+		Interpreter* interpreter() { return m_interp; }
 
 		DefnTree* top();
 		const DefnTree* top() const;
@@ -88,6 +89,7 @@ namespace sap::interp
 		bool canImplicitlyConvert(const Type* from, const Type* to) const;
 
 	private:
+		Interpreter* m_interp;
 		std::unique_ptr<DefnTree> m_top;
 
 		std::vector<DefnTree*> m_tree_stack;

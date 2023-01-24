@@ -47,7 +47,7 @@ namespace sap::interp::builtin
 		             : ev->getBlockContext().cursor_ref->position();
 
 
-		return EvalResult::ofValue(TRY(BS_Position::make(ev, pos)));
+		return EvalResult::ofValue(BS_Position::make(ev, pos));
 	}
 
 

@@ -232,6 +232,9 @@ if-stmt:
     (`else`{keyword.else} stmt)?
     ;
 
+import-stmt:
+    `import`{keyword} string-literal `;`{punctuation.terminator}
+    ;
 
 stmt: block-comment
     | line-comment
@@ -240,6 +243,7 @@ stmt: block-comment
     | struct-defn
     | return-stmt
     | if-stmt
+    | import-stmt
     | namespace-defn
     | expr `;`{punctuation.terminator}
     | `;`{punctuation.terminator}

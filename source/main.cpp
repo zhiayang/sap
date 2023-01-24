@@ -19,16 +19,22 @@
 #if 0
 CLEANUP:
 - maybe wrapper around (const Style*)
+
+TODO:
+
+scripting:
+- x= should be synthesised from x and = if possible (for x in [+, -, *, /, %])
+	- there's a **LOT** of code dupe between binop.cpp and assop.cpp
+- `temporarilyEnterGlobalScope` is a huge hack, ideally variables should know (by themselves, without
+	inspecting the eval environment) whether or not they are globals.
+
+layout:
+- microtype-like stuff (hanging punctuation)
+- spaces after the end of a sentence should be slightly longer than spaces between words
 - smart quotes
 - dijkstra linebreaking might accidentally make an extra page;
 	- when rendering, use some mechanism (eg. proxy object) to only make the page if
 		someone tried to actually put stuff in it (or access it)
-
-TODO:
-- x= should be synthesised from x and = if possible (for x in [+, -, *, /, %])
-	- there's a **LOT** of code dupe between binop.cpp and assop.cpp
-- microtype-like stuff (hanging punctuation)
-- spaces after the end of a sentence should be slightly longer than spaces between words
 
 #endif
 

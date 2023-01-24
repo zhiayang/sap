@@ -1060,18 +1060,35 @@ namespace sap::frontend
 		return ret;
 	}
 
+	static std::unique_ptr<interp::ImportStmt> parse_import_stmt(Lexer& lexer)
+	{
+		auto loc = lexer.location();
+		must_expect(lexer, TT::KW_Import);
+
+		auto maybe_str = lexer.match(TT::String);
+
+		if(not maybe_str.has_value())
+			parse_error(lexer.location(), "expected string literal after 'import'");
+
+		auto path = unicode::stringFromU32String(unescape_string(maybe_str->loc, maybe_str->text));
+
+		auto ret = std::make_unique<interp::ImportStmt>(loc);
+		ret->file_path = std::move(path);
+
+		return ret;
+	}
+
 	static std::unique_ptr<interp::Block> parse_namespace(Lexer& lexer)
 	{
 		must_expect(lexer, TT::KW_Namespace);
 
-		auto maybe_ns_name = lexer.match(TT::Identifier);
-		if(not maybe_ns_name.has_value())
+		if(lexer.peek() != TT::Identifier)
 			parse_error(lexer.location(), "expected identifier after 'namespace'");
 
-		auto ns_name = maybe_ns_name->text;
-		auto qid = interp::QualifiedId {
-			.parents = { ns_name.str() },
-		};
+		auto [qid, len] = parse_qualified_id(lexer);
+
+		qid.parents.push_back(std::move(qid.name));
+		qid.name.clear();
 
 		auto block = parse_block_or_stmt(lexer, /* braces: */ true);
 		block->target_scope = std::move(qid);
@@ -1129,6 +1146,10 @@ namespace sap::frontend
 		else if(tok == TT::KW_Return)
 		{
 			stmt = parse_return_stmt(lexer);
+		}
+		else if(tok == TT::KW_Import)
+		{
+			stmt = parse_import_stmt(lexer);
 		}
 		else
 		{
@@ -1385,7 +1406,7 @@ namespace sap::frontend
 	}
 
 
-	static std::unique_ptr<tree::ScriptBlock> parse_preamble(Lexer& lexer)
+	static std::unique_ptr<interp::Block> parse_preamble(Lexer& lexer)
 	{
 		auto _ = LexerModer(lexer, Lexer::Mode::Script);
 
@@ -1420,11 +1441,8 @@ namespace sap::frontend
 			}
 		}
 
-		auto ret = std::make_unique<tree::ScriptBlock>();
-		ret->body = std::move(block);
-		ret->body->target_scope = interp::QualifiedId { .top_level = true };
-
-		return ret;
+		block->target_scope = interp::QualifiedId { .top_level = true };
+		return block;
 	}
 
 

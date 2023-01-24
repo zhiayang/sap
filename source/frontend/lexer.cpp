@@ -487,6 +487,8 @@ namespace sap::frontend
 				tt = TT::KW_Struct;
 			else if(text == "return")
 				tt = TT::KW_Return;
+			else if(text == "import")
+				tt = TT::KW_Import;
 			else if(text == "namespace")
 				tt = TT::KW_Namespace;
 

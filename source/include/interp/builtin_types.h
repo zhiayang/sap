@@ -6,6 +6,8 @@
 
 #include "util.h"
 
+#include "sap/document_settings.h"
+
 #include "layout/cursor.h"
 
 #include "interp/ast.h"
@@ -41,7 +43,7 @@ namespace sap::interp::builtin
 		static const Type* type;
 		static std::vector<StructDefn::Field> fields();
 
-		static ErrorOr<Value> make(Evaluator* ev, const Style* style);
+		static Value make(Evaluator* ev, const Style* style);
 		static ErrorOr<const Style*> unmake(Evaluator* ev, const Value& value);
 	};
 
@@ -52,7 +54,7 @@ namespace sap::interp::builtin
 		static const Type* type;
 		static std::vector<StructDefn::Field> fields();
 
-		static ErrorOr<Value> make(Evaluator* ev, pdf::PdfFont* font);
+		static Value make(Evaluator* ev, pdf::PdfFont* font);
 		static ErrorOr<pdf::PdfFont*> unmake(Evaluator* ev, const Value& value);
 	};
 
@@ -63,7 +65,7 @@ namespace sap::interp::builtin
 		static const Type* type;
 		static std::vector<StructDefn::Field> fields();
 
-		static ErrorOr<Value> make(Evaluator* ev, sap::FontFamily font);
+		static Value make(Evaluator* ev, sap::FontFamily font);
 		static ErrorOr<sap::FontFamily> unmake(Evaluator* ev, const Value& value);
 	};
 
@@ -74,8 +76,41 @@ namespace sap::interp::builtin
 		static const Type* type;
 		static std::vector<StructDefn::Field> fields();
 
-		static ErrorOr<Value> make(Evaluator* ev, layout::RelativePos pos);
+		static Value make(Evaluator* ev, layout::RelativePos pos);
 		static ErrorOr<layout::RelativePos> unmake(Evaluator* ev, const Value& value);
+	};
+
+	struct BS_Size2d
+	{
+		static constexpr auto name = "Size2d";
+
+		static const Type* type;
+		static std::vector<StructDefn::Field> fields();
+
+		static Value make(Evaluator* ev, DynLength2d pos);
+		static ErrorOr<DynLength2d> unmake(Evaluator* ev, const Value& value);
+	};
+
+	struct BS_DocumentSettings
+	{
+		static constexpr auto name = "DocumentSettings";
+
+		static const Type* type;
+		static std::vector<StructDefn::Field> fields();
+
+		static Value make(Evaluator* ev, DocumentSettings pos);
+		static ErrorOr<DocumentSettings> unmake(Evaluator* ev, const Value& value);
+	};
+
+	struct BS_DocumentMargins
+	{
+		static constexpr auto name = "DocumentMargins";
+
+		static const Type* type;
+		static std::vector<StructDefn::Field> fields();
+
+		static Value make(Evaluator* ev, DocumentSettings::Margins pos);
+		static ErrorOr<DocumentSettings::Margins> unmake(Evaluator* ev, const Value& value);
 	};
 
 
@@ -100,8 +135,28 @@ namespace sap::interp::builtin
 	{
 		explicit StructMaker(const StructType* type);
 
-		ErrorOr<Value> make();
+		Value make();
 		StructMaker& set(zst::str_view field, Value value);
+
+		template <typename T>
+		StructMaker& setOptional(zst::str_view field, std::optional<T> value, Value (*value_factory)(T value))
+		{
+			if(value.has_value())
+				return this->set(field, value_factory(std::move(*value)));
+			else
+				return this->set(field, Value::nullPointer());
+		}
+
+		template <typename T>
+		StructMaker& setOptional(zst::str_view field, std::optional<T> value, Evaluator* ev, Value (*fn)(Evaluator*, T))
+		{
+			if(value.has_value())
+				return this->set(field, fn(ev, std::move(*value)));
+			else
+				return this->set(field, Value::nullPointer());
+		}
+
+
 
 	private:
 		const StructType* m_type;

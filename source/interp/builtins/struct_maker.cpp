@@ -16,9 +16,9 @@ namespace sap::interp::builtin
 		m_fields.resize(type->getFields().size());
 	}
 
-	ErrorOr<Value> StructMaker::make()
+	Value StructMaker::make()
 	{
-		return Ok(Value::structure(m_type, std::move(m_fields)));
+		return Value::structure(m_type, std::move(m_fields));
 	}
 
 	StructMaker& StructMaker::set(zst::str_view name, Value value)

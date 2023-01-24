@@ -46,6 +46,24 @@ namespace std
 	}
 }
 
+namespace std
+{
+namespace paper_size
+{
+	let A4 = builtin::Size2d { .x = 210mm, .y = 297mm };
+}
+}
+
+
+
+
+
+
+
+
+
+
+
 
 #/
 

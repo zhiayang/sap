@@ -9,7 +9,9 @@
 
 namespace sap::interp
 {
-	Typechecker::Typechecker() : m_top(new DefnTree(this, "__top_level", /* parent: */ nullptr))
+	Typechecker::Typechecker(Interpreter* interp)
+	    : m_interp(interp)
+	    , m_top(new DefnTree(this, "__top_level", /* parent: */ nullptr))
 	{
 		this->pushTree(m_top.get()).cancel();
 	}

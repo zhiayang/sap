@@ -21,7 +21,7 @@ namespace sap::interp
 		auto defn = s.get();
 
 		T::type = interp->typechecker().addBuiltinDefinition(std::move(s))->typecheck(&interp->typechecker()).unwrap().type();
-		defn->evaluate(&interp->evaluator());
+		defn->evaluate(&interp->evaluator()).expect("builtin decl failed");
 	}
 
 	template <typename T>
@@ -31,7 +31,7 @@ namespace sap::interp
 		auto defn = e.get();
 
 		T::type = interp->typechecker().addBuiltinDefinition(std::move(e))->typecheck(&interp->typechecker()).unwrap().type();
-		defn->evaluate(&interp->evaluator());
+		defn->evaluate(&interp->evaluator()).expect("builtin decl failed");
 	}
 
 	static void define_builtin_types(Interpreter* interp, DefnTree* builtin_ns)
@@ -41,10 +41,14 @@ namespace sap::interp
 		define_builtin_enum<builtin::BE_Alignment>(interp);
 
 		// this needs a careful ordering
+		define_builtin_struct<builtin::BS_Size2d>(interp);
 		define_builtin_struct<builtin::BS_Position>(interp);
 		define_builtin_struct<builtin::BS_Font>(interp);
 		define_builtin_struct<builtin::BS_FontFamily>(interp);
 		define_builtin_struct<builtin::BS_Style>(interp);
+
+		define_builtin_struct<builtin::BS_DocumentMargins>(interp);
+		define_builtin_struct<builtin::BS_DocumentSettings>(interp);
 	}
 
 
@@ -90,7 +94,7 @@ namespace sap::interp
 
 		auto define_builtin = [&](auto&&... xs) {
 			auto ret = std::make_unique<BFD>(Location::builtin(), std::forward<decltype(xs)>(xs)...);
-			ts->addBuiltinDefinition(std::move(ret))->typecheck(ts);
+			ts->addBuiltinDefinition(std::move(ret))->typecheck(ts).expect("builtin decl failed");
 		};
 
 		auto _ = ts->pushTree(builtin_ns);
@@ -134,7 +138,6 @@ namespace sap::interp
 		        }),
 		    t_tbo, &builtin::load_image);
 
-		define_builtin("import", makeParamList(Param { .name = "1", .type = t_str }), t_tbo, &builtin::import_file);
 		define_builtin("include", makeParamList(Param { .name = "1", .type = t_str }), t_tbo, &builtin::include_file);
 
 		define_builtin("push_style",

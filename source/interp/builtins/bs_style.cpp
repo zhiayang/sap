@@ -55,10 +55,10 @@ namespace sap::interp::builtin
 		);
 	}
 
-	ErrorOr<Value> builtin::BS_Style::make(Evaluator* ev, const Style* style)
+	Value builtin::BS_Style::make(Evaluator* ev, const Style* style)
 	{
 		return StructMaker(BS_Style::type->toStruct()) //
-		    .set("font_family", TRY(BS_FontFamily::make(ev, style->font_family())))
+		    .set("font_family", BS_FontFamily::make(ev, style->font_family()))
 		    .set("font_size", Value::length(DynLength(style->font_size())))
 		    .set("line_spacing", Value::floating(style->line_spacing()))
 		    .set("paragraph_spacing", Value::length(DynLength(style->paragraph_spacing())))

@@ -77,6 +77,9 @@ namespace sap::tree
 	void Document::layout(interp::Interpreter* cs, layout::Document* layout_doc)
 	{
 		auto cursor = layout_doc->pageLayout().newCursor();
+		if(auto e = cs->run(m_preamble.get()); e.is_err())
+			e.error().showAndExit();
+
 		auto objs = m_container->createLayoutObject(cs, cursor, layout_doc->style());
 
 		for(auto& obj : objs.objects)
@@ -94,9 +97,15 @@ namespace sap::tree
 		return std::move(m_container);
 	}
 
-	Document::Document(std::unique_ptr<tree::ScriptBlock> preamble) : m_container(std::make_unique<tree::VertBox>())
+	std::unique_ptr<interp::Block> Document::takePreamble() &&
 	{
-		m_container->contents().push_back(std::move(preamble));
+		return std::move(m_preamble);
+	}
+
+	Document::Document(std::unique_ptr<interp::Block> preamble)
+	    : m_container(std::make_unique<tree::VertBox>())
+	    , m_preamble(std::move(preamble))
+	{
 	}
 
 	BlockObject::~BlockObject()

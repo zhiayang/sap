@@ -119,11 +119,6 @@ namespace sap::interp
 
 		ErrorOr<std::vector<std::unique_ptr<tree::InlineObject>>> convertValueToText(Value&& value);
 
-		// this is necessary to keep the strings around...
-		std::u32string& keepStringAlive(zst::wstr_view str);
-		std::string& keepStringAlive(zst::str_view str);
-
-
 		const Style* currentStyle() const;
 		void pushStyle(const Style* style);
 		const Style* popStyle();
@@ -147,8 +142,5 @@ namespace sap::interp
 		std::vector<Location> m_location_stack;
 
 		std::unordered_map<const Definition*, Value> m_global_values;
-
-		std::vector<std::string> m_leaked_strings;
-		std::vector<std::u32string> m_leaked_strings32;
 	};
 }

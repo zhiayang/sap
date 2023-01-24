@@ -35,7 +35,6 @@ namespace sap::interp
 		ErrorOr<EvalResult> println(Evaluator* ev, std::vector<Value>& args);
 
 		ErrorOr<EvalResult> load_image(Evaluator* ev, std::vector<Value>& args);
-		ErrorOr<EvalResult> import_file(Evaluator* ev, std::vector<Value>& args);
 		ErrorOr<EvalResult> include_file(Evaluator* ev, std::vector<Value>& args);
 
 		ErrorOr<EvalResult> current_style(Evaluator* ev, std::vector<Value>& args);

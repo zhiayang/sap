@@ -14,6 +14,7 @@ namespace sap::interp
 
 		if(this->target_scope.has_value())
 		{
+			// zpr::println("scope = '{}'", *this->target_scope);
 			tree = ts->current()->lookupOrDeclareScope(this->target_scope->parents, this->target_scope->top_level);
 		}
 		else
