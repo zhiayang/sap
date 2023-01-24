@@ -2,8 +2,6 @@
 // Copyright (c) 2021, zhiayang
 // SPDX-License-Identifier: Apache-2.0
 
-#include "util.h" // for readEntireFile
-
 #include "pdf/font.h"   //
 #include "pdf/writer.h" // for Writer
 
@@ -29,9 +27,10 @@ scripting:
 	inspecting the eval environment) whether or not they are globals.
 
 layout:
-- microtype-like stuff (hanging punctuation)
-- spaces after the end of a sentence should be slightly longer than spaces between words
+- em/en dashes
 - smart quotes
+- spaces after the end of a sentence should be slightly longer than spaces between words
+- microtype-like stuff (hanging punctuation)
 - dijkstra linebreaking might accidentally make an extra page;
 	- when rendering, use some mechanism (eg. proxy object) to only make the page if
 		someone tried to actually put stuff in it (or access it)

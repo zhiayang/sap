@@ -2,7 +2,7 @@
 
 import "std.sap";
 
-let font_family = builtin::find_font_family(["Source Serif 4", "Helvetica", "serif"]);
+let font_family = builtin::find_font_family(["Source Serif 4", "XCharter", "Times New Roman", "serif"]);
 
 
 let settings: builtin::DocumentSettings = {
@@ -32,8 +32,6 @@ hello \std::style(builtin::Style { .font_size = 15pt }) { world } asdf
 \std::section("goodbye");
 
 \script ::{
-	fn hmm(a: int) { builtin::println(f"[{a}]: {builtin::current_layout_position()}"); }
-
 	fn omegalul()
 	{
 		let text = builtin::make_text(f"OMEGALUL");
@@ -54,7 +52,7 @@ stores, and I get home every day by 8 PM at the latest. I don't smoke, but I occ
 I'm in bed by 11 PM, and make sure I get eight hours of sleep, no matter what. After having a
 glass of warm milk and doing about twenty minutes of stretches before going to bed, I usually
 have no problems sleeping until morning. Just like a baby, I wake up without any fatigue or stress
-in the morning. I was told there were no issues at my last check-up. I'm trying to explain that \hmm(1)
+in the morning. I was told there were no issues at my last check-up. I'm trying to explain that
 I'm a person who wishes to live a very quiet life. I take care not to trouble myself with any enemies,
 like winning and losing, that would cause me to lose sleep at night. That is how I deal with society,
 and I know that is what brings me \omegalul() happiness. Although, if I were to fight I wouldn't lose to anyone.
@@ -70,7 +68,7 @@ and I know that is what brings me \omegalul() happiness. Although, if I were to 
 	and vital system components comprising a full OS as defined by POSIX.
 }}}}}}}}
 
-AVAYAYA V. Vo P. r.aaa \hmm(3)
+AVAYAYA V. Vo P. r.aaa
 
 
 #/
@@ -95,24 +93,21 @@ The standard chunk of Lorem Ipsum used since the 1500s is reproduced below for t
 
 There are many variations of passages of Lorem Ipsum available, but the majority have suffered alteration in some form, by injected humour, or randomised words which don't look even slightly believable. If you are going to use a passage of Lorem Ipsum, you need to be sure there isn't anything embarrassing hidden in the middle of text. All the Lorem Ipsum generators on the Internet tend to repeat predefined chunks as necessary, making this the first true generator on the Internet. It uses a dictionary of over 200 Latin words, combined with a handful of model sentence structures, to generate Lorem Ipsum which looks reasonable. The generated Lorem Ipsum is therefore always free from repetition, injected humour, or non-characteristic words etc.
 
-Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed sed venenatis orci. Vestibulum auctor eu quam quis posuere. Morbi accumsan euismod semper. Mauris vulputate nunc eu neque pellentesque faucibus. Lorem ipsum dolor sit amet, consectetur adipiscing elit. Proin eget mollis augue. Sed nec vestibulum nunc. Donec pretium gravida purus, ut iaculis lorem facilisis eu. Nulla vitae mi nec felis tempus mollis ut nec ex. Quisque malesuada tellus id velit sollicitudin porttitor. Quisque ut congue neque.
+One morning, when Gregor Samsa woke from troubled dreams, he found himself transformed in his bed into a horrible vermin. He lay on his armour-like back, and if he lifted his head a little he could see his brown belly, slightly domed and divided by arches into stiff sections. The bedding was hardly able to cover it and seemed ready to slide off any moment. His many legs, pitifully thin compared with the size of the rest of him, waved about helplessly as he looked. "What's happened to me? " he thought. It wasn't a dream. His room, a proper human room although a little too small, lay peacefully between its four familiar walls. A collection of textile samples lay spread out on the table - Samsa was a travelling salesman - and above it there hung a picture that he had recently cut out of an illustrated magazine and housed in a nice, gilded frame.
 
-Fusce efficitur elit arcu, iaculis malesuada enim luctus ut. Proin non sem sed ipsum fringilla auctor. Fusce posuere magna vel ante imperdiet finibus. Nulla facilisi. Maecenas nec commodo purus, eget condimentum lacus. Donec quis lectus vestibulum, imperdiet metus a, rhoncus nulla. Sed posuere aliquet nunc, a rutrum dui rutrum nec. Vestibulum ornare tellus in odio convallis tempus. Sed posuere urna ac quam malesuada molestie sed vel magna.
+It showed a lady fitted out with a fur hat and fur boa who sat upright, raising a heavy fur muff that covered the whole of her lower arm towards the viewer. Gregor then turned to look out the window at the dull weather. Drops of rain could be heard hitting the pane, which made him feel quite sad. "How about if I sleep a little bit longer and forget all this nonsense", he thought, but that was something he was unable to do because he was used to sleeping on his right, and in his present state couldn't get into that position. However hard he threw himself onto his right, he always rolled back to where he was. He must have tried it a hundred times, shut his eyes so that he wouldn't have to look at the floundering legs, and only stopped when he began to feel a mild, dull pain there that he had never felt before. "Oh, God", he thought, "what a strenuous career it is that I've chosen!"
 
-Praesent est augue, varius in turpis ut, pretium ultrices risus. Aliquam libero leo, maximus ac feugiat imperdiet, dignissim quis neque. Maecenas mattis mattis nibh non dapibus. Lorem ipsum dolor sit amet, consectetur adipiscing elit. Mauris justo metus, viverra at elementum vitae, aliquet at lorem. Nulla dapibus, ipsum eu bibendum sollicitudin, odio magna ultrices mi, ut fermentum elit nulla ut odio. Nunc malesuada leo urna, vel imperdiet eros sagittis at. Mauris nisl nibh, imperdiet eu viverra eu, imperdiet vitae sapien. Donec sed lacus non ex volutpat consequat non sed ex. Quisque pharetra, turpis vitae commodo sodales, ipsum ligula luctus odio, a pulvinar diam libero et dui.
+Travelling day in and day out. Doing business like this takes much more effort than doing your own business at home, and on top of that there's the curse of travelling, worries about making train connections, bad and irregular food, contact with different people all the time so that you can never get to know anyone or become friendly with them. It can all go to Hell! " He felt a slight itch up on his belly; pushed himself slowly up on his back towards the headboard so that he could lift his head better; found where the itch was, and saw that it was covered with lots of little white spots which he didn't know what to make of; and when he tried to feel the place with one of his legs he drew it quickly back because as soon as he touched it he was overcome by a cold shudder. He slid back into his former position.
 
-Sed non leo nunc. Mauris condimentum dapibus iaculis. Phasellus ullamcorper pellentesque nisl, vel viverra tortor consequat ac. Nulla venenatis, tortor at tincidunt varius, arcu eros tempus sem, ac maximus elit sapien in urna. Sed pellentesque mauris eget lorem lacinia, ut auctor augue ornare. Maecenas at facilisis lorem. Aliquam rhoncus in ipsum a pretium. Maecenas non tempor quam, iaculis fermentum felis. Morbi porttitor tellus a mollis scelerisque. Nullam sit amet pharetra nunc. In consectetur sapien vitae tortor tincidunt lobortis. Nulla malesuada mauris vitae velit commodo, ac ultricies nisl lobortis. Nam commodo odio accumsan lacus viverra, in egestas mi convallis. Sed non leo nunc. Sed non leo nunc.
+"Getting up early all the time", he thought, "it makes you stupid. You've got to get enough sleep. Other travelling salesmen live a life of luxury. For instance, whenever I go back to the guest house during the morning to copy out the contract, these gentlemen are always still sitting there eating their breakfasts. I ought to just try that with my boss; I'd get kicked out on the spot. But who knows, maybe that would be the best thing for me. If I didn't have my parents to think about I'd have given in my notice a long time ago, I'd have gone up to the boss and told him just what I think, tell him everything I would, let him know just what I feel. He'd fall right off his desk! And it's a funny sort of business to be sitting up there at your desk, talking down at your subordinates from up there, especially when you have to go right up close because the boss is hard of hearing. Well, there's still some hope; once I've got the money together to pay off my parents' debt to him - another five or six years I suppose - that's definitely what I'll do. That's when I'll make the big change. First of all though, I've got to get up, my train leaves at five. " And he looked over at the alarm clock, ticking on the chest of drawers. "God in Heaven! " he thought. It was half past six and the hands were quietly moving forwards, it was even later than half past, more like quarter to seven. Had the alarm clock not rung? He could see from the bed that it had been set for four o'clock as it should have been; it certainly must have rung. Yes, but was it possible to quietly sleep through that furniture-rattling noise?
 
 \std::centre() \p {
 	\builtin::load_image("asdf.png", 5.0cm);
 
-	Aenean condimentum. Quisque sit amet turpis hendrerit, commodo libero sed, pellentesque felis.
+	Far far away, behind the word mountains, far from the countries Vokalia and Consonantia, there live the blind texts.
 }
 
-
-
-
-In hac habitasse platea dictumst. Praesent egestas odio nulla, vitae viverra massa scelerisque eu. Vestibulum auctor ligula nec eleifend facilisis. Aliquam vitae tortor eu mauris lobortis consectetur. Vestibulum venenatis eleifend suscipit. Donec placerat nunc sed velit porta, quis interdum arcu eleifend. Etiam vitae semper nibh, sit amet tempor nibh. Vivamus vel facilisis lacus, vitae vulputate augue. \hmm(4)
+Separated they live in Bookmarksgrove right at the coast of the Semantics, a large language ocean. A small river named Duden flows by their place and supplies it with the necessary regelialia. It is a paradisematic country, in which roasted parts of sentences fly into your mouth. Even the all-powerful Pointing has no control about the blind texts it is an almost unorthographic life One day however a small line of blind text by the name of Lorem Ipsum decided to leave for the far World of Grammar. The Big Oxmox advised her not to do so, because there were thousands of bad Commas, wild Question Marks and devious Semikoli, but the Little Blind Text didn’t listen. She packed her seven versalia, put her initial into the belt and made herself on the way.
 
 #/ #/
 thisisalongtestwordforhyphenation
