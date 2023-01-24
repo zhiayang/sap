@@ -10,6 +10,12 @@ namespace sap::interp::builtin
 {
 	ErrorOr<EvalResult> start_document(Evaluator* ev, std::vector<Value>& args)
 	{
-		return EvalResult::ofVoid();
+		assert(args.size() == 1);
+
+		DocumentSettings settings {};
+		if(args[0].haveOptionalValue())
+			settings = TRY(BS_DocumentSettings::unmake(ev, **args[0].getOptional()));
+
+		return EvalResult::ofValue(BS_DocumentSettings::make(ev, std::move(settings)));
 	}
 }

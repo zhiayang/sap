@@ -67,7 +67,15 @@ namespace sap::layout
 
 	struct PageLayout final : LayoutBase
 	{
-		explicit PageLayout(Size2d size, Length margin);
+		struct Margins
+		{
+			Length top;
+			Length bottom;
+			Length left;
+			Length right;
+		};
+
+		explicit PageLayout(Size2d size, PageLayout::Margins margins);
 		~PageLayout();
 
 		PageCursor newCursor() const;
@@ -90,7 +98,8 @@ namespace sap::layout
 
 	private:
 		Size2d m_size;
-		Length m_margin;
+		Margins m_margins;
+
 		size_t m_num_pages = 1;
 		Size2d m_content_size;
 	};

@@ -91,6 +91,7 @@ namespace sap::interp
 		auto t_bstyle = PType::named(make_builtin_name(builtin::BS_Style::name));
 		auto t_bposition = PType::named(make_builtin_name(builtin::BS_Position::name));
 		auto t_bfontfamily = PType::named(make_builtin_name(builtin::BS_FontFamily::name));
+		auto t_bdocsettings = PType::named(make_builtin_name(builtin::BS_DocumentSettings::name));
 
 		auto define_builtin = [&](auto&&... xs) {
 			auto ret = std::make_unique<BFD>(Location::builtin(), std::forward<decltype(xs)>(xs)...);
@@ -99,7 +100,13 @@ namespace sap::interp
 
 		auto _ = ts->pushTree(builtin_ns);
 
-		define_builtin("start_document", makeParamList(), t_void, &builtin::start_document);
+		define_builtin("start_document",
+		    makeParamList(Param {
+		        .name = "_",
+		        .type = PType::optional(t_bdocsettings),
+		        .default_value = make_null(),
+		    }),
+		    t_void, &builtin::start_document);
 
 		define_builtin("bold1", makeParamList(Param { .name = "_", .type = t_any }), t_tio, &builtin::bold1);
 		define_builtin("italic1", makeParamList(Param { .name = "_", .type = t_any }), t_tio, &builtin::italic1);

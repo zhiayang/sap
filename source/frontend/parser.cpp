@@ -1406,11 +1406,12 @@ namespace sap::frontend
 	}
 
 
-	static std::unique_ptr<interp::Block> parse_preamble(Lexer& lexer)
+	static std::pair<std::unique_ptr<interp::Block>, std::unique_ptr<interp::FunctionCall>> parse_preamble(Lexer& lexer)
 	{
 		auto _ = LexerModer(lexer, Lexer::Mode::Script);
 
 		auto block = std::make_unique<interp::Block>(lexer.location());
+		std::unique_ptr<interp::FunctionCall> doc_start {};
 
 		while(not lexer.eof())
 		{
@@ -1428,7 +1429,7 @@ namespace sap::frontend
 				auto ident = std::make_unique<interp::Ident>(lexer.previous().loc);
 				ident->name = std::move(callee);
 
-				block->body.push_back(parse_function_call(lexer, std::move(ident)));
+				doc_start = parse_function_call(lexer, std::move(ident));
 
 				if(lexer.expect(TT::Semicolon))
 					;
@@ -1442,14 +1443,16 @@ namespace sap::frontend
 		}
 
 		block->target_scope = interp::QualifiedId { .top_level = true };
-		return block;
+		return { std::move(block), std::move(doc_start) };
 	}
 
 
 	Document parse(zst::str_view filename, zst::str_view contents)
 	{
 		auto lexer = Lexer(filename, contents);
-		auto document = Document(parse_preamble(lexer));
+
+		auto [preamble, doc_start] = parse_preamble(lexer);
+		auto document = Document(std::move(preamble), std::move(doc_start));
 
 		while(not lexer.eof())
 		{

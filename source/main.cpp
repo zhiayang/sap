@@ -49,14 +49,11 @@ void sap::compile(zst::str_view filename)
 	auto file = interp.loadFile(filename);
 
 	auto document = frontend::parse(filename, file.chars());
-	auto layout_doc = layout::Document(&interp);
-
-	interp.evaluator().pushStyle(layout_doc.style());
-	document.layout(&interp, &layout_doc);
+	auto layout_doc = document.layout(&interp);
 
 	auto out_path = std::filesystem::path(filename.str()).replace_extension(".pdf");
 	auto writer = pdf::Writer(out_path.string());
-	layout_doc.write(&writer);
+	layout_doc->write(&writer);
 	writer.close();
 }
 

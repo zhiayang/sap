@@ -17,6 +17,21 @@ namespace sap
 	{
 	}
 
+	sap::Length DynLength::resolveWithoutFont(sap::Length font_size, sap::Length root_font_size) const
+	{
+		switch(m_unit)
+		{
+			case EX: return (0.4 * font_size).into();
+			case REM: return m_value * root_font_size;
+			case EM: return m_value * font_size;
+			case MM: return dim::mm(m_value);
+			case CM: return dim::cm(m_value).into();
+			case IN: return inches(m_value);
+			case PT: return inches(m_value) / 72;
+			case PC: return inches(m_value) / 6;
+		}
+	}
+
 	sap::Length DynLength::resolve(const pdf::PdfFont* font, sap::Length font_size, sap::Length root_font_size) const
 	{
 		switch(m_unit)
@@ -26,14 +41,7 @@ namespace sap
 				return font->scaleMetricForFontSize(font::FontScalar(x_height == 0.0 ? 400.0 : x_height), font_size.into())
 				    .into();
 			}
-
-			case REM: return m_value * root_font_size;
-			case EM: return m_value * font_size;
-			case MM: return dim::mm(m_value);
-			case CM: return dim::cm(m_value).into();
-			case IN: return inches(m_value);
-			case PT: return inches(m_value) / 72;
-			case PC: return inches(m_value) / 6;
+			default: return resolveWithoutFont(font_size, root_font_size);
 		}
 	}
 

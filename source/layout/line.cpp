@@ -60,8 +60,9 @@ namespace sap::layout
 				ret.ascent_height = std::max(ret.ascent_height, chunk_asc * style->line_spacing());
 				ret.descent_height = std::max(ret.descent_height, chunk_dsc * style->line_spacing());
 
-				auto style_line_spacing = style->font()->scaleMetricForFontSize(
-				    style->font()->getFontMetrics().default_line_spacing, style->font_size().into());
+				auto font_line_spacing = style->font()->getFontMetrics().default_line_spacing;
+				auto style_line_spacing = style->line_spacing()
+				                        * style->font()->scaleMetricForFontSize(font_line_spacing, style->font_size().into());
 
 				ret.default_line_spacing = std::max(ret.default_line_spacing, style_line_spacing.into<Length>());
 			}

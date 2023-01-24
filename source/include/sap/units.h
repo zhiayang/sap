@@ -41,6 +41,8 @@ namespace sap
 
 		sap::Length resolve(const pdf::PdfFont* font, sap::Length font_size, sap::Length root_font_size) const;
 
+		sap::Length resolveWithoutFont(sap::Length font_size, sap::Length root_font_size) const;
+
 		static std::optional<Unit> stringToUnit(zst::str_view sv);
 		static const char* unitToString(Unit unit);
 

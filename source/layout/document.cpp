@@ -11,12 +11,14 @@
 #include "sap/style.h"       // for Style
 #include "sap/units.h"       // for Length
 #include "sap/font_family.h" // for FontSet, FontStyle, FontStyle::Regular
+#include "sap/document_settings.h"
 
 #include "tree/document.h"
 #include "tree/container.h"
 
 #include "interp/interp.h"
 #include "interp/basedefs.h" // for DocumentObject
+#include "interp/builtin_types.h"
 
 #include "layout/base.h"      // for Cursor, LayoutObject, Interpreter, Rec...
 #include "layout/image.h"     //
@@ -25,27 +27,52 @@
 
 namespace sap::layout
 {
-	Document::Document(interp::Interpreter* cs) : m_page_layout(PageLayout(dim::mm(210, 297).into<Size2d>(), dim::mm(25)))
+	DocumentSettings fillDefaultSettings(interp::Interpreter* cs, DocumentSettings settings);
+
+	static Length resolve_len(const DocumentSettings& settings, DynLength len)
 	{
-		static auto default_font_family = sap::FontFamily(                                //
-		    &cs->addLoadedFont(pdf::PdfFont::fromBuiltin(pdf::BuiltinFont::TimesRoman)),  //
-		    &cs->addLoadedFont(pdf::PdfFont::fromBuiltin(pdf::BuiltinFont::TimesItalic)), //
-		    &cs->addLoadedFont(pdf::PdfFont::fromBuiltin(pdf::BuiltinFont::TimesBold)),   //
-		    &cs->addLoadedFont(pdf::PdfFont::fromBuiltin(pdf::BuiltinFont::TimesBoldItalic)));
+		auto pt = [](auto x) {
+			return sap::Length(25.4 * (x / 72.0));
+		};
 
-		// TODO: set root font size based on some preamble
-		static auto default_style = //
-		    sap::Style()
-		        .set_font_family(default_font_family)
-		        .set_font_style(sap::FontStyle::Regular)
-		        .set_font_size(pdf::PdfScalar(12.0).into())
-		        .set_root_font_size(pdf::PdfScalar(12.0).into())
-		        .set_line_spacing(1.0)
-		        .set_alignment(Alignment::Justified)
-		        .set_paragraph_spacing(sap::Length(1.0));
-
-		this->setStyle(&default_style);
+		auto font_size = settings.font_size->resolveWithoutFont(pt(12), pt(12));
+		return len.resolveWithoutFont(font_size, font_size);
 	}
+
+	static Size2d paper_size(const DocumentSettings& settings)
+	{
+		return Size2d {
+			resolve_len(settings, settings.paper_size->x),
+			resolve_len(settings, settings.paper_size->y),
+		};
+	}
+
+	static PageLayout::Margins make_margins(const DocumentSettings& settings)
+	{
+		return PageLayout::Margins {
+			.top = resolve_len(settings, *settings.margins->top),
+			.bottom = resolve_len(settings, *settings.margins->bottom),
+			.left = resolve_len(settings, *settings.margins->left),
+			.right = resolve_len(settings, *settings.margins->right),
+		};
+	}
+
+	Document::Document(const DocumentSettings& settings) : m_page_layout(PageLayout(paper_size(settings), make_margins(settings)))
+	{
+		// TODO: set root font size based on some preamble
+		auto default_style = util::make<sap::Style>();
+
+		default_style->set_font_family(*settings.font_family)
+		    .set_font_style(sap::FontStyle::Regular)
+		    .set_font_size(resolve_len(settings, *settings.font_size))
+		    .set_root_font_size(resolve_len(settings, *settings.font_size))
+		    .set_line_spacing(*settings.line_spacing)
+		    .set_paragraph_spacing(resolve_len(settings, *settings.paragraph_spacing))
+		    .set_alignment(Alignment::Justified);
+
+		this->setStyle(default_style);
+	}
+
 
 	pdf::File& Document::pdf()
 	{
@@ -74,16 +101,35 @@ namespace sap::layout
 
 namespace sap::tree
 {
-	void Document::layout(interp::Interpreter* cs, layout::Document* layout_doc)
+	std::unique_ptr<layout::Document> Document::layout(interp::Interpreter* cs)
 	{
-		auto cursor = layout_doc->pageLayout().newCursor();
+		if(m_document_start == nullptr)
+			ErrorMessage(&cs->typechecker(), "cannot layout a document with no body").showAndExit();
+
 		if(auto e = cs->run(m_preamble.get()); e.is_err())
 			e.error().showAndExit();
 
+		DocumentSettings settings {};
+		if(auto e = cs->run(m_document_start.get()); e.ok())
+		{
+			auto val = e.take_value().take();
+			settings = interp::builtin::BS_DocumentSettings::unmake(&cs->evaluator(), val).unwrap();
+		}
+		else
+		{
+			e.error().showAndExit();
+		}
+
+		auto layout_doc = std::make_unique<layout::Document>(layout::fillDefaultSettings(cs, std::move(settings)));
+		cs->evaluator().pushStyle(layout_doc->style());
+
+		auto cursor = layout_doc->pageLayout().newCursor();
 		auto objs = m_container->createLayoutObject(cs, cursor, layout_doc->style());
 
 		for(auto& obj : objs.objects)
 			layout_doc->pageLayout().addObject(std::move(obj));
+
+		return layout_doc;
 	}
 
 
@@ -102,9 +148,15 @@ namespace sap::tree
 		return std::move(m_preamble);
 	}
 
-	Document::Document(std::unique_ptr<interp::Block> preamble)
+	std::unique_ptr<interp::FunctionCall> Document::takeDocStart() &&
+	{
+		return std::move(m_document_start);
+	}
+
+	Document::Document(std::unique_ptr<interp::Block> preamble, std::unique_ptr<interp::FunctionCall> doc_start)
 	    : m_container(std::make_unique<tree::VertBox>())
 	    , m_preamble(std::move(preamble))
+	    , m_document_start(std::move(doc_start))
 	{
 	}
 

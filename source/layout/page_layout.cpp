@@ -48,9 +48,12 @@ namespace sap::layout
 
 
 
-	PageLayout::PageLayout(Size2d size, Length margin) : m_size(size), m_margin(margin)
+	PageLayout::PageLayout(Size2d size, PageLayout::Margins margins) : m_size(size), m_margins(std::move(margins))
 	{
-		m_content_size = { size.x() - 2 * margin, size.y() - 2 * margin };
+		m_content_size = {
+			size.x() - m_margins.left - m_margins.right,
+			size.y() - m_margins.top - m_margins.bottom,
+		};
 	}
 
 	PageLayout::~PageLayout()
@@ -149,7 +152,7 @@ namespace sap::layout
 	{
 		// PageLayout doesn't do anything with the size.
 		return AbsolutePagePos {
-			.pos = Position(m_margin + pos.pos.x(), m_margin + pos.pos.y()),
+			.pos = Position(m_margins.left + pos.pos.x(), m_margins.top + pos.pos.y()),
 			.page_num = pos.page_num,
 		};
 	}

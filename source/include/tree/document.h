@@ -23,16 +23,19 @@ namespace sap::tree
 
 	struct Document
 	{
-		explicit Document(std::unique_ptr<interp::Block> preamble);
+		explicit Document(std::unique_ptr<interp::Block> preamble, std::unique_ptr<interp::FunctionCall> doc_start);
 
 		void addObject(std::unique_ptr<BlockObject> obj);
-		void layout(interp::Interpreter* cs, layout::Document* layout_doc);
+		std::unique_ptr<layout::Document> layout(interp::Interpreter* cs);
 
 		std::unique_ptr<tree::VertBox> takeContainer() &&;
 		std::unique_ptr<interp::Block> takePreamble() &&;
+		std::unique_ptr<interp::FunctionCall> takeDocStart() &&;
 
 	private:
 		std::unique_ptr<tree::VertBox> m_container;
+
 		std::unique_ptr<interp::Block> m_preamble;
+		std::unique_ptr<interp::FunctionCall> m_document_start;
 	};
 }

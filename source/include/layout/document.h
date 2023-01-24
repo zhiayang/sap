@@ -14,6 +14,7 @@
 
 #include "sap/style.h" // for Stylable
 #include "sap/units.h" // for Vector2
+#include "sap/document_settings.h"
 
 #include "font/font_source.h"
 
@@ -98,7 +99,7 @@ namespace sap::layout
 
 	struct Document : Stylable
 	{
-		explicit Document(interp::Interpreter* interp);
+		explicit Document(const DocumentSettings& settings);
 
 		Document(const Document&) = delete;
 		Document& operator=(const Document&) = delete;

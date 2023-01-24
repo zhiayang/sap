@@ -118,6 +118,7 @@ namespace sap::tree
 		if(not m_single_line_mode)
 		{
 			auto broken_lines = layout::linebreak::breakLines(cursor, style, m_contents, cursor.widthAtCursor());
+
 			for(auto line_it = broken_lines.begin(); line_it != broken_lines.end(); ++line_it)
 			{
 				auto& broken_line = *line_it;

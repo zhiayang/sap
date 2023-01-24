@@ -138,9 +138,9 @@ struct-literal:
         4: meta.name.scope-part,
         5: punctuation.brace.struct-start
     } (
-        struct-literal-field
-        (`,`{punctuation.comma} struct-literal-field)*
-        (`,`{punctuation.comma})?
+        (block-comment | line-comment | struct-literal-field)
+        (block-comment | line-comment | `,`{punctuation.comma} struct-literal-field)*
+        (block-comment | line-comment | `,`{punctuation.comma})?
     )?
     (`}`{punctuation.brace.struct-end})
     ;

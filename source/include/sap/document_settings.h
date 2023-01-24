@@ -23,5 +23,8 @@ namespace sap
 		std::optional<FontFamily> font_family;
 		std::optional<DynLength2d> paper_size;
 		std::optional<Margins> margins;
+
+		std::optional<DynLength> paragraph_spacing;
+		std::optional<double> line_spacing;
 	};
 }
