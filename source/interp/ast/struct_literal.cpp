@@ -32,11 +32,20 @@ namespace sap::interp
 		if(struct_name.name.empty())
 		{
 			if(infer == nullptr)
+			{
 				return ErrMsg(ts, "cannot infer type of struct literal");
-			else if(not infer->isStruct())
-				return ErrMsg(ts, "inferred non-struct type '{}' for struct literal", infer);
-
-			struct_type = infer->toStruct();
+			}
+			else if(infer->isStruct())
+			{
+				struct_type = infer->toStruct();
+			}
+			else
+			{
+				if(infer->isOptional() && infer->optionalElement()->isStruct())
+					struct_type = infer->optionalElement()->toStruct();
+				else
+					return ErrMsg(ts, "inferred non-struct type '{}' for struct literal", infer);
+			}
 		}
 		else
 		{
@@ -50,17 +59,33 @@ namespace sap::interp
 		m_struct_defn = dynamic_cast<const StructDefn*>(TRY(ts->getDefinitionForType(struct_type)));
 		assert(m_struct_defn != nullptr);
 
+		auto fields = get_field_things(m_struct_defn, struct_type);
+
 		// make sure the struct has all the things
 		std::vector<ArrangeArg<const Type*>> processed_fields {};
-		for(auto& f : this->field_inits)
+
+		bool saw_named = false;
+		for(size_t i = 0; i < this->field_inits.size(); i++)
 		{
+			auto& f = this->field_inits[i];
+			if(f.name.has_value())
+				saw_named = true;
+			else if(saw_named)
+				return ErrMsg(ts, "positional field initialiser not allowed after named field initialiser");
+
+
+			const Type* infer = nullptr;
+			if(f.name.has_value() && struct_type->hasFieldNamed(*f.name))
+				infer = struct_type->getFieldNamed(*f.name);
+			else if(not f.name.has_value())
+				infer = struct_type->getFieldAtIndex(i);
+
 			processed_fields.push_back({
 			    .name = f.name,
-			    .value = TRY(f.value->typecheck(ts)).type(),
+			    .value = TRY(f.value->typecheck(ts, infer)).type(),
 			});
 		}
 
-		auto fields = get_field_things(m_struct_defn, struct_type);
 		auto ordered = TRY(arrangeArgumentTypes(ts, fields, processed_fields, "struct", "field", "field"));
 
 		TRY(getCallingCost(ts, fields, ordered, "struct", "field", "field"));

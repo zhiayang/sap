@@ -27,6 +27,7 @@
 
 namespace sap::layout
 {
+	const Style* getDefaultStyle(interp::Interpreter* cs);
 	DocumentSettings fillDefaultSettings(interp::Interpreter* cs, DocumentSettings settings);
 
 	static Length resolve_len(const DocumentSettings& settings, DynLength len)
@@ -59,7 +60,6 @@ namespace sap::layout
 
 	Document::Document(const DocumentSettings& settings) : m_page_layout(PageLayout(paper_size(settings), make_margins(settings)))
 	{
-		// TODO: set root font size based on some preamble
 		auto default_style = util::make<sap::Style>();
 
 		default_style->set_font_family(*settings.font_family)
@@ -105,6 +105,8 @@ namespace sap::tree
 	{
 		if(m_document_start == nullptr)
 			ErrorMessage(&cs->typechecker(), "cannot layout a document with no body").showAndExit();
+
+		cs->evaluator().pushStyle(layout::getDefaultStyle(cs));
 
 		if(auto e = cs->run(m_preamble.get()); e.is_err())
 			e.error().showAndExit();

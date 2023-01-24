@@ -11,6 +11,33 @@
 
 namespace sap::layout
 {
+	static FontFamily get_default_font_family(interp::Interpreter* cs)
+	{
+		static auto ret = sap::FontFamily(                                                //
+		    &cs->addLoadedFont(pdf::PdfFont::fromBuiltin(pdf::BuiltinFont::TimesRoman)),  //
+		    &cs->addLoadedFont(pdf::PdfFont::fromBuiltin(pdf::BuiltinFont::TimesItalic)), //
+		    &cs->addLoadedFont(pdf::PdfFont::fromBuiltin(pdf::BuiltinFont::TimesBold)),   //
+		    &cs->addLoadedFont(pdf::PdfFont::fromBuiltin(pdf::BuiltinFont::TimesBoldItalic)));
+
+		return ret;
+	}
+
+	const Style* getDefaultStyle(interp::Interpreter* cs)
+	{
+		auto default_style = util::make<sap::Style>();
+
+		auto font_size = pdf::PdfScalar(12).into();
+		default_style->set_font_family(get_default_font_family(cs))
+		    .set_font_style(sap::FontStyle::Regular)
+		    .set_font_size(font_size)
+		    .set_root_font_size(font_size)
+		    .set_line_spacing(1.0)
+		    .set_paragraph_spacing(Length(0))
+		    .set_alignment(Alignment::Justified);
+
+		return default_style;
+	}
+
 	DocumentSettings fillDefaultSettings(interp::Interpreter* cs, DocumentSettings settings)
 	{
 		auto mm = [](auto x) {
@@ -90,13 +117,7 @@ namespace sap::layout
 		}
 
 		if(not settings.font_family.has_value())
-		{
-			settings.font_family = sap::FontFamily(                                           //
-			    &cs->addLoadedFont(pdf::PdfFont::fromBuiltin(pdf::BuiltinFont::TimesRoman)),  //
-			    &cs->addLoadedFont(pdf::PdfFont::fromBuiltin(pdf::BuiltinFont::TimesItalic)), //
-			    &cs->addLoadedFont(pdf::PdfFont::fromBuiltin(pdf::BuiltinFont::TimesBold)),   //
-			    &cs->addLoadedFont(pdf::PdfFont::fromBuiltin(pdf::BuiltinFont::TimesBoldItalic)));
-		}
+			settings.font_family = get_default_font_family(cs);
 
 		return settings;
 	}

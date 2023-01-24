@@ -7,6 +7,8 @@ EXTENSIONS = 'sap'
 
 IDENTIFIER = '[A-Za-z_][[:word:]]*'
 
+prototype: (~(block-comment | line-comment))*;
+
 line-comment: '(#+).*\n?'{
     comment.line,
     1: punctuation.definition.comment
@@ -130,21 +132,6 @@ function-call:
     } (function-call-arg (`,`{punctuation.comma} function-call-arg)*)?
     `)`{punctuation.paren.call-end};
 
-struct-literal:
-    '(::)?\s*([A-Za-z_][[:word:]]*)(?:\s*(::)\s*([A-Za-z_][[:word:]]*))*\s*(\{)'{
-        1: punctuation.scope,
-        2: meta.name.scope-part,
-        3: punctuation.scope,
-        4: meta.name.scope-part,
-        5: punctuation.brace.struct-start
-    } (
-        (block-comment | line-comment | struct-literal-field)
-        (block-comment | line-comment | `,`{punctuation.comma} struct-literal-field)*
-        (block-comment | line-comment | `,`{punctuation.comma})?
-    )?
-    (`}`{punctuation.brace.struct-end})
-    ;
-
 struct-literal-field:
     (`.`{punctuation.period})
     ('[A-Za-z_][A-Za-z0-9_]*'{meta.name.struct.field})
@@ -152,7 +139,10 @@ struct-literal-field:
     (expr)
     ;
 
-
+struct-literal-field-list: (struct-literal-field
+        (`,`{punctuation.comma} struct-literal-field)*
+        (`,`{punctuation.comma})?
+    )?;
 
 primary-expr
     : length-literal
@@ -162,6 +152,7 @@ primary-expr
     | fstring-literal
     | array-literal
     | `(`{punctuation.paren} expr `)`{punctuation.paren}
+    | (`{`{punctuation.brace.struct-start} struct-literal-field-list `}`{punctuation.brace.struct-end})
     | '([A-Za-z_][[:word:]]*)(?:\s*(::)\s*([A-Za-z_][[:word:]]*))*'{
         1: variable.other,
         2: punctuation.scope,
@@ -173,12 +164,7 @@ postfix-expr2
     : `(`{punctuation.paren.call-start}
         (function-call-arg (`,`{punctuation.comma} function-call-arg)*)?
       `)`{punctuation.paren.call-end}
-    | `{`{punctuation.paren.struct-start}
-        (struct-literal-field
-            (`,`{punctuation.comma} struct-literal-field)*
-            (`,`{punctuation.comma})?
-        )?
-      `}`{punctuation.paren.struct-end}
+    | `{`{punctuation.brace.struct-start} struct-literal-field-list `}`{punctuation.brace.struct-end}
     | `!`{keyword.operator.deref}
     | '\?(?!\?)'{keyword.operator.qn}
     | `...`{keyword.operator.ellipsis}
