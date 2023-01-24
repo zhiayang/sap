@@ -16,6 +16,8 @@ namespace sap::interp::builtin
 		assert(args.size() == 1);
 		assert(args[0].isTreeInlineObj());
 
+		auto _ = ev->temporarilyEnterGlobalScope();
+
 		auto& tio_output_fn = ev->getBlockContext().output_context.add_inline_object;
 		if(not tio_output_fn.has_value())
 			return ErrMsg(ev, "inline object not allowed in this context");
@@ -32,17 +34,18 @@ namespace sap::interp::builtin
 		assert(args.size() == 1);
 		assert(args[0].isTreeBlockObj());
 
+		auto _ = ev->temporarilyEnterGlobalScope();
+
 		auto& tbo_output_fn = ev->getBlockContext().output_context.add_block_object;
 		if(not tbo_output_fn.has_value())
 			return ErrMsg(ev, "block object not allowed in this context");
 
 		auto obj = TRY((*tbo_output_fn)(std::move(args[0]).takeTreeBlockObj(), std::nullopt));
-		layout::RelativePos pos;
 
-		if(obj != nullptr)
-			pos = obj->layoutPosition();
-		else
-			pos = ev->getBlockContext().cursor_ref->position();
+		auto pos = obj != nullptr //
+		             ? obj->layoutPosition()
+		             : ev->getBlockContext().cursor_ref->position();
+
 
 		return EvalResult::ofValue(TRY(BS_Position::make(ev, pos)));
 	}
@@ -59,6 +62,8 @@ namespace sap::interp::builtin
 	{
 		assert(args.size() == 2);
 		assert(args[1].isTreeBlockObj());
+
+		auto _ = ev->temporarilyEnterGlobalScope();
 
 		auto& blk_context = ev->getBlockContext();
 		auto& tbo_output_fn = blk_context.output_context.add_block_object;

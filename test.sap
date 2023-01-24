@@ -1,17 +1,24 @@
 # test.sap
 
-\builtin::include("std.sap");
+builtin::import("std.sap");
 
-\script {
-	let font_family = builtin::find_font_family(["Source Serif 4", "Helvetica", "serif"]);
+let font_family = builtin::find_font_family(["Source Serif 4", "Helvetica", "serif"]);
 
-	builtin::push_style(builtin::Style {
-		.font_size = 12pt,
-		.font_family = font_family,
-		.paragraph_spacing = 1em,
-		.line_spacing = 1.0,
-	});
-}
+builtin::push_style(builtin::Style {
+	.font_size = 12pt,
+	.font_family = font_family,
+	.paragraph_spacing = 1em,
+	.line_spacing = 1.0,
+});
+
+# let settings = builtin::DocumentSettings {
+# 	.font_size = 12pt,
+# 	.paper_size = builtin::Paper_A4,
+# 	.margins = builtin::Margins { .left = 15mm, .right = 15mm, .top = 15mm, .bottom = 15mm },
+# };
+
+\start_document();
+
 
 
 \std::section("hello");

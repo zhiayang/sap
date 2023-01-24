@@ -487,6 +487,8 @@ namespace sap::frontend
 				tt = TT::KW_Struct;
 			else if(text == "return")
 				tt = TT::KW_Return;
+			else if(text == "namespace")
+				tt = TT::KW_Namespace;
 
 			return advance_and_return(stream, loc, Token { .loc = loc, .type = tt, .text = text }, n);
 		}

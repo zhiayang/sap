@@ -1,48 +1,49 @@
 # std.sap
 
-\script builtin::{
+namespace builtin
+{
 	fn to_string(pos: &Position) -> string
 	{
 		return f"\{xy: ({pos!.x}, {pos!.y}), page: {pos!.page}\}";
 	}
 }
 
-\script std::{
-
-fn style(s: builtin::Style, obj: Block) -> Block { return builtin::apply_style(s, *obj); }
-fn style(s: builtin::Style, obj: Inline) -> Inline { return builtin::apply_style(s, *obj); }
-
-fn centre(b: Block) -> Block
+namespace std
 {
-	let ret = builtin::apply_style(builtin::Style {
-		.alignment = builtin::Alignment::Centred,
-	}, *b);
+	fn style(s: builtin::Style, obj: Block) -> Block { return builtin::apply_style(s, *obj); }
+	fn style(s: builtin::Style, obj: Inline) -> Inline { return builtin::apply_style(s, *obj); }
 
-	return ret;
-}
+	fn centre(b: Block) -> Block
+	{
+		let ret = builtin::apply_style(builtin::Style {
+			.alignment = builtin::Alignment::Centred,
+		}, *b);
 
-var g_section_counter: int = 0;
+		return ret;
+	}
 
-fn section(name: string) -> void
-{
-	let name_tbo = std::style(builtin::Style {
-		.font_size = 2em,
-	}, builtin::make_line(builtin::make_text(name)));
+	var g_section_counter: int = 0;
 
-	let counter_tbo = std::style(builtin::Style {
-		.alignment = builtin::Alignment::Left,
-	}, builtin::make_line(builtin::make_text(f"{1 + g_section_counter}")));
-	g_section_counter += 1;
+	fn section(name: string) -> void
+	{
+		let name_tbo = std::style(builtin::Style {
+			.font_size = 2em,
+		}, builtin::make_line(builtin::make_text(name)));
 
-	var tmp = builtin::current_layout_position();
-	tmp.y += 2em;
-	builtin::set_layout_cursor(*tmp);
+		let counter_tbo = std::style(builtin::Style {
+			.alignment = builtin::Alignment::Left,
+		}, builtin::make_line(builtin::make_text(f"{1 + g_section_counter}")));
+		g_section_counter += 1;
 
-	var pos = builtin::output_at_current(*name_tbo);
-	pos.x -= 2em;
+		var tmp = builtin::current_layout_position();
+		tmp.y += 2em;
+		builtin::set_layout_cursor(*tmp);
 
-	builtin::output_at_position(pos, *counter_tbo);
-}
+		var pos = builtin::output_at_current(*name_tbo);
+		pos.x -= 2em;
+
+		builtin::output_at_position(pos, *counter_tbo);
+	}
 }
 
 

@@ -94,8 +94,9 @@ namespace sap::tree
 		return std::move(m_container);
 	}
 
-	Document::Document() : m_container(std::make_unique<tree::VertBox>())
+	Document::Document(std::unique_ptr<tree::ScriptBlock> preamble) : m_container(std::make_unique<tree::VertBox>())
 	{
+		m_container->contents().push_back(std::move(preamble));
 	}
 
 	BlockObject::~BlockObject()

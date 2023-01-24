@@ -18,9 +18,18 @@ block-comment {comment.block} :
     ~'(/#)'{punctuation.definition.comment}
     ;
 
-main: block-comment
-    | line-comment
-    | paragraph*;
+main: preamble paragraph*;
+
+preamble{meta.document.preamble}
+    : stmt stmt* document-start
+    ;
+
+document-start
+    : `\start_document`{keyword} (`(`{punctuation.paren.call-start}
+        (function-call-arg (`,`{punctuation.comma} function-call-arg)*)?
+    `)`{punctuation.paren.call-end}) `;`{punctuation.terminator}?
+    ;
+
 
 paragraph{meta.para.contents}
     : special-token-escape
@@ -94,6 +103,12 @@ struct-field-defn: IDENTIFIER{entity.name.struct-field} `:`{punctuation.colon} t
 struct-defn: 'struct'{storage.type} IDENTIFIER{entity.name.struct}
     `{`{punctuation.brace}
         struct-field-defn*
+    `}`{punctuation.brace}
+    ;
+
+namespace-defn: 'namespace'{keyword} IDENTIFIER{entity.name.namespace}
+    `{`{punctuation.brace}
+        stmt*
     `}`{punctuation.brace}
     ;
 
@@ -225,6 +240,7 @@ stmt: block-comment
     | struct-defn
     | return-stmt
     | if-stmt
+    | namespace-defn
     | expr `;`{punctuation.terminator}
     | `;`{punctuation.terminator}
     ;

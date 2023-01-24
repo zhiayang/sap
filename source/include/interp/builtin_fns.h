@@ -21,6 +21,9 @@ namespace sap::interp
 
 	namespace builtin
 	{
+		ErrorOr<EvalResult> start_document(Evaluator* ev, std::vector<Value>& args);
+
+
 		ErrorOr<EvalResult> bold1(Evaluator* ev, std::vector<Value>& args);
 		ErrorOr<EvalResult> italic1(Evaluator* ev, std::vector<Value>& args);
 		ErrorOr<EvalResult> bold_italic1(Evaluator* ev, std::vector<Value>& args);
@@ -32,6 +35,7 @@ namespace sap::interp
 		ErrorOr<EvalResult> println(Evaluator* ev, std::vector<Value>& args);
 
 		ErrorOr<EvalResult> load_image(Evaluator* ev, std::vector<Value>& args);
+		ErrorOr<EvalResult> import_file(Evaluator* ev, std::vector<Value>& args);
 		ErrorOr<EvalResult> include_file(Evaluator* ev, std::vector<Value>& args);
 
 		ErrorOr<EvalResult> current_style(Evaluator* ev, std::vector<Value>& args);

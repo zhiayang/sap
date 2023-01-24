@@ -95,6 +95,8 @@ namespace sap::interp
 
 		auto _ = ts->pushTree(builtin_ns);
 
+		define_builtin("start_document", makeParamList(), t_void, &builtin::start_document);
+
 		define_builtin("bold1", makeParamList(Param { .name = "_", .type = t_any }), t_tio, &builtin::bold1);
 		define_builtin("italic1", makeParamList(Param { .name = "_", .type = t_any }), t_tio, &builtin::italic1);
 		define_builtin("bold_italic1", makeParamList(Param { .name = "_", .type = t_any }), t_tio, &builtin::bold_italic1);
@@ -132,6 +134,7 @@ namespace sap::interp
 		        }),
 		    t_tbo, &builtin::load_image);
 
+		define_builtin("import", makeParamList(Param { .name = "1", .type = t_str }), t_tbo, &builtin::import_file);
 		define_builtin("include", makeParamList(Param { .name = "1", .type = t_str }), t_tbo, &builtin::include_file);
 
 		define_builtin("push_style",

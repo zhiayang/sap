@@ -20,7 +20,7 @@ namespace sap::tree
 		auto value_or_err = cs->run(this->call.get());
 
 		if(value_or_err.is_err())
-			error("interp", "evaluation failed: {}", value_or_err.error());
+			value_or_err.error().showAndExit();
 
 		auto value_or_empty = value_or_err.take_value();
 		if(not value_or_empty.hasValue())

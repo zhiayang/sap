@@ -24,6 +24,7 @@ namespace sap::frontend
 
 	constexpr auto KW_PARA_BLOCK = "p";
 	constexpr auto KW_SCRIPT_BLOCK = "script";
+	constexpr auto KW_START_DOCUMENT = "start_document";
 
 	using TT = TokenType;
 	using namespace sap::tree;
@@ -1059,6 +1060,25 @@ namespace sap::frontend
 		return ret;
 	}
 
+	static std::unique_ptr<interp::Block> parse_namespace(Lexer& lexer)
+	{
+		must_expect(lexer, TT::KW_Namespace);
+
+		auto maybe_ns_name = lexer.match(TT::Identifier);
+		if(not maybe_ns_name.has_value())
+			parse_error(lexer.location(), "expected identifier after 'namespace'");
+
+		auto ns_name = maybe_ns_name->text;
+		auto qid = interp::QualifiedId {
+			.parents = { ns_name.str() },
+		};
+
+		auto block = parse_block_or_stmt(lexer, /* braces: */ true);
+		block->target_scope = std::move(qid);
+
+		return block;
+	}
+
 
 
 	static std::unique_ptr<interp::Stmt> parse_stmt(Lexer& lexer)
@@ -1099,6 +1119,11 @@ namespace sap::frontend
 		else if(tok == TT::KW_If)
 		{
 			stmt = parse_if_stmt(lexer);
+			optional_semicolon = true;
+		}
+		else if(tok == TT::KW_Namespace)
+		{
+			stmt = parse_namespace(lexer);
 			optional_semicolon = true;
 		}
 		else if(tok == TT::KW_Return)
@@ -1360,15 +1385,55 @@ namespace sap::frontend
 	}
 
 
+	static std::unique_ptr<tree::ScriptBlock> parse_preamble(Lexer& lexer)
+	{
+		auto _ = LexerModer(lexer, Lexer::Mode::Script);
 
+		auto block = std::make_unique<interp::Block>(lexer.location());
+
+		while(not lexer.eof())
+		{
+			if(lexer.expect(TT::Backslash))
+			{
+				if(not lexer.expect(KW_START_DOCUMENT))
+					parse_error(lexer.location(), "expected '\\{}' in preamble (saw '\\')", KW_START_DOCUMENT);
+
+				auto callee = interp::QualifiedId {
+					.top_level = true,
+					.parents = { "builtin" },
+					.name = KW_START_DOCUMENT,
+				};
+
+				auto ident = std::make_unique<interp::Ident>(lexer.previous().loc);
+				ident->name = std::move(callee);
+
+				block->body.push_back(parse_function_call(lexer, std::move(ident)));
+
+				if(lexer.expect(TT::Semicolon))
+					;
+
+				break;
+			}
+			else
+			{
+				block->body.push_back(parse_stmt(lexer));
+			}
+		}
+
+		auto ret = std::make_unique<tree::ScriptBlock>();
+		ret->body = std::move(block);
+		ret->body->target_scope = interp::QualifiedId { .top_level = true };
+
+		return ret;
+	}
 
 
 	Document parse(zst::str_view filename, zst::str_view contents)
 	{
 		auto lexer = Lexer(filename, contents);
-		Document document {};
+		auto document = Document(parse_preamble(lexer));
 
-		while(true)
+		while(not lexer.eof())
 		{
 			auto objs = parse_top_level(lexer);
 			for(auto& obj : objs)

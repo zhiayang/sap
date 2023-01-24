@@ -115,6 +115,8 @@ namespace sap::interp
 		void setGlobalValue(const Definition* defn, Value val);
 		Value* getGlobalValue(const Definition* defn);
 
+		[[nodiscard]] util::Defer<> temporarilyEnterGlobalScope();
+
 		ErrorOr<std::vector<std::unique_ptr<tree::InlineObject>>> convertValueToText(Value&& value);
 
 		// this is necessary to keep the strings around...

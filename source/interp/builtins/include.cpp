@@ -25,4 +25,18 @@ namespace sap::interp::builtin
 		util::log("included file '{}'", file_path);
 		return EvalResult::ofValue(Value::treeBlockObject(std::move(doc).takeContainer()));
 	}
+
+	ErrorOr<EvalResult> import_file(Evaluator* ev, std::vector<Value>& args)
+	{
+		assert(args.size() == 1);
+
+		auto contents = TRY_VALUE(include_file(ev, args));
+
+		std::vector<Value> aoeu {};
+		aoeu.push_back(std::move(contents));
+
+		TRY(output_at_current_tbo(ev, aoeu));
+
+		return EvalResult::ofVoid();
+	}
 }

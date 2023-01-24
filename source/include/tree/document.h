@@ -18,7 +18,7 @@ namespace sap::tree
 
 	struct Document
 	{
-		Document();
+		explicit Document(std::unique_ptr<tree::ScriptBlock> preamble);
 
 		void addObject(std::unique_ptr<BlockObject> obj);
 		void layout(interp::Interpreter* cs, layout::Document* layout_doc);
