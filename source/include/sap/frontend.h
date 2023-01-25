@@ -83,9 +83,12 @@ namespace sap::frontend
 		KW_Enum,
 		KW_True,
 		KW_False,
+		KW_While,
+		KW_Break,
 		KW_Struct,
 		KW_Return,
 		KW_Import,
+		KW_Continue,
 		KW_Namespace,
 	};
 

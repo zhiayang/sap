@@ -482,12 +482,18 @@ namespace sap::frontend
 				tt = TT::KW_True;
 			else if(text == "false")
 				tt = TT::KW_False;
+			else if(text == "break")
+				tt = TT::KW_Break;
+			else if(text == "while")
+				tt = TT::KW_While;
 			else if(text == "struct")
 				tt = TT::KW_Struct;
 			else if(text == "return")
 				tt = TT::KW_Return;
 			else if(text == "import")
 				tt = TT::KW_Import;
+			else if(text == "continue")
+				tt = TT::KW_Continue;
 			else if(text == "namespace")
 				tt = TT::KW_Namespace;
 

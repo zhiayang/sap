@@ -427,6 +427,37 @@ namespace sap::interp
 		mutable const Type* return_value_type;
 	};
 
+	struct BreakStmt : Stmt
+	{
+		explicit BreakStmt(Location loc) : Stmt(std::move(loc)) { }
+
+		virtual ErrorOr<EvalResult> evaluate_impl(Evaluator* ev) const override;
+		virtual ErrorOr<TCResult> typecheck_impl(Typechecker* ts, const Type* infer = nullptr, bool moving = false)
+		    const override;
+	};
+
+	struct ContinueStmt : Stmt
+	{
+		explicit ContinueStmt(Location loc) : Stmt(std::move(loc)) { }
+
+		virtual ErrorOr<EvalResult> evaluate_impl(Evaluator* ev) const override;
+		virtual ErrorOr<TCResult> typecheck_impl(Typechecker* ts, const Type* infer = nullptr, bool moving = false)
+		    const override;
+	};
+
+	struct WhileLoop : Stmt
+	{
+		explicit WhileLoop(Location loc) : Stmt(std::move(loc)) { }
+
+		virtual ErrorOr<EvalResult> evaluate_impl(Evaluator* ev) const override;
+		virtual ErrorOr<TCResult> typecheck_impl(Typechecker* ts, const Type* infer = nullptr, bool moving = false)
+		    const override;
+
+		std::unique_ptr<Expr> condition;
+		std::unique_ptr<Block> body;
+	};
+
+
 
 	struct ImportStmt : Stmt
 	{

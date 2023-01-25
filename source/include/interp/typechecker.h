@@ -86,6 +86,9 @@ namespace sap::interp
 		bool isCurrentlyInFunction() const;
 		const Type* getCurrentFunctionReturnType() const;
 
+		[[nodiscard]] util::Defer<> enterLoopBody();
+		bool isCurrentlyInLoopBody() const;
+
 		bool canImplicitlyConvert(const Type* from, const Type* to) const;
 
 	private:
@@ -99,5 +102,6 @@ namespace sap::interp
 		std::unordered_map<const Type*, const Definition*> m_type_definitions;
 
 		std::vector<Location> m_location_stack;
+		size_t m_loop_body_nesting;
 	};
 }

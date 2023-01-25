@@ -1047,6 +1047,25 @@ namespace sap::frontend
 		return if_stmt;
 	}
 
+	static std::unique_ptr<interp::WhileLoop> parse_while_loop(Lexer& lexer)
+	{
+		auto loc = lexer.location();
+		must_expect(lexer, TT::KW_While);
+
+		if(not lexer.expect(TT::LParen))
+			parse_error(lexer.location(), "expected '(' after 'while'");
+
+		auto loop = std::make_unique<interp::WhileLoop>(loc);
+
+		loop->condition = parse_expr(lexer);
+		if(not lexer.expect(TT::RParen))
+			parse_error(lexer.location(), "expected ')' after condition");
+
+		loop->body = parse_block_or_stmt(lexer);
+		return loop;
+	}
+
+
 	static std::unique_ptr<interp::ReturnStmt> parse_return_stmt(Lexer& lexer)
 	{
 		auto loc = lexer.location();
@@ -1143,6 +1162,11 @@ namespace sap::frontend
 			stmt = parse_namespace(lexer);
 			optional_semicolon = true;
 		}
+		else if(tok == TT::KW_While)
+		{
+			stmt = parse_while_loop(lexer);
+			optional_semicolon = true;
+		}
 		else if(tok == TT::KW_Return)
 		{
 			stmt = parse_return_stmt(lexer);
@@ -1150,6 +1174,16 @@ namespace sap::frontend
 		else if(tok == TT::KW_Import)
 		{
 			stmt = parse_import_stmt(lexer);
+		}
+		else if(tok == TT::KW_Continue)
+		{
+			lexer.next();
+			stmt = std::make_unique<interp::ContinueStmt>(tok.loc);
+		}
+		else if(tok == TT::KW_Break)
+		{
+			lexer.next();
+			stmt = std::make_unique<interp::BreakStmt>(tok.loc);
 		}
 		else
 		{

@@ -12,6 +12,7 @@ namespace sap::interp
 	Typechecker::Typechecker(Interpreter* interp)
 	    : m_interp(interp)
 	    , m_top(new DefnTree(this, "__top_level", /* parent: */ nullptr))
+	    , m_loop_body_nesting(0)
 	{
 		this->pushTree(m_top.get()).cancel();
 	}
@@ -237,4 +238,17 @@ namespace sap::interp
 		m_expected_return_types.pop_back();
 	}
 
+
+	[[nodiscard]] util::Defer<> Typechecker::enterLoopBody()
+	{
+		m_loop_body_nesting++;
+		return util::Defer([this]() {
+			m_loop_body_nesting--;
+		});
+	}
+
+	bool Typechecker::isCurrentlyInLoopBody() const
+	{
+		return m_loop_body_nesting > 0;
+	}
 }

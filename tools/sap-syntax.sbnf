@@ -216,14 +216,31 @@ expr: binop-expr;
 
 return-stmt: `return`{keyword.return} expr? `;`{punctuation.terminator};
 
-if-stmt:
+block-stmt: (`{`{punctuation.brace.else-start} '\s*' stmt* `}`{punctuation.brace.else-end} | stmt);
+
+else-stmt{meta.control-flow.else-stmt}:
+	`else`{keyword.else} block-stmt;
+
+if-stmt{meta.control-flow.if-stmt}:
 	`if`{keyword.if} `(`{punctuation.paren.if-start} expr `)`{punctuation.paren.if-end}
-	(stmt | `{`{punctuation.brace} stmt* `}`{punctuation.brace})
-	(`else`{keyword.else} stmt)?
+	block-stmt
+	;
+
+while-loop:
+	`while`{keyword.while} `(`{punctuation.paren.while-start} expr `)`{punctuation.paren.while-end}
+	block-stmt
 	;
 
 import-stmt:
-	`import`{keyword} string-literal `;`{punctuation.terminator}
+	`import`{keyword.import} string-literal `;`{punctuation.terminator}
+	;
+
+break-stmt:
+	`break`{keyword.break} `;`{punctuation.terminator}
+	;
+
+continue-stmt:
+	`continue`{keyword.continue} `;`{punctuation.terminator}
 	;
 
 stmt: block-comment
@@ -233,8 +250,12 @@ stmt: block-comment
 	| struct-defn
 	| return-stmt
 	| if-stmt
+	| else-stmt
+	| break-stmt
+	| continue-stmt
 	| import-stmt
 	| namespace-defn
+	| while-loop
 	| expr `;`{punctuation.terminator}
 	| `;`{punctuation.terminator}
 	;

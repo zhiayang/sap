@@ -4,6 +4,12 @@ import "std.sap";
 
 let font_family = builtin::find_font_family(["Source Serif 4", "XCharter", "Times New Roman", "serif"]);
 
+var k = 0;
+while(k < 10)
+{
+	builtin::println(f"k = {k}");
+	k += 1;
+}
 
 let settings = builtin::DocumentSettings {
 	.font_size = 12pt,
@@ -13,6 +19,7 @@ let settings = builtin::DocumentSettings {
 	.paragraph_spacing = 1em,
 	.margins = { .left = 2cm, .right = 2cm, .top = 2cm, .bottom = 2cm },
 };
+
 
 \start_document(*settings);
 
