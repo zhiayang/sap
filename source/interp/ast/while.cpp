@@ -30,7 +30,16 @@ namespace sap::interp
 			if(not loop_cond)
 				break;
 
-			TRY(this->body->evaluate(ev));
+			auto val = TRY(this->body->evaluate(ev));
+			if(not val.isNormal())
+			{
+				if(val.isReturn())
+					return Ok(std::move(val));
+				else if(val.isLoopBreak())
+					break;
+				else if(val.isLoopContinue())
+					continue;
+			}
 		} while(loop_cond);
 
 		return EvalResult::ofVoid();

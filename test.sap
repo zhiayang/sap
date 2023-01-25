@@ -5,10 +5,17 @@ import "std.sap";
 let font_family = builtin::find_font_family(["Source Serif 4", "XCharter", "Times New Roman", "serif"]);
 
 var k = 0;
-while(k < 10)
+while(k < 20)
 {
-	builtin::println(f"k = {k}");
 	k += 1;
+
+	if(k % 2 == 0)
+		continue;
+
+	builtin::println(f"k = {k}");
+
+	if(k == 17)
+		break;
 }
 
 let settings = builtin::DocumentSettings {
