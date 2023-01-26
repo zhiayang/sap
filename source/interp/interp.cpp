@@ -28,6 +28,19 @@ namespace sap::interp
 		defineBuiltins(this, m_typechecker->top()->lookupOrDeclareNamespace("builtin"));
 	}
 
+	void Interpreter::addHookBlock(const HookBlock* block)
+	{
+		m_hook_blocks[block->phase].push_back(block);
+	}
+
+	ErrorOr<void> Interpreter::runHooks()
+	{
+		for(auto* blk : m_hook_blocks[m_current_phase])
+			TRY(blk->evaluate(&this->evaluator()));
+
+		return Ok();
+	}
+
 	zst::byte_span Interpreter::loadFile(zst::str_view filename)
 	{
 		auto file = util::readEntireFile(filename.str());

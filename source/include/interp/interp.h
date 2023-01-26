@@ -46,11 +46,15 @@ namespace sap::interp
 		ProcessingPhase currentPhase() const { return m_current_phase; }
 		void setCurrentPhase(ProcessingPhase phase) { m_current_phase = phase; }
 
+		void addHookBlock(const HookBlock* block);
+		ErrorOr<void> runHooks();
+
 	private:
 		std::unique_ptr<Typechecker> m_typechecker;
 		std::unique_ptr<Evaluator> m_evaluator;
 
 		ProcessingPhase m_current_phase;
+		util::hashmap<ProcessingPhase, std::vector<const HookBlock*>> m_hook_blocks;
 
 		std::vector<zst::unique_span<uint8_t[]>> m_file_contents;
 

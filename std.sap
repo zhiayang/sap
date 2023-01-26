@@ -15,14 +15,18 @@ namespace std
 
 	fn centre(blk: Block) -> Block
 	{
-		let ret = builtin::apply_style(builtin::Style {
+		return builtin::apply_style(builtin::Style {
 			.alignment = builtin::Alignment::Centred,
 		}, *blk);
-
-		return ret;
 	}
 
-	var g_section_counter: int = 0;
+	struct Section
+	{
+		num: int;
+		name: string;
+	};
+
+	var g_sections: [Section] = [];
 
 	fn section(name: string) -> void
 	{
@@ -30,10 +34,16 @@ namespace std
 			.font_size = 2em,
 		}, builtin::make_line(builtin::make_text(name)));
 
+		let the_section = Section {
+			.num = 1 + g_sections.size(),
+			.name = name
+		};
+
 		let counter_tbo = std::style(builtin::Style {
 			.alignment = builtin::Alignment::Left,
-		}, builtin::make_line(builtin::make_text(f"{1 + g_section_counter}")));
-		g_section_counter += 1;
+		}, builtin::make_line(builtin::make_text(f"{the_section.num}")));
+
+		g_sections += [the_section];
 
 		var tmp = builtin::current_layout_position();
 		tmp.y += 2em;
@@ -44,15 +54,38 @@ namespace std
 
 		builtin::output_at_position(pos, *counter_tbo);
 	}
+
+	fn output_table_of_contents()
+	{
+		if(builtin::state().layout_pass == 1)
+		{
+			builtin::request_layout();
+			return;
+		}
+
+		var i = 0;
+		while(i < g_sections.size())
+		{
+			let s = &g_sections[i];
+			let str = f"{s!.num}. {s!.name}";
+
+			let item = std::style(builtin::Style {
+				.alignment = builtin::Alignment::Left
+			}, builtin::make_paragraph(builtin::make_text(str)));
+
+			builtin::output_at_current(*item);
+			i += 1;
+		}
+
+		# reset the sections, so that they number correctly again.
+		g_sections = [];
+	}
 }
 
 namespace std::paper_size
 {
 	let A4 = builtin::Size2d { .x = 210mm, .y = 297mm };
 }
-
-
-
 
 
 

@@ -28,6 +28,7 @@ namespace sap
 	namespace interp
 	{
 		struct Value;
+		struct GlobalState;
 	}
 }
 
@@ -35,6 +36,17 @@ namespace sap::interp::builtin
 {
 	// BS: builtin struct
 	// BE: builtin enum
+
+	struct BS_State
+	{
+		static constexpr auto name = "State";
+
+		static const Type* type;
+		static std::vector<StructDefn::Field> fields();
+
+		static Value make(Evaluator* ev, GlobalState style);
+		static ErrorOr<GlobalState> unmake(Evaluator* ev, const Value& value);
+	};
 
 	struct BS_Style
 	{

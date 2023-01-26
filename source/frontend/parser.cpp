@@ -26,6 +26,8 @@ namespace sap::frontend
 	constexpr auto KW_SCRIPT_BLOCK = "script";
 	constexpr auto KW_START_DOCUMENT = "start_document";
 
+	constexpr auto KW_PHASE_LAYOUT = "layout";
+	constexpr auto KW_PHASE_RENDER = "render";
 	constexpr auto KW_PHASE_POST = "post";
 
 	using TT = TokenType;
@@ -183,6 +185,23 @@ namespace sap::frontend
 	}
 
 
+	static ProcessingPhase parse_processing_phase(Lexer& lexer)
+	{
+		auto ident = lexer.match(TT::Identifier);
+		if(not ident.has_value())
+			parse_error(lexer.location(), "expected identifier after '@'");
+
+		if(ident->text == KW_PHASE_LAYOUT)
+			return ProcessingPhase::Layout;
+		else if(ident->text == KW_PHASE_POST)
+			return ProcessingPhase::PostLayout;
+		else if(ident->text == KW_PHASE_RENDER)
+			return ProcessingPhase::Render;
+
+		parse_error(lexer.location(), "invalid phase '{}'", ident->text);
+	}
+
+
 
 
 	static int get_front_token_precedence(Lexer& lexer)
@@ -221,11 +240,6 @@ namespace sap::frontend
 	static bool is_right_associative(Lexer& lexer)
 	{
 		return false;
-	}
-
-	static bool is_postfix_unary(Lexer& lexer)
-	{
-		return util::is_one_of(lexer.peek().type, TT::LParen, TT::LSquare, TT::Question, TT::Exclamation, TT::Ellipsis);
 	}
 
 	static bool is_assignment_op(TokenType tok)
@@ -290,6 +304,7 @@ namespace sap::frontend
 	static std::unique_ptr<interp::Stmt> parse_stmt(Lexer& lexer);
 	static std::unique_ptr<interp::Expr> parse_expr(Lexer& lexer);
 	static std::unique_ptr<interp::Expr> parse_unary(Lexer& lexer);
+	static std::unique_ptr<interp::Expr> parse_primary(Lexer& lexer);
 
 
 	static std::pair<interp::QualifiedId, uint32_t> parse_qualified_id(Lexer& lexer)
@@ -373,11 +388,33 @@ namespace sap::frontend
 		return call;
 	}
 
-	static std::unique_ptr<interp::Expr> parse_postfix_unary(Lexer& lexer, std::unique_ptr<interp::Expr> lhs)
+	static std::unique_ptr<interp::Expr> parse_subscript(Lexer& lexer, std::unique_ptr<interp::Expr> lhs)
 	{
+		auto loc = lexer.peek().loc;
+
+		must_expect(lexer, TT::LSquare);
+		auto subscript = parse_expr(lexer);
+
+		if(not lexer.expect(TT::RSquare))
+			parse_error(lexer.location(), "expected ']'");
+
+		auto ret = std::make_unique<interp::SubscriptOp>(loc);
+		ret->array = std::move(lhs);
+		ret->index = std::move(subscript);
+		return ret;
+	}
+
+	static std::unique_ptr<interp::Expr> parse_postfix_unary(Lexer& lexer)
+	{
+		auto lhs = parse_primary(lexer);
+
 		if(lexer.peek() == TT::LParen)
 		{
 			return parse_function_call(lexer, std::move(lhs));
+		}
+		else if(lexer.peek() == TT::LSquare)
+		{
+			return parse_subscript(lexer, std::move(lhs));
 		}
 		else if(auto t = lexer.match(TT::Question); t.has_value())
 		{
@@ -395,8 +432,10 @@ namespace sap::frontend
 		{
 			return std::make_unique<interp::ArraySpreadOp>(t->loc, std::move(lhs));
 		}
-
-		parse_error(lexer.peek().loc, "unexpected '{}' after expression", lexer.peek().text);
+		else
+		{
+			return lhs;
+		}
 	}
 
 	static std::unique_ptr<interp::FunctionCall> parse_ufcs(Lexer& lexer,
@@ -432,12 +471,6 @@ namespace sap::frontend
 			int prec = get_front_token_precedence(lexer);
 			if(prec < prio && not is_right_associative(lexer))
 				return lhs;
-
-			if(is_postfix_unary(lexer))
-			{
-				lhs = parse_postfix_unary(lexer, std::move(lhs));
-				continue;
-			}
 
 			// if we see an assignment, bail without consuming the operator token.
 			if(is_assignment_op(lexer.peek()))
@@ -740,7 +773,7 @@ namespace sap::frontend
 			return ret;
 		}
 
-		return parse_primary(lexer);
+		return parse_postfix_unary(lexer);
 	}
 
 	static std::unique_ptr<interp::Expr> parse_expr(Lexer& lexer)
@@ -1117,6 +1150,17 @@ namespace sap::frontend
 		return block;
 	}
 
+	static std::unique_ptr<interp::HookBlock> parse_hook_block(Lexer& lexer)
+	{
+		must_expect(lexer, TT::At);
+		auto block = std::make_unique<interp::HookBlock>(lexer.location());
+		block->phase = parse_processing_phase(lexer);
+		block->body = parse_block_or_stmt(lexer);
+		return block;
+	}
+
+
+
 
 
 	static std::unique_ptr<interp::Stmt> parse_stmt(Lexer& lexer)
@@ -1177,6 +1221,11 @@ namespace sap::frontend
 		{
 			stmt = parse_import_stmt(lexer);
 		}
+		else if(tok == TT::At)
+		{
+			stmt = parse_hook_block(lexer);
+			optional_semicolon = true;
+		}
 		else if(tok == TT::KW_Continue)
 		{
 			lexer.next();
@@ -1215,13 +1264,7 @@ namespace sap::frontend
 
 		auto phase = ProcessingPhase::Layout;
 		if(lexer.expect(TT::At))
-		{
-			auto ident = lexer.match(TT::Identifier);
-			if(not ident.has_value() || ident->text != KW_PHASE_POST)
-				parse_error(lexer.location(), "expected 'post' after '@'");
-
-			phase = ProcessingPhase::PostLayout;
-		}
+			phase = parse_processing_phase(lexer);
 
 		auto block = std::make_unique<ScriptBlock>(phase);
 
@@ -1270,6 +1313,9 @@ namespace sap::frontend
 		lhs->name = std::move(qid);
 
 		auto phase = ProcessingPhase::Layout;
+
+		if(lexer.expect(TT::At))
+			phase = parse_processing_phase(lexer);
 
 		auto open_paren = lexer.peek();
 		if(open_paren != TT::LParen)

@@ -22,7 +22,7 @@ namespace sap::interp
 	namespace builtin
 	{
 		ErrorOr<EvalResult> start_document(Evaluator* ev, std::vector<Value>& args);
-
+		ErrorOr<EvalResult> request_layout(Evaluator* ev, std::vector<Value>& args);
 
 		ErrorOr<EvalResult> bold1(Evaluator* ev, std::vector<Value>& args);
 		ErrorOr<EvalResult> italic1(Evaluator* ev, std::vector<Value>& args);

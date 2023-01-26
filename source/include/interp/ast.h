@@ -352,6 +352,18 @@ namespace sap::interp
 		bool is_mutable = false;
 	};
 
+	struct SubscriptOp : Expr
+	{
+		explicit SubscriptOp(Location loc) : Expr(std::move(loc)) { }
+
+		virtual ErrorOr<EvalResult> evaluate_impl(Evaluator* ev) const override;
+		virtual ErrorOr<TCResult> typecheck_impl(Typechecker* ts, const Type* infer = nullptr, bool moving = false)
+		    const override;
+
+		std::unique_ptr<Expr> array;
+		std::unique_ptr<Expr> index;
+	};
+
 	struct LengthExpr : Expr
 	{
 		explicit LengthExpr(Location loc) : Expr(std::move(loc)) { }
@@ -471,7 +483,17 @@ namespace sap::interp
 		mutable std::unique_ptr<Block> imported_block;
 	};
 
+	struct HookBlock : Stmt
+	{
+		explicit HookBlock(Location loc) : Stmt(std::move(loc)) { }
 
+		virtual ErrorOr<EvalResult> evaluate_impl(Evaluator* ev) const override;
+		virtual ErrorOr<TCResult> typecheck_impl(Typechecker* ts, const Type* infer = nullptr, bool moving = false)
+		    const override;
+
+		ProcessingPhase phase;
+		std::unique_ptr<Block> body;
+	};
 
 
 

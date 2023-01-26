@@ -128,10 +128,16 @@ namespace sap::tree
 		auto layout_doc = std::make_unique<layout::Document>(layout::fillDefaultSettings(cs, std::move(settings)));
 		cs->evaluator().pushStyle(layout_doc->style());
 
-
+		size_t layout_pass = 0;
 		while(true)
 		{
+			layout_pass += 1;
+			util::log("layout pass: {}", layout_pass);
+
+			cs->evaluator().resetLayoutRequest();
+			cs->evaluator().commenceLayoutPass(layout_pass);
 			cs->setCurrentPhase(ProcessingPhase::Layout);
+			cs->runHooks();
 
 			auto cursor = layout_doc->pageLayout().newCursor();
 			auto objs_or_err = m_container->createLayoutObject(cs, cursor, layout_doc->style());
@@ -139,6 +145,12 @@ namespace sap::tree
 				objs_or_err.error().showAndExit();
 
 			cs->setCurrentPhase(ProcessingPhase::PostLayout);
+			cs->runHooks();
+
+			m_container->evaluateScripts(cs);
+
+			if(cs->evaluator().layoutRequested())
+				continue;
 
 			for(auto& obj : objs_or_err->objects)
 				layout_doc->pageLayout().addObject(std::move(obj));

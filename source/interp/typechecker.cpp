@@ -99,6 +99,9 @@ namespace sap::interp
 		else if(from->isEnum() && from->toEnum()->elementType() == to)
 			return true;
 
+		else if(from->isArray() && from->arrayElement()->isVoid() && to->isArray())
+			return true;
+
 		return false;
 	}
 

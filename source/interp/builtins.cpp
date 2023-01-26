@@ -49,6 +49,8 @@ namespace sap::interp
 
 		define_builtin_struct<builtin::BS_DocumentMargins>(interp);
 		define_builtin_struct<builtin::BS_DocumentSettings>(interp);
+
+		define_builtin_struct<builtin::BS_State>(interp);
 	}
 
 
@@ -86,8 +88,12 @@ namespace sap::interp
 			return std::make_unique<interp::NullLit>(Location::builtin());
 		};
 
+		auto t_opt = [](const PType& t) {
+			return PType::optional(t);
+		};
 
 		auto t_bfont = PType::named(make_builtin_name(builtin::BS_Font::name));
+		auto t_bstate = PType::named(make_builtin_name(builtin::BS_State::name));
 		auto t_bstyle = PType::named(make_builtin_name(builtin::BS_Style::name));
 		auto t_bposition = PType::named(make_builtin_name(builtin::BS_Position::name));
 		auto t_bfontfamily = PType::named(make_builtin_name(builtin::BS_FontFamily::name));
@@ -97,6 +103,24 @@ namespace sap::interp
 			auto ret = std::make_unique<BFD>(Location::builtin(), std::forward<decltype(xs)>(xs)...);
 			ts->addBuiltinDefinition(std::move(ret))->typecheck(ts).expect("builtin decl failed");
 		};
+
+		auto P = [](const char* name, const PType& t, std::unique_ptr<Expr> default_val = nullptr) {
+			return Param { .name = name, .type = t, .default_value = std::move(default_val) };
+		};
+
+		namespace B = builtin;
+
+		// TODO: this is a huge hack!!!!!!!
+		// since we don't have generics, we make this accept 'any'...
+		define_builtin("size", makeParamList(Param { .name = "_", .type = t_any }), t_int,
+		    [](Evaluator* ev, std::vector<Value>& args) -> ErrorOr<EvalResult> {
+			    assert(args.size() == 1);
+			    if(not args[0].isPointer() || !args[0].type()->pointerElement()->isArray())
+				    return ErrMsg(ev, ".size() can only be used on arrays (got {})", args[0].type());
+
+			    return EvalResult::ofValue(Value::integer(checked_cast<int64_t>(args[0].getPointer()->getArray().size())));
+		    });
+
 
 		auto _ = ts->pushTree(builtin_ns);
 
@@ -108,93 +132,63 @@ namespace sap::interp
 		    }),
 		    t_void, &builtin::start_document);
 
-		define_builtin("bold1", makeParamList(Param { .name = "_", .type = t_any }), t_tio, &builtin::bold1);
-		define_builtin("italic1", makeParamList(Param { .name = "_", .type = t_any }), t_tio, &builtin::italic1);
-		define_builtin("bold_italic1", makeParamList(Param { .name = "_", .type = t_any }), t_tio, &builtin::bold_italic1);
+		define_builtin("state", makeParamList(), t_bstate, [](auto* ev, auto& args) {
+			assert(args.size() == 0);
+			return EvalResult::ofValue(builtin::BS_State::make(ev, ev->state()));
+		});
 
-		define_builtin("make_text", makeParamList(Param { .name = "1", .type = PType::variadicArray(t_str) }), t_tio,
-		    &builtin::make_text);
+		define_builtin("bold1", makeParamList(P("_", t_any)), t_tio, &B::bold1);
+		define_builtin("italic1", makeParamList(P("_", t_any)), t_tio, &B::italic1);
+		define_builtin("bold_italic1", makeParamList(P("_", t_any)), t_tio, &B::bold_italic1);
 
-		define_builtin("make_line", makeParamList(Param { .name = "1", .type = PType::variadicArray(t_tio) }), t_tbo,
-		    &builtin::make_line);
+		define_builtin("request_layout", makeParamList(), t_void, &B::request_layout);
 
-		define_builtin("make_paragraph", makeParamList(Param { .name = "1", .type = PType::variadicArray(t_tio) }), t_tbo,
-		    &builtin::make_paragraph);
+		define_builtin("make_text", makeParamList(P("1", PType::variadicArray(t_str))), t_tio, &B::make_text);
+		define_builtin("make_line", makeParamList(P("1", PType::variadicArray(t_tio))), t_tbo, &B::make_line);
+		define_builtin("make_paragraph", makeParamList(P("1", PType::variadicArray(t_tio))), t_tbo, &B::make_paragraph);
 
+		define_builtin("apply_style", makeParamList(P("1", t_bstyle), P("2", t_tio)), t_tio, &B::apply_style_tio);
+		define_builtin("apply_style", makeParamList(P("1", t_bstyle), P("2", t_tbo)), t_tbo, &B::apply_style_tbo);
 
-		define_builtin("apply_style",
-		    makeParamList(                               //
-		        Param { .name = "1", .type = t_bstyle }, //
-		        Param { .name = "2", .type = t_tio }),
-		    t_tio, &builtin::apply_style_tio);
+		define_builtin("load_image", makeParamList(P("1", t_str), P("2", t_length), P("3", t_opt(t_length), make_null())), t_tbo,
+		    &B::load_image);
 
-		define_builtin("apply_style",
-		    makeParamList(                               //
-		        Param { .name = "1", .type = t_bstyle }, //
-		        Param { .name = "2", .type = t_tbo }),
-		    t_tbo, &builtin::apply_style_tbo);
+		define_builtin("include", makeParamList(P("1", t_str)), t_tbo, &B::include_file);
 
-		define_builtin("load_image",
-		    makeParamList(                               //
-		        Param { .name = "1", .type = t_str },    //
-		        Param { .name = "2", .type = t_length }, //
-		        Param {
-		            .name = "3",
-		            .type = PType::optional(t_length),
-		            .default_value = make_null(),
-		        }),
-		    t_tbo, &builtin::load_image);
+		define_builtin("push_style", makeParamList(P("1", t_bstyle)), t_void, &B::push_style);
 
-		define_builtin("include", makeParamList(Param { .name = "1", .type = t_str }), t_tbo, &builtin::include_file);
+		define_builtin("pop_style", makeParamList(), t_bstyle, &B::pop_style);
+		define_builtin("current_style", makeParamList(), t_bstyle, &B::current_style);
 
-		define_builtin("push_style",
-		    makeParamList( //
-		        Param { .name = "1", .type = t_bstyle }),
-		    t_void, &builtin::push_style);
+		define_builtin("current_layout_position", makeParamList(), t_bposition, &B::current_layout_position);
+		define_builtin("set_layout_cursor", makeParamList(P("_", t_bposition)), t_void, &B::set_layout_cursor);
 
-		define_builtin("pop_style", makeParamList(), t_bstyle, &builtin::pop_style);
-		define_builtin("current_style", makeParamList(), t_bstyle, &builtin::current_style);
+		define_builtin("output_at_current", makeParamList(P("obj", t_tio)), t_void, &B::output_at_current_tio);
 
-		define_builtin("current_layout_position", makeParamList(), t_bposition, &builtin::current_layout_position);
-		define_builtin("set_layout_cursor", makeParamList(Param { .name = "_", .type = t_bposition }), t_void,
-		    &builtin::set_layout_cursor);
+		define_builtin("output_at_current", makeParamList(P("obj", t_tbo)), t_bposition, &B::output_at_current_tbo);
 
-		define_builtin("output_at_current", makeParamList(Param { .name = "obj", .type = t_tio }), t_void,
-		    &builtin::output_at_current_tio);
+		define_builtin("output_at_position", makeParamList(P("pos", t_bposition), P("obj", t_tio)), t_void,
+		    &B::output_at_position_tio);
 
-		define_builtin("output_at_current", makeParamList(Param { .name = "obj", .type = t_tbo }), t_bposition,
-		    &builtin::output_at_current_tbo);
-
-		define_builtin("output_at_position",
-		    makeParamList(                                    //
-		        Param { .name = "pos", .type = t_bposition }, //
-		        Param { .name = "obj", .type = t_tio }),
-		    t_void, &builtin::output_at_position_tio);
-
-		define_builtin("output_at_position",
-		    makeParamList(                                    //
-		        Param { .name = "pos", .type = t_bposition }, //
-		        Param { .name = "obj", .type = t_tbo }),
-		    t_void, &builtin::output_at_position_tbo);
+		define_builtin("output_at_position", makeParamList(P("pos", t_bposition), P("obj", t_tbo)), t_void,
+		    &B::output_at_position_tbo);
 
 
-		define_builtin("print", makeParamList(Param { .name = "_", .type = t_any }), t_void, &builtin::print);
-		define_builtin("println", makeParamList(Param { .name = "_", .type = t_any }), t_void, &builtin::println);
+		define_builtin("print", makeParamList(P("_", t_any)), t_void, &B::print);
+		define_builtin("println", makeParamList(P("_", t_any)), t_void, &B::println);
 
-		define_builtin("to_string", makeParamList(Param { .name = "_", .type = t_any }), t_str, &builtin::to_string);
+		define_builtin("to_string", makeParamList(P("_", t_any)), t_str, &B::to_string);
 
 		define_builtin("find_font",
-		    makeParamList(                                                                                    //
-		        Param { .name = "names", .type = PType::array(t_str) },                                       //
-		        Param { .name = "weight", .type = PType::optional(t_int), .default_value = make_null() },     //
-		        Param { .name = "italic", .type = PType::optional(t_bool), .default_value = make_null() },    //
-		        Param { .name = "stretch", .type = PType::optional(t_float), .default_value = make_null() }), //
-		    PType::optional(t_bfont), &builtin::find_font);
+		    makeParamList(                                  //
+		        P("names", PType::array(t_str)),            //
+		        P("weight", t_opt(t_int), make_null()),     //
+		        P("italic", t_opt(t_bool), make_null()),    //
+		        P("stretch", t_opt(t_float), make_null())), //
+		    t_opt(t_bfont), &B::find_font);
 
-		define_builtin("find_font_family",
-		    makeParamList( //
-		        Param { .name = "names", .type = PType::array(t_str) }),
-		    PType::optional(t_bfontfamily), &builtin::find_font_family);
+		define_builtin("find_font_family", makeParamList(P("names", PType::array(t_str))), t_opt(t_bfontfamily),
+		    &B::find_font_family);
 	}
 
 	void defineBuiltins(Interpreter* interp, DefnTree* ns)

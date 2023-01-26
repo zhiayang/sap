@@ -74,6 +74,10 @@ namespace sap::interp
 		{
 			return std::move(value).takeEnumerator();
 		}
+		else if(from_type->isArray() && from_type->arrayElement()->isVoid() && to->isArray())
+		{
+			return Value::array(to->arrayElement(), {});
+		}
 		else
 		{
 			return value;
@@ -200,6 +204,30 @@ namespace sap::interp
 		m_block_context_stack.pop_back();
 	}
 
+	void Evaluator::requestLayout()
+	{
+		m_relayout_requested = true;
+	}
+
+	void Evaluator::resetLayoutRequest()
+	{
+		m_relayout_requested = false;
+	}
+
+	bool Evaluator::layoutRequested() const
+	{
+		return m_relayout_requested;
+	}
+
+	void Evaluator::commenceLayoutPass(size_t pass_num)
+	{
+		m_global_state.layout_pass = pass_num;
+	}
+
+	const GlobalState& Evaluator::state() const
+	{
+		return m_global_state;
+	}
 
 
 

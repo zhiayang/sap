@@ -69,39 +69,6 @@ namespace sap::tree
 	{
 		auto new_cursor = TRY(this->evaluate_scripts(cs));
 		return Ok(LayoutResult::make(new_cursor.value_or(cursor)));
-
-#if 0
-		// steal the parent output context (since we don't actually contain stuff)
-		auto _ = cs->evaluator().pushBlockContext(cursor, this, cs->evaluator().getBlockContext().output_context);
-
-		auto value_or_err = cs->run(this->call.get());
-
-		if(value_or_err.is_err())
-			value_or_err.error().showAndExit();
-
-		auto value_or_empty = value_or_err.take_value();
-		if(not value_or_empty.hasValue())
-			return LayoutResult::make(cursor);
-
-		auto style = cs->evaluator().currentStyle()->extendWith(parent_style);
-		if(value_or_empty.get().isTreeBlockObj())
-		{
-			return m_created_block_objects.emplace_back(std::move(value_or_empty.get()).takeTreeBlockObj())
-			    ->createLayoutObject(cs, std::move(cursor), style);
-		}
-		else
-		{
-			auto tmp = cs->evaluator().convertValueToText(std::move(value_or_empty).take());
-			if(tmp.is_err())
-				error("interp", "convertion to text failed: {}", tmp.error());
-
-			auto objs = tmp.take_value();
-			auto new_para = std::make_unique<Paragraph>();
-			new_para->addObjects(std::move(objs));
-
-			return m_created_block_objects.emplace_back(std::move(new_para))->createLayoutObject(cs, std::move(cursor), style);
-		}
-#endif
 	}
 
 

@@ -17,6 +17,9 @@ namespace sap::tree
 {
 	ErrorOr<void> VertBox::evaluateScripts(interp::Interpreter* cs) const
 	{
+		for(auto& obj : m_objects)
+			TRY(obj->evaluateScripts(cs));
+
 		return Ok();
 	}
 

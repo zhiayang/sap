@@ -18,4 +18,12 @@ namespace sap::interp::builtin
 
 		return EvalResult::ofValue(BS_DocumentSettings::make(ev, std::move(settings)));
 	}
+
+	ErrorOr<EvalResult> request_layout(Evaluator* ev, std::vector<Value>& args)
+	{
+		assert(args.size() == 0);
+
+		ev->requestLayout();
+		return EvalResult::ofVoid();
+	}
 }

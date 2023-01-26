@@ -36,7 +36,6 @@ namespace sap::interp
 	struct Interpreter;
 	struct OutputContext;
 
-
 	struct OutputContext
 	{
 		using TioPtr = std::unique_ptr<tree::InlineObject>;
@@ -95,6 +94,12 @@ namespace sap::interp
 	};
 
 
+	struct GlobalState
+	{
+		size_t layout_pass;
+	};
+
+
 	struct Evaluator
 	{
 		explicit Evaluator(Interpreter* cs);
@@ -129,6 +134,12 @@ namespace sap::interp
 
 		void popBlockContext();
 
+		void requestLayout();
+		void resetLayoutRequest();
+		bool layoutRequested() const;
+
+		void commenceLayoutPass(size_t pass_num);
+		const GlobalState& state() const;
 
 	private:
 		Interpreter* m_interp;
@@ -141,5 +152,8 @@ namespace sap::interp
 		std::vector<Location> m_location_stack;
 
 		std::unordered_map<const Definition*, Value> m_global_values;
+
+		bool m_relayout_requested = false;
+		GlobalState m_global_state {};
 	};
 }

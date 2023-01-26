@@ -4,20 +4,6 @@ import "std.sap";
 
 let font_family = builtin::find_font_family(["Source Serif 4", "XCharter", "Times New Roman", "serif"]);
 
-var k = 0;
-while(k < 20)
-{
-	k += 1;
-
-	if(k % 2 == 0)
-		continue;
-
-	builtin::println(f"k = {k}");
-
-	if(k == 17)
-		break;
-}
-
 let settings = builtin::DocumentSettings {
 	.font_size = 12pt,
 	.font_family = *font_family,
@@ -27,8 +13,13 @@ let settings = builtin::DocumentSettings {
 	.margins = { .left = 2cm, .right = 2cm, .top = 2cm, .bottom = 2cm },
 };
 
-
 \start_document(*settings);
+
+
+
+\std::output_table_of_contents();
+
+
 
 \std::section("hello");
 
@@ -58,6 +49,7 @@ hello \std::style(builtin::Style { .font_size = 15pt }) { world } asdf
 		builtin::output_at_current(*para);
 	}
 }
+
 
 My name is Yoshikage Kira. I'm\builtin::bold_italic1(1 < 2 < 5 > 7)years old. My house is in the northeast section of Morioh,
 where all the villas are, and I am not married. I work as an employee for the Kame Yu department
