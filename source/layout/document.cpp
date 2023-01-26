@@ -103,6 +103,9 @@ namespace sap::tree
 {
 	std::unique_ptr<layout::Document> Document::layout(interp::Interpreter* cs)
 	{
+		// the preamble is only ever run once
+		cs->setCurrentPhase(ProcessingPhase::Preamble);
+
 		if(m_document_start == nullptr)
 			ErrorMessage(&cs->typechecker(), "cannot layout a document with no body").showAndExit();
 
@@ -125,11 +128,23 @@ namespace sap::tree
 		auto layout_doc = std::make_unique<layout::Document>(layout::fillDefaultSettings(cs, std::move(settings)));
 		cs->evaluator().pushStyle(layout_doc->style());
 
-		auto cursor = layout_doc->pageLayout().newCursor();
-		auto objs = m_container->createLayoutObject(cs, cursor, layout_doc->style());
 
-		for(auto& obj : objs.objects)
-			layout_doc->pageLayout().addObject(std::move(obj));
+		while(true)
+		{
+			cs->setCurrentPhase(ProcessingPhase::Layout);
+
+			auto cursor = layout_doc->pageLayout().newCursor();
+			auto objs_or_err = m_container->createLayoutObject(cs, cursor, layout_doc->style());
+			if(objs_or_err.is_err())
+				objs_or_err.error().showAndExit();
+
+			cs->setCurrentPhase(ProcessingPhase::PostLayout);
+
+			for(auto& obj : objs_or_err->objects)
+				layout_doc->pageLayout().addObject(std::move(obj));
+
+			break;
+		}
 
 		return layout_doc;
 	}

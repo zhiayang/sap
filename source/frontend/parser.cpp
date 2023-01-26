@@ -26,6 +26,8 @@ namespace sap::frontend
 	constexpr auto KW_SCRIPT_BLOCK = "script";
 	constexpr auto KW_START_DOCUMENT = "start_document";
 
+	constexpr auto KW_PHASE_POST = "post";
+
 	using TT = TokenType;
 	using namespace sap::tree;
 
@@ -1211,7 +1213,17 @@ namespace sap::frontend
 		auto lm = LexerModer(lexer, Lexer::Mode::Script);
 		must_expect(lexer, KW_SCRIPT_BLOCK);
 
-		auto block = std::make_unique<ScriptBlock>();
+		auto phase = ProcessingPhase::Layout;
+		if(lexer.expect(TT::At))
+		{
+			auto ident = lexer.match(TT::Identifier);
+			if(not ident.has_value() || ident->text != KW_PHASE_POST)
+				parse_error(lexer.location(), "expected 'post' after '@'");
+
+			phase = ProcessingPhase::PostLayout;
+		}
+
+		auto block = std::make_unique<ScriptBlock>(phase);
 
 		std::optional<interp::QualifiedId> target_scope;
 		if(lexer.peek() == TT::ColonColon || lexer.peek() == TT::Identifier)
@@ -1257,11 +1269,13 @@ namespace sap::frontend
 		auto lhs = std::make_unique<interp::Ident>(loc);
 		lhs->name = std::move(qid);
 
+		auto phase = ProcessingPhase::Layout;
+
 		auto open_paren = lexer.peek();
 		if(open_paren != TT::LParen)
 			parse_error(open_paren.loc, "expected '(' after qualified-id in inline script call");
 
-		auto sc = std::make_unique<ScriptCall>();
+		auto sc = std::make_unique<ScriptCall>(phase);
 		sc->call = parse_function_call(lexer, std::move(lhs));
 
 		// check if we have trailing things
@@ -1350,13 +1364,21 @@ namespace sap::frontend
 		// for now, these must be text or calls
 		auto tok = lexer.next();
 		if(tok == TT::Text)
+		{
 			return std::make_unique<Text>(escape_word_text(tok.loc, tok.text));
-
+		}
 		else if(tok == TT::Backslash)
-			return parse_script_object(lexer);
+		{
+			auto next = lexer.peekWithMode(Lexer::Mode::Script);
+			if(next.text == KW_SCRIPT_BLOCK)
+				parse_error(next.loc, "script blocks are not allowed in an inline context");
 
+			return parse_inline_script_call(lexer);
+		}
 		else
+		{
 			parse_error(lexer.location(), "unexpected token '{}' in inline object", tok.text);
+		}
 	}
 
 

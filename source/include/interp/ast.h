@@ -532,6 +532,9 @@ namespace sap::interp
 
 		std::unique_ptr<Expr> initialiser;
 		std::optional<frontend::PType> explicit_type;
+
+	private:
+		mutable bool m_is_global = false;
 	};
 
 	struct FunctionDecl : Declaration

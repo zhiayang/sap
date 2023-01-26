@@ -15,16 +15,22 @@
 
 namespace sap::tree
 {
+	ErrorOr<void> VertBox::evaluateScripts(interp::Interpreter* cs) const
+	{
+		return Ok();
+	}
+
 	auto VertBox::createLayoutObject(interp::Interpreter* cs, layout::PageCursor cursor, const Style* parent_style) const
-	    -> LayoutResult
+	    -> ErrorOr<LayoutResult>
 	{
 		bool is_first = true;
 
 		auto start_cursor = cursor;
 		std::vector<std::unique_ptr<layout::Line>> lines {};
 
+		using TboLayoutResult = interp::OutputContext::TboLayoutResult;
 		auto layout_an_object_please =
-		    [&](BlockObject* obj, std::optional<layout::PageCursor> req_cursor) -> layout::LayoutObject* {
+		    [&](BlockObject* obj, std::optional<layout::PageCursor> req_cursor) -> ErrorOr<TboLayoutResult> {
 			auto cur_style = m_style->useDefaultsFrom(cs->evaluator().currentStyle())->useDefaultsFrom(parent_style);
 			bool should_update_cursor = not req_cursor.has_value();
 
@@ -35,26 +41,25 @@ namespace sap::tree
 			is_first = false;
 
 			std::array<BlockObject*, 1> aoeu { obj };
-			auto [new_cursor, maybe_line] = layout::Line::fromBlockObjects(cs, at_cursor, cur_style, aoeu);
+			auto [new_cursor, maybe_line] = TRY(layout::Line::fromBlockObjects(cs, at_cursor, cur_style, aoeu));
 
 			if(not maybe_line.has_value())
-				return nullptr;
+				return Ok<TboLayoutResult>(cursor, nullptr);
 
 			auto line_ptr = lines.emplace_back(std::move(*maybe_line)).get();
 
 			if(should_update_cursor)
 				cursor = std::move(new_cursor);
 
-			return line_ptr;
+			return Ok<TboLayoutResult>(cursor, line_ptr);
 		};
 
 		auto _ = cs->evaluator().pushBlockContext(cursor, this,
 		    {
-		        .add_block_object = [&](auto obj, auto at_cursor) -> ErrorOr<layout::LayoutObject*> {
+		        .add_block_object = [&](auto obj, auto at_cursor) -> ErrorOr<TboLayoutResult> {
 			        auto ptr = m_created_block_objects.emplace_back(std::move(obj)).get();
 
-			        auto layout_obj_ptr = layout_an_object_please(ptr, std::move(at_cursor));
-			        return Ok(layout_obj_ptr);
+			        return layout_an_object_please(ptr, std::move(at_cursor));
 		        },
 		        .set_layout_cursor = [&](auto new_cursor) -> ErrorOr<void> {
 			        cursor = std::move(new_cursor);
@@ -64,11 +69,11 @@ namespace sap::tree
 
 
 		for(size_t i = 0; i < m_objects.size(); i++)
-			layout_an_object_please(m_objects[i].get(), std::nullopt);
+			TRY(layout_an_object_please(m_objects[i].get(), std::nullopt));
 
 		if(lines.empty())
-			return LayoutResult::make(cursor);
+			return Ok(LayoutResult::make(cursor));
 
-		return LayoutResult::make(cursor, layout::Paragraph::fromLines(cs, start_cursor, std::move(lines)));
+		return Ok(LayoutResult::make(cursor, layout::Paragraph::fromLines(cs, start_cursor, std::move(lines))));
 	}
 }

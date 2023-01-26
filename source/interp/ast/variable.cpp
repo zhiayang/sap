@@ -65,6 +65,8 @@ namespace sap::interp
 			}
 		}());
 
+		m_is_global = not ts->isCurrentlyInFunction();
+
 		return this->declaration->typecheck(ts, the_type.type());
 	}
 
@@ -73,10 +75,10 @@ namespace sap::interp
 		if(this->initialiser != nullptr)
 		{
 			auto value = ev->castValue(TRY_VALUE(this->initialiser->evaluate(ev)), this->get_type());
-			if(ev->frame().callDepth() > 0)
-				ev->frame().setValue(this, std::move(value));
-			else
+			if(m_is_global)
 				ev->setGlobalValue(this, std::move(value));
+			else
+				ev->frame().setValue(this, std::move(value));
 		}
 
 		return EvalResult::ofVoid();

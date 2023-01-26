@@ -17,6 +17,11 @@
 
 namespace sap::tree
 {
+	ErrorOr<void> Paragraph::evaluateScripts(interp::Interpreter* cs) const
+	{
+		return Ok();
+	}
+
 	void Paragraph::evaluate_scripts(interp::Interpreter* cs, std::vector<std::unique_ptr<InlineObject>>& output_vec)
 	{
 		output_vec.reserve(m_contents.size());
@@ -50,10 +55,6 @@ namespace sap::tree
 
 				auto objs = tmp.take_value();
 				output_vec.insert(output_vec.end(), std::move_iterator(objs.begin()), std::move_iterator(objs.end()));
-			}
-			else if(auto iscb = dynamic_cast<tree::ScriptBlock*>(obj.get()); iscb != nullptr)
-			{
-				error("interp", "script block unsupported");
 			}
 			else
 			{

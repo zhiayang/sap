@@ -32,8 +32,13 @@ namespace sap::layout
 
 namespace sap::tree
 {
+	ErrorOr<void> Image::evaluateScripts(interp::Interpreter* cs) const
+	{
+		return Ok();
+	}
+
 	auto Image::createLayoutObject(interp::Interpreter* cs, layout::PageCursor cursor, const Style* parent_style) const
-	    -> LayoutResult
+	    -> ErrorOr<LayoutResult>
 	{
 		auto sz = this->size(cursor);
 
@@ -45,6 +50,6 @@ namespace sap::tree
 		cursor = cursor.newLine(sz.y());
 		cursor = cursor.moveRight(sz.x());
 
-		return LayoutResult::make(cursor, std::move(img));
+		return Ok(LayoutResult::make(cursor, std::move(img)));
 	}
 }

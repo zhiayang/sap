@@ -221,11 +221,13 @@ namespace sap::layout
 		};
 	}
 
-	std::pair<PageCursor, std::optional<std::unique_ptr<Line>>> Line::fromBlockObjects(interp::Interpreter* cs, //
+	ErrorOr<std::pair<PageCursor, std::optional<std::unique_ptr<Line>>>> Line::fromBlockObjects(interp::Interpreter* cs, //
 	    PageCursor cursor,
 	    const Style* style,
 	    std::span<tree::BlockObject*> objs)
 	{
+		using RetTy = std::pair<PageCursor, std::optional<std::unique_ptr<Line>>>;
+
 		auto total_width = std::accumulate(objs.begin(), objs.end(), Length(0), [&cursor](Length a, const auto& b) {
 			return a + b->size(cursor).x();
 		});
@@ -245,7 +247,7 @@ namespace sap::layout
 		Length total_height = 0;
 		for(size_t i = 0; i < objs.size(); i++)
 		{
-			auto layout_objs = objs[i]->createLayoutObject(cs, cursor, style);
+			auto layout_objs = TRY(objs[i]->createLayoutObject(cs, cursor, style));
 			auto new_cursor = layout_objs.cursor;
 
 			if(layout_objs.objects.empty())
@@ -261,14 +263,12 @@ namespace sap::layout
 		}
 
 		if(layout_objects.empty())
-			return { cursor, std::nullopt };
+			return Ok<RetTy>(cursor, std::nullopt);
 
-		return {
-			cursor,
-			std::unique_ptr<Line>(new Line(layout_objects.front()->layoutPosition(), //
-			    Size2d(total_width, total_height),                                   //
-			    style, std::move(layout_objects))),
-		};
+		return Ok<RetTy>(cursor,
+		    std::unique_ptr<Line>(new Line(layout_objects.front()->layoutPosition(), //
+		        Size2d(total_width, total_height),                                   //
+		        style, std::move(layout_objects))));
 	}
 
 	void Line::render(const LayoutBase* layout, std::vector<pdf::Page*>& pages) const

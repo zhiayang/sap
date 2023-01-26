@@ -36,6 +36,16 @@ constexpr inline ssize_t operator-(GlyphId a, GlyphId b)
 
 namespace sap
 {
+	enum class ProcessingPhase
+	{
+		Start,
+		Preamble,
+		Layout,
+		PostLayout,
+		Render,
+	};
+
+
 	struct OwnedImageBitmap;
 	struct ImageBitmap
 	{

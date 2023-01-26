@@ -23,8 +23,7 @@ TODO:
 scripting:
 - x= should be synthesised from x and = if possible (for x in [+, -, *, /, %])
 	- there's a **LOT** of code dupe between binop.cpp and assop.cpp
-- `temporarilyEnterGlobalScope` is a huge hack, ideally variables should know (by themselves, without
-	inspecting the eval environment) whether or not they are globals.
+- unify script handling between ScriptCall and Paragraph::evaluate_scripts
 
 layout:
 - em/en dashes
@@ -50,6 +49,9 @@ void sap::compile(zst::str_view filename)
 	auto document = frontend::parse(filename, file.chars());
 	auto layout_doc = document.layout(&interp);
 
+
+
+	interp.setCurrentPhase(ProcessingPhase::Render);
 	auto out_path = std::filesystem::path(filename.str()).replace_extension(".pdf");
 	auto writer = pdf::Writer(out_path.string());
 	layout_doc->write(&writer);

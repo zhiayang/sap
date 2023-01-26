@@ -44,7 +44,7 @@ namespace sap::layout
 		    bool is_first_line,
 		    bool is_last_line);
 
-		static std::pair<PageCursor, std::optional<std::unique_ptr<Line>>> fromBlockObjects(interp::Interpreter* cs,
+		static ErrorOr<std::pair<PageCursor, std::optional<std::unique_ptr<Line>>>> fromBlockObjects(interp::Interpreter* cs,
 		    PageCursor cursor,
 		    const Style* style,
 		    std::span<tree::BlockObject*> objs);

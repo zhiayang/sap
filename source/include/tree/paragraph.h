@@ -88,8 +88,10 @@ namespace sap::tree
 		void addObjects(std::vector<std::unique_ptr<InlineObject>> obj);
 
 		virtual Size2d size(const layout::PageCursor&) const override;
-		virtual LayoutResult createLayoutObject(interp::Interpreter* cs, layout::PageCursor cursor, const Style* parent_style)
-		    const override;
+		virtual ErrorOr<void> evaluateScripts(interp::Interpreter* cs) const override;
+		virtual ErrorOr<LayoutResult> createLayoutObject(interp::Interpreter* cs,
+		    layout::PageCursor cursor,
+		    const Style* parent_style) const override;
 
 		std::vector<std::unique_ptr<InlineObject>>& contents() { return m_contents; }
 		const std::vector<std::unique_ptr<InlineObject>>& contents() const { return m_contents; }

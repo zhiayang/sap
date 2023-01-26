@@ -65,7 +65,7 @@ namespace sap::tree
 	}
 
 	auto Paragraph::createLayoutObject(interp::Interpreter* cs, layout::PageCursor cursor, const Style* parent_style) const
-	    -> LayoutResult
+	    -> ErrorOr<LayoutResult>
 	{
 		std::vector<std::unique_ptr<InlineObject>> para_objects {};
 
@@ -80,7 +80,7 @@ namespace sap::tree
 		const_cast<Paragraph*>(this)->processWordSeparators();
 
 		if(m_contents.empty())
-			return LayoutResult::make(cursor);
+			return Ok(LayoutResult::make(cursor));
 
 		auto style = parent_style->extendWith(this->style());
 
@@ -170,6 +170,6 @@ namespace sap::tree
 		auto layout_para = std::unique_ptr<layout::Paragraph>(new layout::Paragraph(para_pos2, para_size,
 		    std::move(layout_lines)));
 
-		return LayoutResult::make(cursor, std::move(layout_para));
+		return Ok(LayoutResult::make(cursor, std::move(layout_para)));
 	}
 }

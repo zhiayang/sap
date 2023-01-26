@@ -17,7 +17,10 @@ namespace sap::interp
 {
 	extern void defineBuiltins(Interpreter* interp, DefnTree* builtin_ns);
 
-	Interpreter::Interpreter() : m_typechecker(new Typechecker(this)), m_evaluator(new Evaluator(this))
+	Interpreter::Interpreter()
+	    : m_typechecker(new Typechecker(this))
+	    , m_evaluator(new Evaluator(this))
+	    , m_current_phase(ProcessingPhase::Start)
 	{
 		m_typechecker->pushLocation(Location::builtin()).cancel();
 		m_evaluator->pushLocation(Location::builtin()).cancel();

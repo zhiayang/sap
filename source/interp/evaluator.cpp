@@ -125,17 +125,6 @@ namespace sap::interp
 		});
 	}
 
-	util::Defer<> Evaluator::temporarilyEnterGlobalScope()
-	{
-		m_stack_frames.push_back(std::unique_ptr<StackFrame>(new StackFrame(this, //
-		    m_stack_frames.back().get(), /* depth: */ 0)));
-
-		return util::Defer<>([this]() {
-			this->popFrame();
-		});
-	}
-
-
 	void Evaluator::popFrame()
 	{
 		assert(not m_stack_frames.empty());

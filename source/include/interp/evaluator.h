@@ -43,7 +43,8 @@ namespace sap::interp
 		using LayoutInlineObjectFn = std::function<ErrorOr<void>(TioPtr)>;
 
 		using TboPtr = std::unique_ptr<tree::BlockObject>;
-		using LayoutBlockObjectFn = std::function<ErrorOr<layout::LayoutObject*>(TboPtr, std::optional<layout::PageCursor>)>;
+		using TboLayoutResult = std::pair<layout::PageCursor, layout::LayoutObject*>;
+		using LayoutBlockObjectFn = std::function<ErrorOr<TboLayoutResult>(TboPtr, std::optional<layout::PageCursor>)>;
 
 		using SetLayoutCursorFn = std::function<ErrorOr<void>(layout::PageCursor)>;
 
@@ -114,8 +115,6 @@ namespace sap::interp
 		bool isGlobalValue(const Definition* defn) const;
 		void setGlobalValue(const Definition* defn, Value val);
 		Value* getGlobalValue(const Definition* defn);
-
-		[[nodiscard]] util::Defer<> temporarilyEnterGlobalScope();
 
 		ErrorOr<std::vector<std::unique_ptr<tree::InlineObject>>> convertValueToText(Value&& value);
 

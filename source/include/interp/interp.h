@@ -43,9 +43,14 @@ namespace sap::interp
 		std::u32string& keepStringAlive(zst::wstr_view str);
 		std::string& keepStringAlive(zst::str_view str);
 
+		ProcessingPhase currentPhase() const { return m_current_phase; }
+		void setCurrentPhase(ProcessingPhase phase) { m_current_phase = phase; }
+
 	private:
 		std::unique_ptr<Typechecker> m_typechecker;
 		std::unique_ptr<Evaluator> m_evaluator;
+
+		ProcessingPhase m_current_phase;
 
 		std::vector<zst::unique_span<uint8_t[]>> m_file_contents;
 

@@ -11,12 +11,34 @@
 
 namespace sap::interp::builtin
 {
+	ErrorOr<EvalResult> set_layout_cursor(Evaluator* ev, std::vector<Value>& args)
+	{
+		assert(args.size() == 1);
+
+		auto& blk_context = ev->getBlockContext();
+		auto fn = blk_context.output_context.set_layout_cursor;
+		if(not fn.has_value())
+			return ErrMsg(ev, "cannot set layout cursor in this context");
+
+		auto user_pos = TRY(BS_Position::unmake(ev, args[0]));
+		auto cursor = blk_context.cursor.moveToPosition(user_pos);
+		TRY((*fn)(cursor));
+
+		return EvalResult::ofVoid();
+	}
+
+	ErrorOr<EvalResult> current_layout_position(Evaluator* ev, std::vector<Value>& args)
+	{
+		assert(args.size() == 0);
+		return EvalResult::ofValue(BS_Position::make(ev, ev->getBlockContext().cursor_ref->position()));
+	}
+
+
+
 	ErrorOr<EvalResult> output_at_current_tio(Evaluator* ev, std::vector<Value>& args)
 	{
 		assert(args.size() == 1);
 		assert(args[0].isTreeInlineObj());
-
-		auto _ = ev->temporarilyEnterGlobalScope();
 
 		auto& tio_output_fn = ev->getBlockContext().output_context.add_inline_object;
 		if(not tio_output_fn.has_value())
@@ -34,13 +56,11 @@ namespace sap::interp::builtin
 		assert(args.size() == 1);
 		assert(args[0].isTreeBlockObj());
 
-		auto _ = ev->temporarilyEnterGlobalScope();
-
 		auto& tbo_output_fn = ev->getBlockContext().output_context.add_block_object;
 		if(not tbo_output_fn.has_value())
 			return ErrMsg(ev, "block object not allowed in this context");
 
-		auto obj = TRY((*tbo_output_fn)(std::move(args[0]).takeTreeBlockObj(), std::nullopt));
+		auto [_, obj] = TRY((*tbo_output_fn)(std::move(args[0]).takeTreeBlockObj(), std::nullopt));
 
 		auto pos = obj != nullptr //
 		             ? obj->layoutPosition()
@@ -63,8 +83,6 @@ namespace sap::interp::builtin
 		assert(args.size() == 2);
 		assert(args[1].isTreeBlockObj());
 
-		auto _ = ev->temporarilyEnterGlobalScope();
-
 		auto& blk_context = ev->getBlockContext();
 		auto& tbo_output_fn = blk_context.output_context.add_block_object;
 		if(not tbo_output_fn.has_value())
@@ -74,7 +92,7 @@ namespace sap::interp::builtin
 		auto user_pos = TRY(BS_Position::unmake(ev, args[0]));
 		auto cursor = blk_context.cursor.moveToPosition(user_pos);
 
-		(*tbo_output_fn)(std::move(args[1]).takeTreeBlockObj(), std::move(cursor));
+		TRY((*tbo_output_fn)(std::move(args[1]).takeTreeBlockObj(), std::move(cursor)));
 
 		return EvalResult::ofVoid();
 	}

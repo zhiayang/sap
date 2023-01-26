@@ -28,23 +28,6 @@ namespace sap::tree
 	/*
 	    This defines the main tree structure for the entire system. This acts as the "AST" of the entire
 	    document, and is what the metaprogram will traverse/manipulate (in the future).
-
-	    Borrowing a little terminology from CSS, we have InlineObjects, FloatObjects, and BlockObjects.
-	    Inline objects are simple -- they are words, maths expressions, or anything that should be laid
-	    out "inline" within a paragraph.
-
-	    Float objects and Block objects are similar, except that floats can be reordered (ie. the float
-	    environment in LaTeX), while blocks cannot. Inline objects can only appear inside a float or
-	    a block, and not at the top level.
-
-	    We roughly follow the hierarchical layout of a document, starting with the top level Document,
-	    containing some DocumentObjects, each being either a "tangible" object like a float (eg. image)
-	    or block (eg. paragraph), or an "intangible" one like a script block.
-
-	    // TODO:
-	    for now, we do not handle paging, since that is only handled after layout. To correctly support
-	    post-layout processing by the metaprogram, paging information needs to be backfed into this tree
-	    after layout.
 	*/
 
 	struct LayoutResult
@@ -83,8 +66,10 @@ namespace sap::tree
 	{
 		virtual ~BlockObject() = 0;
 
-		virtual LayoutResult createLayoutObject(interp::Interpreter* cs, layout::PageCursor cursor, const Style* parent_style)
-		    const = 0;
+		virtual ErrorOr<void> evaluateScripts(interp::Interpreter* cs) const = 0;
+		virtual ErrorOr<LayoutResult> createLayoutObject(interp::Interpreter* cs,
+		    layout::PageCursor cursor,
+		    const Style* parent_style) const = 0;
 
 		Size2d raw_size() const { return m_size; }
 		virtual Size2d size(const layout::PageCursor&) const { return m_size; }
@@ -98,26 +83,39 @@ namespace sap::tree
 	    inheriting both of them. We want this hierarchy because script blocks and calls can
 	    appear both at the top-level (with blocks or floats), and within blocks/floats as well.
 	*/
-	struct ScriptObject : InlineObject, BlockObject
+	struct ScriptObject : BlockObject
 	{
+		explicit ScriptObject(ProcessingPhase phase) : m_run_phase(phase) { }
+		ProcessingPhase runPhase() const { return m_run_phase; }
+
+	protected:
+		ProcessingPhase m_run_phase = ProcessingPhase::Layout;
 	};
 
 	struct ScriptBlock : ScriptObject
 	{
-		virtual LayoutResult createLayoutObject(interp::Interpreter* cs, layout::PageCursor cursor, const Style* parent_style)
-		    const override;
+		explicit ScriptBlock(ProcessingPhase phase);
+
+		virtual ErrorOr<void> evaluateScripts(interp::Interpreter* cs) const override;
+		virtual ErrorOr<LayoutResult> createLayoutObject(interp::Interpreter* cs,
+		    layout::PageCursor cursor,
+		    const Style* parent_style) const override;
 
 		std::unique_ptr<interp::Block> body;
 	};
 
-	struct ScriptCall : ScriptObject
+	struct ScriptCall : InlineObject, ScriptObject
 	{
-		virtual LayoutResult createLayoutObject(interp::Interpreter* cs, layout::PageCursor cursor, const Style* parent_style)
-		    const override;
+		explicit ScriptCall(ProcessingPhase phase);
+
+		virtual ErrorOr<void> evaluateScripts(interp::Interpreter* cs) const override;
+		virtual ErrorOr<LayoutResult> createLayoutObject(interp::Interpreter* cs,
+		    layout::PageCursor cursor,
+		    const Style* parent_style) const override;
 
 		std::unique_ptr<interp::FunctionCall> call;
 
 	private:
-		mutable std::vector<std::unique_ptr<BlockObject>> m_created_block_objects;
+		ErrorOr<std::optional<layout::PageCursor>> evaluate_scripts(interp::Interpreter* cs) const;
 	};
 }
