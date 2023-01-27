@@ -28,6 +28,8 @@ namespace sap::tree
 		void addObject(std::unique_ptr<BlockObject> obj);
 		std::unique_ptr<layout::Document> layout(interp::Interpreter* cs);
 
+		bool haveDocStart() const { return m_document_start != nullptr; }
+
 		std::unique_ptr<tree::VertBox> takeContainer() &&;
 		std::unique_ptr<interp::Block> takePreamble() &&;
 		std::unique_ptr<interp::FunctionCall> takeDocStart() &&;

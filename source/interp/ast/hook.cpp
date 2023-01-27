@@ -9,6 +9,9 @@ namespace sap::interp
 {
 	ErrorOr<TCResult> HookBlock::typecheck_impl(Typechecker* ts, const Type* infer, bool moving) const
 	{
+		if(ts->isCurrentlyInFunction())
+			return ErrMsg(ts, "hook blocks can only appear the top level");
+
 		auto ret = TRY(this->body->typecheck(ts, infer, moving));
 		ts->interpreter()->addHookBlock(this);
 

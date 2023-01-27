@@ -301,7 +301,7 @@ namespace sap::frontend
 	}
 
 
-	static std::unique_ptr<interp::Stmt> parse_stmt(Lexer& lexer);
+	static std::unique_ptr<interp::Stmt> parse_stmt(Lexer& lexer, bool is_top_level);
 	static std::unique_ptr<interp::Expr> parse_expr(Lexer& lexer);
 	static std::unique_ptr<interp::Expr> parse_unary(Lexer& lexer);
 	static std::unique_ptr<interp::Expr> parse_primary(Lexer& lexer);
@@ -870,7 +870,7 @@ namespace sap::frontend
 		parse_error(lexer.location(), "invalid start of type specifier '{}'", lexer.peek().text);
 	}
 
-	static std::unique_ptr<interp::VariableDefn> parse_var_defn(Lexer& lexer)
+	static std::unique_ptr<interp::VariableDefn> parse_var_defn(Lexer& lexer, bool is_top_level)
 	{
 		auto kw = lexer.next();
 		assert(kw == TT::KW_Let || kw == TT::KW_Var);
@@ -890,7 +890,7 @@ namespace sap::frontend
 			initialiser = parse_expr(lexer);
 
 		return std::make_unique<interp::VariableDefn>(kw.loc, maybe_name->str(), /* is_mutable: */ kw == TT::KW_Var,
-		    std::move(initialiser), std::move(explicit_type));
+		    /* is_global: */ is_top_level, std::move(initialiser), std::move(explicit_type));
 	}
 
 	static interp::FunctionDecl::Param parse_param(Lexer& lexer)
@@ -916,20 +916,25 @@ namespace sap::frontend
 		};
 	}
 
-	static std::unique_ptr<interp::Block> parse_block_or_stmt(Lexer& lexer, bool mandatory_braces = false)
+	static std::unique_ptr<interp::Block> parse_block_or_stmt(Lexer& lexer, bool is_top_level, bool mandatory_braces)
 	{
 		auto block = std::make_unique<interp::Block>(lexer.location());
 		if(lexer.expect(TT::LBrace))
 		{
 			while(not lexer.expect(TT::RBrace))
-				block->body.push_back(parse_stmt(lexer));
+			{
+				if(lexer.expect(TT::Semicolon))
+					continue;
+
+				block->body.push_back(parse_stmt(lexer, is_top_level));
+			}
 		}
 		else
 		{
 			if(mandatory_braces)
 				parse_error(lexer.location(), "expected '{' to begin a block");
 
-			block->body.push_back(parse_stmt(lexer));
+			block->body.push_back(parse_stmt(lexer, is_top_level));
 		}
 
 		return block;
@@ -967,7 +972,7 @@ namespace sap::frontend
 		if(lexer.peek() != TT::LBrace)
 			parse_error(lexer.location(), "expected '{' to begin function body");
 
-		defn->body = parse_block_or_stmt(lexer);
+		defn->body = parse_block_or_stmt(lexer, /* is_top_level: */ false, /* braces: */ true);
 		return defn;
 	}
 
@@ -1074,10 +1079,10 @@ namespace sap::frontend
 		if(not lexer.expect(TT::RParen))
 			parse_error(lexer.location(), "expected ')' after condition");
 
-		if_stmt->if_body = parse_block_or_stmt(lexer);
+		if_stmt->if_body = parse_block_or_stmt(lexer, /* is_top_level: */ false, /* braces: */ false);
 
 		if(lexer.expect(TT::KW_Else))
-			if_stmt->else_body = parse_block_or_stmt(lexer);
+			if_stmt->else_body = parse_block_or_stmt(lexer, /* is_top_level: */ false, /* braces: */ false);
 
 		return if_stmt;
 	}
@@ -1096,7 +1101,7 @@ namespace sap::frontend
 		if(not lexer.expect(TT::RParen))
 			parse_error(lexer.location(), "expected ')' after condition");
 
-		loop->body = parse_block_or_stmt(lexer);
+		loop->body = parse_block_or_stmt(lexer, /* is_top_level: */ false, /* braces: */ false);
 		return loop;
 	}
 
@@ -1144,7 +1149,7 @@ namespace sap::frontend
 		qid.parents.push_back(std::move(qid.name));
 		qid.name.clear();
 
-		auto block = parse_block_or_stmt(lexer, /* braces: */ true);
+		auto block = parse_block_or_stmt(lexer, /* is_top_level: */ true, /* braces: */ false);
 		block->target_scope = std::move(qid);
 
 		return block;
@@ -1155,7 +1160,7 @@ namespace sap::frontend
 		must_expect(lexer, TT::At);
 		auto block = std::make_unique<interp::HookBlock>(lexer.location());
 		block->phase = parse_processing_phase(lexer);
-		block->body = parse_block_or_stmt(lexer);
+		block->body = parse_block_or_stmt(lexer, /* is_top_level: */ false, /* braces: */ false);
 		return block;
 	}
 
@@ -1163,7 +1168,7 @@ namespace sap::frontend
 
 
 
-	static std::unique_ptr<interp::Stmt> parse_stmt(Lexer& lexer)
+	static std::unique_ptr<interp::Stmt> parse_stmt(Lexer& lexer, bool is_top_level)
 	{
 		auto lm = LexerModer(lexer, Lexer::Mode::Script);
 
@@ -1181,7 +1186,7 @@ namespace sap::frontend
 
 		if(tok == TT::KW_Let || tok == TT::KW_Var)
 		{
-			stmt = parse_var_defn(lexer);
+			stmt = parse_var_defn(lexer, is_top_level);
 		}
 		else if(tok == TT::KW_Fn)
 		{
@@ -1290,7 +1295,7 @@ namespace sap::frontend
 			target_scope = std::move(qid);
 		}
 
-		block->body = parse_block_or_stmt(lexer, /* mandatory_braces: */ true);
+		block->body = parse_block_or_stmt(lexer, /* mandatory_braces: */ true, /* braces: */ true);
 		block->body->target_scope = std::move(target_scope);
 
 		return block;
@@ -1540,7 +1545,7 @@ namespace sap::frontend
 			}
 			else
 			{
-				block->body.push_back(parse_stmt(lexer));
+				block->body.push_back(parse_stmt(lexer, /* is_top_level: */ true));
 			}
 		}
 

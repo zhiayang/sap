@@ -16,8 +16,9 @@ namespace sap::interp::builtin
 	std::vector<Field> builtin::BS_State::fields()
 	{
 		auto pt_int = PT::named(frontend::TYPE_INT);
-		return util::vectorOf(                              //
-		    Field { .name = "layout_pass", .type = pt_int } //
+		return util::vectorOf(                               //
+		    Field { .name = "layout_pass", .type = pt_int }, //
+		    Field { .name = "page_count", .type = pt_int }   //
 		);
 	}
 
@@ -25,15 +26,18 @@ namespace sap::interp::builtin
 	{
 		return StructMaker(BS_State::type->toStruct()) //
 		    .set("layout_pass", Value::integer(checked_cast<int64_t>(state.layout_pass)))
+		    .set("page_count", Value::integer(checked_cast<int64_t>(state.page_count)))
 		    .make();
 	}
 
 	ErrorOr<GlobalState> builtin::BS_State::unmake(Evaluator* ev, const Value& value)
 	{
-		auto p = get_struct_field<int64_t>(value, "layout_pass");
+		auto layout_pass = get_struct_field<int64_t>(value, "layout_pass");
+		auto page_count = get_struct_field<int64_t>(value, "page_count");
 
 		return Ok(GlobalState {
-		    .layout_pass = checked_cast<size_t>(p),
+		    .layout_pass = checked_cast<size_t>(layout_pass),
+		    .page_count = checked_cast<size_t>(page_count),
 		});
 	}
 }

@@ -27,6 +27,7 @@ namespace sap::tree
 namespace sap::layout
 {
 	struct PageCursor;
+	struct PageLayout;
 	struct RelativePos;
 }
 
@@ -97,6 +98,7 @@ namespace sap::interp
 	struct GlobalState
 	{
 		size_t layout_pass;
+		size_t page_count;
 	};
 
 
@@ -135,11 +137,15 @@ namespace sap::interp
 		void popBlockContext();
 
 		void requestLayout();
-		void resetLayoutRequest();
 		bool layoutRequested() const;
 
 		void commenceLayoutPass(size_t pass_num);
 		const GlobalState& state() const;
+
+		void setPageLayout(layout::PageLayout* page_layout);
+		layout::PageLayout* pageLayout() const { return m_page_layout; }
+
+		ErrorOr<void> addAbsolutelyPositionedBlockObject(std::unique_ptr<tree::BlockObject> tbo, layout::AbsolutePagePos pos);
 
 	private:
 		Interpreter* m_interp;
@@ -154,6 +160,7 @@ namespace sap::interp
 		std::unordered_map<const Definition*, Value> m_global_values;
 
 		bool m_relayout_requested = false;
-		GlobalState m_global_state {};
+		layout::PageLayout* m_page_layout = nullptr;
+		mutable GlobalState m_global_state {};
 	};
 }

@@ -65,8 +65,6 @@ namespace sap::interp
 			}
 		}());
 
-		m_is_global = not ts->isCurrentlyInFunction();
-
 		return this->declaration->typecheck(ts, the_type.type());
 	}
 

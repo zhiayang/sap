@@ -57,5 +57,6 @@ namespace sap::interp
 		ErrorOr<EvalResult> output_at_current_tbo(Evaluator* ev, std::vector<Value>& args);
 		ErrorOr<EvalResult> output_at_position_tio(Evaluator* ev, std::vector<Value>& args);
 		ErrorOr<EvalResult> output_at_position_tbo(Evaluator* ev, std::vector<Value>& args);
+		ErrorOr<EvalResult> output_at_absolute_pos_tbo(Evaluator* ev, std::vector<Value>& args);
 	}
 }

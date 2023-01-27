@@ -80,6 +80,28 @@ namespace std
 		# reset the sections, so that they number correctly again.
 		g_sections = [];
 	}
+
+	@post {
+		builtin::println("doing page nums");
+
+		var i = 0;
+		while(i < builtin::state().page_count)
+		{
+			let page_num = i + 1;
+			let item = std::style(builtin::Style {
+				.alignment = builtin::Alignment::Left,
+				.font_size = 20pt,
+			}, builtin::make_paragraph(builtin::make_text(f"{page_num}")));
+
+			builtin::output_at_absolute(builtin::AbsPosition {
+				.page = i,
+				.x = 180mm,
+				.y = 260mm,
+			}, *item);
+
+			i += 1;
+		}
+	}
 }
 
 namespace std::paper_size

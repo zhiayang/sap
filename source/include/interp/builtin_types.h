@@ -92,6 +92,17 @@ namespace sap::interp::builtin
 		static ErrorOr<layout::RelativePos> unmake(Evaluator* ev, const Value& value);
 	};
 
+	struct BS_AbsPosition
+	{
+		static constexpr auto name = "AbsPosition";
+
+		static const Type* type;
+		static std::vector<StructDefn::Field> fields();
+
+		static Value make(Evaluator* ev, layout::AbsolutePagePos pos);
+		static ErrorOr<layout::AbsolutePagePos> unmake(Evaluator* ev, const Value& value);
+	};
+
 	struct BS_Size2d
 	{
 		static constexpr auto name = "Size2d";

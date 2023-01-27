@@ -77,7 +77,7 @@ namespace sap::interp
 				param_type = frontend::PType::array(param_type.getArrayElement());
 
 			this->param_defns.push_back(std::make_unique<VariableDefn>(param.loc, param.name, //
-			    /* mutable: */ false, /* init: */ nullptr, param_type));
+			    /* mutable: */ false, /* is_global: */ false, /* init: */ nullptr, param_type));
 
 			TRY(this->param_defns.back()->typecheck(ts));
 		}

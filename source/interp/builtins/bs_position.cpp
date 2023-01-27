@@ -58,4 +58,42 @@ namespace sap::interp::builtin
 
 
 
+	const Type* builtin::BS_AbsPosition::type = nullptr;
+	std::vector<Field> builtin::BS_AbsPosition::fields()
+	{
+		auto pt_int = PT::named(frontend::TYPE_INT);
+		auto pt_len = PT::named(frontend::TYPE_LENGTH);
+		return util::vectorOf(                       //
+		    Field { .name = "x", .type = pt_len },   //
+		    Field { .name = "y", .type = pt_len },   //
+		    Field { .name = "page", .type = pt_int } //
+		);
+	}
+
+	Value builtin::BS_AbsPosition::make(Evaluator* ev, layout::AbsolutePagePos pos)
+	{
+		return StructMaker(BS_AbsPosition::type->toStruct()) //
+		    .set("x", Value::length(DynLength(pos.pos.x())))
+		    .set("y", Value::length(DynLength(pos.pos.y())))
+		    .set("page", Value::integer(checked_cast<int64_t>(pos.page_num)))
+		    .make();
+	}
+
+	ErrorOr<layout::AbsolutePagePos> builtin::BS_AbsPosition::unmake(Evaluator* ev, const Value& value)
+	{
+		auto sty = ev->currentStyle();
+
+		auto x = get_struct_field<DynLength>(value, "x", &Value::getLength)
+		             .resolve(sty->font(), sty->font_size(), sty->root_font_size());
+
+		auto y = get_struct_field<DynLength>(value, "y", &Value::getLength)
+		             .resolve(sty->font(), sty->font_size(), sty->root_font_size());
+
+		auto p = get_struct_field<int64_t>(value, "page");
+
+		return Ok(layout::AbsolutePagePos {
+		    .pos = { x, y },
+		    .page_num = checked_cast<size_t>(p),
+		});
+	}
 }

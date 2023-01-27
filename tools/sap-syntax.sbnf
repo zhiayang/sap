@@ -55,7 +55,7 @@ script-call{meta.script.inline-call}:
     `\`{punctuation.misc} (
         (`::`{punctuation.scope})? (IDENTIFIER{support.function})
         (`::`{punctuation.scope} IDENTIFIER{support.function})*
-    ) '(@\s*(post))'{storage.modifier}? (`(`{punctuation.paren.call-start}
+    ) '(@\s*(layout|post|render))'{storage.modifier}? (`(`{punctuation.paren.call-start}
             (function-call-arg (`,`{punctuation.comma} function-call-arg)*)?
     `)`{punctuation.paren.call-end})
     script-call-tail?;
@@ -69,8 +69,8 @@ script-call-tail
 
 
 script-block:
-    ( '(\\script)\s*(@\s*(post))?\s*(\{)'{1: keyword.block.script, 2: storage.modifier, 4: punctuation.brace}
-    | '(\\script)\s*(@\s*(post))?\s*(::)?'{1: keyword.block.script, 2: storage.modifier, 4: punctuation.scope}
+    ( '(\\script)\s*(@\s*(layout|post|render))?\s*(\{)'{1: keyword.block.script, 2: storage.modifier, 4: punctuation.brace}
+    | '(\\script)\s*(@\s*(layout|post|render))?\s*(::)?'{1: keyword.block.script, 2: storage.modifier, 4: punctuation.scope}
       (IDENTIFIER{entity.name.namespace} '(::)'{punctuation.scope})*
       '\s*(\{)'{1:punctuation.brace}
     ) stmt* `}`{punctuation.brace}
@@ -216,7 +216,7 @@ binop-expr2
 
 expr: binop-expr;
 
-hook-exec-block: '@(layout|post|render)'{storage.modifier} block-stmt;
+hook-exec-block: '(@\s*(?:layout|post|render))(?=\s+|\{)'{1: storage.modifier} block-stmt;
 
 
 return-stmt: `return`{keyword.return} expr? `;`{punctuation.terminator};

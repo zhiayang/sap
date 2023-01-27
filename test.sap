@@ -15,11 +15,7 @@ let settings = builtin::DocumentSettings {
 
 \start_document(*settings);
 
-
-
 \std::output_table_of_contents();
-
-
 
 \std::section("hello");
 

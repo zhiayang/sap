@@ -540,11 +540,13 @@ namespace sap::interp
 		VariableDefn(Location loc,
 		    const std::string& name,
 		    bool is_mutable,
+		    bool is_global,
 		    std::unique_ptr<Expr> init,
 		    std::optional<frontend::PType> explicit_type)
 		    : Definition(loc, new VariableDecl(loc, name, is_mutable))
 		    , initialiser(std::move(init))
 		    , explicit_type(explicit_type)
+		    , m_is_global(is_global)
 		{
 		}
 

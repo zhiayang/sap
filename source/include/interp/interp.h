@@ -49,6 +49,8 @@ namespace sap::interp
 		void addHookBlock(const HookBlock* block);
 		ErrorOr<void> runHooks();
 
+		tree::BlockObject* addAbsolutelyPositionedBlockObject(std::unique_ptr<tree::BlockObject> tbo);
+
 	private:
 		std::unique_ptr<Typechecker> m_typechecker;
 		std::unique_ptr<Evaluator> m_evaluator;
@@ -59,6 +61,8 @@ namespace sap::interp
 		std::vector<zst::unique_span<uint8_t[]>> m_file_contents;
 
 		util::hashmap<int64_t, std::unique_ptr<pdf::PdfFont>> m_loaded_fonts;
+
+		std::vector<std::unique_ptr<tree::BlockObject>> m_abs_tbos;
 
 		std::vector<std::string> m_leaked_strings;
 		std::vector<std::u32string> m_leaked_strings32;

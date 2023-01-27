@@ -43,6 +43,7 @@ namespace sap::interp
 		// this needs a careful ordering
 		define_builtin_struct<builtin::BS_Size2d>(interp);
 		define_builtin_struct<builtin::BS_Position>(interp);
+		define_builtin_struct<builtin::BS_AbsPosition>(interp);
 		define_builtin_struct<builtin::BS_Font>(interp);
 		define_builtin_struct<builtin::BS_FontFamily>(interp);
 		define_builtin_struct<builtin::BS_Style>(interp);
@@ -97,6 +98,7 @@ namespace sap::interp
 		auto t_bstyle = PType::named(make_builtin_name(builtin::BS_Style::name));
 		auto t_bposition = PType::named(make_builtin_name(builtin::BS_Position::name));
 		auto t_bfontfamily = PType::named(make_builtin_name(builtin::BS_FontFamily::name));
+		auto t_babsposition = PType::named(make_builtin_name(builtin::BS_AbsPosition::name));
 		auto t_bdocsettings = PType::named(make_builtin_name(builtin::BS_DocumentSettings::name));
 
 		auto define_builtin = [&](auto&&... xs) {
@@ -172,6 +174,9 @@ namespace sap::interp
 
 		define_builtin("output_at_position", makeParamList(P("pos", t_bposition), P("obj", t_tbo)), t_void,
 		    &B::output_at_position_tbo);
+
+		define_builtin("output_at_absolute", makeParamList(P("pos", t_babsposition), P("obj", t_tbo)), t_void,
+		    &B::output_at_absolute_pos_tbo);
 
 
 		define_builtin("print", makeParamList(P("_", t_any)), t_void, &B::print);

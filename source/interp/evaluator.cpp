@@ -2,9 +2,15 @@
 // Copyright (c) 2022, zhiayang
 // SPDX-License-Identifier: Apache-2.0
 
+#include <array>
+
 #include "tree/paragraph.h"
 
+#include "layout/base.h"
+#include "layout/line.h"
+
 #include "interp/ast.h"
+#include "interp/interp.h"
 #include "interp/evaluator.h"
 
 namespace sap::interp
@@ -209,11 +215,6 @@ namespace sap::interp
 		m_relayout_requested = true;
 	}
 
-	void Evaluator::resetLayoutRequest()
-	{
-		m_relayout_requested = false;
-	}
-
 	bool Evaluator::layoutRequested() const
 	{
 		return m_relayout_requested;
@@ -221,11 +222,22 @@ namespace sap::interp
 
 	void Evaluator::commenceLayoutPass(size_t pass_num)
 	{
+		m_relayout_requested = false;
 		m_global_state.layout_pass = pass_num;
+
+		util::log("layout pass: {}", pass_num);
+	}
+
+	void Evaluator::setPageLayout(layout::PageLayout* page_layout)
+	{
+		m_page_layout = page_layout;
 	}
 
 	const GlobalState& Evaluator::state() const
 	{
+		if(m_page_layout != nullptr)
+			m_global_state.page_count = m_page_layout->pageCount();
+
 		return m_global_state;
 	}
 
@@ -247,6 +259,26 @@ namespace sap::interp
 			return &it->second;
 
 		return nullptr;
+	}
+
+	ErrorOr<void> Evaluator::addAbsolutelyPositionedBlockObject(std::unique_ptr<tree::BlockObject> tbo,
+	    layout::AbsolutePagePos abs_pos)
+	{
+		if(m_page_layout == nullptr)
+			return ErrMsg(this, "cannot output objects in this context");
+
+		auto at_cursor = m_page_layout->newCursorAtPosition(abs_pos);
+		zpr::println("tbo = {}", (void*) tbo.get());
+
+		auto ptr = m_interp->addAbsolutelyPositionedBlockObject(std::move(tbo));
+
+		std::array<tree::BlockObject*, 1> aoeu { ptr };
+		auto [_, maybe_line] = TRY(layout::Line::fromBlockObjects(m_interp, at_cursor, this->currentStyle(), aoeu));
+
+		if(maybe_line.has_value())
+			m_page_layout->addObject(std::move(*maybe_line));
+
+		return Ok();
 	}
 
 

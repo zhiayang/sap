@@ -44,7 +44,7 @@ namespace sap::layout
 		virtual ~LayoutBase() = default;
 
 		PageCursor newCursor();
-		void addObject(std::unique_ptr<LayoutObject> obj);
+		LayoutObject* addObject(std::unique_ptr<LayoutObject> obj);
 
 		// virtual Size2d size() const = 0;
 		virtual AbsolutePagePos convertPosition(RelativePos pos) const = 0;
@@ -79,7 +79,10 @@ namespace sap::layout
 		~PageLayout();
 
 		PageCursor newCursor() const;
+		PageCursor newCursorAtPosition(AbsolutePagePos pos) const;
 		std::vector<pdf::Page*> render() const;
+
+		size_t pageCount() const;
 
 		virtual AbsolutePagePos convertPosition(RelativePos pos) const override;
 

@@ -19,6 +19,9 @@ namespace sap::interp
 		auto file = cs->loadFile(file_path);
 		auto doc = frontend::parse(cs->keepStringAlive(this->file_path), file.chars());
 
+		if(doc.haveDocStart())
+			return ErrMsg(ts, "file '{}' contains a \\start_document, which cannot be imported");
+
 		this->imported_block = std::move(doc).takePreamble();
 
 		auto _ = ts->pushTree(ts->top());
