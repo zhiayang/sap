@@ -96,6 +96,8 @@ namespace sap::layout
 			// preserve horizontal alignment.
 			if(m_direction == Vertical)
 			{
+				cursor = cursor.carriageReturn();
+
 				auto horz_space = cursor.widthAtCursor();
 				auto self_width = m_layout_size.x();
 

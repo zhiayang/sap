@@ -186,7 +186,7 @@ namespace sap::layout
 			}
 		}
 
-		return std::unique_ptr<Line>(new Line(style, Size2d(total_width, line_height), std::move(line_metrics),
+		return std::unique_ptr<Line>(new Line(style, Size2d(total_width, line_metrics.default_line_spacing), line_metrics,
 			std::move(layout_objects)));
 	}
 
@@ -216,7 +216,7 @@ namespace sap::layout
 		}
 
 		this->positionRelatively(cursor.position());
-		return cursor.newLine(m_layout_size.y()).carriageReturn();
+		return cursor.newLine(m_layout_size.y());
 	}
 
 

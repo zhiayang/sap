@@ -45,7 +45,7 @@ namespace sap::layout
 			bool is_first_line,
 			bool is_last_line);
 
-
+		const LineMetrics& metrics() const { return m_metrics; }
 		const std::vector<std::unique_ptr<LayoutObject>>& objects() const { return m_objects; }
 
 	private:

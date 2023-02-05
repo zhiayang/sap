@@ -40,8 +40,13 @@ namespace sap::layout
 
 	layout::PageCursor Paragraph::positionChildren(layout::PageCursor cursor)
 	{
-		cursor = cursor.newLine(0).carriageReturn();
+		assert(not m_lines.empty());
 		this->positionRelatively(cursor.position());
+
+		// this is necessary because lines are typeset with their "position" being
+		// the text baseline; we want the paragraph to be positioned wrt. the top-left corner,
+		// so we move down by the ascent of the first line to achieve this offset.
+		cursor = cursor.newLine(m_lines[0]->metrics().ascent_height);
 
 		for(auto& line : m_lines)
 			cursor = line->positionChildren(cursor);
