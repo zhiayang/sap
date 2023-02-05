@@ -67,6 +67,11 @@ namespace sap::layout
 		return m_num_pages;
 	}
 
+	Size2d PageLayout::pageSize() const
+	{
+		return m_size;
+	}
+
 	PageCursor PageLayout::newCursor() const
 	{
 		return PageCursor(const_cast<PageLayout*>(this), this->new_cursor_payload());

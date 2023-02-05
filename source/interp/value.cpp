@@ -511,7 +511,10 @@ namespace sap::interp
 		for(size_t i = 0; i < ret.v_array.size(); i++)
 		{
 			if(ret.v_array[i].type() != ty->getFieldAtIndex(i))
-				sap::internal_error("mismatched field types!");
+			{
+				sap::internal_error("mismatched field types! expected '{}', got '{}'", ty->getFieldAtIndex(i),
+				    ret.v_array[i].type());
+			}
 		}
 
 		return ret;

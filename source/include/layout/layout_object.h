@@ -27,6 +27,9 @@ namespace sap::layout
 		Size2d layoutSize() const { return m_layout_size; }
 		RelativePos layoutPosition() const { return m_layout_position; }
 
+		void setPosition(RelativePos pos) { m_layout_position = std::move(pos); }
+		void setSize(Size2d size) { m_layout_size = std::move(size); }
+
 		/*
 		    Render (emit PDF commands) the object. Must be called after layout(). For now, we render directly to
 		    the PDF page (by construcitng and emitting PageObjects), instead of returning a pageobject -- some

@@ -99,6 +99,7 @@ namespace sap::interp
 	{
 		size_t layout_pass;
 		size_t page_count;
+		DynLength2d page_size;
 	};
 
 

@@ -21,6 +21,11 @@ CLEANUP:
 TODO:
 
 scripting:
+- `global` keyword to explicitly make variables global, unless they are in a namespace.
+  vars in a \script{} block or a hook (@layout, @post) should be considered "local"
+  and thus re-initialised on every pass, unlike globals.
+- make the tbo output function just return a position, not the entire object.
+
 - x= should be synthesised from x and = if possible (for x in [+, -, *, /, %])
 	- there's a **LOT** of code dupe between binop.cpp and assop.cpp
 - unify script handling between ScriptCall and Paragraph::evaluate_scripts

@@ -236,7 +236,15 @@ namespace sap::interp
 	const GlobalState& Evaluator::state() const
 	{
 		if(m_page_layout != nullptr)
+		{
 			m_global_state.page_count = m_page_layout->pageCount();
+
+			auto page_size = m_page_layout->pageSize();
+			m_global_state.page_size = DynLength2d {
+				.x = DynLength(page_size.x()),
+				.y = DynLength(page_size.y()),
+			};
+		}
 
 		return m_global_state;
 	}
@@ -268,8 +276,6 @@ namespace sap::interp
 			return ErrMsg(this, "cannot output objects in this context");
 
 		auto at_cursor = m_page_layout->newCursorAtPosition(abs_pos);
-		zpr::println("tbo = {}", (void*) tbo.get());
-
 		auto ptr = m_interp->addAbsolutelyPositionedBlockObject(std::move(tbo));
 
 		std::array<tree::BlockObject*, 1> aoeu { ptr };

@@ -151,8 +151,8 @@ namespace sap::tree
 			if(cs->evaluator().layoutRequested())
 				continue;
 
-			for(auto& obj : objs_or_err->objects)
-				layout_doc->pageLayout().addObject(std::move(obj));
+			if(objs_or_err->object.has_value())
+				layout_doc->pageLayout().addObject(std::move(*objs_or_err->object));
 
 			break;
 		}

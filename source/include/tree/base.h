@@ -33,22 +33,21 @@ namespace sap::tree
 	struct LayoutResult
 	{
 		layout::PageCursor cursor;
-		std::vector<std::unique_ptr<layout::LayoutObject>> objects;
+		std::optional<std::unique_ptr<layout::LayoutObject>> object;
 
-		template <typename... Objs>
-		static LayoutResult make(layout::PageCursor cursor, Objs&&... objs)
+		static LayoutResult make(layout::PageCursor cursor)
 		{
 			return LayoutResult {
 				.cursor = std::move(cursor),
-				.objects = util::vectorOf<std::unique_ptr<layout::LayoutObject>>(std::move(objs)...),
+				.object = std::nullopt,
 			};
 		}
 
-		static LayoutResult make(layout::PageCursor cursor, std::vector<std::unique_ptr<layout::LayoutObject>> objs)
+		static LayoutResult make(layout::PageCursor cursor, std::unique_ptr<layout::LayoutObject> obj)
 		{
 			return LayoutResult {
 				.cursor = std::move(cursor),
-				.objects = std::move(objs),
+				.object = std::move(obj),
 			};
 		}
 	};

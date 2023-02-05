@@ -15,7 +15,6 @@ namespace sap::interp::builtin
 
 	static auto pt_float = PT::named(frontend::TYPE_FLOAT);
 	static auto pt_length = PT::named(frontend::TYPE_LENGTH);
-	static auto pt_alignment = PT::named(BE_Alignment::name);
 
 	static auto get_null()
 	{
@@ -44,6 +43,12 @@ namespace sap::interp::builtin
 		    .top_level = true,
 		    .parents = { "builtin" },
 		    .name = BS_FontFamily::name,
+		});
+
+		auto pt_alignment = PT::named(QualifiedId {
+		    .top_level = true,
+		    .parents = { "builtin" },
+		    .name = BE_Alignment::name,
 		});
 
 		return util::vectorOf(                                                                                 //

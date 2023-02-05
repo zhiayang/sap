@@ -18,6 +18,19 @@ namespace sap::interp::builtin
 
 	Value StructMaker::make()
 	{
+		// do some things...
+		for(size_t i = 0; i < m_fields.size(); i++)
+		{
+			auto a = m_type->getFieldAtIndex(i);
+			auto b = m_fields[i].type();
+
+			if(a == b)
+				continue;
+
+			else if(a->isOptional() && a->optionalElement() == b)
+				m_fields[i] = Value::optional(a->optionalElement(), std::move(m_fields[i]));
+		}
+
 		return Value::structure(m_type, std::move(m_fields));
 	}
 

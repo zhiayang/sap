@@ -73,7 +73,7 @@ namespace sap::interp
 		}
 
 		m_resolved_enumerator_type = enum_type;
-		return TCResult::ofVoid();
+		return TCResult::ofRValue(enum_type);
 	}
 
 

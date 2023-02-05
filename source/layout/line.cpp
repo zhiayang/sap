@@ -250,14 +250,11 @@ namespace sap::layout
 			auto layout_objs = TRY(objs[i]->createLayoutObject(cs, cursor, style));
 			auto new_cursor = layout_objs.cursor;
 
-			if(layout_objs.objects.empty())
+			if(not layout_objs.object.has_value())
 				continue;
 
-			for(auto& obj : layout_objs.objects)
-			{
-				total_height = std::max(total_height, obj->layoutSize().y());
-				layout_objects.push_back(std::move(obj));
-			}
+			total_height = std::max(total_height, (*layout_objs.object)->layoutSize().y());
+			layout_objects.push_back(std::move(*layout_objs.object));
 
 			cursor = std::move(new_cursor);
 		}

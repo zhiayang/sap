@@ -174,6 +174,25 @@ namespace sap::interp::builtin
 		return EvalResult::ofValue(Value::treeInlineObject(std::move(inline_objs)));
 	}
 
+	ErrorOr<EvalResult> make_hbox(Evaluator* ev, std::vector<Value>& args)
+	{
+		assert(args.size() == 1);
+
+		auto hbox = std::make_unique<tree::HorzBox>();
+
+		auto objs = std::move(args[0]).takeArray();
+		for(size_t i = 0; i < objs.size(); i++)
+		{
+			auto tbo = std::move(objs[i]).takeTreeBlockObj();
+			assert(tbo != nullptr);
+
+			hbox->contents().push_back(std::move(tbo));
+		}
+
+		return EvalResult::ofValue(Value::treeBlockObject(std::move(hbox)));
+	}
+
+
 
 
 	ErrorOr<EvalResult> make_paragraph(Evaluator* ev, std::vector<Value>& args)

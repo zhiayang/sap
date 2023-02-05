@@ -1394,17 +1394,14 @@ namespace sap::frontend
 	static std::unique_ptr<ScriptObject> parse_script_object(Lexer& lexer)
 	{
 		auto next = lexer.peekWithMode(Lexer::Mode::Script);
-		if(next == TT::Identifier)
-		{
-			if(next.text == KW_SCRIPT_BLOCK)
-				return parse_script_block(lexer);
-			else
-				return parse_inline_script_call(lexer);
-		}
+		if(next == TT::Identifier && next.text == KW_SCRIPT_BLOCK)
+			return parse_script_block(lexer);
+
+		else if(next == TT::Identifier || next == TT::ColonColon)
+			return parse_inline_script_call(lexer);
+
 		else
-		{
 			parse_error(next.loc, "unexpected token '{}' after '\\'", next.text);
-		}
 	}
 
 

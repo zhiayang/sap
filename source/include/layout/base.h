@@ -83,6 +83,7 @@ namespace sap::layout
 		std::vector<pdf::Page*> render() const;
 
 		size_t pageCount() const;
+		Size2d pageSize() const;
 
 		virtual AbsolutePagePos convertPosition(RelativePos pos) const override;
 
