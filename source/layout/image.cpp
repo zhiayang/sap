@@ -17,6 +17,7 @@ namespace sap::layout
 
 	layout::PageCursor Image::positionChildren(layout::PageCursor cursor)
 	{
+		cursor = cursor.ensureVerticalSpace(m_layout_size.y());
 		this->positionRelatively(cursor.position());
 
 		return cursor.moveRight(m_layout_size.x()).newLine(m_layout_size.y());

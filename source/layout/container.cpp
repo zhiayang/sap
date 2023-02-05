@@ -89,6 +89,7 @@ namespace sap::layout
 			}
 		}
 
+		bool is_first_child = true;
 		for(auto& child : m_objects)
 		{
 			// if we are vertically stacked, we need to move the cursor horizontally to
@@ -126,8 +127,11 @@ namespace sap::layout
 					break;
 
 				case Vertical: //
+					if(not is_first_child)
+						cursor = cursor.newLine(obj_spacing);
+
+					is_first_child = false;
 					cursor = child->positionChildren(cursor);
-					cursor = cursor.newLine(obj_spacing);
 					break;
 			}
 		}
