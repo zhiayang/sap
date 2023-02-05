@@ -26,21 +26,20 @@
 
 namespace sap::layout
 {
-	Paragraph::Paragraph(Size2d size, std::vector<std::unique_ptr<Line>> lines) : LayoutObject(size), m_lines(std::move(lines))
+	Paragraph::Paragraph(const Style* style, Size2d size, std::vector<std::unique_ptr<Line>> lines)
+		: LayoutObject(style, size)
+		, m_lines(std::move(lines))
 	{
 	}
 
 	void Paragraph::render_impl(const LayoutBase* layout, std::vector<pdf::Page*>& pages) const
 	{
-		zpr::println("# RP {}", (void*) this);
 		for(auto& line : m_lines)
 			line->render(layout, pages);
 	}
 
 	layout::PageCursor Paragraph::positionChildren(layout::PageCursor cursor)
 	{
-		zpr::println("# PP {}", (void*) this);
-
 		cursor = cursor.newLine(0).carriageReturn();
 		this->positionRelatively(cursor.position());
 
@@ -134,7 +133,7 @@ namespace sap::tree
 			layout_lines.push_back(std::move(layout_line));
 		}
 
-		auto layout_para = std::unique_ptr<layout::Paragraph>(new layout::Paragraph(para_size, std::move(layout_lines)));
+		auto layout_para = std::unique_ptr<layout::Paragraph>(new layout::Paragraph(style, para_size, std::move(layout_lines)));
 
 		return Ok(LayoutResult::make(std::move(layout_para)));
 	}

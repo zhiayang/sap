@@ -112,11 +112,10 @@ namespace sap::layout
 	}
 
 
-	Line::Line(Size2d size, const Style* style, std::vector<std::unique_ptr<LayoutObject>> objs)
-		: LayoutObject(size)
+	Line::Line(const Style* style, Size2d size, std::vector<std::unique_ptr<LayoutObject>> objs)
+		: LayoutObject(style, size)
 		, m_objects(std::move(objs))
 	{
-		this->setStyle(style);
 	}
 
 	std::unique_ptr<Line> Line::fromInlineObjects(interp::Interpreter* cs,
@@ -127,8 +126,6 @@ namespace sap::layout
 		bool is_first_line,
 		bool is_last_line)
 	{
-		// auto start_position = cursor.position();
-
 		auto line_height = line_metrics.ascent_height + line_metrics.descent_height;
 		auto total_width = line_metrics.total_word_width + line_metrics.total_space_width;
 
@@ -188,14 +185,12 @@ namespace sap::layout
 			}
 		}
 
-		return std::unique_ptr<Line>(new Line(Size2d(total_width, line_height), style, std::move(layout_objects)));
+		return std::unique_ptr<Line>(new Line(style, Size2d(total_width, line_height), std::move(layout_objects)));
 	}
 
 
 	layout::PageCursor Line::positionChildren(layout::PageCursor cursor)
 	{
-		zpr::println("# PL {}", (void*) this);
-
 		// for now, lines only contain words; words are already positioned with their relative thingies.
 
 		this->positionRelatively(cursor.position());

@@ -11,12 +11,14 @@
 
 namespace sap::layout
 {
-	Image::Image(Size2d size, ImageBitmap image) : LayoutObject(size), m_image(std::move(image))
+	Image::Image(const Style* style, Size2d size, ImageBitmap image) : LayoutObject(style, size), m_image(std::move(image))
 	{
 	}
 
 	layout::PageCursor Image::positionChildren(layout::PageCursor cursor)
 	{
+		this->positionRelatively(cursor.position());
+
 		return cursor.moveRight(m_layout_size.x()).newLine(m_layout_size.y());
 	}
 
@@ -48,9 +50,7 @@ namespace sap::tree
 		// images are always fixed size, and don't care about the available space.
 		// (for now, at least...)
 
-		auto img = std::unique_ptr<layout::Image>(new layout::Image(m_size, this->image()));
-		img->setStyle(parent_style);
-
+		auto img = std::unique_ptr<layout::Image>(new layout::Image(parent_style, m_size, this->image()));
 		return Ok(LayoutResult::make(std::move(img)));
 	}
 }

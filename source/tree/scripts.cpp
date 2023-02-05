@@ -15,7 +15,10 @@ namespace sap::tree
 	{
 	}
 
-	ErrorOr<std::optional<std::unique_ptr<layout::LayoutObject>>> ScriptCall::evaluate_scripts(interp::Interpreter* cs) const
+	ErrorOr<std::optional<std::unique_ptr<layout::LayoutObject>>> ScriptCall::evaluate_scripts( //
+		interp::Interpreter* cs,
+		const Style* style,
+		Size2d available_space) const
 	{
 		TRY(this->call->typecheck(&cs->typechecker()));
 		if(m_run_phase != cs->currentPhase())
@@ -28,11 +31,10 @@ namespace sap::tree
 		auto val = value.take();
 		if(val.isTreeBlockObj())
 		{
-			auto tbo = std::move(val).takeTreeBlockObj();
+			auto tbo = m_created_tbos.emplace_back(std::move(val).takeTreeBlockObj()).get();
 
 			// TODO: calculate available space correctly
-			auto layout_obj = TRY(tbo->createLayoutObject(cs, cs->evaluator().currentStyle(), //
-				Size2d(Length(INFINITY), Length(INFINITY))));
+			auto layout_obj = TRY(tbo->createLayoutObject(cs, style, available_space));
 
 			if(not layout_obj.object.has_value())
 				return Ok(std::nullopt);
@@ -47,13 +49,18 @@ namespace sap::tree
 
 	ErrorOr<void> ScriptCall::evaluateScripts(interp::Interpreter* cs) const
 	{
-		return this->evaluate_scripts(cs).remove_value();
+		auto space = Size2d(Length(INFINITY), Length(INFINITY));
+		return this->evaluate_scripts(cs, cs->evaluator().currentStyle(), space).remove_value();
 	}
 
 	auto ScriptCall::createLayoutObject(interp::Interpreter* cs, const Style* parent_style, Size2d available_space) const
 		-> ErrorOr<LayoutResult>
 	{
-		TRY(this->evaluate_scripts(cs));
+		auto obj = TRY(this->evaluate_scripts(cs, parent_style, available_space));
+
+		if(obj.has_value())
+			return Ok(LayoutResult::make(std::move(*obj)));
+
 		return Ok(LayoutResult::empty());
 	}
 

@@ -12,7 +12,13 @@ namespace sap::layout
 
 	struct Container : LayoutObject
 	{
-		Container(Size2d size);
+		enum class Direction
+		{
+			Vertical,
+			Horizontal,
+		};
+
+		explicit Container(const Style* style, Size2d size, Direction direction, std::vector<std::unique_ptr<LayoutObject>> objs);
 
 		void addObject(std::unique_ptr<LayoutObject> obj);
 		std::vector<std::unique_ptr<LayoutObject>>& objects();
@@ -22,6 +28,7 @@ namespace sap::layout
 		virtual void render_impl(const LayoutBase* layout, std::vector<pdf::Page*>& pages) const override;
 
 	private:
+		Direction m_direction;
 		std::vector<std::unique_ptr<LayoutObject>> m_objects;
 	};
 }

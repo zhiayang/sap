@@ -28,7 +28,7 @@ namespace sap::layout
 	private:
 		friend struct tree::Image;
 
-		explicit Image(Size2d size, ImageBitmap m_image);
+		explicit Image(const Style* style, Size2d size, ImageBitmap m_image);
 		ImageBitmap m_image;
 	};
 }

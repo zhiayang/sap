@@ -102,6 +102,11 @@ namespace sap::tree
 		std::unique_ptr<interp::FunctionCall> call;
 
 	private:
-		ErrorOr<std::optional<std::unique_ptr<layout::LayoutObject>>> evaluate_scripts(interp::Interpreter* cs) const;
+		ErrorOr<std::optional<std::unique_ptr<layout::LayoutObject>>> evaluate_scripts(interp::Interpreter* cs,
+			const Style* parent_style,
+			Size2d available_space) const;
+
+	private:
+		mutable std::vector<std::unique_ptr<BlockObject>> m_created_tbos;
 	};
 }
