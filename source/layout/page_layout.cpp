@@ -46,13 +46,6 @@ namespace sap::layout
 		return PageCursor(this, this->new_cursor_payload());
 	}
 
-	AbsolutePagePos LayoutObject::resolveAbsPosition(const LayoutBase* layout) const
-	{
-		if(this->isRelativelyPositioned())
-			return layout->convertPosition(*m_rel_position);
-		else
-			return *m_abs_position;
-	}
 
 
 

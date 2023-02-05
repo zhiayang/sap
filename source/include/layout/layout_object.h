@@ -19,41 +19,35 @@ namespace sap::layout
 
 	struct LayoutObject : Stylable
 	{
-		LayoutObject(Size2d size) : m_layout_size(size) { }
+		LayoutObject(Size2d size);
 		virtual ~LayoutObject() = default;
 
 		LayoutObject& operator=(LayoutObject&&) = default;
 		LayoutObject(LayoutObject&&) = default;
 
-		Size2d layoutSize() const { return m_layout_size; }
+		Size2d layoutSize() const;
 
-		void positionAbsolutely(AbsolutePagePos pos) { m_abs_position = std::move(pos); }
-		void positionRelatively(RelativePos pos) { m_rel_position = std::move(pos); }
+		void positionAbsolutely(AbsolutePagePos pos);
+		void positionRelatively(RelativePos pos);
 
-		bool isPositioned() const { return m_abs_position.has_value() || m_rel_position.has_value(); }
-		bool isAbsolutelyPositioned() const { return m_abs_position.has_value(); }
-		bool isRelativelyPositioned() const { return m_rel_position.has_value() && not m_abs_position.has_value(); }
+		bool isPositioned() const;
+		bool isAbsolutelyPositioned() const;
+		bool isRelativelyPositioned() const;
 
-		AbsolutePagePos absolutePosition() const
-		{
-			assert(this->isAbsolutelyPositioned());
-			return *m_abs_position;
-		}
-
-		RelativePos relativePosition() const
-		{
-			assert(this->isRelativelyPositioned());
-			return *m_rel_position;
-		}
-
+		RelativePos relativePosition() const;
+		AbsolutePagePos absolutePosition() const;
 		AbsolutePagePos resolveAbsPosition(const LayoutBase* layout) const;
+
+		void render(const LayoutBase* layout, std::vector<pdf::Page*>& pages) const;
+
+		virtual layout::PageCursor positionChildren(layout::PageCursor cursor) = 0;
 
 		/*
 		    Render (emit PDF commands) the object. Must be called after layout(). For now, we render directly to
-		    the PDF page (by construcitng and emitting PageObjects), instead of returning a pageobject -- some
+		    the PDF page (by constructing and emitting PageObjects), instead of returning a pageobject -- some
 		    layout objects might require multiple pdf page objects, so this is a more flexible design.
 		*/
-		virtual void render(const LayoutBase* layout, std::vector<pdf::Page*>& pages) const = 0;
+		virtual void render_impl(const LayoutBase* layout, std::vector<pdf::Page*>& pages) const = 0;
 
 	protected:
 		std::optional<AbsolutePagePos> m_abs_position {};

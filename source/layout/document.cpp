@@ -139,11 +139,16 @@ namespace sap::tree
 
 			auto available_space = Size2d(layout_doc->pageLayout().contentSize().x(), Length(INFINITY));
 
-
 			auto cursor = layout_doc->pageLayout().newCursor();
-			auto objs_or_err = m_container->createLayoutObject(cs, layout_doc->style(), available_space);
-			if(objs_or_err.is_err())
-				objs_or_err.error().showAndExit();
+			auto container_or_err = m_container->createLayoutObject(cs, layout_doc->style(), available_space);
+			if(container_or_err.is_err())
+				container_or_err.error().showAndExit();
+
+			if(not container_or_err->object.has_value())
+				ErrorMessage(cs->evaluator().loc(), "empty document").showAndExit();
+
+			auto container = std::move(*container_or_err.unwrap().object);
+			container->positionChildren(cursor);
 
 			cs->setCurrentPhase(ProcessingPhase::PostLayout);
 
@@ -156,9 +161,7 @@ namespace sap::tree
 			if(cs->evaluator().layoutRequested())
 				continue;
 
-			if(objs_or_err->object.has_value())
-				layout_doc->pageLayout().addObject(std::move(*objs_or_err->object));
-
+			layout_doc->pageLayout().addObject(std::move(container));
 			break;
 		}
 

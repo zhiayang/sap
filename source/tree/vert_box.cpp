@@ -62,6 +62,9 @@ namespace sap::tree
 		if(objects.empty())
 			return Ok(LayoutResult::empty());
 
-		return Ok(LayoutResult::make(std::make_unique<layout::Container>(Size2d(max_width, total_height))));
+		auto container = std::make_unique<layout::Container>(Size2d(max_width, total_height));
+		container->objects() = std::move(objects);
+
+		return Ok(LayoutResult::make(std::move(container)));
 	}
 }

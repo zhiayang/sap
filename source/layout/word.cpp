@@ -29,19 +29,17 @@ namespace sap::layout
 		assert(m_style != nullptr);
 	}
 
-	void Word::render(const LayoutBase* layout, std::vector<pdf::Page*>& pages) const
+	void Word::render_impl(const LayoutBase* layout, std::vector<pdf::Page*>& pages) const
 	{
-		sap::warn("render", "words should not be rendered directly");
-
-		auto text = util::make<pdf::Text>();
-
-		auto pos = this->resolveAbsPosition(layout);
-		auto page = pages[pos.page_num];
-		text->moveAbs(page->convertVector2(pos.pos.into()));
-
-		this->render_to_text(text);
-		page->addObject(text);
+		sap::internal_error("words cannot be rendered directly");
 	}
+
+	layout::PageCursor Word::positionChildren(layout::PageCursor cursor)
+	{
+		sap::internal_error("words cannot be positioned directly");
+		return cursor;
+	}
+
 
 	void Word::render(AbsolutePagePos line_pos,
 		std::vector<pdf::Page*>& pages,

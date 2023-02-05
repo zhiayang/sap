@@ -34,7 +34,8 @@ namespace sap::layout
 
 	struct Line : LayoutObject
 	{
-		virtual void render(const LayoutBase* layout, std::vector<pdf::Page*>& pages) const override;
+		virtual layout::PageCursor positionChildren(layout::PageCursor cursor) override;
+		virtual void render_impl(const LayoutBase* layout, std::vector<pdf::Page*>& pages) const override;
 
 		static std::unique_ptr<Line> fromInlineObjects(interp::Interpreter* cs,
 			const Style* style,
@@ -43,6 +44,7 @@ namespace sap::layout
 			Size2d available_space,
 			bool is_first_line,
 			bool is_last_line);
+
 
 		const std::vector<std::unique_ptr<LayoutObject>>& objects() const { return m_objects; }
 

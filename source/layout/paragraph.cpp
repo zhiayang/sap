@@ -30,10 +30,24 @@ namespace sap::layout
 	{
 	}
 
-	void Paragraph::render(const LayoutBase* layout, std::vector<pdf::Page*>& pages) const
+	void Paragraph::render_impl(const LayoutBase* layout, std::vector<pdf::Page*>& pages) const
 	{
+		zpr::println("# RP {}", (void*) this);
 		for(auto& line : m_lines)
 			line->render(layout, pages);
+	}
+
+	layout::PageCursor Paragraph::positionChildren(layout::PageCursor cursor)
+	{
+		zpr::println("# PP {}", (void*) this);
+
+		cursor = cursor.newLine(0).carriageReturn();
+		this->positionRelatively(cursor.position());
+
+		for(auto& line : m_lines)
+			cursor = line->positionChildren(cursor);
+
+		return cursor;
 	}
 }
 

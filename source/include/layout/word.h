@@ -22,7 +22,8 @@ namespace sap::layout
 	{
 		Word(zst::wstr_view text, const Style* style, Length relative_offset, Size2d size);
 
-		virtual void render(const LayoutBase* layout, std::vector<pdf::Page*>& pages) const override;
+		virtual layout::PageCursor positionChildren(layout::PageCursor cursor) override;
+		virtual void render_impl(const LayoutBase* layout, std::vector<pdf::Page*>& pages) const override;
 
 		zst::wstr_view text() const { return m_text; }
 

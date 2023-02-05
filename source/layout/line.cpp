@@ -105,20 +105,6 @@ namespace sap::layout
 				// images "drop down" from the line, instead of going up? weirdge idk.
 				sap::internal_error("unsupported inline object!");
 			}
-#if 0
-			else
-			{
-				ret.total_word_width += word_chunk.width;
-
-				word_chunk.width = 0;
-				word_chunk.style = nullptr;
-				word_chunk.text.clear();
-
-				cur_chunk_begin = it + 1;
-
-				ret.widths.push_back(it->get()->size().x());
-			}
-#endif
 		}
 
 		ret.total_word_width += word_chunk.width;
@@ -206,57 +192,18 @@ namespace sap::layout
 	}
 
 
-#if 0
-	ErrorOr<std::pair<PageCursor, std::optional<std::unique_ptr<Line>>>> Line::fromBlockObjects(interp::Interpreter* cs, //
-	    PageCursor cursor,
-	    const Style* style,
-	    std::span<tree::BlockObject*> objs)
+	layout::PageCursor Line::positionChildren(layout::PageCursor cursor)
 	{
-		using RetTy = std::pair<PageCursor, std::optional<std::unique_ptr<Line>>>;
+		zpr::println("# PL {}", (void*) this);
 
-		auto total_width = std::accumulate(objs.begin(), objs.end(), Length(0), [&cursor](Length a, const auto& b) {
-			return a + b->size(cursor).x();
-		});
+		// for now, lines only contain words; words are already positioned with their relative thingies.
 
-		std::vector<std::unique_ptr<LayoutObject>> layout_objects {};
-		if(style->alignment() == Alignment::Centre)
-		{
-			auto left_offset = (cursor.widthAtCursor() - total_width) / 2;
-			cursor = cursor.moveRight(left_offset);
-		}
-		else if(style->alignment() == Alignment::Right)
-		{
-			auto left_offset = cursor.widthAtCursor() - total_width;
-			cursor = cursor.moveRight(left_offset);
-		}
-
-		Length total_height = 0;
-		for(size_t i = 0; i < objs.size(); i++)
-		{
-			auto layout_objs = TRY(objs[i]->createLayoutObject(cs, cursor, style));
-			auto new_cursor = layout_objs.cursor;
-
-			if(not layout_objs.object.has_value())
-				continue;
-
-			total_height = std::max(total_height, (*layout_objs.object)->layoutSize().y());
-			layout_objects.push_back(std::move(*layout_objs.object));
-
-			cursor = std::move(new_cursor);
-		}
-
-		if(layout_objects.empty())
-			return Ok<RetTy>(cursor, std::nullopt);
-
-		return Ok<RetTy>(cursor,
-		    std::unique_ptr<Line>(new Line(layout_objects.front()->layoutPosition(), //
-		        Size2d(total_width, total_height),                                   //
-		        style, std::move(layout_objects))));
+		this->positionRelatively(cursor.position());
+		return cursor.newLine(m_layout_size.y()).carriageReturn();
 	}
-#endif
 
 
-	void Line::render(const LayoutBase* layout, std::vector<pdf::Page*>& pages) const
+	void Line::render_impl(const LayoutBase* layout, std::vector<pdf::Page*>& pages) const
 	{
 		// optimise for words, so we don't make new PDF text objects (TJ) for every word
 		struct PrevWord
@@ -274,6 +221,13 @@ namespace sap::layout
 			if(auto word = dynamic_cast<const Word*>(obj.get()); word != nullptr)
 			{
 				bool is_first = not prev_word.has_value();
+				if(is_first)
+				{
+					prev_word = PrevWord {
+						.pdf_text = util::make<pdf::Text>(),
+						.word_end = {},
+					};
+				}
 
 				auto offset_from_prev = word->relativeOffset() - prev_word->word_end;
 				word->render(line_pos, pages, prev_word->pdf_text, is_first, offset_from_prev);

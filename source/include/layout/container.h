@@ -18,7 +18,8 @@ namespace sap::layout
 		std::vector<std::unique_ptr<LayoutObject>>& objects();
 		const std::vector<std::unique_ptr<LayoutObject>>& objects() const;
 
-		virtual void render(const LayoutBase* layout, std::vector<pdf::Page*>& pages) const override;
+		virtual layout::PageCursor positionChildren(layout::PageCursor cursor) override;
+		virtual void render_impl(const LayoutBase* layout, std::vector<pdf::Page*>& pages) const override;
 
 	private:
 		std::vector<std::unique_ptr<LayoutObject>> m_objects;

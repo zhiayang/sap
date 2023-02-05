@@ -15,7 +15,12 @@ namespace sap::layout
 	{
 	}
 
-	void Image::render(const LayoutBase* layout, std::vector<pdf::Page*>& pages) const
+	layout::PageCursor Image::positionChildren(layout::PageCursor cursor)
+	{
+		return cursor.moveRight(m_layout_size.x()).newLine(m_layout_size.y());
+	}
+
+	void Image::render_impl(const LayoutBase* layout, std::vector<pdf::Page*>& pages) const
 	{
 		auto pos = this->resolveAbsPosition(layout);
 		auto page = pages[pos.page_num];

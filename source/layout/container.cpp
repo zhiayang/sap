@@ -25,9 +25,26 @@ namespace sap::layout
 		return m_objects;
 	}
 
-	void Container::render(const LayoutBase* layout, std::vector<pdf::Page*>& pages) const
+	layout::PageCursor Container::positionChildren(layout::PageCursor cursor)
+	{
+		cursor = cursor.newLine(0).carriageReturn();
+		this->positionRelatively(cursor.position());
+
+		for(auto& child : m_objects)
+		{
+			zpr::println("# PC {}", (void*) child.get());
+			cursor = child->positionChildren(cursor);
+		}
+
+		return cursor;
+	}
+
+	void Container::render_impl(const LayoutBase* layout, std::vector<pdf::Page*>& pages) const
 	{
 		for(auto& obj : m_objects)
+		{
+			zpr::println("# RC {}", (void*) obj.get());
 			obj->render(layout, pages);
+		}
 	}
 }
