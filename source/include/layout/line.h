@@ -49,9 +49,10 @@ namespace sap::layout
 		const std::vector<std::unique_ptr<LayoutObject>>& objects() const { return m_objects; }
 
 	private:
-		explicit Line(const Style* style, Size2d size, std::vector<std::unique_ptr<LayoutObject>> objs);
+		explicit Line(const Style* style, Size2d size, LineMetrics metrics, std::vector<std::unique_ptr<LayoutObject>> objs);
 
 	private:
+		LineMetrics m_metrics;
 		std::vector<std::unique_ptr<LayoutObject>> m_objects;
 	};
 

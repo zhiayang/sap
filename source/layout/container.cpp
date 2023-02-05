@@ -30,37 +30,94 @@ namespace sap::layout
 
 	layout::PageCursor Container::positionChildren(layout::PageCursor cursor)
 	{
+		using enum Alignment;
+		using enum Direction;
+
 		this->positionRelatively(cursor.position());
+
+		if(m_objects.empty())
+			return cursor;
 
 		// TODO: support vertical alignment for vbox.
 		Length obj_spacing = 0;
-		switch(m_direction)
+		if(m_direction == Vertical)
 		{
-			case Direction::Vertical: {
-				obj_spacing = m_style->paragraph_spacing();
-				break;
-			}
+			obj_spacing = m_style->paragraph_spacing();
+		}
+		else
+		{
+			// TODO: specify inter-object spacing properly, right now there's 0.
+			auto total_obj_width = std::accumulate(m_objects.begin(), m_objects.end(), Length(0), [](auto a, const auto& b) {
+				return a + b->layoutSize().x();
+			});
 
-			case Direction::Horizontal: {
-				auto total_width = m_layout_size.x();
-				auto obj_width = std::accumulate(m_objects.begin(), m_objects.end(), Length(0), [](auto a, const auto& b) {
-					return a + b->layoutSize().x();
-				});
+			auto space_width = std::max(Length(0), m_layout_size.x() - total_obj_width);
 
-				obj_spacing = (total_width - obj_width) / static_cast<double>(m_objects.size() - 1);
-				break;
+			assert(m_direction == Horizontal);
+			switch(m_style->alignment())
+			{
+				case Left: {
+					obj_spacing = 0;
+					break;
+				}
+
+				case Right: {
+					obj_spacing = 0;
+					cursor = cursor.moveRight(space_width);
+					break;
+				}
+
+				case Centre: {
+					obj_spacing = 0;
+					cursor = cursor.moveRight(space_width / 2);
+					break;
+				}
+
+				case Justified: {
+					assert(not m_objects.empty());
+					if(m_objects.size() == 1)
+						obj_spacing = 0;
+					else
+						obj_spacing = space_width / static_cast<double>(m_objects.size() - 1);
+
+					break;
+				}
 			}
 		}
 
-
-
 		for(auto& child : m_objects)
 		{
+			// if we are vertically stacked, we need to move the cursor horizontally to
+			// preserve horizontal alignment.
+			if(m_direction == Vertical)
+			{
+				auto horz_space = cursor.widthAtCursor();
+				auto self_width = m_layout_size.x();
+
+				auto space_width = std::max(Length(0), self_width - child->layoutSize().x());
+				switch(m_style->alignment())
+				{
+					case Left:
+					case Justified: break;
+
+					case Right: {
+						cursor = cursor.moveRight(horz_space - self_width);
+						cursor = cursor.moveRight(space_width);
+						break;
+					}
+
+					case Centre: {
+						cursor = cursor.moveRight((horz_space - self_width) / 2);
+						cursor = cursor.moveRight(space_width / 2);
+						break;
+					}
+				}
+			}
+
 			cursor = child->positionChildren(cursor);
 
 			switch(m_direction)
 			{
-				using enum Direction;
 				case Horizontal: //
 					cursor = cursor.moveRight(obj_spacing);
 					break;

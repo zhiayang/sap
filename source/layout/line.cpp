@@ -112,8 +112,9 @@ namespace sap::layout
 	}
 
 
-	Line::Line(const Style* style, Size2d size, std::vector<std::unique_ptr<LayoutObject>> objs)
+	Line::Line(const Style* style, Size2d size, LineMetrics metrics, std::vector<std::unique_ptr<LayoutObject>> objs)
 		: LayoutObject(style, size)
+		, m_metrics(std::move(metrics))
 		, m_objects(std::move(objs))
 	{
 	}
@@ -185,13 +186,34 @@ namespace sap::layout
 			}
 		}
 
-		return std::unique_ptr<Line>(new Line(style, Size2d(total_width, line_height), std::move(layout_objects)));
+		return std::unique_ptr<Line>(new Line(style, Size2d(total_width, line_height), std::move(line_metrics),
+			std::move(layout_objects)));
 	}
 
 
 	layout::PageCursor Line::positionChildren(layout::PageCursor cursor)
 	{
 		// for now, lines only contain words; words are already positioned with their relative thingies.
+		using enum Alignment;
+
+		auto horz_space = cursor.widthAtCursor();
+		auto self_width = m_layout_size.x();
+
+		switch(m_style->alignment())
+		{
+			case Left:
+			case Justified: break;
+
+			case Right: {
+				cursor = cursor.moveRight(horz_space - self_width);
+				break;
+			}
+
+			case Centre: {
+				cursor = cursor.moveRight((horz_space - self_width) / 2);
+				break;
+			}
+		}
 
 		this->positionRelatively(cursor.position());
 		return cursor.newLine(m_layout_size.y()).carriageReturn();
