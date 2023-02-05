@@ -69,7 +69,7 @@ namespace sap::tree
 	{
 		auto category = utf8proc_category((utf8proc_int32_t) c);
 		return util::is_one_of(category, UTF8PROC_CATEGORY_LU, UTF8PROC_CATEGORY_LL, UTF8PROC_CATEGORY_LT, UTF8PROC_CATEGORY_LM,
-		    UTF8PROC_CATEGORY_LO);
+			UTF8PROC_CATEGORY_LO);
 	}
 
 

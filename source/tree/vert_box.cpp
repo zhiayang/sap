@@ -9,44 +9,12 @@
 
 #include "layout/base.h"
 #include "layout/line.h"
-#include "layout/paragraph.h"
+#include "layout/container.h"
 
 #include "pdf/font.h"
 
 namespace sap::tree
 {
-	using TboLayoutResult = interp::OutputContext::TboLayoutResult;
-	static ErrorOr<TboLayoutResult> layout_an_object_please(interp::Interpreter* cs,
-	    layout::PageCursor& cursor,
-	    bool& is_first,
-	    const Style* cur_style,
-	    std::vector<std::unique_ptr<layout::Line>>& lines_out,
-	    BlockObject* obj,
-	    std::optional<layout::PageCursor> req_cursor)
-	{
-		bool should_update_cursor = not req_cursor.has_value();
-
-		auto at_cursor = req_cursor.value_or(cursor);
-		if(not is_first && should_update_cursor)
-			at_cursor = cursor.newLine(cur_style->paragraph_spacing()).carriageReturn();
-
-		is_first = false;
-
-		std::array<BlockObject*, 1> aoeu { obj };
-		auto [new_cursor, maybe_line] = TRY(layout::Line::fromBlockObjects(cs, at_cursor, cur_style, aoeu));
-
-		if(not maybe_line.has_value())
-			return Ok<TboLayoutResult>(cursor, nullptr);
-
-		auto line_ptr = lines_out.emplace_back(std::move(*maybe_line)).get();
-
-		if(should_update_cursor)
-			cursor = std::move(new_cursor);
-
-		return Ok<TboLayoutResult>(cursor, line_ptr);
-	}
-
-
 	ErrorOr<void> VertBox::evaluateScripts(interp::Interpreter* cs) const
 	{
 		for(auto& obj : m_objects)
@@ -55,35 +23,45 @@ namespace sap::tree
 		return Ok();
 	}
 
-	auto VertBox::createLayoutObject(interp::Interpreter* cs, layout::PageCursor cursor, const Style* parent_style) const
-	    -> ErrorOr<LayoutResult>
+	auto VertBox::createLayoutObject(interp::Interpreter* cs, const Style* parent_style, Size2d available_space) const
+		-> ErrorOr<LayoutResult>
 	{
-		bool is_first = true;
-
-		auto start_cursor = cursor;
-		std::vector<std::unique_ptr<layout::Line>> lines {};
+		auto _ = cs->evaluator().pushBlockContext(this);
 
 		auto cur_style = m_style->useDefaultsFrom(cs->evaluator().currentStyle())->useDefaultsFrom(parent_style);
+		std::vector<std::unique_ptr<layout::LayoutObject>> objects;
 
-		auto _ = cs->evaluator().pushBlockContext(cursor, this,
-		    {
-		        .add_block_object = [&](auto obj, auto at_cursor) -> ErrorOr<TboLayoutResult> {
-			        auto ptr = m_created_block_objects.emplace_back(std::move(obj)).get();
-
-			        return layout_an_object_please(cs, cursor, is_first, cur_style, lines, ptr, std::move(at_cursor));
-		        },
-		        .set_layout_cursor = [&](auto new_cursor) -> ErrorOr<void> {
-			        cursor = std::move(new_cursor);
-			        return Ok();
-		        },
-		    });
+		Length total_height = 0;
+		Length max_width = 0;
 
 		for(size_t i = 0; i < m_objects.size(); i++)
-			TRY(layout_an_object_please(cs, cursor, is_first, cur_style, lines, m_objects[i].get(), std::nullopt));
+		{
+			auto obj = TRY(m_objects[i].get()->createLayoutObject(cs, cur_style, available_space));
+			if(not obj.object.has_value())
+				continue;
 
-		if(lines.empty())
-			return Ok(LayoutResult::make(cursor));
+			auto obj_width = (*obj.object)->layoutSize().x();
+			auto obj_height = (*obj.object)->layoutSize().y();
 
-		return Ok(LayoutResult::make(cursor, layout::Paragraph::fromLines(cs, start_cursor, std::move(lines))));
+			max_width = std::max(max_width, obj_width);
+			objects.push_back(std::move(*obj.object));
+
+			if(available_space.y() < obj_height)
+			{
+				sap::warn("layout", "not enough space! need at least {}, but only {} remaining", obj_height, available_space.y());
+				available_space.y() = 0;
+			}
+			else
+			{
+				available_space.y() -= obj_height;
+			}
+
+			total_height += obj_height;
+		}
+
+		if(objects.empty())
+			return Ok(LayoutResult::empty());
+
+		return Ok(LayoutResult::make(std::make_unique<layout::Container>(Size2d(max_width, total_height))));
 	}
 }

@@ -32,17 +32,17 @@ hello \std::style(builtin::Style { .font_size = 15pt }) { world } asdf
 \std::section("goodbye");
 
 \script ::{
-	fn omegalul()
+	fn omegalul() -> Inline
 	{
 		let text = builtin::make_text(f"OMEGALUL");
-		builtin::output_at_current(*text);
+		return text;
 	}
 
-	fn omegalul2()
+	fn omegalul2() -> Block
 	{
 		let text = builtin::make_text((10 * [f"ha"])...);
 		let para = builtin::make_paragraph(*text);
-		builtin::output_at_current(*para);
+		return para;
 	}
 }
 
@@ -124,9 +124,9 @@ Travelling day in and day out. Doing business like this takes much more effort t
 			.alignment = builtin::Alignment::Centred
 		});
 
-		builtin::output_at_current(builtin::make_hbox(
-			builtin::make_hbox(*img1, *img2), builtin::make_hbox(*img3, *img4)
-		));
+		# builtin::output_at_current(builtin::make_hbox(
+		# 	builtin::make_hbox(*img1, *img2), builtin::make_hbox(*img3, *img4)
+		# ));
 
 		builtin::pop_style();
 	}

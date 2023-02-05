@@ -88,8 +88,8 @@ namespace sap::layout
 						return std::get<0>(calculate_word_size(sep_char, parent_style->extendWith((*(it - 1))->style())));
 
 					return std::max(                                                                                //
-					    std::get<0>(calculate_word_size(sep_char, parent_style->extendWith((*(it - 1))->style()))), //
-					    std::get<0>(calculate_word_size(sep_char, parent_style->extendWith((*(it + 1))->style()))));
+						std::get<0>(calculate_word_size(sep_char, parent_style->extendWith((*(it - 1))->style()))), //
+						std::get<0>(calculate_word_size(sep_char, parent_style->extendWith((*(it + 1))->style()))));
 				}();
 
 				if(sep->isSpace())
@@ -126,64 +126,52 @@ namespace sap::layout
 	}
 
 
-	Line::Line(RelativePos pos, Size2d size, const Style* style, std::vector<std::unique_ptr<LayoutObject>> objs)
-	    : LayoutObject(pos, size)
-	    , m_objects(std::move(objs))
+	Line::Line(Size2d size, const Style* style, std::vector<std::unique_ptr<LayoutObject>> objs)
+		: LayoutObject(size)
+		, m_objects(std::move(objs))
 	{
 		this->setStyle(style);
 	}
 
-	std::pair<PageCursor, std::unique_ptr<Line>> Line::fromInlineObjects(interp::Interpreter* cs,
-	    PageCursor cursor,
-	    const Style* style,
-	    std::span<const std::unique_ptr<tree::InlineObject>> objs,
-	    const LineMetrics& line_metrics,
-	    bool is_first_line,
-	    bool is_last_line)
+	std::unique_ptr<Line> Line::fromInlineObjects(interp::Interpreter* cs,
+		const Style* style,
+		std::span<const std::unique_ptr<tree::InlineObject>> objs,
+		const LineMetrics& line_metrics,
+		Size2d available_space,
+		bool is_first_line,
+		bool is_last_line)
 	{
-		auto start_position = cursor.position();
+		// auto start_position = cursor.position();
 
 		auto line_height = line_metrics.ascent_height + line_metrics.descent_height;
 		auto total_width = line_metrics.total_word_width + line_metrics.total_space_width;
 
-		auto desired_space_width = cursor.widthAtCursor() - line_metrics.total_word_width;
+		auto desired_space_width = available_space.x() - line_metrics.total_word_width;
 		double space_width_factor = desired_space_width / line_metrics.total_space_width;
-
-		const Style* prev_word_style = Style::empty();
 
 		std::vector<std::unique_ptr<LayoutObject>> layout_objects {};
 
-		if(style->alignment() == Alignment::Centre)
-		{
-			auto left_offset = (cursor.widthAtCursor() - total_width) / 2;
-			cursor = cursor.moveRight(left_offset);
-		}
-		else if(style->alignment() == Alignment::Right)
-		{
-			auto left_offset = cursor.widthAtCursor() - total_width;
-			cursor = cursor.moveRight(left_offset);
-		}
-
+		const Style* prev_word_style = Style::empty();
+		Length current_offset = 0;
 
 		for(size_t i = 0; i < objs.size(); i++)
 		{
 			auto obj_width = line_metrics.widths[i];
-			auto new_cursor = cursor.moveRight(obj_width);
 
 			if(auto tree_word = dynamic_cast<const tree::Text*>(objs[i].get()); tree_word != nullptr)
 			{
-				auto word = std::make_unique<Word>(tree_word->contents(), style->extendWith(tree_word->style()),
-				    cursor.position(), Size2d(obj_width, line_height));
+				auto word = std::make_unique<Word>(tree_word->contents(), style->extendWith(tree_word->style()), current_offset,
+					Size2d(obj_width, line_height));
 
 				prev_word_style = word->style();
-				cursor = std::move(new_cursor);
-
 				layout_objects.push_back(std::move(word));
+
+				current_offset += obj_width;
 			}
 			else if(auto tree_sep = dynamic_cast<const tree::Separator*>(objs[i].get()); tree_sep != nullptr)
 			{
 				auto sep = std::make_unique<Word>(i + 1 == objs.size() ? tree_sep->endOfLine() : tree_sep->middleOfLine(),
-				    style->extendWith(tree_sep->style()), cursor.position(), Size2d(obj_width, line_height));
+					style->extendWith(tree_sep->style()), current_offset, Size2d(obj_width, line_height));
 
 				prev_word_style = sep->style();
 				layout_objects.push_back(std::move(sep));
@@ -194,18 +182,18 @@ namespace sap::layout
 					if(is_last_line)
 					{
 						if(0.9 <= space_width_factor && space_width_factor <= 1.1)
-							cursor = cursor.moveRight(justified_shift);
+							current_offset += justified_shift;
 						else
-							cursor = cursor.moveRight(obj_width);
+							current_offset += obj_width;
 					}
 					else
 					{
-						cursor = cursor.moveRight(justified_shift);
+						current_offset += justified_shift;
 					}
 				}
 				else
 				{
-					cursor = cursor.moveRight(obj_width);
+					current_offset += obj_width;
 				}
 			}
 			else
@@ -214,13 +202,11 @@ namespace sap::layout
 			}
 		}
 
-		auto vert_offset = line_metrics.default_line_spacing - line_metrics.ascent_height;
-		return {
-			cursor.newLine(vert_offset).carriageReturn(),
-			std::unique_ptr<Line>(new Line(start_position, Size2d(total_width, line_height), style, std::move(layout_objects))),
-		};
+		return std::unique_ptr<Line>(new Line(Size2d(total_width, line_height), style, std::move(layout_objects)));
 	}
 
+
+#if 0
 	ErrorOr<std::pair<PageCursor, std::optional<std::unique_ptr<Line>>>> Line::fromBlockObjects(interp::Interpreter* cs, //
 	    PageCursor cursor,
 	    const Style* style,
@@ -267,6 +253,8 @@ namespace sap::layout
 		        Size2d(total_width, total_height),                                   //
 		        style, std::move(layout_objects))));
 	}
+#endif
+
 
 	void Line::render(const LayoutBase* layout, std::vector<pdf::Page*>& pages) const
 	{
@@ -274,32 +262,23 @@ namespace sap::layout
 		struct PrevWord
 		{
 			pdf::Text* pdf_text;
-			Position word_end;
+			Length word_end;
 		};
 
 		std::optional<PrevWord> prev_word {};
+
+		auto line_pos = this->resolveAbsPosition(layout);
 
 		for(auto& obj : m_objects)
 		{
 			if(auto word = dynamic_cast<const Word*>(obj.get()); word != nullptr)
 			{
 				bool is_first = not prev_word.has_value();
-				if(is_first || word->layoutPosition().pos.y() != prev_word->word_end.y())
-				{
-					is_first = true;
-					prev_word = PrevWord {
-						.pdf_text = util::make<pdf::Text>(),
-						.word_end = {},
-					};
-				}
 
-				auto offset_from_prev = word->layoutPosition().pos.x() - prev_word->word_end.x();
-				word->render(layout, pages, prev_word->pdf_text, is_first, offset_from_prev);
+				auto offset_from_prev = word->relativeOffset() - prev_word->word_end;
+				word->render(line_pos, pages, prev_word->pdf_text, is_first, offset_from_prev);
 
-				prev_word->word_end = {
-					word->layoutPosition().pos.x() + word->layoutSize().x(),
-					word->layoutPosition().pos.y(),
-				};
+				prev_word->word_end = word->relativeOffset() + word->layoutSize().x();
 			}
 			else
 			{

@@ -84,6 +84,7 @@ namespace sap::layout
 
 		size_t pageCount() const;
 		Size2d pageSize() const;
+		Size2d contentSize() const;
 
 		virtual AbsolutePagePos convertPosition(RelativePos pos) const override;
 

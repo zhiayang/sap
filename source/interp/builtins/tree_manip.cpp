@@ -221,6 +221,4 @@ namespace sap::interp::builtin
 		para->setSingleLineMode(true);
 		return EvalResult::ofValue(Value::treeBlockObject(std::move(para)));
 	}
-
-
 }

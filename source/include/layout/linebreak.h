@@ -17,15 +17,11 @@ namespace sap::layout::linebreak
 {
 	struct BrokenLine
 	{
-		BrokenLine(const Style* parent_style, PageCursor m_prev_cursor)
-		    : m_parent_style(parent_style)
-		    , m_prev_cursor(std::move(m_prev_cursor))
-		{
-		}
+		explicit BrokenLine(const Style* parent_style) : m_parent_style(parent_style) { }
 
 	private:
 		const Style* m_parent_style;
-		PageCursor m_prev_cursor;
+		// PageCursor m_prev_cursor;
 
 		enum
 		{
@@ -69,7 +65,9 @@ namespace sap::layout::linebreak
 				// if the previous thing wasn't even a word, we have to add its size as well,
 				// because it doesn't have text in m_last_word
 				if(m_last_obj_kind != WORD)
-					ret += m_last_obj->size().x();
+				{
+					sap::internal_error("unsupported thing in line");
+				}
 
 				m_last_word.erase(m_last_word.size() - m_last_sep->endOfLine().size());
 				return ret;
@@ -83,7 +81,7 @@ namespace sap::layout::linebreak
 		size_t numSpaces() const { return m_num_spaces; }
 		size_t numParts() const { return m_num_parts; }
 		Length lineHeight() const { return m_line_height; }
-		PageCursor PageCursor() const { return m_prev_cursor.newLine(m_line_height); }
+		// PageCursor PageCursor() const { return m_prev_cursor.newLine(m_line_height); }
 
 		void add(const tree::InlineObject* obj)
 		{
@@ -101,13 +99,15 @@ namespace sap::layout::linebreak
 			if(m_last_obj_kind == WORD)
 				return calculateWordSize(m_last_word, style);
 			else if(m_last_obj != nullptr)
-				return m_last_obj->size();
+				sap::internal_error("unsupported");
 			else
 				return { 0, 0 };
 		}
 
 		void add_other(const tree::InlineObject* obj)
 		{
+			sap::internal_error("unsupported");
+#if 0
 			auto prev_word_style = m_parent_style->extendWith(m_current_style);
 
 			m_line_height = std::max(m_line_height, obj->size().y());
@@ -131,6 +131,7 @@ namespace sap::layout::linebreak
 			m_num_parts++;
 			m_last_obj_kind = OTHER;
 			m_last_obj = obj;
+#endif
 		}
 
 		// Modifiers
@@ -164,7 +165,7 @@ namespace sap::layout::linebreak
 			if(m_last_sep != nullptr)
 			{
 				auto sep_width = std::max(calculateWordSize(m_last_sep->middleOfLine(), prev_word_style).x(),
-				    calculateWordSize(m_last_sep->middleOfLine(), word_style).x());
+					calculateWordSize(m_last_sep->middleOfLine(), word_style).x());
 
 				m_line_width_excluding_last_word += sep_width;
 
@@ -186,8 +187,7 @@ namespace sap::layout::linebreak
 		}
 	};
 
-	std::vector<BrokenLine> breakLines(PageCursor cursor,
-	    const Style* parent_style,
-	    const std::vector<std::unique_ptr<tree::InlineObject>>& contents,
-	    Length preferred_line_length);
+	std::vector<BrokenLine> breakLines(const Style* parent_style,
+		const std::vector<std::unique_ptr<tree::InlineObject>>& contents,
+		Length preferred_line_length);
 }

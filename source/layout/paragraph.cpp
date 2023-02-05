@@ -26,28 +26,9 @@
 
 namespace sap::layout
 {
-	std::unique_ptr<Paragraph> Paragraph::fromLines(interp::Interpreter* cs, //
-	    PageCursor cursor,
-	    std::vector<std::unique_ptr<Line>> lines)
-	{
-		auto widest_line = std::max_element(lines.begin(), lines.end(), [](auto& a, auto& b) {
-			return a->layoutSize().x() < b->layoutSize().x();
-		});
-
-		auto line_width = (*widest_line).get()->layoutSize().x();
-		auto total_height = std::accumulate(lines.begin(), lines.end(), Length(0), [](Length a, const auto& b) {
-			return a + b->layoutSize().y();
-		});
-
-		return std::unique_ptr<Paragraph>(new Paragraph(cursor.position(), { line_width, total_height }, std::move(lines)));
-	}
-
-	Paragraph::Paragraph(RelativePos pos, Size2d size, std::vector<std::unique_ptr<Line>> lines)
-	    : LayoutObject(pos, size)
-	    , m_lines(std::move(lines))
+	Paragraph::Paragraph(Size2d size, std::vector<std::unique_ptr<Line>> lines) : LayoutObject(size), m_lines(std::move(lines))
 	{
 	}
-
 
 	void Paragraph::render(const LayoutBase* layout, std::vector<pdf::Page*>& pages) const
 	{
@@ -59,28 +40,17 @@ namespace sap::layout
 
 namespace sap::tree
 {
-	Size2d Paragraph::size(const layout::PageCursor& cursor) const
+	auto Paragraph::createLayoutObject(interp::Interpreter* cs, const Style* parent_style, Size2d available_space) const
+		-> ErrorOr<LayoutResult>
 	{
-		return { cursor.widthAtCursor(), 0 };
-	}
+		auto _ = cs->evaluator().pushBlockContext(this);
 
-	auto Paragraph::createLayoutObject(interp::Interpreter* cs, layout::PageCursor cursor, const Style* parent_style) const
-	    -> ErrorOr<LayoutResult>
-	{
 		std::vector<std::unique_ptr<InlineObject>> para_objects {};
-
-		auto _ = cs->evaluator().pushBlockContext(cursor, this,
-		    { .add_inline_object = [&para_objects](auto obj) -> ErrorOr<void> {
-			    para_objects.push_back(std::move(obj));
-			    return Ok();
-		    } });
-
-
 		const_cast<Paragraph*>(this)->evaluate_scripts(cs, para_objects);
 		const_cast<Paragraph*>(this)->processWordSeparators();
 
 		if(m_contents.empty())
-			return Ok(LayoutResult::make(cursor));
+			return Ok(LayoutResult::empty());
 
 		auto style = parent_style->extendWith(this->style());
 
@@ -97,9 +67,9 @@ namespace sap::tree
 			if(dynamic_cast<const tree::Separator*>((*words_begin).get()) != nullptr)
 			{
 				sap::internal_error(
-				    "line starting with non-Word found, "
-				    "either line breaking algo is broken "
-				    "or we had multiple separators in a row");
+					"line starting with non-Word found, "
+					"either line breaking algo is broken "
+					"or we had multiple separators in a row");
 			}
 
 			// Ignore space at end of line
@@ -109,15 +79,14 @@ namespace sap::tree
 
 			auto words_span = std::span(words_begin, words_end);
 			the_lines.push_back({
-			    layout::computeLineMetrics(words_span, style),
-			    words_span,
+				layout::computeLineMetrics(words_span, style),
+				words_span,
 			});
 		};
 
-
-		if(not m_single_line_mode)
+		if(not m_is_single_line_mode)
 		{
-			auto broken_lines = layout::linebreak::breakLines(cursor, style, m_contents, cursor.widthAtCursor());
+			auto broken_lines = layout::linebreak::breakLines(style, m_contents, available_space.x());
 
 			for(auto line_it = broken_lines.begin(); line_it != broken_lines.end(); ++line_it)
 			{
@@ -137,28 +106,13 @@ namespace sap::tree
 		}
 
 
-
 		for(size_t i = 0; i < the_lines.size(); i++)
 		{
 			bool is_last_line = i + 1 == the_lines.size();
 			auto& [metrics, word_span] = the_lines[i];
 
-			/*
-			    Line typesets its words assuming the cursor is at the baseline;
-			    we need to reserve vertical space to account for that.
-
-			    however, if we are in "single line mode", then we typeset ourselves at the
-			    baseline instead.
-			*/
-			if(i > 0 || not m_single_line_mode)
-				cursor = cursor.newLine(metrics.ascent_height);
-
-
-			auto [new_cursor, layout_line] = layout::Line::fromInlineObjects(cs, //
-			    cursor, style, word_span, metrics, /* is_first: */ i == 0, is_last_line);
-
-			cursor = std::move(new_cursor);
-			cursor = cursor.carriageReturn();
+			auto layout_line = layout::Line::fromInlineObjects(cs, style, word_span, metrics, available_space,
+				/* is_first: */ i == 0, is_last_line);
 
 			para_size.x() = std::max(para_size.x(), layout_line->layoutSize().x());
 			para_size.y() += layout_line->layoutSize().y();
@@ -166,10 +120,8 @@ namespace sap::tree
 			layout_lines.push_back(std::move(layout_line));
 		}
 
-		auto para_pos2 = layout_lines.front()->layoutPosition();
-		auto layout_para = std::unique_ptr<layout::Paragraph>(new layout::Paragraph(para_pos2, para_size,
-		    std::move(layout_lines)));
+		auto layout_para = std::unique_ptr<layout::Paragraph>(new layout::Paragraph(para_size, std::move(layout_lines)));
 
-		return Ok(LayoutResult::make(cursor, std::move(layout_para)));
+		return Ok(LayoutResult::make(std::move(layout_para)));
 	}
 }

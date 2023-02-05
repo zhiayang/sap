@@ -20,24 +20,27 @@ namespace sap::layout
 {
 	struct Word : LayoutObject
 	{
-		Word(zst::wstr_view text, const Style* style, RelativePos position, Size2d size);
+		Word(zst::wstr_view text, const Style* style, Length relative_offset, Size2d size);
 
 		virtual void render(const LayoutBase* layout, std::vector<pdf::Page*>& pages) const override;
 
 		zst::wstr_view text() const { return m_text; }
 
+		Length relativeOffset() const { return m_relative_offset; }
+
 	private:
-		void render(const LayoutBase* layout,
-		    std::vector<pdf::Page*>& pages,
-		    pdf::Text* text,
-		    bool is_first_in_text,
-		    Length offset_from_prev) const;
+		void render(AbsolutePagePos line_pos,
+			std::vector<pdf::Page*>& pages,
+			pdf::Text* text,
+			bool is_first_in_text,
+			Length offset_from_prev) const;
 
 		void render_to_text(pdf::Text* text) const;
 
 		friend struct Line;
 
 	private:
+		Length m_relative_offset {};
 		zst::wstr_view m_text {};
 	};
 }

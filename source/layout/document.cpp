@@ -2,6 +2,8 @@
 // Copyright (c) 2022, zhiayang
 // SPDX-License-Identifier: Apache-2.0
 
+#include <cmath>
+
 #include "pdf/file.h"  // for File
 #include "pdf/font.h"  // for Font
 #include "pdf/units.h" // for PdfScalar
@@ -63,12 +65,12 @@ namespace sap::layout
 		auto default_style = util::make<sap::Style>();
 
 		default_style->set_font_family(*settings.font_family)
-		    .set_font_style(sap::FontStyle::Regular)
-		    .set_font_size(resolve_len(settings, *settings.font_size))
-		    .set_root_font_size(resolve_len(settings, *settings.font_size))
-		    .set_line_spacing(*settings.line_spacing)
-		    .set_paragraph_spacing(resolve_len(settings, *settings.paragraph_spacing))
-		    .set_alignment(Alignment::Justified);
+			.set_font_style(sap::FontStyle::Regular)
+			.set_font_size(resolve_len(settings, *settings.font_size))
+			.set_root_font_size(resolve_len(settings, *settings.font_size))
+			.set_line_spacing(*settings.line_spacing)
+			.set_paragraph_spacing(resolve_len(settings, *settings.paragraph_spacing))
+			.set_alignment(Alignment::Justified);
 
 		this->setStyle(default_style);
 	}
@@ -135,14 +137,17 @@ namespace sap::tree
 			cs->evaluator().commenceLayoutPass(++layout_pass);
 			cs->setCurrentPhase(ProcessingPhase::Layout);
 
+			auto available_space = Size2d(layout_doc->pageLayout().contentSize().x(), Length(INFINITY));
+
+
 			auto cursor = layout_doc->pageLayout().newCursor();
-			auto objs_or_err = m_container->createLayoutObject(cs, cursor, layout_doc->style());
+			auto objs_or_err = m_container->createLayoutObject(cs, layout_doc->style(), available_space);
 			if(objs_or_err.is_err())
 				objs_or_err.error().showAndExit();
 
 			cs->setCurrentPhase(ProcessingPhase::PostLayout);
 
-			auto _ = cs->evaluator().pushBlockContext(cursor, std::nullopt, {});
+			auto _ = cs->evaluator().pushBlockContext(std::nullopt);
 			if(auto e = cs->runHooks(); e.is_err())
 				e.error().showAndExit();
 
@@ -182,9 +187,9 @@ namespace sap::tree
 	}
 
 	Document::Document(std::unique_ptr<interp::Block> preamble, std::unique_ptr<interp::FunctionCall> doc_start)
-	    : m_container(std::make_unique<tree::VertBox>())
-	    , m_preamble(std::move(preamble))
-	    , m_document_start(std::move(doc_start))
+		: m_container(std::make_unique<tree::VertBox>())
+		, m_preamble(std::move(preamble))
+		, m_document_start(std::move(doc_start))
 	{
 	}
 

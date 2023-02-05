@@ -6,7 +6,7 @@
 
 namespace sap::layout
 {
-	Container::Container(RelativePos position, Size2d size) : LayoutObject(std::move(position), std::move(size))
+	Container::Container(Size2d size) : LayoutObject(std::move(size))
 	{
 	}
 

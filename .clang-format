@@ -81,4 +81,4 @@ SpacesInCStyleCastParentheses: false
 SpacesInParentheses: false
 Standard: c++17
 TabWidth: 4
-UseTab: ForIndentation
+UseTab: AlignWithSpaces

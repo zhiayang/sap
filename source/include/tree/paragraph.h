@@ -87,22 +87,22 @@ namespace sap::tree
 		void addObject(std::unique_ptr<InlineObject> obj);
 		void addObjects(std::vector<std::unique_ptr<InlineObject>> obj);
 
-		virtual Size2d size(const layout::PageCursor&) const override;
 		virtual ErrorOr<void> evaluateScripts(interp::Interpreter* cs) const override;
 		virtual ErrorOr<LayoutResult> createLayoutObject(interp::Interpreter* cs,
-		    layout::PageCursor cursor,
-		    const Style* parent_style) const override;
+			const Style* parent_style,
+			Size2d available_space) const override;
 
 		std::vector<std::unique_ptr<InlineObject>>& contents() { return m_contents; }
 		const std::vector<std::unique_ptr<InlineObject>>& contents() const { return m_contents; }
 
 		void processWordSeparators();
-		void setSingleLineMode(bool x) { m_single_line_mode = x; }
+		void setSingleLineMode(bool x) { m_is_single_line_mode = x; }
 
 	private:
-		std::vector<std::unique_ptr<InlineObject>> m_contents {};
-		bool m_single_line_mode = false;
-
 		void evaluate_scripts(interp::Interpreter* cs, std::vector<std::unique_ptr<InlineObject>>& output_vec);
+
+	private:
+		bool m_is_single_line_mode = false;
+		std::vector<std::unique_ptr<InlineObject>> m_contents {};
 	};
 }

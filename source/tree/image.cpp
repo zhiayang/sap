@@ -18,9 +18,8 @@
 
 namespace sap::tree
 {
-	Image::Image(OwnedImageBitmap image, sap::Vector2 size) : m_image(std::move(image))
+	Image::Image(OwnedImageBitmap image, sap::Vector2 size) : m_image(std::move(image)), m_size(size)
 	{
-		m_size = size;
 	}
 
 	// TODO: make ErrorOr<>
@@ -34,7 +33,7 @@ namespace sap::tree
 		// always ask for 3 channels -- r g b.
 		int num_actual_channels = 0;
 		auto image_data_buf = stbi_load_from_memory(file_buf.get(), (int) file_buf.size(), &img_width_, &img_height_,
-		    &num_actual_channels, 3);
+			&num_actual_channels, 3);
 
 		if(image_data_buf == nullptr)
 			sap::internal_error("failed to load image '{}': {}", file_path, stbi_failure_reason());
@@ -43,9 +42,9 @@ namespace sap::tree
 		auto img_height = (size_t) img_height_;
 
 		auto image_rgb_data = zst::unique_span<uint8_t[]>(image_data_buf, img_height * img_width * 3, //
-		    [](const void* ptr, size_t n) {
-			    stbi_image_free((void*) ptr);
-		    });
+			[](const void* ptr, size_t n) {
+				stbi_image_free((void*) ptr);
+			});
 
 		auto aspect = (double) img_width / (double) img_height;
 		if(not height.has_value())

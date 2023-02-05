@@ -5,6 +5,7 @@
 #pragma once
 
 #include <deque>
+#include <variant>
 
 #include "util.h"
 
@@ -35,32 +36,11 @@ namespace sap::interp
 {
 	struct Evaluator;
 	struct Interpreter;
-	struct OutputContext;
-
-	struct OutputContext
-	{
-		using TioPtr = std::unique_ptr<tree::InlineObject>;
-		using LayoutInlineObjectFn = std::function<ErrorOr<void>(TioPtr)>;
-
-		using TboPtr = std::unique_ptr<tree::BlockObject>;
-		using TboLayoutResult = std::pair<layout::PageCursor, layout::LayoutObject*>;
-		using LayoutBlockObjectFn = std::function<ErrorOr<TboLayoutResult>(TboPtr, std::optional<layout::PageCursor>)>;
-
-		using SetLayoutCursorFn = std::function<ErrorOr<void>(layout::PageCursor)>;
-
-		std::optional<LayoutBlockObjectFn> add_block_object = std::nullopt;
-		std::optional<LayoutInlineObjectFn> add_inline_object = std::nullopt;
-		std::optional<SetLayoutCursorFn> set_layout_cursor = std::nullopt;
-	};
 
 	// for tracking layout hierarchy in the evaluator
 	struct BlockContext
 	{
-		layout::PageCursor cursor;
-		layout::RelativePos parent_pos;
 		std::optional<const tree::BlockObject*> obj;
-		OutputContext output_context;
-		const layout::PageCursor* cursor_ref;
 	};
 
 	struct StackFrame
@@ -79,9 +59,9 @@ namespace sap::interp
 
 	private:
 		explicit StackFrame(Evaluator* ev, StackFrame* parent, size_t call_depth)
-		    : m_evaluator(ev)
-		    , m_parent(parent)
-		    , m_call_depth(call_depth)
+			: m_evaluator(ev)
+			, m_parent(parent)
+			, m_call_depth(call_depth)
 		{
 		}
 
@@ -131,9 +111,7 @@ namespace sap::interp
 		const Style* popStyle();
 
 		const BlockContext& getBlockContext() const;
-		[[nodiscard]] util::Defer<> pushBlockContext(const layout::PageCursor& cursor,
-		    std::optional<const tree::BlockObject*> obj,
-		    OutputContext output_ctx);
+		[[nodiscard]] util::Defer<> pushBlockContext(std::optional<const tree::BlockObject*> obj);
 
 		void popBlockContext();
 
@@ -146,7 +124,8 @@ namespace sap::interp
 		void setPageLayout(layout::PageLayout* page_layout);
 		layout::PageLayout* pageLayout() const { return m_page_layout; }
 
-		ErrorOr<void> addAbsolutelyPositionedBlockObject(std::unique_ptr<tree::BlockObject> tbo, layout::AbsolutePagePos pos);
+		ErrorOr<void> addPositionedBlockObject(std::unique_ptr<tree::BlockObject> tbo,
+			std::variant<layout::AbsolutePagePos, layout::RelativePos> pos);
 
 	private:
 		Interpreter* m_interp;

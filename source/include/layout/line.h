@@ -36,23 +36,18 @@ namespace sap::layout
 	{
 		virtual void render(const LayoutBase* layout, std::vector<pdf::Page*>& pages) const override;
 
-		static std::pair<PageCursor, std::unique_ptr<Line>> fromInlineObjects(interp::Interpreter* cs,
-		    PageCursor cursor,
-		    const Style* style,
-		    std::span<const std::unique_ptr<tree::InlineObject>> objs,
-		    const LineMetrics& line_metrics,
-		    bool is_first_line,
-		    bool is_last_line);
-
-		static ErrorOr<std::pair<PageCursor, std::optional<std::unique_ptr<Line>>>> fromBlockObjects(interp::Interpreter* cs,
-		    PageCursor cursor,
-		    const Style* style,
-		    std::span<tree::BlockObject*> objs);
+		static std::unique_ptr<Line> fromInlineObjects(interp::Interpreter* cs,
+			const Style* style,
+			std::span<const std::unique_ptr<tree::InlineObject>> objs,
+			const LineMetrics& line_metrics,
+			Size2d available_space,
+			bool is_first_line,
+			bool is_last_line);
 
 		const std::vector<std::unique_ptr<LayoutObject>>& objects() const { return m_objects; }
 
 	private:
-		explicit Line(RelativePos position, Size2d size, const Style* style, std::vector<std::unique_ptr<LayoutObject>> objs);
+		explicit Line(Size2d size, const Style* style, std::vector<std::unique_ptr<LayoutObject>> objs);
 
 	private:
 		std::vector<std::unique_ptr<LayoutObject>> m_objects;

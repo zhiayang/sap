@@ -30,6 +30,8 @@ namespace std
 
 	fn section(name: string) -> void
 	{
+		return;
+
 		let name_tbo = std::style(builtin::Style {
 			.font_size = 2em,
 		}, builtin::make_line(builtin::make_text(name)));
@@ -62,6 +64,8 @@ namespace std
 			builtin::request_layout();
 			return;
 		}
+
+		return;
 
 		var i = 0;
 		while(i < g_sections.size())

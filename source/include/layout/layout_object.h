@@ -15,20 +15,38 @@ namespace pdf
 namespace sap::layout
 {
 	struct LayoutBase;
+	struct PageLayout;
 
 	struct LayoutObject : Stylable
 	{
-		LayoutObject(RelativePos position, Size2d size) : m_layout_position(std::move(position)), m_layout_size(size) { }
+		LayoutObject(Size2d size) : m_layout_size(size) { }
 		virtual ~LayoutObject() = default;
 
 		LayoutObject& operator=(LayoutObject&&) = default;
 		LayoutObject(LayoutObject&&) = default;
 
 		Size2d layoutSize() const { return m_layout_size; }
-		RelativePos layoutPosition() const { return m_layout_position; }
 
-		void setPosition(RelativePos pos) { m_layout_position = std::move(pos); }
-		void setSize(Size2d size) { m_layout_size = std::move(size); }
+		void positionAbsolutely(AbsolutePagePos pos) { m_abs_position = std::move(pos); }
+		void positionRelatively(RelativePos pos) { m_rel_position = std::move(pos); }
+
+		bool isPositioned() const { return m_abs_position.has_value() || m_rel_position.has_value(); }
+		bool isAbsolutelyPositioned() const { return m_abs_position.has_value(); }
+		bool isRelativelyPositioned() const { return m_rel_position.has_value() && not m_abs_position.has_value(); }
+
+		AbsolutePagePos absolutePosition() const
+		{
+			assert(this->isAbsolutelyPositioned());
+			return *m_abs_position;
+		}
+
+		RelativePos relativePosition() const
+		{
+			assert(this->isRelativelyPositioned());
+			return *m_rel_position;
+		}
+
+		AbsolutePagePos resolveAbsPosition(const LayoutBase* layout) const;
 
 		/*
 		    Render (emit PDF commands) the object. Must be called after layout(). For now, we render directly to
@@ -38,7 +56,9 @@ namespace sap::layout
 		virtual void render(const LayoutBase* layout, std::vector<pdf::Page*>& pages) const = 0;
 
 	protected:
-		RelativePos m_layout_position;
+		std::optional<AbsolutePagePos> m_abs_position {};
+		std::optional<RelativePos> m_rel_position {};
+
 		Size2d m_layout_size;
 	};
 }

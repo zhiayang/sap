@@ -27,15 +27,11 @@ namespace sap::layout
 	{
 		using LayoutObject::LayoutObject;
 
-		static std::unique_ptr<Paragraph> fromLines(interp::Interpreter* cs,
-		    PageCursor cursor,
-		    std::vector<std::unique_ptr<Line>> lines);
-
 		virtual void render(const LayoutBase* layout, std::vector<pdf::Page*>& pages) const override;
 
 	private:
 		friend struct tree::Paragraph;
-		Paragraph(RelativePos pos, Size2d size, std::vector<std::unique_ptr<Line>> lines);
+		Paragraph(Size2d size, std::vector<std::unique_ptr<Line>> lines);
 
 	private:
 		std::vector<std::unique_ptr<Line>> m_lines {};

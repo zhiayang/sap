@@ -12,7 +12,7 @@ namespace sap::layout
 
 	struct Container : LayoutObject
 	{
-		Container(RelativePos position, Size2d size);
+		Container(Size2d size);
 
 		void addObject(std::unique_ptr<LayoutObject> obj);
 		std::vector<std::unique_ptr<LayoutObject>>& objects();

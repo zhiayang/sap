@@ -19,9 +19,10 @@
 
 namespace sap::layout
 {
-	Word::Word(zst::wstr_view text, const Style* style, RelativePos pos, Size2d size) //
-	    : LayoutObject(pos, size)
-	    , m_text(text)
+	Word::Word(zst::wstr_view text, const Style* style, Length relative_offset, Size2d size) //
+		: LayoutObject(size)
+		, m_relative_offset(relative_offset)
+		, m_text(text)
 	{
 		this->setStyle(style);
 
@@ -30,9 +31,11 @@ namespace sap::layout
 
 	void Word::render(const LayoutBase* layout, std::vector<pdf::Page*>& pages) const
 	{
+		sap::warn("render", "words should not be rendered directly");
+
 		auto text = util::make<pdf::Text>();
 
-		auto pos = layout->convertPosition(m_layout_position);
+		auto pos = this->resolveAbsPosition(layout);
 		auto page = pages[pos.page_num];
 		text->moveAbs(page->convertVector2(pos.pos.into()));
 
@@ -40,14 +43,13 @@ namespace sap::layout
 		page->addObject(text);
 	}
 
-	void Word::render(const LayoutBase* layout,
-	    std::vector<pdf::Page*>& pages,
-	    pdf::Text* text,
-	    bool is_first_in_text,
-	    Length offset_from_prev) const
+	void Word::render(AbsolutePagePos line_pos,
+		std::vector<pdf::Page*>& pages,
+		pdf::Text* text,
+		bool is_first_in_text,
+		Length offset_from_prev) const
 	{
-		auto pos = layout->convertPosition(m_layout_position);
-		auto page = pages[pos.page_num];
+		auto page = pages[line_pos.page_num];
 
 		if(not is_first_in_text)
 		{
@@ -55,7 +57,7 @@ namespace sap::layout
 		}
 		else
 		{
-			text->moveAbs(page->convertVector2(pos.pos.into()));
+			text->moveAbs(page->convertVector2(line_pos.pos.into()));
 		}
 
 		this->render_to_text(text);

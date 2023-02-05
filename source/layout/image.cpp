@@ -11,19 +11,19 @@
 
 namespace sap::layout
 {
-	Image::Image(RelativePos pos, Size2d size, ImageBitmap image) : LayoutObject(pos, size), m_image(std::move(image))
+	Image::Image(Size2d size, ImageBitmap image) : LayoutObject(size), m_image(std::move(image))
 	{
 	}
 
 	void Image::render(const LayoutBase* layout, std::vector<pdf::Page*>& pages) const
 	{
-		auto pos = layout->convertPosition(m_layout_position);
+		auto pos = this->resolveAbsPosition(layout);
 		auto page = pages[pos.page_num];
 
 		auto page_obj = util::make<pdf::Image>( //
-		    m_image,                            //
-		    m_layout_size.into(),               //
-		    page->convertVector2(pos.pos.into<pdf::Position2d_YDown>()));
+			m_image,                            //
+			m_layout_size.into(),               //
+			page->convertVector2(pos.pos.into<pdf::Position2d_YDown>()));
 
 		page->addObject(page_obj);
 	}
@@ -37,19 +37,15 @@ namespace sap::tree
 		return Ok();
 	}
 
-	auto Image::createLayoutObject(interp::Interpreter* cs, layout::PageCursor cursor, const Style* parent_style) const
-	    -> ErrorOr<LayoutResult>
+	auto Image::createLayoutObject(interp::Interpreter* cs, const Style* parent_style, Size2d available_space) const
+		-> ErrorOr<LayoutResult>
 	{
-		auto sz = this->size(cursor);
+		// images are always fixed size, and don't care about the available space.
+		// (for now, at least...)
 
-		cursor = cursor.ensureVerticalSpace(sz.y());
-
-		auto img = std::unique_ptr<layout::Image>(new layout::Image(cursor.position(), sz, this->image()));
+		auto img = std::unique_ptr<layout::Image>(new layout::Image(m_size, this->image()));
 		img->setStyle(parent_style);
 
-		cursor = cursor.newLine(sz.y());
-		cursor = cursor.moveRight(sz.x());
-
-		return Ok(LayoutResult::make(cursor, std::move(img)));
+		return Ok(LayoutResult::make(std::move(img)));
 	}
 }

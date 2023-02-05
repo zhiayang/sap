@@ -34,7 +34,6 @@ layout:
 - em/en dashes
 - smart quotes
 - spaces after the end of a sentence should be slightly longer than spaces between words
-- page numbers
 - microtype-like stuff (hanging punctuation)
 - dijkstra linebreaking might accidentally make an extra page;
 	- when rendering, use some mechanism (eg. proxy object) to only make the page if

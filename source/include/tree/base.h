@@ -32,21 +32,18 @@ namespace sap::tree
 
 	struct LayoutResult
 	{
-		layout::PageCursor cursor;
 		std::optional<std::unique_ptr<layout::LayoutObject>> object;
 
-		static LayoutResult make(layout::PageCursor cursor)
+		static LayoutResult empty()
 		{
 			return LayoutResult {
-				.cursor = std::move(cursor),
 				.object = std::nullopt,
 			};
 		}
 
-		static LayoutResult make(layout::PageCursor cursor, std::unique_ptr<layout::LayoutObject> obj)
+		static LayoutResult make(std::unique_ptr<layout::LayoutObject> obj)
 		{
 			return LayoutResult {
-				.cursor = std::move(cursor),
 				.object = std::move(obj),
 			};
 		}
@@ -55,10 +52,6 @@ namespace sap::tree
 	struct InlineObject : Stylable
 	{
 		virtual ~InlineObject() = 0;
-		virtual Size2d size() const { return m_size; }
-
-	protected:
-		Size2d m_size { 0, 0 };
 	};
 
 	struct BlockObject : Stylable
@@ -67,14 +60,8 @@ namespace sap::tree
 
 		virtual ErrorOr<void> evaluateScripts(interp::Interpreter* cs) const = 0;
 		virtual ErrorOr<LayoutResult> createLayoutObject(interp::Interpreter* cs,
-		    layout::PageCursor cursor,
-		    const Style* parent_style) const = 0;
-
-		Size2d raw_size() const { return m_size; }
-		virtual Size2d size(const layout::PageCursor&) const { return m_size; }
-
-	protected:
-		Size2d m_size { 0, 0 };
+			const Style* parent_style,
+			Size2d available_space) const = 0;
 	};
 
 	/*
@@ -97,8 +84,8 @@ namespace sap::tree
 
 		virtual ErrorOr<void> evaluateScripts(interp::Interpreter* cs) const override;
 		virtual ErrorOr<LayoutResult> createLayoutObject(interp::Interpreter* cs,
-		    layout::PageCursor cursor,
-		    const Style* parent_style) const override;
+			const Style* parent_style,
+			Size2d available_space) const override;
 
 		std::unique_ptr<interp::Block> body;
 	};
@@ -109,12 +96,12 @@ namespace sap::tree
 
 		virtual ErrorOr<void> evaluateScripts(interp::Interpreter* cs) const override;
 		virtual ErrorOr<LayoutResult> createLayoutObject(interp::Interpreter* cs,
-		    layout::PageCursor cursor,
-		    const Style* parent_style) const override;
+			const Style* parent_style,
+			Size2d available_space) const override;
 
 		std::unique_ptr<interp::FunctionCall> call;
 
 	private:
-		ErrorOr<std::optional<layout::PageCursor>> evaluate_scripts(interp::Interpreter* cs) const;
+		ErrorOr<std::optional<std::unique_ptr<layout::LayoutObject>>> evaluate_scripts(interp::Interpreter* cs) const;
 	};
 }

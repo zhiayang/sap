@@ -2,6 +2,7 @@
 // Copyright (c) 2022, zhiayang
 // SPDX-License-Identifier: Apache-2.0
 
+#include <cmath>
 #include <array>
 
 #include "tree/paragraph.h"
@@ -179,27 +180,9 @@ namespace sap::interp
 		return m_block_context_stack.back();
 	}
 
-	util::Defer<> Evaluator::pushBlockContext(const layout::PageCursor& cursor, //
-	    std::optional<const tree::BlockObject*> obj,
-	    OutputContext output_ctx)
+	util::Defer<> Evaluator::pushBlockContext(std::optional<const tree::BlockObject*> obj)
 	{
-		auto ctx = BlockContext {
-			.cursor = cursor,
-			.parent_pos = cursor.position(),
-			.obj = std::move(obj),
-			.output_context = std::move(output_ctx),
-			.cursor_ref = &cursor,
-		};
-
-		if(not m_block_context_stack.empty())
-		{
-			auto parent_pos = m_block_context_stack.back().cursor.position();
-
-			ctx.parent_pos.pos -= parent_pos.pos;
-			ctx.parent_pos.page_num -= parent_pos.page_num;
-		}
-
-		m_block_context_stack.push_back(std::move(ctx));
+		m_block_context_stack.push_back(BlockContext { .obj = std::move(obj) });
 		return util::Defer([this]() {
 			this->popBlockContext();
 		});
@@ -269,24 +252,30 @@ namespace sap::interp
 		return nullptr;
 	}
 
-	ErrorOr<void> Evaluator::addAbsolutelyPositionedBlockObject(std::unique_ptr<tree::BlockObject> tbo,
-	    layout::AbsolutePagePos abs_pos)
+	ErrorOr<void> Evaluator::addPositionedBlockObject(std::unique_ptr<tree::BlockObject> tbo_,
+		std::variant<layout::AbsolutePagePos, layout::RelativePos> pos)
 	{
 		if(m_page_layout == nullptr)
 			return ErrMsg(this, "cannot output objects in this context");
 
-		auto at_cursor = m_page_layout->newCursorAtPosition(abs_pos);
-		auto ptr = m_interp->addAbsolutelyPositionedBlockObject(std::move(tbo));
+		auto tbo = m_interp->addAbsolutelyPositionedBlockObject(std::move(tbo_));
 
-		std::array<tree::BlockObject*, 1> aoeu { ptr };
-		auto [_, maybe_line] = TRY(layout::Line::fromBlockObjects(m_interp, at_cursor, this->currentStyle(), aoeu));
+		// TODO: calculate the available space properly.
+		auto avail_space = Size2d(Length(INFINITY), Length(INFINITY));
+		auto obj = TRY(tbo->createLayoutObject(m_interp, this->currentStyle(), avail_space)).object;
 
-		if(maybe_line.has_value())
-			m_page_layout->addObject(std::move(*maybe_line));
+		if(obj.has_value())
+		{
+			auto ptr = m_page_layout->addObject(std::move(*obj));
+
+			if(auto abs_pos = std::get_if<layout::AbsolutePagePos>(&pos); abs_pos != nullptr)
+				ptr->positionAbsolutely(*abs_pos);
+			else
+				ptr->positionRelatively(std::get<layout::RelativePos>(pos));
+		}
 
 		return Ok();
 	}
-
 
 
 
