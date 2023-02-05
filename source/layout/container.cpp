@@ -51,7 +51,9 @@ namespace sap::layout
 				return a + b->layoutSize().x();
 			});
 
-			auto space_width = std::max(Length(0), m_layout_size.x() - total_obj_width);
+			auto self_width = m_layout_size.x();
+			auto space_width = std::max(Length(0), self_width - total_obj_width);
+			auto horz_space = cursor.widthAtCursor();
 
 			assert(m_direction == Horizontal);
 			switch(m_style->alignment())
@@ -63,12 +65,14 @@ namespace sap::layout
 
 				case Right: {
 					obj_spacing = 0;
+					cursor = cursor.moveRight(horz_space);
 					cursor = cursor.moveRight(space_width);
 					break;
 				}
 
 				case Centre: {
 					obj_spacing = 0;
+					cursor = cursor.moveRight((horz_space - self_width) / 2);
 					cursor = cursor.moveRight(space_width / 2);
 					break;
 				}
@@ -114,21 +118,24 @@ namespace sap::layout
 				}
 			}
 
-			cursor = child->positionChildren(cursor);
-
 			switch(m_direction)
 			{
 				case Horizontal: //
-					cursor = cursor.moveRight(obj_spacing);
+					child->positionChildren(cursor);
+					cursor = cursor.moveRight(child->layoutSize().x() + obj_spacing);
 					break;
 
 				case Vertical: //
+					cursor = child->positionChildren(cursor);
 					cursor = cursor.newLine(obj_spacing);
 					break;
 			}
 		}
 
-		return cursor;
+		if(m_direction == Horizontal)
+			return cursor.newLine(m_layout_size.y());
+		else
+			return cursor;
 	}
 
 	void Container::render_impl(const LayoutBase* layout, std::vector<pdf::Page*>& pages) const

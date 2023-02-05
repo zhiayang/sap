@@ -112,7 +112,7 @@ Travelling day in and day out. Doing business like this takes much more effort t
 }
 
 \script ::{
-	fn asdf()
+	fn asdf() -> Block
 	{
 		let img1 = builtin::load_image("asdf.png", 2.0cm);
 		let img2 = builtin::load_image("asdf.png", 2.0cm);
@@ -120,15 +120,11 @@ Travelling day in and day out. Doing business like this takes much more effort t
 		let img3 = builtin::load_image("asdf.png", 2.0cm);
 		let img4 = builtin::load_image("asdf.png", 2.0cm);
 
-		builtin::push_style(builtin::Style {
+		return std::style(builtin::Style{
 			.alignment = builtin::Alignment::Centred
-		});
-
-		# builtin::output_at_current(builtin::make_hbox(
-		# 	builtin::make_hbox(*img1, *img2), builtin::make_hbox(*img3, *img4)
-		# ));
-
-		builtin::pop_style();
+		}, builtin::make_hbox(
+			builtin::make_hbox(*img1, *img2), builtin::make_hbox(*img3, *img4)
+		));
 	}
 }
 
