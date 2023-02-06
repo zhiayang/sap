@@ -7,6 +7,7 @@
 
 #include "tree/base.h"
 #include "tree/image.h"
+#include "tree/wrappers.h"
 #include "tree/paragraph.h"
 #include "tree/container.h"
 
@@ -212,13 +213,12 @@ namespace sap::interp::builtin
 	{
 		assert(args.size() == 1);
 
-		auto para = std::make_unique<tree::Paragraph>();
+		auto line = std::make_unique<tree::WrappedLine>();
 
 		auto objs = std::move(args[0]).takeArray();
 		for(size_t i = 0; i < objs.size(); i++)
-			para->addObjects(std::move(objs[i]).takeTreeInlineObj());
+			line->addObjects(std::move(objs[i]).takeTreeInlineObj());
 
-		para->setSingleLineMode(true);
-		return EvalResult::ofValue(Value::treeBlockObject(std::move(para)));
+		return EvalResult::ofValue(Value::treeBlockObject(std::move(line)));
 	}
 }

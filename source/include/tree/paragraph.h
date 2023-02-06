@@ -96,13 +96,11 @@ namespace sap::tree
 		const std::vector<std::unique_ptr<InlineObject>>& contents() const { return m_contents; }
 
 		void processWordSeparators();
-		void setSingleLineMode(bool x) { m_is_single_line_mode = x; }
 
 	private:
 		void evaluate_scripts(interp::Interpreter* cs, std::vector<std::unique_ptr<InlineObject>>& output_vec);
 
 	private:
-		bool m_is_single_line_mode = false;
 		std::vector<std::unique_ptr<InlineObject>> m_contents {};
 	};
 }

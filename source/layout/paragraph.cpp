@@ -102,27 +102,19 @@ namespace sap::tree
 			});
 		};
 
-		if(not m_is_single_line_mode)
+		auto broken_lines = layout::linebreak::breakLines(style, m_contents, available_space.x());
+
+		for(auto line_it = broken_lines.begin(); line_it != broken_lines.end(); ++line_it)
 		{
-			auto broken_lines = layout::linebreak::breakLines(style, m_contents, available_space.x());
+			auto& broken_line = *line_it;
 
-			for(auto line_it = broken_lines.begin(); line_it != broken_lines.end(); ++line_it)
-			{
-				auto& broken_line = *line_it;
+			auto words_begin = m_contents.begin() + (ssize_t) current_idx;
+			auto words_end = m_contents.begin() + (ssize_t) current_idx + (ssize_t) broken_line.numParts();
 
-				auto words_begin = m_contents.begin() + (ssize_t) current_idx;
-				auto words_end = m_contents.begin() + (ssize_t) current_idx + (ssize_t) broken_line.numParts();
+			add_one_line(words_begin, words_end, style);
 
-				add_one_line(words_begin, words_end, style);
-
-				current_idx += broken_line.numParts();
-			}
+			current_idx += broken_line.numParts();
 		}
-		else
-		{
-			add_one_line(m_contents.begin(), m_contents.end(), style);
-		}
-
 
 		for(size_t i = 0; i < the_lines.size(); i++)
 		{

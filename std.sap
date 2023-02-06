@@ -93,8 +93,6 @@ namespace std
 		page_num_pos.x -= 30mm;
 		page_num_pos.y -= 30mm;
 
-		builtin::println(f"pos = ({page_num_pos.x}, {page_num_pos.y})");
-
 		while(i < builtin::state().page_count)
 		{
 			let page_num = i + 1;
