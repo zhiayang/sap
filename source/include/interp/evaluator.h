@@ -5,7 +5,6 @@
 #pragma once
 
 #include <deque>
-#include <variant>
 
 #include "util.h"
 
@@ -124,8 +123,7 @@ namespace sap::interp
 		void setPageLayout(layout::PageLayout* page_layout);
 		layout::PageLayout* pageLayout() const { return m_page_layout; }
 
-		ErrorOr<void> addPositionedBlockObject(std::unique_ptr<tree::BlockObject> tbo,
-			std::variant<layout::AbsolutePagePos, layout::RelativePos> pos);
+		ErrorOr<void> addAbsolutelyPositionedBlockObject(std::unique_ptr<tree::BlockObject> tbo, layout::AbsolutePagePos pos);
 
 	private:
 		Interpreter* m_interp;

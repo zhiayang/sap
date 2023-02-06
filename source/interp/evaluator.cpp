@@ -252,8 +252,8 @@ namespace sap::interp
 		return nullptr;
 	}
 
-	ErrorOr<void> Evaluator::addPositionedBlockObject(std::unique_ptr<tree::BlockObject> tbo_,
-		std::variant<layout::AbsolutePagePos, layout::RelativePos> pos)
+	ErrorOr<void> Evaluator::addAbsolutelyPositionedBlockObject(std::unique_ptr<tree::BlockObject> tbo_,
+		layout::AbsolutePagePos abs_pos)
 	{
 		if(m_page_layout == nullptr)
 			return ErrMsg(this, "cannot output objects in this context");
@@ -266,12 +266,9 @@ namespace sap::interp
 
 		if(obj.has_value())
 		{
+			auto cursor = m_page_layout->newCursorAtPosition(abs_pos);
 			auto ptr = m_page_layout->addObject(std::move(*obj));
-
-			if(auto abs_pos = std::get_if<layout::AbsolutePagePos>(&pos); abs_pos != nullptr)
-				ptr->positionAbsolutely(*abs_pos);
-			else
-				ptr->positionRelatively(std::get<layout::RelativePos>(pos));
+			ptr->positionChildren(cursor);
 		}
 
 		return Ok();

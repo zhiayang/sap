@@ -64,7 +64,7 @@ namespace sap::layout
 	void LayoutObject::render(const LayoutBase* layout, std::vector<pdf::Page*>& pages) const
 	{
 		if(not this->isPositioned())
-			sap::internal_error("cannot render without position!");
+			sap::internal_error("cannot render without position! ({})", (void*) this);
 
 		this->render_impl(layout, pages);
 	}

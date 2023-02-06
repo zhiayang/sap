@@ -31,7 +31,7 @@ namespace std
 	fn section(name: string) -> void
 	{
 		return;
-
+#/
 		let name_tbo = std::style(builtin::Style {
 			.font_size = 2em,
 		}, builtin::make_line(builtin::make_text(name)));
@@ -55,6 +55,7 @@ namespace std
 		pos.x -= 2em;
 
 		builtin::output_at_position(pos, *counter_tbo);
+/#
 	}
 
 	fn output_table_of_contents()
@@ -66,7 +67,7 @@ namespace std
 		}
 
 		return;
-
+#/
 		var i = 0;
 		while(i < g_sections.size())
 		{
@@ -82,9 +83,9 @@ namespace std
 		}
 
 		# reset the sections, so that they number correctly again.
-		g_sections = [];
+		g_sections = []; /#
 	}
-#/
+
 	@post {
 		var i = 0;
 
@@ -111,7 +112,7 @@ namespace std
 			i += 1;
 		}
 	}
-/#
+
 }
 
 namespace std::paper_size
