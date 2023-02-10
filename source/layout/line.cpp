@@ -62,7 +62,8 @@ namespace sap::layout
 
 				auto font_line_spacing = style->font()->getFontMetrics().default_line_spacing;
 				auto style_line_spacing = style->line_spacing()
-				                        * style->font()->scaleMetricForFontSize(font_line_spacing, style->font_size().into());
+				                        * style->font()->scaleMetricForFontSize(font_line_spacing,
+											style->font_size().into());
 
 				ret.default_line_spacing = std::max(ret.default_line_spacing, style_line_spacing.into<Length>());
 			}
@@ -83,9 +84,11 @@ namespace sap::layout
 						sap::internal_error("??? line with only separator");
 
 					if(it == objs.begin())
-						return std::get<0>(calculate_word_size(sep_char, parent_style->extendWith((*(it + 1))->style())));
+						return std::get<0>(calculate_word_size(sep_char,
+							parent_style->extendWith((*(it + 1))->style())));
 					else if(it + 1 == objs.end())
-						return std::get<0>(calculate_word_size(sep_char, parent_style->extendWith((*(it - 1))->style())));
+						return std::get<0>(calculate_word_size(sep_char,
+							parent_style->extendWith((*(it - 1))->style())));
 
 					return std::max(                                                                                //
 						std::get<0>(calculate_word_size(sep_char, parent_style->extendWith((*(it - 1))->style()))), //
@@ -144,8 +147,10 @@ namespace sap::layout
 
 			if(auto tree_word = dynamic_cast<const tree::Text*>(objs[i].get()); tree_word != nullptr)
 			{
-				auto word = std::make_unique<Word>(tree_word->contents(), style->extendWith(tree_word->style()), current_offset,
-					Size2d(obj_width, line_height));
+				auto word = std::make_unique<Word>(tree_word->contents(), style->extendWith(tree_word->style()),
+					current_offset, Size2d(obj_width, line_height));
+
+				tree_word->m_generated_layout_object = word.get();
 
 				prev_word_style = word->style();
 				layout_objects.push_back(std::move(word));
@@ -154,8 +159,11 @@ namespace sap::layout
 			}
 			else if(auto tree_sep = dynamic_cast<const tree::Separator*>(objs[i].get()); tree_sep != nullptr)
 			{
-				auto sep = std::make_unique<Word>(i + 1 == objs.size() ? tree_sep->endOfLine() : tree_sep->middleOfLine(),
+				auto sep = std::make_unique<
+					Word>(i + 1 == objs.size() ? tree_sep->endOfLine() : tree_sep->middleOfLine(),
 					style->extendWith(tree_sep->style()), current_offset, Size2d(obj_width, line_height));
+
+				tree_sep->m_generated_layout_object = sep.get();
 
 				prev_word_style = sep->style();
 				layout_objects.push_back(std::move(sep));
@@ -186,8 +194,8 @@ namespace sap::layout
 			}
 		}
 
-		return std::unique_ptr<Line>(new Line(style, Size2d(total_width, line_metrics.default_line_spacing), line_metrics,
-			std::move(layout_objects)));
+		return std::unique_ptr<Line>(new Line(style, Size2d(total_width, line_metrics.default_line_spacing),
+			line_metrics, std::move(layout_objects)));
 	}
 
 

@@ -197,13 +197,13 @@ namespace sap::interp
 
 	const Type* Type::makeTreeBlockObjRef()
 	{
-		static Type* obj_type = new Type(KIND_TREE_INLINE_OBJ_REF);
+		static Type* obj_type = new Type(KIND_TREE_BLOCK_OBJ_REF);
 		return obj_type;
 	}
 
 	const Type* Type::makeTreeInlineObjRef()
 	{
-		static Type* obj_type = new Type(KIND_TREE_BLOCK_OBJ_REF);
+		static Type* obj_type = new Type(KIND_TREE_INLINE_OBJ_REF);
 		return obj_type;
 	}
 

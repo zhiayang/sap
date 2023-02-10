@@ -49,7 +49,8 @@ namespace sap::tree
 
 			if(available_space.x() < obj_width)
 			{
-				sap::warn("layout", "not enough space! need at least {}, but only {} remaining", obj_width, available_space.x());
+				sap::warn("layout", "not enough space! need at least {}, but only {} remaining", obj_width,
+					available_space.x());
 				available_space.x() = 0;
 			}
 			else
@@ -66,6 +67,7 @@ namespace sap::tree
 		auto container = std::make_unique<layout::Container>(cur_style, Size2d(total_width, max_height),
 			layout::Container::Direction::Horizontal, std::move(objects));
 
+		m_generated_layout_object = container.get();
 		return Ok(LayoutResult::make(std::move(container)));
 	}
 }

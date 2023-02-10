@@ -34,7 +34,6 @@ namespace std
 	{
 		let section_num = 1 + g_sections.size();
 		var b = builtin::make_line(builtin::make_text(f"{section_num}.  {name}"));
-		# var l = builtin::make_layout_object(*b);
 
 		let the_section = Section {
 			.num = section_num,
@@ -42,11 +41,24 @@ namespace std
 			.block_ref = b.ref(),
 		};
 
-		# l!.position.x -= 2em;
-
 		g_sections += [the_section];
 		return b;
 	}
+
+	@post {
+		var i = 0;
+		while(i < g_sections.size())
+		{
+			let foo = g_sections[i].block_ref.layout_object();
+			builtin::println(f"hello");
+
+			i += 1;
+		}
+
+		g_sections = [];
+	}
+
+
 
 	fn output_table_of_contents()
 	{

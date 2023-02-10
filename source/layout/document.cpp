@@ -60,7 +60,8 @@ namespace sap::layout
 		};
 	}
 
-	Document::Document(const DocumentSettings& settings) : m_page_layout(PageLayout(paper_size(settings), make_margins(settings)))
+	Document::Document(const DocumentSettings& settings)
+		: m_page_layout(PageLayout(paper_size(settings), make_margins(settings)))
 	{
 		auto default_style = util::make<sap::Style>();
 
@@ -134,6 +135,15 @@ namespace sap::tree
 		size_t layout_pass = 0;
 		while(true)
 		{
+			auto run_hooks_for_phase = [this](interp::Interpreter* cs) {
+				auto _ = cs->evaluator().pushBlockContext(std::nullopt);
+				if(auto e = cs->runHooks(); e.is_err())
+					e.error().showAndExit();
+
+				m_container->evaluateScripts(cs);
+			};
+
+
 			cs->evaluator().commenceLayoutPass(++layout_pass);
 			cs->setCurrentPhase(ProcessingPhase::Layout);
 
@@ -148,17 +158,13 @@ namespace sap::tree
 				ErrorMessage(cs->evaluator().loc(), "empty document").showAndExit();
 
 			cs->setCurrentPhase(ProcessingPhase::Position);
+			run_hooks_for_phase(cs);
 
 			auto container = std::move(*container_or_err.unwrap().object);
 			container->positionChildren(cursor);
 
 			cs->setCurrentPhase(ProcessingPhase::PostLayout);
-
-			auto _ = cs->evaluator().pushBlockContext(std::nullopt);
-			if(auto e = cs->runHooks(); e.is_err())
-				e.error().showAndExit();
-
-			m_container->evaluateScripts(cs);
+			run_hooks_for_phase(cs);
 
 			if(cs->evaluator().layoutRequested())
 				continue;

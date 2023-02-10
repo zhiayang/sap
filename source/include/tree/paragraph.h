@@ -6,6 +6,11 @@
 
 #include "tree/base.h"
 
+namespace sap::layout
+{
+	struct Line;
+}
+
 namespace sap::tree
 {
 	struct Text : InlineObject
@@ -17,6 +22,8 @@ namespace sap::tree
 		std::u32string& contents() { return m_contents; }
 
 	private:
+		friend struct layout::Line;
+
 		std::u32string m_contents {};
 	};
 
@@ -29,7 +36,9 @@ namespace sap::tree
 			HYPHENATION_POINT,
 		};
 
-		explicit Separator(SeparatorKind kind, int hyphenation_cost = 0) : m_kind(kind), m_hyphenation_cost(hyphenation_cost)
+		explicit Separator(SeparatorKind kind, int hyphenation_cost = 0)
+			: m_kind(kind)
+			, m_hyphenation_cost(hyphenation_cost)
 		{
 			switch(m_kind)
 			{
@@ -70,6 +79,8 @@ namespace sap::tree
 		int hyphenationCost() const { return m_hyphenation_cost; }
 
 	private:
+		friend struct layout::Line;
+
 		const char32_t* m_end_of_line_char;
 		const char32_t* m_middle_of_line_char;
 		SeparatorKind m_kind;

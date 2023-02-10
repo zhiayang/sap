@@ -193,9 +193,6 @@ namespace sap::interp::builtin
 		return EvalResult::ofValue(Value::treeBlockObject(std::move(hbox)));
 	}
 
-
-
-
 	ErrorOr<EvalResult> make_paragraph(Evaluator* ev, std::vector<Value>& args)
 	{
 		assert(args.size() == 1);
@@ -220,5 +217,33 @@ namespace sap::interp::builtin
 			line->addObjects(std::move(objs[i]).takeTreeInlineObj());
 
 		return EvalResult::ofValue(Value::treeBlockObject(std::move(line)));
+	}
+
+	ErrorOr<EvalResult> get_layout_object(Evaluator* ev, std::vector<Value>& args)
+	{
+		assert(args.size() == 1);
+		assert(args[0].isPointer());
+
+		auto& value = *args[0].getPointer();
+
+		assert(value.type()->isTreeBlockObj() || value.type()->isTreeBlockObjRef());
+
+
+		// of course, this assumes that the order of enumerators in ProcessingPhase
+		// is according to the order that the phases happen.
+		if(ev->interpreter()->currentPhase() <= ProcessingPhase::Layout)
+			return ErrMsg(ev, "`layout_object()` can only be called after the layout phase");
+
+		auto layout_obj = value.isTreeBlockObj()
+		                    ? value.getTreeBlockObj().getGeneratedLayoutObject()
+		                    : value.getTreeBlockObjectRef()->getGeneratedLayoutObject();
+
+		auto ref_type = Type::makeLayoutObjectRef();
+
+		std::optional<Value> tmp {};
+		if(layout_obj.has_value())
+			tmp = Value::layoutObjectRef(*layout_obj);
+
+		return EvalResult::ofValue(Value::optional(ref_type, std::move(tmp)));
 	}
 }

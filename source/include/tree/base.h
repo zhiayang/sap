@@ -52,6 +52,11 @@ namespace sap::tree
 	struct InlineObject : Stylable
 	{
 		virtual ~InlineObject() = 0;
+
+		std::optional<layout::LayoutObject*> getGeneratedLayoutObject() const { return m_generated_layout_object; }
+
+	protected:
+		mutable std::optional<layout::LayoutObject*> m_generated_layout_object = nullptr;
 	};
 
 	struct BlockObject : Stylable
@@ -62,6 +67,11 @@ namespace sap::tree
 		virtual ErrorOr<LayoutResult> createLayoutObject(interp::Interpreter* cs,
 			const Style* parent_style,
 			Size2d available_space) const = 0;
+
+		std::optional<layout::LayoutObject*> getGeneratedLayoutObject() const { return m_generated_layout_object; }
+
+	protected:
+		mutable std::optional<layout::LayoutObject*> m_generated_layout_object = nullptr;
 	};
 
 	/*

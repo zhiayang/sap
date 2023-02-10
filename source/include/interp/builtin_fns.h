@@ -52,6 +52,7 @@ namespace sap::interp
 		ErrorOr<EvalResult> make_paragraph(Evaluator* ev, std::vector<Value>& args);
 
 		ErrorOr<EvalResult> ref_object(Evaluator* ev, std::vector<Value>& args);
+		ErrorOr<EvalResult> get_layout_object(Evaluator* ev, std::vector<Value>& args);
 
 		ErrorOr<EvalResult> output_at_absolute_pos_tbo(Evaluator* ev, std::vector<Value>& args);
 	}

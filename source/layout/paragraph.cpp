@@ -130,8 +130,10 @@ namespace sap::tree
 			layout_lines.push_back(std::move(layout_line));
 		}
 
-		auto layout_para = std::unique_ptr<layout::Paragraph>(new layout::Paragraph(style, para_size, std::move(layout_lines)));
+		auto layout_para = std::unique_ptr<layout::Paragraph>(new layout::Paragraph(style, para_size,
+			std::move(layout_lines)));
 
+		m_generated_layout_object = layout_para.get();
 		return Ok(LayoutResult::make(std::move(layout_para)));
 	}
 }

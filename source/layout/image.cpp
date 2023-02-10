@@ -52,6 +52,8 @@ namespace sap::tree
 		// (for now, at least...)
 
 		auto img = std::unique_ptr<layout::Image>(new layout::Image(parent_style, m_size, this->image()));
+
+		m_generated_layout_object = img.get();
 		return Ok(LayoutResult::make(std::move(img)));
 	}
 }
