@@ -14,7 +14,7 @@
 namespace sap::interp
 {
 	static ErrorOr<void> typecheck_list_of_tios(Typechecker* ts, //
-	    const std::vector<std::unique_ptr<tree::InlineObject>>& tios)
+		const std::vector<std::unique_ptr<tree::InlineObject>>& tios)
 	{
 		for(auto& obj : tios)
 		{
@@ -32,7 +32,7 @@ namespace sap::interp
 	}
 
 	static ErrorOr<std::vector<std::unique_ptr<tree::InlineObject>>> evaluate_list_of_tios(Evaluator* ev,
-	    const std::vector<std::unique_ptr<tree::InlineObject>>& tios)
+		const std::vector<std::unique_ptr<tree::InlineObject>>& tios)
 	{
 		std::vector<std::unique_ptr<tree::InlineObject>> ret {};
 		for(auto& obj : tios)
@@ -58,7 +58,7 @@ namespace sap::interp
 
 
 
-	ErrorOr<TCResult> TreeInlineExpr::typecheck_impl(Typechecker* ts, const Type* infer, bool moving) const
+	ErrorOr<TCResult> TreeInlineExpr::typecheck_impl(Typechecker* ts, const Type* infer, bool keep_lvalue) const
 	{
 		TRY(typecheck_list_of_tios(ts, this->objects));
 		return TCResult::ofRValue(Type::makeTreeInlineObj());
@@ -140,7 +140,7 @@ namespace sap::interp
 
 
 
-	ErrorOr<TCResult> TreeBlockExpr::typecheck_impl(Typechecker* ts, const Type* infer, bool moving) const
+	ErrorOr<TCResult> TreeBlockExpr::typecheck_impl(Typechecker* ts, const Type* infer, bool keep_lvalue) const
 	{
 		TRY(typecheck_block_obj(ts, this->object.get()));
 		return TCResult::ofRValue(Type::makeTreeBlockObj());

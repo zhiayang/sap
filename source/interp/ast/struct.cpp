@@ -8,7 +8,7 @@
 
 namespace sap::interp
 {
-	ErrorOr<TCResult> StructDecl::typecheck_impl(Typechecker* ts, const Type* infer, bool moving) const
+	ErrorOr<TCResult> StructDecl::typecheck_impl(Typechecker* ts, const Type* infer, bool keep_lvalue) const
 	{
 		TRY(ts->current()->declare(this));
 
@@ -17,7 +17,7 @@ namespace sap::interp
 		return TCResult::ofRValue(Type::makeStruct(this->name, {}));
 	}
 
-	ErrorOr<TCResult> StructDefn::typecheck_impl(Typechecker* ts, const Type* infer, bool moving) const
+	ErrorOr<TCResult> StructDefn::typecheck_impl(Typechecker* ts, const Type* infer, bool keep_lvalue) const
 	{
 		this->declaration->resolve(this);
 		auto struct_type = TRY(this->declaration->typecheck(ts)).type()->toStruct();
@@ -43,12 +43,12 @@ namespace sap::interp
 				auto initialiser_type = TRY(init_value->typecheck(ts)).type();
 				if(not ts->canImplicitlyConvert(initialiser_type, field_type))
 					return ErrMsg(ts, "cannot initialise field of type '{}' with value of type '{}'", field_type,
-					    initialiser_type);
+						initialiser_type);
 			}
 
 			field_types.push_back(StructType::Field {
-			    .name = name,
-			    .type = field_type,
+				.name = name,
+				.type = field_type,
 			});
 		}
 

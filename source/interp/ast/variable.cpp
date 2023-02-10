@@ -9,7 +9,7 @@
 
 namespace sap::interp
 {
-	ErrorOr<TCResult> VariableDecl::typecheck_impl(Typechecker* ts, const Type* infer, bool moving) const
+	ErrorOr<TCResult> VariableDecl::typecheck_impl(Typechecker* ts, const Type* infer, bool keep_lvalue) const
 	{
 		assert(infer != nullptr);
 		if(infer->isVoid())
@@ -30,7 +30,7 @@ namespace sap::interp
 
 
 
-	ErrorOr<TCResult> VariableDefn::typecheck_impl(Typechecker* ts, const Type* infer, bool moving) const
+	ErrorOr<TCResult> VariableDefn::typecheck_impl(Typechecker* ts, const Type* infer, bool keep_lvalue) const
 	{
 		this->declaration->resolve(this);
 
@@ -52,7 +52,7 @@ namespace sap::interp
 					if(not ts->canImplicitlyConvert(initialiser_type, resolved_type))
 					{
 						return ErrMsg(ts, "cannot initialise variable of type '{}' with expression of type '{}'", //
-						    resolved_type, initialiser_type);
+							resolved_type, initialiser_type);
 					}
 				}
 

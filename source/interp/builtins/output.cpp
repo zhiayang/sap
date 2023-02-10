@@ -17,7 +17,9 @@ namespace sap::interp::builtin
 		assert(args[1].isTreeBlockObj());
 
 		auto abs_pos = TRY(BS_AbsPosition::unmake(ev, args[0]));
-		TRY(ev->addAbsolutelyPositionedBlockObject(std::move(args[1]).takeTreeBlockObj(), abs_pos));
+
+		auto tbo = std::move(args[1]).takeTreeBlockObj();
+		TRY(ev->addAbsolutelyPositionedBlockObject(std::move(tbo), abs_pos));
 
 		return EvalResult::ofVoid();
 	}

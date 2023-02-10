@@ -37,7 +37,7 @@ BraceWrapping:
   BeforeWhile: false
 BreakBeforeTernaryOperators: true
 BreakConstructorInitializers: BeforeComma
-ColumnLimit: 130
+ColumnLimit: 120
 CommentPragmas:  '^ IWYU pragma:'
 ConstructorInitializerIndentWidth: 4
 ContinuationIndentWidth: 4

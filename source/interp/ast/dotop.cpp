@@ -7,7 +7,7 @@
 
 namespace sap::interp
 {
-	ErrorOr<TCResult> DotOp::typecheck_impl(Typechecker* ts, const Type* infer, bool moving) const
+	ErrorOr<TCResult> DotOp::typecheck_impl(Typechecker* ts, const Type* infer, bool keep_lvalue) const
 	{
 		auto lhs_res = TRY(this->lhs->typecheck(ts));
 		auto ltype = lhs_res.type();
@@ -41,9 +41,9 @@ namespace sap::interp
 			// if we're optional, make an rvalue always.
 			// this means we can't do a?.b = ... , but that's fine probably.
 			return TCResult::ofRValue(
-			    ltype->isOptional() //
-			        ? (const Type*) field_type->optionalOf()
-			        : (const Type*) field_type->pointerTo(ltype->isMutablePointer()));
+				ltype->isOptional() //
+					? (const Type*) field_type->optionalOf()
+					: (const Type*) field_type->pointerTo(ltype->isMutablePointer()));
 		}
 		else
 		{
@@ -67,9 +67,9 @@ namespace sap::interp
 		if(this->is_optional)
 		{
 			bool left_has_value = (lhs_value.isOptional() && lhs_value.haveOptionalValue())
-			                   || (lhs_value.isPointer() && lhs_value.getPointer() != nullptr);
+			                   || (lhs_value.type()->isPointer() && lhs_value.getPointer() != nullptr);
 
-			if(lhs_value.isPointer())
+			if(lhs_value.type()->isPointer())
 			{
 				Value* result = nullptr;
 				if(left_has_value)

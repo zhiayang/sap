@@ -274,6 +274,17 @@ namespace sap::interp
 		return Ok();
 	}
 
+	Value* Evaluator::addToHeap(Value value)
+	{
+		return &m_value_heap.emplace_back(std::move(value));
+	}
+
+	Value Evaluator::addToHeapAndGetPointer(Value value)
+	{
+		auto ptr = this->addToHeap(std::move(value));
+		return Value::mutablePointer(ptr->type(), ptr);
+	}
+
 
 
 

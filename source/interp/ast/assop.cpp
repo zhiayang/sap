@@ -20,7 +20,7 @@ namespace sap::interp
 		}
 	}
 
-	ErrorOr<TCResult> AssignOp::typecheck_impl(Typechecker* ts, const Type* infer, bool moving) const
+	ErrorOr<TCResult> AssignOp::typecheck_impl(Typechecker* ts, const Type* infer, bool keep_lvalue) const
 	{
 		auto lres = TRY(this->lhs->typecheck(ts));
 		if(not lres.isLValue())

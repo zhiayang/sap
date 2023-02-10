@@ -7,7 +7,7 @@
 
 namespace sap::interp
 {
-	ErrorOr<TCResult> ReturnStmt::typecheck_impl(Typechecker* ts, const Type* infer, bool moving) const
+	ErrorOr<TCResult> ReturnStmt::typecheck_impl(Typechecker* ts, const Type* infer, bool keep_lvalue) const
 	{
 		if(not ts->isCurrentlyInFunction())
 			return ErrMsg(ts, "invalid use of 'return' outside of a function body");

@@ -7,7 +7,7 @@
 
 namespace sap::interp
 {
-	ErrorOr<TCResult> WhileLoop::typecheck_impl(Typechecker* ts, const Type* infer, bool moving) const
+	ErrorOr<TCResult> WhileLoop::typecheck_impl(Typechecker* ts, const Type* infer, bool keep_lvalue) const
 	{
 		auto cond = TRY(this->condition->typecheck(ts, Type::makeBool()));
 		if(not cond.type()->isBool())
@@ -58,7 +58,7 @@ namespace sap::interp
 
 
 
-	ErrorOr<TCResult> BreakStmt::typecheck_impl(Typechecker* ts, const Type* infer, bool moving) const
+	ErrorOr<TCResult> BreakStmt::typecheck_impl(Typechecker* ts, const Type* infer, bool keep_lvalue) const
 	{
 		if(not ts->isCurrentlyInLoopBody())
 			return ErrMsg(ts, "invalid use of 'break' outside of a loop body");
@@ -71,7 +71,7 @@ namespace sap::interp
 		return EvalResult::ofLoopBreak();
 	}
 
-	ErrorOr<TCResult> ContinueStmt::typecheck_impl(Typechecker* ts, const Type* infer, bool moving) const
+	ErrorOr<TCResult> ContinueStmt::typecheck_impl(Typechecker* ts, const Type* infer, bool keep_lvalue) const
 	{
 		if(not ts->isCurrentlyInLoopBody())
 			return ErrMsg(ts, "invalid use of 'continue' outside of a loop body");

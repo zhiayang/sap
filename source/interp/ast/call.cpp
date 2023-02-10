@@ -15,7 +15,7 @@ namespace sap::interp
 {
 	template <typename TsEv>
 	static ErrorOr<std::vector<std::tuple<std::string, const Type*, const Expr*>>> convert_params(const TsEv* ts_ev,
-	    const Declaration* decl)
+		const Declaration* decl)
 	{
 		if(auto fdecl = dynamic_cast<const FunctionDecl*>(decl); fdecl != nullptr)
 		{
@@ -26,9 +26,9 @@ namespace sap::interp
 			for(size_t i = 0; i < decl_params.size(); i++)
 			{
 				params.push_back({
-				    decl_params[i].name,
-				    decl_type->parameterTypes()[i],
-				    decl_params[i].default_value.get(),
+					decl_params[i].name,
+					decl_type->parameterTypes()[i],
+					decl_params[i].default_value.get(),
 				});
 			}
 
@@ -41,20 +41,20 @@ namespace sap::interp
 	}
 
 	static ErrorOr<int> get_calling_cost(Typechecker* ts,
-	    const Declaration* decl,
-	    const std::vector<ArrangeArg<const Type*>>& arguments)
+		const Declaration* decl,
+		const std::vector<ArrangeArg<const Type*>>& arguments)
 	{
 		auto params = TRY(convert_params(ts, decl));
 		auto ordered = TRY(arrangeArgumentTypes(ts, params, arguments, //
-		    "function", "argument", "argument for parameter"));
+			"function", "argument", "argument for parameter"));
 
 		return getCallingCost(ts, params, ordered, "function", "argument", "argument for parameter");
 	}
 
 
 	static ErrorOr<const Declaration*> resolve_overload_set(Typechecker* ts,
-	    const std::vector<const Declaration*>& decls,
-	    const std::vector<ArrangeArg<const Type*>>& arguments)
+		const std::vector<const Declaration*>& decls,
+		const std::vector<ArrangeArg<const Type*>>& arguments)
 	{
 		std::vector<const Declaration*> best_decls {};
 		int best_cost = INT_MAX;
@@ -88,7 +88,7 @@ namespace sap::interp
 
 
 
-	ErrorOr<TCResult> FunctionCall::typecheck_impl(Typechecker* ts, const Type* infer, bool moving) const
+	ErrorOr<TCResult> FunctionCall::typecheck_impl(Typechecker* ts, const Type* infer, bool keep_lvalue) const
 	{
 		std::vector<ArrangeArg<const Type*>> processed_args {};
 
@@ -99,10 +99,12 @@ namespace sap::interp
 		{
 			auto& arg = this->arguments[i];
 
-			auto t = TRY(arg.value->typecheck(ts));
+			bool is_ufcs_self = this->rewritten_ufcs && i == 0;
+
+			auto t = TRY(arg.value->typecheck(ts, nullptr, /* keep_lvalue: */ is_ufcs_self));
 			const Type* ty = t.type();
 
-			if(this->rewritten_ufcs && i == 0)
+			if(is_ufcs_self)
 			{
 				m_ufcs_self_is_mutable = t.isMutable();
 				if(t.isMutable())
@@ -112,8 +114,8 @@ namespace sap::interp
 			}
 
 			processed_args.push_back({
-			    .name = arg.name,
-			    .value = ty,
+				.name = arg.name,
+				.value = ty,
 			});
 		}
 
@@ -178,15 +180,15 @@ namespace sap::interp
 					self = Value::pointer(ptr->type(), ptr);
 
 				processed_args.push_back({
-				    .name = arg.name,
-				    .value = std::move(self),
+					.name = arg.name,
+					.value = std::move(self),
 				});
 			}
 			else
 			{
 				processed_args.push_back({
-				    .name = arg.name,
-				    .value = std::move(val).take(),
+					.name = arg.name,
+					.value = std::move(val).take(),
 				});
 			}
 		}
@@ -202,7 +204,7 @@ namespace sap::interp
 			auto params = TRY(convert_params(ev, decl));
 
 			auto ordered_args = TRY(arrangeArgumentValues(ev, params, std::move(processed_args), "function", "argument",
-			    "argument for parameter"));
+				"argument for parameter"));
 
 			bool is_variadic = not params.empty() && std::get<1>(params.back())->isVariadicArray();
 

@@ -95,10 +95,10 @@ namespace sap::tree
 		std::vector<std::unique_ptr<InlineObject>>& contents() { return m_contents; }
 		const std::vector<std::unique_ptr<InlineObject>>& contents() const { return m_contents; }
 
-		void processWordSeparators();
+		ErrorOr<void> processWordSeparators();
 
 	private:
-		void evaluate_scripts(interp::Interpreter* cs, std::vector<std::unique_ptr<InlineObject>>& output_vec);
+		ErrorOr<void> evaluate_scripts(interp::Interpreter* cs, std::vector<std::unique_ptr<InlineObject>>& output_vec);
 
 	private:
 		std::vector<std::unique_ptr<InlineObject>> m_contents {};

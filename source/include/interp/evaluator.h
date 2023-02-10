@@ -125,6 +125,9 @@ namespace sap::interp
 
 		ErrorOr<void> addAbsolutelyPositionedBlockObject(std::unique_ptr<tree::BlockObject> tbo, layout::AbsolutePagePos pos);
 
+		Value* addToHeap(Value value);
+		Value addToHeapAndGetPointer(Value value);
+
 	private:
 		Interpreter* m_interp;
 
@@ -136,6 +139,8 @@ namespace sap::interp
 		std::vector<Location> m_location_stack;
 
 		std::unordered_map<const Definition*, Value> m_global_values;
+
+		std::deque<Value> m_value_heap;
 
 		bool m_relayout_requested = false;
 		layout::PageLayout* m_page_layout = nullptr;

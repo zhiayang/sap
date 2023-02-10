@@ -7,7 +7,7 @@
 
 namespace sap::interp
 {
-	ErrorOr<TCResult> DereferenceOp::typecheck_impl(Typechecker* ts, const Type* infer, bool moving) const
+	ErrorOr<TCResult> DereferenceOp::typecheck_impl(Typechecker* ts, const Type* infer, bool keep_lvalue) const
 	{
 		auto inside = TRY(this->expr->typecheck(ts, infer)).type();
 		if(not inside->isOptional() && not inside->isPointer())
@@ -50,9 +50,9 @@ namespace sap::interp
 
 
 
-	ErrorOr<TCResult> AddressOfOp::typecheck_impl(Typechecker* ts, const Type* infer, bool moving) const
+	ErrorOr<TCResult> AddressOfOp::typecheck_impl(Typechecker* ts, const Type* infer, bool keep_lvalue) const
 	{
-		auto inside = TRY(this->expr->typecheck(ts, infer));
+		auto inside = TRY(this->expr->typecheck(ts, infer, /* keep_lvalue: */ true));
 		if(not inside.isLValue())
 			return ErrMsg(ts, "cannot take the address of a non-lvalue");
 
@@ -69,14 +69,22 @@ namespace sap::interp
 		assert(expr_res.isLValue());
 
 		auto& inside = expr_res.get();
-		auto ty = this->get_type();
-
-		Value ret {};
-		if(this->is_mutable)
-			ret = Value::mutablePointer(ty->pointerElement(), &inside);
+		if(auto inside_ty = inside.type();
+			inside_ty->isTreeBlockObj() || inside_ty->isTreeInlineObj() || inside_ty->isLayoutObject())
+		{
+			return EvalResult::ofVoid();
+		}
 		else
-			ret = Value::pointer(ty->pointerElement(), &inside);
+		{
+			auto ty = this->get_type();
 
-		return EvalResult::ofValue(std::move(ret));
+			Value ret {};
+			if(this->is_mutable)
+				ret = Value::mutablePointer(ty->pointerElement(), &inside);
+			else
+				ret = Value::pointer(ty->pointerElement(), &inside);
+
+			return EvalResult::ofValue(std::move(ret));
+		}
 	}
 }

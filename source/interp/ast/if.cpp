@@ -8,7 +8,7 @@
 
 namespace sap::interp
 {
-	ErrorOr<TCResult> IfStmt::typecheck_impl(Typechecker* ts, const Type* infer, bool moving) const
+	ErrorOr<TCResult> IfStmt::typecheck_impl(Typechecker* ts, const Type* infer, bool keep_lvalue) const
 	{
 		auto cond = TRY(this->if_cond->typecheck(ts, Type::makeBool()));
 		if(not cond.type()->isBool())

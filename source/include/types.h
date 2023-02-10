@@ -41,6 +41,7 @@ namespace sap
 		Start,
 		Preamble,
 		Layout,
+		Position,
 		PostLayout,
 		Render,
 	};

@@ -18,9 +18,9 @@ namespace sap::interp
 	extern void defineBuiltins(Interpreter* interp, DefnTree* builtin_ns);
 
 	Interpreter::Interpreter()
-	    : m_typechecker(new Typechecker(this))
-	    , m_evaluator(new Evaluator(this))
-	    , m_current_phase(ProcessingPhase::Start)
+		: m_typechecker(new Typechecker(this))
+		, m_evaluator(new Evaluator(this))
+		, m_current_phase(ProcessingPhase::Start)
 	{
 		m_typechecker->pushLocation(Location::builtin()).cancel();
 		m_evaluator->pushLocation(Location::builtin()).cancel();
@@ -94,12 +94,12 @@ namespace sap::interp
 		return this->evaluate_impl(ev);
 	}
 
-	ErrorOr<TCResult> Stmt::typecheck(Typechecker* ts, const Type* infer, bool moving) const
+	ErrorOr<TCResult> Stmt::typecheck(Typechecker* ts, const Type* infer, bool keep_lvalue) const
 	{
 		auto _ = ts->pushLocation(m_location);
 
 		if(not m_tc_result.has_value())
-			m_tc_result = TRY(this->typecheck_impl(ts, infer, moving));
+			m_tc_result = TRY(this->typecheck_impl(ts, infer, keep_lvalue));
 
 		return Ok(*m_tc_result);
 	}

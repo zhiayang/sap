@@ -147,6 +147,8 @@ namespace sap::tree
 			if(not container_or_err->object.has_value())
 				ErrorMessage(cs->evaluator().loc(), "empty document").showAndExit();
 
+			cs->setCurrentPhase(ProcessingPhase::Position);
+
 			auto container = std::move(*container_or_err.unwrap().object);
 			container->positionChildren(cursor);
 

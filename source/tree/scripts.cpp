@@ -24,27 +24,63 @@ namespace sap::tree
 		if(m_run_phase != cs->currentPhase())
 			return Ok(std::nullopt);
 
-		auto value = TRY(this->call->evaluate(&cs->evaluator()));
-		if(not value.hasValue())
+		auto maybe_value = TRY(this->call->evaluate(&cs->evaluator()));
+		if(not maybe_value.hasValue())
 			return Ok(std::nullopt);
 
-		auto val = value.take();
-		if(val.isTreeBlockObj())
+		auto value = maybe_value.take();
+		auto value_type = value.type();
+
+		using Type = interp::Type;
+		const Type* t_tbo = Type::makeTreeBlockObj();
+		const Type* t_otbo = Type::makeOptional(t_tbo);
+
+		const Type* t_lo = Type::makeLayoutObject();
+		const Type* t_olo = Type::makeOptional(t_lo);
+
+		if(not util::is_one_of(value_type, t_tbo, t_otbo))
 		{
-			auto tbo = m_created_tbos.emplace_back(std::move(val).takeTreeBlockObj()).get();
+			return ErrMsg(this->call->loc(),
+				"invalid result from script call in paragraph; got type '{}', expected either '{}' or '{}', "
+				"or optional types of them",
+				value_type, t_tbo, t_lo);
+		}
 
-			// TODO: calculate available space correctly
-			auto layout_obj = TRY(tbo->createLayoutObject(cs, style, available_space));
+		std::unique_ptr<layout::LayoutObject> layout_obj {};
 
-			if(not layout_obj.object.has_value())
+		// check the optional guys
+		if(util::is_one_of(value_type, t_otbo, t_olo))
+		{
+			if(not value.haveOptionalValue())
 				return Ok(std::nullopt);
 
-			return Ok(std::move(*layout_obj.object));
+			value = std::move(value).takeOptional().value();
+			value_type = value.type();
+		}
+
+		assert(value.type()->isTreeBlockObj() || value.type()->isLayoutObject());
+
+		if(value.isTreeBlockObj())
+		{
+			auto tbo = m_created_tbos.emplace_back(std::move(value).takeTreeBlockObj()).get();
+
+			// TODO: calculate available space correctly
+			auto result = TRY(tbo->createLayoutObject(cs, style, available_space));
+
+			if(not result.object.has_value())
+				return Ok(std::nullopt);
+
+			layout_obj = std::move(*result.object);
 		}
 		else
 		{
-			return ErrMsg(cs->evaluator().loc(), "inline object not allowed in this context");
+			layout_obj = std::move(value).takeLayoutObject();
 		}
+
+		if(layout_obj != nullptr)
+			return Ok(std::move(layout_obj));
+
+		return Ok(std::nullopt);
 	}
 
 	ErrorOr<void> ScriptCall::evaluateScripts(interp::Interpreter* cs) const

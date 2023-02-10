@@ -107,9 +107,6 @@ namespace sap::interp::builtin
 		if(not pt->isPointer())
 			return ErrMsg(ev, "expected pointer type, got '{}'", pt);
 
-		if(pv.getPointer() == nullptr)
-			return ErrMsg(ev, "null pointer dereference");
-
 		auto& v = *std::move(pv).getPointer();
 		auto str = TRY(to_string(ev, v));
 

@@ -14,34 +14,32 @@ namespace sap::interp
 	{
 		if(this->isAny())
 			return "any";
-
 		else if(this->isVoid())
 			return "void";
-
 		else if(this->isInteger())
 			return "int";
-
 		else if(this->isFloating())
 			return "float";
-
 		else if(this->isBool())
 			return "bool";
-
 		else if(this->isChar())
 			return "char";
-
 		else if(this->isNullPtr())
 			return "null";
-
 		else if(this->isLength())
 			return "Length";
-
 		else if(this->isTreeInlineObj())
 			return "Inline";
-
 		else if(this->isTreeBlockObj())
 			return "Block";
-
+		else if(this->isLayoutObject())
+			return "LayoutObject";
+		else if(this->isTreeInlineObjRef())
+			return "InlineRef";
+		else if(this->isTreeBlockObjRef())
+			return "BlockRef";
+		else if(this->isLayoutObjectRef())
+			return "LayoutObjectRef";
 		else
 			return "?????";
 	}
@@ -64,14 +62,28 @@ namespace sap::interp
 		// note: if the kind is a "primitive", we know that we can just compare m_kind.
 		// otherwise, we should call the virtual function. However, we are a primitive; this means
 		// that the other guy must be the non-primitive, so call their sameAs() instead.
-		if(util::is_one_of(m_kind, KIND_VOID, KIND_ANY, KIND_BOOL, KIND_CHAR, KIND_INTEGER, KIND_FLOATING, KIND_TREE_INLINE_OBJ,
-		       KIND_NULLPTR))
+		switch(m_kind)
 		{
-			return true;
-		}
+			case KIND_VOID:
+			case KIND_ANY:
+			case KIND_BOOL:
+			case KIND_CHAR:
+			case KIND_INTEGER:
+			case KIND_FLOATING:
+			case KIND_NULLPTR:
+			case KIND_LENGTH:
+			case KIND_TREE_INLINE_OBJ:
+			case KIND_TREE_BLOCK_OBJ:
+			case KIND_LAYOUT_OBJ:
+			case KIND_TREE_INLINE_OBJ_REF:
+			case KIND_TREE_BLOCK_OBJ_REF:
+			case KIND_LAYOUT_OBJ_REF: //
+				return true;
 
-		// in theory, this should never end up in a cyclic call.
-		return other->sameAs(this);
+			default:
+				// in theory, this should never end up in a cyclic call.
+				return other->sameAs(this);
+		}
 	}
 
 
@@ -159,6 +171,12 @@ namespace sap::interp
 		return length_type;
 	}
 
+	const Type* Type::makeLayoutObject()
+	{
+		static Type* obj_type = new Type(KIND_LAYOUT_OBJ);
+		return obj_type;
+	}
+
 	const Type* Type::makeTreeInlineObj()
 	{
 		static Type* obj_type = new Type(KIND_TREE_INLINE_OBJ);
@@ -170,6 +188,25 @@ namespace sap::interp
 		static Type* obj_type = new Type(KIND_TREE_BLOCK_OBJ);
 		return obj_type;
 	}
+
+	const Type* Type::makeLayoutObjectRef()
+	{
+		static Type* obj_type = new Type(KIND_LAYOUT_OBJ_REF);
+		return obj_type;
+	}
+
+	const Type* Type::makeTreeBlockObjRef()
+	{
+		static Type* obj_type = new Type(KIND_TREE_INLINE_OBJ_REF);
+		return obj_type;
+	}
+
+	const Type* Type::makeTreeInlineObjRef()
+	{
+		static Type* obj_type = new Type(KIND_TREE_BLOCK_OBJ_REF);
+		return obj_type;
+	}
+
 
 	const EnumType* Type::makeEnum(const std::string& name, const Type* element_type)
 	{
@@ -196,7 +233,8 @@ namespace sap::interp
 		return get_or_add_type(new ArrayType(elem, is_variadic));
 	}
 
-	const StructType* Type::makeStruct(const std::string& name, const std::vector<std::pair<std::string, const Type*>>& foo)
+	const StructType* Type::makeStruct(const std::string& name,
+		const std::vector<std::pair<std::string, const Type*>>& foo)
 	{
 		std::vector<StructType::Field> fields {};
 		for(auto& [n, t] : foo)

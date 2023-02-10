@@ -64,8 +64,8 @@ namespace sap::tree
 		auto _ = cs->evaluator().pushBlockContext(this);
 
 		std::vector<std::unique_ptr<InlineObject>> para_objects {};
-		const_cast<Paragraph*>(this)->evaluate_scripts(cs, para_objects);
-		const_cast<Paragraph*>(this)->processWordSeparators();
+		TRY(const_cast<Paragraph*>(this)->evaluate_scripts(cs, para_objects));
+		TRY(const_cast<Paragraph*>(this)->processWordSeparators());
 
 		if(m_contents.empty())
 			return Ok(LayoutResult::empty());

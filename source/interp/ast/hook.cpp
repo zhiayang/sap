@@ -7,12 +7,12 @@
 
 namespace sap::interp
 {
-	ErrorOr<TCResult> HookBlock::typecheck_impl(Typechecker* ts, const Type* infer, bool moving) const
+	ErrorOr<TCResult> HookBlock::typecheck_impl(Typechecker* ts, const Type* infer, bool keep_lvalue) const
 	{
 		if(ts->isCurrentlyInFunction())
 			return ErrMsg(ts, "hook blocks can only appear the top level");
 
-		auto ret = TRY(this->body->typecheck(ts, infer, moving));
+		auto ret = TRY(this->body->typecheck(ts, infer, keep_lvalue));
 		ts->interpreter()->addHookBlock(this);
 
 		return Ok(ret);

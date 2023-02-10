@@ -12,7 +12,7 @@
 
 namespace sap::interp
 {
-	ErrorOr<TCResult> ImportStmt::typecheck_impl(Typechecker* ts, const Type* infer, bool moving) const
+	ErrorOr<TCResult> ImportStmt::typecheck_impl(Typechecker* ts, const Type* infer, bool keep_lvalue) const
 	{
 		auto cs = ts->interpreter();
 

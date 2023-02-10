@@ -7,7 +7,7 @@
 
 namespace sap::interp
 {
-	ErrorOr<TCResult> OptionalCheckOp::typecheck_impl(Typechecker* ts, const Type* infer, bool moving) const
+	ErrorOr<TCResult> OptionalCheckOp::typecheck_impl(Typechecker* ts, const Type* infer, bool keep_lvalue) const
 	{
 		auto inside = TRY(this->expr->typecheck(ts, infer));
 		if(not inside.type()->isOptional())
@@ -29,7 +29,7 @@ namespace sap::interp
 
 
 
-	ErrorOr<TCResult> NullCoalesceOp::typecheck_impl(Typechecker* ts, const Type* infer, bool moving) const
+	ErrorOr<TCResult> NullCoalesceOp::typecheck_impl(Typechecker* ts, const Type* infer, bool keep_lvalue) const
 	{
 		auto ltype = TRY(this->lhs->typecheck(ts)).type();
 		auto rtype = TRY(this->rhs->typecheck(ts)).type();
@@ -59,7 +59,7 @@ namespace sap::interp
 		auto lval = TRY_VALUE(this->lhs->evaluate(ev));
 		auto ltype = lval.type();
 
-		assert(lval.isOptional() || lval.isPointer());
+		assert(lval.isOptional() || lval.type()->isPointer());
 		bool left_has_value = (lval.isOptional() && lval.haveOptionalValue())
 		                   || (lval.isPointer() && lval.getPointer() != nullptr);
 

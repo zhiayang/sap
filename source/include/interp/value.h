@@ -19,6 +19,11 @@ namespace sap::tree
 	struct InlineObject;
 }
 
+namespace sap::layout
+{
+	struct LayoutObject;
+}
+
 namespace sap::interp
 {
 	struct Interpreter;
@@ -43,6 +48,9 @@ namespace sap::interp
 		const tree::BlockObject& getTreeBlockObj() const;
 		std::unique_ptr<tree::BlockObject> takeTreeBlockObj() &&;
 
+		const layout::LayoutObject& getLayoutObject() const;
+		std::unique_ptr<layout::LayoutObject> takeLayoutObject() &&;
+
 		std::string getUtf8String() const;
 		std::u32string getUtf32String() const;
 
@@ -64,6 +72,15 @@ namespace sap::interp
 		const Value* getPointer() const;
 		Value* getMutablePointer() const;
 
+		tree::BlockObject* getTreeBlockObjectRef() const;
+		layout::LayoutObject* getLayoutObjectRef() const;
+
+		std::optional<std::vector<tree::InlineObject*>> takeTreeInlineObjectRef() &&;
+		const std::optional<std::vector<tree::InlineObject*>>& getTreeInlineObjectRef() const;
+
+
+
+
 		std::optional<const Value*> getOptional() const;
 		std::optional<Value*> getOptional();
 		std::optional<Value> takeOptional() &&;
@@ -79,12 +96,17 @@ namespace sap::interp
 		bool isStruct() const;
 		bool isLength() const;
 		bool isInteger() const;
-		bool isPointer() const;
 		bool isFloating() const;
 		bool isFunction() const;
 		bool isOptional() const;
+		bool isLayoutObject() const;
 		bool isTreeBlockObj() const;
 		bool isTreeInlineObj() const;
+
+		bool isPointer() const;
+		bool isTreeInlineObjRef() const;
+		bool isTreeBlockObjRef() const;
+		bool isLayoutObjectRef() const;
 
 		bool isPrintable() const;
 
@@ -109,11 +131,16 @@ namespace sap::interp
 		static Value array(const Type* elm, std::vector<Value> arr, bool variadic = false);
 		static Value treeInlineObject(InlineObjects obj);
 		static Value treeBlockObject(std::unique_ptr<tree::BlockObject> obj);
+		static Value layoutObject(std::unique_ptr<layout::LayoutObject> obj);
 		static Value structure(const StructType* ty, std::vector<Value> fields);
 		static Value pointer(const Type* elm_type, const Value* value);
 		static Value mutablePointer(const Type* elm_type, Value* value);
 		static Value optional(const Type* type, std::optional<Value> value);
 		Value clone() const;
+
+		static Value treeInlineObjectRef(std::optional<std::vector<tree::InlineObject*>> pointers);
+		static Value treeBlockObjectRef(tree::BlockObject* obj);
+		static Value layoutObjectRef(layout::LayoutObject* obj);
 
 		template <typename T>
 		T get() const;
@@ -142,9 +169,15 @@ namespace sap::interp
 
 			InlineObjects v_inline_obj;
 			std::unique_ptr<tree::BlockObject> v_block_obj;
+			std::unique_ptr<layout::LayoutObject> v_layout_obj;
 			std::vector<Value> v_array;
 			const Value* v_pointer;
 			DynLength v_length;
+
+			// these things need special handling
+			tree::BlockObject* v_block_obj_ref;
+			layout::LayoutObject* v_layout_obj_ref;
+			std::optional<std::vector<tree::InlineObject*>> v_inline_obj_ref;
 		};
 	};
 }

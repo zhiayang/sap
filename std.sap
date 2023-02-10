@@ -24,38 +24,28 @@ namespace std
 	{
 		num: int;
 		name: string;
+		block_ref: BlockRef;
 	};
+
 
 	var g_sections: [Section] = [];
 
-	fn section(name: string) -> void
+	fn section(name: string) -> Block
 	{
-		return;
-#/
-		let name_tbo = std::style(builtin::Style {
-			.font_size = 2em,
-		}, builtin::make_line(builtin::make_text(name)));
+		let section_num = 1 + g_sections.size();
+		var b = builtin::make_line(builtin::make_text(f"{section_num}.  {name}"));
+		# var l = builtin::make_layout_object(*b);
 
 		let the_section = Section {
-			.num = 1 + g_sections.size(),
-			.name = name
+			.num = section_num,
+			.name = name,
+			.block_ref = b.ref(),
 		};
 
-		let counter_tbo = std::style(builtin::Style {
-			.alignment = builtin::Alignment::Left,
-		}, builtin::make_line(builtin::make_text(f"{the_section.num}")));
+		# l!.position.x -= 2em;
 
 		g_sections += [the_section];
-
-		var tmp = builtin::current_layout_position();
-		tmp.y += 2em;
-		builtin::set_layout_cursor(*tmp);
-
-		var pos = builtin::output_at_current(*name_tbo);
-		pos.x -= 2em;
-
-		builtin::output_at_position(pos, *counter_tbo);
-/#
+		return b;
 	}
 
 	fn output_table_of_contents()

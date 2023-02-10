@@ -10,9 +10,9 @@
 namespace sap::interp
 {
 	Typechecker::Typechecker(Interpreter* interp)
-	    : m_interp(interp)
-	    , m_top(new DefnTree(this, "__top_level", /* parent: */ nullptr))
-	    , m_loop_body_nesting(0)
+		: m_interp(interp)
+		, m_top(new DefnTree(this, "__top_level", /* parent: */ nullptr))
+		, m_loop_body_nesting(0)
 	{
 		this->pushTree(m_top.get()).cancel();
 	}
@@ -128,12 +128,20 @@ namespace sap::interp
 					return Ok(Type::makeFloating());
 				else if(nn == TYPE_STRING)
 					return Ok(Type::makeString());
+				else if(nn == TYPE_LENGTH)
+					return Ok(Type::makeLength());
 				else if(nn == TYPE_TREE_INLINE)
 					return Ok(Type::makeTreeInlineObj());
 				else if(nn == TYPE_TREE_BLOCK)
 					return Ok(Type::makeTreeBlockObj());
-				else if(nn == TYPE_LENGTH)
-					return Ok(Type::makeLength());
+				else if(nn == TYPE_LAYOUT_OBJECT)
+					return Ok(Type::makeLayoutObject());
+				else if(nn == TYPE_TREE_INLINE_REF)
+					return Ok(Type::makeTreeInlineObjRef());
+				else if(nn == TYPE_TREE_BLOCK_REF)
+					return Ok(Type::makeTreeBlockObjRef());
+				else if(nn == TYPE_LAYOUT_OBJECT_REF)
+					return Ok(Type::makeLayoutObjectRef());
 			}
 
 			auto decl = TRY(this->current()->lookup(name));

@@ -20,98 +20,112 @@ namespace sap::interp
 	bool Value::getBool() const
 	{
 		this->ensure_not_moved_from();
-		assert(this->isBool());
+		assert(m_type->isBool());
 		return v_bool;
 	}
 
 	char32_t Value::getChar() const
 	{
 		this->ensure_not_moved_from();
-		assert(this->isChar());
+		assert(m_type->isChar());
 		return v_char;
 	}
 
 	double Value::getFloating() const
 	{
 		this->ensure_not_moved_from();
-		assert(this->isFloating());
+		assert(m_type->isFloating());
 		return v_floating;
 	}
 
 	int64_t Value::getInteger() const
 	{
 		this->ensure_not_moved_from();
-		assert(this->isInteger());
+		assert(m_type->isInteger());
 		return v_integer;
 	}
 
 	DynLength Value::getLength() const
 	{
 		this->ensure_not_moved_from();
-		assert(this->isLength());
+		assert(m_type->isLength());
 		return v_length;
 	}
 
 	auto Value::getFunction() const -> FnType
 	{
 		this->ensure_not_moved_from();
-		assert(this->isFunction());
+		assert(m_type->isFunction());
 		return v_function;
 	}
 
 	auto Value::getTreeInlineObj() const -> const InlineObjects&
 	{
 		this->ensure_not_moved_from();
-		assert(this->isTreeInlineObj());
+		assert(m_type->isTreeInlineObj());
 		return v_inline_obj;
 	}
 
 	auto Value::takeTreeInlineObj() && -> InlineObjects
 	{
 		this->ensure_not_moved_from();
-		assert(this->isTreeInlineObj());
+		assert(m_type->isTreeInlineObj());
 		return std::move(v_inline_obj);
 	}
 
 	auto Value::getTreeBlockObj() const -> const tree::BlockObject&
 	{
 		this->ensure_not_moved_from();
-		assert(this->isTreeBlockObj());
+		assert(m_type->isTreeBlockObj());
 		return *v_block_obj;
 	}
 
 	auto Value::takeTreeBlockObj() && -> std::unique_ptr<tree::BlockObject>
 	{
 		this->ensure_not_moved_from();
-		assert(this->isTreeBlockObj());
+		assert(m_type->isTreeBlockObj());
 		return std::move(v_block_obj);
+	}
+
+	auto Value::getLayoutObject() const -> const layout::LayoutObject&
+	{
+		this->ensure_not_moved_from();
+		assert(m_type->isLayoutObject());
+		return *v_layout_obj;
+	}
+
+	auto Value::takeLayoutObject() && -> std::unique_ptr<layout::LayoutObject>
+	{
+		this->ensure_not_moved_from();
+		assert(m_type->isLayoutObject());
+		return std::move(v_layout_obj);
 	}
 
 	const std::vector<Value>& Value::getArray() const
 	{
 		this->ensure_not_moved_from();
-		assert(this->isArray());
+		assert(m_type->isArray());
 		return v_array;
 	}
 
 	std::vector<Value> Value::takeArray() &&
 	{
 		this->ensure_not_moved_from();
-		assert(this->isArray());
+		assert(m_type->isArray());
 		return std::move(v_array);
 	}
 
 	const Value& Value::getEnumerator() const
 	{
 		this->ensure_not_moved_from();
-		assert(this->isEnum());
+		assert(m_type->isEnum());
 		return v_array[0];
 	}
 
 	Value Value::takeEnumerator() &&
 	{
 		this->ensure_not_moved_from();
-		assert(this->isEnum());
+		assert(m_type->isEnum());
 		return std::move(v_array[0]);
 	}
 
@@ -121,7 +135,7 @@ namespace sap::interp
 	std::string Value::getUtf8String() const
 	{
 		this->ensure_not_moved_from();
-		assert(this->isArray());
+		assert(m_type->isArray());
 
 		std::string ret {};
 		ret.reserve(v_array.size());
@@ -139,7 +153,7 @@ namespace sap::interp
 	std::u32string Value::getUtf32String() const
 	{
 		this->ensure_not_moved_from();
-		assert(this->isArray());
+		assert(m_type->isArray());
 
 		std::u32string ret {};
 		ret.reserve(v_array.size());
@@ -154,7 +168,7 @@ namespace sap::interp
 	Value& Value::getStructField(size_t idx)
 	{
 		this->ensure_not_moved_from();
-		assert(this->isStruct());
+		assert(m_type->isStruct());
 		return v_array[idx];
 	}
 
@@ -168,7 +182,7 @@ namespace sap::interp
 	Value& Value::getStructField(zst::str_view name)
 	{
 		this->ensure_not_moved_from();
-		assert(this->isStruct());
+		assert(m_type->isStruct());
 
 		return v_array[m_type->toStruct()->getFieldIndex(name)];
 	}
@@ -176,7 +190,7 @@ namespace sap::interp
 	const Value& Value::getStructField(zst::str_view name) const
 	{
 		this->ensure_not_moved_from();
-		assert(this->isStruct());
+		assert(m_type->isStruct());
 		return v_array[m_type->toStruct()->getFieldIndex(name)];
 	}
 
@@ -184,21 +198,21 @@ namespace sap::interp
 	std::vector<Value> Value::takeStructFields() &&
 	{
 		this->ensure_not_moved_from();
-		assert(this->isStruct());
+		assert(m_type->isStruct());
 		return std::move(v_array);
 	}
 
 	const std::vector<Value>& Value::getStructFields() const
 	{
 		this->ensure_not_moved_from();
-		assert(this->isStruct());
+		assert(m_type->isStruct());
 		return v_array;
 	}
 
 	const Value* Value::getPointer() const
 	{
 		this->ensure_not_moved_from();
-		assert(this->isPointer());
+		assert(m_type->isPointer());
 		return v_pointer;
 	}
 
@@ -207,6 +221,34 @@ namespace sap::interp
 		this->ensure_not_moved_from();
 		assert(m_type->isMutablePointer());
 		return const_cast<Value*>(v_pointer);
+	}
+
+	tree::BlockObject* Value::getTreeBlockObjectRef() const
+	{
+		this->ensure_not_moved_from();
+		assert(m_type->isTreeBlockObjRef());
+		return v_block_obj_ref;
+	}
+
+	layout::LayoutObject* Value::getLayoutObjectRef() const
+	{
+		this->ensure_not_moved_from();
+		assert(m_type->isLayoutObjectRef());
+		return v_layout_obj_ref;
+	}
+
+	std::optional<std::vector<tree::InlineObject*>> Value::takeTreeInlineObjectRef() &&
+	{
+		this->ensure_not_moved_from();
+		assert(m_type->isTreeInlineObjRef());
+		return std::move(v_inline_obj_ref);
+	}
+
+	const std::optional<std::vector<tree::InlineObject*>>& Value::getTreeInlineObjectRef() const
+	{
+		this->ensure_not_moved_from();
+		assert(m_type->isTreeInlineObjRef());
+		return v_inline_obj_ref;
 	}
 
 	std::optional<const Value*> Value::getOptional() const
@@ -253,46 +295,63 @@ namespace sap::interp
 	std::u32string Value::toString() const
 	{
 		this->ensure_not_moved_from();
-		if(this->isChar())
+		if(m_type->isChar())
 		{
 			return &v_char;
 		}
-		else if(this->isBool())
+		else if(m_type->isBool())
 		{
 			return v_bool ? U"true" : U"false";
 		}
-		else if(this->isLength())
+		else if(m_type->isLength())
 		{
-			return unicode::u32StringFromUtf8(zpr::sprint("{}{}", v_length.value(), DynLength::unitToString(v_length.unit())));
+			return unicode::u32StringFromUtf8(zpr::sprint("{}{}", v_length.value(),
+				DynLength::unitToString(v_length.unit())));
 		}
-		else if(this->isInteger())
+		else if(m_type->isInteger())
 		{
 			return unicode::u32StringFromUtf8(std::to_string(v_integer));
 		}
-		else if(this->isFloating())
+		else if(m_type->isFloating())
 		{
 			return unicode::u32StringFromUtf8(std::to_string(v_floating));
 		}
-		else if(this->isFunction())
+		else if(m_type->isFunction())
 		{
 			return U"function";
 		}
-		else if(this->isTreeBlockObj())
+		else if(m_type->isTreeBlockObj())
 		{
 			return U"Block{...}";
 		}
-		else if(this->isTreeInlineObj())
+		else if(m_type->isTreeInlineObj())
 		{
 			return U"Inline{...}";
 		}
-		else if(this->isOptional())
+		else if(m_type->isLayoutObject())
+		{
+			return U"LayoutObject{...}";
+		}
+		else if(m_type->isTreeBlockObjRef())
+		{
+			return U"BlockRef";
+		}
+		else if(m_type->isTreeInlineObjRef())
+		{
+			return U"InlineRef";
+		}
+		else if(m_type->isLayoutObjectRef())
+		{
+			return U"LayoutObjectRef";
+		}
+		else if(m_type->isOptional())
 		{
 			if(v_array.empty())
 				return U"empty";
 			else
 				return v_array[0].toString();
 		}
-		else if(this->isArray())
+		else if(m_type->isArray())
 		{
 			if(m_type == Type::makeString())
 			{
@@ -350,10 +409,6 @@ namespace sap::interp
 	{
 		return m_type->isInteger();
 	}
-	bool Value::isPointer() const
-	{
-		return m_type->isPointer();
-	}
 	bool Value::isFloating() const
 	{
 		return m_type->isFloating();
@@ -374,6 +429,32 @@ namespace sap::interp
 	{
 		return m_type->isTreeBlockObj();
 	}
+	bool Value::isLayoutObject() const
+	{
+		return m_type->isLayoutObject();
+	}
+
+	bool Value::isPointer() const
+	{
+		return m_type->isPointer();
+	}
+
+	bool Value::isTreeInlineObjRef() const
+	{
+		return m_type->isTreeInlineObjRef();
+	}
+
+	bool Value::isTreeBlockObjRef() const
+	{
+		return m_type->isTreeBlockObjRef();
+	}
+
+	bool Value::isLayoutObjectRef() const
+	{
+		return m_type->isLayoutObjectRef();
+	}
+
+
 
 	bool Value::isPrintable() const
 	{
@@ -504,6 +585,13 @@ namespace sap::interp
 		return ret;
 	}
 
+	Value Value::layoutObject(std::unique_ptr<layout::LayoutObject> obj)
+	{
+		auto ret = Value(Type::makeLayoutObject());
+		new(&ret.v_layout_obj) decltype(ret.v_layout_obj)(std::move(obj));
+		return ret;
+	}
+
 	Value Value::structure(const StructType* ty, std::vector<Value> fields)
 	{
 		auto ret = Value(ty);
@@ -513,7 +601,7 @@ namespace sap::interp
 			if(ret.v_array[i].type() != ty->getFieldAtIndex(i))
 			{
 				sap::internal_error("mismatched field types! expected '{}', got '{}'", ty->getFieldAtIndex(i),
-				    ret.v_array[i].type());
+					ret.v_array[i].type());
 			}
 		}
 
@@ -551,6 +639,34 @@ namespace sap::interp
 		return ret;
 	}
 
+	Value Value::treeInlineObjectRef(std::optional<std::vector<tree::InlineObject*>> pointers)
+	{
+		auto ret = Value(Type::makeTreeInlineObjRef());
+		new(&ret.v_inline_obj_ref) decltype(v_inline_obj_ref)();
+		ret.v_inline_obj_ref = std::move(pointers);
+
+		return ret;
+	}
+
+	Value Value::treeBlockObjectRef(tree::BlockObject* obj)
+	{
+		auto ret = Value(Type::makeTreeBlockObjRef());
+		new(&ret.v_block_obj_ref) decltype(v_block_obj_ref)();
+		ret.v_block_obj_ref = obj;
+
+		return ret;
+	}
+
+	Value Value::layoutObjectRef(layout::LayoutObject* obj)
+	{
+		auto ret = Value(Type::makeLayoutObjectRef());
+		new(&ret.v_layout_obj_ref) decltype(v_layout_obj_ref)();
+		ret.v_layout_obj_ref = obj;
+
+		return ret;
+	}
+
+
 
 	Value Value::clone() const
 	{
@@ -587,21 +703,33 @@ namespace sap::interp
 		}
 		else if(m_type->isTreeBlockObj())
 		{
-			sap::internal_error("cannot clone 'Block' objects");
-			// new(&val.v_block_obj) decltype(v_block_obj)();
-			// val.v_block_obj = Value::clone_tbos(*v_block_obj);
+			sap::internal_error("cannot clone 'Block' value");
 		}
 		else if(m_type->isTreeInlineObj())
 		{
-			sap::internal_error("cannot clone 'Inline' objects");
-			// new(&val.v_inline_obj) decltype(v_inline_obj)();
-			// val.v_inline_obj = Value::clone_tios(v_inline_obj);
+			sap::internal_error("cannot clone 'Inline' value");
+		}
+		else if(m_type->isLayoutObject())
+		{
+			sap::internal_error("cannot clone 'LayoutObject' value");
 		}
 		else if(m_type->isArray() || m_type->isStruct() || m_type->isOptional() || m_type->isEnum())
 		{
 			new(&val.v_array) decltype(v_array)();
 			for(auto& e : v_array)
 				val.v_array.push_back(e.clone());
+		}
+		else if(m_type->isTreeBlockObjRef())
+		{
+			val.v_block_obj_ref = v_block_obj_ref;
+		}
+		else if(m_type->isLayoutObjectRef())
+		{
+			val.v_layout_obj_ref = v_layout_obj_ref;
+		}
+		else if(m_type->isTreeInlineObjRef())
+		{
+			new(&val.v_inline_obj_ref) decltype(val.v_inline_obj_ref)(v_inline_obj_ref);
 		}
 		else
 		{
@@ -645,10 +773,16 @@ namespace sap::interp
 	{
 		if(m_type->isTreeInlineObj())
 			v_inline_obj.~decltype(v_inline_obj)();
+
 		else if(m_type->isTreeBlockObj())
 			v_block_obj.~decltype(v_block_obj)();
+
+		else if(m_type->isPointer() && m_type->pointerElement()->isTreeInlineObj())
+			v_inline_obj_ref.~decltype(v_inline_obj_ref)();
+
 		else if(m_type->isArray() || m_type->isStruct() || m_type->isOptional() || m_type->isEnum())
 			v_array.~decltype(v_array)();
+
 		else if(m_type->isLength())
 			v_length.~decltype(v_length)();
 	}
@@ -658,85 +792,47 @@ namespace sap::interp
 		m_type = val.m_type;
 		if(m_type->isBool())
 			v_bool = std::move(val.v_bool);
+
 		else if(m_type->isChar())
 			v_char = std::move(val.v_char);
+
 		else if(m_type->isInteger())
 			v_integer = std::move(val.v_integer);
+
 		else if(m_type->isFloating())
 			v_floating = std::move(val.v_floating);
+
 		else if(m_type->isFunction())
 			v_function = std::move(val.v_function);
+
 		else if(m_type->isPointer() || m_type->isNullPtr())
 			v_pointer = std::move(val.v_pointer);
+
 		else if(m_type->isTreeBlockObj())
 			new(&v_block_obj) decltype(v_block_obj)(std::move(val.v_block_obj));
+
 		else if(m_type->isTreeInlineObj())
 			new(&v_inline_obj) decltype(v_inline_obj)(std::move(val.v_inline_obj));
+
 		else if(m_type->isArray() || m_type->isStruct() || m_type->isOptional() || m_type->isEnum())
 			new(&v_array) decltype(v_array)(std::move(val.v_array));
+
 		else if(m_type->isLength())
 			new(&v_length) decltype(v_length)(std::move(val.v_length));
+
+		else if(m_type->isTreeBlockObjRef())
+			v_block_obj_ref = std::move(val.v_block_obj_ref);
+
+		else if(m_type->isLayoutObjectRef())
+			v_layout_obj_ref = std::move(val.v_layout_obj_ref);
+
+		else if(m_type->isTreeInlineObjRef())
+			new(&v_inline_obj_ref) decltype(v_inline_obj_ref)(std::move(val.v_inline_obj_ref));
+
 		else
 			assert(false && "unreachable!");
 
 		m_moved_from = false;
 		val.m_moved_from = true;
 	}
-
-
-
-#if 0
-	auto Value::clone_tios(const InlineObjects& from) -> InlineObjects
-	{
-		InlineObjects ret {};
-		ret.reserve(from.size());
-
-		for(auto& tio : from)
-		{
-			// whatever is left here should only be text!
-			if(auto txt = dynamic_cast<const tree::Text*>(tio.get()); txt)
-				ret.emplace_back(new tree::Text(txt->contents(), txt->style()));
-			else if(auto sep = dynamic_cast<const tree::Separator*>(tio.get()); sep)
-				ret.emplace_back(new tree::Separator(sep->kind(), sep->hyphenationCost()));
-
-			else
-			{
-				auto& tmp = *tio.get();
-				sap::internal_error("????? non-text TIOs leaked out: {}, {}", (void*) tio.get(), typeid(tmp).name());
-			}
-		}
-
-		return ret;
-	}
-
-	std::unique_ptr<tree::BlockObject> Value::clone_tbos(const tree::BlockObject& from)
-	{
-		zpr::println("warning: cloning tbo!");
-		if(auto para = dynamic_cast<const tree::Paragraph*>(&from); para != nullptr)
-		{
-			auto ret = std::make_unique<tree::Paragraph>();
-			ret->addObjects(clone_tios(para->contents()));
-			return ret;
-		}
-		else if(auto img = dynamic_cast<const tree::Image*>(&from); img != nullptr)
-		{
-			return std::make_unique<tree::Image>(img->image().clone(), img->raw_size());
-		}
-		else if(auto scr = dynamic_cast<const tree::ScriptBlock*>(&from); scr != nullptr)
-		{
-			sap::internal_error("???? script TBO leaked out!");
-		}
-		else if(auto blk = dynamic_cast<const tree::VertBox*>(&from); blk != nullptr)
-		{
-			auto ret = std::make_unique<tree::VertBox>();
-			for(auto& inner : blk->contents())
-				ret->contents().push_back(clone_tbos(*inner));
-			return ret;
-		}
-		else
-		{
-			sap::internal_error("?? unknown TBO type");
-		}
-	}
-#endif
 }

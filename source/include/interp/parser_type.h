@@ -20,6 +20,10 @@ namespace sap::frontend
 	inline constexpr const char* TYPE_LENGTH = "Length";
 	inline constexpr const char* TYPE_TREE_BLOCK = "Block";
 	inline constexpr const char* TYPE_TREE_INLINE = "Inline";
+	inline constexpr const char* TYPE_LAYOUT_OBJECT = "LayoutObject";
+	inline constexpr const char* TYPE_TREE_BLOCK_REF = "BlockRef";
+	inline constexpr const char* TYPE_TREE_INLINE_REF = "InlineRef";
+	inline constexpr const char* TYPE_LAYOUT_OBJECT_REF = "LayoutObjectRef";
 
 	struct PType
 	{

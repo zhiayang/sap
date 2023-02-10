@@ -20,7 +20,11 @@ namespace sap::interp
 		auto s = std::make_unique<StructDefn>(Location::builtin(), T::name, T::fields());
 		auto defn = s.get();
 
-		T::type = interp->typechecker().addBuiltinDefinition(std::move(s))->typecheck(&interp->typechecker()).unwrap().type();
+		T::type = interp->typechecker()
+		              .addBuiltinDefinition(std::move(s))
+		              ->typecheck(&interp->typechecker())
+		              .unwrap()
+		              .type();
 		defn->evaluate(&interp->evaluator()).expect("builtin decl failed");
 	}
 
@@ -30,7 +34,11 @@ namespace sap::interp
 		auto e = std::make_unique<EnumDefn>(Location::builtin(), T::name, T::enumeratorType(), T::enumerators());
 		auto defn = e.get();
 
-		T::type = interp->typechecker().addBuiltinDefinition(std::move(e))->typecheck(&interp->typechecker()).unwrap().type();
+		T::type = interp->typechecker()
+		              .addBuiltinDefinition(std::move(e))
+		              ->typecheck(&interp->typechecker())
+		              .unwrap()
+		              .type();
 		defn->evaluate(&interp->evaluator()).expect("builtin decl failed");
 	}
 
@@ -65,19 +73,24 @@ namespace sap::interp
 		using BFD = BuiltinFunctionDefn;
 		using Param = FunctionDecl::Param;
 
-		auto t_any = PType::named(TYPE_ANY);
-		auto t_int = PType::named(TYPE_INT);
-		auto t_str = PType::named(TYPE_STRING);
-		auto t_bool = PType::named(TYPE_BOOL);
-		auto t_char = PType::named(TYPE_CHAR);
-		auto t_void = PType::named(TYPE_VOID);
-		auto t_float = PType::named(TYPE_FLOAT);
-		auto t_length = PType::named(TYPE_LENGTH);
+		const auto t_any = PType::named(TYPE_ANY);
+		const auto t_int = PType::named(TYPE_INT);
+		const auto t_str = PType::named(TYPE_STRING);
+		const auto t_bool = PType::named(TYPE_BOOL);
+		const auto t_char = PType::named(TYPE_CHAR);
+		const auto t_void = PType::named(TYPE_VOID);
+		const auto t_float = PType::named(TYPE_FLOAT);
+		const auto t_length = PType::named(TYPE_LENGTH);
 
-		auto t_tbo = PType::named(TYPE_TREE_BLOCK);
-		auto t_tio = PType::named(TYPE_TREE_INLINE);
+		const auto t_tbo = PType::named(TYPE_TREE_BLOCK);
+		const auto t_tio = PType::named(TYPE_TREE_INLINE);
+		const auto t_lo = PType::named(TYPE_LAYOUT_OBJECT);
 
-		auto make_builtin_name = [](const char* name) -> QualifiedId {
+		const auto t_tbo_ref = PType::named(TYPE_TREE_BLOCK_REF);
+		const auto t_tio_ref = PType::named(TYPE_TREE_INLINE_REF);
+		const auto t_lo_ref = PType::named(TYPE_LAYOUT_OBJECT_REF);
+
+		const auto make_builtin_name = [](const char* name) -> QualifiedId {
 			return QualifiedId {
 				.top_level = true,
 				.parents = { "builtin" },
@@ -85,28 +98,32 @@ namespace sap::interp
 			};
 		};
 
-		auto make_null = []() {
+		const auto make_null = []() {
 			return std::make_unique<interp::NullLit>(Location::builtin());
 		};
 
-		auto t_opt = [](const PType& t) {
+		const auto t_ptr = [](const PType& t, bool mut = false) {
+			return PType::pointer(t, mut);
+		};
+
+		const auto t_opt = [](const PType& t) {
 			return PType::optional(t);
 		};
 
-		auto t_bfont = PType::named(make_builtin_name(builtin::BS_Font::name));
-		auto t_bstate = PType::named(make_builtin_name(builtin::BS_State::name));
-		auto t_bstyle = PType::named(make_builtin_name(builtin::BS_Style::name));
-		auto t_bposition = PType::named(make_builtin_name(builtin::BS_Position::name));
-		auto t_bfontfamily = PType::named(make_builtin_name(builtin::BS_FontFamily::name));
-		auto t_babsposition = PType::named(make_builtin_name(builtin::BS_AbsPosition::name));
-		auto t_bdocsettings = PType::named(make_builtin_name(builtin::BS_DocumentSettings::name));
+		const auto t_bfont = PType::named(make_builtin_name(builtin::BS_Font::name));
+		const auto t_bstate = PType::named(make_builtin_name(builtin::BS_State::name));
+		const auto t_bstyle = PType::named(make_builtin_name(builtin::BS_Style::name));
+		const auto t_bposition = PType::named(make_builtin_name(builtin::BS_Position::name));
+		const auto t_bfontfamily = PType::named(make_builtin_name(builtin::BS_FontFamily::name));
+		const auto t_babsposition = PType::named(make_builtin_name(builtin::BS_AbsPosition::name));
+		const auto t_bdocsettings = PType::named(make_builtin_name(builtin::BS_DocumentSettings::name));
 
-		auto define_builtin = [&](auto&&... xs) {
+		const auto define_builtin = [&](auto&&... xs) {
 			auto ret = std::make_unique<BFD>(Location::builtin(), std::forward<decltype(xs)>(xs)...);
 			ts->addBuiltinDefinition(std::move(ret))->typecheck(ts).expect("builtin decl failed");
 		};
 
-		auto P = [](const char* name, const PType& t, std::unique_ptr<Expr> default_val = nullptr) {
+		const auto P = [](const char* name, const PType& t, std::unique_ptr<Expr> default_val = nullptr) {
 			return Param { .name = name, .type = t, .default_value = std::move(default_val) };
 		};
 
@@ -114,13 +131,14 @@ namespace sap::interp
 
 		// TODO: this is a huge hack!!!!!!!
 		// since we don't have generics, we make this accept 'any'...
-		define_builtin("size", makeParamList(Param { .name = "_", .type = t_any }), t_int,
+		define_builtin("size", makeParamList(P("_", t_any)), t_int,
 			[](Evaluator* ev, std::vector<Value>& args) -> ErrorOr<EvalResult> {
 				assert(args.size() == 1);
 				if(not args[0].isPointer() || !args[0].type()->pointerElement()->isArray())
 					return ErrMsg(ev, ".size() can only be used on arrays (got {})", args[0].type());
 
-				return EvalResult::ofValue(Value::integer(checked_cast<int64_t>(args[0].getPointer()->getArray().size())));
+				return EvalResult::ofValue(Value::integer(checked_cast<
+					int64_t>(args[0].getPointer()->getArray().size())));
 			});
 
 
@@ -139,6 +157,10 @@ namespace sap::interp
 			return EvalResult::ofValue(builtin::BS_State::make(ev, ev->state()));
 		});
 
+		define_builtin("ref", makeParamList(P("_", t_ptr(t_tio))), t_tio_ref, &B::ref_object);
+		define_builtin("ref", makeParamList(P("_", t_ptr(t_tbo))), t_tbo_ref, &B::ref_object);
+		define_builtin("ref", makeParamList(P("_", t_ptr(t_lo))), t_lo_ref, &B::ref_object);
+
 		define_builtin("bold1", makeParamList(P("_", t_any)), t_tio, &B::bold1);
 		define_builtin("italic1", makeParamList(P("_", t_any)), t_tio, &B::italic1);
 		define_builtin("bold_italic1", makeParamList(P("_", t_any)), t_tio, &B::bold_italic1);
@@ -154,7 +176,8 @@ namespace sap::interp
 		define_builtin("apply_style", makeParamList(P("1", t_bstyle), P("2", t_tio)), t_tio, &B::apply_style_tio);
 		define_builtin("apply_style", makeParamList(P("1", t_bstyle), P("2", t_tbo)), t_tbo, &B::apply_style_tbo);
 
-		define_builtin("load_image", makeParamList(P("1", t_str), P("2", t_length), P("3", t_opt(t_length), make_null())), t_tbo,
+		define_builtin("load_image",
+			makeParamList(P("1", t_str), P("2", t_length), P("3", t_opt(t_length), make_null())), t_tbo,
 			&B::load_image);
 
 		define_builtin("include", makeParamList(P("1", t_str)), t_tbo, &B::include_file);

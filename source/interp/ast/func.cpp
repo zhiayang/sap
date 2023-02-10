@@ -10,7 +10,7 @@
 
 namespace sap::interp
 {
-	ErrorOr<TCResult> FunctionDecl::typecheck_impl(Typechecker* ts, const Type* infer, bool moving) const
+	ErrorOr<TCResult> FunctionDecl::typecheck_impl(Typechecker* ts, const Type* infer, bool keep_lvalue) const
 	{
 		bool saw_variadic = false;
 
@@ -40,13 +40,13 @@ namespace sap::interp
 		return Ok(*m_tc_result);
 	}
 
-	ErrorOr<TCResult> BuiltinFunctionDefn::typecheck_impl(Typechecker* ts, const Type* infer, bool moving) const
+	ErrorOr<TCResult> BuiltinFunctionDefn::typecheck_impl(Typechecker* ts, const Type* infer, bool keep_lvalue) const
 	{
 		return this->declaration->typecheck(ts);
 	}
 
 
-	ErrorOr<TCResult> FunctionDefn::typecheck_impl(Typechecker* ts, const Type* infer, bool moving) const
+	ErrorOr<TCResult> FunctionDefn::typecheck_impl(Typechecker* ts, const Type* infer, bool keep_lvalue) const
 	{
 		this->declaration->resolve(this);
 		auto decl_type = TRY(this->declaration->typecheck(ts)).type();
@@ -65,9 +65,9 @@ namespace sap::interp
 				if(not ts->canImplicitlyConvert(ty, resolved_type))
 				{
 					return ErrMsg(ts,
-					    "default value for parameter '{}' has type '{}', "
-					    "which is incompatible with parameter type '{}'",
-					    param.name, resolved_type, ty);
+						"default value for parameter '{}' has type '{}', "
+						"which is incompatible with parameter type '{}'",
+						param.name, resolved_type, ty);
 				}
 			}
 
@@ -77,7 +77,7 @@ namespace sap::interp
 				param_type = frontend::PType::array(param_type.getArrayElement());
 
 			this->param_defns.push_back(std::make_unique<VariableDefn>(param.loc, param.name, //
-			    /* mutable: */ false, /* is_global: */ false, /* init: */ nullptr, param_type));
+				/* mutable: */ false, /* is_global: */ false, /* init: */ nullptr, param_type));
 
 			TRY(this->param_defns.back()->typecheck(ts));
 		}

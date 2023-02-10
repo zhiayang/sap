@@ -22,7 +22,8 @@ namespace sap::tree
 		return Ok();
 	}
 
-	void Paragraph::evaluate_scripts(interp::Interpreter* cs, std::vector<std::unique_ptr<InlineObject>>& output_vec)
+	ErrorOr<void> Paragraph::evaluate_scripts(interp::Interpreter* cs,
+		std::vector<std::unique_ptr<InlineObject>>& output_vec)
 	{
 		output_vec.reserve(m_contents.size());
 
@@ -34,42 +35,60 @@ namespace sap::tree
 			}
 			else if(auto iscr = dynamic_cast<tree::ScriptCall*>(obj.get()); iscr != nullptr)
 			{
-				auto value_or_err = cs->run(iscr->call.get());
-				if(value_or_err.is_err())
-					error("interp", "evaluation failed: {}", value_or_err.error());
-
-				auto value_or_empty = value_or_err.take_value();
-				if(not value_or_empty.hasValue())
+				auto maybe_value = TRY(cs->run(iscr->call.get()));
+				if(not maybe_value.hasValue())
 				{
 					// TODO: wtf is this? might be to avoid having two separators in a row?
 					output_vec.emplace_back(new tree::Text(U"", obj->style()));
 					continue;
 				}
 
-				if(value_or_empty.get().isTreeBlockObj())
-					error("interp", "TODO: unsupported block object in paragraph!");
+				using Type = interp::Type;
 
-				auto tmp = cs->evaluator().convertValueToText(std::move(value_or_empty).take());
-				if(tmp.is_err())
-					error("interp", "convertion to text failed: {}", tmp.error());
+				// these are all the types we accept.
+				auto value = maybe_value.take();
+				auto value_type = value.type();
 
-				auto objs = tmp.take_value();
-				output_vec.insert(output_vec.end(), std::move_iterator(objs.begin()), std::move_iterator(objs.end()));
+				const Type* t_tio = Type::makeTreeInlineObj();
+				const Type* t_otio = Type::makeOptional(t_tio);
+
+				if(not util::is_one_of(value_type, t_tio, t_otio))
+				{
+					return ErrMsg(iscr->call->loc(),
+						"invalid result from script call in paragraph; got type '{}', expected either '{}' or '{}'", //
+						value_type, t_tio, t_otio);
+				}
+
+				// check the optional guys
+				if(value_type == t_otio)
+				{
+					if(not value.haveOptionalValue())
+						continue;
+
+					value = std::move(value).takeOptional().value();
+					value_type = value.type();
+				}
+
+				assert(value.type()->isTreeInlineObj());
+
+				auto tmp = TRY(cs->evaluator().convertValueToText(std::move(value)));
+				output_vec.insert(output_vec.end(), std::move_iterator(tmp.begin()), std::move_iterator(tmp.end()));
 			}
 			else
 			{
-				error("interp", "unsupported");
+				return ErrMsg(iscr->call->loc(), "unsupported");
 			}
 		}
 
 		m_contents.swap(output_vec);
+		return Ok();
 	}
 
 	static bool is_letter(char32_t c)
 	{
 		auto category = utf8proc_category((utf8proc_int32_t) c);
-		return util::is_one_of(category, UTF8PROC_CATEGORY_LU, UTF8PROC_CATEGORY_LL, UTF8PROC_CATEGORY_LT, UTF8PROC_CATEGORY_LM,
-			UTF8PROC_CATEGORY_LO);
+		return util::is_one_of(category, UTF8PROC_CATEGORY_LU, UTF8PROC_CATEGORY_LL, UTF8PROC_CATEGORY_LT,
+			UTF8PROC_CATEGORY_LM, UTF8PROC_CATEGORY_LO);
 	}
 
 
@@ -164,7 +183,7 @@ namespace sap::tree
 
 
 
-	void Paragraph::processWordSeparators()
+	ErrorOr<void> Paragraph::processWordSeparators()
 	{
 		std::vector<std::unique_ptr<InlineObject>> ret {};
 
@@ -224,6 +243,7 @@ namespace sap::tree
 		}
 
 		m_contents.swap(ret);
+		return Ok();
 	}
 
 

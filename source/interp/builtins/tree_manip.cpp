@@ -44,18 +44,18 @@ namespace sap::interp::builtin
 	{
 		if(value.isTreeInlineObj())
 		{
-			auto tios = std::move(value).takeTreeInlineObj();
+			auto& tios = value.getTreeInlineObj();
 			for(auto& obj : tios)
 				obj->setStyle(obj->style()->extendWith(style));
 
-			return EvalResult::ofValue(Value::treeInlineObject(std::move(tios)));
+			return EvalResult::ofValue(std::move(value));
 		}
 		else if(value.isTreeBlockObj())
 		{
-			auto tbo = std::move(value).takeTreeBlockObj();
-			tbo->setStyle(style);
+			auto& tbo = value.getTreeBlockObj();
+			const_cast<tree::BlockObject&>(tbo).setStyle(style);
 
-			return EvalResult::ofValue(Value::treeBlockObject(std::move(tbo)));
+			return EvalResult::ofValue(std::move(value));
 		}
 		else
 		{

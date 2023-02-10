@@ -24,6 +24,6 @@ namespace sap::interp::builtin
 		auto doc = frontend::parse(cs->keepStringAlive(file_path), file.chars());
 
 		util::log("included file '{}'", file_path);
-		return EvalResult::ofValue(Value::treeBlockObject(std::move(doc).takeContainer()));
+		return EvalResult::ofValue(ev->addToHeapAndGetPointer(Value::treeBlockObject(std::move(doc).takeContainer())));
 	}
 }
