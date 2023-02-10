@@ -14,11 +14,15 @@ namespace sap::layout
 	{
 		enum class Direction
 		{
+			None,
 			Vertical,
 			Horizontal,
 		};
 
-		explicit Container(const Style* style, Size2d size, Direction direction, std::vector<std::unique_ptr<LayoutObject>> objs);
+		explicit Container(const Style* style,
+			Size2d size,
+			Direction direction,
+			std::vector<std::unique_ptr<LayoutObject>> objs);
 
 		void addObject(std::unique_ptr<LayoutObject> obj);
 		std::vector<std::unique_ptr<LayoutObject>>& objects();

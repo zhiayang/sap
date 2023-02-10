@@ -6,7 +6,10 @@
 
 namespace sap::layout
 {
-	Container::Container(const Style* style, Size2d size, Direction direction, std::vector<std::unique_ptr<LayoutObject>> objs)
+	Container::Container(const Style* style, //
+		Size2d size,
+		Direction direction,
+		std::vector<std::unique_ptr<LayoutObject>> objs)
 		: LayoutObject(style, std::move(size))
 		, m_direction(direction)
 		, m_objects(std::move(objs))
@@ -38,56 +41,67 @@ namespace sap::layout
 		if(m_objects.empty())
 			return cursor;
 
-		// TODO: support vertical alignment for vbox.
 		Length obj_spacing = 0;
-		if(m_direction == Vertical)
+		switch(m_direction)
 		{
-			obj_spacing = m_style->paragraph_spacing();
-		}
-		else
-		{
-			// TODO: specify inter-object spacing properly, right now there's 0.
-			auto total_obj_width = std::accumulate(m_objects.begin(), m_objects.end(), Length(0), [](auto a, const auto& b) {
-				return a + b->layoutSize().x();
-			});
+			case None: {
+				obj_spacing = 0;
+				break;
+			}
 
-			auto self_width = m_layout_size.x();
-			auto space_width = std::max(Length(0), self_width - total_obj_width);
-			auto horz_space = cursor.widthAtCursor();
+			case Vertical: {
+				// TODO: support vertical alignment for vbox.
+				obj_spacing = m_style->paragraph_spacing();
+				break;
+			}
 
-			assert(m_direction == Horizontal);
-			switch(m_style->alignment())
-			{
-				case Left: {
-					obj_spacing = 0;
-					break;
-				}
+			case Horizontal: {
+				// TODO: specify inter-object spacing properly, right now there's 0.
+				auto total_obj_width = std::accumulate(m_objects.begin(), m_objects.end(), Length(0),
+					[](auto a, const auto& b) {
+						return a + b->layoutSize().x();
+					});
 
-				case Right: {
-					obj_spacing = 0;
-					cursor = cursor.moveRight(horz_space);
-					cursor = cursor.moveRight(space_width);
-					break;
-				}
+				auto self_width = m_layout_size.x();
+				auto space_width = std::max(Length(0), self_width - total_obj_width);
+				auto horz_space = cursor.widthAtCursor();
 
-				case Centre: {
-					obj_spacing = 0;
-					cursor = cursor.moveRight((horz_space - self_width) / 2);
-					cursor = cursor.moveRight(space_width / 2);
-					break;
-				}
-
-				case Justified: {
-					assert(not m_objects.empty());
-					if(m_objects.size() == 1)
+				assert(m_direction == Horizontal);
+				switch(m_style->alignment())
+				{
+					case Left: {
 						obj_spacing = 0;
-					else
-						obj_spacing = space_width / static_cast<double>(m_objects.size() - 1);
+						break;
+					}
 
-					break;
+					case Right: {
+						obj_spacing = 0;
+						cursor = cursor.moveRight(horz_space);
+						cursor = cursor.moveRight(space_width);
+						break;
+					}
+
+					case Centre: {
+						obj_spacing = 0;
+						cursor = cursor.moveRight((horz_space - self_width) / 2);
+						cursor = cursor.moveRight(space_width / 2);
+						break;
+					}
+
+					case Justified: {
+						assert(not m_objects.empty());
+						if(m_objects.size() == 1)
+							obj_spacing = 0;
+						else
+							obj_spacing = space_width / static_cast<double>(m_objects.size() - 1);
+
+						break;
+					}
 				}
+				break;
 			}
 		}
+
 
 		bool is_first_child = true;
 		for(auto& child : m_objects)
@@ -123,6 +137,10 @@ namespace sap::layout
 
 			switch(m_direction)
 			{
+				case None: //
+					child->positionChildren(cursor);
+					break;
+
 				case Horizontal: //
 					child->positionChildren(cursor);
 					cursor = cursor.moveRight(child->layoutSize().x() + obj_spacing);
@@ -138,10 +156,15 @@ namespace sap::layout
 			}
 		}
 
-		if(m_direction == Horizontal)
-			return cursor.newLine(m_layout_size.y());
-		else
-			return cursor;
+		switch(m_direction)
+		{
+			case None:
+			case Horizontal: //
+				return cursor.newLine(m_layout_size.y());
+
+			case Vertical: //
+				return cursor;
+		}
 	}
 
 	void Container::render_impl(const LayoutBase* layout, std::vector<pdf::Page*>& pages) const

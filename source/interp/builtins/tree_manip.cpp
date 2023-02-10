@@ -179,7 +179,7 @@ namespace sap::interp::builtin
 	{
 		assert(args.size() == 1);
 
-		auto hbox = std::make_unique<tree::HorzBox>();
+		auto hbox = tree::Container::makeHorzBox();
 
 		auto objs = std::move(args[0]).takeArray();
 		for(size_t i = 0; i < objs.size(); i++)

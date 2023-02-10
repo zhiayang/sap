@@ -19,7 +19,7 @@ namespace sap::interp
 
 namespace sap::tree
 {
-	struct VertBox;
+	struct Container;
 
 	struct Document
 	{
@@ -30,12 +30,12 @@ namespace sap::tree
 
 		bool haveDocStart() const { return m_document_start != nullptr; }
 
-		std::unique_ptr<tree::VertBox> takeContainer() &&;
+		std::unique_ptr<tree::Container> takeContainer() &&;
 		std::unique_ptr<interp::Block> takePreamble() &&;
 		std::unique_ptr<interp::FunctionCall> takeDocStart() &&;
 
 	private:
-		std::unique_ptr<tree::VertBox> m_container;
+		std::unique_ptr<tree::Container> m_container;
 
 		std::unique_ptr<interp::Block> m_preamble;
 		std::unique_ptr<interp::FunctionCall> m_document_start;

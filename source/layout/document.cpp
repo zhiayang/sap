@@ -182,7 +182,7 @@ namespace sap::tree
 		m_container->contents().push_back(std::move(obj));
 	}
 
-	std::unique_ptr<tree::VertBox> Document::takeContainer() &&
+	std::unique_ptr<tree::Container> Document::takeContainer() &&
 	{
 		return std::move(m_container);
 	}
@@ -198,7 +198,7 @@ namespace sap::tree
 	}
 
 	Document::Document(std::unique_ptr<interp::Block> preamble, std::unique_ptr<interp::FunctionCall> doc_start)
-		: m_container(std::make_unique<tree::VertBox>())
+		: m_container(tree::Container::makeVertBox())
 		, m_preamble(std::move(preamble))
 		, m_document_start(std::move(doc_start))
 	{

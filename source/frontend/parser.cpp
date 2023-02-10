@@ -746,7 +746,8 @@ namespace sap::frontend
 				else if(lexer.peek() == TT::RSquare)
 					break;
 				else
-					parse_error(lexer.location(), "expected ']' or ',' in array literal, found '{}'", lexer.peek().text);
+					parse_error(lexer.location(), "expected ']' or ',' in array literal, found '{}'",
+						lexer.peek().text);
 			}
 
 			must_expect(lexer, TT::RSquare);
@@ -1055,13 +1056,15 @@ namespace sap::frontend
 			if(lexer.expect(TT::Equal))
 				enum_value = parse_expr(lexer);
 
-			enumerators.push_back(interp::EnumDefn::EnumeratorDefn(enum_name->loc, enum_name->text.str(), std::move(enum_value)));
+			enumerators.push_back(interp::EnumDefn::EnumeratorDefn(enum_name->loc, enum_name->text.str(),
+				std::move(enum_value)));
 
 			if(not lexer.match(TT::Semicolon))
 				parse_error(lexer.location(), "expected ';' after enumerator");
 		}
 
-		return std::make_unique<interp::EnumDefn>(std::move(loc), std::move(name), std::move(enum_type), std::move(enumerators));
+		return std::make_unique<interp::EnumDefn>(std::move(loc), std::move(name), std::move(enum_type),
+			std::move(enumerators));
 	}
 
 
@@ -1357,7 +1360,7 @@ namespace sap::frontend
 			if(is_block)
 			{
 				auto obj = std::make_unique<interp::TreeBlockExpr>(loc);
-				auto container = std::make_unique<tree::VertBox>();
+				auto container = tree::Container::makeVertBox();
 				auto inner = parse_top_level(lexer);
 
 				container->contents().insert(container->contents().end(), std::move_iterator(inner.begin()),
@@ -1492,7 +1495,7 @@ namespace sap::frontend
 			{
 				lexer.next();
 
-				auto container = std::make_unique<tree::VertBox>();
+				auto container = tree::Container::makeVertBox();
 				auto inner = parse_top_level(lexer);
 
 				container->contents().insert(container->contents().end(), std::move_iterator(inner.begin()),

@@ -8,8 +8,18 @@
 
 namespace sap::tree
 {
-	struct VertBox : BlockObject
+	struct Container : BlockObject
 	{
+		enum class Direction
+		{
+			None,
+			Vertical,
+			Horizontal,
+		};
+
+		explicit Container(Direction direction);
+		Direction direction() const { return m_direction; }
+
 		virtual ErrorOr<void> evaluateScripts(interp::Interpreter* cs) const override;
 		virtual ErrorOr<LayoutResult> createLayoutObject(interp::Interpreter* cs,
 			const Style* parent_style,
@@ -18,21 +28,12 @@ namespace sap::tree
 		std::vector<std::unique_ptr<BlockObject>>& contents() { return m_objects; }
 		const std::vector<std::unique_ptr<BlockObject>>& contents() const { return m_objects; }
 
-	private:
-		std::vector<std::unique_ptr<BlockObject>> m_objects;
-	};
-
-	struct HorzBox : BlockObject
-	{
-		virtual ErrorOr<void> evaluateScripts(interp::Interpreter* cs) const override;
-		virtual ErrorOr<LayoutResult> createLayoutObject(interp::Interpreter* cs,
-			const Style* parent_style,
-			Size2d available_space) const override;
-
-		std::vector<std::unique_ptr<BlockObject>>& contents() { return m_objects; }
-		const std::vector<std::unique_ptr<BlockObject>>& contents() const { return m_objects; }
+		static std::unique_ptr<Container> makeVertBox();
+		static std::unique_ptr<Container> makeHorzBox();
+		static std::unique_ptr<Container> makeStackBox();
 
 	private:
+		Direction m_direction;
 		std::vector<std::unique_ptr<BlockObject>> m_objects;
 	};
 }
