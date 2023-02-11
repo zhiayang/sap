@@ -66,7 +66,6 @@ namespace sap::layout
 				auto space_width = std::max(Length(0), self_width - total_obj_width);
 				auto horz_space = cursor.widthAtCursor();
 
-				assert(m_direction == Horizontal);
 				switch(m_style->alignment())
 				{
 					case Left: {
@@ -102,13 +101,12 @@ namespace sap::layout
 			}
 		}
 
-
 		bool is_first_child = true;
 		for(auto& child : m_objects)
 		{
 			// if we are vertically stacked, we need to move the cursor horizontally to
 			// preserve horizontal alignment.
-			if(m_direction == Vertical)
+			if(m_direction == Vertical || m_direction == None)
 			{
 				cursor = cursor.carriageReturn();
 
@@ -142,7 +140,7 @@ namespace sap::layout
 					break;
 
 				case Horizontal: //
-					child->positionChildren(cursor);
+					child->positionChildren(cursor.limitWidth(child->layoutSize().x()));
 					cursor = cursor.moveRight(child->layoutSize().x() + obj_spacing);
 					break;
 

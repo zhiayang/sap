@@ -172,6 +172,8 @@ namespace sap::interp
 		define_builtin("request_layout", makeParamList(), t_void, &B::request_layout);
 
 		define_builtin("make_hbox", makeParamList(P("1", PType::variadicArray(t_tbo))), t_tbo, &B::make_hbox);
+		define_builtin("make_vbox", makeParamList(P("1", PType::variadicArray(t_tbo))), t_tbo, &B::make_vbox);
+		define_builtin("make_zbox", makeParamList(P("1", PType::variadicArray(t_tbo))), t_tbo, &B::make_zbox);
 
 		define_builtin("make_text", makeParamList(P("1", PType::variadicArray(t_str))), t_tio, &B::make_text);
 		define_builtin("make_line", makeParamList(P("1", PType::variadicArray(t_tio))), t_tbo, &B::make_line);

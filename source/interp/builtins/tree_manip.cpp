@@ -175,11 +175,11 @@ namespace sap::interp::builtin
 		return EvalResult::ofValue(Value::treeInlineObject(std::move(inline_objs)));
 	}
 
-	ErrorOr<EvalResult> make_hbox(Evaluator* ev, std::vector<Value>& args)
+	static ErrorOr<EvalResult> make_box(Evaluator* ev, std::vector<Value>& args, tree::Container::Direction direction)
 	{
 		assert(args.size() == 1);
 
-		auto hbox = tree::Container::makeHorzBox();
+		auto box = std::make_unique<tree::Container>(direction);
 
 		auto objs = std::move(args[0]).takeArray();
 		for(size_t i = 0; i < objs.size(); i++)
@@ -187,11 +187,28 @@ namespace sap::interp::builtin
 			auto tbo = std::move(objs[i]).takeTreeBlockObj();
 			assert(tbo != nullptr);
 
-			hbox->contents().push_back(std::move(tbo));
+			box->contents().push_back(std::move(tbo));
 		}
 
-		return EvalResult::ofValue(Value::treeBlockObject(std::move(hbox)));
+		return EvalResult::ofValue(Value::treeBlockObject(std::move(box)));
 	}
+
+	ErrorOr<EvalResult> make_hbox(Evaluator* ev, std::vector<Value>& args)
+	{
+		return make_box(ev, args, tree::Container::Direction::Horizontal);
+	}
+
+	ErrorOr<EvalResult> make_vbox(Evaluator* ev, std::vector<Value>& args)
+	{
+		return make_box(ev, args, tree::Container::Direction::Vertical);
+	}
+
+	ErrorOr<EvalResult> make_zbox(Evaluator* ev, std::vector<Value>& args)
+	{
+		return make_box(ev, args, tree::Container::Direction::None);
+	}
+
+
 
 	ErrorOr<EvalResult> make_paragraph(Evaluator* ev, std::vector<Value>& args)
 	{

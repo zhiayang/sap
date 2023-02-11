@@ -49,7 +49,7 @@ namespace sap::tree
 	{
 		auto _ = cs->evaluator().pushBlockContext(this);
 
-		auto cur_style = m_style->useDefaultsFrom(cs->evaluator().currentStyle())->useDefaultsFrom(parent_style);
+		auto cur_style = m_style->useDefaultsFrom(parent_style)->useDefaultsFrom(cs->evaluator().currentStyle());
 		std::vector<std::unique_ptr<layout::LayoutObject>> objects;
 
 		auto total_size = Size2d(0, 0);

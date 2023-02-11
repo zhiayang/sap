@@ -24,32 +24,38 @@ namespace std
 	{
 		num: int;
 		name: string;
-		block_ref: BlockRef;
+		num_tbo_ref: BlockRef;
 	};
 
 
 	var g_sections: [Section] = [];
 
-	fn section(name: string) -> Block
+	fn section(name: string) -> ?Block
 	{
 		let section_num = 1 + g_sections.size();
-		var b = builtin::make_line(builtin::make_text(f"{section_num}.  {name}"));
+
+		var num_line = builtin::make_line(builtin::make_text(f"{section_num}"));
+		var name_line = builtin::apply_style(builtin::Style {
+			.font_size = 2em,
+		}, builtin::make_hbox(builtin::make_line(builtin::make_text(name))));
 
 		let the_section = Section {
 			.num = section_num,
 			.name = name,
-			.block_ref = b.ref(),
+			.num_tbo_ref = num_line.ref(),
 		};
 
+		var box = builtin::make_zbox(*num_line, *name_line);
+
 		g_sections += [the_section];
-		return b;
+		return box;
 	}
 
 	@post {
 		var i = 0;
 		while(i < g_sections.size())
 		{
-			let foo = g_sections[i].block_ref.layout_object();
+			let foo = g_sections[i].num_tbo_ref.layout_object();
 			builtin::println(f"hello");
 
 			i += 1;

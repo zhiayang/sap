@@ -28,7 +28,7 @@ namespace sap::layout
 
 	struct CursorPayload
 	{
-		uint8_t payload[32];
+		uint8_t payload[48];
 	};
 
 	struct PageCursor
@@ -47,6 +47,7 @@ namespace sap::layout
 		[[nodiscard]] PageCursor newLine(Length line_height, bool* made_new_page = nullptr) const;
 		[[nodiscard]] PageCursor ensureVerticalSpace(Length line_height, bool* made_new_page = nullptr) const;
 		[[nodiscard]] PageCursor carriageReturn() const;
+		[[nodiscard]] PageCursor limitWidth(Length width) const;
 
 		RelativePos position() const;
 		LayoutBase* layout() const { return m_layout; }

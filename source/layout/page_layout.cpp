@@ -14,6 +14,7 @@ namespace sap::layout
 		size_t page_num;
 		RelativePos::Pos pos_on_page;
 		bool is_absolute;
+		Length limited_width = Length(INFINITY);
 	};
 
 	static_assert(sizeof(CursorState) <= sizeof(BasePayload));
@@ -124,7 +125,18 @@ namespace sap::layout
 
 	Length PageLayout::get_width_at_cursor_payload(const BasePayload& curs) const
 	{
-		return m_content_size.x() - get_cursor_state(curs).pos_on_page.x();
+		return std::min(                                                //
+			get_cursor_state(curs).limited_width,                       //
+			m_content_size.x() - get_cursor_state(curs).pos_on_page.x() //
+		);
+	}
+
+	BasePayload PageLayout::limit_width(const BasePayload& payload, Length width) const
+	{
+		auto cst = get_cursor_state(payload);
+		cst.limited_width = std::min(width, this->get_width_at_cursor_payload(payload));
+
+		return to_base_payload(cst);
 	}
 
 	BasePayload PageLayout::move_right(const BasePayload& payload, Length shift) const

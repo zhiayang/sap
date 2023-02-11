@@ -150,7 +150,7 @@ namespace sap::tree
 			auto available_space = Size2d(layout_doc->pageLayout().contentSize().x(), Length(INFINITY));
 
 			auto cursor = layout_doc->pageLayout().newCursor();
-			auto container_or_err = m_container->createLayoutObject(cs, layout_doc->style(), available_space);
+			auto container_or_err = m_container->createLayoutObject(cs, Style::empty(), available_space);
 			if(container_or_err.is_err())
 				container_or_err.error().showAndExit();
 
