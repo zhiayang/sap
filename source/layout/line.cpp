@@ -115,7 +115,10 @@ namespace sap::layout
 	}
 
 
-	Line::Line(const Style* style, Size2d size, LineMetrics metrics, std::vector<std::unique_ptr<LayoutObject>> objs)
+	Line::Line(const Style* style, //
+		LayoutSize size,
+		LineMetrics metrics,
+		std::vector<std::unique_ptr<LayoutObject>> objs)
 		: LayoutObject(style, size)
 		, m_metrics(std::move(metrics))
 		, m_objects(std::move(objs))
@@ -130,7 +133,6 @@ namespace sap::layout
 		bool is_first_line,
 		bool is_last_line)
 	{
-		auto line_height = line_metrics.ascent_height + line_metrics.descent_height;
 		auto total_width = line_metrics.total_word_width + line_metrics.total_space_width;
 
 		auto desired_space_width = available_space.x() - line_metrics.total_word_width;
@@ -147,8 +149,14 @@ namespace sap::layout
 
 			if(auto tree_word = dynamic_cast<const tree::Text*>(objs[i].get()); tree_word != nullptr)
 			{
+				auto word_size = LayoutSize {
+					.width = obj_width,
+					.ascent = line_metrics.ascent_height,
+					.descent = line_metrics.descent_height,
+				};
+
 				auto word = std::make_unique<Word>(tree_word->contents(), style->extendWith(tree_word->style()),
-					current_offset, Size2d(obj_width, line_height));
+					current_offset, word_size);
 
 				tree_word->m_generated_layout_object = word.get();
 
@@ -159,9 +167,15 @@ namespace sap::layout
 			}
 			else if(auto tree_sep = dynamic_cast<const tree::Separator*>(objs[i].get()); tree_sep != nullptr)
 			{
+				auto sep_size = LayoutSize {
+					.width = obj_width,
+					.ascent = line_metrics.ascent_height,
+					.descent = line_metrics.descent_height,
+				};
+
 				auto sep = std::make_unique<
 					Word>(i + 1 == objs.size() ? tree_sep->endOfLine() : tree_sep->middleOfLine(),
-					style->extendWith(tree_sep->style()), current_offset, Size2d(obj_width, line_height));
+					style->extendWith(tree_sep->style()), current_offset, sep_size);
 
 				tree_sep->m_generated_layout_object = sep.get();
 
@@ -194,8 +208,13 @@ namespace sap::layout
 			}
 		}
 
-		return std::unique_ptr<Line>(new Line(style, Size2d(total_width, line_metrics.default_line_spacing),
-			line_metrics, std::move(layout_objects)));
+		auto layout_size = LayoutSize {
+			.width = total_width,
+			.ascent = line_metrics.ascent_height,
+			.descent = line_metrics.default_line_spacing - line_metrics.ascent_height,
+		};
+
+		return std::unique_ptr<Line>(new Line(style, layout_size, line_metrics, std::move(layout_objects)));
 	}
 
 
@@ -205,7 +224,7 @@ namespace sap::layout
 		using enum Alignment;
 
 		auto horz_space = cursor.widthAtCursor();
-		auto self_width = m_layout_size.x();
+		auto self_width = m_layout_size.width;
 
 		switch(m_style->alignment())
 		{
@@ -224,7 +243,7 @@ namespace sap::layout
 		}
 
 		this->positionRelatively(cursor.position());
-		return cursor.newLine(m_layout_size.y());
+		return cursor.newLine(m_layout_size.descent);
 	}
 
 
@@ -257,7 +276,7 @@ namespace sap::layout
 				auto offset_from_prev = word->relativeOffset() - prev_word->word_end;
 				word->render(line_pos, pages, prev_word->pdf_text, is_first, offset_from_prev);
 
-				prev_word->word_end = word->relativeOffset() + word->layoutSize().x();
+				prev_word->word_end = word->relativeOffset() + word->layoutSize().width;
 			}
 			else
 			{

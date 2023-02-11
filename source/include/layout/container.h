@@ -20,8 +20,9 @@ namespace sap::layout
 		};
 
 		explicit Container(const Style* style,
-			Size2d size,
+			LayoutSize size,
 			Direction direction,
+			Length top_to_baseline_dist,
 			std::vector<std::unique_ptr<LayoutObject>> objs);
 
 		void addObject(std::unique_ptr<LayoutObject> obj);
@@ -33,6 +34,7 @@ namespace sap::layout
 
 	private:
 		Direction m_direction;
+		Length m_top_to_baseline_dist;
 		std::vector<std::unique_ptr<LayoutObject>> m_objects;
 	};
 }

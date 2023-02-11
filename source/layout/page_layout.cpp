@@ -146,6 +146,7 @@ namespace sap::layout
 			.page_num = cst.page_num,
 			.pos_on_page = cst.pos_on_page + RelativePos::Pos(shift, 0),
 			.is_absolute = cst.is_absolute,
+			.limited_width = cst.limited_width,
 		});
 	}
 
@@ -156,6 +157,7 @@ namespace sap::layout
 			.page_num = cst.page_num,
 			.pos_on_page = { 0, cst.pos_on_page.y() },
 			.is_absolute = cst.is_absolute,
+			.limited_width = cst.limited_width,
 		});
 	}
 
@@ -171,6 +173,7 @@ namespace sap::layout
 				.page_num = cst.page_num + 1,
 				.pos_on_page = { cst.pos_on_page.x(), 0 },
 				.is_absolute = cst.is_absolute,
+				.limited_width = cst.limited_width,
 			});
 		}
 		else
@@ -180,6 +183,7 @@ namespace sap::layout
 				.page_num = cst.page_num,
 				.pos_on_page = RelativePos::Pos(cst.pos_on_page.x(), cst.pos_on_page.y() + line_height),
 				.is_absolute = cst.is_absolute,
+				.limited_width = cst.limited_width,
 			});
 		}
 	}

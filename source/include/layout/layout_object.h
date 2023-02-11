@@ -19,13 +19,13 @@ namespace sap::layout
 
 	struct LayoutObject : Stylable
 	{
-		explicit LayoutObject(const Style* style, Size2d size);
+		explicit LayoutObject(const Style* style, LayoutSize size);
 		virtual ~LayoutObject() = default;
 
 		LayoutObject& operator=(LayoutObject&&) = default;
 		LayoutObject(LayoutObject&&) = default;
 
-		Size2d layoutSize() const;
+		LayoutSize layoutSize() const;
 
 		void positionAbsolutely(AbsolutePagePos pos);
 		void positionRelatively(RelativePos pos);
@@ -53,6 +53,6 @@ namespace sap::layout
 		std::optional<AbsolutePagePos> m_abs_position {};
 		std::optional<RelativePos> m_rel_position {};
 
-		Size2d m_layout_size;
+		LayoutSize m_layout_size;
 	};
 }

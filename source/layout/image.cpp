@@ -11,16 +11,18 @@
 
 namespace sap::layout
 {
-	Image::Image(const Style* style, Size2d size, ImageBitmap image) : LayoutObject(style, size), m_image(std::move(image))
+	Image::Image(const Style* style, LayoutSize size, ImageBitmap image)
+		: LayoutObject(style, size)
+		, m_image(std::move(image))
 	{
 	}
 
 	layout::PageCursor Image::positionChildren(layout::PageCursor cursor)
 	{
-		cursor = cursor.ensureVerticalSpace(m_layout_size.y());
+		cursor = cursor.ensureVerticalSpace(m_layout_size.descent);
 		this->positionRelatively(cursor.position());
 
-		return cursor.moveRight(m_layout_size.x()).newLine(m_layout_size.y());
+		return cursor.moveRight(m_layout_size.width).newLine(m_layout_size.descent);
 	}
 
 	void Image::render_impl(const LayoutBase* layout, std::vector<pdf::Page*>& pages) const
@@ -28,9 +30,11 @@ namespace sap::layout
 		auto pos = this->resolveAbsPosition(layout);
 		auto page = pages[pos.page_num];
 
+		auto pdf_size = pdf::Size2d(m_layout_size.width.into(), m_layout_size.total_height().into());
+
 		auto page_obj = util::make<pdf::Image>( //
 			m_image,                            //
-			m_layout_size.into(),               //
+			pdf_size,                           //
 			page->convertVector2(pos.pos.into<pdf::Position2d_YDown>()));
 
 		page->addObject(page_obj);
@@ -51,7 +55,8 @@ namespace sap::tree
 		// images are always fixed size, and don't care about the available space.
 		// (for now, at least...)
 
-		auto img = std::unique_ptr<layout::Image>(new layout::Image(parent_style, m_size, this->image()));
+		auto layout_size = LayoutSize { .width = m_size.x(), .ascent = 0, .descent = m_size.y() };
+		auto img = std::unique_ptr<layout::Image>(new layout::Image(parent_style, layout_size, this->image()));
 
 		m_generated_layout_object = img.get();
 		return Ok(LayoutResult::make(std::move(img)));

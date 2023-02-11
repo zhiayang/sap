@@ -37,7 +37,7 @@ namespace std
 		var num_line = builtin::make_line(builtin::make_text(f"{section_num}"));
 		var name_line = builtin::apply_style(builtin::Style {
 			.font_size = 2em,
-		}, builtin::make_hbox(builtin::make_line(builtin::make_text(name))));
+		}, builtin::make_line(builtin::make_text(name)));
 
 		let the_section = Section {
 			.num = section_num,

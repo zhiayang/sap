@@ -32,7 +32,7 @@ namespace sap::layout
 
 	private:
 		friend struct tree::Paragraph;
-		Paragraph(const Style* style, Size2d size, std::vector<std::unique_ptr<Line>> lines);
+		Paragraph(const Style* style, LayoutSize size, std::vector<std::unique_ptr<Line>> lines);
 
 	private:
 		std::vector<std::unique_ptr<Line>> m_lines {};

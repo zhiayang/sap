@@ -26,7 +26,7 @@
 
 namespace sap::layout
 {
-	Paragraph::Paragraph(const Style* style, Size2d size, std::vector<std::unique_ptr<Line>> lines)
+	Paragraph::Paragraph(const Style* style, LayoutSize size, std::vector<std::unique_ptr<Line>> lines)
 		: LayoutObject(style, size)
 		, m_lines(std::move(lines))
 	{
@@ -43,13 +43,15 @@ namespace sap::layout
 		assert(not m_lines.empty());
 		this->positionRelatively(cursor.position());
 
-		// this is necessary because lines are typeset with their "position" being
-		// the text baseline; we want the paragraph to be positioned wrt. the top-left corner,
-		// so we move down by the ascent of the first line to achieve this offset.
-		cursor = cursor.newLine(m_lines[0]->metrics().ascent_height);
-
+		bool first = true;
 		for(auto& line : m_lines)
+		{
+			if(not first)
+				cursor = cursor.newLine(line->layoutSize().ascent);
+
+			first = false;
 			cursor = line->positionChildren(cursor);
+		}
 
 		return cursor;
 	}
@@ -73,7 +75,7 @@ namespace sap::tree
 		auto style = parent_style->extendWith(this->style());
 
 		std::vector<std::unique_ptr<layout::Line>> layout_lines {};
-		Size2d para_size { 0, 0 };
+		LayoutSize para_size {};
 
 		size_t current_idx = 0;
 
@@ -118,14 +120,26 @@ namespace sap::tree
 
 		for(size_t i = 0; i < the_lines.size(); i++)
 		{
-			bool is_last_line = i + 1 == the_lines.size();
+			bool is_last_line = (i + 1 == the_lines.size());
+			bool is_first_line = (i == 0);
+
 			auto& [metrics, word_span] = the_lines[i];
 
 			auto layout_line = layout::Line::fromInlineObjects(cs, style, word_span, metrics, available_space,
-				/* is_first: */ i == 0, is_last_line);
+				is_first_line, is_last_line);
 
-			para_size.x() = std::max(para_size.x(), layout_line->layoutSize().x());
-			para_size.y() += layout_line->layoutSize().y();
+			auto line_size = layout_line->layoutSize();
+
+			para_size.width = std::max(para_size.width, line_size.width);
+			if(is_first_line)
+			{
+				para_size.ascent += line_size.ascent;
+				para_size.descent += line_size.descent;
+			}
+			else
+			{
+				para_size.descent += line_size.total_height();
+			}
 
 			layout_lines.push_back(std::move(layout_line));
 		}

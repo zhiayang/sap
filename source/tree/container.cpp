@@ -52,12 +52,10 @@ namespace sap::tree
 		auto cur_style = m_style->useDefaultsFrom(parent_style)->useDefaultsFrom(cs->evaluator().currentStyle());
 		std::vector<std::unique_ptr<layout::LayoutObject>> objects;
 
-		auto total_size = Size2d(0, 0);
+		LayoutSize total_size {};
+		LayoutSize max_size {};
 
-		Length max_width = 0;
-		Length max_height = 0;
-
-		for(size_t i = 0; i < m_objects.size(); i++)
+		for(size_t i = 0, obj_idx = 0; i < m_objects.size(); i++)
 		{
 			auto obj = TRY(m_objects[i].get()->createLayoutObject(cs, cur_style, available_space));
 			if(not obj.object.has_value())
@@ -65,8 +63,9 @@ namespace sap::tree
 
 			auto obj_size = (*obj.object)->layoutSize();
 
-			max_width = std::max(max_width, obj_size.x());
-			max_height = std::max(max_height, obj_size.y());
+			max_size.width = std::max(max_size.width, obj_size.width);
+			max_size.ascent = std::max(max_size.ascent, obj_size.ascent);
+			max_size.descent = std::max(max_size.descent, obj_size.descent);
 
 			objects.push_back(std::move(*obj.object));
 
@@ -78,43 +77,58 @@ namespace sap::tree
 				}
 
 				case Vertical: {
-					if(available_space.y() < obj_size.y())
+					if(available_space.y() < obj_size.descent)
 					{
-						sap::warn("layout", "not enough space! need at least {}, but only {} remaining", obj_size.y(),
-							available_space.y());
+						sap::warn("layout", "not enough space! need at least {}, but only {} remaining",
+							obj_size.descent, available_space.y());
+
 						available_space.y() = 0;
 					}
 					else
 					{
-						available_space.y() -= obj_size.y();
+						available_space.y() -= obj_size.descent;
 					}
 
 					break;
 				}
 
 				case Horizontal: {
-					if(available_space.x() < obj_size.x())
+					if(available_space.x() < obj_size.width)
 					{
-						sap::warn("layout", "not enough space! need at least {}, but only {} remaining", obj_size.x(),
+						sap::warn("layout", "not enough space! need at least {}, but only {} remaining", obj_size.width,
 							available_space.x());
 						available_space.x() = 0;
 					}
 					else
 					{
-						available_space.x() -= obj_size.x();
+						available_space.x() -= obj_size.width;
 					}
 
 					break;
 				}
 			}
 
-			total_size += obj_size;
+			total_size.width += obj_size.width;
+			if(obj_idx == 0)
+			{
+				total_size.ascent += obj_size.ascent;
+				total_size.descent += obj_size.descent;
+			}
+			else
+			{
+				total_size.descent += obj_size.total_height();
+			}
+
+			obj_idx++;
 		}
+
 
 		if(objects.empty())
 			return Ok(LayoutResult::empty());
 
-		Size2d final_size {};
+		LayoutSize final_size {};
+		Length top_to_baseline = 0;
+
 		layout::Container::Direction dir {};
 
 		switch(m_direction)
@@ -124,24 +138,39 @@ namespace sap::tree
 
 			case None: {
 				dir = LD::None;
-				final_size = Size2d(max_width, max_height);
+				top_to_baseline = max_size.ascent;
+				final_size = LayoutSize {
+					.width = max_size.width,
+					.ascent = 0,
+					.descent = max_size.total_height(),
+				};
 				break;
 			}
 
 			case Vertical: {
 				dir = LD::Vertical;
-				final_size = Size2d(max_width, total_size.y());
+				final_size = LayoutSize {
+					.width = max_size.width,
+					.ascent = 0,
+					.descent = total_size.total_height(),
+				};
 				break;
 			}
 
 			case Horizontal: {
 				dir = LD::Horizontal;
-				final_size = Size2d(total_size.x(), max_height);
+				top_to_baseline = max_size.ascent;
+				final_size = LayoutSize {
+					.width = total_size.width,
+					.ascent = 0,
+					.descent = max_size.total_height(),
+				};
 				break;
 			}
 		}
 
-		auto container = std::make_unique<layout::Container>(cur_style, final_size, dir, std::move(objects));
+		auto container = std::make_unique<layout::Container>(cur_style, final_size, dir, top_to_baseline,
+			std::move(objects));
 
 		m_generated_layout_object = container.get();
 		return Ok(LayoutResult::make(std::move(container)));

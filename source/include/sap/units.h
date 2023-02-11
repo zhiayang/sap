@@ -56,4 +56,14 @@ namespace sap
 		DynLength x;
 		DynLength y;
 	};
+
+
+	struct LayoutSize
+	{
+		Length width;
+		Length ascent;
+		Length descent;
+
+		Length total_height() const { return this->ascent + this->descent; }
+	};
 }

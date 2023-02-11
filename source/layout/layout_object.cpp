@@ -7,11 +7,11 @@
 
 namespace sap::layout
 {
-	LayoutObject::LayoutObject(const Style* style, Size2d size) : Stylable(style), m_layout_size(size)
+	LayoutObject::LayoutObject(const Style* style, LayoutSize size) : Stylable(style), m_layout_size(size)
 	{
 	}
 
-	Size2d LayoutObject::layoutSize() const
+	LayoutSize LayoutObject::layoutSize() const
 	{
 		return m_layout_size;
 	}

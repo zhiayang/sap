@@ -7,11 +7,13 @@
 namespace sap::layout
 {
 	Container::Container(const Style* style, //
-		Size2d size,
+		LayoutSize size,
 		Direction direction,
+		Length top_to_baseline,
 		std::vector<std::unique_ptr<LayoutObject>> objs)
 		: LayoutObject(style, std::move(size))
 		, m_direction(direction)
+		, m_top_to_baseline_dist(top_to_baseline)
 		, m_objects(std::move(objs))
 	{
 	}
@@ -41,17 +43,21 @@ namespace sap::layout
 		if(m_objects.empty())
 			return cursor;
 
+		// for containers, ascent is always 0 -- the top-left corner is always the origin
+		assert(m_layout_size.ascent == 0);
+		cursor = cursor.newLine(m_top_to_baseline_dist);
+
 		Length obj_spacing = 0;
 		switch(m_direction)
 		{
-			case None: {
-				obj_spacing = 0;
-				break;
-			}
-
 			case Vertical: {
 				// TODO: support vertical alignment for vbox.
 				obj_spacing = m_style->paragraph_spacing();
+				break;
+			}
+
+			case None: {
+				obj_spacing = 0;
 				break;
 			}
 
@@ -59,10 +65,10 @@ namespace sap::layout
 				// TODO: specify inter-object spacing properly, right now there's 0.
 				auto total_obj_width = std::accumulate(m_objects.begin(), m_objects.end(), Length(0),
 					[](auto a, const auto& b) {
-						return a + b->layoutSize().x();
+						return a + b->layoutSize().width;
 					});
 
-				auto self_width = m_layout_size.x();
+				auto self_width = m_layout_size.width;
 				auto space_width = std::max(Length(0), self_width - total_obj_width);
 				auto horz_space = cursor.widthAtCursor();
 
@@ -111,9 +117,9 @@ namespace sap::layout
 				cursor = cursor.carriageReturn();
 
 				auto horz_space = cursor.widthAtCursor();
-				auto self_width = m_layout_size.x();
+				auto self_width = m_layout_size.width;
 
-				auto space_width = std::max(Length(0), self_width - child->layoutSize().x());
+				auto space_width = std::max(Length(0), self_width - child->layoutSize().width);
 				switch(m_style->alignment())
 				{
 					case Left:
@@ -135,22 +141,30 @@ namespace sap::layout
 
 			switch(m_direction)
 			{
-				case None: //
+				case None: {
 					child->positionChildren(cursor);
 					break;
+				}
 
-				case Horizontal: //
-					child->positionChildren(cursor.limitWidth(child->layoutSize().x()));
-					cursor = cursor.moveRight(child->layoutSize().x() + obj_spacing);
+				case Horizontal: {
+					child->positionChildren(cursor.limitWidth(child->layoutSize().width));
+					cursor = cursor.moveRight(child->layoutSize().width + obj_spacing);
 					break;
+				}
 
-				case Vertical: //
+				case Vertical: {
+					// auto& tmp = *child;
+					// zpr::println("child({})@{}: a={}, d={}", typeid(tmp).name(), cursor.position().page_num,
+					// 	child->layoutSize().ascent, child->layoutSize().descent);
+
 					if(not is_first_child)
 						cursor = cursor.newLine(obj_spacing);
 
+					cursor = child->positionChildren(cursor.newLine(child->layoutSize().ascent));
+
 					is_first_child = false;
-					cursor = child->positionChildren(cursor);
 					break;
+				}
 			}
 		}
 
@@ -158,7 +172,7 @@ namespace sap::layout
 		{
 			case None:
 			case Horizontal: //
-				return cursor.newLine(m_layout_size.y());
+				return cursor.newLine(m_layout_size.total_height() - m_top_to_baseline_dist);
 
 			case Vertical: //
 				return cursor;

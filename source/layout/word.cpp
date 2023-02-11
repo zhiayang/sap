@@ -19,7 +19,7 @@
 
 namespace sap::layout
 {
-	Word::Word(zst::wstr_view text, const Style* style, Length relative_offset, Size2d size) //
+	Word::Word(zst::wstr_view text, const Style* style, Length relative_offset, LayoutSize size) //
 		: LayoutObject(style, size)
 		, m_relative_offset(relative_offset)
 		, m_text(text)
@@ -49,7 +49,8 @@ namespace sap::layout
 
 		if(not is_first_in_text)
 		{
-			text->offset(pdf::PdfFont::convertPDFScalarToTextSpaceForFontSize(offset_from_prev.into(), text->currentFontSize()));
+			text->offset(pdf::PdfFont::convertPDFScalarToTextSpaceForFontSize(offset_from_prev.into(),
+				text->currentFontSize()));
 		}
 		else
 		{

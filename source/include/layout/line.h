@@ -49,12 +49,16 @@ namespace sap::layout
 		const std::vector<std::unique_ptr<LayoutObject>>& objects() const { return m_objects; }
 
 	private:
-		explicit Line(const Style* style, Size2d size, LineMetrics metrics, std::vector<std::unique_ptr<LayoutObject>> objs);
+		explicit Line(const Style* style,
+			LayoutSize size,
+			LineMetrics metrics,
+			std::vector<std::unique_ptr<LayoutObject>> objs);
 
 	private:
 		LineMetrics m_metrics;
 		std::vector<std::unique_ptr<LayoutObject>> m_objects;
 	};
 
-	LineMetrics computeLineMetrics(std::span<const std::unique_ptr<tree::InlineObject>> objs, const Style* parent_style);
+	LineMetrics computeLineMetrics(std::span<const std::unique_ptr<tree::InlineObject>> objs,
+		const Style* parent_style);
 }
