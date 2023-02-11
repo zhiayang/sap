@@ -211,15 +211,6 @@ namespace sap::frontend
 	{
 		switch(lexer.peek())
 		{
-			case TT::LParen:
-			case TT::LSquare:
-			case TT::Question:
-			case TT::Ellipsis:
-			case TT::Exclamation: return 1000000;
-
-			case TT::Period: return 900;
-			case TT::QuestionPeriod: return 900;
-
 			case TT::Asterisk:
 			case TT::Percent:
 			case TT::Slash: return 400;
@@ -407,9 +398,34 @@ namespace sap::frontend
 		return ret;
 	}
 
-	static std::unique_ptr<interp::Expr> parse_postfix_unary(Lexer& lexer)
+	static std::unique_ptr<interp::FunctionCall> parse_ufcs(Lexer& lexer,
+		std::unique_ptr<interp::Expr> first_arg,
+		const std::string& method_name,
+		bool is_optional)
 	{
-		auto lhs = parse_primary(lexer);
+		auto method = std::make_unique<interp::Ident>(lexer.location());
+		method->name.top_level = false;
+		method->name.name = method_name;
+
+		auto call = parse_function_call(lexer, std::move(method));
+
+		call->rewritten_ufcs = true;
+		call->is_optional_ufcs = is_optional;
+
+		call->arguments.insert(call->arguments.begin(),
+			interp::FunctionCall::Arg {
+				.name = std::nullopt,
+				.value = std::move(first_arg),
+			});
+
+		return call;
+	}
+
+	static std::unique_ptr<interp::Expr> parse_postfix_unary(Lexer& lexer,
+		std::unique_ptr<interp::Expr> lhs,
+		bool* success)
+	{
+		*success = true;
 
 		if(lexer.peek() == TT::LParen)
 		{
@@ -435,34 +451,48 @@ namespace sap::frontend
 		{
 			return std::make_unique<interp::ArraySpreadOp>(t->loc, std::move(lhs));
 		}
+		else if(lexer.peek() == TT::Period || lexer.peek() == TT::QuestionPeriod)
+		{
+			auto op_tok = lexer.next();
+
+			// TODO: maybe support .0, .1 syntax for tuples
+			auto field_name = lexer.match(TT::Identifier);
+			if(not field_name.has_value())
+				parse_error(lexer.location(), "expected field name after '.'");
+
+			auto newlhs = std::make_unique<interp::DotOp>(op_tok.loc);
+			newlhs->is_optional = (op_tok == TT::QuestionPeriod);
+			newlhs->rhs = field_name->text.str();
+			newlhs->lhs = std::move(lhs);
+
+			// special case method calls: UFCS, rewrite into a free function call.
+			if(lexer.peek() == TT::LParen)
+			{
+				return parse_ufcs(lexer, std::move(newlhs->lhs), field_name->text.str(),
+					/* is_optional */ op_tok == TT::QuestionPeriod);
+			}
+			else
+			{
+				return newlhs;
+			}
+		}
 		else
 		{
+			*success = false;
 			return lhs;
 		}
 	}
 
-	static std::unique_ptr<interp::FunctionCall> parse_ufcs(Lexer& lexer,
-		std::unique_ptr<interp::Expr> first_arg,
-		const std::string& method_name,
-		bool is_optional)
+	static std::unique_ptr<interp::Expr> parse_postfix_unary(Lexer& lexer)
 	{
-		auto method = std::make_unique<interp::Ident>(lexer.location());
-		method->name.top_level = false;
-		method->name.name = method_name;
+		bool keep_going = true;
 
-		auto call = parse_function_call(lexer, std::move(method));
-		call->rewritten_ufcs = true;
-		call->is_optional_ufcs = is_optional;
+		auto lhs = parse_primary(lexer);
+		while(keep_going)
+			lhs = parse_postfix_unary(lexer, std::move(lhs), &keep_going);
 
-		call->arguments.insert(call->arguments.begin(),
-			interp::FunctionCall::Arg {
-				.name = std::nullopt,
-				.value = std::move(first_arg),
-			});
-
-		return call;
+		return lhs;
 	}
-
 
 	static std::unique_ptr<interp::Expr> parse_rhs(Lexer& lexer, std::unique_ptr<interp::Expr> lhs, int prio)
 	{
@@ -480,32 +510,6 @@ namespace sap::frontend
 				return lhs;
 
 			auto op_tok = lexer.next();
-
-			// special handling for dot op -- check here.
-			if(op_tok == TT::Period || op_tok == TT::QuestionPeriod)
-			{
-				// TODO: maybe support .0, .1 syntax for tuples
-				auto field_name = lexer.match(TT::Identifier);
-				if(not field_name.has_value())
-					parse_error(lexer.location(), "expected field name after '.'");
-
-				auto newlhs = std::make_unique<interp::DotOp>(op_tok.loc);
-				newlhs->is_optional = (op_tok == TT::QuestionPeriod);
-				newlhs->rhs = field_name->text.str();
-				newlhs->lhs = std::move(lhs);
-
-				// special case method calls: UFCS, rewrite into a free function call.
-				if(lexer.peek() == TT::LParen)
-				{
-					lhs = parse_ufcs(lexer, std::move(newlhs->lhs), field_name->text.str(),
-						/* is_optional */ op_tok == TT::QuestionPeriod);
-				}
-				else
-				{
-					lhs = std::move(newlhs);
-				}
-				continue;
-			}
 
 			auto rhs = parse_unary(lexer);
 			int next = get_front_token_precedence(lexer);
@@ -616,7 +620,10 @@ namespace sap::frontend
 
 				fstr.remove_prefix((size_t) (tmp_lexer.stream().bytes().data() - fstr.data()));
 				if(not fstr.starts_with('}'))
-					parse_error(tmp_lexer.location(), "expected '}' to end f-string expression");
+				{
+					parse_error(tmp_lexer.location(), "expected '}' to end f-string expression, found '{}'",
+						fstr.front());
+				}
 
 				fstr.remove_prefix(1);
 			}

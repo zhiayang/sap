@@ -33,13 +33,26 @@ namespace sap::interp
 			return can_compare(op, lhs->arrayElement(), rhs->arrayElement());
 
 		if(util::is_one_of(op, ComparisonOp::Op::EQ, ComparisonOp::Op::NE))
-			return lhs == rhs;
+		{
+			return (lhs == rhs)                            //
+			    || (lhs->isOptional() && rhs->isNullPtr()) //
+			    || (lhs->isNullPtr() && rhs->isOptional());
+		}
 
-		return lhs == rhs && (not lhs->isTreeInlineObj()) && (not lhs->isFunction());
+		return lhs == rhs                      //
+		    && (not lhs->isTreeInlineObj())    //
+		    && (not lhs->isTreeBlockObj())     //
+		    && (not lhs->isLayoutObject())     //
+		    && (not lhs->isTreeInlineObjRef()) //
+		    && (not lhs->isTreeBlockObjRef())  //
+		    && (not lhs->isLayoutObjectRef())  //
+		    && (not lhs->isFunction());
 	}
 
 	static bool do_compare(ComparisonOp::Op op, const Value& lhs, const Value& rhs)
 	{
+		using enum ComparisonOp::Op;
+
 		auto cmp_lt = []<typename T>(const T& a, const T& b) -> bool {
 			return a < b;
 		};
@@ -51,12 +64,12 @@ namespace sap::interp
 		auto do_cmp = [&]<typename T>(const T& a, const T& b) -> bool {
 			switch(op)
 			{
-				case ComparisonOp::Op::LT: return cmp_lt(a, b);
-				case ComparisonOp::Op::GT: return not(cmp_lt(a, b) || cmp_eq(a, b));
-				case ComparisonOp::Op::LE: return cmp_lt(a, b) || cmp_eq(a, b);
-				case ComparisonOp::Op::GE: return not cmp_lt(a, b);
-				case ComparisonOp::Op::EQ: return cmp_eq(a, b);
-				case ComparisonOp::Op::NE: return not cmp_eq(a, b);
+				case LT: return cmp_lt(a, b);
+				case GT: return not(cmp_lt(a, b) || cmp_eq(a, b));
+				case LE: return cmp_lt(a, b) || cmp_eq(a, b);
+				case GE: return not cmp_lt(a, b);
+				case EQ: return cmp_eq(a, b);
+				case NE: return not cmp_eq(a, b);
 			}
 		};
 
@@ -78,15 +91,15 @@ namespace sap::interp
 		{
 			if(lhs.isBool())
 			{
-				assert(op == ComparisonOp::Op::EQ || op == ComparisonOp::Op::NE);
+				assert(op == EQ || op == NE);
 				auto eq = (lhs.getBool() == rhs.getBool());
-				return op == ComparisonOp::Op::EQ ? eq : not eq;
+				return op == EQ ? eq : not eq;
 			}
 			else if(lhs.isFunction())
 			{
-				assert(op == ComparisonOp::Op::EQ || op == ComparisonOp::Op::NE);
+				assert(op == EQ || op == NE);
 				auto eq = (lhs.getFunction() == rhs.getFunction());
-				return op == ComparisonOp::Op::EQ ? eq : not eq;
+				return op == EQ ? eq : not eq;
 			}
 			else if(lhs.isChar())
 			{
@@ -100,6 +113,18 @@ namespace sap::interp
 			{
 				return do_cmp(lhs.getInteger(), rhs.getInteger());
 			}
+		}
+		else if(lhs.type()->isOptional() && rhs.type()->isNullPtr())
+		{
+			assert(op == EQ || op == NE);
+			bool have_value = lhs.getOptional().has_value();
+			return (op == EQ ? not have_value : have_value);
+		}
+		else if(lhs.type()->isNullPtr() && rhs.type()->isOptional())
+		{
+			assert(op == EQ || op == NE);
+			bool have_value = rhs.getOptional().has_value();
+			return (op == EQ ? not have_value : have_value);
 		}
 
 		sap::internal_error("??? unsupported comparison");
@@ -120,7 +145,8 @@ namespace sap::interp
 		for(size_t i = 0;;)
 		{
 			if(not can_compare(op, lhs, rhs))
-				return ErrMsg(ts, "types '{}' and '{}' are not comparable with operator '{}'", lhs, rhs, op_to_string(op));
+				return ErrMsg(ts, "types '{}' and '{}' are not comparable with operator '{}'", lhs, rhs,
+					op_to_string(op));
 
 			if(i + 1 == this->rest.size())
 				break;

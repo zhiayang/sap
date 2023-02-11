@@ -165,7 +165,7 @@ namespace sap::interp
 			auto& arg = this->arguments[i];
 			auto val = TRY(arg.value->evaluate(ev));
 
-			if(this->rewritten_ufcs)
+			if(i == 0 && this->rewritten_ufcs)
 			{
 				Value* ptr = nullptr;
 				if(val.isLValue())

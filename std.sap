@@ -55,8 +55,13 @@ namespace std
 		var i = 0;
 		while(i < g_sections.size())
 		{
-			let foo = g_sections[i].num_tbo_ref.layout_object();
-			builtin::println(f"hello");
+			let foo = g_sections[i].num_tbo_ref.layout_object()!;
+
+			var tmp = foo.position();
+			tmp.x -= 1.5em;
+
+			foo.set_position(tmp);
+			# builtin::println(f"hello");
 
 			i += 1;
 		}

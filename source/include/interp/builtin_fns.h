@@ -56,6 +56,8 @@ namespace sap::interp
 
 		ErrorOr<EvalResult> ref_object(Evaluator* ev, std::vector<Value>& args);
 		ErrorOr<EvalResult> get_layout_object(Evaluator* ev, std::vector<Value>& args);
+		ErrorOr<EvalResult> get_layout_object_position(Evaluator* ev, std::vector<Value>& args);
+		ErrorOr<EvalResult> set_layout_object_position(Evaluator* ev, std::vector<Value>& args);
 
 		ErrorOr<EvalResult> output_at_absolute_pos_tbo(Evaluator* ev, std::vector<Value>& args);
 	}

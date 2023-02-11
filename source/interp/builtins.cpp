@@ -165,6 +165,11 @@ namespace sap::interp
 		define_builtin("layout_object", makeParamList(P("_", t_ptr(t_tbo_ref))), t_opt(t_lo_ref),
 			&B::get_layout_object);
 
+		define_builtin("position", makeParamList(P("_", t_ptr(t_lo_ref))), t_babsposition,
+			&B::get_layout_object_position);
+		define_builtin("set_position", makeParamList(P("_", t_ptr(t_lo_ref)), P("pos", t_babsposition)), t_void,
+			&B::set_layout_object_position);
+
 		define_builtin("bold1", makeParamList(P("_", t_any)), t_tio, &B::bold1);
 		define_builtin("italic1", makeParamList(P("_", t_any)), t_tio, &B::italic1);
 		define_builtin("bold_italic1", makeParamList(P("_", t_any)), t_tio, &B::bold_italic1);
