@@ -1327,11 +1327,11 @@ namespace sap::frontend
 	}
 
 
-	static std::unique_ptr<tree::InlineObject> parse_inline_obj(Lexer& lexer);
+	static std::pair<std::unique_ptr<tree::InlineObject>, bool> parse_inline_obj(Lexer& lexer);
 	static std::optional<std::unique_ptr<Paragraph>> parse_paragraph(Lexer& lexer);
 	static std::vector<std::unique_ptr<BlockObject>> parse_top_level(Lexer& lexer);
 
-	static std::unique_ptr<ScriptCall> parse_inline_script_call(Lexer& lexer)
+	static std::pair<std::unique_ptr<ScriptCall>, bool> parse_script_call(Lexer& lexer)
 	{
 		auto lm = LexerModer(lexer, Lexer::Mode::Script);
 
@@ -1359,15 +1359,14 @@ namespace sap::frontend
 		bool is_block = false;
 
 		// if we see a semicolon or a new paragraph, stop.
-		if(lexer.expect(TT::Semicolon) || lexer.peekWithMode(Lexer::Mode::Text) == TT::ParagraphBreak)
-			return sc;
+		if(lexer.expect(TT::Semicolon))
+			return { std::move(sc), /* saw semicolon: */ true };
 
-		if(lexer.expect(TT::Backslash))
+		else if(lexer.peekWithMode(Lexer::Mode::Text) == TT::ParagraphBreak)
+			return { std::move(sc), /* saw semicolon: */ false };
+
+		if(lexer.expect(TT::Backslash) && lexer.expect(KW_PARA_BLOCK))
 		{
-			if(auto n = lexer.match(TT::Identifier); not n.has_value() || n->text != KW_PARA_BLOCK)
-				parse_error(lexer.location(), "expected 'p' after '\\' in script call, got '{}'",
-					n ? n->text : lexer.peek().text);
-
 			is_block = true;
 			if(lexer.peek() != TT::LBrace)
 				parse_error(lexer.location(), "expected '{' after '\\p'");
@@ -1400,7 +1399,10 @@ namespace sap::frontend
 				auto obj = std::make_unique<interp::TreeInlineExpr>(loc);
 
 				while(not lexer.expect(TT::RBrace))
-					obj->objects.push_back(parse_inline_obj(lexer));
+				{
+					auto [tmp, _] = parse_inline_obj(lexer);
+					obj->objects.push_back(std::move(tmp));
+				}
 
 				sc->call->arguments.push_back(interp::FunctionCall::Arg {
 					.name = std::nullopt,
@@ -1413,24 +1415,37 @@ namespace sap::frontend
 			parse_error(lexer.location(), "expected '{' after \\p in script call");
 		}
 
-		return sc;
+		bool semi = lexer.expect(TT::Semicolon);
+		return { std::move(sc), semi };
 	}
 
 	static std::unique_ptr<ScriptObject> parse_script_object(Lexer& lexer)
 	{
 		auto next = lexer.peekWithMode(Lexer::Mode::Script);
 		if(next == TT::Identifier && next.text == KW_SCRIPT_BLOCK)
+		{
 			return parse_script_block(lexer);
-
+		}
 		else if(next == TT::Identifier || next == TT::ColonColon)
-			return parse_inline_script_call(lexer);
+		{
+			auto [tmp, saw_semi] = parse_script_call(lexer);
+			if(saw_semi)
+			{
+				auto txt = lexer.peekWithMode(Lexer::Mode::Text);
+				if(txt.text == "\n" || txt.text == "\r\n")
+					lexer.nextWithMode(Lexer::Mode::Text);
+			}
 
+			return std::move(tmp);
+		}
 		else
+		{
 			parse_error(next.loc, "unexpected token '{}' after '\\'", next.text);
+		}
 	}
 
 
-	static std::unique_ptr<tree::InlineObject> parse_inline_obj(Lexer& lexer)
+	static std::pair<std::unique_ptr<tree::InlineObject>, bool> parse_inline_obj(Lexer& lexer)
 	{
 		auto _ = LexerModer(lexer, Lexer::Mode::Text);
 
@@ -1438,7 +1453,7 @@ namespace sap::frontend
 		auto tok = lexer.next();
 		if(tok == TT::Text)
 		{
-			return std::make_unique<Text>(escape_word_text(tok.loc, tok.text));
+			return { std::make_unique<Text>(escape_word_text(tok.loc, tok.text)), false };
 		}
 		else if(tok == TT::Backslash)
 		{
@@ -1446,7 +1461,7 @@ namespace sap::frontend
 			if(next.text == KW_SCRIPT_BLOCK)
 				parse_error(next.loc, "script blocks are not allowed in an inline context");
 
-			return parse_inline_script_call(lexer);
+			return parse_script_call(lexer);
 		}
 		else
 		{
@@ -1473,7 +1488,11 @@ namespace sap::frontend
 					break;
 			}
 
-			para->addObject(parse_inline_obj(lexer));
+			auto [obj, end_para] = parse_inline_obj(lexer);
+			para->addObject(std::move(obj));
+
+			if(end_para)
+				break;
 		}
 
 		return para;
@@ -1493,7 +1512,8 @@ namespace sap::frontend
 			if(lexer.eof())
 				break;
 
-			if(auto tok = lexer.peek(); tok == TT::Text)
+			auto tok = lexer.peek();
+			if(tok == TT::Text)
 			{
 				if(auto ret = parse_paragraph(lexer); ret.has_value())
 					objs.push_back(std::move(*ret));

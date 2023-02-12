@@ -142,6 +142,7 @@ namespace sap::frontend
 		bool expect(zst::str_view sv);
 
 		Token peekWithMode(Mode mode) const;
+		Token nextWithMode(Mode mode);
 
 		SaveState save();
 		void rewind(SaveState st);

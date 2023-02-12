@@ -596,6 +596,18 @@ namespace sap::frontend
 		}
 	}
 
+	Token Lexer::nextWithMode(Mode mode)
+	{
+		m_previous_token = this->save();
+
+		switch(mode)
+		{
+			using enum Mode;
+			case Text: return consume_text_token(m_stream, m_location);
+			case Script: return consume_script_token(m_stream, m_location);
+		}
+	}
+
 	Token Lexer::peek() const
 	{
 		return this->peekWithMode(this->mode());

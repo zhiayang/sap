@@ -16,9 +16,7 @@ let settings = builtin::DocumentSettings {
 \start_document(*settings);
 
 \std::output_table_of_contents();
-
 \std::section("hello");
-
 \std::section("hello2");
 
 ffi ffl ff ello aP. asdf no no no
