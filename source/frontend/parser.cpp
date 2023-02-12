@@ -734,6 +734,17 @@ namespace sap::frontend
 		{
 			return std::make_unique<interp::BooleanLit>(bool_true->loc, false);
 		}
+		else if(lexer.expect(TT::Period))
+		{
+			auto ident = lexer.match(TT::Identifier);
+			if(not ident.has_value())
+				parse_error(lexer.location(), "expected enumerator name (an identifier) after '.'");
+
+			auto ret = std::make_unique<interp::EnumLit>(ident->loc);
+			ret->name = ident->text.str();
+
+			return ret;
+		}
 		else if(lexer.expect(TT::LParen))
 		{
 			auto inside = parse_expr(lexer);

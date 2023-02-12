@@ -201,8 +201,8 @@ namespace sap::interp
 		mutable std::vector<Part> parts;
 	};
 
-
 	struct StructDefn;
+
 	struct StructLit : Expr
 	{
 		explicit StructLit(Location loc) : Expr(std::move(loc)) { }
@@ -748,10 +748,27 @@ namespace sap::interp
 		virtual ErrorOr<TCResult> typecheck_impl(Typechecker* ts, const Type* infer = nullptr, bool keep_lvalue = false)
 			const override;
 
+		const EnumeratorDefn* getEnumeratorNamed(const std::string& name) const;
+
 	private:
 		frontend::PType m_enumerator_type;
 		std::vector<EnumeratorDefn> m_enumerators;
 		mutable const EnumType* m_resolved_enumerator_type;
+	};
+
+
+	struct EnumLit : Expr
+	{
+		explicit EnumLit(Location loc) : Expr(std::move(loc)) { }
+
+		virtual ErrorOr<EvalResult> evaluate_impl(Evaluator* ev) const override;
+		virtual ErrorOr<TCResult> typecheck_impl(Typechecker* ts, const Type* infer = nullptr, bool keep_lvalue = false)
+			const override;
+
+		std::string name;
+
+	private:
+		mutable const EnumDefn::EnumeratorDefn* m_enumerator_defn = nullptr;
 	};
 }
 

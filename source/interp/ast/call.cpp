@@ -166,8 +166,12 @@ namespace sap::interp
 				auto param_idx = arg_arrangement.arg_idx_to_param_idx[i];
 				auto param_type = fn_type->toFunction()->parameterTypes()[param_idx];
 
+				bool is_ufcs_self = this->rewritten_ufcs && i == 0;
+				if(is_ufcs_self)
+					param_type = param_type->pointerElement();
+
 				TRY(this->arguments[i].value->typecheck(ts, /* infer: */ param_type, /* keep_lvalue: */
-					this->rewritten_ufcs && i == 0));
+					is_ufcs_self));
 			}
 		}
 		else

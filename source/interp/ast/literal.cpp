@@ -38,7 +38,8 @@ namespace sap::interp
 			{
 				auto t2 = TRY(this->elements[i]->typecheck(ts, t1)).type();
 				if(t2 != t1)
-					return ErrMsg(this->elements[i]->loc(), "mismatched types in array literal: expected '{}', got '{}'", t1, t2);
+					return ErrMsg(this->elements[i]->loc(),
+						"mismatched types in array literal: expected '{}', got '{}'", t1, t2);
 			}
 
 			return TCResult::ofRValue(Type::makeArray(t1));
@@ -57,6 +58,45 @@ namespace sap::interp
 
 
 
+
+
+	ErrorOr<TCResult> EnumLit::typecheck_impl(Typechecker* ts, const Type* infer, bool keep_lvalue) const
+	{
+		const EnumType* enum_type = nullptr;
+
+		if(infer == nullptr)
+		{
+			return ErrMsg(ts, "cannot infer type for enum literal");
+		}
+		else if(infer->isEnum())
+		{
+			enum_type = infer->toEnum();
+		}
+		else
+		{
+			if(infer->isOptional() && infer->optionalElement()->isEnum())
+				enum_type = infer->optionalElement()->toEnum();
+			else
+				return ErrMsg(ts, "inferred non-enum type '{}' for enum literal", infer);
+		}
+
+		auto enum_defn = dynamic_cast<const EnumDefn*>(TRY(ts->getDefinitionForType(enum_type)));
+		assert(enum_defn != nullptr);
+
+		auto enumerator = enum_defn->getEnumeratorNamed(this->name);
+
+		if(enumerator == nullptr)
+			return ErrMsg(ts, "enum '{}' has no enumerator named '{}'", (const Type*) enum_type, this->name);
+
+		m_enumerator_defn = enumerator;
+		return TCResult::ofLValue(enum_type, /* mutable: */ false);
+	}
+
+	ErrorOr<EvalResult> EnumLit::evaluate_impl(Evaluator* ev) const
+	{
+		assert(m_enumerator_defn != nullptr);
+		return EvalResult::ofLValue(*ev->getGlobalValue(m_enumerator_defn));
+	}
 
 
 

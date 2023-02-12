@@ -154,6 +154,7 @@ primary-expr
     | string-literal
     | fstring-literal
     | array-literal
+    | enum-literal
     | `(`{punctuation.paren} expr `)`{punctuation.paren}
     | (`{`{punctuation.brace.struct-start} struct-literal-field-list `}`{punctuation.brace.struct-end})
     | '(::)?([A-Za-z_][[:word:]]*)(?:\s*(::)\s*([A-Za-z_][[:word:]]*))*'{
@@ -301,6 +302,11 @@ array-literal:
         (`,`{punctuation.comma} expr)*
     )?
     (`]`{punctuation.bracket})
+    ;
+
+enum-literal:
+    (`.`{punctuation.period})
+    IDENTIFIER{meta.name.enumerator}
     ;
 
 string-escapes

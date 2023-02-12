@@ -16,7 +16,7 @@ namespace std
 	fn centre(blk: Block) -> Block
 	{
 		return builtin::apply_style({
-			.alignment = builtin::Alignment::Centred,
+			.alignment = .Centred,
 		}, *blk);
 	}
 
@@ -37,7 +37,7 @@ namespace std
 		let section_num = 1 + g_sections.size();
 
 		var num_line = builtin::apply_style({
-			.alignment = builtin::Alignment::Right,
+			.alignment = .Right,
 		}, builtin::make_line(builtin::make_text(f"{section_num * 7}")));
 
 		var name_line = builtin::apply_style({
@@ -92,7 +92,7 @@ namespace std
 			let str = f"{s!.num}. {s!.name}   -   {s!.page_num}";
 
 			let item = std::style({
-				.alignment = builtin::Alignment::Left
+				.alignment = .Left
 			}, builtin::make_line(builtin::make_text(str)));
 
 			lines += [*item];
@@ -125,7 +125,7 @@ namespace std
 		{
 			let page_num = i + 1;
 			let item = std::style({
-				.alignment = builtin::Alignment::Left,
+				.alignment = .Left,
 				.font_size = 20pt,
 			}, builtin::make_line(builtin::make_text(f"{page_num}")));
 

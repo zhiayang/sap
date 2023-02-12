@@ -7,7 +7,8 @@
 
 namespace sap::interp
 {
-	ErrorOr<TCResult> EnumDefn::EnumeratorDecl::typecheck_impl(Typechecker* ts, const Type* infer, bool keep_lvalue) const
+	ErrorOr<TCResult> EnumDefn::EnumeratorDecl::typecheck_impl(Typechecker* ts, const Type* infer, bool keep_lvalue)
+		const
 	{
 		assert(infer != nullptr && infer->isEnum());
 
@@ -15,7 +16,8 @@ namespace sap::interp
 		return TCResult::ofRValue(infer);
 	}
 
-	ErrorOr<TCResult> EnumDefn::EnumeratorDefn::typecheck_impl(Typechecker* ts, const Type* infer, bool keep_lvalue) const
+	ErrorOr<TCResult> EnumDefn::EnumeratorDefn::typecheck_impl(Typechecker* ts, const Type* infer, bool keep_lvalue)
+		const
 	{
 		assert(infer != nullptr && infer->isEnum());
 
@@ -27,7 +29,8 @@ namespace sap::interp
 		{
 			auto ty = TRY(m_value->typecheck(ts, elm_type)).type();
 			if(not ts->canImplicitlyConvert(ty, elm_type))
-				return ErrMsg(ts, "cannot use value of type '{}' as enumerator for enum type '{}'", ty, (const Type*) enum_type);
+				return ErrMsg(ts, "cannot use value of type '{}' as enumerator for enum type '{}'", ty,
+					(const Type*) enum_type);
 		}
 		else if(not elm_type->isInteger())
 		{
@@ -114,7 +117,7 @@ namespace sap::interp
 		assert(m_value != nullptr);
 
 		auto value = ev->castValue(TRY_VALUE(m_value->evaluate(ev)), this->get_type());
-		ev->frame().setValue(this, std::move(value));
+		ev->setGlobalValue(this, std::move(value));
 
 		return EvalResult::ofVoid();
 	}
@@ -125,7 +128,7 @@ namespace sap::interp
 		if(m_value == nullptr)
 		{
 			assert(et->elementType()->isInteger());
-			ev->frame().setValue(this, Value::enumerator(et, Value::integer(++(*prev_value))));
+			ev->setGlobalValue(this, Value::enumerator(et, Value::integer(++(*prev_value))));
 		}
 		else
 		{
@@ -134,9 +137,20 @@ namespace sap::interp
 				(*prev_value) = tmp.getInteger();
 
 			auto value = Value::enumerator(et, ev->castValue(std::move(tmp), et->elementType()));
-			ev->frame().setValue(this, std::move(value));
+			ev->setGlobalValue(this, std::move(value));
 		}
 
 		return EvalResult::ofVoid();
+	}
+
+	auto EnumDefn::getEnumeratorNamed(const std::string& name) const -> const EnumeratorDefn*
+	{
+		for(auto& e : m_enumerators)
+		{
+			if(e.declaration->name == name)
+				return &e;
+		}
+
+		return nullptr;
 	}
 }
