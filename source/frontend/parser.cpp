@@ -680,7 +680,10 @@ namespace sap::frontend
 		else if(lexer.peek() == TT::LBrace)
 		{
 			// '{' starts a struct literal with no name
-			return parse_struct_literal(lexer, {});
+			auto ret = parse_struct_literal(lexer, {});
+			ret->is_anonymous = true;
+
+			return ret;
 		}
 		else if(auto num = lexer.match(TT::Number); num)
 		{

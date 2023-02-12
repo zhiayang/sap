@@ -15,7 +15,7 @@ namespace std
 
 	fn centre(blk: Block) -> Block
 	{
-		return builtin::apply_style(builtin::Style {
+		return builtin::apply_style({
 			.alignment = builtin::Alignment::Centred,
 		}, *blk);
 	}
@@ -24,6 +24,7 @@ namespace std
 	{
 		num: int;
 		name: string;
+		page_num: int;
 		num_tbo_ref: BlockRef;
 	};
 
@@ -35,17 +36,18 @@ namespace std
 	{
 		let section_num = 1 + g_sections.size();
 
-		var num_line = builtin::apply_style(builtin::Style {
+		var num_line = builtin::apply_style({
 			.alignment = builtin::Alignment::Right,
 		}, builtin::make_line(builtin::make_text(f"{section_num * 7}")));
 
-		var name_line = builtin::apply_style(builtin::Style {
+		var name_line = builtin::apply_style({
 			.font_size = 2em,
 		}, builtin::make_line(builtin::make_text(name)));
 
 		let the_section = Section {
 			.num = section_num,
 			.name = name,
+			.page_num = 0,
 			.num_tbo_ref = num_line.ref(),
 		};
 
@@ -65,6 +67,8 @@ namespace std
 			tmp.x -= 175mm;
 
 			foo.set_position(tmp);
+			g_sections[i].page_num = 1 + tmp.page;
+
 			i += 1;
 		}
 	}
@@ -81,15 +85,13 @@ namespace std
 
 		var lines = [:Block];
 
-		builtin::println(f"sections: {g_sections.size()}");
-
 		var i = 0;
 		while(i < g_sections.size())
 		{
 			let s = &g_sections[i];
-			let str = f"{s!.num}. {s!.name}";
+			let str = f"{s!.num}. {s!.name}   -   {s!.page_num}";
 
-			let item = std::style(builtin::Style {
+			let item = std::style({
 				.alignment = builtin::Alignment::Left
 			}, builtin::make_line(builtin::make_text(str)));
 
@@ -101,9 +103,13 @@ namespace std
 		g_sections = [];
 
 		var ret = builtin::make_vbox((*lines)...);
-		ret = builtin::apply_style(builtin::Style {
+		ret = builtin::apply_style({
 			.paragraph_spacing = 0em,
 		}, *ret);
+
+		# we must re-request layout again, to make the page numbers correct.
+		if(builtin::state().layout_pass == 2)
+			builtin::request_layout();
 
 		return ret;
 	}
@@ -118,12 +124,12 @@ namespace std
 		while(i < builtin::state().page_count)
 		{
 			let page_num = i + 1;
-			let item = std::style(builtin::Style {
+			let item = std::style({
 				.alignment = builtin::Alignment::Left,
 				.font_size = 20pt,
 			}, builtin::make_line(builtin::make_text(f"{page_num}")));
 
-			builtin::output_at_absolute(builtin::AbsPosition {
+			builtin::output_at_absolute({
 				.page = i,
 				.x = page_num_pos.x,
 				.y = page_num_pos.y,

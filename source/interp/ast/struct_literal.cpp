@@ -8,7 +8,8 @@
 
 namespace sap::interp
 {
-	static std::vector<std::tuple<std::string, const Type*, const Expr*>> get_field_things(const StructDefn* struct_defn,
+	static std::vector<std::tuple<std::string, const Type*, const Expr*>> get_field_things(
+		const StructDefn* struct_defn,
 		const StructType* struct_type)
 	{
 		std::vector<std::tuple<std::string, const Type*, const Expr*>> fields {};
@@ -88,7 +89,7 @@ namespace sap::interp
 
 		auto ordered = TRY(arrangeArgumentTypes(ts, fields, processed_fields, "struct", "field", "field"));
 
-		TRY(getCallingCost(ts, fields, ordered, "struct", "field", "field"));
+		TRY(getCallingCost(ts, fields, ordered.param_idx_to_arg, "struct", "field", "field"));
 
 		return TCResult::ofRValue(struct_type);
 	}
@@ -120,7 +121,7 @@ namespace sap::interp
 		for(size_t i = 0; i < struct_type->getFields().size(); i++)
 		{
 			Value field {};
-			if(auto it = ordered.find(i); it == ordered.end())
+			if(auto it = ordered.param_idx_to_arg.find(i); it == ordered.param_idx_to_arg.end())
 			{
 				if(defn_fields[i].initialiser == nullptr)
 					return ErrMsg(ev, "missing value for field '{}'", defn_fields[i].name);
@@ -129,7 +130,7 @@ namespace sap::interp
 			}
 			else
 			{
-				field = std::move(it->second);
+				field = std::move(it->second.value);
 			}
 
 			field_values.push_back(ev->castValue(std::move(field), struct_type->getFieldAtIndex(i)));

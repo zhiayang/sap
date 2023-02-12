@@ -40,7 +40,7 @@ namespace sap::interp
 		}
 	}
 
-	static ErrorOr<int> get_calling_cost(Typechecker* ts,
+	static ErrorOr<std::pair<int, ArrangedArguments<const Type*>>> get_calling_cost(Typechecker* ts,
 		const Declaration* decl,
 		const std::vector<ArrangeArg<const Type*>>& arguments)
 	{
@@ -48,37 +48,49 @@ namespace sap::interp
 		auto ordered = TRY(arrangeArgumentTypes(ts, params, arguments, //
 			"function", "argument", "argument for parameter"));
 
-		return getCallingCost(ts, params, ordered, "function", "argument", "argument for parameter");
+		auto cost = TRY(getCallingCost(ts, params, ordered.param_idx_to_arg, "function", "argument",
+			"argument for parameter"));
+
+		using X = std::pair<int, ArrangedArguments<const Type*>>;
+		return Ok<X>(cost, std::move(ordered));
 	}
 
 
-	static ErrorOr<const Declaration*> resolve_overload_set(Typechecker* ts,
+	static ErrorOr<std::pair<const Declaration*, ArrangedArguments<const Type*>>> resolve_overload_set(Typechecker* ts,
 		const std::vector<const Declaration*>& decls,
 		const std::vector<ArrangeArg<const Type*>>& arguments)
 	{
 		std::vector<const Declaration*> best_decls {};
 		int best_cost = INT_MAX;
 
+		ArrangedArguments<const Type*> arg_arrangement {};
+
 		for(auto decl : decls)
 		{
-			auto cost = get_calling_cost(ts, decl, arguments);
+			auto result = get_calling_cost(ts, decl, arguments);
 
-			if(cost.is_err())
+			if(result.is_err())
 				continue;
 
-			if(*cost == best_cost)
+			auto [cost, ord] = result.take_value();
+
+			if(cost == best_cost)
 			{
 				best_decls.push_back(decl);
 			}
-			else if(*cost < best_cost)
+			else if(cost < best_cost)
 			{
-				best_cost = *cost;
+				best_cost = cost;
 				best_decls = { decl };
+				arg_arrangement = std::move(ord);
 			}
 		}
 
 		if(best_decls.size() == 1)
-			return Ok(best_decls[0]);
+		{
+			return Ok<std::pair<const Declaration*, ArrangedArguments<const Type*>>>(best_decls[0],
+				std::move(arg_arrangement));
+		}
 
 		if(best_decls.empty())
 			return ErrMsg(ts, "no matching function for call");
@@ -92,16 +104,24 @@ namespace sap::interp
 	{
 		std::vector<ArrangeArg<const Type*>> processed_args {};
 
-		// TODO: this might be problematic if we want to have bidirectional type inference
-		// either way, we must ensure that all the arguments typecheck to begin with
-
 		for(size_t i = 0; i < this->arguments.size(); i++)
 		{
 			auto& arg = this->arguments[i];
 
+			if(auto str_lit = dynamic_cast<const StructLit*>(arg.value.get());
+				str_lit != nullptr && str_lit->is_anonymous)
+			{
+				processed_args.push_back({
+					.name = arg.name,
+					.value = Type::makeVoid(),
+					.deferred_typecheck = true,
+				});
+				continue;
+			}
+
 			bool is_ufcs_self = this->rewritten_ufcs && i == 0;
 
-			auto t = TRY(arg.value->typecheck(ts, nullptr, /* keep_lvalue: */ is_ufcs_self));
+			auto t = TRY(arg.value->typecheck(ts, /* infer: */ nullptr, /* keep_lvalue: */ is_ufcs_self));
 			const Type* ty = t.type();
 
 			if(is_ufcs_self)
@@ -126,18 +146,29 @@ namespace sap::interp
 		{
 			const DefnTree* lookup_in = ts->current();
 			if(this->rewritten_ufcs)
-			{
 				lookup_in = TRY(ts->getDefnTreeForType(processed_args[0].value));
-			}
 
 			auto decls = TRY(lookup_in->lookup(ident->name));
 			assert(decls.size() > 0);
 
-			const Declaration* best_decl = TRY(resolve_overload_set(ts, decls, processed_args));
+			auto [best_decl, arg_arrangement] = TRY(resolve_overload_set(ts, decls, processed_args));
 			assert(best_decl != nullptr);
 
 			fn_type = TRY(best_decl->typecheck(ts)).type();
 			m_resolved_func_decl = best_decl;
+
+			// now that we have the best decl, typecheck any arguments that are deferred.
+			for(size_t i = 0; i < processed_args.size(); i++)
+			{
+				if(not processed_args[i].deferred_typecheck)
+					continue;
+
+				auto param_idx = arg_arrangement.arg_idx_to_param_idx[i];
+				auto param_type = fn_type->toFunction()->parameterTypes()[param_idx];
+
+				TRY(this->arguments[i].value->typecheck(ts, /* infer: */ param_type, /* keep_lvalue: */
+					this->rewritten_ufcs && i == 0));
+			}
 		}
 		else
 		{
@@ -203,8 +234,10 @@ namespace sap::interp
 			auto decl = m_resolved_func_decl;
 			auto params = TRY(convert_params(ev, decl));
 
-			auto ordered_args = TRY(arrangeArgumentValues(ev, params, std::move(processed_args), "function", "argument",
-				"argument for parameter"));
+			auto arg_arrangement = TRY(arrangeArgumentValues(ev, params, std::move(processed_args), "function",
+				"argument", "argument for parameter"));
+
+			auto& ordered_args = arg_arrangement.param_idx_to_arg;
 
 			bool is_variadic = not params.empty() && std::get<1>(params.back())->isVariadicArray();
 
@@ -223,15 +256,15 @@ namespace sap::interp
 							auto value = std::move(it->second);
 
 							// if the value itself is variadic, it means it's a spread op
-							if(value.type()->isVariadicArray())
+							if(value.value.type()->isVariadicArray())
 							{
-								auto arr = std::move(value).takeArray();
+								auto arr = std::move(value.value).takeArray();
 								for(auto& val : arr)
 									vararg_array.push_back(ev->castValue(std::move(val), variadic_elm));
 							}
 							else
 							{
-								vararg_array.push_back(ev->castValue(std::move(value), variadic_elm));
+								vararg_array.push_back(ev->castValue(std::move(value.value), variadic_elm));
 							}
 						}
 						else
@@ -246,7 +279,7 @@ namespace sap::interp
 
 				if(auto it = ordered_args.find(i); it != ordered_args.end())
 				{
-					final_args.push_back(ev->castValue(std::move(it->second), param_type));
+					final_args.push_back(ev->castValue(std::move(it->second.value), param_type));
 				}
 				else
 				{

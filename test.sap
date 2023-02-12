@@ -3,17 +3,14 @@
 import "std.sap";
 
 let font_family = builtin::find_font_family(["Source Serif 4", "XCharter", "Times New Roman", "serif"]);
-
-let settings = builtin::DocumentSettings {
+\start_document({
 	.font_size = 12pt,
 	.font_family = *font_family,
 	.paper_size = std::paper_size::A4,
 	.line_spacing = 1.0,
 	.paragraph_spacing = 1em,
 	.margins = { .left = 2cm, .right = 2cm, .top = 2cm, .bottom = 2cm },
-};
-
-\start_document(*settings);
+});
 
 \std::output_table_of_contents();
 \std::section("hello");
@@ -27,17 +24,13 @@ this     is     a    aoeu bsdf, fill me up flour fj
 fi fl Всички хора се раждат свободни и равни по \{ \}
 
 
-hello \std::style(builtin::Style { .font_size = 15pt }) { world } asdf
+hello \std::style({ .font_size = 15pt }) { world } asdf
 
 \std::section("goodbye");
 
 \script ::{
 	fn omegalul() -> Inline
 	{
-		var uwu = 0;
-		builtin::println(f"uwu = {uwu}");
-		uwu += 1;
-
 		return builtin::make_text(f"OMEGALUL");
 	}
 
@@ -115,6 +108,8 @@ Travelling day in and day out. Doing business like this takes much more effort t
 
 	Far far away, behind the word mountains, far from the countries Vokalia and Consonantia, there live the blind texts.
 }
+
+\std::section("rin-chaaaaan");
 
 \script ::{
 	fn asdf() -> Block

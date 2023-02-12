@@ -215,6 +215,7 @@ namespace sap::interp
 
 		QualifiedId struct_name;
 		std::vector<Arg> field_inits;
+		bool is_anonymous = false;
 
 	private:
 		mutable const StructDefn* m_struct_defn = nullptr;
@@ -390,7 +391,9 @@ namespace sap::interp
 
 	struct ArraySpreadOp : Expr
 	{
-		explicit ArraySpreadOp(Location loc, std::unique_ptr<Expr> expr) : Expr(std::move(loc)), expr(std::move(expr)) { }
+		explicit ArraySpreadOp(Location loc, std::unique_ptr<Expr> expr) : Expr(std::move(loc)), expr(std::move(expr))
+		{
+		}
 
 		virtual ErrorOr<EvalResult> evaluate_impl(Evaluator* ev) const override;
 		virtual ErrorOr<TCResult> typecheck_impl(Typechecker* ts, const Type* infer = nullptr, bool keep_lvalue = false)
@@ -520,7 +523,10 @@ namespace sap::interp
 
 	struct Definition : Stmt
 	{
-		Definition(Location loc, Declaration* decl) : Stmt(std::move(loc)), declaration(decl) { declaration->resolve(this); }
+		Definition(Location loc, Declaration* decl) : Stmt(std::move(loc)), declaration(decl)
+		{
+			declaration->resolve(this);
+		}
 
 		// the definition owns its declaration
 		std::unique_ptr<Declaration> declaration {};
@@ -528,7 +534,11 @@ namespace sap::interp
 
 	struct VariableDecl : Declaration
 	{
-		VariableDecl(Location loc, const std::string& name, bool mut) : Declaration(std::move(loc), name), is_mutable(mut) { }
+		VariableDecl(Location loc, const std::string& name, bool mut)
+			: Declaration(std::move(loc), name)
+			, is_mutable(mut)
+		{
+		}
 
 		virtual ErrorOr<EvalResult> evaluate_impl(Evaluator* ev) const override;
 		virtual ErrorOr<TCResult> typecheck_impl(Typechecker* ts, const Type* infer = nullptr, bool keep_lvalue = false)
@@ -602,7 +612,10 @@ namespace sap::interp
 
 	struct FunctionDefn : Definition
 	{
-		FunctionDefn(Location loc, const std::string& name, std::vector<FunctionDecl::Param> params, frontend::PType return_type)
+		FunctionDefn(Location loc,
+			const std::string& name,
+			std::vector<FunctionDecl::Param> params,
+			frontend::PType return_type)
 			: Definition(loc, new FunctionDecl(loc, name, std::move(params), return_type))
 		{
 		}
@@ -695,8 +708,9 @@ namespace sap::interp
 			EnumeratorDecl(Location loc, const std::string& name) : Declaration(loc, name) { }
 
 			virtual ErrorOr<EvalResult> evaluate_impl(Evaluator* ev) const override;
-			virtual ErrorOr<TCResult> typecheck_impl(Typechecker* ts, const Type* infer = nullptr, bool keep_lvalue = false)
-				const override;
+			virtual ErrorOr<TCResult> typecheck_impl(Typechecker* ts,
+				const Type* infer = nullptr,
+				bool keep_lvalue = false) const override;
 		};
 
 		struct EnumeratorDefn : Definition
@@ -710,8 +724,9 @@ namespace sap::interp
 			ErrorOr<EvalResult> evaluate_impl(Evaluator* ev, int64_t* prev_value) const;
 
 			virtual ErrorOr<EvalResult> evaluate_impl(Evaluator* ev) const override;
-			virtual ErrorOr<TCResult> typecheck_impl(Typechecker* ts, const Type* infer = nullptr, bool keep_lvalue = false)
-				const override;
+			virtual ErrorOr<TCResult> typecheck_impl(Typechecker* ts,
+				const Type* infer = nullptr,
+				bool keep_lvalue = false) const override;
 
 		private:
 			friend struct EnumDefn;
@@ -719,7 +734,10 @@ namespace sap::interp
 			std::unique_ptr<Expr> m_value;
 		};
 
-		EnumDefn(Location loc, const std::string& name, frontend::PType type, std::vector<EnumeratorDefn> enumerators) //
+		EnumDefn(Location loc,
+			const std::string& name,
+			frontend::PType type,
+			std::vector<EnumeratorDefn> enumerators) //
 			: Definition(loc, new EnumDecl(loc, name))
 			, m_enumerator_type(std::move(type))
 			, m_enumerators(std::move(enumerators))

@@ -17,23 +17,40 @@ namespace sap::interp
 	{
 		std::optional<std::string> name;
 		T value;
+		bool deferred_typecheck = false;
+	};
+
+	template <typename T>
+	struct ArgPair
+	{
+		T value;
+		bool deferred_typecheck;
+	};
+
+	using ExpectedParams = std::vector<std::tuple<std::string, const Type*, const Expr*>>;
+
+	template <typename T>
+	struct ArrangedArguments
+	{
+		std::unordered_map<size_t, ArgPair<T>> param_idx_to_arg;
+		std::unordered_map<size_t, size_t> arg_idx_to_param_idx;
 	};
 
 	template <typename TsEv, typename T, bool MoveValue>
-	extern ErrorOr<std::unordered_map<size_t, T>> arrange_arguments(const TsEv* ts_ev,
-	    const std::vector<std::tuple<std::string, const Type*, const Expr*>>& expected,                      //
-	    std::conditional_t<MoveValue, std::vector<ArrangeArg<T>>&&, const std::vector<ArrangeArg<T>>&> args, //
-	    const char* fn_or_struct,                                                                            //
-	    const char* thing_name,                                                                              //
-	    const char* thing_name2);
+	ErrorOr<ArrangedArguments<T>> arrange_arguments(const TsEv* ts_ev,
+		const ExpectedParams& expected,                                                                      //
+		std::conditional_t<MoveValue, std::vector<ArrangeArg<T>>&&, const std::vector<ArrangeArg<T>>&> args, //
+		const char* fn_or_struct,                                                                            //
+		const char* thing_name,                                                                              //
+		const char* thing_name2);
 
 	inline constexpr auto arrangeArgumentTypes = arrange_arguments<Typechecker, const Type*, /* move: */ false>;
 	inline constexpr auto arrangeArgumentValues = arrange_arguments<Evaluator, Value, /* move: */ true>;
 
 	ErrorOr<int> getCallingCost(Typechecker* ts,                                        //
-	    const std::vector<std::tuple<std::string, const Type*, const Expr*>>& expected, //
-	    std::unordered_map<size_t, const Type*>& ordered_args,                          //
-	    const char* fn_or_struct,                                                       //
-	    const char* thing_name,                                                         //
-	    const char* thing_name2);
+		const std::vector<std::tuple<std::string, const Type*, const Expr*>>& expected, //
+		const std::unordered_map<size_t, ArgPair<const Type*>>& ordered_args,           //
+		const char* fn_or_struct,                                                       //
+		const char* thing_name,                                                         //
+		const char* thing_name2);
 }
