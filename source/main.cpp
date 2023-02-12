@@ -21,11 +21,6 @@ CLEANUP:
 TODO:
 
 scripting:
-- `global` keyword to explicitly make variables global, unless they are in a namespace.
-  vars in a \script{} block or a hook (@layout, @post) should be considered "local"
-  and thus re-initialised on every pass, unlike globals.
-- make the tbo output function just return a position, not the entire object.
-
 - x= should be synthesised from x and = if possible (for x in [+, -, *, /, %])
 	- there's a **LOT** of code dupe between binop.cpp and assop.cpp
 - unify script handling between ScriptCall and Paragraph::evaluate_scripts
@@ -52,9 +47,11 @@ void sap::compile(zst::str_view filename)
 	auto file = interp.loadFile(filename);
 
 	auto document = frontend::parse(filename, file.chars());
-	auto layout_doc = document.layout(&interp);
+	auto layout_doc_or_err = document.layout(&interp);
+	if(layout_doc_or_err.is_err())
+		layout_doc_or_err.error().showAndExit();
 
-
+	auto layout_doc = layout_doc_or_err.take_value();
 
 	interp.setCurrentPhase(ProcessingPhase::Render);
 	auto out_path = std::filesystem::path(filename.str()).replace_extension(".pdf");

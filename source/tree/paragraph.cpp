@@ -22,16 +22,20 @@ namespace sap::tree
 		return Ok();
 	}
 
-	ErrorOr<void> Paragraph::evaluate_scripts(interp::Interpreter* cs,
-		std::vector<std::unique_ptr<InlineObject>>& output_vec)
+	ErrorOr<std::vector<std::unique_ptr<InlineObject>>> Paragraph::evaluate_scripts(interp::Interpreter* cs) const
 	{
+		std::vector<std::unique_ptr<InlineObject>> output_vec {};
 		output_vec.reserve(m_contents.size());
 
 		for(auto& obj : m_contents)
 		{
-			if(dynamic_cast<tree::Text*>(obj.get()) || dynamic_cast<tree::Separator*>(obj.get()))
+			if(auto txt = dynamic_cast<tree::Text*>(obj.get()); txt != nullptr)
 			{
-				output_vec.push_back(std::move(obj));
+				output_vec.push_back(txt->clone());
+			}
+			else if(auto sep = dynamic_cast<tree::Separator*>(obj.get()); sep != nullptr)
+			{
+				output_vec.push_back(sep->clone());
 			}
 			else if(auto iscr = dynamic_cast<tree::ScriptCall*>(obj.get()); iscr != nullptr)
 			{
@@ -80,8 +84,7 @@ namespace sap::tree
 			}
 		}
 
-		m_contents.swap(output_vec);
-		return Ok();
+		return Ok(std::move(output_vec));
 	}
 
 	static bool is_letter(char32_t c)
@@ -183,13 +186,15 @@ namespace sap::tree
 
 
 
-	ErrorOr<void> Paragraph::processWordSeparators()
+	ErrorOr<std::vector<std::unique_ptr<InlineObject>>> Paragraph::processWordSeparators( //
+		std::vector<std::unique_ptr<InlineObject>> input) const
 	{
 		std::vector<std::unique_ptr<InlineObject>> ret {};
+		ret.reserve(input.size());
 
 		bool first_obj = true;
 		bool seen_whitespace = false;
-		for(auto& uwu : m_contents)
+		for(auto& uwu : input)
 		{
 			if(dynamic_cast<tree::Separator*>(uwu.get()))
 			{
@@ -242,8 +247,7 @@ namespace sap::tree
 			first_obj = false;
 		}
 
-		m_contents.swap(ret);
-		return Ok();
+		return Ok(std::move(ret));
 	}
 
 
@@ -259,5 +263,17 @@ namespace sap::tree
 	void Paragraph::addObjects(std::vector<std::unique_ptr<InlineObject>> objs)
 	{
 		m_contents.insert(m_contents.end(), std::move_iterator(objs.begin()), std::move_iterator(objs.end()));
+	}
+
+
+
+	std::unique_ptr<Text> Text::clone() const
+	{
+		return std::make_unique<Text>(m_contents, m_style);
+	}
+
+	std::unique_ptr<Separator> Separator::clone() const
+	{
+		return std::make_unique<Separator>(m_kind, m_hyphenation_cost);
 	}
 }

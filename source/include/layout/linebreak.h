@@ -106,7 +106,8 @@ namespace sap::layout::linebreak
 
 		void add_other(const tree::InlineObject* obj)
 		{
-			sap::internal_error("unsupported");
+			auto& tmp = *obj;
+			sap::internal_error("unsupported: {}", typeid(tmp).name());
 #if 0
 			auto prev_word_style = m_parent_style->extendWith(m_current_style);
 
@@ -151,7 +152,8 @@ namespace sap::layout::linebreak
 				m_line_width_excluding_last_word += get_size_of_last_thing(prev_word_style).x();
 				m_last_word = word->contents();
 			}
-			else if(m_current_style != nullptr && m_current_style != word->style() && *m_current_style != *word->style())
+			else if(m_current_style != nullptr && m_current_style != word->style()
+					&& *m_current_style != *word->style())
 			{
 				m_line_width_excluding_last_word += get_size_of_last_thing(prev_word_style).x();
 				m_last_word = word->contents();

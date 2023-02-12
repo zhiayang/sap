@@ -21,6 +21,8 @@ namespace sap::tree
 		const std::u32string& contents() const { return m_contents; }
 		std::u32string& contents() { return m_contents; }
 
+		std::unique_ptr<Text> clone() const;
+
 	private:
 		friend struct layout::Line;
 
@@ -78,6 +80,8 @@ namespace sap::tree
 
 		int hyphenationCost() const { return m_hyphenation_cost; }
 
+		std::unique_ptr<Separator> clone() const;
+
 	private:
 		friend struct layout::Line;
 
@@ -106,10 +110,11 @@ namespace sap::tree
 		std::vector<std::unique_ptr<InlineObject>>& contents() { return m_contents; }
 		const std::vector<std::unique_ptr<InlineObject>>& contents() const { return m_contents; }
 
-		ErrorOr<void> processWordSeparators();
+		ErrorOr<std::vector<std::unique_ptr<InlineObject>>> processWordSeparators( //
+			std::vector<std::unique_ptr<InlineObject>> vec) const;
 
 	private:
-		ErrorOr<void> evaluate_scripts(interp::Interpreter* cs, std::vector<std::unique_ptr<InlineObject>>& output_vec);
+		ErrorOr<std::vector<std::unique_ptr<InlineObject>>> evaluate_scripts(interp::Interpreter* cs) const;
 
 	private:
 		std::vector<std::unique_ptr<InlineObject>> m_contents {};

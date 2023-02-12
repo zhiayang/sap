@@ -104,28 +104,33 @@ namespace sap::layout
 
 namespace sap::tree
 {
-	std::unique_ptr<layout::Document> Document::layout(interp::Interpreter* cs)
+	ErrorOr<std::unique_ptr<layout::Document>> Document::layout(interp::Interpreter* cs)
 	{
 		// the preamble is only ever run once
 		cs->setCurrentPhase(ProcessingPhase::Preamble);
 
-		if(m_document_start == nullptr)
+		if(not this->haveDocStart())
 			ErrorMessage(&cs->typechecker(), "cannot layout a document with no body").showAndExit();
 
 		cs->evaluator().pushStyle(layout::getDefaultStyle(cs));
 
-		if(auto e = cs->run(m_preamble.get()); e.is_err())
-			e.error().showAndExit();
-
 		DocumentSettings settings {};
-		if(auto e = cs->run(m_document_start.get()); e.ok())
 		{
-			auto val = e.take_value().take();
-			settings = interp::builtin::BS_DocumentSettings::unmake(&cs->evaluator(), val).unwrap();
-		}
-		else
-		{
-			e.error().showAndExit();
+			auto _ = cs->typechecker().pushTree(cs->typechecker().top());
+
+			for(size_t i = 0; i < m_preamble.size(); i++)
+			{
+				auto& stmt = m_preamble[i];
+				auto result = TRY(cs->run(stmt.get()));
+
+				if(i + 1 == m_preamble.size())
+				{
+					assert(result.hasValue());
+
+					auto val = result.take();
+					settings = interp::builtin::BS_DocumentSettings::unmake(&cs->evaluator(), val).unwrap();
+				}
+			}
 		}
 
 		auto layout_doc = std::make_unique<layout::Document>(layout::fillDefaultSettings(cs, std::move(settings)));
@@ -135,36 +140,33 @@ namespace sap::tree
 		size_t layout_pass = 0;
 		while(true)
 		{
-			auto run_hooks_for_phase = [this](interp::Interpreter* cs) {
+			auto run_hooks_for_phase = [this](interp::Interpreter* cs) -> ErrorOr<void> {
 				auto _ = cs->evaluator().pushBlockContext(std::nullopt);
-				if(auto e = cs->runHooks(); e.is_err())
-					e.error().showAndExit();
 
-				m_container->evaluateScripts(cs);
+				TRY(cs->runHooks());
+				TRY(m_container->evaluateScripts(cs));
+
+				return Ok();
 			};
-
 
 			cs->evaluator().commenceLayoutPass(++layout_pass);
 			cs->setCurrentPhase(ProcessingPhase::Layout);
 
 			auto available_space = Size2d(layout_doc->pageLayout().contentSize().x(), Length(INFINITY));
 
-			auto cursor = layout_doc->pageLayout().newCursor();
-			auto container_or_err = m_container->createLayoutObject(cs, Style::empty(), available_space);
-			if(container_or_err.is_err())
-				container_or_err.error().showAndExit();
+			auto maybe_container = TRY(m_container->createLayoutObject(cs, Style::empty(), available_space));
 
-			if(not container_or_err->object.has_value())
+			if(not maybe_container.object.has_value())
 				ErrorMessage(cs->evaluator().loc(), "empty document").showAndExit();
 
 			cs->setCurrentPhase(ProcessingPhase::Position);
-			run_hooks_for_phase(cs);
+			TRY(run_hooks_for_phase(cs));
 
-			auto container = std::move(*container_or_err.unwrap().object);
-			container->positionChildren(cursor);
+			auto container = std::move(*maybe_container.object);
+			container->positionChildren(layout_doc->pageLayout().newCursor());
 
 			cs->setCurrentPhase(ProcessingPhase::PostLayout);
-			run_hooks_for_phase(cs);
+			TRY(run_hooks_for_phase(cs));
 
 			if(cs->evaluator().layoutRequested())
 				continue;
@@ -173,7 +175,7 @@ namespace sap::tree
 			break;
 		}
 
-		return layout_doc;
+		return Ok(std::move(layout_doc));
 	}
 
 
@@ -187,20 +189,15 @@ namespace sap::tree
 		return std::move(m_container);
 	}
 
-	std::unique_ptr<interp::Block> Document::takePreamble() &&
+	std::vector<std::unique_ptr<interp::Stmt>> Document::takePreamble() &&
 	{
 		return std::move(m_preamble);
 	}
 
-	std::unique_ptr<interp::FunctionCall> Document::takeDocStart() &&
-	{
-		return std::move(m_document_start);
-	}
-
-	Document::Document(std::unique_ptr<interp::Block> preamble, std::unique_ptr<interp::FunctionCall> doc_start)
+	Document::Document(std::vector<std::unique_ptr<interp::Stmt>> preamble, bool have_doc_start)
 		: m_container(tree::Container::makeVertBox())
 		, m_preamble(std::move(preamble))
-		, m_document_start(std::move(doc_start))
+		, m_have_document_start(have_doc_start)
 	{
 	}
 

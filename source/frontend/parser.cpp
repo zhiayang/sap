@@ -884,7 +884,19 @@ namespace sap::frontend
 	static std::unique_ptr<interp::VariableDefn> parse_var_defn(Lexer& lexer, bool is_top_level)
 	{
 		auto kw = lexer.next();
-		assert(kw == TT::KW_Let || kw == TT::KW_Var);
+		assert(kw == TT::KW_Global || kw == TT::KW_Let || kw == TT::KW_Var);
+
+		bool is_global = false;
+		if(kw == TT::KW_Global)
+		{
+			is_global = true;
+			kw = lexer.next();
+			if(kw != TT::KW_Let && kw != TT::KW_Var)
+				parse_error(lexer.location(), "expected either 'var' or 'let' after 'global' keyword");
+		}
+
+		if(is_top_level && not is_global)
+			parse_error(kw.loc, "variables at top level must be declared 'global'");
 
 		// expect a name
 		auto maybe_name = lexer.match(TT::Identifier);
@@ -901,7 +913,7 @@ namespace sap::frontend
 			initialiser = parse_expr(lexer);
 
 		return std::make_unique<interp::VariableDefn>(kw.loc, maybe_name->str(), /* is_mutable: */ kw == TT::KW_Var,
-			/* is_global: */ is_top_level, std::move(initialiser), std::move(explicit_type));
+			is_global, std::move(initialiser), std::move(explicit_type));
 	}
 
 	static interp::FunctionDecl::Param parse_param(Lexer& lexer)
@@ -1197,7 +1209,7 @@ namespace sap::frontend
 
 		bool optional_semicolon = false;
 
-		if(tok == TT::KW_Let || tok == TT::KW_Var)
+		if(tok == TT::KW_Global || tok == TT::KW_Let || tok == TT::KW_Var)
 		{
 			stmt = parse_var_defn(lexer, is_top_level);
 		}
@@ -1308,7 +1320,7 @@ namespace sap::frontend
 			target_scope = std::move(qid);
 		}
 
-		block->body = parse_block_or_stmt(lexer, /* mandatory_braces: */ true, /* braces: */ true);
+		block->body = parse_block_or_stmt(lexer, /* is_top_level: */ false, /* braces: */ true);
 		block->body->target_scope = std::move(target_scope);
 
 		return block;
@@ -1523,12 +1535,12 @@ namespace sap::frontend
 	}
 
 
-	static std::pair<std::unique_ptr<interp::Block>, std::unique_ptr<interp::FunctionCall>> parse_preamble(Lexer& lexer)
+	static std::pair<std::vector<std::unique_ptr<interp::Stmt>>, bool> parse_preamble(Lexer& lexer)
 	{
 		auto _ = LexerModer(lexer, Lexer::Mode::Script);
 
-		auto block = std::make_unique<interp::Block>(lexer.location());
-		std::unique_ptr<interp::FunctionCall> doc_start {};
+		bool saw_doc_start = false;
+		std::vector<std::unique_ptr<interp::Stmt>> stmts {};
 
 		while(not lexer.eof())
 		{
@@ -1546,7 +1558,8 @@ namespace sap::frontend
 				auto ident = std::make_unique<interp::Ident>(lexer.previous().loc);
 				ident->name = std::move(callee);
 
-				doc_start = parse_function_call(lexer, std::move(ident));
+				stmts.push_back(parse_function_call(lexer, std::move(ident)));
+				saw_doc_start = true;
 
 				if(lexer.expect(TT::Semicolon))
 					;
@@ -1555,12 +1568,11 @@ namespace sap::frontend
 			}
 			else
 			{
-				block->body.push_back(parse_stmt(lexer, /* is_top_level: */ true));
+				stmts.push_back(parse_stmt(lexer, /* is_top_level: */ false));
 			}
 		}
 
-		block->target_scope = interp::QualifiedId { .top_level = true };
-		return { std::move(block), std::move(doc_start) };
+		return { std::move(stmts), saw_doc_start };
 	}
 
 
@@ -1568,8 +1580,8 @@ namespace sap::frontend
 	{
 		auto lexer = Lexer(filename, contents);
 
-		auto [preamble, doc_start] = parse_preamble(lexer);
-		auto document = Document(std::move(preamble), std::move(doc_start));
+		auto [preamble, have_doc_start] = parse_preamble(lexer);
+		auto document = Document(std::move(preamble), have_doc_start);
 
 		while(not lexer.eof())
 		{

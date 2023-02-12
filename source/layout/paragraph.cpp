@@ -26,9 +26,13 @@
 
 namespace sap::layout
 {
-	Paragraph::Paragraph(const Style* style, LayoutSize size, std::vector<std::unique_ptr<Line>> lines)
+	Paragraph::Paragraph(const Style* style,
+		LayoutSize size,
+		std::vector<std::unique_ptr<Line>> lines,
+		std::vector<std::unique_ptr<tree::InlineObject>> para_inline_objs)
 		: LayoutObject(style, size)
 		, m_lines(std::move(lines))
+		, m_para_inline_objs(std::move(para_inline_objs))
 	{
 	}
 
@@ -65,11 +69,10 @@ namespace sap::tree
 	{
 		auto _ = cs->evaluator().pushBlockContext(this);
 
-		std::vector<std::unique_ptr<InlineObject>> para_objects {};
-		TRY(const_cast<Paragraph*>(this)->evaluate_scripts(cs, para_objects));
-		TRY(const_cast<Paragraph*>(this)->processWordSeparators());
+		auto para_objects = TRY(this->evaluate_scripts(cs));
+		para_objects = TRY(this->processWordSeparators(std::move(para_objects)));
 
-		if(m_contents.empty())
+		if(para_objects.empty())
 			return Ok(LayoutResult::empty());
 
 		auto style = parent_style->extendWith(this->style());
@@ -104,14 +107,14 @@ namespace sap::tree
 			});
 		};
 
-		auto broken_lines = layout::linebreak::breakLines(style, m_contents, available_space.x());
+		auto broken_lines = layout::linebreak::breakLines(style, para_objects, available_space.x());
 
 		for(auto line_it = broken_lines.begin(); line_it != broken_lines.end(); ++line_it)
 		{
 			auto& broken_line = *line_it;
 
-			auto words_begin = m_contents.begin() + (ssize_t) current_idx;
-			auto words_end = m_contents.begin() + (ssize_t) current_idx + (ssize_t) broken_line.numParts();
+			auto words_begin = para_objects.begin() + (ssize_t) current_idx;
+			auto words_end = para_objects.begin() + (ssize_t) current_idx + (ssize_t) broken_line.numParts();
 
 			add_one_line(words_begin, words_end, style);
 
@@ -145,7 +148,7 @@ namespace sap::tree
 		}
 
 		auto layout_para = std::unique_ptr<layout::Paragraph>(new layout::Paragraph(style, para_size,
-			std::move(layout_lines)));
+			std::move(layout_lines), std::move(para_objects)));
 
 		m_generated_layout_object = layout_para.get();
 		return Ok(LayoutResult::make(std::move(layout_para)));

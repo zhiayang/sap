@@ -91,6 +91,9 @@ namespace sap::interp
 				return Ok(decls);
 			}
 
+			if(current->parent() == nullptr)
+				break;
+
 			current = current->parent();
 		}
 
@@ -142,5 +145,19 @@ namespace sap::interp
 		const_cast<Declaration*>(new_decl)->declareAt(this);
 
 		return Ok();
+	}
+
+	void DefnTree::dump(int indent) const
+	{
+		auto x = std::string(static_cast<size_t>(indent * 2), ' ');
+
+		zpr::println("{}name = '{}'", x, m_name);
+		zpr::println("{}defns ({}):", x, m_decls.size());
+		for(auto& [n, d] : m_decls)
+			zpr::println("  {}'{}'{}", x, n, d.size() == 1 ? "" : zpr::sprint(" ({} overloads)", d.size()));
+
+		zpr::println("{}subs ({}):", x, m_children.size());
+		for(auto& child : m_children)
+			child.second->dump(indent + 1);
 	}
 }

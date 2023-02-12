@@ -32,11 +32,13 @@ namespace sap::interp
 
 		ErrorOr<void> declare(const Declaration* decl);
 
+		void dump(int indent = 0) const;
+
 	private:
 		explicit DefnTree(const Typechecker* ts, std::string name, DefnTree* parent)
-		    : m_name(std::move(name))
-		    , m_parent(parent)
-		    , m_typechecker(ts)
+			: m_name(std::move(name))
+			, m_parent(parent)
+			, m_typechecker(ts)
 		{
 		}
 

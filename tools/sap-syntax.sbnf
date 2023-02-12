@@ -78,7 +78,7 @@ script-block:
 
 
 var-defn:
-    'var|let'{storage.type}
+    '(global\s+)?(var|let)'{1: storage.modifier, 2: storage.type}
     IDENTIFIER{meta.name.variable}
     (':'{punctuation.colon} type)?
     ('='{keyword.operator} expr)?

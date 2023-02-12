@@ -14,6 +14,7 @@ namespace sap::layout
 
 namespace sap::interp
 {
+	struct Stmt;
 	struct Block;
 }
 
@@ -23,21 +24,19 @@ namespace sap::tree
 
 	struct Document
 	{
-		explicit Document(std::unique_ptr<interp::Block> preamble, std::unique_ptr<interp::FunctionCall> doc_start);
+		explicit Document(std::vector<std::unique_ptr<interp::Stmt>> preamble, bool have_doc_start);
 
 		void addObject(std::unique_ptr<BlockObject> obj);
-		std::unique_ptr<layout::Document> layout(interp::Interpreter* cs);
+		ErrorOr<std::unique_ptr<layout::Document>> layout(interp::Interpreter* cs);
 
-		bool haveDocStart() const { return m_document_start != nullptr; }
+		bool haveDocStart() const { return m_have_document_start; }
 
 		std::unique_ptr<tree::Container> takeContainer() &&;
-		std::unique_ptr<interp::Block> takePreamble() &&;
-		std::unique_ptr<interp::FunctionCall> takeDocStart() &&;
+		std::vector<std::unique_ptr<interp::Stmt>> takePreamble() &&;
 
 	private:
 		std::unique_ptr<tree::Container> m_container;
-
-		std::unique_ptr<interp::Block> m_preamble;
-		std::unique_ptr<interp::FunctionCall> m_document_start;
+		std::vector<std::unique_ptr<interp::Stmt>> m_preamble;
+		bool m_have_document_start;
 	};
 }
