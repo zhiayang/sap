@@ -54,6 +54,17 @@ namespace sap::interp
 		return this->isArray() && this->toArray()->isVariadic();
 	}
 
+	bool Type::isCloneable() const
+	{
+		if(this->isTreeBlockObj() || this->isTreeInlineObj() || this->isLayoutObject())
+			return false;
+
+		if(this->isArray())
+			return this->arrayElement()->isCloneable();
+
+		return true;
+	}
+
 	bool Type::sameAs(const Type* other) const
 	{
 		if(m_kind != other->m_kind)

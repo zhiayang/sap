@@ -29,6 +29,7 @@ namespace std
 
 
 	global var g_sections: [Section] = [];
+	@layout g_sections = [];
 
 	fn section(name: string) -> ?Block
 	{
@@ -64,25 +65,24 @@ namespace std
 			tmp.x -= 175mm;
 
 			foo.set_position(tmp);
-			# builtin::println(f"hello");
-
 			i += 1;
 		}
-
-		g_sections = [];
 	}
 
 
 
-	fn output_table_of_contents()
+	fn output_table_of_contents() -> ?Block
 	{
 		if(builtin::state().layout_pass == 1)
 		{
 			builtin::request_layout();
-			return;
+			return null;
 		}
 
-#/
+		var lines = [:Block];
+
+		builtin::println(f"sections: {g_sections.size()}");
+
 		var i = 0;
 		while(i < g_sections.size())
 		{
@@ -91,14 +91,21 @@ namespace std
 
 			let item = std::style(builtin::Style {
 				.alignment = builtin::Alignment::Left
-			}, builtin::make_paragraph(builtin::make_text(str)));
+			}, builtin::make_line(builtin::make_text(str)));
 
-			builtin::output_at_current(*item);
+			lines += [*item];
 			i += 1;
 		}
 
 		# reset the sections, so that they number correctly again.
-		g_sections = [];  /#
+		g_sections = [];
+
+		var ret = builtin::make_vbox((*lines)...);
+		ret = builtin::apply_style(builtin::Style {
+			.paragraph_spacing = 0em,
+		}, *ret);
+
+		return ret;
 	}
 
 	@post {

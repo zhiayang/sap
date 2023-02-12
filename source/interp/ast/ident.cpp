@@ -31,10 +31,7 @@ namespace sap::interp
 									 || ret.type()->isLayoutObject());
 
 			if(ret.isLValue() && not keep_lvalue && cannot_be_copied)
-			{
-				return ErrMsg(ts, "'{}' values cannot be copied; use '*' to move or '.clone()' to explicitly clone",
-					ret.type());
-			}
+				return ErrMsg(ts, "'{}' values cannot be copied; use '*' to move", ret.type());
 
 			return Ok(ret);
 		}

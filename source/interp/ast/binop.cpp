@@ -42,7 +42,16 @@ namespace sap::interp
 		else if((ltype->isArray() && rtype->isInteger()) || (ltype->isInteger() && rtype->isArray()))
 		{
 			if(this->op == Op::Multiply)
+			{
+				auto arr_type = ltype->isArray() ? ltype : rtype;
+				if(not arr_type->isCloneable())
+				{
+					return ErrMsg(ts, "cannot copy array of type '{}' because array element type cannot be copied",
+						arr_type);
+				}
+
 				return TCResult::ofRValue(ltype->isArray() ? ltype : rtype);
+			}
 		}
 		else if(ltype->isLength() && rtype->isLength())
 		{
@@ -60,15 +69,19 @@ namespace sap::interp
 				return TCResult::ofRValue(Type::makeLength());
 		}
 
-		return ErrMsg(ts, "unsupported operation '{}' between types '{}' and '{}'", op_to_string(this->op), ltype, rtype);
+		return ErrMsg(ts, "unsupported operation '{}' between types '{}' and '{}'", op_to_string(this->op), ltype,
+			rtype);
 	}
 
-	ErrorOr<EvalResult> BinaryOp::evaluate_impl(Evaluator* ev) const
-	{
-		auto lval = TRY_VALUE(this->lhs->evaluate(ev));
-		auto ltype = lval.type();
 
-		auto rval = TRY_VALUE(this->rhs->evaluate(ev));
+
+
+
+	ErrorOr<Value> evaluateBinaryOperationOnValues(Evaluator* ev, BinaryOp::Op op, Value lval, Value rval)
+	{
+		using Op = BinaryOp::Op;
+
+		auto ltype = lval.type();
 		auto rtype = rval.type();
 
 		auto do_arith = [](Op op, auto a, auto b) {
@@ -91,18 +104,18 @@ namespace sap::interp
 
 		if((ltype->isInteger() && rtype->isInteger()) || (ltype->isFloating() && rtype->isFloating()))
 		{
-			if(util::is_one_of(this->op, Op::Add, Op::Subtract, Op::Multiply, Op::Divide, Op::Modulo))
+			if(util::is_one_of(op, Op::Add, Op::Subtract, Op::Multiply, Op::Divide, Op::Modulo))
 			{
 				// TODO: this might be bad because implicit conversions
 				if(ltype->isInteger())
-					return EvalResult::ofValue(Value::integer(do_arith(this->op, lval.getInteger(), rval.getInteger())));
+					return Ok(Value::integer(do_arith(op, lval.getInteger(), rval.getInteger())));
 				else
-					return EvalResult::ofValue(Value::floating(do_arith(this->op, lval.getFloating(), rval.getFloating())));
+					return Ok(Value::floating(do_arith(op, lval.getFloating(), rval.getFloating())));
 			}
 		}
 		else if(ltype->isArray() && rtype->isArray() && ltype->arrayElement() == rtype->arrayElement())
 		{
-			if(this->op == Op::Add)
+			if(op == Op::Add)
 			{
 				auto lhs = std::move(lval).takeArray();
 				auto rhs = std::move(rval).takeArray();
@@ -110,19 +123,19 @@ namespace sap::interp
 				for(auto& x : rhs)
 					lhs.push_back(std::move(x));
 
-				return EvalResult::ofValue(Value::array(ltype->arrayElement(), std::move(lhs)));
+				return Ok(Value::array(ltype->arrayElement(), std::move(lhs)));
 			}
 		}
 		else if((ltype->isArray() && rtype->isInteger()) || (ltype->isInteger() && rtype->isArray()))
 		{
-			if(this->op == Op::Multiply)
+			if(op == Op::Multiply)
 			{
 				auto elm = (ltype->isArray() ? ltype : rtype)->arrayElement();
 				auto arr = ltype->isArray() ? std::move(lval) : std::move(rval);
 				auto num = (ltype->isArray() ? std::move(rval) : std::move(lval)).getInteger();
 
 				if(num <= 0)
-					return EvalResult::ofValue(Value::array(elm, {}));
+					return Ok(Value::array(elm, {}));
 
 				std::vector<Value> ret = std::move(arr.clone()).takeArray();
 
@@ -133,12 +146,12 @@ namespace sap::interp
 						ret.push_back(std::move(c));
 				}
 
-				return EvalResult::ofValue(Value::array(elm, std::move(ret)));
+				return Ok(Value::array(elm, std::move(ret)));
 			}
 		}
 		else if(ltype->isLength() && rtype->isLength())
 		{
-			assert(this->op == Op::Add || this->op == Op::Subtract);
+			assert(op == Op::Add || op == Op::Subtract);
 
 			auto style = ev->currentStyle();
 
@@ -146,16 +159,16 @@ namespace sap::interp
 			auto right = rval.getLength().resolve(style->font(), style->font_size(), style->root_font_size());
 
 			sap::Length result = 0;
-			if(this->op == Op::Add)
+			if(op == Op::Add)
 				result = left + right;
 			else
 				result = left - right;
 
-			return EvalResult::ofValue(Value::length(DynLength(result)));
+			return Ok(Value::length(DynLength(result)));
 		}
 		else if((ltype->isFloating() || ltype->isInteger()) && rtype->isLength())
 		{
-			assert(this->op == Op::Multiply);
+			assert(op == Op::Multiply);
 			auto len = lval.getLength();
 
 			double multiplier = 0;
@@ -164,11 +177,11 @@ namespace sap::interp
 			else
 				multiplier = static_cast<double>(lval.getInteger());
 
-			return EvalResult::ofValue(Value::length(DynLength(len.value() * multiplier, len.unit())));
+			return Ok(Value::length(DynLength(len.value() * multiplier, len.unit())));
 		}
 		else if(ltype->isLength() && (rtype->isFloating() || rtype->isInteger()))
 		{
-			assert(this->op == Op::Multiply || this->op == Op::Divide);
+			assert(op == Op::Multiply || op == Op::Divide);
 			auto len = lval.getLength();
 
 			double multiplier = 0;
@@ -177,12 +190,21 @@ namespace sap::interp
 			else
 				multiplier = static_cast<double>(lval.getInteger());
 
-			if(this->op == Op::Divide)
+			if(op == Op::Divide)
 				multiplier = 1.0 / multiplier;
 
-			return EvalResult::ofValue(Value::length(DynLength(len.value() * multiplier, len.unit())));
+			return Ok(Value::length(DynLength(len.value() * multiplier, len.unit())));
 		}
 
 		assert(false && "unreachable!");
+	}
+
+	ErrorOr<EvalResult> BinaryOp::evaluate_impl(Evaluator* ev) const
+	{
+		auto lval = TRY_VALUE(this->lhs->evaluate(ev));
+		auto rval = TRY_VALUE(this->rhs->evaluate(ev));
+
+		return EvalResult::ofValue(TRY(evaluateBinaryOperationOnValues(ev, //
+			this->op, std::move(lval), std::move(rval))));
 	}
 }

@@ -21,8 +21,6 @@ CLEANUP:
 TODO:
 
 scripting:
-- x= should be synthesised from x and = if possible (for x in [+, -, *, /, %])
-	- there's a **LOT** of code dupe between binop.cpp and assop.cpp
 - unify script handling between ScriptCall and Paragraph::evaluate_scripts
 
 layout:

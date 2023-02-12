@@ -47,6 +47,8 @@ namespace sap::interp
 		const ArrayType* toArray() const;
 		const EnumType* toEnum() const;
 
+		bool isCloneable() const;
+
 		virtual std::string str() const;
 		virtual bool sameAs(const Type* other) const;
 
