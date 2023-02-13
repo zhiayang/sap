@@ -10,6 +10,7 @@
 
 namespace sap::tree
 {
+	struct Separator;
 	struct BlockObject;
 	struct InlineObject;
 }
@@ -61,4 +62,12 @@ namespace sap::layout
 
 	LineMetrics computeLineMetrics(std::span<const std::unique_ptr<tree::InlineObject>> objs,
 		const Style* parent_style);
+
+	struct SepWidths
+	{
+		Length actual;
+		Length preferred;
+	};
+
+	SepWidths calculateSeparatorWidths(const tree::Separator* sep, const Style* style, bool is_end_of_line);
 }

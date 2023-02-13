@@ -8,6 +8,7 @@ let font_family = builtin::find_font_family(["Source Serif 4", "XCharter", "Time
 	.font_family = *font_family,
 	.paper_size = std::paper_size::A4,
 	.line_spacing = 1.0,
+	.sentence_space_stretch = 1.3,
 	.paragraph_spacing = 1em,
 	.margins = { .left = 2cm, .right = 2cm, .top = 2cm, .bottom = 2cm },
 });

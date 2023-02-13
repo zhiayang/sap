@@ -214,14 +214,21 @@ namespace sap::tree
 				{
 					if(not seen_whitespace)
 					{
+						// we've seen a space, so flush the current text (if not empty)
 						if(not current_text->contents().empty())
 						{
+							bool did_end_sentence = util::is_one_of(current_text->contents().back(), U'.', U'?', U'!');
+
 							make_separators_for_word(ret, std::move(current_text));
-							ret.push_back(std::make_unique<Separator>(Separator::SPACE));
+
+							ret.push_back(std::make_unique<
+								Separator>(did_end_sentence ? Separator::SENTENCE_END : Separator::SPACE));
 
 							current_text = std::make_unique<Text>(U"");
 							current_text->setStyle(tree_text->style());
 						}
+						// if the current text is empty, we just put another separator unless
+						// we're the first object (don't start with a separator)
 						else if(not first_obj)
 						{
 							ret.push_back(std::make_unique<Separator>(Separator::SPACE));
@@ -231,7 +238,9 @@ namespace sap::tree
 					}
 					else
 					{
-						// do nothing (consume more whitespace)
+						// do nothing (consume more whitespace). note that we don't need to specially
+						// handle the case of consecutive newlines forming a paragraph break, since
+						// we should not get those things inside Texts anyway.
 					}
 				}
 				else

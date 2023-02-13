@@ -14,26 +14,31 @@ namespace sap::layout
 	static FontFamily get_default_font_family(interp::Interpreter* cs)
 	{
 		static auto ret = sap::FontFamily(                                                //
-		    &cs->addLoadedFont(pdf::PdfFont::fromBuiltin(pdf::BuiltinFont::TimesRoman)),  //
-		    &cs->addLoadedFont(pdf::PdfFont::fromBuiltin(pdf::BuiltinFont::TimesItalic)), //
-		    &cs->addLoadedFont(pdf::PdfFont::fromBuiltin(pdf::BuiltinFont::TimesBold)),   //
-		    &cs->addLoadedFont(pdf::PdfFont::fromBuiltin(pdf::BuiltinFont::TimesBoldItalic)));
+			&cs->addLoadedFont(pdf::PdfFont::fromBuiltin(pdf::BuiltinFont::TimesRoman)),  //
+			&cs->addLoadedFont(pdf::PdfFont::fromBuiltin(pdf::BuiltinFont::TimesItalic)), //
+			&cs->addLoadedFont(pdf::PdfFont::fromBuiltin(pdf::BuiltinFont::TimesBold)),   //
+			&cs->addLoadedFont(pdf::PdfFont::fromBuiltin(pdf::BuiltinFont::TimesBoldItalic)));
 
 		return ret;
 	}
+
+	static constexpr double DEFAULT_FONT_SIZE_PT = 12;
+	static constexpr double DEFAULT_LINE_SPACING = 1.0;
+	static constexpr double DEFAULT_SENTENCE_SPACE_STRETCH = 1.5;
 
 	const Style* getDefaultStyle(interp::Interpreter* cs)
 	{
 		auto default_style = util::make<sap::Style>();
 
-		auto font_size = pdf::PdfScalar(12).into();
+		auto font_size = pdf::PdfScalar(DEFAULT_FONT_SIZE_PT).into();
 		default_style->set_font_family(get_default_font_family(cs))
-		    .set_font_style(sap::FontStyle::Regular)
-		    .set_font_size(font_size)
-		    .set_root_font_size(font_size)
-		    .set_line_spacing(1.0)
-		    .set_paragraph_spacing(Length(0))
-		    .set_alignment(Alignment::Justified);
+			.set_font_style(sap::FontStyle::Regular)
+			.set_font_size(font_size)
+			.set_root_font_size(font_size)
+			.set_line_spacing(DEFAULT_LINE_SPACING)
+			.set_sentence_space_stretch(DEFAULT_SENTENCE_SPACE_STRETCH)
+			.set_paragraph_spacing(Length(0))
+			.set_alignment(Alignment::Justified);
 
 		return default_style;
 	}
@@ -50,9 +55,10 @@ namespace sap::layout
 
 		using Margins = DocumentSettings::Margins;
 
-		settings.font_size = settings.font_size.value_or(DynLength(12, DynLength::PT));
+		settings.font_size = settings.font_size.value_or(DynLength(DEFAULT_FONT_SIZE_PT, DynLength::PT));
 		settings.paper_size = settings.paper_size.value_or(DynLength2d { mm(210), mm(297) });
-		settings.line_spacing = settings.line_spacing.value_or(1.0);
+		settings.line_spacing = settings.line_spacing.value_or(DEFAULT_LINE_SPACING);
+		settings.sentence_space_stretch = settings.sentence_space_stretch.value_or(DEFAULT_SENTENCE_SPACE_STRETCH);
 		settings.paragraph_spacing = settings.paragraph_spacing.value_or(DynLength(0, DynLength::MM));
 
 		auto paper_width = settings.paper_size->x.resolveWithoutFont(pt(12), pt(12));

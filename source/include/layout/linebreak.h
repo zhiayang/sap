@@ -10,6 +10,7 @@
 #include "sap/style.h" // for Style
 #include "sap/units.h" // for Length
 
+#include "layout/line.h"
 #include "layout/base.h" // for Size2d, Cursor, RectPageLayout
 #include "layout/word.h" // for Separator, Word
 
@@ -21,7 +22,6 @@ namespace sap::layout::linebreak
 
 	private:
 		const Style* m_parent_style;
-		// PageCursor m_prev_cursor;
 
 		enum
 		{
@@ -46,7 +46,7 @@ namespace sap::layout::linebreak
 		// Helper functions
 		static Size2d calculateWordSize(zst::wstr_view text, const Style* style)
 		{
-			return style->font()->getWordSize(text, style->font_size().into<pdf::PdfScalar>()).into<Size2d>();
+			return style->font()->getWordSize(text, style->font_size().into()).into();
 		}
 
 	public:
@@ -60,14 +60,13 @@ namespace sap::layout::linebreak
 			{
 				m_last_word += m_last_sep->endOfLine().sv();
 
-				auto ret = m_line_width_excluding_last_word + calculateWordSize(m_last_word, last_word_style).x();
+				auto word_width = calculateWordSize(m_last_word, last_word_style).x();
+				auto ret = m_line_width_excluding_last_word + word_width;
 
 				// if the previous thing wasn't even a word, we have to add its size as well,
 				// because it doesn't have text in m_last_word
 				if(m_last_obj_kind != WORD)
-				{
 					sap::internal_error("unsupported thing in line");
-				}
 
 				m_last_word.erase(m_last_word.size() - m_last_sep->endOfLine().size());
 				return ret;
@@ -81,7 +80,6 @@ namespace sap::layout::linebreak
 		size_t numSpaces() const { return m_num_spaces; }
 		size_t numParts() const { return m_num_parts; }
 		Length lineHeight() const { return m_line_height; }
-		// PageCursor PageCursor() const { return m_prev_cursor.newLine(m_line_height); }
 
 		void add(const tree::InlineObject* obj)
 		{
@@ -108,31 +106,6 @@ namespace sap::layout::linebreak
 		{
 			auto& tmp = *obj;
 			sap::internal_error("unsupported: {}", typeid(tmp).name());
-#if 0
-			auto prev_word_style = m_parent_style->extendWith(m_current_style);
-
-			m_line_height = std::max(m_line_height, obj->size().y());
-			m_line_width_excluding_last_word += get_size_of_last_thing(prev_word_style).x();
-
-			if(m_last_sep != nullptr && m_last_sep->isSpace())
-				m_num_spaces++;
-
-			if(m_last_sep != nullptr)
-			{
-				auto sep_width = calculateWordSize(m_last_sep->middleOfLine(), prev_word_style).x();
-
-				m_line_width_excluding_last_word += sep_width;
-
-				if(m_last_sep->isSpace())
-					m_total_space_width += sep_width;
-			}
-
-			m_last_word.clear();
-
-			m_num_parts++;
-			m_last_obj_kind = OTHER;
-			m_last_obj = obj;
-#endif
 		}
 
 		// Modifiers
@@ -145,7 +118,7 @@ namespace sap::layout::linebreak
 			auto this_line_height = calculateWordSize(word->contents(), word_style).y() * word_style->line_spacing();
 			m_line_height = std::max(m_line_height, this_line_height);
 
-			if(m_last_sep != nullptr && m_last_sep->isSpace())
+			if(m_last_sep != nullptr && (m_last_sep->isSpace() || m_last_sep->isSentenceEnding()))
 			{
 				m_num_spaces++;
 
@@ -166,12 +139,14 @@ namespace sap::layout::linebreak
 
 			if(m_last_sep != nullptr)
 			{
-				auto sep_width = std::max(calculateWordSize(m_last_sep->middleOfLine(), prev_word_style).x(),
-					calculateWordSize(m_last_sep->middleOfLine(), word_style).x());
+				auto calc = [this](const Style* sty) {
+					return calculateSeparatorWidths(m_last_sep, sty, false);
+				};
 
+				auto sep_width = std::max(calc(prev_word_style).preferred, calc(word_style).preferred);
 				m_line_width_excluding_last_word += sep_width;
 
-				if(m_last_sep->isSpace())
+				if(m_last_sep->isSpace() || m_last_sep->isSentenceEnding())
 					m_total_space_width += sep_width;
 			}
 

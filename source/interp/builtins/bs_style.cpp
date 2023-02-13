@@ -40,23 +40,24 @@ namespace sap::interp::builtin
 	std::vector<Field> builtin::BS_Style::fields()
 	{
 		auto pt_font_family = PT::named(QualifiedId {
-		    .top_level = true,
-		    .parents = { "builtin" },
-		    .name = BS_FontFamily::name,
+			.top_level = true,
+			.parents = { "builtin" },
+			.name = BS_FontFamily::name,
 		});
 
 		auto pt_alignment = PT::named(QualifiedId {
-		    .top_level = true,
-		    .parents = { "builtin" },
-		    .name = BE_Alignment::name,
+			.top_level = true,
+			.parents = { "builtin" },
+			.name = BE_Alignment::name,
 		});
 
-		return util::vectorOf(                                                                                 //
-		    Field { .name = "font_family", .type = PT::optional(pt_font_family), .initialiser = get_null() },  //
-		    Field { .name = "font_size", .type = PT::optional(pt_length), .initialiser = get_null() },         //
-		    Field { .name = "line_spacing", .type = PT::optional(pt_float), .initialiser = get_null() },       //
-		    Field { .name = "paragraph_spacing", .type = PT::optional(pt_length), .initialiser = get_null() }, //
-		    Field { .name = "alignment", .type = PT::optional(pt_alignment), .initialiser = get_null() }       //
+		return util::vectorOf(                                                                                     //
+			Field { .name = "font_family", .type = PT::optional(pt_font_family), .initialiser = get_null() },      //
+			Field { .name = "font_size", .type = PT::optional(pt_length), .initialiser = get_null() },             //
+			Field { .name = "line_spacing", .type = PT::optional(pt_float), .initialiser = get_null() },           //
+			Field { .name = "sentence_space_stretch", .type = PT::optional(pt_float), .initialiser = get_null() }, //
+			Field { .name = "paragraph_spacing", .type = PT::optional(pt_length), .initialiser = get_null() },     //
+			Field { .name = "alignment", .type = PT::optional(pt_alignment), .initialiser = get_null() }           //
 		);
 	}
 
@@ -66,9 +67,11 @@ namespace sap::interp::builtin
 		    .set("font_family", BS_FontFamily::make(ev, style->font_family()))
 		    .set("font_size", Value::length(DynLength(style->font_size())))
 		    .set("line_spacing", Value::floating(style->line_spacing()))
+		    .set("sentence_space_stretch", Value::floating(style->sentence_space_stretch()))
 		    .set("paragraph_spacing", Value::length(DynLength(style->paragraph_spacing())))
 		    .set("alignment",
-		        Value::enumerator(BE_Alignment::type->toEnum(), Value::integer(static_cast<int64_t>(style->alignment()))))
+				Value::enumerator(BE_Alignment::type->toEnum(),
+					Value::integer(static_cast<int64_t>(style->alignment()))))
 		    .make();
 	}
 
@@ -88,6 +91,7 @@ namespace sap::interp::builtin
 
 		style->set_font_size(resolve_length_field(value, "font_size"));
 		style->set_line_spacing(get_optional_struct_field<double>(value, "line_spacing"));
+		style->set_sentence_space_stretch(get_optional_struct_field<double>(value, "sentence_space_stretch"));
 		style->set_alignment(get_optional_enumerator_field<Alignment>(value, "alignment"));
 
 		style->set_paragraph_spacing(resolve_length_field(value, "paragraph_spacing"));

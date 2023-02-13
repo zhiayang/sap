@@ -25,17 +25,20 @@ namespace sap::interp::builtin
 		auto pt_len = PT::named(frontend::TYPE_LENGTH);
 		auto pt_float = PT::named(frontend::TYPE_FLOAT);
 
-		auto pt_font_family = PT::named(QID { .top_level = true, .parents = { "builtin" }, .name = BS_FontFamily::name });
+		auto pt_font_family = PT::
+			named(QID { .top_level = true, .parents = { "builtin" }, .name = BS_FontFamily::name });
 		auto pt_size2d = PT::named(QID { .top_level = true, .parents = { "builtin" }, .name = BS_Size2d::name });
-		auto pt_margins = PT::named(QID { .top_level = true, .parents = { "builtin" }, .name = BS_DocumentMargins::name });
+		auto pt_margins = PT::
+			named(QID { .top_level = true, .parents = { "builtin" }, .name = BS_DocumentMargins::name });
 
-		return util::vectorOf(                                                                                 //
-		    Field { .name = "font_family", .type = PT::optional(pt_font_family), .initialiser = make_null() }, //
-		    Field { .name = "font_size", .type = PT::optional(pt_len), .initialiser = make_null() },           //
-		    Field { .name = "paper_size", .type = PT::optional(pt_size2d), .initialiser = make_null() },       //
-		    Field { .name = "margins", .type = PT::optional(pt_margins), .initialiser = make_null() },         //
-		    Field { .name = "line_spacing", .type = PT::optional(pt_float), .initialiser = make_null() },      //
-		    Field { .name = "paragraph_spacing", .type = PT::optional(pt_len), .initialiser = make_null() }    //
+		return util::vectorOf(                                                                                      //
+			Field { .name = "font_family", .type = PT::optional(pt_font_family), .initialiser = make_null() },      //
+			Field { .name = "font_size", .type = PT::optional(pt_len), .initialiser = make_null() },                //
+			Field { .name = "paper_size", .type = PT::optional(pt_size2d), .initialiser = make_null() },            //
+			Field { .name = "margins", .type = PT::optional(pt_margins), .initialiser = make_null() },              //
+			Field { .name = "line_spacing", .type = PT::optional(pt_float), .initialiser = make_null() },           //
+			Field { .name = "sentence_space_stretch", .type = PT::optional(pt_float), .initialiser = make_null() }, //
+			Field { .name = "paragraph_spacing", .type = PT::optional(pt_len), .initialiser = make_null() }         //
 		);
 	}
 
@@ -47,6 +50,7 @@ namespace sap::interp::builtin
 		    .setOptional("paper_size", settings.paper_size, ev, &BS_Size2d::make)
 		    .setOptional("font_size", settings.font_size, &Value::length)
 		    .setOptional("line_spacing", settings.line_spacing, &Value::floating)
+		    .setOptional("sentence_space_stretch", settings.sentence_space_stretch, &Value::floating)
 		    .setOptional("paragraph_spacing", settings.paragraph_spacing, &Value::length)
 		    .make();
 	}
@@ -65,8 +69,10 @@ namespace sap::interp::builtin
 			settings.paper_size = TRY(BS_Size2d::unmake(ev, **x.getOptional()));
 
 		settings.font_size = get_optional_struct_field<DynLength>(value, "font_size", &Value::getLength);
-		settings.paragraph_spacing = get_optional_struct_field<DynLength>(value, "paragraph_spacing", &Value::getLength);
+		settings.paragraph_spacing = get_optional_struct_field<DynLength>(value, "paragraph_spacing",
+			&Value::getLength);
 		settings.line_spacing = get_optional_struct_field<double>(value, "line_spacing");
+		settings.sentence_space_stretch = get_optional_struct_field<double>(value, "sentence_space_stretch");
 
 		return Ok(std::move(settings));
 	}
@@ -79,10 +85,10 @@ namespace sap::interp::builtin
 	{
 		auto t = PT::optional(PT::named(frontend::TYPE_LENGTH));
 		return util::vectorOf(                                                 //
-		    Field { .name = "top", .type = t, .initialiser = make_null() },    //
-		    Field { .name = "bottom", .type = t, .initialiser = make_null() }, //
-		    Field { .name = "left", .type = t, .initialiser = make_null() },   //
-		    Field { .name = "right", .type = t, .initialiser = make_null() }   //
+			Field { .name = "top", .type = t, .initialiser = make_null() },    //
+			Field { .name = "bottom", .type = t, .initialiser = make_null() }, //
+			Field { .name = "left", .type = t, .initialiser = make_null() },   //
+			Field { .name = "right", .type = t, .initialiser = make_null() }   //
 		);
 	}
 

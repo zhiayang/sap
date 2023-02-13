@@ -21,6 +21,19 @@ namespace sap::layout
 		return { x.into(), asc.into(), dsc.into() };
 	}
 
+	SepWidths calculateSeparatorWidths(const tree::Separator* sep, const Style* style, bool is_end_of_line)
+	{
+		double multiplier = sep->isSentenceEnding() ? style->sentence_space_stretch() : 1.0;
+
+		auto sep_str = is_end_of_line ? sep->endOfLine() : sep->middleOfLine();
+		auto ret = style->font()->getWordSize(sep_str, style->font_size().into()).x();
+
+		return {
+			.actual = ret.into(),
+			.preferred = (ret * multiplier).into(),
+		};
+	}
+
 	LineMetrics computeLineMetrics(std::span<const std::unique_ptr<tree::InlineObject>> objs, const Style* parent_style)
 	{
 		LineMetrics ret {};
@@ -53,6 +66,7 @@ namespace sap::layout
 				word_chunk.text += word->contents();
 
 				auto [chunk_x, chunk_asc, chunk_dsc] = calculate_word_size(word_chunk.text, style);
+
 				ret.widths.push_back(chunk_x - word_chunk.width);
 
 				word_chunk.width = chunk_x;
@@ -76,31 +90,38 @@ namespace sap::layout
 				word_chunk.text.clear();
 
 				cur_chunk_begin = it + 1;
+				bool is_end_of_line = it + 1 == objs.end();
 
-				auto sep_char = (it + 1 == objs.end() ? sep->endOfLine() : sep->middleOfLine());
 
-				auto sep_width = [&]() {
+				auto sep_widths = [&]() -> SepWidths {
 					if(it == objs.begin() && it + 1 == objs.end())
 						sap::internal_error("??? line with only separator");
 
-					if(it == objs.begin())
-						return std::get<0>(calculate_word_size(sep_char,
-							parent_style->extendWith((*(it + 1))->style())));
-					else if(it + 1 == objs.end())
-						return std::get<0>(calculate_word_size(sep_char,
-							parent_style->extendWith((*(it - 1))->style())));
+					auto calc = [sep, is_end_of_line, parent_style](auto iter) {
+						return calculateSeparatorWidths(sep, parent_style->extendWith((*iter)->style()),
+							is_end_of_line);
+					};
 
-					return std::max(                                                                                //
-						std::get<0>(calculate_word_size(sep_char, parent_style->extendWith((*(it - 1))->style()))), //
-						std::get<0>(calculate_word_size(sep_char, parent_style->extendWith((*(it + 1))->style()))));
+					if(it == objs.begin())
+						return calc(it + 1);
+
+					else if(it + 1 == objs.end())
+						return calc(it - 1);
+
+					auto a = calc(it - 1);
+					auto b = calc(it + 1);
+					return {
+						.actual = std::max(a.actual, b.actual),
+						.preferred = std::max(a.preferred, b.preferred),
+					};
 				}();
 
-				if(sep->isSpace())
-					ret.total_space_width += sep_width;
+				if(sep->isSpace() || sep->isSentenceEnding())
+					ret.total_space_width += sep_widths.preferred;
 				else
-					ret.total_word_width += sep_width;
+					ret.total_word_width += sep_widths.preferred;
 
-				ret.widths.push_back(sep_width);
+				ret.widths.push_back(sep_widths.actual);
 			}
 			else
 			{
@@ -173,34 +194,29 @@ namespace sap::layout
 					.descent = line_metrics.descent_height,
 				};
 
-				auto sep = std::make_unique<
-					Word>(i + 1 == objs.size() ? tree_sep->endOfLine() : tree_sep->middleOfLine(),
-					style->extendWith(tree_sep->style()), current_offset, sep_size);
+				bool is_end_of_line = i + 1 == objs.size();
+				auto sep_widths = calculateSeparatorWidths(tree_sep, style->extendWith(tree_sep->style()),
+					is_end_of_line);
+
+				auto orig_offset = current_offset;
+
+				if(style->alignment() == Alignment::Justified
+					&& (not is_last_line || (0.9 <= space_width_factor && space_width_factor <= 1.1)))
+				{
+					current_offset += sep_widths.preferred * space_width_factor;
+				}
+				else
+				{
+					current_offset += sep_widths.preferred;
+				}
+
+				auto sep = std::make_unique<Word>(is_end_of_line ? tree_sep->endOfLine() : tree_sep->middleOfLine(),
+					style->extendWith(tree_sep->style()), orig_offset, sep_size);
 
 				tree_sep->m_generated_layout_object = sep.get();
 
 				prev_word_style = sep->style();
 				layout_objects.push_back(std::move(sep));
-
-				if(style->alignment() == Alignment::Justified)
-				{
-					auto justified_shift = obj_width * space_width_factor;
-					if(is_last_line)
-					{
-						if(0.9 <= space_width_factor && space_width_factor <= 1.1)
-							current_offset += justified_shift;
-						else
-							current_offset += obj_width;
-					}
-					else
-					{
-						current_offset += justified_shift;
-					}
-				}
-				else
-				{
-					current_offset += obj_width;
-				}
 			}
 			else
 			{
@@ -276,10 +292,12 @@ namespace sap::layout
 				auto offset_from_prev = word->relativeOffset() - prev_word->word_end;
 				word->render(line_pos, pages, prev_word->pdf_text, is_first, offset_from_prev);
 
-				prev_word->word_end = word->relativeOffset() + word->layoutSize().width;
+				prev_word->word_end = word->relativeOffset() + word->layoutSize().width /* - word->extraWidth()*/;
 			}
 			else
 			{
+				zpr::println("warning: non-word in line");
+
 				// if we encountered a non-word, reset the text (we can't go back to the same text!)
 				prev_word = std::nullopt;
 				obj->render(layout, pages);

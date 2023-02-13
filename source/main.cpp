@@ -26,11 +26,11 @@ scripting:
 layout:
 - em/en dashes
 - smart quotes
-- spaces after the end of a sentence should be slightly longer than spaces between words
 - microtype-like stuff (hanging punctuation)
 - dijkstra linebreaking might accidentally make an extra page;
 	- when rendering, use some mechanism (eg. proxy object) to only make the page if
 		someone tried to actually put stuff in it (or access it)
+- control comma spacing stretch as well (similar to sentence ending)
 
 #endif
 

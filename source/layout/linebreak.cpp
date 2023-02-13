@@ -84,9 +84,11 @@ namespace sap::layout::linebreak
 				auto& wordorsep = *neighbour_broken_until++;
 				neighbour_line.add(wordorsep.get());
 
+				auto neighbour_width = neighbour_line.width();
+
 				// TODO: allow shrinking of spaces by allowing lines to go past the end of the preferred_line_length
 				// by 10% of the space width * num_spaces
-				if(neighbour_line.width() >= preferred_line_length)
+				if(neighbour_width >= preferred_line_length)
 				{
 					if(ret.empty())
 					{
@@ -103,10 +105,10 @@ namespace sap::layout::linebreak
 					// so the cost is twice as high as having 1 space
 
 					// note: this is "extra mm per space character"
-					if(sep->isSpace())
+					if(sep->isSpace() || sep->isSentenceEnding())
 					{
 						auto tmp = std::max((double) neighbour_line.numSpaces(), 0.5);
-						double extra_space_size = (preferred_line_length - neighbour_line.width()).mm() / tmp;
+						double extra_space_size = (preferred_line_length - neighbour_width).mm() / tmp;
 						cost += extra_space_size * extra_space_size;
 					}
 					else if(sep->isHyphenationPoint() || sep->isExplicitBreakPoint())
@@ -116,7 +118,7 @@ namespace sap::layout::linebreak
 
 						cost += 0.3 * (1 + sep->hyphenationCost()) * (avg_space_width * avg_space_width);
 
-						double extra_space_size = (preferred_line_length - neighbour_line.width()).mm() / tmp;
+						double extra_space_size = (preferred_line_length - neighbour_width).mm() / tmp;
 						cost += extra_space_size * extra_space_size;
 					}
 					else
@@ -135,7 +137,9 @@ namespace sap::layout::linebreak
 
 
 
-	std::vector<BrokenLine> breakLines(const Style* parent_style, const InlineObjVec& contents, Length preferred_line_length)
+	std::vector<BrokenLine> breakLines(const Style* parent_style,
+		const InlineObjVec& contents,
+		Length preferred_line_length)
 	{
 		auto path = util::dijkstra_shortest_path(
 			LineBreakNode {

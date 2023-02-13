@@ -43,6 +43,7 @@ namespace sap
 		DEFINE_ACCESSOR(Length, m_font_size, font_size);
 		DEFINE_ACCESSOR(Length, m_root_font_size, root_font_size);
 		DEFINE_ACCESSOR(double, m_line_spacing, line_spacing);
+		DEFINE_ACCESSOR(double, m_sentence_space_stretch, sentence_space_stretch);
 		DEFINE_ACCESSOR(Length, m_paragraph_spacing, paragraph_spacing);
 		DEFINE_ACCESSOR(Alignment, m_alignment, alignment);
 #undef DEFINE_ACCESSOR
@@ -60,6 +61,7 @@ namespace sap
 		DEFINE_SETTER(Length, m_font_size, set_font_size);
 		DEFINE_SETTER(Length, m_root_font_size, set_root_font_size);
 		DEFINE_SETTER(double, m_line_spacing, set_line_spacing);
+		DEFINE_SETTER(double, m_sentence_space_stretch, set_sentence_space_stretch);
 		DEFINE_SETTER(Length, m_paragraph_spacing, set_paragraph_spacing);
 		DEFINE_SETTER(Alignment, m_alignment, set_alignment);
 
@@ -87,6 +89,7 @@ namespace sap
 		std::optional<Length> m_font_size;
 		std::optional<Length> m_root_font_size;
 		std::optional<double> m_line_spacing;
+		std::optional<double> m_sentence_space_stretch;
 		std::optional<Length> m_paragraph_spacing;
 		std::optional<Alignment> m_alignment;
 

@@ -70,6 +70,7 @@ namespace sap::layout
 			.set_font_size(resolve_len(settings, *settings.font_size))
 			.set_root_font_size(resolve_len(settings, *settings.font_size))
 			.set_line_spacing(*settings.line_spacing)
+			.set_sentence_space_stretch(*settings.sentence_space_stretch)
 			.set_paragraph_spacing(resolve_len(settings, *settings.paragraph_spacing))
 			.set_alignment(Alignment::Justified);
 

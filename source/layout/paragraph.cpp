@@ -97,8 +97,11 @@ namespace sap::tree
 
 			// Ignore space at end of line
 			const auto& last_word = *(words_end - 1);
-			if(auto sep = dynamic_cast<const tree::Separator*>(last_word.get()); sep && sep->isSpace())
+			if(auto sep = dynamic_cast<const tree::Separator*>(last_word.get());
+				sep && (sep->isSpace() || sep->isSentenceEnding()))
+			{
 				--words_end;
+			}
 
 			auto words_span = std::span(words_begin, words_end);
 			the_lines.push_back({

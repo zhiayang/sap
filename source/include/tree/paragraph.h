@@ -36,6 +36,7 @@ namespace sap::tree
 			SPACE,
 			BREAK_POINT,
 			HYPHENATION_POINT,
+			SENTENCE_END,
 		};
 
 		explicit Separator(SeparatorKind kind, int hyphenation_cost = 0)
@@ -45,6 +46,7 @@ namespace sap::tree
 			switch(m_kind)
 			{
 				case decltype(kind)::SPACE:
+				case decltype(kind)::SENTENCE_END:
 					m_end_of_line_char = 0;
 					m_middle_of_line_char = &s_space;
 					break;
@@ -74,9 +76,10 @@ namespace sap::tree
 
 		SeparatorKind kind() const { return m_kind; }
 
-		bool isSpace() const { return m_kind == SPACE; }
 		bool isHyphenationPoint() const { return m_kind == HYPHENATION_POINT; }
 		bool isExplicitBreakPoint() const { return m_kind == BREAK_POINT; }
+		bool isSentenceEnding() const { return m_kind == SENTENCE_END; }
+		bool isSpace() const { return m_kind == SPACE; }
 
 		int hyphenationCost() const { return m_hyphenation_cost; }
 

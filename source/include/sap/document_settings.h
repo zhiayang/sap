@@ -26,5 +26,6 @@ namespace sap
 
 		std::optional<DynLength> paragraph_spacing;
 		std::optional<double> line_spacing;
+		std::optional<double> sentence_space_stretch;
 	};
 }
