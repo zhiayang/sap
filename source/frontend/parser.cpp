@@ -227,6 +227,9 @@ namespace sap::frontend
 
 			case TT::QuestionQuestion: return 100;
 
+			case TT::KW_And: return 50;
+			case TT::KW_Or: return 40;
+
 			default: return -1;
 		}
 	}
@@ -244,7 +247,7 @@ namespace sap::frontend
 
 	static bool is_regular_binary_op(TokenType tok)
 	{
-		return util::is_one_of(tok, TT::Plus, TT::Minus, TT::Asterisk, TT::Slash, TT::Percent);
+		return util::is_one_of(tok, TT::Plus, TT::Minus, TT::Asterisk, TT::Slash, TT::Percent, TT::KW_And, TT::KW_Or);
 	}
 
 	static bool is_comparison_op(TokenType tok)
@@ -795,6 +798,27 @@ namespace sap::frontend
 		{
 			auto ret = std::make_unique<interp::MoveExpr>(t->loc);
 			ret->expr = parse_unary(lexer);
+			return ret;
+		}
+		else if(auto t = lexer.match(TT::Minus); t.has_value())
+		{
+			auto ret = std::make_unique<interp::UnaryOp>(t->loc);
+			ret->expr = parse_unary(lexer);
+			ret->op = interp::UnaryOp::Op::Minus;
+			return ret;
+		}
+		else if(auto t = lexer.match(TT::Plus); t.has_value())
+		{
+			auto ret = std::make_unique<interp::UnaryOp>(t->loc);
+			ret->expr = parse_unary(lexer);
+			ret->op = interp::UnaryOp::Op::Plus;
+			return ret;
+		}
+		else if(auto t = lexer.match(TT::KW_Not); t.has_value())
+		{
+			auto ret = std::make_unique<interp::UnaryOp>(t->loc);
+			ret->expr = parse_unary(lexer);
+			ret->op = interp::UnaryOp::Op::LogicalNot;
 			return ret;
 		}
 

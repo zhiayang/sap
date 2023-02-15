@@ -76,9 +76,12 @@ namespace sap::frontend
 		// keywords
 		KW_If,
 		KW_Fn,
+		KW_Or,
 		KW_Mut,
 		KW_Let,
 		KW_Var,
+		KW_And,
+		KW_Not,
 		KW_Else,
 		KW_Enum,
 		KW_True,

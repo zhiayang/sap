@@ -157,7 +157,7 @@ primary-expr
     | enum-literal
     | `(`{punctuation.paren} expr `)`{punctuation.paren}
     | (`{`{punctuation.brace.struct-start} struct-literal-field-list `}`{punctuation.brace.struct-end})
-    | '(::)?([A-Za-z_][[:word:]]*)(?:\s*(::)\s*([A-Za-z_][[:word:]]*))*'{
+    | '(::)?(?!not)([A-Za-z_][[:word:]]*)(?:\s*(::)\s*([A-Za-z_][[:word:]]*))*'{
         1: punctuation.scope,
         2: variable.other,
         3: punctuation.scope,
@@ -185,8 +185,9 @@ unary-expr
     : postfix-expr
     | `*`{keyword.operator.move} unary-expr
     | `&`{keyword.operator.addr} `mut`{storage.modifier.mut}? unary-expr
-    | `+`{keyword.operator.addr} unary-expr
-    | `-`{keyword.operator.addr} unary-expr
+    | `+`{keyword.operator.plus} unary-expr
+    | `-`{keyword.operator.minus} unary-expr
+    | `not`{keyword.operator.not} unary-expr
     ;
 
 binop-expr: unary-expr binop-expr2?;
@@ -197,21 +198,25 @@ binop-expr2
     | `*=`{keyword.operator.binop.arith} unary-expr binop-expr2
     | `/=`{keyword.operator.binop.arith} unary-expr binop-expr2
     | `%=`{keyword.operator.binop.arith} unary-expr binop-expr2
-    | `<=`{keyword.operator.binop.arith} unary-expr binop-expr2
-    | `>=`{keyword.operator.binop.arith} unary-expr binop-expr2
-    | `==`{keyword.operator.binop.arith} unary-expr binop-expr2
-    | `!=`{keyword.operator.binop.arith} unary-expr binop-expr2
+    | `<=`{keyword.operator.binop.compare} unary-expr binop-expr2
+    | `>=`{keyword.operator.binop.compare} unary-expr binop-expr2
+    | `==`{keyword.operator.binop.compare} unary-expr binop-expr2
+    | `!=`{keyword.operator.binop.compare} unary-expr binop-expr2
     | `??`{keyword.operator.binop.arith} unary-expr binop-expr2
+    | `and`{keyword.operator.binop.logical} unary-expr binop-expr2
+    | `or`{keyword.operator.binop.logical} unary-expr binop-expr2
+    | `&&`{keyword.operator.binop.logical} unary-expr binop-expr2
+    | `||`{keyword.operator.binop.logical} unary-expr binop-expr2
     | `+`{keyword.operator.binop.arith} unary-expr binop-expr2
     | `-`{keyword.operator.binop.arith} unary-expr binop-expr2
     | `*`{keyword.operator.binop.arith} unary-expr binop-expr2
     | `/`{keyword.operator.binop.arith} unary-expr binop-expr2
     | `%`{keyword.operator.binop.arith} unary-expr binop-expr2
-    | `<`{keyword.operator.binop.arith} unary-expr binop-expr2
-    | `>`{keyword.operator.binop.arith} unary-expr binop-expr2
-    | `≤`{keyword.operator.binop.arith} unary-expr binop-expr2
-    | `≥`{keyword.operator.binop.arith} unary-expr binop-expr2
-    | `=`{keyword.operator.binop.arith} unary-expr binop-expr2
+    | `<`{keyword.operator.binop.compare} unary-expr binop-expr2
+    | `>`{keyword.operator.binop.compare} unary-expr binop-expr2
+    | `≤`{keyword.operator.binop.compare} unary-expr binop-expr2
+    | `≥`{keyword.operator.binop.compare} unary-expr binop-expr2
+    | `=`{keyword.operator.binop.assign} unary-expr binop-expr2
     | '(?=;)'?
     ;
 

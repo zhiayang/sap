@@ -381,6 +381,16 @@ namespace sap::frontend
 			return advance_and_return(stream, loc, //
 				Token { .loc = loc, .type = TT::ColonColon, .text = stream.take(2) }, 2);
 		}
+		else if(stream.starts_with("&&"))
+		{
+			return advance_and_return(stream, loc, //
+				Token { .loc = loc, .type = TT::KW_And, .text = stream.take(2) }, 2);
+		}
+		else if(stream.starts_with("||"))
+		{
+			return advance_and_return(stream, loc, //
+				Token { .loc = loc, .type = TT::KW_Or, .text = stream.take(2) }, 2);
+		}
 		else if(stream.starts_with("<="))
 		{
 			return advance_and_return(stream, loc, //
@@ -468,6 +478,12 @@ namespace sap::frontend
 				tt = TT::KW_If;
 			else if(text == "fn")
 				tt = TT::KW_Fn;
+			else if(text == "or")
+				tt = TT::KW_Or;
+			else if(text == "not")
+				tt = TT::KW_Not;
+			else if(text == "and")
+				tt = TT::KW_And;
 			else if(text == "mut")
 				tt = TT::KW_Mut;
 			else if(text == "let")

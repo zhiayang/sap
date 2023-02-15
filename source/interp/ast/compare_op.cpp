@@ -1,4 +1,4 @@
-// cmpop.cpp
+// compare_op.cpp
 // Copyright (c) 2022, zhiayang
 // SPDX-License-Identifier: Apache-2.0
 

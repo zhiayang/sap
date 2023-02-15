@@ -221,6 +221,24 @@ namespace sap::interp
 		mutable const StructDefn* m_struct_defn = nullptr;
 	};
 
+	struct UnaryOp : Expr
+	{
+		explicit UnaryOp(Location loc) : Expr(std::move(loc)) { }
+
+		virtual ErrorOr<EvalResult> evaluate_impl(Evaluator* ev) const override;
+		virtual ErrorOr<TCResult> typecheck_impl(Typechecker* ts, const Type* infer = nullptr, bool keep_lvalue = false)
+			const override;
+
+		enum Op
+		{
+			Plus,
+			Minus,
+			LogicalNot,
+		};
+
+		Op op;
+		std::unique_ptr<Expr> expr;
+	};
 
 	struct BinaryOp : Expr
 	{
@@ -240,6 +258,25 @@ namespace sap::interp
 			Multiply,
 			Divide,
 			Modulo,
+		};
+		Op op;
+	};
+
+	struct LogicalBinOp : Expr
+	{
+		explicit LogicalBinOp(Location loc) : Expr(std::move(loc)) { }
+
+		virtual ErrorOr<EvalResult> evaluate_impl(Evaluator* ev) const override;
+		virtual ErrorOr<TCResult> typecheck_impl(Typechecker* ts, const Type* infer = nullptr, bool keep_lvalue = false)
+			const override;
+
+		std::unique_ptr<Expr> lhs;
+		std::unique_ptr<Expr> rhs;
+
+		enum Op
+		{
+			And,
+			Or,
 		};
 		Op op;
 	};
