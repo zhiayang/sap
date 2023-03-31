@@ -23,6 +23,8 @@ namespace pdf
 		{
 			m_id = doc->getNewObjectId();
 			m_gen = 0;
+
+			doc->addObject(this);
 		}
 	}
 

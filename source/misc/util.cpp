@@ -26,6 +26,7 @@ namespace util
 		if(ptr == reinterpret_cast<void*>(-1))
 			sap::internal_error("failed to read '{}': mmap(): {}", path, strerror(errno));
 
+		close(fd);
 		return zst::unique_span<uint8_t[]>((uint8_t*) ptr, size, [](const void* ptr, size_t n) {
 			munmap((void*) ptr, n);
 		});

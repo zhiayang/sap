@@ -10,7 +10,7 @@ WARNINGS += -Wno-error=unused-function
 WARNINGS += -Wno-unused-but-set-variable
 WARNINGS += -Wno-error=shadow
 
-OPT_FLAGS           := -O0 -fsanitize=address
+OPT_FLAGS           := -O2
 LINKER_OPT_FLAGS    :=
 COMMON_CFLAGS       := -g $(OPT_FLAGS)
 
