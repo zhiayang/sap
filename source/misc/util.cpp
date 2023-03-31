@@ -2,7 +2,8 @@
 // Copyright (c) 2021, zhiayang
 // SPDX-License-Identifier: Apache-2.0
 
-#include <fcntl.h>    // for open, O_RDONLY
+#include <fcntl.h> // for open, O_RDONLY
+#include <unistd.h>
 #include <sys/mman.h> // for size_t, mmap, MAP_PRIVATE, PROT_READ
 #include <sys/stat.h> // for fstat, stat
 

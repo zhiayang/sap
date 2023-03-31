@@ -14,7 +14,7 @@ AllowShortCaseLabelsOnASingleLine: true
 AllowShortFunctionsOnASingleLine: InlineOnly
 AllowShortIfStatementsOnASingleLine: Never
 AllowShortLoopsOnASingleLine: false
-AllowShortLambdasOnASingleLine: Empty
+AllowShortLambdasOnASingleLine: true
 AlwaysBreakBeforeMultilineStrings: false
 AlwaysBreakTemplateDeclarations: true
 BinPackArguments: true
@@ -40,6 +40,7 @@ BreakConstructorInitializers: BeforeComma
 ColumnLimit: 120
 CommentPragmas:  '^ IWYU pragma:'
 ConstructorInitializerIndentWidth: 4
+ConstructorInitializerAllOnOneLineOrOnePerLine: true
 ContinuationIndentWidth: 4
 Cpp11BracedListStyle: false
 DerivePointerAlignment: false
@@ -53,7 +54,6 @@ IndentPPDirectives: None
 KeepEmptyLinesAtTheStartOfBlocks: true
 MaxEmptyLinesToKeep: 100
 NamespaceIndentation: All
-PackConstructorInitializers: CurrentLine
 PenaltyBreakBeforeFirstCallParameter: 10000000
 PenaltyBreakComment: 300
 PenaltyBreakFirstLessLess: 120
@@ -79,6 +79,6 @@ SpaceInEmptyBlock: true
 SpacesInContainerLiterals: true
 SpacesInCStyleCastParentheses: false
 SpacesInParentheses: false
-Standard: c++17
+Standard: Latest
 TabWidth: 4
 UseTab: AlignWithSpaces

@@ -52,7 +52,7 @@ namespace sap::interp::builtin
 		}
 		else if(t->isFloating())
 		{
-			return get_str("{.4f}", v.getFloating());
+			return get_str("{}", v.getFloating());
 		}
 		else if(t->isBool())
 		{

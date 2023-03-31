@@ -2,7 +2,10 @@
 // Copyright (c) 2022, zhiayang
 // SPDX-License-Identifier: Apache-2.0
 
+#include "tree/spacer.h"
+
 #include "layout/base.h"
+#include "layout/spacer.h"
 
 #include "interp/interp.h"
 #include "interp/evaluator.h"
@@ -11,6 +14,35 @@
 
 namespace sap::interp::builtin
 {
+	ErrorOr<EvalResult> vspace(Evaluator* ev, std::vector<Value>& args)
+	{
+		assert(args.size() == 1);
+		assert(args[0].isLength());
+
+		auto spacer = std::make_unique<tree::Spacer>(DynLength2d {
+			.x = DynLength(),
+			.y = args[0].getLength(),
+		});
+
+		return EvalResult::ofValue(Value::treeBlockObject(std::move(spacer)));
+	}
+
+	ErrorOr<EvalResult> hspace(Evaluator* ev, std::vector<Value>& args)
+	{
+		assert(args.size() == 1);
+		assert(args[0].isLength());
+
+		auto spacer = std::make_unique<tree::Spacer>(DynLength2d {
+			.x = args[0].getLength(),
+			.y = DynLength(),
+		});
+
+		return EvalResult::ofValue(Value::treeBlockObject(std::move(spacer)));
+	}
+
+
+
+
 	ErrorOr<EvalResult> output_at_absolute_pos_tbo(Evaluator* ev, std::vector<Value>& args)
 	{
 		assert(args.size() == 2);

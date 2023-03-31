@@ -16,7 +16,7 @@
 */
 
 /*
-    Version 1.4.3
+    Version 2.0.0
     =============
 
 
@@ -25,33 +25,33 @@
     =============
 
     Just a collection of various common utility classes/functions that aren't
-   big enough to justify their own header library.
+    big enough to justify their own header library.
 
     Macros:
 
     - ZST_USE_STD
         this is *TRUE* by default. controls whether or not STL type interfaces
-   are used; with it, str_view gains implicit constructors accepting std::string
-   and std::string_view, as well as methods to convert to them (sv() and str()).
+        are used; with it, str_view gains implicit constructors accepting std::string
+        and std::string_view, as well as methods to convert to them (sv() and str()).
 
     - ZST_FREESTANDING
         this is *FALSE by default; controls whether or not a standard library
-   implementation is available. if not, then memset(), memmove(), memcmp(),
-   strlen(), and strncmp() are forward declared according to the C library
-   specifications, but not defined.
+        implementation is available. if not, then memset(), memmove(), memcmp(),
+        strlen(), and strncmp() are forward declared according to the C library
+        specifications, but not defined.
 
     - ZST_HAVE_BUFFER
         this is *TRUE* by default. controls whether the zst::buffer<T> type is
-   available. If you do not have operator new[] and want to avoid link errors,
-   then set this to false.
+        available. If you do not have operator new[] and want to avoid link errors,
+        then set this to false.
 
 
     Note that ZST_FREESTANDING implies ZST_USE_STD = 0.
 
     Also note that buffer<T>, while it is itself a RAII type, it does *NOT*
-   correctly RAII its contents. notably, no copy or move constructors will be
-   called on any elements, only destructors. Thus, the element type should be
-   limited to POD types.
+    correctly RAII its contents. notably, no copy or move constructors will be
+    called on any elements, only destructors. Thus, the element type should be
+    limited to POD types.
 
     This may change in the future.
 
@@ -63,6 +63,7 @@
 
 #include <stddef.h>
 #include <stdint.h>
+#include <concepts>
 #include <type_traits>
 
 #define ZST_DO_EXPAND(VAL)  VAL ## 1
@@ -107,7 +108,20 @@
 #if !ZST_FREESTANDING && ZST_USE_STD
 	#include <string>
 	#include <string_view>
+
+	#include <memory>
+#else
+
+// if we DONT have std, then make a shitty unique_ptr that will allow SFINAE
+namespace std
+{
+	template <int>
+	class unique_ptr;
+}
+
 #endif
+
+
 
 #undef ZST_DO_EXPAND
 #undef ZST_EXPAND
@@ -798,7 +812,6 @@ namespace zst
 
 
 
-
 namespace zst
 {
 	template <typename, typename>
@@ -806,11 +819,26 @@ namespace zst
 
 	namespace detail
 	{
-		template <typename T>
-		struct is_result : std::false_type { };
+#if ZST_USE_STD && !ZST_FREESTANDING
+		template <typename ToUniquePtr, typename FromUniquePtr>
+		concept UniquePtrConvertible = requires(FromUniquePtr f)
+		{
+			typename FromUniquePtr::pointer;
+			typename FromUniquePtr::element_type;
+			typename FromUniquePtr::deleter_type;
 
-		template <typename T, typename U>
-		struct is_result<Result<T, U>> : std::true_type { };
+			typename ToUniquePtr::pointer;
+			typename ToUniquePtr::element_type;
+			typename ToUniquePtr::deleter_type;
+
+			requires std::derived_from<
+				std::remove_pointer_t<typename FromUniquePtr::pointer>,
+				std::remove_pointer_t<typename ToUniquePtr::pointer>
+			>;
+
+			{ f.release() } -> std::same_as<typename FromUniquePtr::pointer>;
+		};
+#endif
 	}
 
 	template <typename T>
@@ -969,10 +997,10 @@ namespace zst
 		E& error() { this->assert_is_error(); return this->err; }
 
 		// enable implicit upcast to a base type
-		template <typename U, typename = std::enable_if_t<
-			std::is_pointer_v<T> && std::is_pointer_v<U>
+		template <typename U> requires(std::is_pointer_v<T>
+			&& std::is_pointer_v<U>
 			&& std::is_base_of_v<std::remove_pointer_t<U>, std::remove_pointer_t<T>>
-		>>
+		)
 		operator Result<U, E> () const
 		{
 			using R = Result<U, E>;
@@ -981,6 +1009,21 @@ namespace zst
 
 			impl::error_wrapper("invalid state of Result");
 		}
+
+#if ZST_USE_STD && !ZST_FREESTANDING
+
+		template <detail::UniquePtrConvertible<T> U>
+		operator Result<U, E>() &&
+		{
+			using R = Result<U, E>;
+			if(state == STATE_VAL)  return R(typename R::tag_ok{}, U(this->val.release()));
+			if(state == STATE_ERR)  return R(typename R::tag_err{}, static_cast<E&&>(this->err));
+
+			impl::error_wrapper("invalid state of Result");
+		}
+
+#endif
+
 
 		const T& expect(str_view msg) const
 		{
@@ -1196,6 +1239,163 @@ namespace zst
 
 	template <typename E>
 	using Failable = Result<void, E>;
+
+
+
+
+
+	// TODO: see if we can share code between Either and Result
+	template <typename T>
+	struct Left
+	{
+		Left() = default;
+		~Left() = default;
+		Left(Left&&) = default;
+		Left(const Left&) = default;
+
+		Left(const T& value) : m_value(value) { }
+		Left(T&& value) : m_value(static_cast<T&&>(value)) { }
+
+		template <typename... Args>
+		Left(Args&&... args) : m_value(static_cast<Args&&>(args)...) { }
+
+		template <typename, typename> friend struct Either;
+
+	private:
+		T m_value;
+	};
+
+	template <typename T>
+	struct Right
+	{
+		Right() = default;
+		~Right() = default;
+		Right(Right&&) = default;
+		Right(const Right&) = default;
+
+		Right(const T& value) : m_value(value) { }
+		Right(T&& value) : m_value(static_cast<T&&>(value)) { }
+
+		template <typename... Args>
+		Right(Args&&... args) : m_value(static_cast<Args&&>(args)...) { }
+
+		template <typename, typename> friend struct Either;
+
+	private:
+		T m_value;
+	};
+
+	template <typename LT, typename RT>
+	struct Either
+	{
+	private:
+		static constexpr int STATE_NONE  = 0;
+		static constexpr int STATE_LEFT  = 1;
+		static constexpr int STATE_RIGHT = 2;
+
+		struct tag_left {};
+		struct tag_right {};
+
+		Either(tag_left _, const LT& x)  : m_state(STATE_LEFT), m_left(x) { (void) _; }
+		Either(tag_left _, LT&& x)       : m_state(STATE_LEFT), m_left(static_cast<LT&&>(x)) { (void) _; }
+
+		Either(tag_right _, const RT& x) : m_state(STATE_RIGHT), m_right(x) { (void) _; }
+		Either(tag_right _, RT&& x)      : m_state(STATE_RIGHT), m_right(static_cast<RT&&>(x)) { (void) _; }
+
+	public:
+		using left_type = LT;
+		using right_type = RT;
+
+		~Either()
+		{
+			if(m_state == STATE_LEFT)   m_left.~LT();
+			if(m_state == STATE_RIGHT)  m_right.~RT();
+		}
+
+		template <typename T1 = LT>
+		Either(Left<T1>&& x) : Either(tag_left(), static_cast<T1&&>(x.m_value)) { }
+
+		template <typename T1 = RT>
+		Either(Right<T1>&& x) : Either(tag_right(), static_cast<T1&&>(x.m_value)) { }
+
+		Either(const Either& other)
+		{
+			m_state = other.m_state;
+			if(m_state == STATE_LEFT)  new(&m_left) LT(other.m_left);
+			if(m_state == STATE_RIGHT) new(&m_right) RT(other.m_right);
+		}
+
+		Either(Either&& other)
+		{
+			m_state = other.m_state;
+			other.m_state = STATE_NONE;
+			if(m_state == STATE_LEFT)  new(&m_left) LT(static_cast<LT&&>(other.m_left));
+			if(m_state == STATE_RIGHT) new(&m_right) RT(static_cast<RT&&>(other.m_right));
+		}
+
+		Either& operator=(const Either& other)
+		{
+			if(this != &other)
+			{
+				if(m_state == STATE_LEFT)  m_left.~LT();
+				if(m_state == STATE_RIGHT) m_right.~RT();
+
+				m_state = other.m_state;
+				if(m_state == STATE_LEFT) new(&m_left) LT(other.m_left);
+				if(m_state == STATE_RIGHT) new(&m_right) RT(other.m_right);
+			}
+			return *this;
+		}
+
+		Either& operator=(Either&& other)
+		{
+			if(this != &other)
+			{
+				if(m_state == STATE_LEFT) m_left.~LT();
+				if(m_state == STATE_RIGHT) m_right.~RT();
+
+				m_state = other.m_state;
+				other.m_state = STATE_NONE;
+				if(m_state == STATE_LEFT) new(&m_left) LT(static_cast<LT&&>(other.m_left));
+				if(m_state == STATE_RIGHT) new(&m_right) RT(static_cast<RT&&>(other.m_right));
+			}
+			return *this;
+		}
+
+		bool is_left() const { return m_state == STATE_LEFT; }
+		bool is_right() const { return m_state == STATE_RIGHT; }
+
+		const LT& left() const { this->assert_is_left(); return m_left; }
+		const RT& right() const { this->assert_is_right(); return m_right; }
+
+		LT& left()  { this->assert_is_left(); return m_left; }
+		RT& right() { this->assert_is_right(); return m_right; }
+
+		LT take_left() { this->assert_is_left(); m_state = STATE_NONE; return static_cast<LT&&>(m_left); }
+		RT take_right() { this->assert_is_right(); m_state = STATE_NONE; return static_cast<RT&&>(m_right); }
+
+	private:
+		inline void assert_is_left() const
+		{
+			if(m_state != STATE_LEFT)
+				impl::error_wrapper("expected Left, was Right!");
+		}
+
+		inline void assert_is_right() const
+		{
+			if(m_state != STATE_RIGHT)
+				impl::error_wrapper("expected Right, was Left!");
+		}
+
+		int m_state = 0;
+		union {
+			LT m_left;
+			RT m_right;
+		};
+
+		template <typename, typename> friend struct Either;
+	};
+
 }
 
 
@@ -1309,6 +1509,14 @@ constexpr inline zst::byte_span operator""_bs(const char* s, size_t n)
 /*
 	Version History
 	===============
+
+	2.0.0 - 28/03/2023
+	------------------
+	- switch to C++20, partial conversion to concepts
+	- add automatic derived -> base casting for Result<std::unique_ptr<T>>
+	- add Either<L, R>
+
+
 
 	1.4.3 - 18/01/2023
 	------------------

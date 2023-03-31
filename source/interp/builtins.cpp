@@ -98,17 +98,11 @@ namespace sap::interp
 			};
 		};
 
-		const auto make_null = []() {
-			return std::make_unique<interp::NullLit>(Location::builtin());
-		};
+		const auto make_null = []() { return std::make_unique<interp::NullLit>(Location::builtin()); };
 
-		const auto t_ptr = [](const PType& t, bool mut = false) {
-			return PType::pointer(t, mut);
-		};
+		const auto t_ptr = [](const PType& t, bool mut = false) { return PType::pointer(t, mut); };
 
-		const auto t_opt = [](const PType& t) {
-			return PType::optional(t);
-		};
+		const auto t_opt = [](const PType& t) { return PType::optional(t); };
 
 		const auto t_bfont = PType::named(make_builtin_name(builtin::BS_Font::name));
 		const auto t_bstate = PType::named(make_builtin_name(builtin::BS_State::name));
@@ -160,6 +154,9 @@ namespace sap::interp
 		define_builtin("ref", makeParamList(P("_", t_ptr(t_tio))), t_tio_ref, &B::ref_object);
 		define_builtin("ref", makeParamList(P("_", t_ptr(t_tbo))), t_tbo_ref, &B::ref_object);
 		define_builtin("ref", makeParamList(P("_", t_ptr(t_lo))), t_lo_ref, &B::ref_object);
+
+		define_builtin("vspace", makeParamList(P("_", t_length)), t_tbo, &B::vspace);
+		define_builtin("hspace", makeParamList(P("_", t_length)), t_tbo, &B::hspace);
 
 		define_builtin("layout_object", makeParamList(P("_", t_ptr(t_tbo))), t_opt(t_lo_ref), &B::get_layout_object);
 		define_builtin("layout_object", makeParamList(P("_", t_ptr(t_tbo_ref))), t_opt(t_lo_ref),

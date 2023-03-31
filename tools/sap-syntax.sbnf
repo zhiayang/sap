@@ -47,6 +47,7 @@ special-token-escape
     | '(\\)(\\)'{1: punctuation.escape}
     | '(\\)(\{)'{1: punctuation.escape}
     | '(\\)(\})'{1: punctuation.escape}
+    | '(\\)(;)'{1: punctuation.escape}
     ;
 
 
@@ -89,8 +90,8 @@ func-defn:
     'fn'{storage.type}
     IDENTIFIER{entity.name.function}
     `(`{punctuation.paren.params-start}
-        (IDENTIFIER{variable.parameter} `:`{punctuation.colon} type)?
-        (`,`{punctuation.comma} IDENTIFIER{variable.parameter} `:`{punctuation.colon} type)*
+        (IDENTIFIER{variable.parameter} `:`{punctuation.colon} type (`=`{punctuation.equal} expr)?)?
+        (`,`{punctuation.comma} IDENTIFIER{variable.parameter} `:`{punctuation.colon} type (`=`{punctuation.equal} expr)?)*
     `)`{punctuation.parenparams-end}
     (`->`{punctuation.arrow} type)?
     `{`{punctuation.brace}
@@ -105,6 +106,17 @@ struct-field-defn: IDENTIFIER{entity.name.struct-field} `:`{punctuation.colon} t
 struct-defn: 'struct'{storage.type} IDENTIFIER{entity.name.struct}
     `{`{punctuation.brace}
         struct-field-defn*
+    `}`{punctuation.brace}
+    ;
+
+
+enum-enumerator-defn: IDENTIFIER{entity.name.enum-enumerator}
+    (`=`{keyword.operator} expr)? `;`{punctuation.terminator}
+    ;
+
+enum-defn: 'enum'{storage.type} IDENTIFIER{entity.name.enum} (`:`{punctuation.colon} type)?
+    `{`{punctuation.brace}
+        enum-enumerator-defn*
     `}`{punctuation.brace}
     ;
 
@@ -262,6 +274,7 @@ stmt: block-comment
     | func-defn
     | var-defn
     | struct-defn
+    | enum-defn
     | return-stmt
     | if-stmt
     | else-stmt
@@ -315,13 +328,13 @@ enum-literal:
     ;
 
 string-escapes
-    : '\\\{|\\\}|\\\\|\\n|\\t|\\b|\\"\\\''{constant.character.escape}
+    : '\\\{|\\\}|\\\\|\\n|\\t|\\b|\\"|\\\''{constant.character.escape}
     | '\\x[[:xdigit:]]{2}'{constant.character.escape}
     | '\\u[[:xdigit:]]{4}'{constant.character.escape}
     | '\\U[[:xdigit:]]{8}'{constant.character.escape}
     ;
 
-string-literal {string.quoted.double}:
+string-literal {string.quoted.double, include-prototype: false}:
     '"'{punctuation.quote}
         (string-escapes | '[^"]')*
     '"'{punctuation.quote};
@@ -332,7 +345,7 @@ fstring-contents
     | '[^"]'{string.quoted.double}
     ;
 
-fstring-literal:
+fstring-literal {include-prototype: false}:
     '(f)(")'{1: storage.type.string, 2: punctuation.quote.fstring-start}
         fstring-contents*
     '(")'{1: punctuation.quote.fstring-end}

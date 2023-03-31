@@ -79,6 +79,8 @@ namespace dim
 			using unit_system = _System;
 
 			_Type value;
+
+			ScalarConverter operator-() const { return ScalarConverter { -value }; }
 		};
 
 		template <typename _System, typename _CoordSystem, typename _Type>
@@ -90,6 +92,8 @@ namespace dim
 
 			_Type value1;
 			_Type value2;
+
+			Vector2Converter operator-() const { return Vector2Converter { -value1, -value2 }; }
 		};
 	}
 
@@ -254,11 +258,12 @@ namespace dim
 
 
 		template <typename _Vector>
-		constexpr _Vector into() const requires(                                                    //
-			(impl::is_vector2<_Vector>::value)                                                      //
-			&& impl::can_convert_coord_systems<coord_system, typename _Vector::coord_system>::value //
-			&& impl::can_convert_units<unit_tag_type, typename _Vector::unit_tag_type>::value       //
-		)
+		constexpr _Vector into() const
+			requires(                                                                                   //
+				(impl::is_vector2<_Vector>::value)                                                      //
+				&& impl::can_convert_coord_systems<coord_system, typename _Vector::coord_system>::value //
+				&& impl::can_convert_units<unit_tag_type, typename _Vector::unit_tag_type>::value       //
+			)
 		{
 			using _S = typename _Vector::unit_system;
 			using _C = typename _Vector::coord_system;
@@ -281,9 +286,10 @@ namespace dim
 		constexpr auto into() const { return impl::Vector2Converter<_System, _CoordSystem, _Type> { _x._x, _y._x }; }
 
 		template <typename _FromSys, typename _FromCoordSystem, typename _FromType>
-		constexpr Vector2(impl::Vector2Converter<_FromSys, _FromCoordSystem, _FromType> conv) requires( //
-			(impl::can_convert_units<typename _FromSys::Tag, unit_tag_type>::value)
-			&& (impl::can_convert_coord_systems<_FromCoordSystem, coord_system>::value))
+		constexpr Vector2(impl::Vector2Converter<_FromSys, _FromCoordSystem, _FromType> conv)
+			requires( //
+				(impl::can_convert_units<typename _FromSys::Tag, unit_tag_type>::value)
+				&& (impl::can_convert_coord_systems<_FromCoordSystem, coord_system>::value))
 		{
 			this->_x = scalar_type(conv.value1 * _FromSys::scale_factor) / scale_factor;
 			this->_y = scalar_type(conv.value2 * _FromSys::scale_factor) / scale_factor;

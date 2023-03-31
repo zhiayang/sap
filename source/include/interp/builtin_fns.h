@@ -50,6 +50,9 @@ namespace sap::interp
 		ErrorOr<EvalResult> make_vbox(Evaluator* ev, std::vector<Value>& args);
 		ErrorOr<EvalResult> make_zbox(Evaluator* ev, std::vector<Value>& args);
 
+		ErrorOr<EvalResult> hspace(Evaluator* ev, std::vector<Value>& args);
+		ErrorOr<EvalResult> vspace(Evaluator* ev, std::vector<Value>& args);
+
 		ErrorOr<EvalResult> make_text(Evaluator* ev, std::vector<Value>& args);
 		ErrorOr<EvalResult> make_line(Evaluator* ev, std::vector<Value>& args);
 		ErrorOr<EvalResult> make_paragraph(Evaluator* ev, std::vector<Value>& args);

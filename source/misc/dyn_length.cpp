@@ -3,6 +3,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #include "pdf/font.h"
+#include "sap/style.h"
 #include "sap/units.h"
 
 namespace sap
@@ -32,13 +33,19 @@ namespace sap
 		}
 	}
 
+	sap::Length DynLength::resolve(const Style* style) const
+	{
+		return this->resolve(style->font(), style->font_size(), style->root_font_size());
+	}
+
 	sap::Length DynLength::resolve(const pdf::PdfFont* font, sap::Length font_size, sap::Length root_font_size) const
 	{
 		switch(m_unit)
 		{
 			case EX: {
 				auto x_height = font->getFontMetrics().x_height;
-				return font->scaleMetricForFontSize(font::FontScalar(x_height == 0.0 ? 400.0 : x_height), font_size.into())
+				return font
+				    ->scaleMetricForFontSize(font::FontScalar(x_height == 0.0 ? 400.0 : x_height), font_size.into())
 				    .into();
 			}
 			default: return resolveWithoutFont(font_size, root_font_size);
@@ -80,5 +87,23 @@ namespace sap
 			case PC: return "pc";
 			case REM: return "rem";
 		}
+	}
+
+
+	sap::Size2d DynLength2d::resolve(const Style* style) const
+	{
+		return sap::Size2d(this->x.resolve(style), this->y.resolve(style));
+	}
+
+	sap::Size2d DynLength2d::resolve(const pdf::PdfFont* font, sap::Length font_size, sap::Length root_font_size) const
+	{
+		return sap::Size2d(this->x.resolve(font, font_size, root_font_size),
+			this->y.resolve(font, font_size, root_font_size));
+	}
+
+	sap::Size2d DynLength2d::resolveWithoutFont(sap::Length font_size, sap::Length root_font_size) const
+	{
+		return sap::Size2d(this->x.resolveWithoutFont(font_size, root_font_size),
+			this->y.resolveWithoutFont(font_size, root_font_size));
 	}
 }
