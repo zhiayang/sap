@@ -140,9 +140,7 @@ namespace sap::layout
 		LayoutSize size,
 		LineMetrics metrics,
 		std::vector<std::unique_ptr<LayoutObject>> objs)
-		: LayoutObject(style, size)
-		, m_metrics(std::move(metrics))
-		, m_objects(std::move(objs))
+		: LayoutObject(style, size), m_metrics(std::move(metrics)), m_objects(std::move(objs))
 	{
 	}
 

@@ -62,13 +62,13 @@ namespace pdf
 			zst::byte_buffer compressed_bytes {};
 
 			tdefl_init(
-			    &compressor,
-			    [](const void* buf, int len, void* user) -> int {
-				    static_cast<zst::byte_buffer*>(user)->append(static_cast<const uint8_t*>(buf),
-				        util::checked_cast<size_t>(len));
-				    return 1;
-			    },
-			    (void*) &compressed_bytes, COMPRESSION_LEVEL | TDEFL_WRITE_ZLIB_HEADER);
+				&compressor,
+				[](const void* buf, int len, void* user) -> int {
+					static_cast<zst::byte_buffer*>(user)->append(static_cast<const uint8_t*>(buf),
+						util::checked_cast<size_t>(len));
+					return 1;
+				},
+				(void*) &compressed_bytes, COMPRESSION_LEVEL | TDEFL_WRITE_ZLIB_HEADER);
 
 
 			auto res = tdefl_compress_buffer(&compressor, m_bytes.data(), m_bytes.size(), TDEFL_SYNC_FLUSH);
@@ -120,7 +120,8 @@ namespace pdf
 
 	Stream* Stream::create(zst::byte_buffer bytes)
 	{
-		auto dict = Dictionary::create({ { names::Length, Integer::create(util::checked_cast<int64_t>(bytes.size())) } });
+		auto dict = Dictionary::create({ { names::Length,
+			Integer::create(util::checked_cast<int64_t>(bytes.size())) } });
 
 		return Object::createIndirect<Stream>(dict, std::move(bytes));
 	}

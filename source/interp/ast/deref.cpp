@@ -29,9 +29,9 @@ namespace sap::interp
 
 		if(type->isOptional())
 		{
-			auto opt = std::move(inside).takeOptional();
+			auto opt = inside.getOptional();
 			if(opt.has_value())
-				return EvalResult::ofValue(std::move(*opt));
+				return EvalResult::ofValue((*opt)->clone());
 			else
 				return ErrMsg(ev, "dereferencing empty optional");
 		}

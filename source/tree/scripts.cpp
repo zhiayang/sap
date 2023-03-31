@@ -15,10 +15,8 @@ namespace sap::tree
 	{
 	}
 
-	ErrorOr<std::optional<std::unique_ptr<layout::LayoutObject>>> ScriptCall::evaluate_scripts( //
-		interp::Interpreter* cs,
-		const Style* style,
-		Size2d available_space) const
+	auto ScriptCall::evaluate_script(interp::Interpreter* cs, const Style* style, Size2d available_space) const
+		-> ErrorOr<std::optional<ScriptEvalResult>>
 	{
 		TRY(this->call->typecheck(&cs->typechecker()));
 		if(m_run_phase != cs->currentPhase())
@@ -32,16 +30,37 @@ namespace sap::tree
 		auto value_type = value.type();
 
 		using Type = interp::Type;
+		const Type* t_tio = Type::makeTreeInlineObj();
+		const Type* t_otio = Type::makeOptional(t_tio);
+
+		if(util::is_one_of(value_type, t_tio, t_otio))
+		{
+			if(value_type == t_otio)
+			{
+				if(not value.haveOptionalValue())
+					return Ok(Left<ScriptEvalResult::left_type>());
+
+				value = std::move(value).takeOptional().value();
+				value_type = value.type();
+			}
+
+			assert(value.type()->isTreeInlineObj());
+
+			auto tmp = TRY(cs->evaluator().convertValueToText(std::move(value)));
+			return Ok(Left(std::move(tmp)));
+		}
+
+
 		const Type* t_tbo = Type::makeTreeBlockObj();
 		const Type* t_otbo = Type::makeOptional(t_tbo);
 
 		const Type* t_lo = Type::makeLayoutObject();
 		const Type* t_olo = Type::makeOptional(t_lo);
 
-		if(not util::is_one_of(value_type, t_tbo, t_otbo))
+		if(not util::is_one_of(value_type, t_tbo, t_otbo, t_lo, t_olo))
 		{
 			return ErrMsg(this->call->loc(),
-				"invalid result from script call in paragraph; got type '{}', expected either '{}' or '{}', "
+				"invalid result from document script call; got type '{}', expected either '{}' or '{}', "
 				"or optional types of them",
 				value_type, t_tbo, t_lo);
 		}
@@ -78,7 +97,7 @@ namespace sap::tree
 		}
 
 		if(layout_obj != nullptr)
-			return Ok(std::move(layout_obj));
+			return Ok(Right(std::move(layout_obj)));
 
 		return Ok(std::nullopt);
 	}
@@ -86,16 +105,18 @@ namespace sap::tree
 	ErrorOr<void> ScriptCall::evaluateScripts(interp::Interpreter* cs) const
 	{
 		auto space = Size2d(Length(INFINITY), Length(INFINITY));
-		return this->evaluate_scripts(cs, cs->evaluator().currentStyle(), space).remove_value();
+		return this->evaluate_script(cs, cs->evaluator().currentStyle(), space).remove_value();
 	}
 
 	auto ScriptCall::createLayoutObject(interp::Interpreter* cs, const Style* parent_style, Size2d available_space)
 		const -> ErrorOr<LayoutResult>
 	{
-		auto obj = TRY(this->evaluate_scripts(cs, parent_style, available_space));
-
+		auto obj = TRY(this->evaluate_script(cs, parent_style, available_space));
 		if(obj.has_value())
-			return Ok(LayoutResult::make(std::move(*obj)));
+		{
+			assert(obj->is_right());
+			return Ok(LayoutResult::make(obj->take_right()));
+		}
 
 		return Ok(LayoutResult::empty());
 	}

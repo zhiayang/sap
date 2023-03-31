@@ -112,9 +112,14 @@ namespace sap::tree
 		std::unique_ptr<interp::FunctionCall> call;
 
 	private:
-		ErrorOr<std::optional<std::unique_ptr<layout::LayoutObject>>> evaluate_scripts(interp::Interpreter* cs,
+		using ScriptEvalResult = Either<std::vector<std::unique_ptr<InlineObject>>,
+			std::unique_ptr<layout::LayoutObject>>;
+		ErrorOr<std::optional<ScriptEvalResult>> evaluate_script(interp::Interpreter* cs,
 			const Style* parent_style,
 			Size2d available_space) const;
+
+		// befriend Paragraph so it can use our evaluate_script
+		friend struct Paragraph;
 
 	private:
 		mutable std::vector<std::unique_ptr<BlockObject>> m_created_tbos;

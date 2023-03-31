@@ -22,8 +22,90 @@ namespace sap::tree
 		return Ok();
 	}
 
-	ErrorOr<std::vector<std::unique_ptr<InlineObject>>> Paragraph::evaluate_scripts(interp::Interpreter* cs) const
+	auto Paragraph::eval_single_script_in_para(interp::Interpreter* cs,
+		Size2d available_space,
+		ScriptCall* iscr,
+		bool allow_blocks) const -> ErrorOr<std::optional<EvalScriptResult>>
 	{
+		if(iscr->runPhase() != ProcessingPhase::Layout)
+			return ErrMsg(iscr->call->loc(), "inline script calls must run at layout time");
+
+		auto result = TRY(iscr->evaluate_script(cs, m_style, available_space));
+		if(not result.has_value())
+			return Ok(std::nullopt);
+
+		// if we allow blocks, we can just pass through the result.
+		if(allow_blocks)
+			return Ok(std::move(result));
+
+		if(result->is_left())
+			return Ok(std::move(result));
+		else
+			return ErrMsg(iscr->call->loc(), "cannot insert LayoutObject or Block objects in paragraphs");
+
+
+
+
+
+
+#if 0
+		auto maybe_value = TRY(cs->run(iscr->call.get()));
+		if(not maybe_value.hasValue())
+		{
+			// TODO: wtf is this? might be to avoid having two separators in a row?
+			output_vec.emplace_back(new tree::Text(U"", static_cast<InlineObject*>(iscr)->style()));
+			return Ok(Left(std::move(output_vec)));
+		}
+
+		using Type = interp::Type;
+
+		// these are all the types we accept.
+		auto value = maybe_value.take();
+		auto value_type = value.type();
+
+		const Type* t_tio = Type::makeTreeInlineObj();
+		const Type* t_otio = Type::makeOptional(t_tio);
+
+		const Type* t_tbo = Type::makeTreeBlockObj();
+		const Type* t_otbo = Type::makeOptional(t_tbo);
+		const Type* t_lo = Type::makeLayoutObject();
+		const Type* t_olo = Type::makeOptional(t_lo);
+
+		if(util::is_one_of(value_type, t_tbo, t_otbo, t_lo, t_olo))
+		{
+		}
+		else if(not util::is_one_of(value_type, t_tio, t_otio))
+		{
+			return ErrMsg(iscr->call->loc(),
+				"invalid result from script call in paragraph; got type '{}', expected either '{}', '{}', or '{}'"
+				"(or optionals of those)",
+				value_type, t_tio, t_tbo, t_lo);
+		}
+
+		// check the optional guys
+		if(value_type == t_otio)
+		{
+			if(not value.haveOptionalValue())
+				return Ok(Left(std::move(output_vec)));
+
+			value = std::move(value).takeOptional().value();
+			value_type = value.type();
+		}
+#endif
+	}
+
+
+	auto Paragraph::evaluate_scripts(interp::Interpreter* cs, Size2d available_space) const
+		-> ErrorOr<std::optional<EvalScriptResult>>
+	{
+		// if the paragraph has exactly one guy and that guy is a script call,
+		// then we can allow that guy to be promoted to a block object.
+		if(m_contents.size() == 1)
+		{
+			if(auto iscr = dynamic_cast<tree::ScriptCall*>(m_contents.front().get()))
+				return this->eval_single_script_in_para(cs, available_space, iscr, /* allow blocks: */ true);
+		}
+
 		std::vector<std::unique_ptr<InlineObject>> output_vec {};
 		output_vec.reserve(m_contents.size());
 
@@ -39,43 +121,13 @@ namespace sap::tree
 			}
 			else if(auto iscr = dynamic_cast<tree::ScriptCall*>(obj.get()); iscr != nullptr)
 			{
-				auto maybe_value = TRY(cs->run(iscr->call.get()));
-				if(not maybe_value.hasValue())
-				{
-					// TODO: wtf is this? might be to avoid having two separators in a row?
-					output_vec.emplace_back(new tree::Text(U"", obj->style()));
+				auto _tmp = TRY(this->eval_single_script_in_para(cs, available_space, iscr, /* allow blocks: */ false));
+				if(not _tmp.has_value())
 					continue;
-				}
 
-				using Type = interp::Type;
+				assert(_tmp->is_left());
+				auto tmp = _tmp->take_left();
 
-				// these are all the types we accept.
-				auto value = maybe_value.take();
-				auto value_type = value.type();
-
-				const Type* t_tio = Type::makeTreeInlineObj();
-				const Type* t_otio = Type::makeOptional(t_tio);
-
-				if(not util::is_one_of(value_type, t_tio, t_otio))
-				{
-					return ErrMsg(iscr->call->loc(),
-						"invalid result from script call in paragraph; got type '{}', expected either '{}' or '{}'", //
-						value_type, t_tio, t_otio);
-				}
-
-				// check the optional guys
-				if(value_type == t_otio)
-				{
-					if(not value.haveOptionalValue())
-						continue;
-
-					value = std::move(value).takeOptional().value();
-					value_type = value.type();
-				}
-
-				assert(value.type()->isTreeInlineObj());
-
-				auto tmp = TRY(cs->evaluator().convertValueToText(std::move(value)));
 				output_vec.insert(output_vec.end(), std::move_iterator(tmp.begin()), std::move_iterator(tmp.end()));
 			}
 			else
@@ -84,7 +136,7 @@ namespace sap::tree
 			}
 		}
 
-		return Ok(std::move(output_vec));
+		return Ok(Left(std::move(output_vec)));
 	}
 
 	static bool is_letter(char32_t c)

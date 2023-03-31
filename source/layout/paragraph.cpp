@@ -30,9 +30,7 @@ namespace sap::layout
 		LayoutSize size,
 		std::vector<std::unique_ptr<Line>> lines,
 		std::vector<std::unique_ptr<tree::InlineObject>> para_inline_objs)
-		: LayoutObject(style, size)
-		, m_lines(std::move(lines))
-		, m_para_inline_objs(std::move(para_inline_objs))
+		: LayoutObject(style, size), m_lines(std::move(lines)), m_para_inline_objs(std::move(para_inline_objs))
 	{
 	}
 
@@ -69,9 +67,14 @@ namespace sap::tree
 	{
 		auto _ = cs->evaluator().pushBlockContext(this);
 
-		auto para_objects = TRY(this->evaluate_scripts(cs));
-		para_objects = TRY(this->processWordSeparators(std::move(para_objects)));
+		auto objs = TRY(this->evaluate_scripts(cs, available_space));
+		if(not objs.has_value())
+			return Ok(LayoutResult::empty());
 
+		else if(objs->is_right())
+			return Ok(LayoutResult::make(objs->take_right()));
+
+		auto para_objects = TRY(this->processWordSeparators(objs->take_left()));
 		if(para_objects.empty())
 			return Ok(LayoutResult::empty());
 

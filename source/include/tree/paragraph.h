@@ -40,8 +40,7 @@ namespace sap::tree
 		};
 
 		explicit Separator(SeparatorKind kind, int hyphenation_cost = 0)
-			: m_kind(kind)
-			, m_hyphenation_cost(hyphenation_cost)
+			: m_kind(kind), m_hyphenation_cost(hyphenation_cost)
 		{
 			switch(m_kind)
 			{
@@ -117,7 +116,16 @@ namespace sap::tree
 			std::vector<std::unique_ptr<InlineObject>> vec) const;
 
 	private:
-		ErrorOr<std::vector<std::unique_ptr<InlineObject>>> evaluate_scripts(interp::Interpreter* cs) const;
+		using EvalScriptResult = zst::Either<std::vector<std::unique_ptr<InlineObject>>,
+			std::unique_ptr<layout::LayoutObject>>;
+
+		ErrorOr<std::optional<EvalScriptResult>> evaluate_scripts(interp::Interpreter* cs,
+			Size2d available_space) const;
+
+		ErrorOr<std::optional<EvalScriptResult>> eval_single_script_in_para(interp::Interpreter* cs,
+			Size2d available_space,
+			ScriptCall* script,
+			bool allow_blocks) const;
 
 	private:
 		std::vector<std::unique_ptr<InlineObject>> m_contents {};

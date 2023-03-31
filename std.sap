@@ -20,7 +20,7 @@ namespace std
 		}, *blk);
 	}
 
-	struct Section
+	struct SubSubSection
 	{
 		num: int;
 		name: string;
@@ -28,9 +28,37 @@ namespace std
 		num_tbo_ref: BlockRef;
 	};
 
+	struct SubSection
+	{
+		num: int;
+		name: string;
+		page_num: int;
+		num_tbo_ref: BlockRef;
+
+		subsubsections: [SubSubSection];
+	};
+
+	struct Section
+	{
+		num: int;
+		name: string;
+		page_num: int;
+		num_tbo_ref: BlockRef;
+
+		subsections: [SubSection];
+	};
+
 
 	global var g_sections: [Section] = [];
 	@layout g_sections = [];
+
+	global let g_sans_font = builtin::find_font_family([
+		"Myriad Pro", "sans-serif"
+	]);
+
+	global let g_mono_font = builtin::find_font_family([
+		"Fantasque Sans Mono", "Menlo", "monospace"
+	]);
 
 	fn section(name: string) -> ?Block
 	{
@@ -38,7 +66,8 @@ namespace std
 
 		var num_line = builtin::apply_style({
 			.alignment = .Right,
-		}, builtin::make_line(builtin::make_text(f"{section_num * 7}")));
+			.font_size = 13pt,
+		}, builtin::make_line(builtin::make_text(f"{section_num}")));
 
 		var name_line = builtin::apply_style({
 			.font_size = 2em,
@@ -49,29 +78,208 @@ namespace std
 			.name = name,
 			.page_num = 0,
 			.num_tbo_ref = num_line.ref(),
+			.subsections = [],
 		};
 
-		var box = builtin::make_zbox(*num_line, *name_line);
+		var box = builtin::apply_style({
+			.font_family = g_sans_font,
+		}, builtin::make_vbox(
+			builtin::vspace(0.3em),
+			builtin::make_zbox(*num_line, *name_line),
+			builtin::vspace(-1.3em)
+		));
 
 		g_sections += [the_section];
 		return box;
 	}
 
+
+	fn subsection(name: string) -> ?Block
+	{
+		if(g_sections.size() == 0)
+		{
+			builtin::println(f"no sections to put subsection in!");
+			return null;
+		}
+
+		var sec = &mut g_sections[g_sections.size() - 1];
+		let subnum = 1 + sec!.subsections.size();
+
+		var num_line = builtin::apply_style({
+			.alignment = .Right,
+			.font_size = 13pt,
+		}, builtin::make_line(builtin::make_text(f"{sec!.num}.{subnum}")));
+
+		var name_line = builtin::apply_style({
+			.font_size = 1.6em,
+		}, builtin::make_line(builtin::make_text(name)));
+
+		let the_sub = SubSection {
+			.num = subnum,
+			.name = name,
+			.page_num = 0,
+			.num_tbo_ref = num_line.ref(),
+			.subsubsections = [],
+		};
+
+		var box = builtin::apply_style({
+			.font_family = g_sans_font,
+		}, builtin::make_vbox(
+			builtin::vspace(0.3em),
+			builtin::make_zbox(*num_line, *name_line),
+			builtin::vspace(-1.5em)
+		));
+
+		sec!.subsections += [the_sub];
+		return box;
+	}
+
+
+	fn subsubsection(name: string) -> ?Block
+	{
+		if(g_sections.size() == 0)
+		{
+			builtin::println(f"no sections to put subsubsection in!");
+			return null;
+		}
+
+		var sec = &mut g_sections[g_sections.size() - 1];
+		if(sec!.subsections.size() == 0)
+		{
+			builtin::println(f"no subsections to put subsubsection in!");
+			return null;
+		}
+
+		var subsec = &mut sec!.subsections[sec!.subsections.size() - 1];
+		var subsubnum = 1 + subsec!.subsubsections.size();
+
+		var num_line = builtin::apply_style({
+			.alignment = .Right,
+			.font_size = 13pt,
+		}, builtin::make_line(builtin::make_text(f"{sec!.num}.{subsec!.num}.{subsubnum}")));
+
+		var name_line = builtin::apply_style({
+			.font_size = 1.4em,
+		}, builtin::make_line(builtin::make_text(name)));
+
+		let the_subsub = SubSubSection {
+			.num = subsubnum,
+			.name = name,
+			.page_num = 0,
+			.num_tbo_ref = num_line.ref(),
+		};
+
+		var box = builtin::apply_style({
+			.font_family = g_sans_font,
+		}, builtin::make_vbox(
+			builtin::vspace(0.3em),
+			builtin::make_zbox(*num_line, *name_line),
+			builtin::vspace(-1.5em)
+		));
+
+		subsec!.subsubsections += [the_subsub];
+		return box;
+	}
+
+
+
+
+
+
+
 	@post {
 		var i = 0;
 		while(i < g_sections.size())
 		{
-			let foo = g_sections[i].num_tbo_ref.layout_object()!;
+			let sec = &mut g_sections[i];
+			let sec_lo = sec!.num_tbo_ref.layout_object()!;
 
-			var tmp = foo.position();
+			var tmp = sec_lo.position();
 			tmp.x -= 175mm;
 
-			foo.set_position(tmp);
-			g_sections[i].page_num = 1 + tmp.page;
+			sec_lo.set_position(tmp);
+			sec!.page_num = 1 + tmp.page;
+
+			var k = 0;
+			while(k < sec!.subsections.size())
+			{
+				let sub = &mut sec!.subsections[k];
+				let sub_lo = sub!.num_tbo_ref.layout_object()!;
+
+				var tmp = sub_lo.position();
+				tmp.x -= 175mm;
+
+				sub_lo.set_position(tmp);
+				sub!.page_num = 1 + tmp.page;
+
+				var zz = 0;
+				while(zz < sub!.subsubsections.size())
+				{
+					let subsub = &mut sub!.subsubsections[zz];
+					let subsub_lo = subsub!.num_tbo_ref.layout_object()!;
+
+					var tmp = subsub_lo.position();
+					tmp.x -= 175mm;
+
+					subsub_lo.set_position(tmp);
+					subsub!.page_num = 1 + tmp.page;
+
+					zz += 1;
+				}
+
+				k += 1;
+			}
 
 			i += 1;
 		}
 	}
+
+
+
+
+
+
+	struct Reference
+	{
+		name: string;
+		num: int;
+	};
+
+	global var g_references: [Reference] = [];
+	@layout g_references = [];
+
+	fn cite(name: string, page: ?int = null) -> ?Inline
+	{
+		# look for an existing ref
+		var ref_num = 0;
+		while(ref_num < g_references.size())
+		{
+			if(g_references[ref_num].name == name)
+				break;
+
+			ref_num += 1;
+		}
+
+		if(ref_num == g_references.size())
+		{
+			g_references += [Reference {
+				.name = name,
+				.num = ref_num,
+			}];
+		}
+
+		if(page?)
+		{
+			return builtin::make_text(f"[{1 + ref_num}, p. {page!}]");
+		}
+		else
+		{
+			return builtin::make_text(f"[{1 + ref_num}]");
+		}
+	}
+
+
+
 
 
 
@@ -99,9 +307,6 @@ namespace std
 			i += 1;
 		}
 
-		# reset the sections, so that they number correctly again.
-		g_sections = [];
-
 		var ret = builtin::make_vbox((*lines)...);
 		ret = builtin::apply_style({
 			.paragraph_spacing = 0em,
@@ -110,6 +315,10 @@ namespace std
 		# we must re-request layout again, to make the page numbers correct.
 		if(builtin::state().layout_pass == 2)
 			builtin::request_layout();
+
+		# reset the persistent state
+		g_sections = [];
+		g_references = [];
 
 		return ret;
 	}
@@ -126,7 +335,7 @@ namespace std
 			let page_num = i + 1;
 			let item = std::style({
 				.alignment = .Left,
-				.font_size = 20pt,
+				.font_size = 11pt,
 			}, builtin::make_line(builtin::make_text(f"{page_num}")));
 
 			builtin::output_at_absolute({
@@ -139,6 +348,145 @@ namespace std
 		}
 	}
 
+
+	fn numbered_list(items: [string...]) -> ?Block
+	{
+		var lines = [:Block];
+		var i = 0;
+		while(i < items.size())
+		{
+			lines += [builtin::make_hbox(
+				builtin::hspace(0.8em),
+				builtin::apply_style({ .alignment = .Right },
+					builtin::make_line(builtin::make_text(f"{i + 1}."))
+				),
+				builtin::hspace(0.6em),
+				builtin::make_line(builtin::make_text(items[i]))
+			)];
+			i += 1;
+		}
+
+		return builtin::apply_style({ .paragraph_spacing = 0.2em, },
+			builtin::make_vbox(builtin::vspace(-0.9em), (*lines)...)
+		);
+	}
+
+	fn bulleted_list(items: [Inline...]) -> Block
+	{
+		var lines = [:Block];
+		var i = 0;
+		while(i < items.size())
+		{
+			lines += [builtin::make_hbox(
+				builtin::hspace(0.8em),
+				builtin::apply_style({ .alignment = .Right },
+					builtin::make_line(builtin::make_text(f"•"))
+				),
+				builtin::hspace(0.6em),
+				builtin::make_line(*items[i])
+			)];
+			i += 1;
+		}
+
+		return builtin::apply_style({ .paragraph_spacing = 0.2em, },
+			builtin::make_vbox(builtin::vspace(-0.9em), (*lines)...)
+		);
+	}
+
+	fn bulleted_list(items: [string...]) -> Block
+	{
+		var inlines = [:Inline];
+		var i = 0;
+		while(i < items.size())
+		{
+			inlines += [builtin::make_text(items[i])];
+			i += 1;
+		}
+
+		return bulleted_list((*inlines)...);
+	}
+
+
+
+
+
+	fn emph(x: string) -> Inline
+	{
+		return builtin::italic1(builtin::make_text(x));
+	}
+
+	fn emph(x: Inline) -> Inline
+	{
+		return builtin::italic1(*x);
+	}
+
+	fn quote(x: string) -> Inline
+	{
+		return builtin::make_text(f"‘{x}’");
+	}
+
+	fn mono(x: string) -> Inline
+	{
+		return builtin::apply_style({
+			.font_family = g_mono_font
+		}, builtin::make_text(x));
+	}
+
+
+	enum Prefix
+	{
+		nano;
+		micro;
+		milli;
+		none;
+		kilo;
+		mega;
+		giga;
+	}
+
+	enum Unit
+	{
+		byte;
+		second;
+	}
+
+	fn _get_prefix_and_units(prefix: ?Prefix = null, unit: ?Unit = null,
+		p: &mut string, u: &mut string)
+	{
+		if(prefix?)
+		{
+			if(prefix! == Prefix::nano)         p! = "n";
+			else if(prefix! == Prefix::micro)   p! = "µ";
+			else if(prefix! == Prefix::milli)   p! = "m";
+			else if(prefix! == Prefix::kilo)    p! = "k";
+			else if(prefix! == Prefix::mega)    p! = "M";
+			else if(prefix! == Prefix::giga)    p! = "G";
+		}
+
+		if(unit?)
+		{
+			if(unit! == Unit::byte)         u! = "B";
+			else if(unit! == Unit::second)  u! = "s";
+		}
+	}
+
+	fn qty(num: int, prefix: ?Prefix = null, unit: ?Unit = null) -> Inline
+	{
+		var p = "";
+		var u = "";
+		_get_prefix_and_units(prefix, unit, &mut p, &mut u);
+
+		return builtin::make_text(f"{num} {p}{u}");
+	}
+
+	fn qty(num: float, prefix: ?Prefix = null, unit: ?Unit = null) -> Inline
+	{
+		var p = "";
+		var u = "";
+		_get_prefix_and_units(prefix, unit, &mut p, &mut u);
+
+		return builtin::make_text(f"{num} {p}{u}");
+	}
 }
 
 namespace std::paper_size

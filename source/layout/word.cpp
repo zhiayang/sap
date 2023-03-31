@@ -20,9 +20,7 @@
 namespace sap::layout
 {
 	Word::Word(zst::wstr_view text, const Style* style, Length relative_offset, LayoutSize size)
-		: LayoutObject(style, size)
-		, m_relative_offset(relative_offset)
-		, m_text(text)
+		: LayoutObject(style, size), m_relative_offset(relative_offset), m_text(text)
 	{
 		assert(m_style != nullptr);
 	}
