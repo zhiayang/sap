@@ -134,7 +134,7 @@ namespace sap::frontend
 
 		Token previous() const;
 		Token peek() const;
-		Token next();
+		ErrorOr<Token> next();
 		bool eof() const;
 
 		void skipWhitespaceAndComments();
@@ -145,7 +145,7 @@ namespace sap::frontend
 		bool expect(zst::str_view sv);
 
 		Token peekWithMode(Mode mode) const;
-		Token nextWithMode(Mode mode);
+		ErrorOr<Token> nextWithMode(Mode mode);
 
 		SaveState save();
 		void rewind(SaveState st);
@@ -179,5 +179,5 @@ namespace sap::frontend
 
 
 	constexpr inline size_t TAB_WIDTH = 4;
-	tree::Document parse(zst::str_view filename, zst::str_view contents);
+	ErrorOr<tree::Document> parse(zst::str_view filename, zst::str_view contents);
 }

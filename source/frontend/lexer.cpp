@@ -11,24 +11,24 @@ namespace sap::frontend
 {
 	using TT = TokenType;
 
-	static Token advance_and_return(zst::str_view& stream, Location& loc, Token tok, size_t n)
+	static Ok<Token> advance_and_return(zst::str_view& stream, Location& loc, Token tok, size_t n)
 	{
 		loc.column += n;
 		tok.loc.length = util::checked_cast<uint32_t>(n);
 		tok.loc.byte_offset = checked_cast<size_t>(tok.text.data() - tok.loc.file_contents.data());
 		stream.remove_prefix(n);
-		return tok;
+		return Ok(std::move(tok));
 	}
 
-	static Token advance_and_return2(zst::str_view& stream, const Location& loc, Token tok, size_t n)
+	static Ok<Token> advance_and_return2(zst::str_view& stream, const Location& loc, Token tok, size_t n)
 	{
 		tok.loc.length = checked_cast<uint32_t>(n);
 		tok.loc.byte_offset = checked_cast<size_t>(tok.text.data() - tok.loc.file_contents.data());
 		stream.remove_prefix(n);
-		return tok;
+		return Ok(std::move(tok));
 	}
 
-	static bool parse_comment(zst::str_view& stream, Location& loc)
+	static ErrorOr<bool> parse_comment(zst::str_view& stream, Location& loc)
 	{
 		if(stream.starts_with("#/"))
 		{
@@ -39,7 +39,7 @@ namespace sap::frontend
 				auto i = stream.find_first_of("\r\n/#");
 				if(i == (size_t) -1)
 				{
-					parse_error(start_locs.back(), "unterminated block comment (reached end of file) '{}', {}, {}",
+					return ErrMsg(start_locs.back(), "unterminated block comment (reached end of file) '{}', {}, {}",
 						stream.take(10), loc.column, loc.line);
 				}
 
@@ -63,7 +63,7 @@ namespace sap::frontend
 					start_locs.pop_back();
 
 					if(start_locs.empty())
-						return true;
+						return Ok(true);
 				}
 				else if(stream[0] == '\n' || stream.starts_with("\r\n"))
 				{
@@ -116,32 +116,32 @@ namespace sap::frontend
 				}
 			}
 
-			return true;
+			return Ok(true);
 		}
 		else
 		{
-			return false;
+			return Ok(false);
 		}
 	}
 
-	static Token consume_text_token(zst::str_view& stream, Location& loc)
+	static ErrorOr<Token> consume_text_token(zst::str_view& stream, Location& loc)
 	{
 		if(stream.empty())
 		{
-			return Token {
+			return Ok(Token {
 				.loc = loc,
 				.type = TT::EndOfFile,
 				.text = stream.take_last(1),
-			};
+			});
 		}
 		else if(stream.starts_with("#"))
 		{
-			(void) parse_comment(stream, loc);
+			(void) TRY(parse_comment(stream, loc));
 			return consume_text_token(stream, loc);
 		}
 		else if(stream.starts_with("/#"))
 		{
-			parse_error(loc, "unexpected end of block comment");
+			return ErrMsg(loc, "unexpected end of block comment");
 		}
 		else if(stream.starts_with("\n\n") || stream.starts_with("\r\n\r\n"))
 		{
@@ -176,10 +176,11 @@ namespace sap::frontend
 					.text = stream.take(1) },
 				1);
 		}
-		else if(stream[0] == '\\'
-				&& (stream.size() == 1
-					|| (stream[1] != '\\' && //
-						stream[1] != '#' && stream[1] != '{' && stream[1] != '}')))
+		else if(stream[0] == ';')
+		{
+			return advance_and_return(stream, loc, Token { .loc = loc, .type = TT::Text, .text = stream.take(1) }, 1);
+		}
+		else if(stream[0] == '\\' && (stream.size() == 1 || not util::is_one_of(stream[1], '\\', '#', '{', '}', ';')))
 		{
 			return advance_and_return(stream, loc,
 				Token { //
@@ -190,7 +191,7 @@ namespace sap::frontend
 		}
 		else
 		{
-			auto finish_and_return = [&](size_t n) -> Token {
+			auto finish_and_return = [&](size_t n) {
 				return advance_and_return2(stream, loc,
 					Token { //
 						.loc = loc,
@@ -206,7 +207,7 @@ namespace sap::frontend
 				if(stream[n] == '\\')
 				{
 					if(n + 1 >= stream.size())
-						parse_error(loc, "unterminated '\\' escape sequence");
+						return ErrMsg(loc, "unterminated '\\' escape sequence");
 					else if(stream[n + 1] == '\\')
 						n += 2;
 					else if(stream[n + 1] == '#')
@@ -214,6 +215,8 @@ namespace sap::frontend
 					else if(stream[n + 1] == '{')
 						n += 2;
 					else if(stream[n + 1] == '}')
+						n += 2;
+					else if(stream[n + 1] == ';')
 						n += 2;
 					else
 					{
@@ -225,7 +228,7 @@ namespace sap::frontend
 						break;
 					}
 				}
-				else if(util::is_one_of(stream[n], '#', '{', '}'))
+				else if(util::is_one_of(stream[n], '#', '{', '}', ';'))
 				{
 					return finish_and_return(n);
 				}
@@ -252,19 +255,19 @@ namespace sap::frontend
 		}
 	}
 
-	static Token consume_string(zst::str_view& stream, Location& loc, size_t start, TokenType tt)
+	static ErrorOr<Token> consume_string(zst::str_view& stream, Location& loc, size_t start, TokenType tt)
 	{
 		size_t n = start;
 		while(true)
 		{
 			if(n == stream.size())
-				parse_error(loc, "unterminated string literal");
+				return ErrMsg(loc, "unterminated string literal");
 
 			// while we don't unescape these escape sequences, we still need to accept them.
 			if(stream[n] == '\\')
 			{
 				if(n + 1 == stream.size())
-					parse_error(loc, "unterminated escape sequence");
+					return ErrMsg(loc, "unterminated escape sequence");
 
 				auto is_hex = [](char c) -> bool {
 					return ('0' <= c && c <= '9') || ('a' <= c && c <= 'f') || ('A' <= c && c <= 'F');
@@ -287,31 +290,35 @@ namespace sap::frontend
 				else if(stream[n + 1] == 'x')
 				{
 					if(n + 3 <= stream.size())
-						parse_error(loc, "insufficient chars for \\x escape (need 2)");
+						return ErrMsg(loc, "insufficient chars for \\x escape (need 2)");
 
 					if(not std::all_of(&stream.data()[n + 2], &stream.data()[n + 4], is_hex))
-						parse_error(loc, "invalid non-hex character in \\x escape");
+						return ErrMsg(loc, "invalid non-hex character in \\x escape");
 				}
 				else if(stream[n + 1] == 'u')
 				{
 					if(n + 5 <= stream.size())
-						parse_error(loc, "insufficient chars for \\u escape (need 4)");
+						return ErrMsg(loc, "insufficient chars for \\u escape (need 4)");
 
 					if(not std::all_of(&stream.data()[n + 2], &stream.data()[n + 6], is_hex))
-						parse_error(loc, "invalid non-hex character in \\u escape");
+						return ErrMsg(loc, "invalid non-hex character in \\u escape");
 				}
 				else if(stream[n + 1] == 'U')
 				{
 					if(n + 9 <= stream.size())
-						parse_error(loc, "insufficient chars for \\U escape (need 8)");
+						return ErrMsg(loc, "insufficient chars for \\U escape (need 8)");
 
 					if(not std::all_of(&stream.data()[n + 2], &stream.data()[n + 10], is_hex))
-						parse_error(loc, "invalid non-hex character in \\U escape");
+						return ErrMsg(loc, "invalid non-hex character in \\U escape");
+				}
+				else
+				{
+					n++;
 				}
 			}
 			else if(stream[n] == '\r' || stream[n] == '\n')
 			{
-				parse_error(loc, "unescaped newline in string literal");
+				return ErrMsg(loc, "unescaped newline in string literal");
 			}
 			else if(stream[n] == '"')
 			{
@@ -331,7 +338,7 @@ namespace sap::frontend
 	}
 
 
-	static Token consume_script_token(zst::str_view& stream, Location& loc)
+	static ErrorOr<Token> consume_script_token(zst::str_view& stream, Location& loc)
 	{
 		// skip whitespace
 		while(stream.size() > 0)
@@ -363,17 +370,17 @@ namespace sap::frontend
 
 		if(stream.empty())
 		{
-			return Token { .loc = loc, .type = TT::EndOfFile, .text = stream.take_last(1) };
+			return Ok(Token { .loc = loc, .type = TT::EndOfFile, .text = stream.take_last(1) });
 		}
 
 		else if(stream.starts_with("#"))
 		{
-			(void) parse_comment(stream, loc);
+			(void) TRY(parse_comment(stream, loc));
 			return consume_script_token(stream, loc);
 		}
 		else if(stream.starts_with("/#"))
 		{
-			parse_error(loc, "unexpected end of block comment");
+			return ErrMsg(loc, "unexpected end of block comment");
 		}
 
 		else if(stream.starts_with("::"))
@@ -562,7 +569,7 @@ namespace sap::frontend
 				case '!': tt = TT::Exclamation; break;
 				case '\\': tt = TT::Backslash; break;
 
-				default: parse_error(loc, "unknown token '{}'", stream[0]); break;
+				default: return ErrMsg(loc, "unknown token '{}'", stream[0]); break;
 			}
 
 			return advance_and_return(stream, loc, Token { .loc = loc, .type = tt, .text = stream.take(1) }, 1);
@@ -607,12 +614,12 @@ namespace sap::frontend
 		switch(mode)
 		{
 			using enum Mode;
-			case Text: return consume_text_token(foo, bar);
-			case Script: return consume_script_token(foo, bar);
+			case Text: return consume_text_token(foo, bar).or_else(Token { .type = TT::Invalid });
+			case Script: return consume_script_token(foo, bar).or_else(Token { .type = TT::Invalid });
 		}
 	}
 
-	Token Lexer::nextWithMode(Mode mode)
+	ErrorOr<Token> Lexer::nextWithMode(Mode mode)
 	{
 		m_previous_token = this->save();
 
@@ -631,10 +638,11 @@ namespace sap::frontend
 
 	bool Lexer::eof() const
 	{
-		return this->peek() == TT::EndOfFile;
+		auto x = this->peek();
+		return x == TT::Invalid || x == TT::EndOfFile;
 	}
 
-	Token Lexer::next()
+	ErrorOr<Token> Lexer::next()
 	{
 		m_previous_token = this->save();
 		switch(this->mode())
@@ -652,16 +660,16 @@ namespace sap::frontend
 		switch(this->mode())
 		{
 			using enum Mode;
-			case Text: return consume_text_token(tmp1, tmp2);
-			case Script: return consume_script_token(tmp1, tmp2);
+			case Text: return consume_text_token(tmp1, tmp2).unwrap();
+			case Script: return consume_script_token(tmp1, tmp2).unwrap();
 		}
 	}
 
 	bool Lexer::expect(TokenType type)
 	{
-		if(this->peek() == type)
+		if(auto t = this->peek(); t == type)
 		{
-			this->next();
+			this->next().unwrap();
 			return true;
 		}
 
@@ -701,7 +709,7 @@ namespace sap::frontend
 
 				m_stream.remove_prefix(1);
 			}
-			else if(parse_comment(m_stream, m_location))
+			else if(auto c = parse_comment(m_stream, m_location); c.ok() && *c)
 			{
 				// do nothing
 			}
@@ -716,9 +724,9 @@ namespace sap::frontend
 	std::optional<Token> Lexer::match(TokenType type)
 	{
 		if(this->peek() == type)
-			return this->next();
+			return this->next().unwrap();
 
-		return {};
+		return std::nullopt;
 	}
 
 	Lexer::Mode Lexer::mode() const
@@ -730,7 +738,7 @@ namespace sap::frontend
 
 	Location Lexer::location() const
 	{
-		return this->peek().loc;
+		return m_location;
 	}
 
 	void Lexer::pushMode(Lexer::Mode mode)
