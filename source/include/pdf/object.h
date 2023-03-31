@@ -217,7 +217,7 @@ namespace pdf
 	// owns the memory.
 	struct Stream : Object
 	{
-		explicit Stream(Dictionary* dict, zst::byte_buffer bytes) : m_bytes(std::move(bytes)), m_dict(dict) { }
+		explicit Stream(Dictionary* dict, zst::byte_buffer bytes);
 		~Stream();
 
 		Dictionary* dictionary() { return m_dict; }

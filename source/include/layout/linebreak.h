@@ -139,11 +139,9 @@ namespace sap::layout::linebreak
 
 			if(m_last_sep != nullptr)
 			{
-				auto calc = [this](const Style* sty) {
-					return calculateSeparatorWidths(m_last_sep, sty, false);
-				};
+				auto sep_width = calculatePreferredSeparatorWidth(m_last_sep, /* end of line: */ false, //
+					prev_word_style, word_style);
 
-				auto sep_width = std::max(calc(prev_word_style).preferred, calc(word_style).preferred);
 				m_line_width_excluding_last_word += sep_width;
 
 				if(m_last_sep->isSpace() || m_last_sep->isSentenceEnding())

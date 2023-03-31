@@ -22,6 +22,11 @@ namespace pdf
 		fwrite(m_bytes.data(), 1, m_bytes.size(), file);
 	}
 
+	Stream::Stream(Dictionary* dict, zst::byte_buffer bytes)
+		: m_bytes(std::move(bytes)), m_compressed(true), m_dict(dict)
+	{
+	}
+
 	Stream::~Stream()
 	{
 	}

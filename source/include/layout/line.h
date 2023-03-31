@@ -26,7 +26,9 @@ namespace sap::layout
 	{
 		sap::Length total_space_width;
 		sap::Length total_word_width;
+
 		std::vector<sap::Length> widths;
+		std::vector<sap::Length> preferred_sep_widths;
 
 		sap::Length ascent_height;
 		sap::Length descent_height;
@@ -63,11 +65,8 @@ namespace sap::layout
 	LineMetrics computeLineMetrics(std::span<const std::unique_ptr<tree::InlineObject>> objs,
 		const Style* parent_style);
 
-	struct SepWidths
-	{
-		Length actual;
-		Length preferred;
-	};
-
-	SepWidths calculateSeparatorWidths(const tree::Separator* sep, const Style* style, bool is_end_of_line);
+	Length calculatePreferredSeparatorWidth(const tree::Separator* sep,
+		bool is_end_of_line,
+		const Style* left_style,
+		const Style* right_style);
 }
