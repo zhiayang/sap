@@ -34,39 +34,80 @@ layout:
 
 #endif
 
-namespace sap
-{
-	void compile(zst::str_view filename);
-}
-
-void sap::compile(zst::str_view filename)
+bool sap::compile(zst::str_view filename)
 {
 	auto interp = interp::Interpreter();
 	auto file = interp.loadFile(filename);
 
 	auto document = frontend::parse(filename, file.chars());
-	auto layout_doc_or_err = document.layout(&interp);
-	if(layout_doc_or_err.is_err())
-		layout_doc_or_err.error().showAndExit();
+	if(document.is_err())
+		return document.error().display(), false;
 
-	auto layout_doc = layout_doc_or_err.take_value();
+	auto layout_doc = document.unwrap().layout(&interp);
+	if(layout_doc.is_err())
+		return layout_doc.error().display(), false;
 
 	interp.setCurrentPhase(ProcessingPhase::Render);
 	auto out_path = std::filesystem::path(filename.str()).replace_extension(".pdf");
 	auto writer = pdf::Writer(out_path.string());
-	layout_doc->write(&writer);
+	layout_doc.unwrap()->write(&writer);
 	writer.close();
+
+	return true;
 }
 
 int main(int argc, char** argv)
 {
-	if(argc != 2)
+	if(argc < 2)
 	{
-		zpr::println("Usage: {} <input file>", argv[0]);
+		zpr::println("Usage: {} [options...] <input file>", argv[0]);
 		return 1;
 	}
 
-	sap::compile(argv[1]);
+	bool is_watching = false;
+	bool no_more_opts = false;
+
+	int last = 1;
+	for(; last < argc && (not no_more_opts); last++)
+	{
+		auto sv = zst::str_view(argv[last]);
+		if(sv == "--")
+		{
+			no_more_opts = true;
+		}
+		else if(not no_more_opts && sv.starts_with("--"))
+		{
+			if(sv == "--watch")
+			{
+				is_watching = true;
+			}
+			else
+			{
+				zpr::fprintln(stderr, "unsupported option '{}'", sv);
+				return 1;
+			}
+		}
+	}
+
+	if(last != argc)
+	{
+		zpr::fprintln(stderr, "expected exactly one input file");
+		return 1;
+	}
+
+	auto input_file = argv[last - 1];
+	if(is_watching)
+	{
+		sap::watch::addFileToWatchList(input_file);
+
+		(void) sap::compile(input_file);
+
+		sap::watch::start(input_file);
+	}
+	else
+	{
+		return sap::compile(input_file) ? 0 : 1;
+	}
 }
 
 

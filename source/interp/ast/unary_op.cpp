@@ -30,7 +30,7 @@ namespace sap::interp
 			case Op::Plus:
 			case Op::Minus: {
 				auto ty = TRY(this->expr->typecheck(ts)).type();
-				if(not(ty->isInteger() || ty->isFloating()))
+				if(not(ty->isInteger() || ty->isFloating() || ty->isLength()))
 				{
 					return ErrMsg(this->expr->loc(), "invalid type '{}' for unary '{}' operator", ty,
 						op_to_string(this->op));
@@ -62,8 +62,12 @@ namespace sap::interp
 			case Op::Minus: {
 				if(val.type()->isInteger())
 					return EvalResult::ofValue(Value::integer(-val.getInteger()));
-				else
+				else if(val.type()->isFloating())
 					return EvalResult::ofValue(Value::floating(-val.getFloating()));
+				else if(val.type()->isLength())
+					return EvalResult::ofValue(Value::length(val.getLength().negate()));
+				else
+					assert(false);
 			}
 
 			case Op::LogicalNot: {

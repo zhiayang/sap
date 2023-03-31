@@ -39,6 +39,11 @@ namespace sap::interp
 			    || (lhs->isNullPtr() && rhs->isOptional());
 		}
 
+		// if we are doing ordering, make sure that the enum is integral (if it's an enum)
+		if((lhs->isEnum() && not lhs->toEnum()->elementType()->isInteger())
+			|| (rhs->isEnum() && not rhs->toEnum()->elementType()->isInteger()))
+			return false;
+
 		return lhs == rhs                      //
 		    && (not lhs->isTreeInlineObj())    //
 		    && (not lhs->isTreeBlockObj())     //
@@ -53,13 +58,9 @@ namespace sap::interp
 	{
 		using enum ComparisonOp::Op;
 
-		auto cmp_lt = []<typename T>(const T& a, const T& b) -> bool {
-			return a < b;
-		};
+		auto cmp_lt = []<typename T>(const T& a, const T& b) -> bool { return a < b; };
 
-		auto cmp_eq = []<typename T>(const T& a, const T& b) -> bool {
-			return a == b;
-		};
+		auto cmp_eq = []<typename T>(const T& a, const T& b) -> bool { return a == b; };
 
 		auto do_cmp = [&]<typename T>(const T& a, const T& b) -> bool {
 			switch(op)
@@ -79,13 +80,49 @@ namespace sap::interp
 			auto& larr = lhs.getArray();
 			auto& rarr = rhs.getArray();
 
-			for(size_t i = 0; i < std::min(larr.size(), rarr.size()); i++)
+			if(op == EQ)
 			{
-				if(not do_compare(op, larr[i], rarr[i]))
+				if(larr.size() != rarr.size())
 					return false;
-			}
 
-			return larr.size() < rarr.size();
+				for(size_t i = 0; i < larr.size(); i++)
+				{
+					if(not do_compare(EQ, larr[i], rarr[i]))
+						return false;
+				}
+				return true;
+			}
+			else if(op == NE)
+			{
+				if(larr.size() != rarr.size())
+					return true;
+
+				for(size_t i = 0; i < larr.size(); i++)
+				{
+					if(not do_compare(EQ, larr[i], rarr[i]))
+						return true;
+				}
+				return false;
+			}
+			else
+			{
+				for(size_t i = 0; i < std::min(larr.size(), rarr.size()); i++)
+				{
+					if(not do_compare(op, larr[i], rarr[i]))
+						return false;
+				}
+
+				switch(op)
+				{
+					case LT: return larr.size() < rarr.size();
+					case GT: return larr.size() > rarr.size();
+					case LE: return larr.size() <= rarr.size();
+					case GE: return larr.size() >= rarr.size();
+
+					case EQ:
+					case NE: assert(false);
+				}
+			}
 		}
 		else if(lhs.type() == rhs.type())
 		{
@@ -113,6 +150,13 @@ namespace sap::interp
 			{
 				return do_cmp(lhs.getInteger(), rhs.getInteger());
 			}
+			else if(lhs.isEnum())
+			{
+				assert(rhs.isEnum());
+				assert(lhs.type() == rhs.type());
+
+				return do_compare(op, lhs.getEnumerator(), rhs.getEnumerator());
+			}
 		}
 		else if(lhs.type()->isOptional() && rhs.type()->isNullPtr())
 		{
@@ -127,7 +171,7 @@ namespace sap::interp
 			return (op == EQ ? not have_value : have_value);
 		}
 
-		sap::internal_error("??? unsupported comparison");
+		sap::internal_error("??? unsupported comparison: {}, {}", lhs.type(), rhs.type());
 	}
 
 

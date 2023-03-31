@@ -29,13 +29,4 @@ namespace sap
 			};
 		}
 	};
-
-	void showErrorMessage(const Location& loc, const std::string& message);
-
-	template <typename... Args>
-	[[noreturn]] void parse_error(const Location& loc, const char* fmt, Args&&... args)
-	{
-		showErrorMessage(loc, zpr::sprint(fmt, static_cast<Args&&>(args)...));
-		abort();
-	}
 }
