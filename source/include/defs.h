@@ -23,8 +23,20 @@ namespace sap
 	using zst::Err;
 	using zst::ErrFmt;
 
+	using zst::Left;
+	using zst::Right;
+	using zst::Either;
+
 	using zst::Result;
 	using zst::Failable;
+
+	bool compile(zst::str_view filename);
+
+	namespace watch
+	{
+		void start(zst::str_view main_file);
+		StrErrorOr<void> addFileToWatchList(zst::str_view path);
+	}
 }
 
 #define TRY(x)                                                       \

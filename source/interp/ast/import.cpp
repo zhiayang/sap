@@ -17,7 +17,11 @@ namespace sap::interp
 		auto cs = ts->interpreter();
 
 		auto file = cs->loadFile(file_path);
-		auto doc = frontend::parse(cs->keepStringAlive(this->file_path), file.chars());
+		auto doc = TRY(frontend::parse(cs->keepStringAlive(this->file_path), file.chars()));
+
+		// add this file to the watchlist
+		if(auto e = watch::addFileToWatchList(file_path); e.is_err())
+			return ErrMsg(ts, "{}", e.error());
 
 		if(doc.haveDocStart())
 			return ErrMsg(ts, "file '{}' contains a '\\start_document', which cannot be imported");

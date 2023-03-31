@@ -21,7 +21,10 @@ namespace sap::interp::builtin
 
 		auto cs = ev->interpreter();
 		auto file = cs->loadFile(file_path);
-		auto doc = frontend::parse(cs->keepStringAlive(file_path), file.chars());
+		auto doc = TRY(frontend::parse(cs->keepStringAlive(file_path), file.chars()));
+
+		if(auto e = watch::addFileToWatchList(file_path); e.is_err())
+			return ErrMsg(ev, "{}", e.error());
 
 		util::log("included file '{}'", file_path);
 		return EvalResult::ofValue(ev->addToHeapAndGetPointer(Value::treeBlockObject(std::move(doc).takeContainer())));
