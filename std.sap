@@ -6,6 +6,11 @@ namespace builtin
 	{
 		return f"\{xy: ({pos!.x}, {pos!.y}), page: {pos!.page}\}";
 	}
+
+	fn to_string(pos: &AbsPosition) -> string
+	{
+		return f"\{xy: ({pos!.x}, {pos!.y}), page: {pos!.page}\}";
+	}
 }
 
 namespace std
@@ -67,7 +72,8 @@ namespace std
 		var num_line = builtin::apply_style({
 			.alignment = .Right,
 			.font_size = 13pt,
-		}, builtin::make_line(builtin::make_text(f"{section_num}")));
+		}, builtin::make_hbox(builtin::make_line(builtin::make_text(f"{section_num}")), builtin::hspace(3mm)));
+		num_line.set_size_x(13mm);
 
 		var name_line = builtin::apply_style({
 			.font_size = 2em,
@@ -85,10 +91,10 @@ namespace std
 			.font_family = g_sans_font,
 		}, builtin::make_vbox(
 			builtin::vspace(0.3em),
-			builtin::make_zbox(*num_line, *name_line),
-			builtin::vspace(-1.3em)
+			builtin::make_hbox(*num_line, *name_line)
 		));
 
+		box.offset_position({ .x = -13mm, .y = 0mm });
 		g_sections += [the_section];
 		return box;
 	}
@@ -108,7 +114,8 @@ namespace std
 		var num_line = builtin::apply_style({
 			.alignment = .Right,
 			.font_size = 13pt,
-		}, builtin::make_line(builtin::make_text(f"{sec!.num}.{subnum}")));
+		}, builtin::make_hbox(builtin::make_line(builtin::make_text(f"{sec!.num}.{subnum}")), builtin::hspace(3mm)));
+		num_line.set_size_x(13mm);
 
 		var name_line = builtin::apply_style({
 			.font_size = 1.6em,
@@ -126,10 +133,10 @@ namespace std
 			.font_family = g_sans_font,
 		}, builtin::make_vbox(
 			builtin::vspace(0.3em),
-			builtin::make_zbox(*num_line, *name_line),
-			builtin::vspace(-1.5em)
+			builtin::make_hbox(*num_line, *name_line)
 		));
 
+		box.offset_position({ .x = -13mm, .y = 0mm });
 		sec!.subsections += [the_sub];
 		return box;
 	}
@@ -156,7 +163,8 @@ namespace std
 		var num_line = builtin::apply_style({
 			.alignment = .Right,
 			.font_size = 13pt,
-		}, builtin::make_line(builtin::make_text(f"{sec!.num}.{subsec!.num}.{subsubnum}")));
+		}, builtin::make_hbox(builtin::make_line(builtin::make_text(f"{sec!.num}.{subsec!.num}.{subsubnum}")), builtin::hspace(3mm)));
+		num_line.set_size_x(13mm);
 
 		var name_line = builtin::apply_style({
 			.font_size = 1.4em,
@@ -173,10 +181,10 @@ namespace std
 			.font_family = g_sans_font,
 		}, builtin::make_vbox(
 			builtin::vspace(0.3em),
-			builtin::make_zbox(*num_line, *name_line),
-			builtin::vspace(-1.5em)
+			builtin::make_hbox(*num_line, *name_line)
 		));
 
+		box.offset_position({ .x = -13mm, .y = 0mm });
 		subsec!.subsubsections += [the_subsub];
 		return box;
 	}
@@ -186,7 +194,7 @@ namespace std
 
 
 
-
+#/
 	@post {
 		var i = 0;
 		while(i < g_sections.size())
@@ -196,6 +204,7 @@ namespace std
 
 			var tmp = sec_lo.position();
 			tmp.x -= 175mm;
+			builtin::println(f"position = {tmp}");
 
 			sec_lo.set_position(tmp);
 			sec!.page_num = 1 + tmp.page;
@@ -232,7 +241,7 @@ namespace std
 
 			i += 1;
 		}
-	}
+	} /#
 
 
 
@@ -322,7 +331,7 @@ namespace std
 
 		return ret;
 	}
-
+#/
 	@post {
 		var i = 0;
 
@@ -347,7 +356,7 @@ namespace std
 			i += 1;
 		}
 	}
-
+ /#
 
 	fn numbered_list(items: [string...]) -> ?Block
 	{

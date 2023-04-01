@@ -21,6 +21,7 @@
 #include "layout/base.h"      // for Cursor, Size2d, RectPageLayout, Position
 #include "layout/line.h"      // for Line, breakLines
 #include "layout/word.h"      // for Separator, Word
+#include "layout/container.h" //
 #include "layout/paragraph.h" // for Paragraph, PositionedWord
 #include "layout/linebreak.h" //
 
@@ -40,30 +41,24 @@ namespace sap::layout
 			line->render(layout, pages);
 	}
 
-	layout::PageCursor Paragraph::positionChildren(layout::PageCursor cursor)
+	layout::PageCursor Paragraph::compute_position_impl(layout::PageCursor cursor)
 	{
 		assert(not m_lines.empty());
 		this->positionRelatively(cursor.position());
 
-		bool first = true;
-		for(auto& line : m_lines)
-		{
-			if(not first)
-				cursor = cursor.newLine(line->layoutSize().ascent);
+		cursor = cursor.carriageReturn();
 
-			first = false;
-			cursor = line->positionChildren(cursor);
-		}
-
-		return cursor;
+		return position_children_in_container(cursor, m_layout_size.width, Container::Direction::Vertical,
+			m_style->alignment(), 0, 0, /* shift_by_ascent_of_first_child: */ false, m_lines);
 	}
 }
 
 
 namespace sap::tree
 {
-	auto Paragraph::createLayoutObject(interp::Interpreter* cs, const Style* parent_style, Size2d available_space) const
-		-> ErrorOr<LayoutResult>
+	auto Paragraph::create_layout_object_impl(interp::Interpreter* cs,
+		const Style* parent_style,
+		Size2d available_space) const -> ErrorOr<LayoutResult>
 	{
 		auto _ = cs->evaluator().pushBlockContext(this);
 
@@ -74,7 +69,7 @@ namespace sap::tree
 		else if(objs->is_right())
 			return Ok(LayoutResult::make(objs->take_right()));
 
-		auto para_objects = TRY(this->processWordSeparators(objs->take_left()));
+		auto para_objects = TRY(Paragraph::processWordSeparators(objs->take_left()));
 		if(para_objects.empty())
 			return Ok(LayoutResult::empty());
 

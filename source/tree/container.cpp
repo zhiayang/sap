@@ -44,8 +44,9 @@ namespace sap::tree
 		return Ok();
 	}
 
-	auto Container::createLayoutObject(interp::Interpreter* cs, const Style* parent_style, Size2d available_space) const
-		-> ErrorOr<LayoutResult>
+	auto Container::create_layout_object_impl(interp::Interpreter* cs,
+		const Style* parent_style,
+		Size2d available_space) const -> ErrorOr<LayoutResult>
 	{
 		auto _ = cs->evaluator().pushBlockContext(this);
 
@@ -138,11 +139,10 @@ namespace sap::tree
 
 			case None: {
 				dir = LD::None;
-				top_to_baseline = max_size.ascent;
 				final_size = LayoutSize {
 					.width = max_size.width,
-					.ascent = 0,
-					.descent = max_size.total_height(),
+					.ascent = max_size.ascent,
+					.descent = max_size.descent,
 				};
 				break;
 			}
@@ -159,11 +159,10 @@ namespace sap::tree
 
 			case Horizontal: {
 				dir = LD::Horizontal;
-				top_to_baseline = max_size.ascent;
 				final_size = LayoutSize {
 					.width = total_size.width,
-					.ascent = 0,
-					.descent = max_size.total_height(),
+					.ascent = max_size.ascent,
+					.descent = max_size.descent,
 				};
 				break;
 			}

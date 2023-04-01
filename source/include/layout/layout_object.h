@@ -39,20 +39,23 @@ namespace sap::layout
 		AbsolutePagePos resolveAbsPosition(const LayoutBase* layout) const;
 
 		void render(const LayoutBase* layout, std::vector<pdf::Page*>& pages) const;
+		PageCursor computePosition(PageCursor cursor);
 
-		virtual layout::PageCursor positionChildren(layout::PageCursor cursor) = 0;
+		void overrideLayoutSizeX(Length x);
+		void overrideLayoutSizeY(Length y);
+		void overrideAbsolutePosition(AbsolutePagePos pos);
+		void addRelativePositionOffset(Size2d offset);
 
-		/*
-		    Render (emit PDF commands) the object. Must be called after layout(). For now, we render directly to
-		    the PDF page (by constructing and emitting PageObjects), instead of returning a pageobject -- some
-		    layout objects might require multiple pdf page objects, so this is a more flexible design.
-		*/
+		virtual bool requires_space_reservation() const { return false; }
+		virtual PageCursor compute_position_impl(PageCursor cursor) = 0;
 		virtual void render_impl(const LayoutBase* layout, std::vector<pdf::Page*>& pages) const = 0;
 
 	protected:
-		std::optional<AbsolutePagePos> m_abs_position {};
-		std::optional<RelativePos> m_rel_position {};
-
+		std::optional<Either<RelativePos, AbsolutePagePos>> m_position {};
 		LayoutSize m_layout_size;
+
+	private:
+		std::optional<Size2d> m_relative_pos_offset {};
+		std::optional<AbsolutePagePos> m_absolute_pos_override {};
 	};
 }

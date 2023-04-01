@@ -17,8 +17,8 @@ namespace sap::tree
 		return Ok();
 	}
 
-	auto Spacer::createLayoutObject(interp::Interpreter* cs, const Style* parent_style, Size2d available_space) const
-		-> ErrorOr<LayoutResult>
+	auto Spacer::create_layout_object_impl(interp::Interpreter* cs, const Style* parent_style, Size2d available_space)
+		const -> ErrorOr<LayoutResult>
 	{
 		auto _ = cs->evaluator().pushBlockContext(this);
 

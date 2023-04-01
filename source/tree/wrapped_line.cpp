@@ -4,6 +4,7 @@
 
 #include "tree/base.h"
 #include "tree/wrappers.h"
+#include "tree/paragraph.h"
 
 #include "layout/line.h"
 #include "interp/interp.h"
@@ -20,7 +21,7 @@ namespace sap::tree
 		m_objects.insert(m_objects.end(), std::move_iterator(objs.begin()), std::move_iterator(objs.end()));
 	}
 
-	auto WrappedLine::createLayoutObject(interp::Interpreter* cs, //
+	auto WrappedLine::create_layout_object_impl(interp::Interpreter* cs, //
 		const Style* parent_style,
 		Size2d available_space) const -> ErrorOr<LayoutResult>
 	{
@@ -28,7 +29,6 @@ namespace sap::tree
 		auto cur_style = m_style->useDefaultsFrom(parent_style)->useDefaultsFrom(cs->evaluator().currentStyle());
 
 		auto metrics = layout::computeLineMetrics(m_objects, cur_style);
-
 		auto line = layout::Line::fromInlineObjects(cs, cur_style, m_objects, metrics, available_space,
 			/* is_first: */ true, /* is_last: */ true);
 

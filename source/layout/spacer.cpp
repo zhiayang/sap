@@ -10,7 +10,7 @@ namespace sap::layout
 	{
 	}
 
-	layout::PageCursor Spacer::positionChildren(layout::PageCursor cursor)
+	layout::PageCursor Spacer::compute_position_impl(layout::PageCursor cursor)
 	{
 		this->positionRelatively(cursor.position());
 

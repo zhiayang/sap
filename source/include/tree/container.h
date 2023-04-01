@@ -21,9 +21,6 @@ namespace sap::tree
 		Direction direction() const { return m_direction; }
 
 		virtual ErrorOr<void> evaluateScripts(interp::Interpreter* cs) const override;
-		virtual ErrorOr<LayoutResult> createLayoutObject(interp::Interpreter* cs,
-			const Style* parent_style,
-			Size2d available_space) const override;
 
 		std::vector<std::unique_ptr<BlockObject>>& contents() { return m_objects; }
 		const std::vector<std::unique_ptr<BlockObject>>& contents() const { return m_objects; }
@@ -31,6 +28,11 @@ namespace sap::tree
 		static std::unique_ptr<Container> makeVertBox();
 		static std::unique_ptr<Container> makeHorzBox();
 		static std::unique_ptr<Container> makeStackBox();
+
+	private:
+		virtual ErrorOr<LayoutResult> create_layout_object_impl(interp::Interpreter* cs,
+			const Style* parent_style,
+			Size2d available_space) const override;
 
 	private:
 		Direction m_direction;

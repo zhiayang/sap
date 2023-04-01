@@ -12,16 +12,19 @@
 namespace sap::layout
 {
 	Image::Image(const Style* style, LayoutSize size, ImageBitmap image)
-		: LayoutObject(style, size)
-		, m_image(std::move(image))
+		: LayoutObject(style, size), m_image(std::move(image))
 	{
 	}
 
-	layout::PageCursor Image::positionChildren(layout::PageCursor cursor)
+	bool Image::requires_space_reservation() const
 	{
-		cursor = cursor.ensureVerticalSpace(m_layout_size.descent);
-		this->positionRelatively(cursor.position());
+		zpr::println("img: {}", m_image.pixel_height);
+		return true;
+	}
 
+	layout::PageCursor Image::compute_position_impl(layout::PageCursor cursor)
+	{
+		this->positionRelatively(cursor.position());
 		return cursor.moveRight(m_layout_size.width).newLine(m_layout_size.descent);
 	}
 
@@ -49,8 +52,8 @@ namespace sap::tree
 		return Ok();
 	}
 
-	auto Image::createLayoutObject(interp::Interpreter* cs, const Style* parent_style, Size2d available_space) const
-		-> ErrorOr<LayoutResult>
+	auto Image::create_layout_object_impl(interp::Interpreter* cs, const Style* parent_style, Size2d available_space)
+		const -> ErrorOr<LayoutResult>
 	{
 		// images are always fixed size, and don't care about the available space.
 		// (for now, at least...)

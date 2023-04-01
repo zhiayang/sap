@@ -245,30 +245,9 @@ namespace sap::layout
 	}
 
 
-	layout::PageCursor Line::positionChildren(layout::PageCursor cursor)
+	layout::PageCursor Line::compute_position_impl(layout::PageCursor cursor)
 	{
 		// for now, lines only contain words; words are already positioned with their relative thingies.
-		using enum Alignment;
-
-		auto horz_space = cursor.widthAtCursor();
-		auto self_width = m_layout_size.width;
-
-		switch(m_style->alignment())
-		{
-			case Left:
-			case Justified: break;
-
-			case Right: {
-				cursor = cursor.moveRight(horz_space - self_width);
-				break;
-			}
-
-			case Centre: {
-				cursor = cursor.moveRight((horz_space - self_width) / 2);
-				break;
-			}
-		}
-
 		this->positionRelatively(cursor.position());
 		return cursor.newLine(m_layout_size.descent);
 	}

@@ -34,9 +34,7 @@ namespace sap::layout
 
 	static Length resolve_len(const DocumentSettings& settings, DynLength len)
 	{
-		auto pt = [](auto x) {
-			return sap::Length(25.4 * (x / 72.0));
-		};
+		auto pt = [](auto x) { return sap::Length(25.4 * (x / 72.0)); };
 
 		auto font_size = settings.font_size->resolveWithoutFont(pt(12), pt(12));
 		return len.resolveWithoutFont(font_size, font_size);
@@ -164,7 +162,7 @@ namespace sap::tree
 			TRY(run_hooks_for_phase(cs));
 
 			auto container = std::move(*maybe_container.object);
-			container->positionChildren(layout_doc->pageLayout().newCursor());
+			container->computePosition(layout_doc->pageLayout().newCursor());
 
 			cs->setCurrentPhase(ProcessingPhase::PostLayout);
 			TRY(run_hooks_for_phase(cs));

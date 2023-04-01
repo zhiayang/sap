@@ -107,6 +107,7 @@ namespace sap::interp
 		const auto t_bfont = PType::named(make_builtin_name(builtin::BS_Font::name));
 		const auto t_bstate = PType::named(make_builtin_name(builtin::BS_State::name));
 		const auto t_bstyle = PType::named(make_builtin_name(builtin::BS_Style::name));
+		const auto t_bsize2d = PType::named(make_builtin_name(builtin::BS_Size2d::name));
 		const auto t_bposition = PType::named(make_builtin_name(builtin::BS_Position::name));
 		const auto t_bfontfamily = PType::named(make_builtin_name(builtin::BS_FontFamily::name));
 		const auto t_babsposition = PType::named(make_builtin_name(builtin::BS_AbsPosition::name));
@@ -164,8 +165,38 @@ namespace sap::interp
 
 		define_builtin("position", makeParamList(P("_", t_ptr(t_lo_ref))), t_babsposition,
 			&B::get_layout_object_position);
-		define_builtin("set_position", makeParamList(P("_", t_ptr(t_lo_ref)), P("pos", t_babsposition)), t_void,
-			&B::set_layout_object_position);
+
+		define_builtin("set_size", makeParamList(P("_", t_ptr(t_tbo)), P("size", t_bsize2d)), t_void, &B::set_tbo_size);
+		define_builtin("set_size", makeParamList(P("_", t_ptr(t_tbo_ref)), P("size", t_bsize2d)), t_void,
+			&B::set_tbo_size);
+
+		define_builtin("set_size_x", makeParamList(P("_", t_ptr(t_tbo)), P("size", t_length)), t_void,
+			&B::set_tbo_size_x);
+		define_builtin("set_size_x", makeParamList(P("_", t_ptr(t_tbo_ref)), P("size", t_length)), t_void,
+			&B::set_tbo_size_x);
+
+		define_builtin("set_size_y", makeParamList(P("_", t_ptr(t_tbo)), P("size", t_length)), t_void,
+			&B::set_tbo_size_y);
+		define_builtin("set_size_y", makeParamList(P("_", t_ptr(t_tbo_ref)), P("size", t_length)), t_void,
+			&B::set_tbo_size_y);
+
+
+
+		define_builtin("offset_position", makeParamList(P("_", t_ptr(t_tbo)), P("offset", t_bsize2d)), t_void,
+			&B::offset_object_position);
+		define_builtin("offset_position", makeParamList(P("_", t_ptr(t_tbo_ref)), P("offset", t_bsize2d)), t_void,
+			&B::offset_object_position);
+		define_builtin("offset_position", makeParamList(P("_", t_ptr(t_lo_ref)), P("offset", t_bsize2d)), t_void,
+			&B::offset_object_position);
+
+		define_builtin("override_position", makeParamList(P("_", t_ptr(t_tbo)), P("pos", t_babsposition)), t_void,
+			&B::override_object_position);
+		define_builtin("override_position", makeParamList(P("_", t_ptr(t_tbo_ref)), P("pos", t_babsposition)), t_void,
+			&B::override_object_position);
+		define_builtin("override_position", makeParamList(P("_", t_ptr(t_lo_ref)), P("pos", t_babsposition)), t_void,
+			&B::override_object_position);
+
+
 
 		define_builtin("bold1", makeParamList(P("_", t_any)), t_tio, &B::bold1);
 		define_builtin("italic1", makeParamList(P("_", t_any)), t_tio, &B::italic1);

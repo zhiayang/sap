@@ -117,8 +117,16 @@ namespace sap::interp::builtin
 		auto line = std::make_unique<tree::WrappedLine>();
 
 		auto objs = std::move(args[0]).takeArray();
+		std::vector<std::unique_ptr<tree::InlineObject>> inlines {};
+
 		for(size_t i = 0; i < objs.size(); i++)
-			line->addObjects(std::move(objs[i]).takeTreeInlineObj());
+		{
+			auto tmp = std::move(objs[i]).takeTreeInlineObj();
+			inlines.insert(inlines.end(), std::move_iterator(tmp.begin()), std::move_iterator(tmp.end()));
+		}
+
+		inlines = TRY(tree::Paragraph::processWordSeparators(std::move(inlines)));
+		line->addObjects(std::move(inlines));
 
 		return EvalResult::ofValue(Value::treeBlockObject(std::move(line)));
 	}
@@ -149,5 +157,63 @@ namespace sap::interp::builtin
 			tmp = Value::layoutObjectRef(*layout_obj);
 
 		return EvalResult::ofValue(Value::optional(ref_type, std::move(tmp)));
+	}
+
+
+
+
+	ErrorOr<EvalResult> set_tbo_size(Evaluator* ev, std::vector<Value>& args)
+	{
+		assert(args.size() == 2);
+		assert(args[0].isPointer());
+
+		auto& value = *args[0].getPointer();
+		assert(value.type()->isTreeBlockObj() || value.type()->isTreeBlockObjRef());
+
+		if(ev->interpreter()->currentPhase() != ProcessingPhase::Layout)
+			return ErrMsg(ev, "`set_size()` can only be called during `@layout`");
+
+		auto size = TRY(BS_Size2d::unmake(ev, args[1])).resolve(ev->currentStyle());
+		auto tbo = value.isTreeBlockObj() ? &value.getTreeBlockObj() : value.getTreeBlockObjectRef();
+
+		const_cast<tree::BlockObject*>(tbo)->overrideLayoutSizeX(size.x());
+		const_cast<tree::BlockObject*>(tbo)->overrideLayoutSizeY(size.y());
+		return EvalResult::ofVoid();
+	}
+
+	ErrorOr<EvalResult> set_tbo_size_x(Evaluator* ev, std::vector<Value>& args)
+	{
+		assert(args.size() == 2);
+		assert(args[0].isPointer());
+
+		auto& value = *args[0].getPointer();
+		assert(value.type()->isTreeBlockObj() || value.type()->isTreeBlockObjRef());
+
+		if(ev->interpreter()->currentPhase() != ProcessingPhase::Layout)
+			return ErrMsg(ev, "`set_size_x()` can only be called during `@layout`");
+
+		auto size = args[1].getLength().resolve(ev->currentStyle());
+		auto tbo = value.isTreeBlockObj() ? &value.getTreeBlockObj() : value.getTreeBlockObjectRef();
+
+		const_cast<tree::BlockObject*>(tbo)->overrideLayoutSizeX(size);
+		return EvalResult::ofVoid();
+	}
+
+	ErrorOr<EvalResult> set_tbo_size_y(Evaluator* ev, std::vector<Value>& args)
+	{
+		assert(args.size() == 2);
+		assert(args[0].isPointer());
+
+		auto& value = *args[0].getPointer();
+		assert(value.type()->isTreeBlockObj() || value.type()->isTreeBlockObjRef());
+
+		if(ev->interpreter()->currentPhase() != ProcessingPhase::Layout)
+			return ErrMsg(ev, "`set_size_y()` can only be called during `@layout`");
+
+		auto size = args[1].getLength().resolve(ev->currentStyle());
+		auto tbo = value.isTreeBlockObj() ? &value.getTreeBlockObj() : value.getTreeBlockObjectRef();
+
+		const_cast<tree::BlockObject*>(tbo)->overrideLayoutSizeY(size);
+		return EvalResult::ofVoid();
 	}
 }

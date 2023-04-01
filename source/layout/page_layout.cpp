@@ -150,6 +150,44 @@ namespace sap::layout
 		});
 	}
 
+	BasePayload PageLayout::move_down(const BasePayload& payload, Length shift)
+	{
+		auto& cst = get_cursor_state(payload);
+		if(not cst.is_absolute)
+		{
+			Length ypos = cst.pos_on_page.y() + shift;
+			size_t page_num = cst.page_num;
+
+			if(auto diff = (cst.pos_on_page.y() + shift) - m_content_size.y(); diff > 0)
+			{
+				size_t num_new_pages = static_cast<size_t>(1 + static_cast<int>(diff / m_content_size.y()));
+
+				m_num_pages = std::max(m_num_pages, cst.page_num + 1 + num_new_pages);
+				page_num += num_new_pages;
+
+				ypos = Length(fmod(diff.value(), m_content_size.y().value()));
+
+				zpr::println("made {} new pages", num_new_pages);
+			}
+
+			return to_base_payload({
+				.page_num = page_num,
+				.pos_on_page = RelativePos::Pos(cst.pos_on_page.x(), ypos),
+				.is_absolute = cst.is_absolute,
+				.limited_width = cst.limited_width,
+			});
+		}
+		else
+		{
+			return to_base_payload({
+				.page_num = cst.page_num,
+				.pos_on_page = cst.pos_on_page + RelativePos::Pos(0, shift),
+				.is_absolute = cst.is_absolute,
+				.limited_width = cst.limited_width,
+			});
+		}
+	}
+
 	BasePayload PageLayout::carriage_return(const BasePayload& payload) const
 	{
 		auto& cst = get_cursor_state(payload);

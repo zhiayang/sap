@@ -71,6 +71,28 @@ namespace sap::interp::builtin
 		return Ok(obj);
 	}
 
+	static ErrorOr<tree::BlockObject*> get_tbo_ref(Evaluator* ev, Value& value)
+	{
+		assert(value.type()->isPointer()
+			   && (value.type()->pointerElement()->isTreeBlockObj()
+				   || value.type()->pointerElement()->isTreeBlockObjRef()));
+
+		auto ptr = value.getPointer();
+		if(ptr == nullptr)
+			return ErrMsg(ev, "unexpected null pointer");
+
+		if(ptr->type()->isTreeBlockObj())
+			return Ok(const_cast<tree::BlockObject*>(&ptr->getTreeBlockObj()));
+		else if(ptr->type()->isTreeBlockObjRef())
+			return Ok(ptr->getTreeBlockObjectRef());
+		else
+			return ErrMsg(ev, "unexpected type '{}'", ptr->type());
+	}
+
+
+
+
+
 	ErrorOr<EvalResult> get_layout_object_position(Evaluator* ev, std::vector<Value>& args)
 	{
 		assert(args.size() == 1);
@@ -88,17 +110,44 @@ namespace sap::interp::builtin
 		return EvalResult::ofValue(BS_AbsPosition::make(ev, pos));
 	}
 
-	ErrorOr<EvalResult> set_layout_object_position(Evaluator* ev, std::vector<Value>& args)
+	ErrorOr<EvalResult> offset_object_position(Evaluator* ev, std::vector<Value>& args)
 	{
 		assert(args.size() == 2);
 
-		if(ev->interpreter()->currentPhase() < ProcessingPhase::PostLayout)
-			return ErrMsg(ev, "LayoutObjectRef::set_position() can only be called during or after `@post`");
+		if(ev->interpreter()->currentPhase() >= ProcessingPhase::Position)
+			return ErrMsg(ev, "offset_position() can only be called before `@position`");
 
-		auto obj = TRY(get_layout_object_ref(ev, args[0]));
+		auto offset = TRY(BS_Size2d::unmake(ev, args[1])).resolve(ev->currentStyle());
+		if(args[0].isLayoutObjectRef())
+		{
+			auto obj = TRY(get_layout_object_ref(ev, args[0]));
+			obj->addRelativePositionOffset(offset);
+		}
+		else
+		{
+			TRY(get_tbo_ref(ev, args[0]))->offsetRelativePosition(offset);
+		}
+
+		return EvalResult::ofVoid();
+	}
+
+	ErrorOr<EvalResult> override_object_position(Evaluator* ev, std::vector<Value>& args)
+	{
+		assert(args.size() == 2);
+
+		if(ev->interpreter()->currentPhase() >= ProcessingPhase::Position)
+			return ErrMsg(ev, "override_position() can only be called before `@position`");
 
 		auto pos = TRY(BS_AbsPosition::unmake(ev, args[1]));
-		obj->positionAbsolutely(pos);
+		if(args[0].isLayoutObjectRef())
+		{
+			auto obj = TRY(get_layout_object_ref(ev, args[0]));
+			obj->overrideAbsolutePosition(pos);
+		}
+		else
+		{
+			TRY(get_tbo_ref(ev, args[0]))->overrideAbsolutePosition(pos);
+		}
 
 		return EvalResult::ofVoid();
 	}

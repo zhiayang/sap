@@ -27,7 +27,7 @@ namespace sap::layout
 	{
 		using LayoutObject::LayoutObject;
 
-		virtual layout::PageCursor positionChildren(layout::PageCursor cursor) override;
+		virtual layout::PageCursor compute_position_impl(layout::PageCursor cursor) override;
 		virtual void render_impl(const LayoutBase* layout, std::vector<pdf::Page*>& pages) const override;
 
 	private:

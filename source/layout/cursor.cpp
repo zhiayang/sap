@@ -12,14 +12,12 @@ namespace sap::layout
 	}
 
 	PageCursor::PageCursor(const PageCursor& other)
-		: m_layout(other.m_layout)
-		, m_payload(m_layout->copy_cursor_payload(other.m_payload))
+		: m_layout(other.m_layout), m_payload(m_layout->copy_cursor_payload(other.m_payload))
 	{
 	}
 
 	PageCursor::PageCursor(LayoutBase* layout, LayoutBase::Payload payload)
-		: m_layout(layout)
-		, m_payload(std::move(payload))
+		: m_layout(layout), m_payload(std::move(payload))
 	{
 	}
 
@@ -74,6 +72,9 @@ namespace sap::layout
 		bool made_new_page = false;
 		auto payload = m_layout->new_line(m_payload, vert, &made_new_page);
 
+		zpr::println("*** ensuring vertical space: {} (page={})", made_new_page,
+			m_layout->get_position_on_page(m_payload).page_num);
+
 		// if we didn't have to make a new page, it means we had enough space;
 		// so don't return the new cursor, and continue layout on the current page.
 		if(not made_new_page)
@@ -81,12 +82,18 @@ namespace sap::layout
 
 		if(made_new_page2)
 			*made_new_page2 = true;
+
 		return PageCursor(m_layout, std::move(payload));
 	}
 
 	PageCursor PageCursor::moveRight(Length shift) const
 	{
 		return PageCursor(m_layout, m_layout->move_right(m_payload, shift));
+	}
+
+	PageCursor PageCursor::moveDown(Length shift) const
+	{
+		return PageCursor(m_layout, m_layout->move_down(m_payload, shift));
 	}
 
 	PageCursor PageCursor::carriageReturn() const

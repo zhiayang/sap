@@ -105,15 +105,12 @@ namespace sap::tree
 		void addObjects(std::vector<std::unique_ptr<InlineObject>> obj);
 
 		virtual ErrorOr<void> evaluateScripts(interp::Interpreter* cs) const override;
-		virtual ErrorOr<LayoutResult> createLayoutObject(interp::Interpreter* cs,
-			const Style* parent_style,
-			Size2d available_space) const override;
 
 		std::vector<std::unique_ptr<InlineObject>>& contents() { return m_contents; }
 		const std::vector<std::unique_ptr<InlineObject>>& contents() const { return m_contents; }
 
-		ErrorOr<std::vector<std::unique_ptr<InlineObject>>> processWordSeparators( //
-			std::vector<std::unique_ptr<InlineObject>> vec) const;
+		static ErrorOr<std::vector<std::unique_ptr<InlineObject>>> processWordSeparators( //
+			std::vector<std::unique_ptr<InlineObject>> vec);
 
 	private:
 		using EvalScriptResult = zst::Either<std::vector<std::unique_ptr<InlineObject>>,
@@ -126,6 +123,10 @@ namespace sap::tree
 			Size2d available_space,
 			ScriptCall* script,
 			bool allow_blocks) const;
+
+		virtual ErrorOr<LayoutResult> create_layout_object_impl(interp::Interpreter* cs,
+			const Style* parent_style,
+			Size2d available_space) const override;
 
 	private:
 		std::vector<std::unique_ptr<InlineObject>> m_contents {};

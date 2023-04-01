@@ -30,7 +30,7 @@ namespace sap::layout
 		sap::internal_error("words cannot be rendered directly");
 	}
 
-	layout::PageCursor Word::positionChildren(layout::PageCursor cursor)
+	layout::PageCursor Word::compute_position_impl(layout::PageCursor cursor)
 	{
 		sap::internal_error("words cannot be positioned directly");
 		return cursor;

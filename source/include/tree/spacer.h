@@ -13,7 +13,9 @@ namespace sap::tree
 		explicit Spacer(DynLength2d size);
 
 		virtual ErrorOr<void> evaluateScripts(interp::Interpreter* cs) const override;
-		virtual ErrorOr<LayoutResult> createLayoutObject(interp::Interpreter* cs,
+
+	private:
+		virtual ErrorOr<LayoutResult> create_layout_object_impl(interp::Interpreter* cs,
 			const Style* parent_style,
 			Size2d available_space) const override;
 

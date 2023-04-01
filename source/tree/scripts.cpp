@@ -108,8 +108,9 @@ namespace sap::tree
 		return this->evaluate_script(cs, cs->evaluator().currentStyle(), space).remove_value();
 	}
 
-	auto ScriptCall::createLayoutObject(interp::Interpreter* cs, const Style* parent_style, Size2d available_space)
-		const -> ErrorOr<LayoutResult>
+	auto ScriptCall::create_layout_object_impl(interp::Interpreter* cs,
+		const Style* parent_style,
+		Size2d available_space) const -> ErrorOr<LayoutResult>
 	{
 		auto obj = TRY(this->evaluate_script(cs, parent_style, available_space));
 		if(obj.has_value())
@@ -137,8 +138,9 @@ namespace sap::tree
 		return this->body->evaluate(&cs->evaluator()).remove_value();
 	}
 
-	auto ScriptBlock::createLayoutObject(interp::Interpreter* cs, const Style* parent_style, Size2d available_space)
-		const -> ErrorOr<LayoutResult>
+	auto ScriptBlock::create_layout_object_impl(interp::Interpreter* cs,
+		const Style* parent_style,
+		Size2d available_space) const -> ErrorOr<LayoutResult>
 	{
 		TRY(this->evaluateScripts(cs));
 		return Ok(LayoutResult::empty());

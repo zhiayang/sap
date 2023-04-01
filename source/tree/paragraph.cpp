@@ -239,7 +239,7 @@ namespace sap::tree
 
 
 	ErrorOr<std::vector<std::unique_ptr<InlineObject>>> Paragraph::processWordSeparators( //
-		std::vector<std::unique_ptr<InlineObject>> input) const
+		std::vector<std::unique_ptr<InlineObject>> input)
 	{
 		std::vector<std::unique_ptr<InlineObject>> ret {};
 		ret.reserve(input.size());

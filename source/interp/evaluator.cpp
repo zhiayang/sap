@@ -30,9 +30,7 @@ namespace sap::interp
 	[[nodiscard]] util::Defer<> Evaluator::pushLocation(const Location& loc)
 	{
 		m_location_stack.push_back(loc);
-		return util::Defer([this]() {
-			this->popLocation();
-		});
+		return util::Defer([this]() { this->popLocation(); });
 	}
 
 	void Evaluator::popLocation()
@@ -122,18 +120,14 @@ namespace sap::interp
 	{
 		auto cur = m_stack_frames.back().get();
 		m_stack_frames.push_back(std::unique_ptr<StackFrame>(new StackFrame(this, cur, cur->callDepth())));
-		return util::Defer<>([this]() {
-			this->popFrame();
-		});
+		return util::Defer<>([this]() { this->popFrame(); });
 	}
 
 	[[nodiscard]] util::Defer<> Evaluator::pushCallFrame()
 	{
 		auto cur = m_stack_frames.back().get();
 		m_stack_frames.push_back(std::unique_ptr<StackFrame>(new StackFrame(this, cur, 1 + cur->callDepth())));
-		return util::Defer<>([this]() {
-			this->popFrame();
-		});
+		return util::Defer<>([this]() { this->popFrame(); });
 	}
 
 	void Evaluator::popFrame()
@@ -183,9 +177,7 @@ namespace sap::interp
 	util::Defer<> Evaluator::pushBlockContext(std::optional<const tree::BlockObject*> obj)
 	{
 		m_block_context_stack.push_back(BlockContext { .obj = std::move(obj) });
-		return util::Defer([this]() {
-			this->popBlockContext();
-		});
+		return util::Defer([this]() { this->popBlockContext(); });
 	}
 
 	void Evaluator::popBlockContext()
@@ -268,7 +260,7 @@ namespace sap::interp
 		{
 			auto cursor = m_page_layout->newCursorAtPosition(abs_pos);
 			auto ptr = m_page_layout->addObject(std::move(*obj));
-			ptr->positionChildren(cursor);
+			ptr->computePosition(cursor);
 		}
 
 		return Ok();

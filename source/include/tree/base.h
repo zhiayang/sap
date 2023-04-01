@@ -66,12 +66,29 @@ namespace sap::tree
 		virtual ErrorOr<void> evaluateScripts(interp::Interpreter* cs) const = 0;
 		virtual ErrorOr<LayoutResult> createLayoutObject(interp::Interpreter* cs,
 			const Style* parent_style,
-			Size2d available_space) const = 0;
+			Size2d available_space) const final;
 
 		std::optional<layout::LayoutObject*> getGeneratedLayoutObject() const { return m_generated_layout_object; }
 
+		void overrideLayoutSizeX(Length x);
+		void overrideLayoutSizeY(Length y);
+
+		void offsetRelativePosition(Size2d offset);
+		void overrideAbsolutePosition(layout::AbsolutePagePos pos);
+
 	protected:
 		mutable std::optional<layout::LayoutObject*> m_generated_layout_object = nullptr;
+
+	private:
+		virtual ErrorOr<LayoutResult> create_layout_object_impl(interp::Interpreter* cs,
+			const Style* parent_style,
+			Size2d available_space) const = 0;
+
+	private:
+		std::optional<Length> m_override_size_x {};
+		std::optional<Length> m_override_size_y {};
+		std::optional<Size2d> m_rel_position_offset {};
+		std::optional<layout::AbsolutePagePos> m_abs_position_override {};
 	};
 
 	/*
@@ -93,11 +110,13 @@ namespace sap::tree
 		explicit ScriptBlock(ProcessingPhase phase);
 
 		virtual ErrorOr<void> evaluateScripts(interp::Interpreter* cs) const override;
-		virtual ErrorOr<LayoutResult> createLayoutObject(interp::Interpreter* cs,
-			const Style* parent_style,
-			Size2d available_space) const override;
 
 		std::unique_ptr<interp::Block> body;
+
+	private:
+		virtual ErrorOr<LayoutResult> create_layout_object_impl(interp::Interpreter* cs,
+			const Style* parent_style,
+			Size2d available_space) const override;
 	};
 
 	struct ScriptCall : InlineObject, ScriptObject
@@ -105,9 +124,6 @@ namespace sap::tree
 		explicit ScriptCall(ProcessingPhase phase);
 
 		virtual ErrorOr<void> evaluateScripts(interp::Interpreter* cs) const override;
-		virtual ErrorOr<LayoutResult> createLayoutObject(interp::Interpreter* cs,
-			const Style* parent_style,
-			Size2d available_space) const override;
 
 		std::unique_ptr<interp::FunctionCall> call;
 
@@ -117,6 +133,10 @@ namespace sap::tree
 		ErrorOr<std::optional<ScriptEvalResult>> evaluate_script(interp::Interpreter* cs,
 			const Style* parent_style,
 			Size2d available_space) const;
+
+		virtual ErrorOr<LayoutResult> create_layout_object_impl(interp::Interpreter* cs,
+			const Style* parent_style,
+			Size2d available_space) const override;
 
 		// befriend Paragraph so it can use our evaluate_script
 		friend struct Paragraph;
