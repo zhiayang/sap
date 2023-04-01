@@ -135,9 +135,6 @@ namespace sap::layout
 			}
 		}
 
-		zpr::println("START {}BOX ({}) - @{}", direction == Vertical ? "V" : "H", objects.size(),
-			cursor.position().pos);
-
 		bool is_first_child = true;
 		for(auto& child : objects)
 		{
@@ -187,7 +184,6 @@ namespace sap::layout
 					if(child->requires_space_reservation())
 						cursor = cursor.ensureVerticalSpace(child->layoutSize().descent);
 
-					zpr::println("HBOX @ {}", cursor.position().pos);
 					child->computePosition(cursor.limitWidth(child->layoutSize().width));
 					cursor = cursor.moveRight(child->layoutSize().width + obj_spacing);
 					break;
@@ -206,31 +202,16 @@ namespace sap::layout
 					if(not(is_first_child && not shift_by_ascent_of_first_child))
 						cursor = cursor.newLine(child->layoutSize().ascent);
 
-					zpr::println("child ascent = {}", child->layoutSize().ascent);
-
 					if(child->requires_space_reservation())
-					{
-						zpr::println(">> reserving space for child");
 						cursor = cursor.ensureVerticalSpace(child->layoutSize().descent);
-						zpr::println("== cursor = {}", cursor.position().pos);
-					}
 
-					zpr::println("cursor @ {}", cursor.position().pos);
 					cursor = child->computePosition(cursor);
-					// cursor = cursor.carriageReturn();
-
-					// cursor = cursor.moveDown(child->layoutSize().descent);
-
-					// zpr::println("?? cursor = {} / h={}", cursor.position().pos, child->layoutSize().descent);
-					// zpr::println("!! cursor = {}", cursor.position().pos);
-
 					is_first_child = false;
 					break;
 				}
 			}
 		}
 
-		zpr::println("DONE");
 		return cursor;
 	}
 
@@ -270,11 +251,7 @@ namespace sap::layout
 		{
 			case None:
 			case Horizontal: { //
-				auto ret = cursor.moveDown(m_layout_size.descent);
-
-				zpr::println("moving down: +{} / +{}", m_layout_size.ascent, m_layout_size.descent);
-				zpr::println("{} => {}", cursor.position().pos.y(), ret.position().pos.y());
-				return ret;
+				return cursor.moveDown(m_layout_size.descent);
 			}
 
 			case Vertical: //

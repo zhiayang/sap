@@ -166,8 +166,6 @@ namespace sap::layout
 				page_num += num_new_pages;
 
 				ypos = Length(fmod(diff.value(), m_content_size.y().value()));
-
-				zpr::println("made {} new pages", num_new_pages);
 			}
 
 			return to_base_payload({

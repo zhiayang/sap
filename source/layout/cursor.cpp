@@ -72,9 +72,6 @@ namespace sap::layout
 		bool made_new_page = false;
 		auto payload = m_layout->new_line(m_payload, vert, &made_new_page);
 
-		zpr::println("*** ensuring vertical space: {} (page={})", made_new_page,
-			m_layout->get_position_on_page(m_payload).page_num);
-
 		// if we didn't have to make a new page, it means we had enough space;
 		// so don't return the new cursor, and continue layout on the current page.
 		if(not made_new_page)

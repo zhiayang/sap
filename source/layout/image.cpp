@@ -18,7 +18,6 @@ namespace sap::layout
 
 	bool Image::requires_space_reservation() const
 	{
-		zpr::println("img: {}", m_image.pixel_height);
 		return true;
 	}
 
