@@ -118,6 +118,7 @@ namespace sap::tree
 			else
 			{
 				total_size.descent += obj_size.total_height();
+				total_size.descent += cur_style->paragraph_spacing();
 			}
 
 			obj_idx++;
