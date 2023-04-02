@@ -190,7 +190,7 @@ namespace sap::layout
 					child->computePosition(cursor.limitWidth(child->layoutSize().width));
 					cursor = cursor.moveRight(child->layoutSize().width);
 
-					if(not prev_child_was_phantom)
+					if(not prev_child_was_phantom && not child->is_phantom())
 						cursor = cursor.moveRight(obj_spacing);
 
 					break;

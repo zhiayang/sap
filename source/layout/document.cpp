@@ -198,6 +198,7 @@ namespace sap::tree
 		, m_preamble(std::move(preamble))
 		, m_have_document_start(have_doc_start)
 	{
+		m_container->setStyle(m_container->style()->with_alignment(Alignment::Justified));
 	}
 
 	BlockObject::~BlockObject()

@@ -394,14 +394,14 @@ namespace std
 		var i = 0;
 
 		var page_num_pos = builtin::state().page_size;
-		page_num_pos.x -= 30mm;
+		page_num_pos.x -= 34mm;
 		page_num_pos.y -= 30mm;
 
 		while(i < builtin::state().page_count)
 		{
 			let page_num = i + 1;
 			let item = std::style({
-				.alignment = .Left,
+				.alignment = .Right,
 				.font_size = 11pt,
 			}, builtin::make_line(builtin::make_text(f"{page_num}")));
 

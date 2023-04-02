@@ -16,15 +16,9 @@
 
 namespace sap::tree
 {
-	static Style g_left_aligned_style = []() {
-		Style s {};
-		s.set_alignment(Alignment::Left);
-		return s;
-	}();
-
 	Container::Container(Direction direction, bool glued) : m_glued(glued), m_direction(direction)
 	{
-		m_style = m_style->extendWith(&g_left_aligned_style);
+		this->setStyle(m_style->with_alignment(Alignment::Left));
 	}
 
 	std::unique_ptr<Container> Container::makeVertBox()

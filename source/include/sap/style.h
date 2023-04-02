@@ -48,22 +48,30 @@ namespace sap
 		DEFINE_ACCESSOR(Alignment, m_alignment, alignment);
 #undef DEFINE_ACCESSOR
 
-#define DEFINE_SETTER(field_type, field_name, method_name)         \
-	inline Style& method_name(std::optional<field_type> new_value) \
-	{                                                              \
-		if(new_value.has_value())                                  \
-			field_name = std::move(new_value);                     \
-		return *this;                                              \
+#define DEFINE_SETTER(field_type, field_name, method_name, method_name2) \
+	inline Style& method_name(std::optional<field_type> new_value)       \
+	{                                                                    \
+		if(new_value.has_value())                                        \
+			field_name = std::move(new_value);                           \
+		return *this;                                                    \
+	}                                                                    \
+                                                                         \
+	inline const Style* method_name2(field_type new_value) const         \
+	{                                                                    \
+		auto copy = util::make<Style>(*this);                            \
+		copy->method_name(new_value);                                    \
+		return this->extendWith(copy);                                   \
 	}
 
-		DEFINE_SETTER(FontFamily, m_font_family, set_font_family);
-		DEFINE_SETTER(FontStyle, m_font_style, set_font_style);
-		DEFINE_SETTER(Length, m_font_size, set_font_size);
-		DEFINE_SETTER(Length, m_root_font_size, set_root_font_size);
-		DEFINE_SETTER(double, m_line_spacing, set_line_spacing);
-		DEFINE_SETTER(double, m_sentence_space_stretch, set_sentence_space_stretch);
-		DEFINE_SETTER(Length, m_paragraph_spacing, set_paragraph_spacing);
-		DEFINE_SETTER(Alignment, m_alignment, set_alignment);
+
+		DEFINE_SETTER(FontFamily, m_font_family, set_font_family, with_font_family);
+		DEFINE_SETTER(FontStyle, m_font_style, set_font_style, with_font_style);
+		DEFINE_SETTER(Length, m_font_size, set_font_size, with_font_size);
+		DEFINE_SETTER(Length, m_root_font_size, set_root_font_size, with_root_font_size);
+		DEFINE_SETTER(double, m_line_spacing, set_line_spacing, with_line_spacing);
+		DEFINE_SETTER(double, m_sentence_space_stretch, set_sentence_space_stretch, with_sentence_space_stretch);
+		DEFINE_SETTER(Length, m_paragraph_spacing, set_paragraph_spacing, with_paragraph_spacing);
+		DEFINE_SETTER(Alignment, m_alignment, set_alignment, with_alignment);
 
 #undef DEFINE_SETTER
 

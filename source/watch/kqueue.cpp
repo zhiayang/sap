@@ -117,7 +117,7 @@ namespace sap::watch
 
 		g_state.ready_sem.release();
 
-		zpr::println("\x1b[3J\x1b[2J\x1b[1;1H");
+		// zpr::println("\x1b[3J\x1b[2J\x1b[1;1H");
 
 		addFileToWatchList(g_state.main_file);
 		g_state.compile_start = std::chrono::steady_clock::now();
