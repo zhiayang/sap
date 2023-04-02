@@ -91,7 +91,8 @@ namespace std
 			.font_family = g_sans_font,
 		}, builtin::make_vbox(
 			builtin::vspace(0.3em),
-			builtin::make_hbox(*num_line, *name_line)
+			builtin::make_hbox(*num_line, *name_line),
+			builtin::vspace(-0.0em),
 		));
 
 		box.offset_position({ .x = -13mm, .y = 0mm });
@@ -133,7 +134,8 @@ namespace std
 			.font_family = g_sans_font,
 		}, builtin::make_vbox(
 			builtin::vspace(0.3em),
-			builtin::make_hbox(*num_line, *name_line)
+			builtin::make_hbox(*num_line, *name_line),
+			builtin::vspace(-0.em)
 		));
 
 		box.offset_position({ .x = -13mm, .y = 0mm });
@@ -181,68 +183,14 @@ namespace std
 			.font_family = g_sans_font,
 		}, builtin::make_vbox(
 			builtin::vspace(0.3em),
-			builtin::make_hbox(*num_line, *name_line)
+			builtin::make_hbox(*num_line, *name_line),
+			builtin::vspace(-0.em)
 		));
 
 		box.offset_position({ .x = -13mm, .y = 0mm });
 		subsec!.subsubsections += [the_subsub];
 		return box;
 	}
-
-
-
-
-
-
-#/
-	@post {
-		var i = 0;
-		while(i < g_sections.size())
-		{
-			let sec = &mut g_sections[i];
-			let sec_lo = sec!.num_tbo_ref.layout_object()!;
-
-			var tmp = sec_lo.position();
-			tmp.x -= 175mm;
-			builtin::println(f"position = {tmp}");
-
-			sec_lo.set_position(tmp);
-			sec!.page_num = 1 + tmp.page;
-
-			var k = 0;
-			while(k < sec!.subsections.size())
-			{
-				let sub = &mut sec!.subsections[k];
-				let sub_lo = sub!.num_tbo_ref.layout_object()!;
-
-				var tmp = sub_lo.position();
-				tmp.x -= 175mm;
-
-				sub_lo.set_position(tmp);
-				sub!.page_num = 1 + tmp.page;
-
-				var zz = 0;
-				while(zz < sub!.subsubsections.size())
-				{
-					let subsub = &mut sub!.subsubsections[zz];
-					let subsub_lo = subsub!.num_tbo_ref.layout_object()!;
-
-					var tmp = subsub_lo.position();
-					tmp.x -= 175mm;
-
-					subsub_lo.set_position(tmp);
-					subsub!.page_num = 1 + tmp.page;
-
-					zz += 1;
-				}
-
-				k += 1;
-			}
-
-			i += 1;
-		}
-	} /#
-
 
 
 

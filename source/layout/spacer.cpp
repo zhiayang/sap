@@ -10,6 +10,11 @@ namespace sap::layout
 	{
 	}
 
+	bool Spacer::is_phantom() const
+	{
+		return true;
+	}
+
 	layout::PageCursor Spacer::compute_position_impl(layout::PageCursor cursor)
 	{
 		this->positionRelatively(cursor.position());

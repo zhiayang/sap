@@ -46,7 +46,9 @@ namespace sap::layout
 		void overrideAbsolutePosition(AbsolutePagePos pos);
 		void addRelativePositionOffset(Size2d offset);
 
+		virtual bool is_phantom() const { return false; }
 		virtual bool requires_space_reservation() const { return false; }
+
 		virtual PageCursor compute_position_impl(PageCursor cursor) = 0;
 		virtual void render_impl(const LayoutBase* layout, std::vector<pdf::Page*>& pages) const = 0;
 

@@ -137,6 +137,8 @@ namespace sap::layout
 		}
 
 		bool is_first_child = true;
+		bool prev_child_was_phantom = false;
+
 		for(auto& child : objects)
 		{
 			// if we are vertically stacked, we need to move the cursor horizontally to
@@ -186,12 +188,16 @@ namespace sap::layout
 						cursor = cursor.ensureVerticalSpace(child->layoutSize().descent);
 
 					child->computePosition(cursor.limitWidth(child->layoutSize().width));
-					cursor = cursor.moveRight(child->layoutSize().width + obj_spacing);
+					cursor = cursor.moveRight(child->layoutSize().width);
+
+					if(not prev_child_was_phantom)
+						cursor = cursor.moveRight(obj_spacing);
+
 					break;
 				}
 
 				case Vertical: {
-					if(not is_first_child)
+					if(not is_first_child && not prev_child_was_phantom && not child->is_phantom())
 						cursor = cursor.newLine(obj_spacing);
 
 					/*
@@ -211,6 +217,8 @@ namespace sap::layout
 					break;
 				}
 			}
+
+			prev_child_was_phantom = child->is_phantom();
 		}
 
 		return cursor;
