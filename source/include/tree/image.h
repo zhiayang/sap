@@ -25,8 +25,6 @@ namespace sap::tree
 			const Style* parent_style,
 			Size2d available_space) const override;
 
-		static util::hashmap<std::string, OwnedImageBitmap> s_cached_images;
-
 	private:
 		ImageBitmap m_image;
 		Size2d m_size;

@@ -2,6 +2,9 @@
 // Copyright (c) 2022, zhiayang
 // SPDX-License-Identifier: Apache-2.0
 
+#include <chrono>
+#include <filesystem>
+
 #include "tree/image.h"
 
 #include "layout/image.h"
@@ -18,15 +21,31 @@
 
 namespace sap::tree
 {
-	util::hashmap<std::string, OwnedImageBitmap> Image::s_cached_images;
+	namespace stdfs = std::filesystem;
+
+	struct CachedImage
+	{
+		OwnedImageBitmap image;
+		std::chrono::time_point<std::chrono::file_clock> mtime;
+	};
+
+	static util::hashmap<std::string, CachedImage> g_cached_images;
 
 	Image::Image(ImageBitmap image, sap::Vector2 size) : m_image(std::move(image)), m_size(size)
 	{
 	}
 
-	static StrErrorOr<OwnedImageBitmap> load_image_from_path(zst::str_view file_path)
+	static StrErrorOr<ImageBitmap> load_image_from_path(zst::str_view file_path)
 	{
+		auto file_mtime = stdfs::last_write_time(file_path.str());
+		if(auto it = g_cached_images.find(file_path); it != g_cached_images.end())
+		{
+			if(file_mtime <= it->second.mtime)
+				return Ok(it->second.image.span());
+		}
+
 		auto file_buf = util::readEntireFile(file_path.str());
+		watch::addFileToWatchList(file_path);
 
 		int img_width_ = 0;
 		int img_height_ = 0;
@@ -70,7 +89,9 @@ namespace sap::tree
 		}
 
 		util::log("loaded image '{}'", file_path);
-		return Ok(std::move(image));
+		auto& img = (g_cached_images[file_path.str()] = CachedImage { .image = std::move(image), .mtime = file_mtime });
+
+		return Ok(img.image.span());
 	}
 
 
@@ -85,19 +106,13 @@ namespace sap::tree
 		sap::Length width,
 		std::optional<sap::Length> height)
 	{
-		ImageBitmap image {};
-		if(auto it = s_cached_images.find(file_path); it == s_cached_images.end())
-		{
+		auto image = TRY(([&loc, &file_path]() -> ErrorOr<ImageBitmap> {
 			auto x = load_image_from_path(file_path);
 			if(x.is_err())
 				return ErrMsg(loc, "{}", x.take_error());
 
-			image = (s_cached_images[file_path.str()] = std::move(*x)).span();
-		}
-		else
-		{
-			image = it->second.span();
-		}
+			return Ok(*x);
+		}()));
 
 		auto aspect = (double) image.pixel_width / (double) image.pixel_height;
 		if(not height.has_value())

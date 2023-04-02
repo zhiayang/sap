@@ -75,10 +75,10 @@ namespace sap::watch
 
 		auto& kevent = g_state.kevents.emplace_back();
 
-		util::log("watching {}", path);
-		EV_SET(&kevent, fd, EVFILT_VNODE,                                       //
-			(EV_ADD | EV_CLEAR | EV_ONESHOT),                                   //
-			(NOTE_DELETE | NOTE_WRITE | NOTE_RENAME | NOTE_LINK | NOTE_REVOKE), //
+		// util::log("watching {}", path);
+		EV_SET(&kevent, fd, EVFILT_VNODE,                                                     //
+			(EV_ADD | EV_CLEAR | EV_ONESHOT),                                                 //
+			(NOTE_DELETE | NOTE_WRITE | NOTE_RENAME | NOTE_LINK | NOTE_ATTRIB | NOTE_REVOKE), //
 			0, &event);
 
 		return Ok();
