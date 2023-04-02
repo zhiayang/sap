@@ -243,9 +243,30 @@ namespace std
 		var i = 0;
 		while(i < g_sections.size())
 		{
-			let foo = g_sections[i].num_tbo_ref.layout_object()!;
-			let tmp = foo.position();
+			let s = &mut g_sections[i];
+			let tmp = s!.num_tbo_ref.layout_object()!.position();
 			g_sections[i].page_num = 1 + tmp.page;
+
+			var si = 0;
+			while(si < s!.subsections.size())
+			{
+				let ss = &mut s!.subsections[si];
+				let tmp = ss!.num_tbo_ref.layout_object()!.position();
+				ss!.page_num = 1 + tmp.page;
+
+				var ssi = 0;
+				while(ssi < ss!.subsubsections.size())
+				{
+					let sss = &mut ss!.subsubsections[ssi];
+					let tmp = sss!.num_tbo_ref.layout_object()!.position();
+					sss!.page_num = 1 + tmp.page;
+
+					ssi += 1;
+				}
+
+				si += 1;
+			}
+
 			i += 1;
 		}
 	}
@@ -264,13 +285,85 @@ namespace std
 		while(i < g_sections.size())
 		{
 			let s = &g_sections[i];
-			let str = f"{s!.num}. {s!.name}   -   {s!.page_num}";
 
-			let item = std::style({
-				.alignment = .Left
-			}, builtin::make_line(builtin::make_text(str)));
+			let number = builtin::make_line(builtin::bold1(builtin::make_text(f"{s!.num}.")));
+			number.set_size_x(8mm);
+
+			let title = builtin::make_line(builtin::bold1(builtin::make_text(s!.name)));
+			let heading = builtin::make_hbox(
+				*number, *title
+			);
+
+			let pagenum = builtin::make_hbox(
+				builtin::make_line(builtin::bold1(builtin::make_text(f"{s!.page_num}")))
+			);
+
+			let item = builtin::apply_style({
+				.alignment = .Justified
+			}, builtin::make_hbox(
+				*heading, *pagenum
+			));
+
+			if(i != 0)
+				lines += [builtin::vspace(0.7em)];
 
 			lines += [*item];
+
+			var si = 0;
+			while(si < s!.subsections.size())
+			{
+				let ss = &s!.subsections[si];
+
+				let number = builtin::make_line(builtin::make_text(f"{s!.num}.{ss!.num}"));
+				number.set_size_x(11mm);
+
+				let title = builtin::make_line(builtin::make_text(ss!.name));
+				let heading = builtin::make_hbox(
+					builtin::hspace(9mm), *number, *title
+				);
+
+				let pagenum = builtin::make_hbox(
+					builtin::make_line(builtin::make_text(f"{ss!.page_num}"))
+				);
+
+				let item = builtin::apply_style({
+					.alignment = .Justified
+				}, builtin::make_hbox(
+					*heading, *pagenum
+				));
+
+				lines += [*item];
+
+				var ssi = 0;
+				while(ssi < ss!.subsubsections.size())
+				{
+					let sss = &ss!.subsubsections[ssi];
+
+					let number = builtin::make_line(builtin::make_text(f"{s!.num}.{ss!.num}.{sss!.num}"));
+					number.set_size_x(15mm);
+
+					let title = builtin::make_line(builtin::make_text(sss!.name));
+					let heading = builtin::make_hbox(
+						builtin::hspace(20mm), *number, *title
+					);
+
+					let pagenum = builtin::make_hbox(
+						builtin::make_line(builtin::make_text(f"{sss!.page_num}"))
+					);
+
+					let item = builtin::apply_style({
+						.alignment = .Justified
+					}, builtin::make_hbox(
+						*heading, *pagenum
+					));
+
+					lines += [*item];
+					ssi += 1;
+				}
+
+				si += 1;
+			}
+
 			i += 1;
 		}
 
@@ -278,6 +371,13 @@ namespace std
 		ret = builtin::apply_style({
 			.paragraph_spacing = 0em,
 		}, *ret);
+
+		ret = builtin::make_vbox(
+			builtin::apply_style({ .alignment = .Centred, .font_size = 28pt, .font_family = g_sans_font }, builtin::make_hbox(
+				builtin::make_line(builtin::make_text("Contents"))
+			)),
+			*ret
+		);
 
 		# we must re-request layout again, to make the page numbers correct.
 		if(builtin::state().layout_pass == 2)

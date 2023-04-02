@@ -127,7 +127,7 @@ namespace sap::layout
 						if(objects.size() == 1)
 							obj_spacing = 0;
 						else
-							obj_spacing = space_width / static_cast<double>(objects.size() - 1);
+							obj_spacing = (horz_space - self_width) / static_cast<double>(objects.size() - 1);
 
 						break;
 					}
