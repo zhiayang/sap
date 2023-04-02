@@ -30,19 +30,25 @@ namespace sap
 	inline constexpr const char* COLOUR_WHITE_BOLD = "\033[1m\033[37m";
 	inline constexpr const char* COLOUR_GREY_BOLD = "\033[30;1m";
 
-
-	void showErrorMessage(const Location& loc, const std::string& message)
+	static void show_message(const char* error_text,
+		const char* _error_colour,
+		const Location& loc,
+		const std::string& message)
 	{
 		bool coloured = isatty(STDERR_FILENO);
 
-		const char* colour_red_bold = coloured ? COLOUR_RED_BOLD : "";
+		const char* colour_error = coloured ? _error_colour : "";
 		const char* colour_black_bold = coloured ? COLOUR_BLACK_BOLD : "";
 		const char* colour_blue = coloured ? COLOUR_BLUE : "";
 		const char* colour_reset = coloured ? COLOUR_RESET : "";
 
-		zpr::fprintln(stderr, "{}error:{} {}{}{}", colour_red_bold, colour_reset, colour_black_bold, message, colour_reset);
-		zpr::fprintln(stderr, "{} at:{} {}{}:{}:{}{}", colour_blue, colour_reset, colour_black_bold, loc.filename, loc.line + 1,
-		    loc.column + 1, colour_reset);
+		zpr::fprintln(stderr, "{}{}:{} {}{}{}", colour_error, error_text, colour_reset, colour_black_bold, message,
+			colour_reset);
+		zpr::fprintln(stderr, "{} at:{} {}{}:{}:{}{}", colour_blue, colour_reset, colour_black_bold, loc.filename,
+			loc.line + 1, loc.column + 1, colour_reset);
+
+		if(loc.is_builtin)
+			return;
 
 		// search backwards from the token to find the newline
 		size_t tmp = loc.file_contents.take(loc.byte_offset).rfind('\n');
@@ -74,18 +80,14 @@ namespace sap
 
 		zpr::fprintln(stderr, "{}{} |{}", colour_blue, line_num_padding, colour_reset);
 		zpr::fprintln(stderr, "{}{} |  {} {}", colour_blue, line_num, colour_reset, current_line);
-		zpr::fprintln(stderr, "{}{} |  {}{}{}{}{}", colour_blue, line_num_padding, colour_reset, colour_red_bold, caret_spaces,
-		    carets, colour_reset);
-		zpr::fprintln(stderr, "{}{} |{}", colour_blue, line_num_padding, colour_reset);
+		zpr::fprintln(stderr, "{}{} |  {}{}{}{}{}", colour_blue, line_num_padding, colour_reset, colour_error,
+			caret_spaces, carets, colour_reset);
 		zpr::fprintln(stderr, "");
 	}
 
 
-
-
 	ErrorMessage::ErrorMessage(Location loc, const std::string& msg) : m_location(std::move(loc))
 	{
-		// m_message = zpr::sprint("{}:{}:{}: error: {}", m_location.file, m_location.line + 1, m_location.column + 1, msg);
 		m_message = msg;
 	}
 
@@ -97,6 +99,22 @@ namespace sap
 	{
 	}
 
+	ErrorMessage& ErrorMessage::addInfo(Location loc, const std::string& msg)
+	{
+		m_infos.emplace_back(loc, msg);
+		return *this;
+	}
+
+	ErrorMessage& ErrorMessage::addInfo(const interp::Typechecker* ts, const std::string& msg)
+	{
+		return this->addInfo(ts->loc(), msg);
+	}
+
+	ErrorMessage& ErrorMessage::addInfo(const interp::Evaluator* ev, const std::string& msg)
+	{
+		return this->addInfo(ev->loc(), msg);
+	}
+
 	const std::string& ErrorMessage::string() const
 	{
 		return m_message;
@@ -104,9 +122,9 @@ namespace sap
 
 	void ErrorMessage::display() const
 	{
-		showErrorMessage(m_location, m_message);
-
-		// zpr::fprintln(stderr, "{}", m_message);
+		show_message("error", COLOUR_RED_BOLD, m_location, m_message);
+		for(auto& [loc, info] : m_infos)
+			show_message("note", COLOUR_GREY_BOLD, loc, info);
 	}
 
 	[[noreturn]] void ErrorMessage::showAndExit() const

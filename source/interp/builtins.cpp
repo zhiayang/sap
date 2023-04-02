@@ -99,6 +99,7 @@ namespace sap::interp
 		};
 
 		const auto make_null = []() { return std::make_unique<interp::NullLit>(Location::builtin()); };
+		const auto make_bool = [](bool x) { return std::make_unique<interp::BooleanLit>(Location::builtin(), x); };
 
 		const auto t_ptr = [](const PType& t, bool mut = false) { return PType::pointer(t, mut); };
 
@@ -205,8 +206,10 @@ namespace sap::interp
 		define_builtin("request_layout", makeParamList(), t_void, &B::request_layout);
 
 		define_builtin("make_hbox", makeParamList(P("1", PType::variadicArray(t_tbo))), t_tbo, &B::make_hbox);
-		define_builtin("make_vbox", makeParamList(P("1", PType::variadicArray(t_tbo))), t_tbo, &B::make_vbox);
 		define_builtin("make_zbox", makeParamList(P("1", PType::variadicArray(t_tbo))), t_tbo, &B::make_zbox);
+		define_builtin("make_vbox",
+			makeParamList(P("1", PType::variadicArray(t_tbo)), P("glue", t_bool, make_bool(false))), t_tbo,
+			&B::make_vbox);
 
 		define_builtin("make_text", makeParamList(P("1", PType::variadicArray(t_str))), t_tio, &B::make_text);
 		define_builtin("make_line", makeParamList(P("1", PType::variadicArray(t_tio))), t_tbo, &B::make_line);

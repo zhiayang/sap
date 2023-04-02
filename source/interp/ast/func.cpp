@@ -27,10 +27,10 @@ namespace sap::interp
 
 				saw_variadic = true;
 			}
-			else if(saw_variadic)
-			{
-				return ErrMsg(ts, "variadic array parameter must be the last parameter");
-			}
+			// else if(saw_variadic)
+			// {
+			// 	return ErrMsg(ts, "variadic array parameter must be the last parameter");
+			// }
 		}
 
 		auto fn_type = Type::makeFunction(std::move(param_types), TRY(ts->resolveType(m_return_type)));
@@ -52,7 +52,8 @@ namespace sap::interp
 		auto decl_type = TRY(this->declaration->typecheck(ts)).type();
 
 		// TODO: maybe a less weird mangling solution? idk
-		auto tree = ts->current()->lookupOrDeclareNamespace(zpr::sprint("{}${}", this->declaration->name, decl_type->str()));
+		auto tree = ts->current()->lookupOrDeclareNamespace(zpr::sprint("{}${}", this->declaration->name,
+			decl_type->str()));
 		auto _ = ts->pushTree(tree);
 
 		// make definitions for our parameters

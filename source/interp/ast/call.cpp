@@ -48,7 +48,7 @@ namespace sap::interp
 		auto ordered = TRY(arrangeArgumentTypes(ts, params, arguments, //
 			"function", "argument", "argument for parameter"));
 
-		auto cost = TRY(getCallingCost(ts, params, ordered.param_idx_to_arg, "function", "argument",
+		auto cost = TRY(getCallingCost(ts, params, ordered.param_idx_to_args, "function", "argument",
 			"argument for parameter"));
 
 		using X = std::pair<int, ArrangedArguments<const Type*>>;
@@ -61,16 +61,22 @@ namespace sap::interp
 		const std::vector<ArrangeArg<const Type*>>& arguments)
 	{
 		std::vector<const Declaration*> best_decls {};
+		std::vector<std::pair<const Declaration*, ErrorMessage>> failed_decls {};
+
 		int best_cost = INT_MAX;
 
 		ArrangedArguments<const Type*> arg_arrangement {};
+
 
 		for(auto decl : decls)
 		{
 			auto result = get_calling_cost(ts, decl, arguments);
 
 			if(result.is_err())
+			{
+				failed_decls.emplace_back(decl, result.take_error());
 				continue;
+			}
 
 			auto [cost, ord] = result.take_value();
 
@@ -93,9 +99,15 @@ namespace sap::interp
 		}
 
 		if(best_decls.empty())
-			return ErrMsg(ts, "no matching function for call");
+		{
+			auto err = ErrorMessage(ts, "no matching function for call");
+			for(auto& [decl, msg] : failed_decls)
+				err.addInfo(decl->loc(), msg.string());
 
-		return ErrMsg(ts, "ambiguous call");
+			return Err(std::move(err));
+		}
+
+		return ErrMsg(ts, "ambiguous call: {} candidates", best_decls.size());
 	}
 
 
@@ -250,49 +262,41 @@ namespace sap::interp
 			auto arg_arrangement = TRY(arrangeArgumentValues(ev, params, std::move(processed_args), "function",
 				"argument", "argument for parameter"));
 
-			auto& ordered_args = arg_arrangement.param_idx_to_arg;
-
-			bool is_variadic = not params.empty() && std::get<1>(params.back())->isVariadicArray();
+			auto& ordered_args = arg_arrangement.param_idx_to_args;
 
 			for(size_t i = 0; i < params.size(); i++)
 			{
 				auto param_type = std::get<1>(params[i]);
-				if(i + 1 == params.size() && is_variadic)
+				if(auto it = ordered_args.find(i); it != ordered_args.end())
 				{
-					auto variadic_elm = param_type->arrayElement();
-
-					std::vector<Value> vararg_array {};
-					for(size_t k = i;; k++)
+					auto arg_pairs = std::move(it->second);
+					if(param_type->isVariadicArray())
 					{
-						if(auto it = ordered_args.find(k); it != ordered_args.end())
-						{
-							auto value = std::move(it->second);
+						auto variadic_elm = param_type->arrayElement();
+						std::vector<Value> vararg_array {};
 
+						for(auto& ap : arg_pairs)
+						{
 							// if the value itself is variadic, it means it's a spread op
-							if(value.value.type()->isVariadicArray())
+							if(ap.value.type()->isVariadicArray())
 							{
-								auto arr = std::move(value.value).takeArray();
+								auto arr = std::move(ap.value).takeArray();
 								for(auto& val : arr)
 									vararg_array.push_back(ev->castValue(std::move(val), variadic_elm));
 							}
 							else
 							{
-								vararg_array.push_back(ev->castValue(std::move(value.value), variadic_elm));
+								vararg_array.push_back(ev->castValue(std::move(ap.value), variadic_elm));
 							}
 						}
-						else
-						{
-							break;
-						}
+
+						final_args.push_back(Value::array(param_type->arrayElement(), std::move(vararg_array)));
 					}
-
-					final_args.push_back(Value::array(param_type->arrayElement(), std::move(vararg_array)));
-					break;
-				}
-
-				if(auto it = ordered_args.find(i); it != ordered_args.end())
-				{
-					final_args.push_back(ev->castValue(std::move(it->second.value), param_type));
+					else
+					{
+						assert(arg_pairs.size() == 1);
+						final_args.push_back(ev->castValue(std::move(arg_pairs[0].value), param_type));
+					}
 				}
 				else
 				{

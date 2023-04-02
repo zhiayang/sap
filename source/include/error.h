@@ -27,6 +27,10 @@ namespace sap
 		explicit ErrorMessage(const interp::Typechecker* ts, const std::string& msg);
 		explicit ErrorMessage(const interp::Evaluator* ev, const std::string& msg);
 
+		ErrorMessage& addInfo(Location loc, const std::string& msg);
+		ErrorMessage& addInfo(const interp::Typechecker* ts, const std::string& msg);
+		ErrorMessage& addInfo(const interp::Evaluator* ev, const std::string& msg);
+
 		void display() const;
 		const std::string& string() const;
 		[[noreturn]] void showAndExit() const;
@@ -34,6 +38,8 @@ namespace sap
 	private:
 		Location m_location;
 		std::string m_message;
+
+		std::vector<std::pair<Location, std::string>> m_infos;
 	};
 
 	template <typename T>

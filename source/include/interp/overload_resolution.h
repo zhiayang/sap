@@ -24,6 +24,7 @@ namespace sap::interp
 	struct ArgPair
 	{
 		T value;
+		bool was_named;
 		bool deferred_typecheck;
 	};
 
@@ -32,7 +33,7 @@ namespace sap::interp
 	template <typename T>
 	struct ArrangedArguments
 	{
-		std::unordered_map<size_t, ArgPair<T>> param_idx_to_arg;
+		std::unordered_map<size_t, std::vector<ArgPair<T>>> param_idx_to_args;
 		std::unordered_map<size_t, size_t> arg_idx_to_param_idx;
 	};
 
@@ -47,10 +48,10 @@ namespace sap::interp
 	inline constexpr auto arrangeArgumentTypes = arrange_arguments<Typechecker, const Type*, /* move: */ false>;
 	inline constexpr auto arrangeArgumentValues = arrange_arguments<Evaluator, Value, /* move: */ true>;
 
-	ErrorOr<int> getCallingCost(Typechecker* ts,                                        //
-		const std::vector<std::tuple<std::string, const Type*, const Expr*>>& expected, //
-		const std::unordered_map<size_t, ArgPair<const Type*>>& ordered_args,           //
-		const char* fn_or_struct,                                                       //
-		const char* thing_name,                                                         //
+	ErrorOr<int> getCallingCost(Typechecker* ts,                                           //
+		const std::vector<std::tuple<std::string, const Type*, const Expr*>>& expected,    //
+		const std::unordered_map<size_t, std::vector<ArgPair<const Type*>>>& ordered_args, //
+		const char* fn_or_struct,                                                          //
+		const char* thing_name,                                                            //
 		const char* thing_name2);
 }

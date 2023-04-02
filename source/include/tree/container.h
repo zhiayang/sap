@@ -17,7 +17,7 @@ namespace sap::tree
 			Horizontal,
 		};
 
-		explicit Container(Direction direction);
+		explicit Container(Direction direction, bool glue = false);
 		Direction direction() const { return m_direction; }
 
 		virtual ErrorOr<void> evaluateScripts(interp::Interpreter* cs) const override;
@@ -35,6 +35,7 @@ namespace sap::tree
 			Size2d available_space) const override;
 
 	private:
+		bool m_glued;
 		Direction m_direction;
 		std::vector<std::unique_ptr<BlockObject>> m_objects;
 	};

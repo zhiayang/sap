@@ -13,8 +13,10 @@ namespace sap::layout
 		LayoutSize size,
 		Direction direction,
 		Length tallest_ascent,
+		bool glued,
 		std::vector<std::unique_ptr<LayoutObject>> objs)
 		: LayoutObject(style, std::move(size))
+		, m_glued(glued)
 		, m_direction(direction)
 		, m_tallest_ascent(tallest_ascent)
 		, m_objects(std::move(objs))
@@ -53,9 +55,8 @@ namespace sap::layout
 				return false;
 			}
 
-			// TODO: when we support unsplittable containers, this should be true
 			case Vertical: //
-				return false;
+				return m_glued;
 		}
 	}
 

@@ -16,7 +16,7 @@
 
 namespace sap::tree
 {
-	Container::Container(Direction direction) : m_direction(direction)
+	Container::Container(Direction direction, bool glued) : m_glued(glued), m_direction(direction)
 	{
 	}
 
@@ -169,7 +169,7 @@ namespace sap::tree
 			}
 		}
 
-		auto container = std::make_unique<layout::Container>(cur_style, final_size, dir, top_to_baseline,
+		auto container = std::make_unique<layout::Container>(cur_style, final_size, dir, top_to_baseline, m_glued,
 			std::move(objects));
 
 		m_generated_layout_object = container.get();

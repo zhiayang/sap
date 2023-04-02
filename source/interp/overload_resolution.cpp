@@ -32,6 +32,16 @@ namespace sap::interp
 		for(size_t i = 0; i < expected.size(); i++)
 			param_names[std::get<0>(expected[i])] = i;
 
+		size_t variadic_param_idx = expected.size();
+		for(size_t i = 0; i < expected.size(); i++)
+		{
+			if(std::get<1>(expected[i])->isVariadicArray())
+			{
+				variadic_param_idx = i;
+				break;
+			}
+		}
+
 		size_t cur_idx = 0;
 		size_t have_named = false;
 		for(size_t arg_idx = 0; arg_idx < args.size(); arg_idx++)
@@ -40,9 +50,21 @@ namespace sap::interp
 
 			auto get_arg_pair = [](auto&& arg) -> ArgPair<T> {
 				if constexpr(MoveValue)
-					return { std::move(arg.value), arg.deferred_typecheck };
+				{
+					return {
+						.value = std::move(arg.value),
+						.was_named = arg.name.has_value(),
+						.deferred_typecheck = arg.deferred_typecheck,
+					};
+				}
 				else
-					return { arg.value, arg.deferred_typecheck };
+				{
+					return {
+						.value = arg.value,
+						.was_named = arg.name.has_value(),
+						.deferred_typecheck = arg.deferred_typecheck,
+					};
+				}
 			};
 
 			if(arg.name.has_value())
@@ -54,28 +76,27 @@ namespace sap::interp
 				}
 				else
 				{
-					if(auto tmp = ret.param_idx_to_arg.find(it->second); tmp != ret.param_idx_to_arg.end())
+					if(auto tmp = ret.param_idx_to_args.find(it->second); tmp != ret.param_idx_to_args.end())
 						return ErrMsg(ts_ev, "{} '{}' already specified", thing_name2, *arg.name);
 
-					ret.param_idx_to_arg[it->second] = get_arg_pair(arg);
+					ret.param_idx_to_args[it->second].push_back(get_arg_pair(arg));
 					ret.arg_idx_to_param_idx[arg_idx] = it->second;
 				}
 			}
 			else
 			{
-				if(have_named)
-					return ErrMsg(ts_ev, "positional {} not allowed after named {}s", thing_name, thing_name);
-
 				// variadics are never specified by name. here, check the index of the current argument
-				if(cur_idx + 1 > expected.size())
+				if(cur_idx >= variadic_param_idx)
 				{
-					auto param_type = std::get<1>(expected.back());
+					auto param_type = std::get<1>(expected[variadic_param_idx]);
 
 					if(param_type->isVariadicArray())
 					{
-						ret.param_idx_to_arg[cur_idx] = get_arg_pair(arg);
+						ret.param_idx_to_args[cur_idx].push_back(get_arg_pair(arg));
 						ret.arg_idx_to_param_idx[arg_idx] = cur_idx;
-						cur_idx += 1;
+
+						// note: don't increment cur_idx -- lump all the args for
+						// this variadic to the same index.
 					}
 					else
 					{
@@ -85,7 +106,10 @@ namespace sap::interp
 				}
 				else
 				{
-					ret.param_idx_to_arg[cur_idx] = get_arg_pair(arg);
+					if(have_named)
+						return ErrMsg(ts_ev, "positional {} not allowed after named {}s", thing_name, thing_name);
+
+					ret.param_idx_to_args[cur_idx].push_back(get_arg_pair(arg));
 					ret.arg_idx_to_param_idx[arg_idx] = cur_idx;
 					cur_idx += 1;
 				}
@@ -119,81 +143,108 @@ namespace sap::interp
 
 	ErrorOr<int> getCallingCost(Typechecker* ts,
 		const std::vector<std::tuple<std::string, const Type*, const Expr*>>& expected,
-		const std::unordered_map<size_t, ArgPair<const Type*>>& ordered_args,
+		const std::unordered_map<size_t, std::vector<ArgPair<const Type*>>>& param_idx_to_args,
 		const char* fn_or_struct,
 		const char* thing_name,
 		const char* thing_name2)
 	{
 		int cost = 0;
 
+		size_t variadic_param_idx = expected.size();
 		const Type* variadic_element_type = nullptr;
-		if(expected.size() > 0)
+
+		for(size_t i = 0; i < expected.size(); i++)
 		{
-			if(auto t = std::get<1>(expected.back()); t->isVariadicArray())
+			if(auto t = std::get<1>(expected[i]); t->isVariadicArray())
+			{
+				variadic_param_idx = i;
 				variadic_element_type = t->arrayElement();
+				break;
+			}
 		}
 
 		int variadic_cost = 0;
-		for(size_t i = 0; i < ordered_args.size(); i++)
+		for(size_t param_idx = 0; param_idx < param_idx_to_args.size(); param_idx++)
 		{
-			const Type* arg_type = nullptr;
-			bool is_deferred = false;
-			if(not ordered_args.contains(i))
-			{
-				if(auto default_value = std::get<2>(expected[i]); default_value == nullptr)
-					return ErrMsg(ts, "missing {} '{}'", thing_name2, std::get<0>(expected[i]));
+			auto arg_pairs = TRY(([&](size_t k) -> ErrorOr<std::vector<ArgPair<const Type*>>> {
+				if(not param_idx_to_args.contains(k))
+				{
+					if(auto default_value = std::get<2>(expected[k]); default_value == nullptr)
+					{
+						return ErrMsg(ts, "missing {} '{}'", thing_name2, std::get<0>(expected[k]));
+					}
+					else
+					{
+						auto t = TRY(default_value->typecheck(ts)).type();
+						auto asdf = std::vector { ArgPair<const Type*> {
+							.value = t,
+							.was_named = false,
+							.deferred_typecheck = false,
+						} };
+
+						return Ok(std::move(asdf));
+					}
+				}
 				else
-					arg_type = TRY(default_value->typecheck(ts)).type();
-			}
-			else
+				{
+					return Ok(param_idx_to_args.at(k));
+				}
+			}(param_idx)));
+
+			for(auto& ap : arg_pairs)
 			{
-				arg_type = ordered_args.at(i).value;
-				is_deferred = ordered_args.at(i).deferred_typecheck;
-			}
+				auto arg_type = ap.value;
+				auto is_deferred = ap.deferred_typecheck;
 
-			if(i >= expected.size())
-			{
-				if(variadic_element_type == nullptr)
-					return ErrMsg(ts, "too many arguments (expected {})", expected.size());
+				if(param_idx == variadic_param_idx)
+				{
+					if(variadic_element_type == nullptr)
+						return ErrMsg(ts, "too many arguments (expected {})", expected.size());
 
-				if(arg_type == variadic_element_type)
-					variadic_cost += 1;
-				else if(variadic_element_type->isAny())
-					variadic_cost += 3;
-				else if(ts->canImplicitlyConvert(arg_type, variadic_element_type))
-					variadic_cost += 2;
+					if(arg_type == Type::makeArray(variadic_element_type, /* variadic */ true))
+						;
+					else if(arg_type == variadic_element_type)
+						variadic_cost += 1;
+					else if(variadic_element_type->isAny())
+						variadic_cost += 3;
+					else if(ts->canImplicitlyConvert(arg_type, variadic_element_type))
+						variadic_cost += 2;
+					else
+						return ErrMsg(ts, "mismatched types in variadic argument; expected '{}', got '{}",
+							variadic_element_type, arg_type);
 
-				continue;
-			}
+					continue;
+				}
 
-			// if the param is an any, we can just do it, but with extra cost.
-			auto param_type = std::get<1>(expected[i]);
+				// if the param is an any, we can just do it, but with extra cost.
+				auto param_type = std::get<1>(expected[param_idx]);
 
-			// no conversion = no cost
-			if(arg_type == param_type)
-				continue;
+				// no conversion = no cost
+				if(arg_type == param_type)
+					continue;
 
-			// if we are forced to defer typechecking (ie. we don't have a type for this argument),
-			// then skip it -- it's free for now.
-			if(is_deferred)
-				continue;
+				// if we are forced to defer typechecking (ie. we don't have a type for this argument),
+				// then skip it -- it's free for now.
+				if(is_deferred)
+					continue;
 
-			if(param_type->isAny())
-			{
-				cost += 2;
-			}
-			else if(param_type->isVariadicArray() && ts->canImplicitlyConvert(arg_type, param_type->arrayElement()))
-			{
-				cost += 1;
-			}
-			else if(ts->canImplicitlyConvert(arg_type, param_type))
-			{
-				cost += 1;
-			}
-			else
-			{
-				return ErrMsg(ts, "mismatched types for {} {}: got '{}', expected '{}'", //
-					thing_name, 1 + i, arg_type, param_type);
+				if(param_type->isAny())
+				{
+					cost += 2;
+				}
+				else if(param_type->isVariadicArray() && ts->canImplicitlyConvert(arg_type, param_type->arrayElement()))
+				{
+					cost += 1;
+				}
+				else if(ts->canImplicitlyConvert(arg_type, param_type))
+				{
+					cost += 1;
+				}
+				else
+				{
+					return ErrMsg(ts, "mismatched types for {} {}: expected '{}', got '{}'", //
+						thing_name, 1 + param_idx, param_type, arg_type);
+				}
 			}
 		}
 

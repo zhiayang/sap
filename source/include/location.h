@@ -19,6 +19,8 @@ namespace sap
 		zst::str_view filename;
 		zst::str_view file_contents;
 
+		bool is_builtin = false;
+
 		static inline Location builtin()
 		{
 			return Location {
@@ -26,6 +28,7 @@ namespace sap
 				.column = 0,
 				.length = 1,
 				.filename = "builtin",
+				.is_builtin = true,
 			};
 		}
 	};

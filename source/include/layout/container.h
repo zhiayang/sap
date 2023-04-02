@@ -24,6 +24,7 @@ namespace sap::layout
 			LayoutSize size,
 			Direction direction,
 			Length top_to_baseline_dist,
+			bool glue_objects,
 			std::vector<std::unique_ptr<LayoutObject>> objs);
 
 		void addObject(std::unique_ptr<LayoutObject> obj);
@@ -35,6 +36,7 @@ namespace sap::layout
 		virtual void render_impl(const LayoutBase* layout, std::vector<pdf::Page*>& pages) const override;
 
 	private:
+		bool m_glued;
 		Direction m_direction;
 		Length m_tallest_ascent;
 		std::vector<std::unique_ptr<LayoutObject>> m_objects;
