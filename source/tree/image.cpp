@@ -18,12 +18,13 @@
 
 namespace sap::tree
 {
-	Image::Image(OwnedImageBitmap image, sap::Vector2 size) : m_image(std::move(image)), m_size(size)
+	util::hashmap<std::string, OwnedImageBitmap> Image::s_cached_images;
+
+	Image::Image(ImageBitmap image, sap::Vector2 size) : m_image(std::move(image)), m_size(size)
 	{
 	}
 
-	// TODO: make ErrorOr<>
-	std::unique_ptr<Image> Image::fromImageFile(zst::str_view file_path, sap::Length width, std::optional<sap::Length> height)
+	static StrErrorOr<OwnedImageBitmap> load_image_from_path(zst::str_view file_path)
 	{
 		auto file_buf = util::readEntireFile(file_path.str());
 
@@ -36,19 +37,13 @@ namespace sap::tree
 			&num_actual_channels, 3);
 
 		if(image_data_buf == nullptr)
-			sap::internal_error("failed to load image '{}': {}", file_path, stbi_failure_reason());
+			return ErrFmt("failed to load image '{}': {}", file_path, stbi_failure_reason());
 
 		auto img_width = (size_t) img_width_;
 		auto img_height = (size_t) img_height_;
 
 		auto image_rgb_data = zst::unique_span<uint8_t[]>(image_data_buf, img_height * img_width * 3, //
-			[](const void* ptr, size_t n) {
-				stbi_image_free((void*) ptr);
-			});
-
-		auto aspect = (double) img_width / (double) img_height;
-		if(not height.has_value())
-			height = width / aspect;
+			[](const void* ptr, size_t n) { stbi_image_free((void*) ptr); });
 
 		auto image = OwnedImageBitmap {
 			.pixel_width = img_width,
@@ -75,6 +70,39 @@ namespace sap::tree
 		}
 
 		util::log("loaded image '{}'", file_path);
-		return std::make_unique<Image>(std::move(image), sap::Vector2(width, *height));
+		return Ok(std::move(image));
+	}
+
+
+
+
+
+
+
+
+	ErrorOr<std::unique_ptr<Image>> Image::fromImageFile(const Location& loc,
+		zst::str_view file_path,
+		sap::Length width,
+		std::optional<sap::Length> height)
+	{
+		ImageBitmap image {};
+		if(auto it = s_cached_images.find(file_path); it == s_cached_images.end())
+		{
+			auto x = load_image_from_path(file_path);
+			if(x.is_err())
+				return ErrMsg(loc, "{}", x.take_error());
+
+			image = (s_cached_images[file_path.str()] = std::move(*x)).span();
+		}
+		else
+		{
+			image = it->second.span();
+		}
+
+		auto aspect = (double) image.pixel_width / (double) image.pixel_height;
+		if(not height.has_value())
+			height = width / aspect;
+
+		return Ok(std::make_unique<Image>(image, sap::Vector2(width, *height)));
 	}
 }

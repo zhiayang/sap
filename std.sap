@@ -239,6 +239,16 @@ namespace std
 
 
 
+	@post {
+		var i = 0;
+		while(i < g_sections.size())
+		{
+			let foo = g_sections[i].num_tbo_ref.layout_object()!;
+			let tmp = foo.position();
+			g_sections[i].page_num = 1 + tmp.page;
+			i += 1;
+		}
+	}
 
 	fn output_table_of_contents() -> ?Block
 	{

@@ -60,31 +60,32 @@ namespace pdf
 
 
 		bool did_compress = false;
-		do
+		while(m_compressed)
 		{
 			// needs slack space
 			auto buf_size = m_bytes.size() + 10;
 			auto compressed_bytes = new uint8_t[buf_size];
 			auto _ = util::Defer([&]() { delete[] compressed_bytes; });
 
-			auto compressor = libdeflate_alloc_compressor(5);
+			auto compressor = libdeflate_alloc_compressor(6);
 			assert(compressor != nullptr);
 
-			auto compressed_len = libdeflate_deflate_compress(compressor, m_bytes.data(), m_bytes.size(),
-				compressed_bytes, buf_size);
+			auto compressed_len = libdeflate_zlib_compress(compressor, m_bytes.data(), m_bytes.size(), compressed_bytes,
+				buf_size);
 
 			if(compressed_len == 0)
 				break;
 
-			did_compress = true;
+			libdeflate_free_compressor(compressor);
 
 			m_dict->addOrReplace(names::Length1, Integer::create(util::checked_cast<int64_t>(m_bytes.size())));
 			m_dict->addOrReplace(names::Length, Integer::create(util::checked_cast<int64_t>(compressed_len)));
 			m_dict->addOrReplace(names::Filter, names::FlateDecode.ptr());
 
-			libdeflate_free_compressor(compressor);
 			write_the_thing(w, m_dict, zst::byte_span(compressed_bytes, compressed_len));
-		} while(false);
+			did_compress = true;
+			break;
+		}
 
 		if(not did_compress)
 		{
