@@ -10,7 +10,7 @@ WARNINGS += -Wno-error=unused-function
 WARNINGS += -Wno-unused-but-set-variable
 WARNINGS += -Wno-error=shadow
 
-OPT_FLAGS           := -O0
+OPT_FLAGS           := -O2 -march=native
 LINKER_OPT_FLAGS    :=
 COMMON_CFLAGS       := -g $(OPT_FLAGS)
 
@@ -44,8 +44,8 @@ TESTS               = $(TESTSRC:test/%.cpp=$(TEST_DIR)/%)
 UTF8PROC_SRCS       := external/utf8proc/utf8proc.c
 UTF8PROC_OBJS       := $(UTF8PROC_SRCS:%.c=$(OUTPUT_DIR)/%.c.o)
 
-MINIZ_SRCS          := external/miniz/miniz.c
-MINIZ_OBJS          := $(MINIZ_SRCS:%.c=$(OUTPUT_DIR)/%.c.o)
+LIBDEFLATE_SRCS     := $(shell find external/libdeflate/lib -iname "*.c" -print)
+LIBDEFLATE_OBJS     := $(LIBDEFLATE_SRCS:%.c=$(OUTPUT_DIR)/%.c.o)
 
 PRECOMP_HDR         := source/include/precompile.h
 PRECOMP_GCH         := $(PRECOMP_HDR:%.h=$(OUTPUT_DIR)/%.h.gch)
@@ -117,25 +117,12 @@ check: test
 		$$test; \
 	done
 
-compile_commands.json:
-	@echo "  $@"
-	@# first build list of commands
-	@echo -n > $(OUTPUT_DIR)/cmds
-	@for f in $(MINIZ_SRCS); do echo $(CC) $(CFLAGS) -MMD -MP -c -o $(OUTPUT_DIR)/$$f.o $(OUTPUT_DIR)/$$f; done >> $(OUTPUT_DIR)/cmds
-	@for f in $(UTF8PROC_SRCS); do echo $(CC) $(CFLAGS) -MMD -MP -c -o $(OUTPUT_DIR)/$$f.o $(OUTPUT_DIR)/$$f; done >> $(OUTPUT_DIR)/cmds
-	@for f in $(CXXSRC); do echo $(CXX) -include $(PRECOMP_HDR) $(CXXFLAGS) $(NONGCH_CXXFLAGS) $(WARNINGS) $(INCLUDES) $(DEFINES) -MMD -MP -c -o $(OUTPUT_DIR)/$$f $$f; done >> $(OUTPUT_DIR)/cmds
-	@# now convert cmd list to compile_commands.json
-	@cat $(OUTPUT_DIR)/cmds | awk -v CWD=$$(pwd) 'BEGIN { print "[" } END { print "]"} { print "{\"arguments\": ["; for (i = 1; i <= NF; i++) { print "\"" $$i "\"," } print "], \"directory\": \"" CWD "\", \"file\": \"" $$NF "\", \"output\": \"" $$(NF - 1) "\"}, " }' > $@
-	@# do some cleaning
-	@cat $@ | tr '\n' ' ' | sed -e 's/ \+/ /g' | sed -e 's/, *]/]/g' -e 's/, *]/}/g' -e 's/},/},\n/g' -e 's/ *$$/\n/' > $@.new
-	@mv $@.new $@
-
-$(OUTPUT_BIN): $(PRECOMP_OBJ) $(CXXOBJ) $(UTF8PROC_OBJS) $(MINIZ_OBJS)
+$(OUTPUT_BIN): $(PRECOMP_OBJ) $(CXXOBJ) $(UTF8PROC_OBJS) $(LIBDEFLATE_OBJS)
 	@echo "  $(notdir $@)"
 	@mkdir -p $(shell dirname $@)
 	@$(CXX) $(CXXFLAGS) $(WARNINGS) $(DEFINES) $(LDFLAGS) $(LINKER_OPT_FLAGS) -Iexternal -o $@ $^
 
-$(TEST_DIR)/%: $(OUTPUT_DIR)/test/%.cpp.o $(CXXLIBOBJ) $(UTF8PROC_OBJS) $(MINIZ_OBJS) $(PRECOMP_OBJ)
+$(TEST_DIR)/%: $(OUTPUT_DIR)/test/%.cpp.o $(CXXLIBOBJ) $(UTF8PROC_OBJS) $(PRECOMP_OBJ)
 	@echo "  $(notdir $@)"
 	@mkdir -p $(shell dirname $@)
 	@$(CXX) $(CXXFLAGS) $(NONGCH_CXXFLAGS) $(WARNINGS) $(DEFINES) $(LDFLAGS) -Iexternal -o $@ $^
@@ -148,7 +135,7 @@ $(OUTPUT_DIR)/%.cpp.o: %.cpp $(PRECOMP_GCH)
 $(OUTPUT_DIR)/%.c.o: %.c
 	@echo "  $<"
 	@mkdir -p $(shell dirname $@)
-	@$(CC) $(CFLAGS) -MMD -MP -c -o $@ $<
+	@$(CC) $(CFLAGS) -MMD -MP -O3 -c -o $@ $<
 
 $(PRECOMP_GCH): $(PRECOMP_HDR)
 	@printf "# precompiling header $<\n"
@@ -172,6 +159,19 @@ $(PRECOMP_OBJ): $(PRECOMP_GCH)
 
 
 
+
+compile_commands.json:
+	@echo "  $@"
+	@# first build list of commands
+	@echo -n > $(OUTPUT_DIR)/cmds
+	@for f in $(UTF8PROC_SRCS); do echo $(CC) $(CFLAGS) -MMD -MP -c -o $(OUTPUT_DIR)/$$f.o $(OUTPUT_DIR)/$$f; done >> $(OUTPUT_DIR)/cmds
+	@for f in $(LIBDEFLATE_SRCS); do echo $(CC) $(CFLAGS) -MMD -MP -c -o $(OUTPUT_DIR)/$$f.o $(OUTPUT_DIR)/$$f; done >> $(OUTPUT_DIR)/cmds
+	@for f in $(CXXSRC); do echo $(CXX) -include $(PRECOMP_HDR) $(CXXFLAGS) $(NONGCH_CXXFLAGS) $(WARNINGS) $(INCLUDES) $(DEFINES) -MMD -MP -c -o $(OUTPUT_DIR)/$$f $$f; done >> $(OUTPUT_DIR)/cmds
+	@# now convert cmd list to compile_commands.json
+	@cat $(OUTPUT_DIR)/cmds | awk -v CWD=$$(pwd) 'BEGIN { print "[" } END { print "]"} { print "{\"arguments\": ["; for (i = 1; i <= NF; i++) { print "\"" $$i "\"," } print "], \"directory\": \"" CWD "\", \"file\": \"" $$NF "\", \"output\": \"" $$(NF - 1) "\"}, " }' > $@
+	@# do some cleaning
+	@cat $@ | tr '\n' ' ' | sed -e 's/ \+/ /g' | sed -e 's/, *]/]/g' -e 's/, *]/}/g' -e 's/},/},\n/g' -e 's/ *$$/\n/' > $@.new
+	@mv $@.new $@
 
 clean:
 	-@rm -fr $(OUTPUT_DIR)

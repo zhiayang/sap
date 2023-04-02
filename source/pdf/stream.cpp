@@ -2,7 +2,7 @@
 // Copyright (c) 2021, zhiayang
 // SPDX-License-Identifier: Apache-2.0
 
-#include <miniz/miniz.h> // for tdefl_compress_buffer, tdefl_init, TDEFL_F...
+#include <libdeflate/libdeflate.h>
 
 #include "util.h" // for checked_cast
 
@@ -13,8 +13,6 @@
 
 namespace pdf
 {
-	constexpr int COMPRESSION_LEVEL = 2048;
-
 	// TODO: FOR DEBUGGING
 	void Stream::write_to_file(void* f) const
 	{
@@ -48,7 +46,7 @@ namespace pdf
 
 		auto helper = IndirHelper(w, this);
 
-		auto write_the_thing = [](Writer* w, Dictionary* dict, const zst::byte_buffer& buf) {
+		auto write_the_thing = [](Writer* w, Dictionary* dict, zst::byte_span buf) {
 			dict->writeFull(w);
 
 			w->writeln();
@@ -61,39 +59,37 @@ namespace pdf
 		};
 
 
-		if(m_compressed)
+		bool did_compress = false;
+		do
 		{
-			tdefl_compressor compressor {};
-			zst::byte_buffer compressed_bytes {};
+			// needs slack space
+			auto buf_size = m_bytes.size() + 10;
+			auto compressed_bytes = new uint8_t[buf_size];
+			auto _ = util::Defer([&]() { delete[] compressed_bytes; });
 
-			tdefl_init(
-				&compressor,
-				[](const void* buf, int len, void* user) -> int {
-					static_cast<zst::byte_buffer*>(user)->append(static_cast<const uint8_t*>(buf),
-						util::checked_cast<size_t>(len));
-					return 1;
-				},
-				(void*) &compressed_bytes, COMPRESSION_LEVEL | TDEFL_WRITE_ZLIB_HEADER);
+			auto compressor = libdeflate_alloc_compressor(5);
+			assert(compressor != nullptr);
 
+			auto compressed_len = libdeflate_deflate_compress(compressor, m_bytes.data(), m_bytes.size(),
+				compressed_bytes, buf_size);
 
-			auto res = tdefl_compress_buffer(&compressor, m_bytes.data(), m_bytes.size(), TDEFL_SYNC_FLUSH);
-			if(res != TDEFL_STATUS_OKAY)
-				pdf::error("stream compression failed");
+			if(compressed_len == 0)
+				break;
 
-			res = tdefl_compress_buffer(&compressor, 0, 0, TDEFL_FINISH);
-			if(res != TDEFL_STATUS_DONE)
-				pdf::error("failed to flush the stream: {}", res);
+			did_compress = true;
 
 			m_dict->addOrReplace(names::Length1, Integer::create(util::checked_cast<int64_t>(m_bytes.size())));
-			m_dict->addOrReplace(names::Length, Integer::create(util::checked_cast<int64_t>(compressed_bytes.size())));
+			m_dict->addOrReplace(names::Length, Integer::create(util::checked_cast<int64_t>(compressed_len)));
 			m_dict->addOrReplace(names::Filter, names::FlateDecode.ptr());
 
-			write_the_thing(w, m_dict, compressed_bytes);
-		}
-		else
+			libdeflate_free_compressor(compressor);
+			write_the_thing(w, m_dict, zst::byte_span(compressed_bytes, compressed_len));
+		} while(false);
+
+		if(not did_compress)
 		{
 			m_dict->addOrReplace(names::Length, Integer::create(util::checked_cast<int64_t>(m_bytes.size())));
-			write_the_thing(w, m_dict, m_bytes);
+			write_the_thing(w, m_dict, m_bytes.span());
 		}
 	}
 

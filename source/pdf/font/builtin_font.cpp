@@ -2,9 +2,10 @@
 // Copyright (c) 2022, zhiayang
 // SPDX-License-Identifier: Apache-2.0
 
+#include <libdeflate/libdeflate.h>
+
 #include <array>
 #include <charconv>
-#include <miniz/miniz.h>
 
 #include "pdf/builtin_font.h"
 
@@ -22,13 +23,16 @@ namespace pdf
 
 		auto output = new uint8_t[OUTPUT_BUF_SIZE];
 
-		auto result = tinfl_decompress_mem_to_mem(&output[0], OUTPUT_BUF_SIZE, buf, len, //
-		    TINFL_FLAG_PARSE_ZLIB_HEADER);
+		auto dc = libdeflate_alloc_decompressor();
 
-		if(result == TINFL_DECOMPRESS_MEM_TO_MEM_FAILED)
+		size_t real_size = 0;
+		auto result = libdeflate_zlib_decompress(dc, buf, len, output, OUTPUT_BUF_SIZE, &real_size);
+
+		if(result != LIBDEFLATE_SUCCESS)
 			sap::internal_error("failed to decompress afm!");
 
-		return { output, result };
+		libdeflate_free_decompressor(dc);
+		return { output, real_size };
 	}
 
 
@@ -128,9 +132,7 @@ namespace pdf
 
 		for(auto line : lines)
 		{
-			auto get_value = [&line](zst::str_view key) {
-				return get_value_for_key(line, key);
-			};
+			auto get_value = [&line](zst::str_view key) { return get_value_for_key(line, key); };
 
 			if(auto x = get_value("FontName"); x.has_value())
 			{
@@ -291,12 +293,12 @@ namespace pdf
 		// see the comment in font/loader.cpp about this 1.2x
 		m_metrics.units_per_em = 1000;
 		m_metrics.default_line_spacing = std::max(FontScalar(m_metrics.units_per_em * 12) / 10,
-		    m_metrics.typo_ascent - m_metrics.typo_descent);
+			m_metrics.typo_ascent - m_metrics.typo_descent);
 	}
 
 
-	std::map<size_t, font::GlyphAdjustment> BuiltinFont::getPositioningAdjustmentsForGlyphSequence(zst::span<GlyphId> glyphs,
-	    const font::FeatureSet& features) const
+	std::map<size_t, font::GlyphAdjustment> BuiltinFont::
+		getPositioningAdjustmentsForGlyphSequence(zst::span<GlyphId> glyphs, const font::FeatureSet& features) const
 	{
 		if(glyphs.size() < 2)
 			return {};
@@ -311,8 +313,8 @@ namespace pdf
 		return kerns;
 	}
 
-	std::optional<font::SubstitutedGlyphString> BuiltinFont::performSubstitutionsForGlyphSequence(zst::span<GlyphId> glyphs,
-	    const font::FeatureSet& features) const
+	std::optional<font::SubstitutedGlyphString> BuiltinFont::
+		performSubstitutionsForGlyphSequence(zst::span<GlyphId> glyphs, const font::FeatureSet& features) const
 	{
 		if(glyphs.size() < 2)
 			return std::nullopt;

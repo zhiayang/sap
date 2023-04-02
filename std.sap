@@ -90,9 +90,9 @@ namespace std
 		var box = builtin::apply_style({
 			.font_family = g_sans_font,
 		}, builtin::make_vbox(
-			builtin::vspace(0.3em),
+			builtin::vspace(0.5em),
 			builtin::make_hbox(*num_line, *name_line),
-			builtin::vspace(-0.0em),
+			builtin::vspace(-0.9em),
 		));
 
 		box.offset_position({ .x = -13mm, .y = 0mm });
@@ -133,9 +133,9 @@ namespace std
 		var box = builtin::apply_style({
 			.font_family = g_sans_font,
 		}, builtin::make_vbox(
-			builtin::vspace(0.3em),
+			builtin::vspace(0.5em),
 			builtin::make_hbox(*num_line, *name_line),
-			builtin::vspace(-0.em)
+			builtin::vspace(-0.9em)
 		));
 
 		box.offset_position({ .x = -13mm, .y = 0mm });
@@ -182,9 +182,9 @@ namespace std
 		var box = builtin::apply_style({
 			.font_family = g_sans_font,
 		}, builtin::make_vbox(
-			builtin::vspace(0.3em),
+			builtin::vspace(0.5em),
 			builtin::make_hbox(*num_line, *name_line),
-			builtin::vspace(-0.em)
+			builtin::vspace(-0.9em)
 		));
 
 		box.offset_position({ .x = -13mm, .y = 0mm });
@@ -280,30 +280,30 @@ namespace std
 		return ret;
 	}
 
-	# @post {
-	# 	var i = 0;
+	@post {
+		var i = 0;
 
-	# 	var page_num_pos = builtin::state().page_size;
-	# 	page_num_pos.x -= 30mm;
-	# 	page_num_pos.y -= 30mm;
+		var page_num_pos = builtin::state().page_size;
+		page_num_pos.x -= 30mm;
+		page_num_pos.y -= 30mm;
 
-	# 	while(i < builtin::state().page_count)
-	# 	{
-	# 		let page_num = i + 1;
-	# 		let item = std::style({
-	# 			.alignment = .Left,
-	# 			.font_size = 11pt,
-	# 		}, builtin::make_line(builtin::make_text(f"{page_num}")));
+		while(i < builtin::state().page_count)
+		{
+			let page_num = i + 1;
+			let item = std::style({
+				.alignment = .Left,
+				.font_size = 11pt,
+			}, builtin::make_line(builtin::make_text(f"{page_num}")));
 
-	# 		builtin::output_at_absolute({
-	# 			.page = i,
-	# 			.x = page_num_pos.x,
-	# 			.y = page_num_pos.y,
-	# 		}, *item);
+			builtin::output_at_absolute({
+				.page = i,
+				.x = page_num_pos.x,
+				.y = page_num_pos.y,
+			}, *item);
 
-	# 		i += 1;
-	# 	}
-	# }
+			i += 1;
+		}
+	}
 
 
 	fn numbered_list(items: [string...]) -> ?Block
