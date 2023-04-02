@@ -28,7 +28,7 @@ preamble{meta.document.preamble}
 
 document-start
     : `\start_document`{keyword} (`(`{punctuation.paren.call-start}
-        (function-call-arg (`,`{punctuation.comma} function-call-arg)*)?
+        (function-call-arg (`,`{punctuation.comma} function-call-arg)* (`,`{punctuation.comma})?)?
     `)`{punctuation.paren.call-end}) `;`{punctuation.terminator}?
     ;
 
@@ -57,7 +57,7 @@ script-call{meta.script.inline-call}:
         (`::`{punctuation.scope})? (IDENTIFIER{support.function})
         (`::`{punctuation.scope} IDENTIFIER{support.function})*
     ) '(@\s*(layout|position|post|render))'{storage.modifier}? (`(`{punctuation.paren.call-start}
-            (function-call-arg (`,`{punctuation.comma} function-call-arg)*)?
+            (function-call-arg (`,`{punctuation.comma})?)*
     `)`{punctuation.paren.call-end})
     script-call-tail?;
 
@@ -137,16 +137,6 @@ function-call-arg: '([A-Za-z_][[:word:]]*)\s*(:)\s*(?!:)'{
         2: punctuation.colon
     }? expr;
 
-function-call:
-    '(::)?\s*([A-Za-z_][[:word:]]*)(?:\s*(::)\s*([A-Za-z_][[:word:]]*))*\s*(\()'{
-        1: punctuation.scope,
-        2: meta.name.scope-part,
-        3: punctuation.scope,
-        4: meta.name.scope-part,
-        5: punctuation.paren.call-start
-    } (function-call-arg (`,`{punctuation.comma} function-call-arg)*)?
-    `)`{punctuation.paren.call-end};
-
 struct-literal-field:
     (`.`{punctuation.period})
     ('[A-Za-z_][A-Za-z0-9_]*'{meta.name.struct.field})
@@ -179,7 +169,7 @@ primary-expr
 
 postfix-expr2
     : `(`{punctuation.paren.call-start}
-        (function-call-arg (`,`{punctuation.comma} function-call-arg)*)?
+        (function-call-arg (`,`{punctuation.comma})?)*
       `)`{punctuation.paren.call-end}
     | `[`{punctuation.bracket.subscript-start}
         expr (`:`{punctuation.colon.slice} expr)?

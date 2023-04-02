@@ -376,6 +376,14 @@ namespace sap::frontend
 			if(not first && not lexer.expect(TT::Comma))
 				return ErrMsg(lexer.location(), "expected ',' or ')' in call argument list");
 
+			else if(first && lexer.peek() == TT::Comma)
+				return ErrMsg(lexer.location(), "unexpected ','");
+
+			// if we are not first, and we see a rparen (at this point), break
+			// we check again because it allows us to handle trailing commas (for >0 args)
+			if(lexer.expect(TT::RParen))
+				break;
+
 			bool is_arg_named = false;
 
 			interp::FunctionCall::Arg arg {};
