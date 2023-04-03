@@ -166,8 +166,6 @@ namespace sap::layout
 		bool is_first_line,
 		bool is_last_line)
 	{
-		auto total_width = line_metrics.total_word_width + line_metrics.total_space_width;
-
 		auto desired_space_width = available_space.x() - line_metrics.total_word_width;
 		double space_width_factor = desired_space_width / line_metrics.total_space_width;
 
@@ -176,6 +174,7 @@ namespace sap::layout
 		const Style* prev_word_style = Style::empty();
 		Length current_offset = 0;
 
+		Length actual_width = 0;
 		for(size_t i = 0, sep_idx = 0; i < objs.size(); i++)
 		{
 			auto obj_width = line_metrics.widths[i];
@@ -235,8 +234,10 @@ namespace sap::layout
 			}
 		}
 
+		actual_width = current_offset;
+
 		auto layout_size = LayoutSize {
-			.width = total_width,
+			.width = actual_width,
 			.ascent = line_metrics.ascent_height,
 			.descent = line_metrics.default_line_spacing - line_metrics.ascent_height,
 		};

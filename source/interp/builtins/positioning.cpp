@@ -19,10 +19,12 @@ namespace sap::interp::builtin
 		assert(args.size() == 1);
 		assert(args[0].isLength());
 
-		auto spacer = std::make_unique<tree::Spacer>(DynLength2d {
-			.x = DynLength(),
-			.y = args[0].getLength(),
-		});
+		auto spacer = std::make_unique<tree::Spacer>(
+			DynLength2d {
+				.x = DynLength(),
+				.y = args[0].getLength(),
+			},
+			/* page break: */ false);
 
 		return EvalResult::ofValue(Value::treeBlockObject(std::move(spacer)));
 	}
@@ -32,13 +34,25 @@ namespace sap::interp::builtin
 		assert(args.size() == 1);
 		assert(args[0].isLength());
 
-		auto spacer = std::make_unique<tree::Spacer>(DynLength2d {
-			.x = args[0].getLength(),
-			.y = DynLength(),
-		});
+		auto spacer = std::make_unique<tree::Spacer>(
+			DynLength2d {
+				.x = args[0].getLength(),
+				.y = DynLength(),
+			},
+			/* page break: */ false);
 
 		return EvalResult::ofValue(Value::treeBlockObject(std::move(spacer)));
 	}
+
+	ErrorOr<EvalResult> page_break(Evaluator* ev, std::vector<Value>& args)
+	{
+		assert(args.size() == 0);
+		return EvalResult::ofValue(Value::treeBlockObject(std::make_unique<tree::Spacer>(DynLength2d {},
+			/* page break: */ true)));
+	}
+
+
+
 
 
 

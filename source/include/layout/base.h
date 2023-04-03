@@ -62,6 +62,7 @@ namespace sap::layout
 		virtual Payload move_to_position(const Payload& payload, RelativePos pos) const = 0;
 		virtual Payload carriage_return(const Payload& payload) const = 0;
 		virtual Payload limit_width(const Payload& payload, Length width) const = 0;
+		virtual Payload new_page(const Payload& payload) = 0;
 
 	protected:
 		std::vector<std::unique_ptr<LayoutObject>> m_objects {};
@@ -104,6 +105,7 @@ namespace sap::layout
 		virtual Payload move_to_position(const Payload& payload, RelativePos pos) const override;
 		virtual Payload carriage_return(const Payload& payload) const override;
 		virtual Payload limit_width(const Payload& payload, Length width) const override;
+		virtual Payload new_page(const Payload& payload) override;
 
 	private:
 		Size2d m_size;

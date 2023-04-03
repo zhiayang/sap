@@ -105,11 +105,19 @@ namespace sap::interp::builtin
 	{
 		assert(args.size() == 1);
 
+		auto objs = std::move(args[0]).takeArray();
+		std::vector<std::unique_ptr<tree::InlineObject>> inlines {};
+
+		for(size_t i = 0; i < objs.size(); i++)
+		{
+			auto tmp = std::move(objs[i]).takeTreeInlineObj();
+			inlines.insert(inlines.end(), std::move_iterator(tmp.begin()), std::move_iterator(tmp.end()));
+		}
+
 		auto para = std::make_unique<tree::Paragraph>();
 
-		auto objs = std::move(args[0]).takeArray();
-		for(size_t i = 0; i < objs.size(); i++)
-			para->addObjects(std::move(objs[i]).takeTreeInlineObj());
+		inlines = TRY(tree::Paragraph::processWordSeparators(std::move(inlines)));
+		para->addObjects(std::move(inlines));
 
 		return EvalResult::ofValue(Value::treeBlockObject(std::move(para)));
 	}

@@ -45,6 +45,7 @@ namespace sap::layout
 		Length widthAtCursor() const;
 		[[nodiscard]] PageCursor moveRight(Length shift) const;
 		[[nodiscard]] PageCursor moveDown(Length shift) const;
+		[[nodiscard]] PageCursor newPage() const;
 		[[nodiscard]] PageCursor newLine(Length line_height, bool* made_new_page = nullptr) const;
 		[[nodiscard]] PageCursor ensureVerticalSpace(Length line_height, bool* made_new_page = nullptr) const;
 		[[nodiscard]] PageCursor carriageReturn() const;

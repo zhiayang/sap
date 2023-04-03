@@ -42,56 +42,6 @@ namespace sap::tree
 			return Ok(std::move(result));
 		else
 			return ErrMsg(iscr->call->loc(), "cannot insert LayoutObject or Block objects in paragraphs");
-
-
-
-
-
-
-#if 0
-		auto maybe_value = TRY(cs->run(iscr->call.get()));
-		if(not maybe_value.hasValue())
-		{
-			// TODO: wtf is this? might be to avoid having two separators in a row?
-			output_vec.emplace_back(new tree::Text(U"", static_cast<InlineObject*>(iscr)->style()));
-			return Ok(Left(std::move(output_vec)));
-		}
-
-		using Type = interp::Type;
-
-		// these are all the types we accept.
-		auto value = maybe_value.take();
-		auto value_type = value.type();
-
-		const Type* t_tio = Type::makeTreeInlineObj();
-		const Type* t_otio = Type::makeOptional(t_tio);
-
-		const Type* t_tbo = Type::makeTreeBlockObj();
-		const Type* t_otbo = Type::makeOptional(t_tbo);
-		const Type* t_lo = Type::makeLayoutObject();
-		const Type* t_olo = Type::makeOptional(t_lo);
-
-		if(util::is_one_of(value_type, t_tbo, t_otbo, t_lo, t_olo))
-		{
-		}
-		else if(not util::is_one_of(value_type, t_tio, t_otio))
-		{
-			return ErrMsg(iscr->call->loc(),
-				"invalid result from script call in paragraph; got type '{}', expected either '{}', '{}', or '{}'"
-				"(or optionals of those)",
-				value_type, t_tio, t_tbo, t_lo);
-		}
-
-		// check the optional guys
-		if(value_type == t_otio)
-		{
-			if(not value.haveOptionalValue())
-				return Ok(Left(std::move(output_vec)));
-
-			value = std::move(value).takeOptional().value();
-			value_type = value.type();
-		}
-#endif
 	}
 
 
@@ -190,7 +140,7 @@ namespace sap::tree
 
 		if(manual_hyphenation)
 		{
-			for(size_t i = 0; (i = orig_span.find(U'-')) != (size_t) -1;)
+			for(size_t i = 0; (i = orig_span.find_first_of(U"-/.")) != (size_t) -1;)
 			{
 				auto part = orig_span.take_prefix(i + 1);
 				vec.push_back(std::make_unique<Text>(part.str(), text->style()));
@@ -303,7 +253,7 @@ namespace sap::tree
 			}
 
 			if(not current_text->contents().empty())
-				ret.push_back(std::move(current_text));
+				make_separators_for_word(ret, std::move(current_text));
 
 			first_obj = false;
 		}

@@ -159,6 +159,7 @@ namespace sap::interp
 
 		define_builtin("vspace", makeParamList(P("_", t_length)), t_tbo, &B::vspace);
 		define_builtin("hspace", makeParamList(P("_", t_length)), t_tbo, &B::hspace);
+		define_builtin("page_break", makeParamList(), t_tbo, &B::page_break);
 
 		define_builtin("layout_object", makeParamList(P("_", t_ptr(t_tbo))), t_opt(t_lo_ref), &B::get_layout_object);
 		define_builtin("layout_object", makeParamList(P("_", t_ptr(t_tbo_ref))), t_opt(t_lo_ref),

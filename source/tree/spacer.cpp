@@ -8,7 +8,7 @@
 
 namespace sap::tree
 {
-	Spacer::Spacer(DynLength2d size) : m_size(size)
+	Spacer::Spacer(DynLength2d size, bool page_break) : m_size(size), m_page_break(page_break)
 	{
 	}
 
@@ -28,7 +28,7 @@ namespace sap::tree
 		auto layout_size = LayoutSize {
 			.width = size.x(),
 			.ascent = 0,
-			.descent = size.y(),
+			.descent = m_page_break ? Length(INFINITY) : size.y(),
 		};
 
 		auto ret = std::make_unique<layout::Spacer>(cur_style, layout_size);

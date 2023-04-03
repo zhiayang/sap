@@ -52,6 +52,8 @@ namespace sap::interp
 
 		ErrorOr<EvalResult> hspace(Evaluator* ev, std::vector<Value>& args);
 		ErrorOr<EvalResult> vspace(Evaluator* ev, std::vector<Value>& args);
+		ErrorOr<EvalResult> page_break(Evaluator* ev, std::vector<Value>& args);
+
 
 		ErrorOr<EvalResult> make_text(Evaluator* ev, std::vector<Value>& args);
 		ErrorOr<EvalResult> make_line(Evaluator* ev, std::vector<Value>& args);

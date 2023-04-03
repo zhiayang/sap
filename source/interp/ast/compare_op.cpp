@@ -35,6 +35,8 @@ namespace sap::interp
 		if(util::is_one_of(op, ComparisonOp::Op::EQ, ComparisonOp::Op::NE))
 		{
 			return (lhs == rhs)                            //
+			    || (lhs->isPointer() && rhs->isNullPtr())  //
+			    || (lhs->isNullPtr() && rhs->isPointer())  //
 			    || (lhs->isOptional() && rhs->isNullPtr()) //
 			    || (lhs->isNullPtr() && rhs->isOptional());
 		}
@@ -168,6 +170,18 @@ namespace sap::interp
 		{
 			assert(op == EQ || op == NE);
 			bool have_value = rhs.getOptional().has_value();
+			return (op == EQ ? not have_value : have_value);
+		}
+		else if(lhs.type()->isPointer() && rhs.type()->isNullPtr())
+		{
+			assert(op == EQ || op == NE);
+			bool have_value = lhs.getPointer() != nullptr;
+			return (op == EQ ? not have_value : have_value);
+		}
+		else if(lhs.type()->isNullPtr() && rhs.type()->isPointer())
+		{
+			assert(op == EQ || op == NE);
+			bool have_value = rhs.getPointer() != nullptr;
 			return (op == EQ ? not have_value : have_value);
 		}
 

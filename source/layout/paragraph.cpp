@@ -46,7 +46,7 @@ namespace sap::layout
 		assert(not m_lines.empty());
 		this->positionRelatively(cursor.position());
 
-		cursor = cursor.carriageReturn();
+		// cursor = cursor.carriageReturn();
 
 		return position_children_in_container(cursor, m_layout_size.width, Container::Direction::Vertical,
 			m_style->alignment(), 0, 0, /* shift_by_ascent_of_first_child: */ false, m_lines);

@@ -197,20 +197,26 @@ namespace sap::layout
 		});
 	}
 
+	BasePayload PageLayout::new_page(const BasePayload& payload)
+	{
+		auto& cst = get_cursor_state(payload);
+		m_num_pages = std::max(m_num_pages, cst.page_num + 1 + 1);
+
+		return to_base_payload({
+			.page_num = cst.page_num + 1,
+			.pos_on_page = { cst.pos_on_page.x(), 0 },
+			.is_absolute = cst.is_absolute,
+			.limited_width = cst.limited_width,
+		});
+	}
+
 	BasePayload PageLayout::new_line(const BasePayload& payload, Length line_height, bool* made_new_page)
 	{
 		auto& cst = get_cursor_state(payload);
 		if(not cst.is_absolute && cst.pos_on_page.y() + line_height >= m_content_size.y())
 		{
-			m_num_pages = std::max(m_num_pages, cst.page_num + 1 + 1);
-
 			*made_new_page = true;
-			return to_base_payload({
-				.page_num = cst.page_num + 1,
-				.pos_on_page = { cst.pos_on_page.x(), 0 },
-				.is_absolute = cst.is_absolute,
-				.limited_width = cst.limited_width,
-			});
+			return this->new_page(payload);
 		}
 		else
 		{

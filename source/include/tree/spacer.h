@@ -10,7 +10,7 @@ namespace sap::tree
 {
 	struct Spacer : BlockObject
 	{
-		explicit Spacer(DynLength2d size);
+		explicit Spacer(DynLength2d size, bool page_break);
 
 		virtual ErrorOr<void> evaluateScripts(interp::Interpreter* cs) const override;
 
@@ -21,5 +21,6 @@ namespace sap::tree
 
 	private:
 		DynLength2d m_size;
+		bool m_page_break;
 	};
 }

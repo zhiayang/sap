@@ -93,6 +93,11 @@ namespace sap::layout
 		return PageCursor(m_layout, m_layout->move_down(m_payload, shift));
 	}
 
+	PageCursor PageCursor::newPage() const
+	{
+		return PageCursor(m_layout, m_layout->new_page(m_payload));
+	}
+
 	PageCursor PageCursor::carriageReturn() const
 	{
 		return PageCursor(m_layout, m_layout->carriage_return(m_payload));
