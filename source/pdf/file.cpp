@@ -11,6 +11,9 @@
 #include "pdf/object.h" // for Object, Dictionary, Name, IndirectRef, Int...
 #include "pdf/writer.h" // for Writer
 
+#if !defined(GIT_REVISION)
+#define GIT_REVISION "unknown"
+#endif
 
 namespace pdf
 {
@@ -26,11 +29,18 @@ namespace pdf
 		auto pagetree = this->createPageTree();
 		auto root = Dictionary::createIndirect(names::Catalog, { { names::Pages, IndirectRef::create(pagetree) } });
 
+		auto info_dict = Dictionary::createIndirect({
+			{ names::Creator, String::create("sap-" GIT_REVISION) },
+			{ names::Producer, String::create("sap-" GIT_REVISION) },
+		});
+
 		// first, traverse all objects that are reachable from the root
 		root->collectIndirectObjectsAndAssignIds(this);
+		info_dict->collectIndirectObjectsAndAssignIds(this);
 
 		// then write the indirect objects
 		root->writeIndirectObjects(w);
+		info_dict->writeIndirectObjects(w);
 
 		// write the xref table
 		auto xref_position = w->position();
@@ -51,8 +61,11 @@ namespace pdf
 
 		w->writeln();
 
-		auto trailer = Dictionary::create({ { names::Size, Integer::create(util::checked_cast<int64_t>(num_objects)) },
-			{ names::Root, IndirectRef::create(root) } });
+		auto trailer = Dictionary::create({
+			{ names::Size, Integer::create(util::checked_cast<int64_t>(num_objects)) },
+			{ names::Info, IndirectRef::create(info_dict) },
+			{ names::Root, IndirectRef::create(root) },
+		});
 
 		w->writeln("trailer");
 		w->write(trailer);

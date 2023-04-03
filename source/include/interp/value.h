@@ -75,8 +75,8 @@ namespace sap::interp
 		tree::BlockObject* getTreeBlockObjectRef() const;
 		layout::LayoutObject* getLayoutObjectRef() const;
 
-		std::optional<std::vector<tree::InlineObject*>> takeTreeInlineObjectRef() &&;
-		const std::optional<std::vector<tree::InlineObject*>>& getTreeInlineObjectRef() const;
+		std::vector<tree::InlineObject*> takeTreeInlineObjectRef() &&;
+		const std::vector<tree::InlineObject*>& getTreeInlineObjectRef() const;
 
 
 
@@ -138,7 +138,7 @@ namespace sap::interp
 		static Value optional(const Type* type, std::optional<Value> value);
 		Value clone() const;
 
-		static Value treeInlineObjectRef(std::optional<std::vector<tree::InlineObject*>> pointers);
+		static Value treeInlineObjectRef(std::vector<tree::InlineObject*> pointers);
 		static Value treeBlockObjectRef(tree::BlockObject* obj);
 		static Value layoutObjectRef(layout::LayoutObject* obj);
 
@@ -177,7 +177,7 @@ namespace sap::interp
 			// these things need special handling
 			tree::BlockObject* v_block_obj_ref;
 			layout::LayoutObject* v_layout_obj_ref;
-			std::optional<std::vector<tree::InlineObject*>> v_inline_obj_ref;
+			std::vector<tree::InlineObject*> v_inline_obj_ref;
 		};
 	};
 }

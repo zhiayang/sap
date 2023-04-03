@@ -182,6 +182,11 @@ namespace sap::interp
 		define_builtin("set_size_y", makeParamList(P("_", t_ptr(t_tbo_ref)), P("size", t_length)), t_void,
 			&B::set_tbo_size_y);
 
+		define_builtin("set_width", makeParamList(P("_", t_ptr(t_tio)), P("size", t_bsize2d)), t_void,
+			&B::set_tbo_size);
+		define_builtin("set_width", makeParamList(P("_", t_ptr(t_tio_ref)), P("size", t_bsize2d)), t_void,
+			&B::set_tbo_size);
+
 
 
 		define_builtin("offset_position", makeParamList(P("_", t_ptr(t_tbo)), P("offset", t_bsize2d)), t_void,

@@ -325,6 +325,7 @@ namespace pdf
 		static const auto FontName = pdf::Name("FontName");
 		static const auto Height = pdf::Name("Height");
 		static const auto Identity = pdf::Name("Identity");
+		static const auto Info = pdf::Name("Info");
 		static const auto Image = pdf::Name("Image");
 		static const auto Interpolate = pdf::Name("Interpolate");
 		static const auto ItalicAngle = pdf::Name("ItalicAngle");
@@ -358,5 +359,13 @@ namespace pdf
 		static const auto Widths = pdf::Name("Widths");
 		static const auto XHeight = pdf::Name("XHeight");
 		static const auto XObject = pdf::Name("XObject");
+		static const auto Title = pdf::Name("Title");
+		static const auto Author = pdf::Name("Author");
+		static const auto Subject = pdf::Name("Subject");
+		static const auto Keywords = pdf::Name("Keywords");
+		static const auto Creator = pdf::Name("Creator");
+		static const auto Producer = pdf::Name("Producer");
+		static const auto CreationDate = pdf::Name("CreationDate");
+		static const auto ModDate = pdf::Name("ModDate");
 	}
 }

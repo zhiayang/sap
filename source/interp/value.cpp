@@ -237,14 +237,14 @@ namespace sap::interp
 		return v_layout_obj_ref;
 	}
 
-	std::optional<std::vector<tree::InlineObject*>> Value::takeTreeInlineObjectRef() &&
+	std::vector<tree::InlineObject*> Value::takeTreeInlineObjectRef() &&
 	{
 		this->ensure_not_moved_from();
 		assert(m_type->isTreeInlineObjRef());
 		return std::move(v_inline_obj_ref);
 	}
 
-	const std::optional<std::vector<tree::InlineObject*>>& Value::getTreeInlineObjectRef() const
+	const std::vector<tree::InlineObject*>& Value::getTreeInlineObjectRef() const
 	{
 		this->ensure_not_moved_from();
 		assert(m_type->isTreeInlineObjRef());
@@ -639,7 +639,7 @@ namespace sap::interp
 		return ret;
 	}
 
-	Value Value::treeInlineObjectRef(std::optional<std::vector<tree::InlineObject*>> pointers)
+	Value Value::treeInlineObjectRef(std::vector<tree::InlineObject*> pointers)
 	{
 		auto ret = Value(Type::makeTreeInlineObjRef());
 		new(&ret.v_inline_obj_ref) decltype(v_inline_obj_ref)();

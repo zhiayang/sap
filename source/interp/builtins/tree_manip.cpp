@@ -228,4 +228,24 @@ namespace sap::interp::builtin
 		const_cast<tree::BlockObject*>(tbo)->overrideLayoutSizeY(size);
 		return EvalResult::ofVoid();
 	}
+
+
+
+	ErrorOr<EvalResult> set_tio_width(Evaluator* ev, std::vector<Value>& args)
+	{
+		assert(args.size() == 2);
+		assert(args[0].isPointer());
+
+		// auto& value = *args[0].getPointer();
+		// assert(value.type()->isTreeInlineObj() || value.type()->isTreeInlineObjRef());
+
+		// if(ev->interpreter()->currentPhase() != ProcessingPhase::Layout)
+		// 	return ErrMsg(ev, "`set_width()` can only be called during `@layout`");
+
+		// auto size = args[1].getLength().resolve(ev->currentStyle());
+		// auto tbo = value.isTreeInlineObj() ? &value.getTreeInlineObj() : value.getTreeInlineObjectRef();
+
+		// const_cast<tree::BlockObject*>(tbo)->overrideLayoutSizeX(size);
+		return EvalResult::ofVoid();
+	}
 }

@@ -68,6 +68,9 @@ endif
 DEFINES             :=
 INCLUDES            := -Isource/include -Iexternal
 
+GIT_REVISION        := $(shell git describe --always --dirty)
+CXXFLAGS            += -DGIT_REVISION=\"$(GIT_REVISION)\"
+
 UNAME_IDENT := $(shell uname)
 ifeq ("$(UNAME_IDENT)", "Linux")
 	USE_FONTCONFIG := 1

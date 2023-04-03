@@ -55,8 +55,14 @@ namespace sap::tree
 
 		std::optional<layout::LayoutObject*> getGeneratedLayoutObject() const { return m_generated_layout_object; }
 
+		void overrideWidth(Length length) { m_override_width = length; }
+		std::optional<Length> getOverriddenWidth() const { return m_override_width; }
+
 	protected:
 		mutable std::optional<layout::LayoutObject*> m_generated_layout_object = nullptr;
+
+	private:
+		std::optional<Length> m_override_width {};
 	};
 
 	struct BlockObject : Stylable

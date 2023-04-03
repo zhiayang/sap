@@ -63,6 +63,7 @@ namespace sap::interp
 		ErrorOr<EvalResult> get_layout_object(Evaluator* ev, std::vector<Value>& args);
 		ErrorOr<EvalResult> get_layout_object_position(Evaluator* ev, std::vector<Value>& args);
 
+		ErrorOr<EvalResult> set_tio_width(Evaluator* ev, std::vector<Value>& args);
 		ErrorOr<EvalResult> set_tbo_size(Evaluator* ev, std::vector<Value>& args);
 		ErrorOr<EvalResult> set_tbo_size_x(Evaluator* ev, std::vector<Value>& args);
 		ErrorOr<EvalResult> set_tbo_size_y(Evaluator* ev, std::vector<Value>& args);
