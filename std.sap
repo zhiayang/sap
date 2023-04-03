@@ -73,7 +73,7 @@ namespace std
 			.alignment = .Right,
 			.font_size = 13pt,
 		}, builtin::make_hbox(builtin::make_line(builtin::make_text(f"{section_num}")), builtin::hspace(3mm)));
-		num_line.set_size_x(13mm);
+		num_line.set_size_x(14mm);
 
 		var name_line = builtin::apply_style({
 			.font_size = 2em,
@@ -95,7 +95,7 @@ namespace std
 			builtin::vspace(-0.9em),
 		));
 
-		box.offset_position({ .x = -13mm, .y = 0mm });
+		box.offset_position({ .x = -14mm, .y = 0mm });
 		g_sections += [the_section];
 		return box;
 	}
@@ -116,7 +116,7 @@ namespace std
 			.alignment = .Right,
 			.font_size = 13pt,
 		}, builtin::make_hbox(builtin::make_line(builtin::make_text(f"{sec!.num}.{subnum}")), builtin::hspace(3mm)));
-		num_line.set_size_x(13mm);
+		num_line.set_size_x(14mm);
 
 		var name_line = builtin::apply_style({
 			.font_size = 1.6em,
@@ -138,7 +138,7 @@ namespace std
 			builtin::vspace(-0.9em)
 		));
 
-		box.offset_position({ .x = -13mm, .y = 0mm });
+		box.offset_position({ .x = -14mm, .y = 0mm });
 		sec!.subsections += [the_sub];
 		return box;
 	}
@@ -166,7 +166,7 @@ namespace std
 			.alignment = .Right,
 			.font_size = 13pt,
 		}, builtin::make_hbox(builtin::make_line(builtin::make_text(f"{sec!.num}.{subsec!.num}.{subsubnum}")), builtin::hspace(3mm)));
-		num_line.set_size_x(13mm);
+		num_line.set_size_x(14mm);
 
 		var name_line = builtin::apply_style({
 			.font_size = 1.4em,
@@ -187,7 +187,7 @@ namespace std
 			builtin::vspace(-0.9em)
 		));
 
-		box.offset_position({ .x = -13mm, .y = 0mm });
+		box.offset_position({ .x = -14mm, .y = 0mm });
 		subsec!.subsubsections += [the_subsub];
 		return box;
 	}
@@ -195,45 +195,73 @@ namespace std
 
 
 
+	struct RefRecord
+	{
+		name: string;
+		text: string;
+
+		used: bool = false;
+		refnum: ?int = null;
+	}
 
 	struct Reference
 	{
-		name: string;
 		num: int;
-	};
+		record: &mut RefRecord;
+	}
+
+	global var g_ref_records: [RefRecord] = [];
+
+	fn install_references(records: [RefRecord])
+	{
+		if(builtin::state().layout_pass == 1)
+			g_ref_records = *records;
+	}
 
 	global var g_references: [Reference] = [];
-	@layout g_references = [];
+	global var g_citation_num = 0;
+
+	@layout {
+		g_references = [];
+		g_citation_num = 0;
+	}
 
 	fn cite(name: string, page: ?int = null) -> ?Inline
 	{
 		# look for an existing ref
-		var ref_num = 0;
-		while(ref_num < g_references.size())
+		var record: &mut RefRecord = null;
+
+		var i = 0;
+		while(i < g_ref_records.size())
 		{
-			if(g_references[ref_num].name == name)
+			if(g_ref_records[i].name == name)
+			{
+				record = &mut g_ref_records[i];
 				break;
+			}
 
-			ref_num += 1;
+			i += 1;
 		}
 
-		if(ref_num == g_references.size())
+		if(record == null)
+			return builtin::make_text(f"[??????]");
+
+		if(not record!.refnum?)
 		{
-			g_references += [Reference {
-				.name = name,
-				.num = ref_num,
-			}];
+			record!.refnum = 1 + g_citation_num;
+			g_citation_num += 1;
 		}
+
+		record!.used = true;
 
 		if(page?)
-		{
-			return builtin::make_text(f"[{1 + ref_num}, p. {page!}]");
-		}
+			return builtin::make_text(f"[{record!.refnum}, p. {page!}]");
 		else
-		{
-			return builtin::make_text(f"[{1 + ref_num}]");
-		}
+			return builtin::make_text(f"[{record!.refnum}]");
 	}
+
+
+
 
 
 
@@ -390,30 +418,114 @@ namespace std
 		return ret;
 	}
 
-	@post {
-		var i = 0;
 
-		var page_num_pos = builtin::state().page_size;
-		page_num_pos.x -= 34mm;
-		page_num_pos.y -= 30mm;
 
-		while(i < builtin::state().page_count)
+	fn output_list_of_references() -> ?Block
+	{
+		# sort... the record list
+		var records: [RefRecord] = [];
+
+		var next = 1;
+		while(true)
 		{
-			let page_num = i + 1;
-			let item = std::style({
+			var found = false;
+			var i = 0;
+			while(i < g_ref_records.size())
+			{
+				if(not g_ref_records[i].used || not g_ref_records[i].refnum?)
+				{
+					i += 1;
+					continue;
+				}
+
+				if(g_ref_records[i].refnum! == next)
+				{
+					records += [g_ref_records[i]];
+					found = true;
+					next += 1;
+					break;
+				}
+
+				i += 1;
+			}
+
+			if(not found)
+				break;
+		}
+
+		var lines = [:Block];
+
+		var i = 0;
+		while(i < records.size())
+		{
+			let rec = *records[i];
+
+			let number = builtin::apply_style({
 				.alignment = .Right,
-				.font_size = 11pt,
-			}, builtin::make_line(builtin::make_text(f"{page_num}")));
+			}, builtin::make_hbox(builtin::make_line(builtin::bold1(builtin::make_text(f"[{rec.refnum!}]")))));
 
-			builtin::output_at_absolute({
-				.page = i,
-				.x = page_num_pos.x,
-				.y = page_num_pos.y,
-			}, *item);
+			number.set_size_x(10mm);
 
+			let item = builtin::apply_style({
+				.alignment = .Left
+			}, builtin::make_hbox(
+				*number, builtin::hspace(1em), builtin::apply_style({
+					.line_spacing = 1.1,
+					.alignment = .Justified
+				}, builtin::make_paragraph(builtin::make_text(rec.text)))
+			));
+
+			lines += [*item];
 			i += 1;
 		}
+
+		return builtin::make_vbox(builtin::apply_style({
+				.alignment = .Left, .font_size = 24pt, .font_family = g_sans_font
+			}, builtin::make_hbox(
+				builtin::make_line(builtin::make_text("References"))
+			)),
+			(*lines)...
+		);
 	}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+	# # page numbers
+	# @post {
+	# 	var i = 0;
+
+	# 	var page_num_pos = builtin::state().page_size;
+	# 	page_num_pos.x -= 34mm;
+	# 	page_num_pos.y -= 30mm;
+
+	# 	while(i < builtin::state().page_count)
+	# 	{
+	# 		let page_num = i + 1;
+	# 		let item = std::style({
+	# 			.alignment = .Right,
+	# 			.font_size = 11pt,
+	# 		}, builtin::make_line(builtin::make_text(f"{page_num}")));
+
+	# 		builtin::output_at_absolute({
+	# 			.page = i,
+	# 			.x = page_num_pos.x,
+	# 			.y = page_num_pos.y,
+	# 		}, *item);
+
+	# 		i += 1;
+	# 	}
+	# }
 
 
 	fn numbered_list(items: [string...]) -> ?Block
@@ -560,127 +672,3 @@ namespace std::paper_size
 {
 	global let A4 = builtin::Size2d { .x = 210mm, .y = 297mm };
 }
-
-
-
-
-
-
-
-
-
-#/
-
-# testing
-\script {
-	var foo = 10;
-	builtin::println(f"foo = {foo}");
-
-	foo = 20;
-	builtin::println(f"foo = {foo + 1}");
-
-	builtin::bold1(69);
-	builtin::bold1("420");
-
-	fn foozle(a: int) -> void
-	{
-		builtin::println(f"a = {a}");
-
-		if(a > 10)
-			builtin::println("a > 10");
-		else
-			builtin::println("a ≤ 10");
-	}
-
-	foozle(foo);
-	foo = 69;
-	foozle(foo);
-
-	struct Cactus
-	{
-		thorns: int = 100;
-		juice: int;
-	}
-
-	fn kek(c: &Cactus)
-	{
-		builtin::println(f"thorns = {c!.thorns}");
-		builtin::println(f"juice = {c!.juice}");
-	}
-
-	var bar = Cactus {
-		.juice = 420,
-	};
-
-	bar.juice = 69420;
-	bar.kek();
-
-	fn tus(c: &mut Cactus)
-	{
-		c!.juice = 0;
-	}
-
-	tus(&mut bar);
-
-	let kekw: (int)->int;
-
-	builtin::print("------\njuice = ");
-	builtin::println(bar.juice);
-	builtin::println("------");
-
-	Cactus {
-		.thorns = 999,
-		.juice = 333
-	}.kek();
-
-	let p1: &mut int = null;
-	let p2: &mut int = p1;
-	let p3: &int = p2;
-
-
-	let asdf: ?Cactus = Cactus {
-		.juice = 6969
-	};
-
-	builtin::println("------");
-	builtin::println(f"juice = {asdf?.juice}");
-}
-
-
-
-\script {
-	fn fib(n: int) -> int
-	{
-		if(n == 0)
-			return 0;
-		else if(n <= 2)
-			return 1;
-
-		return fib(n - 1) + fib(n - 2);
-	}
-
-	builtin::println(f"fib(15) = {fib(15)}");
-
-
-	let f1: ?int = null;
-	let f2: ?int = 10;
-
-	let f3 = f1 ?? f2 ?? 69;
-
-	if(f1?) builtin::println("f1!");
-	if(f2?) builtin::println("f2!");
-
-	builtin::println(f"f3 = {f3}");
-
-
-	fn foozle(n: int) -> int
-	{
-		if(n < 0)
-			return 69;
-		else
-			return 420;
-	}
-
-	builtin::println(f"hello {10mm} world");
-}
-/#

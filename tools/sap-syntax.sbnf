@@ -144,10 +144,7 @@ struct-literal-field:
     (expr)
     ;
 
-struct-literal-field-list: (struct-literal-field
-        (`,`{punctuation.comma} struct-literal-field)*
-        (`,`{punctuation.comma})?
-    )?;
+struct-literal-field-list: (struct-literal-field (`,`{punctuation.comma})?)*;
 
 primary-expr
     : length-literal
