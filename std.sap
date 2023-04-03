@@ -55,7 +55,9 @@ namespace std
 
 
 	global var g_sections: [Section] = [];
-	@layout g_sections = [];
+	@layout {
+		g_sections = [];
+	}
 
 	global let g_sans_font = builtin::find_font_family([
 		"Myriad Pro", "sans-serif"
@@ -97,6 +99,7 @@ namespace std
 
 		box.offset_position({ .x = -14mm, .y = 0mm });
 		g_sections += [the_section];
+
 		return box;
 	}
 
@@ -264,31 +267,182 @@ namespace std
 
 
 
+	# page numbers
+	struct PageNumberState
+	{
+		ref: BlockRef;
+		enable: bool;
+		reset: bool;
+	}
 
+	global var g_page_numbering_resets: [PageNumberState] = [];
+	@layout {
+		g_page_numbering_resets = [];
+	}
+
+	fn disable_page_numbering() -> Block
+	{
+		# FIXME: this feels kinda hackish.
+		let x = builtin::vspace(0em);
+		g_page_numbering_resets += [PageNumberState {
+			.ref = x.ref(),
+			.enable = false,
+			.reset = false,
+		}];
+
+		return x;
+	}
+
+	fn enable_page_numbering() -> Block
+	{
+		# FIXME: this feels kinda hackish.
+		let x = builtin::vspace(0em);
+		g_page_numbering_resets += [PageNumberState {
+			.ref = x.ref(),
+			.enable = true,
+			.reset = false,
+		}];
+
+		return x;
+	}
+
+	fn reset_page_numbering() -> Block
+	{
+		# FIXME: this feels kinda hackish.
+		let x = builtin::vspace(0em);
+		g_page_numbering_resets += [PageNumberState {
+			.ref = x.ref(),
+			.enable = true,
+			.reset = true,
+		}];
+
+		return x;
+	}
+
+	@finalise {
+		var i = 0;
+		var rst_idx = 0;
+		var enabled = true;
+
+		var page_num_pos = builtin::state().page_size;
+		page_num_pos.x -= 34mm;
+		page_num_pos.y -= 30mm;
+
+		while(i < builtin::state().page_count)
+		{
+			var page_num = i + 1;
+			if(rst_idx < g_page_numbering_resets.size())
+			{
+				let rst = g_page_numbering_resets[rst_idx];
+				let tmp = rst.ref.layout_object()!.position().page;
+				if(tmp == i)
+				{
+					rst_idx += 1;
+
+					enabled = rst.enable;
+					if(rst.reset)
+						page_num = 1;
+				}
+			}
+
+			if(enabled)
+			{
+				let item = std::style({
+					.alignment = .Right,
+					.font_size = 11pt,
+				}, builtin::make_line(builtin::make_text(f"{page_num}")));
+
+				builtin::output_at_absolute({
+					.page = i,
+					.x = page_num_pos.x,
+					.y = page_num_pos.y,
+				}, *item);
+			}
+
+			i += 1;
+		}
+	}
 
 
 	@post {
+
 		var i = 0;
+		var rst_idx = 0;
+		var page_offset = 0;
+
 		while(i < g_sections.size())
 		{
 			let s = &mut g_sections[i];
 			let tmp = s!.num_tbo_ref.layout_object()!.position();
-			g_sections[i].page_num = 1 + tmp.page;
+
+			while(rst_idx < g_page_numbering_resets.size())
+			{
+				let rst = g_page_numbering_resets[rst_idx];
+				let p = rst.ref.layout_object()!.position().page;
+
+				if(tmp.page >= p)
+				{
+					rst_idx += 1;
+					if(rst.reset)
+						page_offset += p;
+				}
+				else
+				{
+					break;
+				}
+			}
+
+			g_sections[i].page_num = 1 + tmp.page - page_offset;
 
 			var si = 0;
 			while(si < s!.subsections.size())
 			{
 				let ss = &mut s!.subsections[si];
 				let tmp = ss!.num_tbo_ref.layout_object()!.position();
-				ss!.page_num = 1 + tmp.page;
+
+				while(rst_idx < g_page_numbering_resets.size())
+				{
+					let rst = g_page_numbering_resets[rst_idx];
+					let p = rst.ref.layout_object()!.position().page;
+
+					if(tmp.page >= p)
+					{
+						rst_idx += 1;
+						if(rst.reset)
+							page_offset += p;
+					}
+					else
+					{
+						break;
+					}
+				}
+
+				ss!.page_num = 1 + tmp.page - page_offset;
 
 				var ssi = 0;
 				while(ssi < ss!.subsubsections.size())
 				{
 					let sss = &mut ss!.subsubsections[ssi];
 					let tmp = sss!.num_tbo_ref.layout_object()!.position();
-					sss!.page_num = 1 + tmp.page;
 
+					while(rst_idx < g_page_numbering_resets.size())
+					{
+						let rst = g_page_numbering_resets[rst_idx];
+						let p = rst.ref.layout_object()!.position().page;
+
+						if(tmp.page >= p)
+						{
+							rst_idx += 1;
+							if(rst.reset)
+								page_offset += p;
+						}
+						else
+						{
+							break;
+						}
+					}
+
+					sss!.page_num = 1 + tmp.page - page_offset;
 					ssi += 1;
 				}
 
@@ -297,6 +451,13 @@ namespace std
 
 			i += 1;
 		}
+	}
+
+
+
+	global var g_saved_sections: [Section] = [];
+	@post {
+		g_saved_sections = *g_sections;
 	}
 
 	fn output_table_of_contents() -> ?Block
@@ -310,9 +471,9 @@ namespace std
 		var lines = [:Block];
 
 		var i = 0;
-		while(i < g_sections.size())
+		while(i < g_saved_sections.size())
 		{
-			let s = &g_sections[i];
+			let s = &g_saved_sections[i];
 
 			let number = builtin::make_line(builtin::bold1(builtin::make_text(f"{s!.num}.")));
 			number.set_size_x(8mm);
@@ -411,10 +572,6 @@ namespace std
 		if(builtin::state().layout_pass == 2)
 			builtin::request_layout();
 
-		# reset the persistent state
-		g_sections = [];
-		g_references = [];
-
 		return ret;
 	}
 
@@ -462,7 +619,7 @@ namespace std
 
 			let number = builtin::apply_style({
 				.alignment = .Right,
-			}, builtin::make_hbox(builtin::make_line(builtin::bold1(builtin::make_text(f"[{rec.refnum!}]")))));
+			}, builtin::make_hbox(builtin::make_line(builtin::make_text(f"[{rec.refnum!}]"))));
 
 			number.set_size_x(10mm);
 
@@ -501,32 +658,6 @@ namespace std
 
 
 
-	# # page numbers
-	# @post {
-	# 	var i = 0;
-
-	# 	var page_num_pos = builtin::state().page_size;
-	# 	page_num_pos.x -= 34mm;
-	# 	page_num_pos.y -= 30mm;
-
-	# 	while(i < builtin::state().page_count)
-	# 	{
-	# 		let page_num = i + 1;
-	# 		let item = std::style({
-	# 			.alignment = .Right,
-	# 			.font_size = 11pt,
-	# 		}, builtin::make_line(builtin::make_text(f"{page_num}")));
-
-	# 		builtin::output_at_absolute({
-	# 			.page = i,
-	# 			.x = page_num_pos.x,
-	# 			.y = page_num_pos.y,
-	# 		}, *item);
-
-	# 		i += 1;
-	# 	}
-	# }
-
 
 	fn numbered_list(items: [string...]) -> ?Block
 	{
@@ -545,8 +676,8 @@ namespace std
 			i += 1;
 		}
 
-		return builtin::apply_style({ .paragraph_spacing = 0.2em, },
-			builtin::make_vbox(builtin::vspace(-0.9em), (*lines)...)
+		return builtin::apply_style({ .paragraph_spacing = 0.0em, },
+			builtin::make_vbox(builtin::vspace(-0.5em), (*lines)...)
 		);
 	}
 
@@ -567,8 +698,8 @@ namespace std
 			i += 1;
 		}
 
-		return builtin::apply_style({ .paragraph_spacing = 0.2em, },
-			builtin::make_vbox(builtin::vspace(-0.9em), (*lines)...)
+		return builtin::apply_style({ .paragraph_spacing = 0.0em, },
+			builtin::make_vbox(builtin::vspace(-0.5em), (*lines)...)
 		);
 	}
 

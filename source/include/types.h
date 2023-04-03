@@ -43,6 +43,7 @@ namespace sap
 		Layout,
 		Position,
 		PostLayout,
+		Finalise,
 		Render,
 	};
 

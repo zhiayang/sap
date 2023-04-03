@@ -150,6 +150,7 @@ namespace sap::tree
 
 			cs->evaluator().commenceLayoutPass(++layout_pass);
 			cs->setCurrentPhase(ProcessingPhase::Layout);
+			TRY(run_hooks_for_phase(cs));
 
 			auto available_space = Size2d(layout_doc->pageLayout().contentSize().x(), Length(INFINITY));
 
@@ -169,6 +170,9 @@ namespace sap::tree
 
 			if(cs->evaluator().layoutRequested())
 				continue;
+
+			cs->setCurrentPhase(ProcessingPhase::Finalise);
+			TRY(run_hooks_for_phase(cs));
 
 			layout_doc->pageLayout().addObject(std::move(container));
 			break;

@@ -28,8 +28,9 @@ namespace sap::frontend
 
 	constexpr auto KW_PHASE_LAYOUT = "layout";
 	constexpr auto KW_PHASE_POSITION = "position";
-	constexpr auto KW_PHASE_RENDER = "render";
 	constexpr auto KW_PHASE_POST = "post";
+	constexpr auto KW_PHASE_FINALISE = "finalise";
+	constexpr auto KW_PHASE_RENDER = "render";
 
 	using TT = TokenType;
 	using namespace sap::tree;
@@ -205,6 +206,8 @@ namespace sap::frontend
 			return Ok(ProcessingPhase::Position);
 		else if(ident->text == KW_PHASE_POST)
 			return Ok(ProcessingPhase::PostLayout);
+		else if(ident->text == KW_PHASE_FINALISE)
+			return Ok(ProcessingPhase::Finalise);
 		else if(ident->text == KW_PHASE_RENDER)
 			return Ok(ProcessingPhase::Render);
 

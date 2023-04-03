@@ -57,8 +57,10 @@ namespace sap::layout
 	{
 		if(this->isRelativelyPositioned())
 			return layout->convertPosition(m_position->left());
-		else
+		else if(this->isAbsolutelyPositioned())
 			return m_position->right();
+		else
+			sap::internal_error("layout object was not positioned!");
 	}
 
 	void LayoutObject::overrideLayoutSizeX(Length x)

@@ -56,7 +56,7 @@ script-call{meta.script.inline-call}:
     `\`{punctuation.misc} (
         (`::`{punctuation.scope})? (IDENTIFIER{support.function})
         (`::`{punctuation.scope} IDENTIFIER{support.function})*
-    ) '(@\s*(layout|position|post|render))'{storage.modifier}? (`(`{punctuation.paren.call-start}
+    ) '(@\s*(layout|position|post|finalise|render))'{storage.modifier}? (`(`{punctuation.paren.call-start}
             (function-call-arg (`,`{punctuation.comma})?)*
     `)`{punctuation.paren.call-end})
     script-call-tail?;
@@ -70,8 +70,8 @@ script-call-tail
 
 
 script-block:
-    ( '(\\script)\s*(@\s*(layout|position|post|render))?\s*(\{)'{1: keyword.block.script, 2: storage.modifier, 4: punctuation.brace}
-    | '(\\script)\s*(@\s*(layout|position|post|render))?\s*(::)?'{1: keyword.block.script, 2: storage.modifier, 4: punctuation.scope}
+    ( '(\\script)\s*(@\s*(layout|position|post|finalise|render))?\s*(\{)'{1: keyword.block.script, 2: storage.modifier, 4: punctuation.brace}
+    | '(\\script)\s*(@\s*(layout|position|post|finalise|render))?\s*(::)?'{1: keyword.block.script, 2: storage.modifier, 4: punctuation.scope}
       (IDENTIFIER{entity.name.namespace} '(::)'{punctuation.scope})*
       '\s*(\{)'{1:punctuation.brace}
     ) stmt* `}`{punctuation.brace}
@@ -221,7 +221,7 @@ binop-expr2
 
 expr: binop-expr;
 
-hook-exec-block: '(@\s*(?:layout|position|post|render))(?=\s+|\{)'{1: storage.modifier} block-stmt;
+hook-exec-block: '(@\s*(?:layout|position|post|finalise|render))(?=\s+|\{)'{1: storage.modifier} block-stmt;
 
 
 return-stmt: `return`{keyword.return} expr? `;`{punctuation.terminator};

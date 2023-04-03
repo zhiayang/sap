@@ -97,8 +97,8 @@ namespace sap::tree
 				case Horizontal: {
 					if(available_space.x() < obj_size.width)
 					{
-						sap::warn("layout", "not enough space! need at least {.15f}, but only {.15f} remaining",
-							obj_size.width, available_space.x());
+						// sap::warn("layout", "not enough space! need at least {.15f}, but only {.15f} remaining",
+						// 	obj_size.width, available_space.x());
 						available_space.x() = 0;
 					}
 					else
