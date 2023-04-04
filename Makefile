@@ -65,11 +65,9 @@ else
 	PCH_INCLUDE_FLAGS   := -include $(PRECOMP_INCLUDE)
 endif
 
-DEFINES             :=
-INCLUDES            := -Isource/include -Iexternal
-
 GIT_REVISION        := $(shell git describe --always --dirty)
-CXXFLAGS            += -DGIT_REVISION=\"$(GIT_REVISION)\"
+DEFINES             := -DGIT_REVISION=\"$(GIT_REVISION)\"
+INCLUDES            := -Isource/include -Iexternal
 
 UNAME_IDENT := $(shell uname)
 ifeq ("$(UNAME_IDENT)", "Linux")

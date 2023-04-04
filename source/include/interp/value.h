@@ -16,6 +16,8 @@
 namespace sap::tree
 {
 	struct BlockObject;
+
+	struct InlineSpan;
 	struct InlineObject;
 }
 
@@ -31,7 +33,6 @@ namespace sap::interp
 	struct Value
 	{
 		using FnType = std::optional<Value> (*)(Interpreter*, const std::vector<Value>&);
-		using InlineObjects = std::vector<std::unique_ptr<tree::InlineObject>>;
 
 		const Type* type() const;
 
@@ -42,8 +43,8 @@ namespace sap::interp
 		FnType getFunction() const;
 		DynLength getLength() const;
 
-		const InlineObjects& getTreeInlineObj() const;
-		InlineObjects takeTreeInlineObj() &&;
+		const tree::InlineSpan& getTreeInlineObj() const;
+		std::unique_ptr<tree::InlineSpan> takeTreeInlineObj() &&;
 
 		const tree::BlockObject& getTreeBlockObj() const;
 		std::unique_ptr<tree::BlockObject> takeTreeBlockObj() &&;
@@ -72,11 +73,9 @@ namespace sap::interp
 		const Value* getPointer() const;
 		Value* getMutablePointer() const;
 
+		tree::InlineSpan* getTreeInlineObjectRef() const;
 		tree::BlockObject* getTreeBlockObjectRef() const;
 		layout::LayoutObject* getLayoutObjectRef() const;
-
-		std::vector<tree::InlineObject*> takeTreeInlineObjectRef() &&;
-		const std::vector<tree::InlineObject*>& getTreeInlineObjectRef() const;
 
 
 
@@ -129,7 +128,7 @@ namespace sap::interp
 		static Value function(const FunctionType* fn_type, FnType fn);
 		static Value string(const std::u32string& str);
 		static Value array(const Type* elm, std::vector<Value> arr, bool variadic = false);
-		static Value treeInlineObject(InlineObjects obj);
+		static Value treeInlineObject(std::unique_ptr<tree::InlineSpan> obj);
 		static Value treeBlockObject(std::unique_ptr<tree::BlockObject> obj);
 		static Value layoutObject(std::unique_ptr<layout::LayoutObject> obj);
 		static Value structure(const StructType* ty, std::vector<Value> fields);
@@ -138,7 +137,7 @@ namespace sap::interp
 		static Value optional(const Type* type, std::optional<Value> value);
 		Value clone() const;
 
-		static Value treeInlineObjectRef(std::vector<tree::InlineObject*> pointers);
+		static Value treeInlineObjectRef(tree::InlineSpan* obj);
 		static Value treeBlockObjectRef(tree::BlockObject* obj);
 		static Value layoutObjectRef(layout::LayoutObject* obj);
 
@@ -152,9 +151,6 @@ namespace sap::interp
 		void steal_from(Value&& val);
 		void ensure_not_moved_from() const;
 
-		static InlineObjects clone_tios(const InlineObjects& from);
-		static std::unique_ptr<tree::BlockObject> clone_tbos(const tree::BlockObject& from);
-
 		const Type* m_type;
 		bool m_moved_from = false;
 
@@ -167,7 +163,7 @@ namespace sap::interp
 
 			FnType v_function;
 
-			InlineObjects v_inline_obj;
+			std::unique_ptr<tree::InlineSpan> v_inline_obj;
 			std::unique_ptr<tree::BlockObject> v_block_obj;
 			std::unique_ptr<layout::LayoutObject> v_layout_obj;
 			std::vector<Value> v_array;
@@ -175,9 +171,9 @@ namespace sap::interp
 			DynLength v_length;
 
 			// these things need special handling
+			tree::InlineSpan* v_inline_obj_ref;
 			tree::BlockObject* v_block_obj_ref;
 			layout::LayoutObject* v_layout_obj_ref;
-			std::vector<tree::InlineObject*> v_inline_obj_ref;
 		};
 	};
 }

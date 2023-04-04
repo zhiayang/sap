@@ -27,10 +27,6 @@ namespace sap::interp
 
 				saw_variadic = true;
 			}
-			// else if(saw_variadic)
-			// {
-			// 	return ErrMsg(ts, "variadic array parameter must be the last parameter");
-			// }
 		}
 
 		auto fn_type = Type::makeFunction(std::move(param_types), TRY(ts->resolveType(m_return_type)));

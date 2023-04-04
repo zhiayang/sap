@@ -75,7 +75,7 @@ namespace std
 			.alignment = .Right,
 			.font_size = 13pt,
 		}, builtin::make_hbox(builtin::make_line(builtin::make_text(f"{section_num}")), builtin::hspace(3mm)));
-		num_line.set_size_x(14mm);
+		num_line.set_width(14mm);
 
 		var name_line = builtin::apply_style({
 			.font_size = 2em,
@@ -119,7 +119,7 @@ namespace std
 			.alignment = .Right,
 			.font_size = 13pt,
 		}, builtin::make_hbox(builtin::make_line(builtin::make_text(f"{sec!.num}.{subnum}")), builtin::hspace(3mm)));
-		num_line.set_size_x(14mm);
+		num_line.set_width(14mm);
 
 		var name_line = builtin::apply_style({
 			.font_size = 1.6em,
@@ -169,7 +169,7 @@ namespace std
 			.alignment = .Right,
 			.font_size = 13pt,
 		}, builtin::make_hbox(builtin::make_line(builtin::make_text(f"{sec!.num}.{subsec!.num}.{subsubnum}")), builtin::hspace(3mm)));
-		num_line.set_size_x(14mm);
+		num_line.set_width(14mm);
 
 		var name_line = builtin::apply_style({
 			.font_size = 1.4em,
@@ -229,7 +229,7 @@ namespace std
 		g_citation_num = 0;
 	}
 
-	fn cite(name: string, page: ?int = null) -> ?Inline
+	fn cite(name: string, page: ?int = null) -> Inline
 	{
 		# look for an existing ref
 		var record: &mut RefRecord = null;
@@ -476,7 +476,7 @@ namespace std
 			let s = &g_saved_sections[i];
 
 			let number = builtin::make_line(builtin::bold1(builtin::make_text(f"{s!.num}.")));
-			number.set_size_x(8mm);
+			number.set_width(8mm);
 
 			let title = builtin::make_line(builtin::bold1(builtin::make_text(s!.name)));
 			let heading = builtin::make_hbox(
@@ -504,7 +504,7 @@ namespace std
 				let ss = &s!.subsections[si];
 
 				let number = builtin::make_line(builtin::make_text(f"{s!.num}.{ss!.num}"));
-				number.set_size_x(11mm);
+				number.set_width(11mm);
 
 				let title = builtin::make_line(builtin::make_text(ss!.name));
 				let heading = builtin::make_hbox(
@@ -529,7 +529,7 @@ namespace std
 					let sss = &ss!.subsubsections[ssi];
 
 					let number = builtin::make_line(builtin::make_text(f"{s!.num}.{ss!.num}.{sss!.num}"));
-					number.set_size_x(15mm);
+					number.set_width(15mm);
 
 					let title = builtin::make_line(builtin::make_text(sss!.name));
 					let heading = builtin::make_hbox(
@@ -621,7 +621,7 @@ namespace std
 				.alignment = .Right,
 			}, builtin::make_hbox(builtin::make_line(builtin::make_text(f"[{rec.refnum!}]"))));
 
-			number.set_size_x(10mm);
+			number.set_width(10mm);
 
 			let item = builtin::apply_style({
 				.alignment = .Left

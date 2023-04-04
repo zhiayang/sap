@@ -2,6 +2,7 @@
 // Copyright (c) 2022, zhiayang
 // SPDX-License-Identifier: Apache-2.0
 
+#include "tree/wrappers.h"
 #include "tree/paragraph.h"
 #include "tree/container.h"
 
@@ -18,14 +19,22 @@ namespace sap::interp
 	{
 		for(auto& obj : tios)
 		{
-			if(auto txt = dynamic_cast<const tree::Text*>(obj.get()); txt)
+			if(dynamic_cast<const tree::Text*>(obj.get()) || dynamic_cast<const tree::Separator*>(obj.get()))
+			{
 				; // do nothing
-
+			}
+			else if(auto sp = dynamic_cast<const tree::InlineSpan*>(obj.get()); sp)
+			{
+				TRY(typecheck_list_of_tios(ts, sp->objects()));
+			}
 			else if(auto sc = dynamic_cast<const tree::ScriptCall*>(obj.get()); sc)
+			{
 				TRY(sc->call->typecheck(ts));
-
+			}
 			else
+			{
 				sap::internal_error("unsupported thing A: {}", typeid(obj.get()).name());
+			}
 		}
 
 		return Ok();
@@ -41,10 +50,19 @@ namespace sap::interp
 			{
 				ret.emplace_back(new tree::Text(txt->contents(), txt->style()));
 			}
+			else if(auto sep = dynamic_cast<const tree::Separator*>(obj.get()); sep)
+			{
+				ret.emplace_back(new tree::Separator(sep->kind(), sep->hyphenationCost()));
+			}
+			else if(auto span = dynamic_cast<const tree::InlineSpan*>(obj.get()); span)
+			{
+				auto tmp = TRY(evaluate_list_of_tios(ev, span->objects()));
+				std::move(tmp.begin(), tmp.end(), std::back_inserter(ret));
+			}
 			else if(auto sc = dynamic_cast<const tree::ScriptCall*>(obj.get()); sc)
 			{
 				auto tmp = TRY(ev->convertValueToText(TRY_VALUE(sc->call->evaluate(ev))));
-				ret.insert(tios.end(), std::move_iterator(tmp.begin()), std::move_iterator(tmp.end()));
+				std::move(tmp.begin(), tmp.end(), std::back_inserter(ret));
 			}
 			else
 			{
@@ -67,7 +85,9 @@ namespace sap::interp
 	ErrorOr<EvalResult> TreeInlineExpr::evaluate_impl(Evaluator* ev) const
 	{
 		auto tios = TRY(evaluate_list_of_tios(ev, this->objects));
-		return EvalResult::ofValue(Value::treeInlineObject(std::move(tios)));
+		auto span = std::make_unique<tree::InlineSpan>(std::move(tios));
+
+		return EvalResult::ofValue(Value::treeInlineObject(std::move(span)));
 	}
 
 

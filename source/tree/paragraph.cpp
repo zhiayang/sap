@@ -4,6 +4,7 @@
 
 #include <utf8proc/utf8proc.h>
 
+#include "tree/wrappers.h"
 #include "misc/hyphenator.h"
 
 #include "interp/ast.h"         // for FunctionCall
@@ -200,6 +201,14 @@ namespace sap::tree
 		{
 			if(dynamic_cast<tree::Separator*>(uwu.get()))
 			{
+				ret.push_back(std::move(uwu));
+				continue;
+			}
+			else if(auto span = dynamic_cast<tree::InlineSpan*>(uwu.get()); span)
+			{
+				auto new_objs = TRY(processWordSeparators(std::move(span->objects())));
+				span->objects() = std::move(new_objs);
+
 				ret.push_back(std::move(uwu));
 				continue;
 			}

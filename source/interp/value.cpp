@@ -5,6 +5,7 @@
 #include <utf8proc/utf8proc.h>
 
 #include "tree/image.h"
+#include "tree/wrappers.h"
 #include "tree/container.h"
 #include "tree/paragraph.h"
 
@@ -59,14 +60,14 @@ namespace sap::interp
 		return v_function;
 	}
 
-	auto Value::getTreeInlineObj() const -> const InlineObjects&
+	auto Value::getTreeInlineObj() const -> const tree::InlineSpan&
 	{
 		this->ensure_not_moved_from();
 		assert(m_type->isTreeInlineObj());
-		return v_inline_obj;
+		return *v_inline_obj;
 	}
 
-	auto Value::takeTreeInlineObj() && -> InlineObjects
+	auto Value::takeTreeInlineObj() && -> std::unique_ptr<tree::InlineSpan>
 	{
 		this->ensure_not_moved_from();
 		assert(m_type->isTreeInlineObj());
@@ -237,14 +238,7 @@ namespace sap::interp
 		return v_layout_obj_ref;
 	}
 
-	std::vector<tree::InlineObject*> Value::takeTreeInlineObjectRef() &&
-	{
-		this->ensure_not_moved_from();
-		assert(m_type->isTreeInlineObjRef());
-		return std::move(v_inline_obj_ref);
-	}
-
-	const std::vector<tree::InlineObject*>& Value::getTreeInlineObjectRef() const
+	tree::InlineSpan* Value::getTreeInlineObjectRef() const
 	{
 		this->ensure_not_moved_from();
 		assert(m_type->isTreeInlineObjRef());
@@ -571,7 +565,7 @@ namespace sap::interp
 		return ret;
 	}
 
-	Value Value::treeInlineObject(InlineObjects obj)
+	Value Value::treeInlineObject(std::unique_ptr<tree::InlineSpan> obj)
 	{
 		auto ret = Value(Type::makeTreeInlineObj());
 		new(&ret.v_inline_obj) decltype(ret.v_inline_obj)(std::move(obj));
@@ -639,11 +633,11 @@ namespace sap::interp
 		return ret;
 	}
 
-	Value Value::treeInlineObjectRef(std::vector<tree::InlineObject*> pointers)
+	Value Value::treeInlineObjectRef(tree::InlineSpan* obj)
 	{
 		auto ret = Value(Type::makeTreeInlineObjRef());
 		new(&ret.v_inline_obj_ref) decltype(v_inline_obj_ref)();
-		ret.v_inline_obj_ref = std::move(pointers);
+		ret.v_inline_obj_ref = obj;
 
 		return ret;
 	}

@@ -27,8 +27,14 @@ namespace sap::layout
 		sap::Length total_space_width;
 		sap::Length total_word_width;
 
+		// there is one of this for every object in the line
 		std::vector<sap::Length> widths;
+
+		// there is one of this for every Separator
 		std::vector<sap::Length> preferred_sep_widths;
+
+		// there is one of this for every InlineSpan
+		std::vector<LineMetrics> nested_span_metrics;
 
 		sap::Length ascent_height;
 		sap::Length descent_height;

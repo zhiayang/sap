@@ -147,11 +147,17 @@ namespace sap::interp
 
 			if(is_ufcs_self)
 			{
-				m_ufcs_self_is_mutable = t.isMutable();
-				if(t.isMutable())
+				// we can yeet rvalues into mutability
+				if(t.isMutable() || not t.isLValue())
+				{
+					m_ufcs_self_is_mutable = true;
 					ty = ty->mutablePointerTo();
+				}
 				else
+				{
+					m_ufcs_self_is_mutable = false;
 					ty = ty->pointerTo();
+				}
 			}
 
 			processed_args.push_back({

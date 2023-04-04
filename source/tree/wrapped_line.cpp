@@ -18,7 +18,7 @@ namespace sap::tree
 
 	void WrappedLine::addObjects(std::vector<std::unique_ptr<InlineObject>> objs)
 	{
-		m_objects.insert(m_objects.end(), std::move_iterator(objs.begin()), std::move_iterator(objs.end()));
+		std::move(objs.begin(), objs.end(), std::back_inserter(m_objects));
 	}
 
 	auto WrappedLine::create_layout_object_impl(interp::Interpreter* cs, //

@@ -144,7 +144,7 @@ namespace sap::layout
 
 		bool is_first_child = true;
 
-		size_t prev_child_page = 0;
+		size_t prev_child_bottom_page = 0;
 		bool prev_child_was_phantom = false;
 
 		for(auto& child : objects)
@@ -208,8 +208,13 @@ namespace sap::layout
 					if(not is_first_child             //
 						&& not prev_child_was_phantom //
 						&& not child->is_phantom()    //
-						&& prev_child_page == cursor.position().page_num)
+						&& prev_child_bottom_page == cursor.position().page_num)
 					{
+						/*
+						    note:
+						    if the previous child ended on a different page than us,
+						    we don't want to add additional space.
+						*/
 						cursor = cursor.newLine(obj_spacing);
 					}
 
@@ -225,8 +230,11 @@ namespace sap::layout
 					if(child->requires_space_reservation())
 						cursor = cursor.ensureVerticalSpace(child->layoutSize().descent);
 
-					prev_child_page = cursor.position().page_num;
 					cursor = child->computePosition(cursor);
+
+					// note: we want where the child *ended*
+					prev_child_bottom_page = cursor.position().page_num;
+
 					is_first_child = false;
 					break;
 				}

@@ -20,16 +20,8 @@ namespace sap::interp::builtin
 
 		if(ty->isTreeInlineObj())
 		{
-			std::vector<tree::InlineObject*> obj_ptrs {};
-			for(auto& obj : value.getTreeInlineObj())
-			{
-				if(obj == nullptr)
-					sap::internal_error("unexpected nullptr");
-
-				obj_ptrs.push_back(obj.get());
-			}
-
-			return EvalResult::ofValue(Value::treeInlineObjectRef(std::move(obj_ptrs)));
+			return EvalResult::ofValue(Value::treeInlineObjectRef( //
+				const_cast<tree::InlineSpan*>(&value.getTreeInlineObj())));
 		}
 		else if(ty->isTreeBlockObj())
 		{

@@ -3,6 +3,8 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #include "tree/base.h"
+#include "tree/wrappers.h"
+
 #include "layout/base.h"
 
 namespace sap::tree
@@ -16,12 +18,12 @@ namespace sap::tree
 		if(result.object.has_value())
 		{
 			auto& obj = *result.object;
-			if(m_override_size_x.has_value())
-				obj->overrideLayoutSizeX(*m_override_size_x);
+			if(m_override_width.has_value())
+				obj->overrideLayoutSizeX(*m_override_width);
 
 			// TODO: maybe allow being able to specify ascent and descent separately
-			if(m_override_size_y.has_value())
-				obj->overrideLayoutSizeY(*m_override_size_y);
+			if(m_override_height.has_value())
+				obj->overrideLayoutSizeY(*m_override_height);
 
 			if(m_abs_position_override.has_value())
 				obj->overrideAbsolutePosition(*m_abs_position_override);
@@ -44,13 +46,61 @@ namespace sap::tree
 		m_abs_position_override = std::move(pos);
 	}
 
-	void BlockObject::overrideLayoutSizeX(Length x)
+	void BlockObject::overrideLayoutWidth(Length x)
 	{
-		m_override_size_x = std::move(x);
+		m_override_width = std::move(x);
 	}
 
-	void BlockObject::overrideLayoutSizeY(Length y)
+	void BlockObject::overrideLayoutHeight(Length y)
 	{
-		m_override_size_y = std::move(y);
+		m_override_height = std::move(y);
+	}
+
+
+
+
+	InlineSpan::InlineSpan() : m_objects()
+	{
+	}
+
+	InlineSpan::InlineSpan(std::vector<std::unique_ptr<InlineObject>> objs) : m_objects(std::move(objs))
+	{
+	}
+
+	void InlineSpan::addObject(std::unique_ptr<InlineObject> obj)
+	{
+		m_objects.push_back(std::move(obj));
+	}
+
+	void InlineSpan::addObjects(std::vector<std::unique_ptr<InlineObject>> objs)
+	{
+		std::move(objs.begin(), objs.end(), std::back_inserter(m_objects));
+	}
+
+	static void do_flatten(std::vector<std::unique_ptr<InlineObject>>& out,
+		std::vector<std::unique_ptr<InlineObject>> objs)
+	{
+		for(auto& obj : objs)
+		{
+			if(auto span = dynamic_cast<InlineSpan*>(obj.get()))
+			{
+				if(span->hasOverriddenWidth())
+					out.push_back(std::move(obj));
+				else
+					do_flatten(out, std::move(span->objects()));
+			}
+			else
+			{
+				out.push_back(std::move(obj));
+			}
+		}
+	}
+
+	std::vector<std::unique_ptr<InlineObject>> InlineSpan::flatten() &&
+	{
+		std::vector<std::unique_ptr<InlineObject>> ret {};
+		do_flatten(ret, std::move(m_objects));
+
+		return ret;
 	}
 }

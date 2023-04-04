@@ -2,6 +2,7 @@
 // Copyright (c) 2022, zhiayang
 // SPDX-License-Identifier: Apache-2.0
 
+#include "tree/wrappers.h"
 #include "tree/paragraph.h"
 
 #include "interp/interp.h"
@@ -33,7 +34,7 @@ namespace sap::interp::builtin
 		if(value.isTreeInlineObj())
 		{
 			auto& tios = value.getTreeInlineObj();
-			for(auto& obj : tios)
+			for(auto& obj : tios.objects())
 				obj->setStyle(obj->style()->extendWith(style));
 
 			return EvalResult::ofValue(std::move(value));
@@ -50,10 +51,10 @@ namespace sap::interp::builtin
 			auto word = std::make_unique<tree::Text>(value.toString());
 			word->setStyle(style);
 
-			std::vector<std::unique_ptr<tree::InlineObject>> tmp;
-			tmp.push_back(std::move(word));
+			auto span = std::make_unique<tree::InlineSpan>();
+			span->addObject(std::move(word));
 
-			return EvalResult::ofValue(Value::treeInlineObject(std::move(tmp)));
+			return EvalResult::ofValue(Value::treeInlineObject(std::move(span)));
 		}
 	}
 

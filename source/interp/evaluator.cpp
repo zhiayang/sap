@@ -5,6 +5,7 @@
 #include <cmath>
 #include <array>
 
+#include "tree/wrappers.h"
 #include "tree/paragraph.h"
 
 #include "layout/base.h"
@@ -96,7 +97,7 @@ namespace sap::interp
 		if(value.isTreeInlineObj())
 		{
 			auto objs = std::move(value).takeTreeInlineObj();
-			ret.insert(ret.end(), std::move_iterator(objs.begin()), std::move_iterator(objs.end()));
+			std::move(objs->objects().begin(), objs->objects().end(), std::back_inserter(ret));
 		}
 		else if(value.isPrintable())
 		{

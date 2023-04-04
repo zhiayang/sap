@@ -101,7 +101,8 @@ namespace sap::interp
 		const auto make_null = []() { return std::make_unique<interp::NullLit>(Location::builtin()); };
 		const auto make_bool = [](bool x) { return std::make_unique<interp::BooleanLit>(Location::builtin(), x); };
 
-		const auto t_ptr = [](const PType& t, bool mut = false) { return PType::pointer(t, mut); };
+		const auto t_ptr = [](const PType& t) { return PType::pointer(t, false); };
+		const auto t_mutptr = [](const PType& t) { return PType::pointer(t, true); };
 
 		const auto t_opt = [](const PType& t) { return PType::optional(t); };
 
@@ -172,20 +173,18 @@ namespace sap::interp
 		define_builtin("set_size", makeParamList(P("_", t_ptr(t_tbo_ref)), P("size", t_bsize2d)), t_void,
 			&B::set_tbo_size);
 
-		define_builtin("set_size_x", makeParamList(P("_", t_ptr(t_tbo)), P("size", t_length)), t_void,
-			&B::set_tbo_size_x);
-		define_builtin("set_size_x", makeParamList(P("_", t_ptr(t_tbo_ref)), P("size", t_length)), t_void,
-			&B::set_tbo_size_x);
+		define_builtin("set_width", makeParamList(P("_", t_ptr(t_tbo)), P("width", t_length)), t_void,
+			&B::set_tbo_width);
+		define_builtin("set_width", makeParamList(P("_", t_ptr(t_tbo_ref)), P("width", t_length)), t_void,
+			&B::set_tbo_width);
 
-		define_builtin("set_size_y", makeParamList(P("_", t_ptr(t_tbo)), P("size", t_length)), t_void,
-			&B::set_tbo_size_y);
-		define_builtin("set_size_y", makeParamList(P("_", t_ptr(t_tbo_ref)), P("size", t_length)), t_void,
-			&B::set_tbo_size_y);
+		define_builtin("set_height", makeParamList(P("_", t_ptr(t_tbo)), P("height", t_length)), t_void,
+			&B::set_tbo_height);
+		define_builtin("set_height", makeParamList(P("_", t_ptr(t_tbo_ref)), P("height", t_length)), t_void,
+			&B::set_tbo_height);
 
-		define_builtin("set_width", makeParamList(P("_", t_ptr(t_tio)), P("size", t_bsize2d)), t_void,
-			&B::set_tbo_size);
-		define_builtin("set_width", makeParamList(P("_", t_ptr(t_tio_ref)), P("size", t_bsize2d)), t_void,
-			&B::set_tbo_size);
+		define_builtin("set_width", makeParamList(P("_", t_mutptr(t_tio)), P("width", t_length)), t_mutptr(t_tio),
+			&B::set_tio_width);
 
 
 
@@ -217,6 +216,7 @@ namespace sap::interp
 			makeParamList(P("1", PType::variadicArray(t_tbo)), P("glue", t_bool, make_bool(false))), t_tbo,
 			&B::make_vbox);
 
+		define_builtin("make_span", makeParamList(P("1", PType::variadicArray(t_tio))), t_tio, &B::make_span);
 		define_builtin("make_text", makeParamList(P("1", PType::variadicArray(t_str))), t_tio, &B::make_text);
 		define_builtin("make_line", makeParamList(P("1", PType::variadicArray(t_tio))), t_tbo, &B::make_line);
 		define_builtin("make_paragraph", makeParamList(P("1", PType::variadicArray(t_tio))), t_tbo, &B::make_paragraph);

@@ -55,6 +55,7 @@ namespace sap::interp
 		ErrorOr<EvalResult> page_break(Evaluator* ev, std::vector<Value>& args);
 
 
+		ErrorOr<EvalResult> make_span(Evaluator* ev, std::vector<Value>& args);
 		ErrorOr<EvalResult> make_text(Evaluator* ev, std::vector<Value>& args);
 		ErrorOr<EvalResult> make_line(Evaluator* ev, std::vector<Value>& args);
 		ErrorOr<EvalResult> make_paragraph(Evaluator* ev, std::vector<Value>& args);
@@ -64,9 +65,9 @@ namespace sap::interp
 		ErrorOr<EvalResult> get_layout_object_position(Evaluator* ev, std::vector<Value>& args);
 
 		ErrorOr<EvalResult> set_tio_width(Evaluator* ev, std::vector<Value>& args);
+		ErrorOr<EvalResult> set_tbo_width(Evaluator* ev, std::vector<Value>& args);
+		ErrorOr<EvalResult> set_tbo_height(Evaluator* ev, std::vector<Value>& args);
 		ErrorOr<EvalResult> set_tbo_size(Evaluator* ev, std::vector<Value>& args);
-		ErrorOr<EvalResult> set_tbo_size_x(Evaluator* ev, std::vector<Value>& args);
-		ErrorOr<EvalResult> set_tbo_size_y(Evaluator* ev, std::vector<Value>& args);
 
 		ErrorOr<EvalResult> offset_object_position(Evaluator* ev, std::vector<Value>& args);
 		ErrorOr<EvalResult> override_object_position(Evaluator* ev, std::vector<Value>& args);

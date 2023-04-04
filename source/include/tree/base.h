@@ -53,9 +53,11 @@ namespace sap::tree
 	{
 		virtual ~InlineObject() = 0;
 
+		void setGeneratedLayoutObject(layout::LayoutObject* obj) const { m_generated_layout_object = obj; }
 		std::optional<layout::LayoutObject*> getGeneratedLayoutObject() const { return m_generated_layout_object; }
 
 		void overrideWidth(Length length) { m_override_width = length; }
+		bool hasOverriddenWidth() const { return m_override_width.has_value(); }
 		std::optional<Length> getOverriddenWidth() const { return m_override_width; }
 
 	protected:
@@ -63,6 +65,23 @@ namespace sap::tree
 
 	private:
 		std::optional<Length> m_override_width {};
+	};
+
+	struct InlineSpan : InlineObject
+	{
+		InlineSpan();
+		explicit InlineSpan(std::vector<std::unique_ptr<InlineObject>> objs);
+
+		void addObject(std::unique_ptr<InlineObject> obj);
+		void addObjects(std::vector<std::unique_ptr<InlineObject>> objs);
+
+		const std::vector<std::unique_ptr<InlineObject>>& objects() const { return m_objects; }
+		std::vector<std::unique_ptr<InlineObject>>& objects() { return m_objects; }
+
+		std::vector<std::unique_ptr<InlineObject>> flatten() &&;
+
+	private:
+		std::vector<std::unique_ptr<InlineObject>> m_objects;
 	};
 
 	struct BlockObject : Stylable
@@ -76,8 +95,8 @@ namespace sap::tree
 
 		std::optional<layout::LayoutObject*> getGeneratedLayoutObject() const { return m_generated_layout_object; }
 
-		void overrideLayoutSizeX(Length x);
-		void overrideLayoutSizeY(Length y);
+		void overrideLayoutWidth(Length x);
+		void overrideLayoutHeight(Length y);
 
 		void offsetRelativePosition(Size2d offset);
 		void overrideAbsolutePosition(layout::AbsolutePagePos pos);
@@ -91,8 +110,8 @@ namespace sap::tree
 			Size2d available_space) const = 0;
 
 	private:
-		std::optional<Length> m_override_size_x {};
-		std::optional<Length> m_override_size_y {};
+		std::optional<Length> m_override_width {};
+		std::optional<Length> m_override_height {};
 		std::optional<Size2d> m_rel_position_offset {};
 		std::optional<layout::AbsolutePagePos> m_abs_position_override {};
 	};

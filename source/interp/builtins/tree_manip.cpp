@@ -48,18 +48,18 @@ namespace sap::interp::builtin
 	{
 		assert(args.size() == 1);
 
-		std::vector<std::unique_ptr<tree::InlineObject>> inline_objs {};
+		auto span = std::make_unique<tree::InlineSpan>();
 
 		auto strings = std::move(args[0]).takeArray();
 		for(size_t i = 0; i < strings.size(); i++)
 		{
 			if(i != 0)
-				inline_objs.push_back(std::make_unique<tree::Separator>(tree::Separator::SPACE));
+				span->addObject(std::make_unique<tree::Separator>(tree::Separator::SPACE));
 
-			inline_objs.push_back(std::make_unique<tree::Text>(strings[i].getUtf32String()));
+			span->addObject(std::make_unique<tree::Text>(strings[i].getUtf32String()));
 		}
 
-		return EvalResult::ofValue(Value::treeInlineObject(std::move(inline_objs)));
+		return EvalResult::ofValue(Value::treeInlineObject(std::move(span)));
 	}
 
 	static ErrorOr<EvalResult> make_box(Evaluator* ev,
@@ -101,6 +101,37 @@ namespace sap::interp::builtin
 
 
 
+	static std::vector<std::unique_ptr<tree::InlineObject>> flatten_tio(std::unique_ptr<tree::InlineSpan> tio)
+	{
+		if(tio->hasOverriddenWidth())
+		{
+			std::vector<std::unique_ptr<tree::InlineObject>> ret {};
+			ret.emplace_back(tio.release());
+
+			return ret;
+		}
+		else
+		{
+			return std::move(*tio).flatten();
+		}
+	}
+
+	ErrorOr<EvalResult> make_span(Evaluator* ev, std::vector<Value>& args)
+	{
+		assert(args.size() == 1);
+
+		auto span = std::make_unique<tree::InlineSpan>();
+
+		auto objs = std::move(args[0]).takeArray();
+		for(size_t i = 0; i < objs.size(); i++)
+		{
+			auto flat = flatten_tio(std::move(objs[i]).takeTreeInlineObj());
+			std::move(flat.begin(), flat.end(), std::back_inserter(span->objects()));
+		}
+
+		return EvalResult::ofValue(Value::treeInlineObject(std::move(span)));
+	}
+
 	ErrorOr<EvalResult> make_paragraph(Evaluator* ev, std::vector<Value>& args)
 	{
 		assert(args.size() == 1);
@@ -110,8 +141,8 @@ namespace sap::interp::builtin
 
 		for(size_t i = 0; i < objs.size(); i++)
 		{
-			auto tmp = std::move(objs[i]).takeTreeInlineObj();
-			inlines.insert(inlines.end(), std::move_iterator(tmp.begin()), std::move_iterator(tmp.end()));
+			auto flat = flatten_tio(std::move(objs[i]).takeTreeInlineObj());
+			std::move(flat.begin(), flat.end(), std::back_inserter(inlines));
 		}
 
 		auto para = std::make_unique<tree::Paragraph>();
@@ -133,8 +164,8 @@ namespace sap::interp::builtin
 
 		for(size_t i = 0; i < objs.size(); i++)
 		{
-			auto tmp = std::move(objs[i]).takeTreeInlineObj();
-			inlines.insert(inlines.end(), std::move_iterator(tmp.begin()), std::move_iterator(tmp.end()));
+			auto flat = flatten_tio(std::move(objs[i]).takeTreeInlineObj());
+			std::move(flat.begin(), flat.end(), std::back_inserter(inlines));
 		}
 
 		inlines = TRY(tree::Paragraph::processWordSeparators(std::move(inlines)));
@@ -188,12 +219,12 @@ namespace sap::interp::builtin
 		auto size = TRY(BS_Size2d::unmake(ev, args[1])).resolve(ev->currentStyle());
 		auto tbo = value.isTreeBlockObj() ? &value.getTreeBlockObj() : value.getTreeBlockObjectRef();
 
-		const_cast<tree::BlockObject*>(tbo)->overrideLayoutSizeX(size.x());
-		const_cast<tree::BlockObject*>(tbo)->overrideLayoutSizeY(size.y());
+		const_cast<tree::BlockObject*>(tbo)->overrideLayoutWidth(size.x());
+		const_cast<tree::BlockObject*>(tbo)->overrideLayoutHeight(size.y());
 		return EvalResult::ofVoid();
 	}
 
-	ErrorOr<EvalResult> set_tbo_size_x(Evaluator* ev, std::vector<Value>& args)
+	ErrorOr<EvalResult> set_tbo_width(Evaluator* ev, std::vector<Value>& args)
 	{
 		assert(args.size() == 2);
 		assert(args[0].isPointer());
@@ -202,16 +233,16 @@ namespace sap::interp::builtin
 		assert(value.type()->isTreeBlockObj() || value.type()->isTreeBlockObjRef());
 
 		if(ev->interpreter()->currentPhase() != ProcessingPhase::Layout)
-			return ErrMsg(ev, "`set_size_x()` can only be called during `@layout`");
+			return ErrMsg(ev, "`set_width()` can only be called during `@layout`");
 
 		auto size = args[1].getLength().resolve(ev->currentStyle());
 		auto tbo = value.isTreeBlockObj() ? &value.getTreeBlockObj() : value.getTreeBlockObjectRef();
 
-		const_cast<tree::BlockObject*>(tbo)->overrideLayoutSizeX(size);
+		const_cast<tree::BlockObject*>(tbo)->overrideLayoutWidth(size);
 		return EvalResult::ofVoid();
 	}
 
-	ErrorOr<EvalResult> set_tbo_size_y(Evaluator* ev, std::vector<Value>& args)
+	ErrorOr<EvalResult> set_tbo_height(Evaluator* ev, std::vector<Value>& args)
 	{
 		assert(args.size() == 2);
 		assert(args[0].isPointer());
@@ -220,12 +251,12 @@ namespace sap::interp::builtin
 		assert(value.type()->isTreeBlockObj() || value.type()->isTreeBlockObjRef());
 
 		if(ev->interpreter()->currentPhase() != ProcessingPhase::Layout)
-			return ErrMsg(ev, "`set_size_y()` can only be called during `@layout`");
+			return ErrMsg(ev, "`set_height()` can only be called during `@layout`");
 
 		auto size = args[1].getLength().resolve(ev->currentStyle());
 		auto tbo = value.isTreeBlockObj() ? &value.getTreeBlockObj() : value.getTreeBlockObjectRef();
 
-		const_cast<tree::BlockObject*>(tbo)->overrideLayoutSizeY(size);
+		const_cast<tree::BlockObject*>(tbo)->overrideLayoutHeight(size);
 		return EvalResult::ofVoid();
 	}
 
@@ -236,16 +267,16 @@ namespace sap::interp::builtin
 		assert(args.size() == 2);
 		assert(args[0].isPointer());
 
-		// auto& value = *args[0].getPointer();
-		// assert(value.type()->isTreeInlineObj() || value.type()->isTreeInlineObjRef());
+		auto& value = *args[0].getMutablePointer();
+		assert(value.type()->isTreeInlineObj());
 
-		// if(ev->interpreter()->currentPhase() != ProcessingPhase::Layout)
-		// 	return ErrMsg(ev, "`set_width()` can only be called during `@layout`");
+		if(ev->interpreter()->currentPhase() != ProcessingPhase::Layout)
+			return ErrMsg(ev, "`set_width()` can only be called during `@layout`");
 
-		// auto size = args[1].getLength().resolve(ev->currentStyle());
-		// auto tbo = value.isTreeInlineObj() ? &value.getTreeInlineObj() : value.getTreeInlineObjectRef();
+		auto width = args[1].getLength().resolve(ev->currentStyle());
+		const_cast<tree::InlineSpan&>(value.getTreeInlineObj()).overrideWidth(width);
 
-		// const_cast<tree::BlockObject*>(tbo)->overrideLayoutSizeX(size);
-		return EvalResult::ofVoid();
+		return EvalResult::ofValue(Value::mutablePointer(Type::makeTreeInlineObj()->pointerTo(),
+			args[0].getMutablePointer()));
 	}
 }
