@@ -90,6 +90,6 @@ But what about `<insert_tool_here>`?
 ### license
 
 sap is licensed under the [Apache License version 2.0](./LICENSE). [utf8proc](./external/utf8proc/LICENSE.md)
-and [miniz](./external/miniz/LICENSE) are licensed under their respective licenses.
+and [libdeflate](./external/libdeflate/LICENSE) are licensed under their respective licenses.
 
 The hyphenation list is MIT licensed, see the hyphenation file [hyph-en-gb.tex](./hyph-en-gb.tex) or [the repo](https://github.com/hyphenation/tex-hyphen).
