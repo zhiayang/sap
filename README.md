@@ -27,8 +27,7 @@ there are some "big features" that will be implemented eventually:
 1. Graphics support — at least the (very very) basic features of PGF/TikZ
 2. Full document metaprogramming (freely manipulating text)
 3. Some basic level of typesetting mathematical expressions
-4. Some level of bibliography/referencing support
-5. ...?
+4. ...?
 
 ### non-goals
 Non-goals are split into two categories: things I can't do because this is a one-person effort, and things
@@ -57,11 +56,14 @@ While I appreciate the vast ecosystem that LaTeX has, having any kind of compati
 
 This also acts as a sort of TODO; as time goes on completed features may be removed from this list if they are deemed "trivial".
 
-- [ ] Layout integration with scripting language
 - [ ] Unicode substitution (eg. codepoint (de)composition)
 - [ ] More advanced typography support (`BASE`, `MATH`, `JSTF`, AAT `kerx`)
 - [ ] Further size optimisation for embedded fonts
 - [ ] Optimising bytecode compiler for the scripting language
+- [ ] PDF Links (annotations)
+- [x] Rudimentary and crude bibliography support
+- [x] Slightly more advanced layout capabilities (hbox, vbox, zbox)
+- [x] Layout integration with scripting language
 - [x] Embedding images
 - [x] Automatic hyphenation (English only, parsed from `hyph-en-gb.tex`)
 - [x] OpenType font (otf/ttf) loading and embedding
@@ -79,6 +81,7 @@ This also acts as a sort of TODO; as time goes on completed features may be remo
 
 But what about `<insert_tool_here>`?
 
+- **typst**: it wasn't released when i started sap ):
 - **(g)roff**: the language (doesn't seem) powerful enough, seems to require strange things to use unicode, and the syntax is too terse.
 - **patoline**: development seems slow/abandoned, basic things don't work (eg. copying text)
 - **html/css**: no. just no.
