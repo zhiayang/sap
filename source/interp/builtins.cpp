@@ -226,8 +226,11 @@ namespace sap::interp
 		define_builtin("make_line", makeParamList(P("1", PType::variadicArray(t_tio))), t_tbo, &B::make_line);
 		define_builtin("make_paragraph", makeParamList(P("1", PType::variadicArray(t_tio))), t_tbo, &B::make_paragraph);
 
-		define_builtin("apply_style", makeParamList(P("1", t_bstyle), P("2", t_tio)), t_tio, &B::apply_style_tio);
-		define_builtin("apply_style", makeParamList(P("1", t_bstyle), P("2", t_tbo)), t_tbo, &B::apply_style_tbo);
+		define_builtin("apply_style", makeParamList(P("style", t_bstyle), P("obj", t_tio)), t_tio, &B::apply_style_tio);
+		define_builtin("apply_style", makeParamList(P("style", t_bstyle), P("obj", t_tbo)), t_tbo, &B::apply_style_tbo);
+
+		define_builtin("apply_style", makeParamList(P("obj", t_tio), P("style", t_bstyle)), t_tio, &B::apply_style_tio);
+		define_builtin("apply_style", makeParamList(P("obj", t_tbo), P("style", t_bstyle)), t_tbo, &B::apply_style_tbo);
 
 		define_builtin("load_image",
 			makeParamList(P("1", t_str), P("2", t_length), P("3", t_opt(t_length), make_null())), t_tbo,

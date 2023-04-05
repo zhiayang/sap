@@ -61,17 +61,21 @@ namespace sap::interp::builtin
 	ErrorOr<EvalResult> apply_style_tio(Evaluator* ev, std::vector<Value>& args)
 	{
 		assert(args.size() == 2);
-		assert(args[0].type() == BS_Style::type);
 
-		return do_apply_style(ev, args[1], TRY(BS_Style::unmake(ev, args[0])));
+		if(args[0].type() == BS_Style::type)
+			return do_apply_style(ev, args[1], TRY(BS_Style::unmake(ev, args[0])));
+		else
+			return do_apply_style(ev, args[0], TRY(BS_Style::unmake(ev, args[1])));
 	}
 
 	ErrorOr<EvalResult> apply_style_tbo(Evaluator* ev, std::vector<Value>& args)
 	{
 		assert(args.size() == 2);
-		assert(args[0].type() == BS_Style::type);
 
-		return do_apply_style(ev, args[1], TRY(BS_Style::unmake(ev, args[0])));
+		if(args[0].type() == BS_Style::type)
+			return do_apply_style(ev, args[1], TRY(BS_Style::unmake(ev, args[0])));
+		else
+			return do_apply_style(ev, args[0], TRY(BS_Style::unmake(ev, args[1])));
 	}
 
 
