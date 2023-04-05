@@ -125,9 +125,22 @@ namespace sap::interp
 			bool must_defer = [&arg]() {
 				auto* x = arg.value.get();
 				if(auto str_lit = dynamic_cast<const StructLit*>(x); str_lit && str_lit->is_anonymous)
+				{
 					return true;
+				}
 				else if(auto enum_lit = dynamic_cast<const EnumLit*>(x); enum_lit)
+				{
 					return true;
+				}
+				else if(auto arr = dynamic_cast<const ArrayLit*>(x);
+						arr && not arr->elem_type.has_value() && not arr->elements.empty())
+				{
+					const Expr* inside = arr->elements[0].get();
+					if(auto s = dynamic_cast<const StructLit*>(inside); s && s->is_anonymous)
+						return true;
+					else if(auto e = dynamic_cast<const EnumLit*>(inside); e)
+						return true;
+				}
 
 				return false;
 			}();

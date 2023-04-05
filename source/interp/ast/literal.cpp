@@ -33,16 +33,18 @@ namespace sap::interp
 			if(this->elements.empty())
 				return TCResult::ofRValue(Type::makeArray(Type::makeVoid()));
 
-			auto t1 = TRY(this->elements[0]->typecheck(ts)).type();
+			auto et = infer ? infer->arrayElement() : nullptr;
+			et = TRY(this->elements[0]->typecheck(ts, et)).type();
+
 			for(size_t i = 1; i < this->elements.size(); i++)
 			{
-				auto t2 = TRY(this->elements[i]->typecheck(ts, t1)).type();
-				if(t2 != t1)
+				auto t2 = TRY(this->elements[i]->typecheck(ts, et)).type();
+				if(t2 != et)
 					return ErrMsg(this->elements[i]->loc(),
-						"mismatched types in array literal: expected '{}', got '{}'", t1, t2);
+						"mismatched types in array literal: expected '{}', got '{}'", et, t2);
 			}
 
-			return TCResult::ofRValue(Type::makeArray(t1));
+			return TCResult::ofRValue(Type::makeArray(et));
 		}
 	}
 
