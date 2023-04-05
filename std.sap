@@ -18,7 +18,7 @@ namespace std
 	fn centre(blk: Block) -> Block
 	{
 		return (*blk).apply_style({
-			.alignment = .Centred,
+			alignment: .Centred,
 		});
 	}
 
@@ -70,21 +70,21 @@ namespace std
 
 		var num_line = builtin::make_hbox(builtin::make_line(builtin::make_text(f"{section_num}")), builtin::hspace(3mm))
 			.apply_style({
-				.alignment = .Right,
-				.font_size = 13pt,
+				alignment: .Right,
+				font_size: 13pt,
 			});
 		num_line.set_width(14mm);
 
 		var name_line = builtin::make_line(builtin::make_text(name)).apply_style({
-			.font_size = 2em,
+			font_size: 2em,
 		});
 
 		let the_section = Section {
-			.num = section_num,
-			.name = name,
-			.page_num = 0,
-			.num_tbo_ref = num_line.ref(),
-			.subsections = [],
+			num: section_num,
+			name: name,
+			page_num: 0,
+			num_tbo_ref: num_line.ref(),
+			subsections: [],
 		};
 
 		var box = builtin::make_vbox(
@@ -92,10 +92,10 @@ namespace std
 			builtin::make_hbox(*num_line, *name_line),
 			builtin::vspace(-0.9em),
 		).apply_style({
-			.font_family = g_sans_font,
+			font_family: g_sans_font,
 		});
 
-		box.offset_position({ .x = -14mm, .y = 0mm });
+		box.offset_position({ x: -14mm, y: 0mm });
 		g_sections += [the_section];
 
 		return box;
@@ -115,21 +115,21 @@ namespace std
 
 		var num_line = builtin::make_hbox(builtin::make_line(builtin::make_text(f"{sec!.num}.{subnum}")), builtin::hspace(3mm))
 			.apply_style({
-				.alignment = .Right,
-				.font_size = 13pt,
+				alignment: .Right,
+				font_size: 13pt,
 			});
 		num_line.set_width(14mm);
 
 		var name_line = builtin::make_line(builtin::make_text(name)).apply_style({
-			.font_size = 1.6em,
+			font_size: 1.6em,
 		});
 
 		let the_sub = SubSection {
-			.num = subnum,
-			.name = name,
-			.page_num = 0,
-			.num_tbo_ref = num_line.ref(),
-			.subsubsections = [],
+			num: subnum,
+			name: name,
+			page_num: 0,
+			num_tbo_ref: num_line.ref(),
+			subsubsections: [],
 		};
 
 		var box = builtin::make_vbox(
@@ -137,10 +137,10 @@ namespace std
 			builtin::make_hbox(*num_line, *name_line),
 			builtin::vspace(-0.9em),
 		).apply_style({
-			.font_family = g_sans_font,
+			font_family: g_sans_font,
 		});
 
-		box.offset_position({ .x = -14mm, .y = 0mm });
+		box.offset_position({ x: -14mm, y: 0mm });
 		sec!.subsections += [the_sub];
 		return box;
 	}
@@ -166,20 +166,20 @@ namespace std
 
 		var num_line = builtin::make_hbox(builtin::make_line(builtin::make_text(f"{sec!.num}.{subsec!.num}.{subsubnum}")),
 			builtin::hspace(3mm)).apply_style({
-				.alignment = .Right,
-				.font_size = 13pt,
+				alignment: .Right,
+				font_size: 13pt,
 			});
 		num_line.set_width(14mm);
 
 		var name_line = builtin::make_line(builtin::make_text(name)).apply_style({
-			.font_size = 1.4em,
+			font_size: 1.4em,
 		});
 
 		let the_subsub = SubSubSection {
-			.num = subsubnum,
-			.name = name,
-			.page_num = 0,
-			.num_tbo_ref = num_line.ref(),
+			num: subsubnum,
+			name: name,
+			page_num: 0,
+			num_tbo_ref: num_line.ref(),
 		};
 
 		var box = builtin::make_vbox(
@@ -187,10 +187,10 @@ namespace std
 			builtin::make_hbox(*num_line, *name_line),
 			builtin::vspace(-0.9em)
 		).apply_style({
-			.font_family = g_sans_font,
+			font_family: g_sans_font,
 		});
 
-		box.offset_position({ .x = -14mm, .y = 0mm });
+		box.offset_position({ x: -14mm, y: 0mm });
 		subsec!.subsubsections += [the_subsub];
 		return box;
 	}
@@ -285,9 +285,9 @@ namespace std
 		# FIXME: this feels kinda hackish.
 		let x = builtin::vspace(0em);
 		g_page_numbering_resets += [PageNumberState {
-			.ref = x.ref(),
-			.enable = false,
-			.reset = false,
+			ref: x.ref(),
+			enable: false,
+			reset: false,
 		}];
 
 		return x;
@@ -298,9 +298,9 @@ namespace std
 		# FIXME: this feels kinda hackish.
 		let x = builtin::vspace(0em);
 		g_page_numbering_resets += [PageNumberState {
-			.ref = x.ref(),
-			.enable = true,
-			.reset = false,
+			ref: x.ref(),
+			enable: true,
+			reset: false,
 		}];
 
 		return x;
@@ -311,9 +311,9 @@ namespace std
 		# FIXME: this feels kinda hackish.
 		let x = builtin::vspace(0em);
 		g_page_numbering_resets += [PageNumberState {
-			.ref = x.ref(),
-			.enable = true,
-			.reset = true,
+			ref: x.ref(),
+			enable: true,
+			reset: true,
 		}];
 
 		return x;
@@ -350,14 +350,14 @@ namespace std
 			if(enabled)
 			{
 				let item = builtin::make_line(builtin::make_text(f"{page_num}")).apply_style({
-					.alignment = .Right,
-					.font_size = 11pt,
+					alignment: .Right,
+					font_size: 11pt,
 				});
 
 				builtin::output_at_absolute({
-					.page = i,
-					.x = page_num_pos.x,
-					.y = page_num_pos.y,
+					page: i,
+					x: page_num_pos.x,
+					y: page_num_pos.y,
 				}, *item);
 			}
 
@@ -492,7 +492,7 @@ namespace std
 			let item = builtin::make_hbox(
 				*heading, *pagenum
 			).apply_style({
-				.alignment = .Justified
+				alignment: .Justified
 			});
 
 			if(i != 0)
@@ -520,7 +520,7 @@ namespace std
 				let item = builtin::make_hbox(
 					*heading, *pagenum
 				).apply_style({
-					.alignment = .Justified
+					alignment: .Justified
 				});
 
 				lines += [*item];
@@ -545,7 +545,7 @@ namespace std
 					let item = builtin::make_hbox(
 						*heading, *pagenum
 					).apply_style({
-						.alignment = .Justified
+						alignment: .Justified
 					});
 
 					lines += [*item];
@@ -559,13 +559,13 @@ namespace std
 		}
 
 		var ret = builtin::make_vbox(...*lines).apply_style({
-			.paragraph_spacing = 0em,
+			paragraph_spacing: 0em,
 		});
 
 		ret = builtin::make_vbox(
 			builtin::make_hbox(
 				builtin::make_line(builtin::make_text("Contents"))
-			).apply_style({ .alignment = .Left, .font_size = 20pt, .font_family = g_sans_font }),
+			).apply_style({ alignment: .Left, font_size: 20pt, font_family: g_sans_font }),
 			*ret
 		);
 
@@ -619,7 +619,7 @@ namespace std
 			let rec = *records[i];
 
 			let number = builtin::make_hbox(builtin::make_line(builtin::make_text(f"[{rec.refnum!}]"))).apply_style({
-				.alignment = .Right,
+				alignment: .Right,
 			});
 
 			number.set_width(10mm);
@@ -628,11 +628,11 @@ namespace std
 				*number,
 				builtin::hspace(1em),
 				builtin::make_paragraph(builtin::make_text(rec.text)).apply_style({
-					.line_spacing = 1.1,
-					.alignment = .Justified
+					line_spacing: 1.1,
+					alignment: .Justified
 				})
 			).apply_style({
-				.alignment = .Left
+				alignment: .Left
 			});
 
 			lines += [*item];
@@ -641,7 +641,7 @@ namespace std
 
 		return builtin::make_vbox(builtin::make_hbox(
 				builtin::make_line(builtin::make_text("References"))
-			).apply_style({.alignment = .Left, .font_size = 20pt, .font_family = g_sans_font}),
+			).apply_style({alignment: .Left, font_size: 20pt, font_family: g_sans_font}),
 			...*lines
 		);
 	}
@@ -668,7 +668,7 @@ namespace std
 		{
 			lines += [builtin::make_hbox(
 				builtin::hspace(0.8em),
-				builtin::make_line(builtin::make_text(f"{i + 1}.")).apply_style({ .alignment = .Right }),
+				builtin::make_line(builtin::make_text(f"{i + 1}.")).apply_style({ alignment: .Right }),
 				builtin::hspace(0.6em),
 				builtin::make_line(builtin::make_text(items[i]))
 			)];
@@ -676,7 +676,7 @@ namespace std
 		}
 
 		return builtin::make_vbox(builtin::vspace(-0.5em), ...*lines)
-			.apply_style({ .paragraph_spacing = 0.0em, });
+			.apply_style({ paragraph_spacing: 0.0em, });
 	}
 
 	fn bulleted_list(items: [Inline...]) -> Block
@@ -687,7 +687,7 @@ namespace std
 		{
 			lines += [builtin::make_hbox(
 				builtin::hspace(0.8em),
-				builtin::make_line(builtin::make_text(f"•")).apply_style({ .alignment = .Right }),
+				builtin::make_line(builtin::make_text(f"•")).apply_style({ alignment: .Right }),
 				builtin::hspace(0.6em),
 				builtin::make_line(*items[i])
 			)];
@@ -695,7 +695,7 @@ namespace std
 		}
 
 		return builtin::make_vbox(builtin::vspace(-0.5em), ...*lines)
-			.apply_style({ .paragraph_spacing = 0.0em, });
+			.apply_style({ paragraph_spacing: 0.0em, });
 	}
 
 	fn bulleted_list(items: [string...]) -> Block
@@ -733,7 +733,7 @@ namespace std
 	fn mono(x: string) -> Inline
 	{
 		return builtin::make_text(x).apply_style({
-			.font_family = g_mono_font
+			font_family: g_mono_font
 		});
 	}
 
@@ -796,5 +796,5 @@ namespace std
 
 namespace std::paper_size
 {
-	global let A4 = builtin::Size2d { .x = 210mm, .y = 297mm };
+	global let A4 = builtin::Size2d { x: 210mm, y: 297mm };
 }

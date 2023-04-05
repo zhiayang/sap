@@ -95,6 +95,7 @@ namespace sap::interp
 	struct Ident : Expr
 	{
 		explicit Ident(Location loc) : Expr(std::move(loc)) { }
+		Ident(Location loc, QualifiedId name) : Expr(std::move(loc)), name(std::move(name)) { }
 
 		virtual ErrorOr<EvalResult> evaluate_impl(Evaluator* ev) const override;
 		virtual ErrorOr<TCResult> typecheck_impl(Typechecker* ts, const Type* infer = nullptr, bool keep_lvalue = false)

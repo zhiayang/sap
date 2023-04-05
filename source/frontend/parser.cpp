@@ -625,17 +625,30 @@ namespace sap::frontend
 
 		while(not lexer.expect(TT::RBrace))
 		{
-			if(not lexer.expect(TT::Period))
-				return ErrMsg(lexer.location(), "expected '.' to begin designated struct initialiser, found '{}'");
+			// if(not lexer.expect(TT::Period))
+			// 	return ErrMsg(lexer.location(), "expected '.' to begin designated struct initialiser, found '{}'");
 
 			auto field_name = lexer.match(TT::Identifier);
 			if(not field_name.has_value())
-				return ErrMsg(lexer.location(), "expected identifier after '.' for field name");
+				return ErrMsg(lexer.location(), "expected identifier for field name");
 
-			if(not lexer.expect(TT::Equal))
-				return ErrMsg(lexer.location(), "expected '=' after field name");
+			/*
+			    note: handle the thing like in crablang, where
+			    { name: name } can be shortened to just { name }
+			*/
 
-			auto value = TRY(parse_expr(lexer));
+			std::unique_ptr<interp::Expr> value {};
+
+			if(lexer.expect(TT::Colon))
+			{
+				value = TRY(parse_expr(lexer));
+			}
+			else
+			{
+				value = std::make_unique<interp::Ident>(field_name->loc,
+					interp::QualifiedId { .name = field_name->str() });
+			}
+
 			ret->field_inits.push_back(interp::StructLit::Arg {
 				.name = field_name->text.str(),
 				.value = std::move(value),
