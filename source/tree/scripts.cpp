@@ -26,6 +26,9 @@ namespace sap::tree
 		if(not maybe_value.hasValue())
 			return Ok(std::nullopt);
 
+		// it's a call, idk how you managed to return an lvalue from that
+		assert(not maybe_value.isLValue());
+
 		auto value = maybe_value.take();
 		auto value_type = value.type();
 
@@ -47,7 +50,7 @@ namespace sap::tree
 			assert(value.type()->isTreeInlineObj());
 
 			auto tmp = TRY(cs->evaluator().convertValueToText(std::move(value)));
-			return Ok(Left(std::move(tmp)));
+			return Ok(Left(std::make_unique<InlineSpan>(std::move(tmp))));
 		}
 
 

@@ -16,6 +16,7 @@ namespace sap::frontend
 		loc.column += n;
 		tok.loc.length = util::checked_cast<uint32_t>(n);
 		tok.loc.byte_offset = checked_cast<size_t>(tok.text.data() - tok.loc.file_contents.data());
+
 		stream.remove_prefix(n);
 		return Ok(std::move(tok));
 	}
@@ -24,6 +25,7 @@ namespace sap::frontend
 	{
 		tok.loc.length = checked_cast<uint32_t>(n);
 		tok.loc.byte_offset = checked_cast<size_t>(tok.text.data() - tok.loc.file_contents.data());
+
 		stream.remove_prefix(n);
 		return Ok(std::move(tok));
 	}
@@ -188,6 +190,38 @@ namespace sap::frontend
 					.type = TT::Backslash,
 					.text = stream.take(1) },
 				1);
+		}
+		else if(stream.starts_with("```"))
+		{
+			// take the whole line.
+			auto first_line = stream.take(stream.find_first_of("\r\n"));
+
+			auto num_ticks = first_line.sv().find_first_not_of('`');
+			if(num_ticks == std::string::npos)
+				num_ticks = first_line.size();
+
+			auto end_pattern = std::string(num_ticks, '`');
+
+			size_t i = stream.drop(first_line.size() + 1).find(end_pattern);
+			if(i == std::string::npos)
+				return ErrMsg(loc, "unterminated raw block (expected '{}')", end_pattern);
+
+			auto n = first_line.size() + 1 + i + end_pattern.size();
+			auto text = stream.take(n);
+
+			loc.line += std::count(text.begin(), text.end(), '\n');
+			auto k = text.rfind('\n');
+			if(k == std::string::npos)
+				k = 0;
+
+			loc.column = checked_cast<uint32_t>(k);
+			return advance_and_return2(stream, loc,
+				Token {
+					.loc = loc,
+					.type = TT::RawBlock,
+					.text = text,
+				},
+				n);
 		}
 		else
 		{
@@ -593,7 +627,7 @@ namespace sap::frontend
 
 
 
-	Lexer::Lexer(zst::str_view filename, zst::str_view contents) : m_stream(contents)
+	Lexer::Lexer(zst::str_view filename, zst::str_view contents) : m_file_contents(contents), m_stream(contents)
 	{
 		m_mode_stack.push_back(Mode::Text);
 		m_location = Location {
@@ -642,14 +676,19 @@ namespace sap::frontend
 		return x == TT::Invalid || x == TT::EndOfFile;
 	}
 
+	void Lexer::update_location() const
+	{
+		m_location.byte_offset = checked_cast<size_t>(m_stream.data() - m_file_contents.data());
+	}
+
 	ErrorOr<Token> Lexer::next()
 	{
 		m_previous_token = this->save();
 		switch(this->mode())
 		{
 			using enum Mode;
-			case Text: return consume_text_token(m_stream, m_location);
-			case Script: return consume_script_token(m_stream, m_location);
+			case Text: return update_location(), consume_text_token(m_stream, m_location);
+			case Script: return update_location(), consume_script_token(m_stream, m_location);
 		}
 	}
 
@@ -719,6 +758,7 @@ namespace sap::frontend
 				break;
 			}
 		}
+		update_location();
 	}
 
 	std::optional<Token> Lexer::match(TokenType type)

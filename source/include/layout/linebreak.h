@@ -27,7 +27,7 @@ namespace sap::layout::linebreak
 		{
 			NONE,
 			WORD,
-			OTHER,
+			SPAN,
 		} m_last_obj_kind = NONE;
 
 		Length m_line_height = 0;
@@ -36,7 +36,7 @@ namespace sap::layout::linebreak
 
 		std::u32string m_last_word {};
 		const tree::Separator* m_last_sep = nullptr;
-		const tree::InlineObject* m_last_obj = nullptr;
+		const tree::InlineSpan* m_last_span = nullptr;
 
 		const Style* m_current_style = Style::empty();
 
@@ -65,8 +65,8 @@ namespace sap::layout::linebreak
 
 				// if the previous thing wasn't even a word, we have to add its size as well,
 				// because it doesn't have text in m_last_word
-				if(m_last_obj_kind != WORD)
-					sap::internal_error("unsupported thing in line");
+				if(m_last_obj_kind == SPAN)
+					ret += *m_last_span->getOverriddenWidth();
 
 				m_last_word.erase(m_last_word.size() - m_last_sep->endOfLine().size());
 				return ret;
@@ -87,8 +87,10 @@ namespace sap::layout::linebreak
 				this->add_word(w);
 			else if(auto s = dynamic_cast<const tree::Separator*>(obj); s)
 				this->add_sep(s);
+			else if(auto ss = dynamic_cast<const tree::InlineSpan*>(obj); ss)
+				this->add_span(ss);
 			else
-				this->add_other(obj);
+				sap::internal_error("unsupported: {}", typeid(*obj).name());
 		}
 
 	private:
@@ -96,45 +98,68 @@ namespace sap::layout::linebreak
 		{
 			if(m_last_obj_kind == WORD)
 				return calculateWordSize(m_last_word, style);
-			else if(m_last_obj != nullptr)
-				sap::internal_error("unsupported");
+			else if(m_last_obj_kind == SPAN)
+				return { *m_last_span->getOverriddenWidth(), 0 }; // FIXME: spans don't have height set properly
 			else
 				return { 0, 0 };
 		}
 
-		void add_other(const tree::InlineObject* obj)
+		void add_span(const tree::InlineSpan* span)
 		{
-			auto& tmp = *obj;
-			sap::internal_error("unsupported: {}", typeid(tmp).name());
+			assert(span->hasOverriddenWidth());
+
+			this->add_span_or_word(span->style());
+
+			m_last_obj_kind = SPAN;
+			m_last_span = span;
+		}
+
+		void add_sep(const tree::Separator* sep)
+		{
+			m_num_parts++;
+
+			m_last_span = nullptr;
+			m_last_sep = sep;
 		}
 
 		// Modifiers
 		void add_word(const tree::Text* word)
 		{
-			auto prev_word_style = m_parent_style->extendWith(m_current_style);
 			auto word_style = m_parent_style->extendWith(word->style());
 
-			// TODO: suspicious; should this use `prev_word_style` instead of `word_style`?
-			auto this_line_height = calculateWordSize(word->contents(), word_style).y() * word_style->line_spacing();
-			m_line_height = std::max(m_line_height, this_line_height);
+			auto lh = calculateWordSize(word->contents(), word_style).y() * word_style->line_spacing();
+			m_line_height = std::max(m_line_height, lh);
 
+			if(bool replace_last_word = this->add_span_or_word(word->style()))
+				m_last_word = word->contents();
+			else
+				m_last_word += word->contents();
+
+			m_last_obj_kind = WORD;
+		}
+
+		bool add_span_or_word(const Style* style)
+		{
+			auto prev_word_style = m_parent_style->extendWith(m_current_style);
+			auto word_style = m_parent_style->extendWith(style);
+
+			bool replace_last_word = false;
 			if(m_last_sep != nullptr && (m_last_sep->isSpace() || m_last_sep->isSentenceEnding()))
 			{
 				m_num_spaces++;
 
 				m_line_width_excluding_last_word += get_size_of_last_thing(prev_word_style).x();
-				m_last_word = word->contents();
+				replace_last_word = true;
 			}
-			else if(m_current_style != nullptr && m_current_style != word->style()
-					&& *m_current_style != *word->style())
+			else if(m_last_span != nullptr || (m_current_style != nullptr && m_current_style != style))
 			{
 				m_line_width_excluding_last_word += get_size_of_last_thing(prev_word_style).x();
-				m_last_word = word->contents();
+				replace_last_word = true;
 			}
 			else
 			{
 				// either there is no last separator, or the last separator was a hyphen
-				m_last_word += word->contents();
+				replace_last_word = false;
 			}
 
 			if(m_last_sep != nullptr)
@@ -148,17 +173,12 @@ namespace sap::layout::linebreak
 					m_total_space_width += sep_width;
 			}
 
+			m_current_style = style;
+			m_last_span = nullptr;
 			m_last_sep = nullptr;
-
-			m_current_style = word->style();
-			m_last_obj_kind = WORD;
 			m_num_parts++;
-		}
 
-		void add_sep(const tree::Separator* sep)
-		{
-			m_num_parts++;
-			m_last_sep = sep;
+			return replace_last_word;
 		}
 	};
 

@@ -19,8 +19,8 @@
 
 namespace sap::layout
 {
-	Word::Word(zst::wstr_view text, const Style* style, Length relative_offset, LayoutSize size)
-		: LayoutObject(style, size), m_relative_offset(relative_offset), m_text(text)
+	Word::Word(zst::wstr_view text, const Style* style, Length relative_offset, Length raise_height, LayoutSize size)
+		: LayoutObject(style, size), m_relative_offset(relative_offset), m_raise_height(raise_height), m_text(text)
 	{
 		assert(m_style != nullptr);
 	}
@@ -67,6 +67,12 @@ namespace sap::layout
 		const auto font_size = m_style->font_size();
 		text->setFont(font, font_size.into<pdf::PdfScalar>());
 
+		if(m_raise_height != 0)
+		{
+			text->rise(pdf::PdfFont::convertPDFScalarToTextSpaceForFontSize(m_raise_height.into(),
+				text->currentFontSize()));
+		}
+
 		auto add_gid = [&font, text](GlyphId gid) {
 			if(font->isCIDFont())
 				text->addEncoded(2, static_cast<uint32_t>(gid));
@@ -81,5 +87,8 @@ namespace sap::layout
 			// TODO: handle placement as well
 			text->offset(font->scaleMetricForPDFTextSpace(glyph.adjustments.horz_advance));
 		}
+
+		if(m_raise_height != 0)
+			text->rise(0);
 	}
 }

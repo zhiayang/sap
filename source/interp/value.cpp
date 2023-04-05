@@ -808,6 +808,9 @@ namespace sap::interp
 		else if(m_type->isTreeInlineObj())
 			new(&v_inline_obj) decltype(v_inline_obj)(std::move(val.v_inline_obj));
 
+		else if(m_type->isLayoutObject())
+			new(&v_layout_obj) decltype(v_layout_obj)(std::move(val.v_layout_obj));
+
 		else if(m_type->isArray() || m_type->isStruct() || m_type->isOptional() || m_type->isEnum())
 			new(&v_array) decltype(v_array)(std::move(val.v_array));
 

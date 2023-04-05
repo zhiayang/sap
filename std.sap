@@ -324,13 +324,14 @@ namespace std
 		var rst_idx = 0;
 		var enabled = true;
 
+		var page_num_offset = 0;
+
 		var page_num_pos = builtin::state().page_size;
 		page_num_pos.x -= 34mm;
 		page_num_pos.y -= 30mm;
 
 		while(i < builtin::state().page_count)
 		{
-			var page_num = i + 1;
 			if(rst_idx < g_page_numbering_resets.size())
 			{
 				let rst = g_page_numbering_resets[rst_idx];
@@ -341,10 +342,11 @@ namespace std
 
 					enabled = rst.enable;
 					if(rst.reset)
-						page_num = 1;
+						page_num_offset = tmp;
 				}
 			}
 
+			let page_num = i + 1 - page_num_offset;
 			if(enabled)
 			{
 				let item = std::style({
@@ -556,13 +558,13 @@ namespace std
 			i += 1;
 		}
 
-		var ret = builtin::make_vbox((*lines)...);
+		var ret = builtin::make_vbox(...*lines);
 		ret = builtin::apply_style({
 			.paragraph_spacing = 0em,
 		}, *ret);
 
 		ret = builtin::make_vbox(
-			builtin::apply_style({ .alignment = .Centred, .font_size = 28pt, .font_family = g_sans_font }, builtin::make_hbox(
+			builtin::apply_style({ .alignment = .Left, .font_size = 20pt, .font_family = g_sans_font }, builtin::make_hbox(
 				builtin::make_line(builtin::make_text("Contents"))
 			)),
 			*ret
@@ -637,11 +639,11 @@ namespace std
 		}
 
 		return builtin::make_vbox(builtin::apply_style({
-				.alignment = .Left, .font_size = 24pt, .font_family = g_sans_font
+				.alignment = .Left, .font_size = 20pt, .font_family = g_sans_font
 			}, builtin::make_hbox(
 				builtin::make_line(builtin::make_text("References"))
 			)),
-			(*lines)...
+			...*lines
 		);
 	}
 
@@ -677,7 +679,7 @@ namespace std
 		}
 
 		return builtin::apply_style({ .paragraph_spacing = 0.0em, },
-			builtin::make_vbox(builtin::vspace(-0.5em), (*lines)...)
+			builtin::make_vbox(builtin::vspace(-0.5em), ...*lines)
 		);
 	}
 
@@ -699,7 +701,7 @@ namespace std
 		}
 
 		return builtin::apply_style({ .paragraph_spacing = 0.0em, },
-			builtin::make_vbox(builtin::vspace(-0.5em), (*lines)...)
+			builtin::make_vbox(builtin::vspace(-0.5em), ...*lines)
 		);
 	}
 
@@ -713,7 +715,7 @@ namespace std
 			i += 1;
 		}
 
-		return bulleted_list((*inlines)...);
+		return bulleted_list(...*inlines);
 	}
 
 

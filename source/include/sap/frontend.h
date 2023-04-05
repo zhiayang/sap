@@ -73,6 +73,8 @@ namespace sap::frontend
 
 		Ellipsis,
 
+		RawBlock,
+
 		// keywords
 		KW_If,
 		KW_Fn,
@@ -160,11 +162,16 @@ namespace sap::frontend
 		void setLocation(Location loc) { m_location = std::move(loc); }
 
 	private:
+		void update_location() const;
+
+	private:
 		std::vector<Mode> m_mode_stack {};
+		zst::str_view m_file_contents {};
 		zst::str_view m_stream {};
-		Location m_location {};
 
 		SaveState m_previous_token {};
+
+		mutable Location m_location {};
 	};
 
 	struct LexerModer

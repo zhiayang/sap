@@ -35,11 +35,9 @@ document-start
 
 paragraph{meta.para.contents}
     : special-token-escape
-    | block-comment
-    | line-comment
     | `{`{keyword.brace} paragraph* `}`{keyword.brace}
-    | ~(script-block | script-call)
-    | '\w*'
+    | ~(script-block | script-call | raw-block)
+    | '.*?'
     ;
 
 special-token-escape
@@ -49,6 +47,24 @@ special-token-escape
     | '(\\)(\})'{1: punctuation.escape}
     | '(\\)(;)'{1: punctuation.escape}
     ;
+
+
+text-literal
+    : ('(\\(box|vbox|hbox|zbox|line|para))\s*(\{)'{1: keyword.block.text, 3: punctuation.brace}
+    | '(\\)\s*(\{)'{1: keyword.inline.text, 2: punctuation.brace})
+        (script-call | raw-block | '[^}]')*  ~(`}`{punctuation.brace})
+    ;
+
+raw-block-x[name, scope]
+    : '(`{3,})(#[name])(\s+)([^`]*)$\n?'{1: punctuation.other, 2: constant.other}
+        %embed['(\1)']{scope:source.#[scope], 1: punctuation.other}
+    ;
+
+raw-block
+    : raw-block-x[`c`, 'c']
+    | raw-block-x[`cpp`, 'c++']
+    ;
+
 
 
 
@@ -63,9 +79,9 @@ script-call{meta.script.inline-call}:
 
 script-call-tail
     : `;`{punctuation.terminator}
-    | '\s*(\\(?:p|t))?\s*(\{)'{1: keyword.script.trailing-block, 2: punctuation.brace.block-start}
-      paragraph*
-      `}`{punctuation.brace.block-end}
+    # | '\s*(\\(?:p|t))?\s*(\{)'{1: keyword.script.trailing-block, 2: punctuation.brace.block-start}
+    #   paragraph*
+    #   `}`{punctuation.brace.block-end}
     ;
 
 
@@ -154,6 +170,7 @@ primary-expr
     | fstring-literal
     | array-literal
     | enum-literal
+    | text-literal
     | `(`{punctuation.paren} expr `)`{punctuation.paren}
     | (`{`{punctuation.brace.struct-start} struct-literal-field-list `}`{punctuation.brace.struct-end})
     | '(::)?(?!not)([A-Za-z_][[:word:]]*)(?:\s*(::)\s*([A-Za-z_][[:word:]]*))*'{
@@ -174,7 +191,6 @@ postfix-expr2
     | `{`{punctuation.brace.struct-start} struct-literal-field-list `}`{punctuation.brace.struct-end}
     | `!`{keyword.operator.deref}
     | '\?(?!\?)'{keyword.operator.qn}
-    | `...`{keyword.operator.ellipsis}
     | `.`{punctuation.operator.dot} IDENTIFIER{meta.name.field}
     ;
 
@@ -182,6 +198,7 @@ postfix-expr: primary-expr '\s*' postfix-expr2*;
 
 unary-expr
     : postfix-expr
+    | `...`{keyword.operator.ellipsis} unary-expr
     | `*`{keyword.operator.move} unary-expr
     | `&`{keyword.operator.addr} `mut`{storage.modifier.mut}? unary-expr
     | `+`{keyword.operator.plus} unary-expr
@@ -310,7 +327,7 @@ array-literal:
     ;
 
 enum-literal:
-    (`.`{punctuation.period})
+    ('\.(?!\.)'{punctuation.period})
     IDENTIFIER{meta.name.enumerator}
     ;
 

@@ -323,13 +323,6 @@ namespace zst
 
 			inline size_t find_first_of(str_view sv)
 			{
-#if 0 && !ZST_FREESTANDING && ZST_USE_STD
-				auto ret = std::find_first_of(this->ptr, this->ptr + this->len, sv.ptr, sv.ptr + sv.len);
-				if(ret == this->ptr + this->len)
-					return static_cast<size_t>(-1);
-
-				return static_cast<size_t>(ret - this->ptr);
-#else
 				for(size_t i = 0; i < this->len; i++)
 				{
 					for(value_type k : sv)
@@ -339,7 +332,32 @@ namespace zst
 					}
 				}
 				return static_cast<size_t>(-1);
-#endif
+			}
+
+			inline size_t find_first_not_of(value_type k)
+			{
+				for(size_t i = 0; i < this->len; i++)
+				{
+					if(this->ptr[i] != k)
+						return i;
+				}
+				return static_cast<size_t>(-1);
+			}
+
+			[[nodiscard]] str_view trim_whitespace() const
+			{
+				auto copy = *this;
+				while(not copy.empty() && (copy[0] == value_type(' ') || copy[0] == value_type('\t') || copy[0] == value_type('\n') || copy[0] == value_type('\r')))
+				{
+					copy.remove_prefix(1);
+				}
+
+				while(not copy.empty() && (copy.back() == value_type(' ') || copy.back() == value_type('\t') || copy.back() == value_type('\n') || copy.back() == value_type('\r')))
+				{
+					copy.remove_suffix(1);
+				}
+
+				return copy;
 			}
 
 			[[nodiscard]] inline str_view drop(size_t n) const
@@ -361,7 +379,7 @@ namespace zst
 					: cnt);
 			}
 
-			[[nodiscard]] inline str_view drop_until(char c) const
+			[[nodiscard]] inline str_view drop_until(value_type c) const
 			{
 				auto n = this->find(c);
 				if(n == size_t(-1))
@@ -369,7 +387,7 @@ namespace zst
 				return this->drop(n);
 			}
 
-			[[nodiscard]] inline str_view take_until(char c) const
+			[[nodiscard]] inline str_view take_until(value_type c) const
 			{
 				auto n = this->find(c);
 				if(n == size_t(-1))

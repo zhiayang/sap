@@ -12,14 +12,14 @@ namespace sap::layout
 	Container::Container(const Style* style, //
 		LayoutSize size,
 		Direction direction,
-		Length tallest_ascent,
 		bool glued,
-		std::vector<std::unique_ptr<LayoutObject>> objs)
+		std::vector<std::unique_ptr<LayoutObject>> objs,
+		std::optional<Length> override_obj_spacing)
 		: LayoutObject(style, std::move(size))
 		, m_glued(glued)
 		, m_direction(direction)
-		, m_tallest_ascent(tallest_ascent)
 		, m_objects(std::move(objs))
+		, m_override_obj_spacing(std::move(override_obj_spacing))
 	{
 	}
 
@@ -66,7 +66,6 @@ namespace sap::layout
 		Length self_width,
 		Container::Direction direction,
 		Alignment horz_alignment,
-		Length tallest_ascent,
 		Length vert_obj_spacing,
 		bool shift_by_ascent_of_first_child,
 		const std::vector<std::unique_ptr<T>>& objects)
@@ -250,7 +249,6 @@ namespace sap::layout
 		Length self_width,
 		Container::Direction direction,
 		Alignment horz_alignment,
-		Length tallest_ascent,
 		Length vert_obj_spacing,
 		bool shift_by_ascent_of_first_child,
 		const std::vector<std::unique_ptr<LayoutObject>>& objects);
@@ -259,7 +257,6 @@ namespace sap::layout
 		Length self_width,
 		Container::Direction direction,
 		Alignment horz_alignment,
-		Length tallest_ascent,
 		Length vert_obj_spacing,
 		bool shift_by_ascent_of_first_child,
 		const std::vector<std::unique_ptr<Line>>& objects);
@@ -275,8 +272,13 @@ namespace sap::layout
 		if(m_objects.empty())
 			return cursor;
 
-		cursor = position_children_in_container(cursor, m_layout_size.width, m_direction, m_style->alignment(),
-			m_tallest_ascent, m_style->paragraph_spacing(), /* shift_by_ascent_of_first_child */ true, m_objects);
+		cursor = position_children_in_container(cursor,                    //
+			m_layout_size.width,                                           //
+			m_direction,                                                   //
+			m_style->alignment(),                                          //
+			m_override_obj_spacing.value_or(m_style->paragraph_spacing()), //
+			/* shift_by_ascent_of_first_child */ true,                     //
+			m_objects);
 
 		switch(m_direction)
 		{

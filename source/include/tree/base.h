@@ -56,15 +56,15 @@ namespace sap::tree
 		void setGeneratedLayoutObject(layout::LayoutObject* obj) const { m_generated_layout_object = obj; }
 		std::optional<layout::LayoutObject*> getGeneratedLayoutObject() const { return m_generated_layout_object; }
 
-		void overrideWidth(Length length) { m_override_width = length; }
-		bool hasOverriddenWidth() const { return m_override_width.has_value(); }
-		std::optional<Length> getOverriddenWidth() const { return m_override_width; }
+		Length raiseHeight() const { return m_raise_height; }
+		void setRaiseHeight(Length raise) { m_raise_height = raise; }
+		void addRaiseHeight(Length raise) { m_raise_height += raise; }
 
 	protected:
 		mutable std::optional<layout::LayoutObject*> m_generated_layout_object = nullptr;
 
 	private:
-		std::optional<Length> m_override_width {};
+		Length m_raise_height = 0;
 	};
 
 	struct InlineSpan : InlineObject
@@ -80,8 +80,13 @@ namespace sap::tree
 
 		std::vector<std::unique_ptr<InlineObject>> flatten() &&;
 
+		void overrideWidth(Length length) { m_override_width = length; }
+		bool hasOverriddenWidth() const { return m_override_width.has_value(); }
+		std::optional<Length> getOverriddenWidth() const { return m_override_width; }
+
 	private:
 		std::vector<std::unique_ptr<InlineObject>> m_objects;
+		std::optional<Length> m_override_width {};
 	};
 
 	struct BlockObject : Stylable
@@ -153,8 +158,7 @@ namespace sap::tree
 		std::unique_ptr<interp::FunctionCall> call;
 
 	private:
-		using ScriptEvalResult = Either<std::vector<std::unique_ptr<InlineObject>>,
-			std::unique_ptr<layout::LayoutObject>>;
+		using ScriptEvalResult = Either<std::unique_ptr<InlineSpan>, std::unique_ptr<layout::LayoutObject>>;
 		ErrorOr<std::optional<ScriptEvalResult>> evaluate_script(interp::Interpreter* cs,
 			const Style* parent_style,
 			Size2d available_space) const;

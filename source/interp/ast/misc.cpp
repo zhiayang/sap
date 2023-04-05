@@ -9,16 +9,24 @@ namespace sap::interp
 {
 	ErrorOr<TCResult> ArraySpreadOp::typecheck_impl(Typechecker* ts, const Type* infer, bool keep_lvalue) const
 	{
-		auto type = TRY(this->expr->typecheck(ts, infer)).type();
-		if(not type->isArray())
-			return ErrMsg(ts, "invalid use of '...' operator on non-array type '{}'", type);
+		auto value = TRY(this->expr->typecheck(ts, infer));
+		if(not value.type()->isArray())
+			return ErrMsg(ts, "invalid use of '...' operator on non-array type '{}'", value.type());
 
-		return TCResult::ofRValue(Type::makeArray(type->arrayElement(), /* variadic: */ true));
+		auto ret_type = Type::makeArray(value.type()->arrayElement(), /* variadic: */ true);
+		if(value.isLValue() && not ret_type->arrayElement()->isCloneable())
+		{
+			return ErrMsg(ts, "arrays of type '{}' cannot be spread with `...` without first moving; use `...*`",
+				ret_type->arrayElement());
+		}
+
+		return TCResult::ofRValue(ret_type);
 	}
 
 	ErrorOr<EvalResult> ArraySpreadOp::evaluate_impl(Evaluator* ev) const
 	{
 		auto arr = TRY_VALUE(this->expr->evaluate(ev)).takeArray();
-		return EvalResult::ofValue(Value::array(this->get_type()->arrayElement(), std::move(arr), /* variadic: */ true));
+		return EvalResult::ofValue(Value::array(this->get_type()->arrayElement(), std::move(arr),
+			/* variadic: */ true));
 	}
 }

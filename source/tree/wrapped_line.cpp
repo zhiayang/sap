@@ -16,6 +16,10 @@ namespace sap::tree
 		return Ok();
 	}
 
+	WrappedLine::WrappedLine(std::vector<std::unique_ptr<InlineObject>> objs) : m_objects(std::move(objs))
+	{
+	}
+
 	void WrappedLine::addObjects(std::vector<std::unique_ptr<InlineObject>> objs)
 	{
 		std::move(objs.begin(), objs.end(), std::back_inserter(m_objects));

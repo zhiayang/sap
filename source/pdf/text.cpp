@@ -13,9 +13,7 @@ namespace pdf
 	void Text::writePdfCommands(Stream* stream) const
 	{
 		auto str_buf = zst::buffer<char>();
-		auto appender = [&str_buf](const char* c, size_t n) {
-			str_buf.append(c, n);
-		};
+		auto appender = [&str_buf](const char* c, size_t n) { str_buf.append(c, n); };
 
 		zpr::cprint(appender, "q BT\n");
 		for(auto& group : m_groups)
@@ -64,6 +62,7 @@ namespace pdf
 		m_groups.back().commands.push_back(sv.str());
 	}
 
+
 	// convention is that all appends to the command list should start with a " ".
 	void Text::moveAbs(Position2d pos)
 	{
@@ -75,6 +74,12 @@ namespace pdf
 	void Text::nextLine(Offset2d offset)
 	{
 		this->insertPDFCommand(zpr::sprint(" {} {} Td\n", offset.x(), offset.y()));
+	}
+
+	void Text::rise(TextSpace1d rise)
+	{
+		// positive is up
+		this->insertPDFCommand(zpr::sprint(" {} Ts", rise.value()));
 	}
 
 	void Text::offset(TextSpace1d ofs)

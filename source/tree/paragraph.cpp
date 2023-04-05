@@ -57,18 +57,16 @@ namespace sap::tree
 				return this->eval_single_script_in_para(cs, available_space, iscr, /* allow blocks: */ true);
 		}
 
-		std::vector<std::unique_ptr<InlineObject>> output_vec {};
-		output_vec.reserve(m_contents.size());
-
+		auto span = std::make_unique<InlineSpan>();
 		for(auto& obj : m_contents)
 		{
 			if(auto txt = dynamic_cast<tree::Text*>(obj.get()); txt != nullptr)
 			{
-				output_vec.push_back(txt->clone());
+				span->addObject(txt->clone());
 			}
 			else if(auto sep = dynamic_cast<tree::Separator*>(obj.get()); sep != nullptr)
 			{
-				output_vec.push_back(sep->clone());
+				span->addObject(sep->clone());
 			}
 			else if(auto iscr = dynamic_cast<tree::ScriptCall*>(obj.get()); iscr != nullptr)
 			{
@@ -77,17 +75,16 @@ namespace sap::tree
 					continue;
 
 				assert(_tmp->is_left());
-				auto tmp = _tmp->take_left();
-
-				output_vec.insert(output_vec.end(), std::move_iterator(tmp.begin()), std::move_iterator(tmp.end()));
+				auto tmp = std::move(*_tmp->take_left()).flatten();
+				span->addObjects(std::move(tmp));
 			}
 			else
 			{
-				return ErrMsg(iscr->call->loc(), "unsupported");
+				return ErrMsg(&cs->evaluator(), "unsupported");
 			}
 		}
 
-		return Ok(Left(std::move(output_vec)));
+		return Ok(Left(std::move(span)));
 	}
 
 	static bool is_letter(char32_t c)
@@ -212,6 +209,22 @@ namespace sap::tree
 				ret.push_back(std::move(uwu));
 				continue;
 			}
+			else if(uwu->raiseHeight() != 0)
+			{
+				// FIXME: this is really dirty
+				auto raise = uwu->raiseHeight();
+				uwu->setRaiseHeight(0);
+
+				std::vector<std::unique_ptr<InlineObject>> tmp {};
+				tmp.push_back(std::move(uwu));
+
+				auto new_objs = TRY(processWordSeparators(std::move(tmp)));
+				for(auto& x : new_objs)
+					x->setRaiseHeight(raise);
+
+				std::move(new_objs.begin(), new_objs.end(), std::back_inserter(ret));
+				continue;
+			}
 
 			auto tree_text = dynamic_cast<tree::Text*>(uwu.get());
 			assert(tree_text != nullptr);
@@ -289,11 +302,15 @@ namespace sap::tree
 
 	std::unique_ptr<Text> Text::clone() const
 	{
-		return std::make_unique<Text>(m_contents, m_style);
+		auto ret = std::make_unique<Text>(m_contents, m_style);
+		ret->setRaiseHeight(this->raiseHeight());
+		return ret;
 	}
 
 	std::unique_ptr<Separator> Separator::clone() const
 	{
-		return std::make_unique<Separator>(m_kind, m_hyphenation_cost);
+		auto ret = std::make_unique<Separator>(m_kind, m_hyphenation_cost);
+		ret->setRaiseHeight(this->raiseHeight());
+		return ret;
 	}
 }

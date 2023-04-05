@@ -112,13 +112,11 @@ namespace sap::tree
 		static ErrorOr<std::vector<std::unique_ptr<InlineObject>>> processWordSeparators( //
 			std::vector<std::unique_ptr<InlineObject>> vec);
 
-	private:
-		using EvalScriptResult = zst::Either<std::vector<std::unique_ptr<InlineObject>>,
-			std::unique_ptr<layout::LayoutObject>>;
-
+		using EvalScriptResult = zst::Either<std::unique_ptr<InlineSpan>, std::unique_ptr<layout::LayoutObject>>;
 		ErrorOr<std::optional<EvalScriptResult>> evaluate_scripts(interp::Interpreter* cs,
 			Size2d available_space) const;
 
+	private:
 		ErrorOr<std::optional<EvalScriptResult>> eval_single_script_in_para(interp::Interpreter* cs,
 			Size2d available_space,
 			ScriptCall* script,

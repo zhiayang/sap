@@ -55,8 +55,9 @@ namespace sap::interp
 		return Ok<X>(cost, std::move(ordered));
 	}
 
+	using ResolvedOverloadSet = ErrorOr<std::pair<const Declaration*, ArrangedArguments<const Type*>>>;
 
-	static ErrorOr<std::pair<const Declaration*, ArrangedArguments<const Type*>>> resolve_overload_set(Typechecker* ts,
+	static ResolvedOverloadSet resolve_overload_set(Typechecker* ts,
 		const std::vector<const Declaration*>& decls,
 		const std::vector<ArrangeArg<const Type*>>& arguments)
 	{
@@ -116,6 +117,7 @@ namespace sap::interp
 	{
 		std::vector<ArrangeArg<const Type*>> processed_args {};
 
+		bool ufcs_is_rvalue = false;
 		for(size_t i = 0; i < this->arguments.size(); i++)
 		{
 			auto& arg = this->arguments[i];
@@ -148,10 +150,14 @@ namespace sap::interp
 			if(is_ufcs_self)
 			{
 				// we can yeet rvalues into mutability
-				if(t.isMutable() || not t.isLValue())
+				if(t.isMutable())
 				{
 					m_ufcs_self_is_mutable = true;
 					ty = ty->mutablePointerTo();
+				}
+				else if(not t.isLValue())
+				{
+					ufcs_is_rvalue = true;
 				}
 				else
 				{
@@ -178,7 +184,33 @@ namespace sap::interp
 			auto decls = TRY(lookup_in->lookup(ident->name));
 			assert(decls.size() > 0);
 
-			auto [best_decl, arg_arrangement] = TRY(resolve_overload_set(ts, decls, processed_args));
+			auto [best_decl, arg_arrangement] = TRY(([&]() -> ResolvedOverloadSet {
+				// first, try with the normal set.
+				m_ufcs_self_by_value = ufcs_is_rvalue;
+				auto ret = resolve_overload_set(ts, decls, processed_args);
+				if(ret.ok())
+					return Ok(std::move(ret.unwrap()));
+
+				// we were not ok.
+				if(not ufcs_is_rvalue)
+					return Err(std::move(ret.error()));
+
+				// if we didn't manage to resolve with the rvalue as a value,
+				// then we have to pass by pointer, so reset this.
+				m_ufcs_self_by_value = false;
+
+				// always pass rvalues by mutable pointer
+				if(ufcs_is_rvalue)
+					m_ufcs_self_is_mutable = true;
+
+
+				// if the ufcs was an rvalue, then we would have tried the pass-self-by-value
+				// overload first; now, try the self-by-pointer overload (if it exists).
+				processed_args[0].value = processed_args[0].value->mutablePointerTo();
+
+				return resolve_overload_set(ts, decls, processed_args);
+			}()));
+
 			assert(best_decl != nullptr);
 
 			fn_type = TRY(best_decl->typecheck(ts)).type();
@@ -195,7 +227,10 @@ namespace sap::interp
 
 				bool is_ufcs_self = this->rewritten_ufcs && i == 0;
 				if(is_ufcs_self)
-					param_type = param_type->pointerElement();
+				{
+					if(not m_ufcs_self_by_value)
+						param_type = param_type->pointerElement();
+				}
 
 				TRY(this->arguments[i].value->typecheck(ts, /* infer: */ param_type, /* keep_lvalue: */
 					is_ufcs_self));
@@ -229,28 +264,45 @@ namespace sap::interp
 
 			if(i == 0 && this->rewritten_ufcs)
 			{
-				Value* ptr = nullptr;
-				if(val.isLValue())
-					ptr = &val.get();
+				if(m_ufcs_self_by_value)
+				{
+					processed_args.push_back({
+						.name = arg.name,
+						.value = val.take(),
+					});
+				}
 				else
-					ptr = ev->frame().createTemporary(std::move(val).take());
+				{
+					Value* ptr = nullptr;
+					if(val.isLValue())
+						ptr = &val.get();
+					else
+						ptr = ev->frame().createTemporary(std::move(val).take());
 
-				Value self {};
-				if(m_ufcs_self_is_mutable)
-					self = Value::mutablePointer(ptr->type(), ptr);
-				else
-					self = Value::pointer(ptr->type(), ptr);
+					Value self {};
+					if(m_ufcs_self_is_mutable)
+						self = Value::mutablePointer(ptr->type(), ptr);
+					else
+						self = Value::pointer(ptr->type(), ptr);
 
-				processed_args.push_back({
-					.name = arg.name,
-					.value = std::move(self),
-				});
+					processed_args.push_back({
+						.name = arg.name,
+						.value = std::move(self),
+					});
+				}
 			}
 			else
 			{
+				if(val.isLValue() && not val.get().type()->isCloneable())
+				{
+					return ErrMsg(arg.value->loc(),
+						"cannot pass a non-cloneable value of type '{}' as an argument; move with `*`",
+						val.get().type());
+				}
+
 				processed_args.push_back({
 					.name = arg.name,
-					.value = std::move(val).take(),
+					.value = val.take(),
 				});
 			}
 		}

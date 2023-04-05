@@ -104,12 +104,13 @@ namespace sap::interp::builtin
 		auto& pv = args[0];
 		auto pt = pv.type();
 
-		if(not pt->isPointer())
-			return ErrMsg(ev, "expected pointer type, got '{}'", pt);
+		const Value* v = nullptr;
+		if(pt->isPointer())
+			v = std::move(pv).getPointer();
+		else
+			v = &pv;
 
-		auto& v = *std::move(pv).getPointer();
-		auto str = TRY(to_string(ev, v));
-
+		auto str = TRY(to_string(ev, *v));
 		return EvalResult::ofValue(Value::string(str));
 	}
 }

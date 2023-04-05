@@ -57,6 +57,8 @@ namespace sap::tree
 		LayoutSize total_size {};
 		LayoutSize max_size {};
 
+		bool prev_child_was_phantom = false;
+
 		for(size_t i = 0, obj_idx = 0; i < m_objects.size(); i++)
 		{
 			auto obj = TRY(m_objects[i].get()->createLayoutObject(cs, cur_style, available_space));
@@ -64,6 +66,7 @@ namespace sap::tree
 				continue;
 
 			auto obj_size = (*obj.object)->layoutSize();
+			bool is_phantom = (*obj.object)->is_phantom();
 
 			max_size.width = std::max(max_size.width, obj_size.width);
 			max_size.ascent = std::max(max_size.ascent, obj_size.ascent);
@@ -118,10 +121,13 @@ namespace sap::tree
 			}
 			else
 			{
+				if(not prev_child_was_phantom && not is_phantom)
+					total_size.descent += cur_style->paragraph_spacing();
+
 				total_size.descent += obj_size.total_height();
-				total_size.descent += cur_style->paragraph_spacing();
 			}
 
+			prev_child_was_phantom = is_phantom;
 			obj_idx++;
 		}
 
@@ -130,8 +136,6 @@ namespace sap::tree
 			return Ok(LayoutResult::empty());
 
 		LayoutSize final_size {};
-		Length top_to_baseline = 0;
-
 		layout::Container::Direction dir {};
 
 		switch(m_direction)
@@ -170,8 +174,7 @@ namespace sap::tree
 			}
 		}
 
-		auto container = std::make_unique<layout::Container>(cur_style, final_size, dir, top_to_baseline, m_glued,
-			std::move(objects));
+		auto container = std::make_unique<layout::Container>(cur_style, final_size, dir, m_glued, std::move(objects));
 
 		m_generated_layout_object = container.get();
 		return Ok(LayoutResult::make(std::move(container)));

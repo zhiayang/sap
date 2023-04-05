@@ -8,7 +8,9 @@
 #include "sap/units.h"
 #include "sap/frontend.h" // for Token, Lexer, TokenType, Lexer::Mode
 
+#include "tree/raw.h"
 #include "tree/base.h"
+#include "tree/wrappers.h"
 #include "tree/document.h"
 #include "tree/paragraph.h"
 #include "tree/container.h"
@@ -22,7 +24,13 @@ namespace sap::frontend
 {
 	constexpr auto KW_NULL = "null";
 
-	constexpr auto KW_PARA_BLOCK = "p";
+	constexpr auto KW_BOX_BLOCK = "box";
+	constexpr auto KW_PARA_BLOCK = "para";
+	constexpr auto KW_LINE_BLOCK = "line";
+	constexpr auto KW_VBOX_BLOCK = "vbox";
+	constexpr auto KW_HBOX_BLOCK = "hbox";
+	constexpr auto KW_ZBOX_BLOCK = "zbox";
+
 	constexpr auto KW_SCRIPT_BLOCK = "script";
 	constexpr auto KW_START_DOCUMENT = "start_document";
 
@@ -330,6 +338,10 @@ namespace sap::frontend
 	static ErrorOrUniquePtr<interp::Expr> parse_unary(Lexer& lexer);
 	static ErrorOrUniquePtr<interp::Expr> parse_primary(Lexer& lexer);
 
+	static ErrorOr<std::pair<std::unique_ptr<tree::InlineObject>, bool>> parse_inline_obj(Lexer& lexer);
+	static ErrorOr<std::vector<std::unique_ptr<BlockObject>>> parse_top_level(Lexer& lexer);
+	static ErrorOr<std::optional<std::unique_ptr<Paragraph>>> parse_paragraph(Lexer& lexer);
+
 
 	static ErrorOr<std::pair<interp::QualifiedId, uint32_t>> parse_qualified_id(Lexer& lexer)
 	{
@@ -377,7 +389,10 @@ namespace sap::frontend
 		for(bool first = true; not lexer.expect(TT::RParen); first = false)
 		{
 			if(not first && not lexer.expect(TT::Comma))
-				return ErrMsg(lexer.location(), "expected ',' or ')' in call argument list");
+			{
+				return ErrMsg(lexer.location(), "expected ',' or ')' in call argument list, got '{}'",
+					lexer.peek().text);
+			}
 
 			else if(first && lexer.peek() == TT::Comma)
 				return ErrMsg(lexer.location(), "unexpected ','");
@@ -485,10 +500,6 @@ namespace sap::frontend
 			auto ret = std::make_unique<interp::DereferenceOp>(t->loc);
 			ret->expr = std::move(lhs);
 			return OkMove(ret);
-		}
-		else if(auto t = lexer.match(TT::Ellipsis); t.has_value())
-		{
-			return Ok(std::make_unique<interp::ArraySpreadOp>(t->loc, std::move(lhs)));
 		}
 		else if(auto t = lexer.peek(); t == TT::Period || t == TT::QuestionPeriod)
 		{
@@ -703,6 +714,7 @@ namespace sap::frontend
 
 	static ErrorOrUniquePtr<interp::Expr> parse_primary(Lexer& lexer)
 	{
+		auto lm = LexerModer(lexer, Lexer::Mode::Script);
 		if(auto t = lexer.peek(); t == TT::Identifier || t == TT::ColonColon)
 		{
 			if(t.text == KW_NULL)
@@ -828,6 +840,106 @@ namespace sap::frontend
 			must_expect(lexer, TT::RSquare);
 			return OkMove(array);
 		}
+		else if(lexer.expect(TT::Backslash))
+		{
+			/*
+			    check what's the next guy. we expect either:
+			    1. 'box' -- a single block object
+			    2. 'vbox' / 'hbox' / 'zbox' -- ≥0 block objects
+			    3. 'para' -- paragraph
+			    4. '{' -- inline object(s)
+			*/
+			if(lexer.expect(TT::LBrace))
+			{
+				auto inlines = std::make_unique<interp::TreeInlineExpr>(lexer.location());
+				while(lexer.peek() != TT::RBrace)
+				{
+					auto [obj, end_para] = TRY(parse_inline_obj(lexer));
+					inlines->objects.push_back(std::move(obj));
+
+					if(end_para)
+						break;
+				}
+
+				if(not lexer.expect(TT::RBrace))
+					return ErrMsg(lexer.location(), "unterminated inline text expression");
+
+				return OkMove(inlines);
+			}
+			else if(lexer.expect(KW_LINE_BLOCK))
+			{
+				auto blk = std::make_unique<interp::TreeBlockExpr>(lexer.location());
+
+				if(not lexer.expect(TT::LBrace))
+					return ErrMsg(lexer.location(), "expected '{' after '\\{}'", KW_LINE_BLOCK);
+
+				std::vector<std::unique_ptr<tree::InlineObject>> inlines {};
+				while(lexer.peek() != TT::RBrace)
+				{
+					auto [obj, end_para] = TRY(parse_inline_obj(lexer));
+					inlines.push_back(std::move(obj));
+
+					if(end_para)
+						break;
+				}
+
+				if(not lexer.expect(TT::RBrace))
+					return ErrMsg(lexer.location(), "unterminated inline text expression");
+
+				auto line = std::make_unique<tree::WrappedLine>(std::move(inlines));
+
+				blk->object = std::move(line);
+				return OkMove(blk);
+			}
+			else if(lexer.expect(KW_BOX_BLOCK))
+			{
+				auto blk = std::make_unique<interp::TreeBlockExpr>(lexer.location());
+
+				if(not lexer.expect(TT::LBrace))
+					return ErrMsg(lexer.location(), "expected '{' after '\\{}'", KW_BOX_BLOCK);
+
+				auto objs = TRY(parse_top_level(lexer));
+				if(not lexer.expect(TT::RBrace))
+					return ErrMsg(lexer.location(), "unterminated block expression");
+
+				if(objs.size() != 1)
+				{
+					return ErrMsg(lexer.location(), "expected exactly one block object inside '\\{}' (found {})",
+						KW_BOX_BLOCK, objs.size());
+				}
+
+				blk->object = std::move(objs[0]);
+				return OkMove(blk);
+			}
+			else if(lexer.peek() == TT::Identifier
+					&& util::is_one_of(lexer.peek().text, KW_VBOX_BLOCK, KW_HBOX_BLOCK, KW_ZBOX_BLOCK))
+			{
+				auto blk = std::make_unique<interp::TreeBlockExpr>(lexer.location());
+				auto x = TRY(lexer.next());
+
+				if(not lexer.expect(TT::LBrace))
+					return ErrMsg(lexer.location(), "expected '{' after '\\{}'", KW_BOX_BLOCK);
+
+				auto objs = TRY(parse_top_level(lexer));
+				if(not lexer.expect(TT::RBrace))
+					return ErrMsg(lexer.location(), "unterminated block expression");
+
+				using enum tree::Container::Direction;
+				auto container = std::make_unique<tree::Container>(
+					x.text == KW_HBOX_BLOCK ? Horizontal
+					: x.text == KW_VBOX_BLOCK
+						? Vertical
+						: None);
+
+				container->contents() = std::move(objs);
+				blk->object = std::move(container);
+				return OkMove(blk);
+			}
+			else
+			{
+				return ErrMsg(lexer.location(), "invalid text expression '\\{}'", lexer.peek().text);
+			}
+		}
 		else
 		{
 			return ErrMsg(lexer.location(), "invalid start of expression '{}'", lexer.peek().text);
@@ -850,6 +962,10 @@ namespace sap::frontend
 			auto ret = std::make_unique<interp::MoveExpr>(t->loc);
 			ret->expr = TRY(parse_unary(lexer));
 			return OkMove(ret);
+		}
+		else if(auto t = lexer.match(TT::Ellipsis); t.has_value())
+		{
+			return Ok(std::make_unique<interp::ArraySpreadOp>(t->loc, TRY(parse_unary(lexer))));
 		}
 		else if(auto t = lexer.match(TT::Minus); t.has_value())
 		{
@@ -1416,10 +1532,6 @@ namespace sap::frontend
 	}
 
 
-	static ErrorOr<std::pair<std::unique_ptr<tree::InlineObject>, bool>> parse_inline_obj(Lexer& lexer);
-	static ErrorOr<std::vector<std::unique_ptr<BlockObject>>> parse_top_level(Lexer& lexer);
-	static ErrorOr<std::optional<std::unique_ptr<Paragraph>>> parse_paragraph(Lexer& lexer);
-
 	static ErrorOr<std::pair<std::unique_ptr<ScriptCall>, bool>> parse_script_call(Lexer& lexer)
 	{
 		using PP = std::pair<std::unique_ptr<ScriptCall>, bool>;
@@ -1581,9 +1693,14 @@ namespace sap::frontend
 			else if(peek != TT::Backslash && peek != TT::Text)
 			{
 				if(para->contents().size() == 0)
-					return ErrMsg(lexer.location(), "unexpected token '{}' in inline object", peek.text);
-				else
-					break;
+				{
+					if(peek == TT::RawBlock)
+						return ErrMsg(lexer.location(), "raw blocks cannot appear inside paragraphs");
+					else
+						return ErrMsg(lexer.location(), "unexpected token '{}' in inline object", peek.text);
+				}
+
+				break;
 			}
 
 			auto [obj, end_para] = TRY(parse_inline_obj(lexer));
@@ -1633,6 +1750,8 @@ namespace sap::frontend
 			parse_para:
 				if(auto ret = TRY(parse_paragraph(lexer)); ret.has_value())
 					objs.push_back(std::move(*ret));
+
+				lexer.skipWhitespaceAndComments();
 			}
 			else if(tok == TT::ParagraphBreak)
 			{
@@ -1703,6 +1822,25 @@ namespace sap::frontend
 					return ErrMsg(lexer.location(), "expected closing '}', got '{}'", lexer.peek().text);
 
 				objs.push_back(std::move(container));
+			}
+			else if(tok == TT::RawBlock)
+			{
+				lexer.next();
+
+				// the string we get from the lexer includes the ```, the attributes,
+				// and the trailing ```.
+				auto k = tok.text.find_first_not_of('`');
+				auto attrs = tok.text.drop(k).take_until('\n');
+				auto foo = attrs.size();
+
+				attrs = attrs.trim_whitespace();
+
+				auto body = tok.text.drop(k + foo + 1).drop_last(k);
+				auto text = unicode::u32StringFromUtf8(body.bytes());
+
+				// TODO: use attrs
+				objs.push_back(std::make_unique<tree::RawBlock>(std::move(text)));
+				lexer.skipWhitespaceAndComments();
 			}
 			else
 			{

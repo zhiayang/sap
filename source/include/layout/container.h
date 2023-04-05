@@ -23,9 +23,9 @@ namespace sap::layout
 		explicit Container(const Style* style,
 			LayoutSize size,
 			Direction direction,
-			Length top_to_baseline_dist,
 			bool glue_objects,
-			std::vector<std::unique_ptr<LayoutObject>> objs);
+			std::vector<std::unique_ptr<LayoutObject>> objs,
+			std::optional<Length> override_obj_spacing = std::nullopt);
 
 		void addObject(std::unique_ptr<LayoutObject> obj);
 		std::vector<std::unique_ptr<LayoutObject>>& objects();
@@ -38,8 +38,8 @@ namespace sap::layout
 	private:
 		bool m_glued;
 		Direction m_direction;
-		Length m_tallest_ascent;
 		std::vector<std::unique_ptr<LayoutObject>> m_objects;
+		std::optional<Length> m_override_obj_spacing {};
 	};
 
 	template <typename T>
@@ -47,7 +47,6 @@ namespace sap::layout
 		Length self_width,
 		Container::Direction direction,
 		Alignment horz_alignment,
-		Length top_to_baseline_dist,
 		Length vert_obj_spacing,
 		bool shift_by_ascent_of_first_child,
 		const std::vector<std::unique_ptr<T>>& objects);

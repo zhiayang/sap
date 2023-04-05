@@ -129,6 +129,7 @@ namespace sap::interp
 
 	private:
 		mutable bool m_ufcs_self_is_mutable = false;
+		mutable bool m_ufcs_self_by_value = false;
 		mutable const Declaration* m_resolved_func_decl = nullptr;
 	};
 
@@ -572,8 +573,7 @@ namespace sap::interp
 	struct VariableDecl : Declaration
 	{
 		VariableDecl(Location loc, const std::string& name, bool mut)
-			: Declaration(std::move(loc), name)
-			, is_mutable(mut)
+			: Declaration(std::move(loc), name), is_mutable(mut)
 		{
 		}
 
@@ -621,9 +621,7 @@ namespace sap::interp
 		};
 
 		FunctionDecl(Location loc, const std::string& name, std::vector<Param>&& params, frontend::PType return_type)
-			: Declaration(loc, name)
-			, m_params(std::move(params))
-			, m_return_type(return_type)
+			: Declaration(loc, name), m_params(std::move(params)), m_return_type(return_type)
 		{
 		}
 
@@ -671,15 +669,14 @@ namespace sap::interp
 
 	struct BuiltinFunctionDefn : Definition
 	{
-		using FuncTy = std::function<ErrorOr<EvalResult>(Evaluator*, std::vector<Value>&)>;
+		using FuncTy = ErrorOr<EvalResult> (*)(Evaluator*, std::vector<Value>&);
 
 		BuiltinFunctionDefn(Location loc,
 			const std::string& name,
 			std::vector<FunctionDecl::Param>&& params,
 			frontend::PType return_type,
 			const FuncTy& fn)
-			: Definition(loc, new FunctionDecl(loc, name, std::move(params), return_type))
-			, function(fn)
+			: Definition(loc, new FunctionDecl(loc, name, std::move(params), return_type)), function(fn)
 		{
 		}
 
@@ -710,8 +707,7 @@ namespace sap::interp
 		};
 
 		StructDefn(Location loc, const std::string& name, std::vector<Field> fields)
-			: Definition(loc, new StructDecl(loc, name))
-			, m_fields(std::move(fields))
+			: Definition(loc, new StructDecl(loc, name)), m_fields(std::move(fields))
 		{
 		}
 
@@ -753,8 +749,7 @@ namespace sap::interp
 		struct EnumeratorDefn : Definition
 		{
 			EnumeratorDefn(Location loc, const std::string& name, std::unique_ptr<Expr> value)
-				: Definition(loc, new EnumeratorDecl(loc, name))
-				, m_value(std::move(value))
+				: Definition(loc, new EnumeratorDecl(loc, name)), m_value(std::move(value))
 			{
 			}
 

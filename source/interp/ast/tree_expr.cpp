@@ -2,6 +2,7 @@
 // Copyright (c) 2022, zhiayang
 // SPDX-License-Identifier: Apache-2.0
 
+#include "tree/raw.h"
 #include "tree/wrappers.h"
 #include "tree/paragraph.h"
 #include "tree/container.h"
@@ -48,11 +49,11 @@ namespace sap::interp
 		{
 			if(auto txt = dynamic_cast<const tree::Text*>(obj.get()); txt)
 			{
-				ret.emplace_back(new tree::Text(txt->contents(), txt->style()));
+				ret.emplace_back(txt->clone());
 			}
 			else if(auto sep = dynamic_cast<const tree::Separator*>(obj.get()); sep)
 			{
-				ret.emplace_back(new tree::Separator(sep->kind(), sep->hyphenationCost()));
+				ret.emplace_back(sep->clone());
 			}
 			else if(auto span = dynamic_cast<const tree::InlineSpan*>(obj.get()); span)
 			{
@@ -112,9 +113,18 @@ namespace sap::interp
 			for(auto& inner : box->contents())
 				TRY(typecheck_block_obj(ts, inner.get()));
 		}
+		else if(auto line = dynamic_cast<const tree::WrappedLine*>(obj); line)
+		{
+			TRY(typecheck_list_of_tios(ts, line->objects()));
+		}
+		else if(auto raw = dynamic_cast<const tree::RawBlock*>(obj); raw)
+		{
+			// nothing
+		}
 		else
 		{
-			sap::internal_error("unsupported block object: {}", typeid(obj).name());
+			auto& x = *obj;
+			sap::internal_error("unsupported block object: {}", typeid(x).name());
 		}
 
 		return Ok();
@@ -129,8 +139,44 @@ namespace sap::interp
 
 		if(auto para = dynamic_cast<const tree::Paragraph*>(obj); para)
 		{
-			auto tios = TRY(evaluate_list_of_tios(ev, para->contents()));
-			return EvalResult::ofValue(make_para_from_tios(std::move(tios)));
+			if(para->contents().size() == 1)
+			{
+				auto& obj = para->contents()[0];
+				if(auto sc = dynamic_cast<tree::ScriptCall*>(obj.get()))
+				{
+					auto tmp = TRY_VALUE(sc->call->evaluate(ev));
+					auto ty = tmp.type();
+
+					if(not(ty->isTreeBlockObj() || (ty->isOptional() && ty->optionalElement()->isTreeBlockObj())))
+						return EvalResult::ofValue(make_para_from_tios(TRY(ev->convertValueToText(std::move(tmp)))));
+
+					if(tmp.isOptional() && not tmp.haveOptionalValue())
+						return EvalResult::ofVoid();
+
+					std::unique_ptr<tree::BlockObject> blk {};
+					if(tmp.isOptional())
+						blk = std::move(**tmp.getOptional()).takeTreeBlockObj();
+					else
+						blk = std::move(tmp).takeTreeBlockObj();
+
+					return EvalResult::ofValue(Value::treeBlockObject(std::move(blk)));
+				}
+				else
+				{
+					goto do_para;
+				}
+			}
+			else
+			{
+			do_para:
+				auto tios = TRY(evaluate_list_of_tios(ev, para->contents()));
+				return EvalResult::ofValue(make_para_from_tios(std::move(tios)));
+			}
+		}
+		else if(auto line = dynamic_cast<const tree::WrappedLine*>(obj); line)
+		{
+			auto tios = TRY(evaluate_list_of_tios(ev, line->objects()));
+			return EvalResult::ofValue(Value::treeBlockObject(std::make_unique<tree::WrappedLine>(std::move(tios))));
 		}
 		else if(auto sc = dynamic_cast<const tree::ScriptCall*>(obj); sc)
 		{
@@ -149,9 +195,14 @@ namespace sap::interp
 
 			return EvalResult::ofValue(Value::treeBlockObject(std::move(container)));
 		}
+		else if(auto raw = dynamic_cast<const tree::RawBlock*>(obj); raw)
+		{
+			return EvalResult::ofValue(Value::treeBlockObject(raw->clone()));
+		}
 		else
 		{
-			sap::internal_error("unsupported block object: {}", typeid(obj).name());
+			auto& x = *obj;
+			sap::internal_error("unsupported block object: {}", typeid(x).name());
 		}
 	}
 

@@ -265,18 +265,76 @@ namespace sap::interp::builtin
 	ErrorOr<EvalResult> set_tio_width(Evaluator* ev, std::vector<Value>& args)
 	{
 		assert(args.size() == 2);
-		assert(args[0].isPointer());
 
-		auto& value = *args[0].getMutablePointer();
-		assert(value.type()->isTreeInlineObj());
+		Value* tio = nullptr;
+		if(args[0].isPointer())
+			tio = args[0].getMutablePointer();
+		else
+			tio = &args[0];
+
+		assert(tio->type()->isTreeInlineObj());
 
 		if(ev->interpreter()->currentPhase() != ProcessingPhase::Layout)
 			return ErrMsg(ev, "`set_width()` can only be called during `@layout`");
 
 		auto width = args[1].getLength().resolve(ev->currentStyle());
-		const_cast<tree::InlineSpan&>(value.getTreeInlineObj()).overrideWidth(width);
+		const_cast<tree::InlineSpan&>(tio->getTreeInlineObj()).overrideWidth(width);
 
-		return EvalResult::ofValue(Value::mutablePointer(Type::makeTreeInlineObj()->pointerTo(),
-			args[0].getMutablePointer()));
+		if(args[0].isPointer())
+		{
+			return EvalResult::ofValue(Value::mutablePointer(Type::makeTreeInlineObj()->pointerTo(),
+				args[0].getMutablePointer()));
+		}
+		else
+		{
+			return EvalResult::ofValue(std::move(args[0]));
+		}
+	}
+
+
+
+	static void apply_raise(std::vector<std::unique_ptr<tree::InlineObject>>& objs, Length raise)
+	{
+		for(auto& obj : objs)
+		{
+			if(auto span = dynamic_cast<tree::InlineSpan*>(obj.get()))
+			{
+				apply_raise(span->objects(), raise);
+			}
+			else
+			{
+				assert(dynamic_cast<tree::Text*>(obj.get()) || dynamic_cast<tree::Separator*>(obj.get()));
+				obj->addRaiseHeight(raise);
+			}
+		}
+	}
+
+	ErrorOr<EvalResult> raise_tio(Evaluator* ev, std::vector<Value>& args)
+	{
+		assert(args.size() == 2);
+
+		Value* tio = nullptr;
+		if(args[0].isPointer())
+			tio = args[0].getMutablePointer();
+		else
+			tio = &args[0];
+
+		assert(tio->type()->isTreeInlineObj());
+
+		if(ev->interpreter()->currentPhase() != ProcessingPhase::Layout)
+			return ErrMsg(ev, "`raise()` can only be called during `@layout`");
+
+		auto raise = args[1].getLength().resolve(ev->currentStyle());
+		apply_raise(const_cast<tree::InlineSpan&>(tio->getTreeInlineObj()).objects(), raise);
+
+		if(args[0].isPointer())
+		{
+			return EvalResult::ofValue(Value::mutablePointer(Type::makeTreeInlineObj()->pointerTo(),
+				args[0].getMutablePointer()));
+		}
+		else
+		{
+			return EvalResult::ofValue(std::move(args[0]));
+		}
 	}
 }

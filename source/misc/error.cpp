@@ -50,8 +50,9 @@ namespace sap
 		if(loc.is_builtin)
 			return;
 
-		// search backwards from the token to find the newline
 		size_t tmp = loc.file_contents.take(loc.byte_offset).rfind('\n');
+		zpr::println("byte offset = {}, tmp = {}", loc.byte_offset, tmp);
+
 		if(tmp == std::string::npos)
 			tmp = 0;
 		else

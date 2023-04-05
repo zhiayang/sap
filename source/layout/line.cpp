@@ -112,7 +112,7 @@ namespace sap::layout
 				auto style = parent_style->extendWith(span->style());
 
 				auto span_metrics = computeLineMetrics(span->objects(), style);
-				auto span_width = span_metrics.total_space_width + span_metrics.total_word_width;
+				auto span_width = *span->getOverriddenWidth();
 
 				ret.ascent_height = std::max(ret.ascent_height, span_metrics.ascent_height);
 				ret.descent_height = std::max(ret.descent_height, span_metrics.descent_height);
@@ -220,7 +220,7 @@ namespace sap::layout
 				};
 
 				auto word = std::make_unique<Word>(tree_word->contents(), style->extendWith(tree_word->style()),
-					current_offset, word_size);
+					current_offset, tree_word->raiseHeight(), word_size);
 
 				tree_word->setGeneratedLayoutObject(word.get());
 
@@ -256,7 +256,7 @@ namespace sap::layout
 					current_offset += preferred_sep_width;
 
 				auto sep = std::make_unique<Word>(is_end_of_line ? tree_sep->endOfLine() : tree_sep->middleOfLine(),
-					style->extendWith(tree_sep->style()), orig_offset, sep_size);
+					style->extendWith(tree_sep->style()), orig_offset, tree_sep->raiseHeight(), sep_size);
 
 				tree_sep->setGeneratedLayoutObject(sep.get());
 				layout_objects.push_back(std::move(sep));
@@ -296,7 +296,7 @@ namespace sap::layout
 				};
 
 				auto word = std::make_unique<Word>(tree_word->contents(), style->extendWith(tree_word->style()),
-					current_offset, word_size);
+					current_offset, tree_word->raiseHeight(), word_size);
 
 				tree_word->setGeneratedLayoutObject(word.get());
 
@@ -337,7 +337,7 @@ namespace sap::layout
 				}
 
 				auto sep = std::make_unique<Word>(is_end_of_line ? tree_sep->endOfLine() : tree_sep->middleOfLine(),
-					style->extendWith(tree_sep->style()), orig_offset, sep_size);
+					style->extendWith(tree_sep->style()), orig_offset, tree_sep->raiseHeight(), sep_size);
 
 				tree_sep->setGeneratedLayoutObject(sep.get());
 				layout_objects.push_back(std::move(sep));

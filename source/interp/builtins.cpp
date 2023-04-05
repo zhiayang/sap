@@ -185,6 +185,11 @@ namespace sap::interp
 
 		define_builtin("set_width", makeParamList(P("_", t_mutptr(t_tio)), P("width", t_length)), t_mutptr(t_tio),
 			&B::set_tio_width);
+		define_builtin("raise", makeParamList(P("_", t_mutptr(t_tio)), P("width", t_length)), t_mutptr(t_tio),
+			&B::raise_tio);
+
+		define_builtin("set_width", makeParamList(P("_", t_tio), P("width", t_length)), t_tio, &B::set_tio_width);
+		define_builtin("raise", makeParamList(P("_", t_tio), P("width", t_length)), t_tio, &B::raise_tio);
 
 
 
