@@ -26,6 +26,7 @@ namespace sap::tree
 
 namespace sap::layout
 {
+	struct Document;
 	struct PageCursor;
 	struct PageLayout;
 	struct RelativePos;
@@ -118,10 +119,11 @@ namespace sap::interp
 		void commenceLayoutPass(size_t pass_num);
 		const GlobalState& state() const;
 
-		void setPageLayout(layout::PageLayout* page_layout);
-		layout::PageLayout* pageLayout() const { return m_page_layout; }
+		void setDocument(layout::Document* document) { m_document = document; }
+		layout::Document* document() const { return m_document; }
 
-		ErrorOr<void> addAbsolutelyPositionedBlockObject(zst::SharedPtr<tree::BlockObject> tbo, layout::AbsolutePagePos pos);
+		ErrorOr<void> addAbsolutelyPositionedBlockObject(zst::SharedPtr<tree::BlockObject> tbo,
+			layout::AbsolutePagePos pos);
 
 		Value* addToHeap(Value value);
 		Value addToHeapAndGetPointer(Value value);
@@ -141,7 +143,8 @@ namespace sap::interp
 		std::deque<Value> m_value_heap;
 
 		bool m_relayout_requested = false;
-		layout::PageLayout* m_page_layout = nullptr;
+
+		layout::Document* m_document = nullptr;
 		mutable GlobalState m_global_state {};
 	};
 }

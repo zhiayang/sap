@@ -23,6 +23,11 @@ namespace sap::tree
 	struct InlineObject;
 }
 
+namespace sap::layout
+{
+	struct Document;
+}
+
 namespace sap::interp
 {
 	struct Interpreter

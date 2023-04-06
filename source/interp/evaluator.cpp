@@ -10,6 +10,7 @@
 
 #include "layout/base.h"
 #include "layout/line.h"
+#include "layout/document.h"
 
 #include "interp/ast.h"
 #include "interp/interp.h"
@@ -204,18 +205,13 @@ namespace sap::interp
 		util::log("layout pass: {}", pass_num);
 	}
 
-	void Evaluator::setPageLayout(layout::PageLayout* page_layout)
-	{
-		m_page_layout = page_layout;
-	}
-
 	const GlobalState& Evaluator::state() const
 	{
-		if(m_page_layout != nullptr)
+		if(m_document != nullptr)
 		{
-			m_global_state.page_count = m_page_layout->pageCount();
+			m_global_state.page_count = m_document->pageLayout().pageCount();
 
-			auto page_size = m_page_layout->pageSize();
+			auto page_size = m_document->pageLayout().pageSize();
 			m_global_state.page_size = DynLength2d {
 				.x = DynLength(page_size.x()),
 				.y = DynLength(page_size.y()),
@@ -248,7 +244,7 @@ namespace sap::interp
 	ErrorOr<void> Evaluator::addAbsolutelyPositionedBlockObject(zst::SharedPtr<tree::BlockObject> tbo_,
 		layout::AbsolutePagePos abs_pos)
 	{
-		if(m_page_layout == nullptr)
+		if(m_document == nullptr)
 			return ErrMsg(this, "cannot output objects in this context");
 
 		auto tbo = m_interp->addAbsolutelyPositionedBlockObject(std::move(tbo_));
@@ -259,8 +255,9 @@ namespace sap::interp
 
 		if(obj.has_value())
 		{
-			auto cursor = m_page_layout->newCursorAtPosition(abs_pos);
-			auto ptr = m_page_layout->addObject(std::move(*obj));
+			auto& pl = m_document->pageLayout();
+			auto cursor = pl.newCursorAtPosition(abs_pos);
+			auto ptr = pl.addObject(std::move(*obj));
 			ptr->computePosition(cursor);
 		}
 

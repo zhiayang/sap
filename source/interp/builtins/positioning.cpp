@@ -6,6 +6,7 @@
 
 #include "layout/base.h"
 #include "layout/spacer.h"
+#include "layout/document.h"
 
 #include "interp/interp.h"
 #include "interp/evaluator.h"
@@ -114,13 +115,13 @@ namespace sap::interp::builtin
 		if(ev->interpreter()->currentPhase() < ProcessingPhase::PostLayout)
 			return ErrMsg(ev, "LayoutObjectRef::position() can only be called during or after `@post`");
 
-		auto layout = ev->pageLayout();
-		if(layout == nullptr)
+		auto doc = ev->document();
+		if(doc == nullptr)
 			return ErrMsg(ev, "cannot get object position in this context");
 
 		auto obj = TRY(get_layout_object_ref(ev, args[0]));
 
-		auto pos = obj->resolveAbsPosition(layout);
+		auto pos = obj->resolveAbsPosition(&doc->pageLayout());
 		return EvalResult::ofValue(BS_AbsPosition::make(ev, pos));
 	}
 

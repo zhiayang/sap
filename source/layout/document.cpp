@@ -134,7 +134,7 @@ namespace sap::tree
 
 		auto layout_doc = std::make_unique<layout::Document>(layout::fillDefaultSettings(cs, std::move(settings)));
 		cs->evaluator().pushStyle(layout_doc->style());
-		cs->evaluator().setPageLayout(&layout_doc->pageLayout());
+		cs->evaluator().setDocument(layout_doc.get());
 
 		size_t layout_pass = 0;
 		while(true)

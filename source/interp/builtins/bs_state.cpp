@@ -17,15 +17,15 @@ namespace sap::interp::builtin
 	{
 		auto pt_int = PT::named(frontend::TYPE_INT);
 		auto pt_size2d = PT::named(QualifiedId {
-		    .top_level = true,
-		    .parents = { "builtin" },
-		    .name = BS_Size2d::name,
+			.top_level = true,
+			.parents = { "builtin" },
+			.name = BS_Size2d::name,
 		});
 
 		return util::vectorOf(                               //
-		    Field { .name = "layout_pass", .type = pt_int }, //
-		    Field { .name = "page_count", .type = pt_int },  //
-		    Field { .name = "page_size", .type = pt_size2d } //
+			Field { .name = "layout_pass", .type = pt_int }, //
+			Field { .name = "page_count", .type = pt_int },  //
+			Field { .name = "page_size", .type = pt_size2d } //
 		);
 	}
 
@@ -45,9 +45,9 @@ namespace sap::interp::builtin
 		auto& page_size = value.getStructField("page_size");
 
 		return Ok(GlobalState {
-		    .layout_pass = checked_cast<size_t>(layout_pass),
-		    .page_count = checked_cast<size_t>(page_count),
-		    .page_size = TRY(BS_Size2d::unmake(ev, page_size)),
+			.layout_pass = checked_cast<size_t>(layout_pass),
+			.page_count = checked_cast<size_t>(page_count),
+			.page_size = TRY(BS_Size2d::unmake(ev, page_size)),
 		});
 	}
 }

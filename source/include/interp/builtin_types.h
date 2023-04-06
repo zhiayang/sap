@@ -6,6 +6,7 @@
 
 #include "util.h"
 
+#include "sap/outline_item.h"
 #include "sap/document_settings.h"
 
 #include "layout/cursor.h"
@@ -136,6 +137,16 @@ namespace sap::interp::builtin
 		static ErrorOr<DocumentSettings::Margins> unmake(Evaluator* ev, const Value& value);
 	};
 
+	struct BS_OutlineItem
+	{
+		static constexpr auto name = "OutlineItem";
+
+		static const Type* type;
+		static std::vector<StructDefn::Field> fields();
+
+		static Value make(Evaluator* ev, OutlineItem pos);
+		static ErrorOr<OutlineItem> unmake(Evaluator* ev, const Value& value);
+	};
 
 
 
