@@ -4,9 +4,10 @@
 
 #pragma once
 
-#include <vector> // for vector
+#include <vector>
 
-#include "pdf/object.h" // for Object, Dictionary, Writer
+#include "pdf/object.h"
+#include "pdf/destination.h"
 
 namespace pdf
 {
@@ -30,17 +31,23 @@ namespace pdf
 		size_t getNewObjectId();
 
 		void addPage(Page* page);
+		Page* getPage(size_t page_num) const;
+
+		void addOutlineItem(OutlineItem outline_item);
 
 		size_t getNextFontResourceNumber();
 
 	private:
+		Dictionary* create_page_tree();
+
+	private:
 		size_t m_current_id = 0;
-		std::map<size_t, Object*> m_objects;
+		util::hashmap<size_t, Object*> m_objects;
 
 		std::vector<Page*> m_pages;
+		std::vector<OutlineItem> m_outline_items;
 
 		size_t m_current_font_number = 0;
-		Dictionary* createPageTree();
 	};
 
 }

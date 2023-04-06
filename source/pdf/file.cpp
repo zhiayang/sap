@@ -26,8 +26,23 @@ namespace pdf
 		w->writeln("%\xf0\xf1\xf2\xf3");
 		w->writeln();
 
-		auto pagetree = this->createPageTree();
+		auto pagetree = this->create_page_tree();
 		auto root = Dictionary::createIndirect(names::Catalog, { { names::Pages, IndirectRef::create(pagetree) } });
+
+		if(not m_outline_items.empty())
+		{
+			auto outlines_root = Dictionary::createIndirect(names::Outlines, {});
+			auto [first_child, last_child] = OutlineItem::linkChildren(m_outline_items, outlines_root, this);
+
+			outlines_root->add(names::Count, Integer::create(checked_cast<int64_t>(m_outline_items.size())));
+			outlines_root->add(names::First, first_child);
+			outlines_root->add(names::Last, last_child);
+
+			root->add(names::Outlines, outlines_root);
+
+			// show outlines by default if we have it
+			root->add(names::PageMode, names::UseOutlines.ptr());
+		}
 
 		auto info_dict = Dictionary::createIndirect({
 			{ names::Creator, String::create("sap-" GIT_REVISION) },
@@ -82,7 +97,7 @@ namespace pdf
 		m_pages.push_back(page);
 	}
 
-	Dictionary* File::createPageTree()
+	Dictionary* File::create_page_tree()
 	{
 		// TODO: make this more efficient -- make some kind of balanced tree.
 
@@ -114,6 +129,19 @@ namespace pdf
 	File::File()
 	{
 		m_current_id = 0;
+	}
+
+	void File::addOutlineItem(OutlineItem outline_item)
+	{
+		m_outline_items.push_back(std::move(outline_item));
+	}
+
+	Page* File::getPage(size_t num) const
+	{
+		if(num >= m_pages.size())
+			pdf::error("page number {} is out of range (have only {})", num, m_pages.size());
+
+		return m_pages[num];
 	}
 
 	void File::addObject(Object* obj)
