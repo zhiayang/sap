@@ -155,7 +155,7 @@ function-call-arg: '([A-Za-z_][[:word:]]*)\s*(:)\s*(?!:)'{
 
 struct-literal-field:
     ('[A-Za-z_][A-Za-z0-9_]*'{meta.name.struct.field})
-    (`:`{keyword.operator} expr)?
+    (`:`{punctuation.colon} expr)?
     ;
 
 struct-literal-field-list: (struct-literal-field (`,`{punctuation.comma})?)*;
