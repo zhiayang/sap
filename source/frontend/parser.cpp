@@ -1640,32 +1640,6 @@ namespace sap::frontend
 		return Ok<PP>(std::move(sc), semi);
 	}
 
-	static ErrorOrUniquePtr<ScriptObject> parse_script_object(Lexer& lexer)
-	{
-		auto next = lexer.peekWithMode(Lexer::Mode::Script);
-		if(next == TT::Identifier && next.text == KW_SCRIPT_BLOCK)
-		{
-			return parse_script_block(lexer);
-		}
-		else if(next == TT::Identifier || next == TT::ColonColon)
-		{
-			auto [tmp, saw_semi] = TRY(parse_script_call(lexer));
-			if(saw_semi)
-			{
-				auto txt = lexer.peekWithMode(Lexer::Mode::Text);
-				if(txt.text == "\n" || txt.text == "\r\n")
-					lexer.nextWithMode(Lexer::Mode::Text);
-			}
-
-			return OkMove(tmp);
-		}
-		else
-		{
-			return ErrMsg(next.loc, "unexpected token '{}' after '\\'", next.text);
-		}
-	}
-
-
 	static ErrorOr<std::pair<std::unique_ptr<tree::InlineObject>, bool>> parse_inline_obj(Lexer& lexer)
 	{
 		using PP = std::pair<std::unique_ptr<tree::InlineObject>, bool>;
@@ -1776,29 +1750,57 @@ namespace sap::frontend
 			else if(tok == TT::Backslash)
 			{
 				lexer.next();
+				if(auto x = lexer.peekWithMode(Lexer::Mode::Script); x == TT::Identifier && x.text == KW_SCRIPT_BLOCK)
+				{
+					objs.push_back(TRY(parse_script_block(lexer)));
+					continue;
+				}
 
 				std::vector<std::unique_ptr<InlineObject>> inline_objs {};
 
-				auto script_obj = TRY(parse_script_object(lexer));
-				while(auto si = dynamic_cast<ScriptCall*>(script_obj.get()))
+				while(true)
 				{
-					inline_objs.emplace_back(static_cast<ScriptCall*>(script_obj.release()));
-					if(auto tt = lexer.peek(); tt == TT::Text)
-					{
-						// eat a paragraph and go away.
-						if(auto para = TRY(parse_paragraph(lexer)); para.has_value())
-						{
-							(*para)->contents().insert((*para)->contents().begin(),
-								std::move_iterator(inline_objs.begin()), std::move_iterator(inline_objs.end()));
+					auto [script_obj, end_para] = TRY(parse_script_call(lexer));
+					inline_objs.push_back(std::move(script_obj));
 
-							inline_objs.clear();
-							objs.push_back(std::move(*para));
-							goto finish;
-						}
-					}
-					else if(tt == TT::Backslash)
+					// check if the next guy is a text
+					if(end_para || lexer.peekWithMode(Lexer::Mode::Text) == TT::Text)
 					{
-						script_obj = TRY(parse_script_object(lexer));
+						// eat a paragraph and go away. this means that this script call
+						// (and all preceeding ones) are just part of a paragraph.
+						std::unique_ptr<Paragraph> para {};
+						if(not end_para)
+							para = TRY(parse_paragraph(lexer)).value_or(std::make_unique<Paragraph>());
+						else
+							para = std::make_unique<Paragraph>();
+
+						std::move(inline_objs.begin(), inline_objs.end(), std::back_inserter(para->contents()));
+						objs.push_back(std::move(para));
+						inline_objs.clear();
+
+						goto finish;
+					}
+					else if(lexer.peekWithMode(Lexer::Mode::Script) == TT::Backslash)
+					{
+						// we got another script-like thing, continue
+						lexer.nextWithMode(Lexer::Mode::Script);
+
+						// we are currently in paragraph context, *UNLESS* end_para is true
+						auto tmp = lexer.peekWithMode(Lexer::Mode::Script);
+						if(tmp == TT::Identifier && tmp.text == KW_SCRIPT_BLOCK)
+						{
+							if(end_para)
+							{
+								objs.push_back(TRY(parse_script_block(lexer)));
+								goto finish;
+							}
+							else
+							{
+								return ErrMsg(tmp.loc, "script blocks not allowed in paragraphs");
+							}
+						}
+
+						// go again, parsing another script call if necessary.
 						continue;
 					}
 
@@ -1810,14 +1812,10 @@ namespace sap::frontend
 				if(not inline_objs.empty())
 				{
 					auto para = std::make_unique<Paragraph>();
-					for(auto& obj : inline_objs)
-						para->addObject(std::move(obj));
+					std::move(inline_objs.begin(), inline_objs.end(), std::back_inserter(para->contents()));
 
 					objs.push_back(std::move(para));
 				}
-
-				if(script_obj != nullptr)
-					objs.push_back(std::move(script_obj));
 
 			finish:;
 			}

@@ -126,7 +126,7 @@ namespace sap::tree
 	    inheriting both of them. We want this hierarchy because script blocks and calls can
 	    appear both at the top-level (with blocks or floats), and within blocks/floats as well.
 	*/
-	struct ScriptObject : BlockObject
+	struct ScriptObject
 	{
 		explicit ScriptObject(ProcessingPhase phase) : m_run_phase(phase) { }
 		ProcessingPhase runPhase() const { return m_run_phase; }
@@ -135,7 +135,7 @@ namespace sap::tree
 		ProcessingPhase m_run_phase = ProcessingPhase::Layout;
 	};
 
-	struct ScriptBlock : ScriptObject
+	struct ScriptBlock : BlockObject, ScriptObject
 	{
 		explicit ScriptBlock(ProcessingPhase phase);
 
@@ -153,7 +153,7 @@ namespace sap::tree
 	{
 		explicit ScriptCall(ProcessingPhase phase);
 
-		virtual ErrorOr<void> evaluateScripts(interp::Interpreter* cs) const override;
+		ErrorOr<void> evaluateScripts(interp::Interpreter* cs) const;
 
 		std::unique_ptr<interp::FunctionCall> call;
 
@@ -163,9 +163,9 @@ namespace sap::tree
 			const Style* parent_style,
 			Size2d available_space) const;
 
-		virtual ErrorOr<LayoutResult> create_layout_object_impl(interp::Interpreter* cs,
+		ErrorOr<LayoutResult> create_layout_object_impl(interp::Interpreter* cs,
 			const Style* parent_style,
-			Size2d available_space) const override;
+			Size2d available_space) const;
 
 		// befriend Paragraph so it can use our evaluate_script
 		friend struct Paragraph;
