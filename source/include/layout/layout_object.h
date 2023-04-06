@@ -22,9 +22,6 @@ namespace sap::layout
 		explicit LayoutObject(const Style* style, LayoutSize size);
 		virtual ~LayoutObject() = default;
 
-		LayoutObject& operator=(LayoutObject&&) = default;
-		LayoutObject(LayoutObject&&) = default;
-
 		LayoutSize layoutSize() const;
 
 		void positionAbsolutely(AbsolutePagePos pos);

@@ -16,7 +16,7 @@
 
 namespace sap::layout::linebreak
 {
-	using InlineObjPtr = std::unique_ptr<tree::InlineObject>;
+	using InlineObjPtr = zst::SharedPtr<tree::InlineObject>;
 	using InlineObjVec = std::vector<InlineObjPtr>;
 	using VecIter = InlineObjVec::const_iterator;
 

@@ -16,7 +16,7 @@
 namespace sap::interp
 {
 	static ErrorOr<void> typecheck_list_of_tios(Typechecker* ts, //
-		const std::vector<std::unique_ptr<tree::InlineObject>>& tios)
+		const std::vector<zst::SharedPtr<tree::InlineObject>>& tios)
 	{
 		for(auto& obj : tios)
 		{
@@ -41,19 +41,19 @@ namespace sap::interp
 		return Ok();
 	}
 
-	static ErrorOr<std::vector<std::unique_ptr<tree::InlineObject>>> evaluate_list_of_tios(Evaluator* ev,
-		const std::vector<std::unique_ptr<tree::InlineObject>>& tios)
+	static ErrorOr<std::vector<zst::SharedPtr<tree::InlineObject>>> evaluate_list_of_tios(Evaluator* ev,
+		const std::vector<zst::SharedPtr<tree::InlineObject>>& tios)
 	{
-		std::vector<std::unique_ptr<tree::InlineObject>> ret {};
+		std::vector<zst::SharedPtr<tree::InlineObject>> ret {};
 		for(auto& obj : tios)
 		{
 			if(auto txt = dynamic_cast<const tree::Text*>(obj.get()); txt)
 			{
-				ret.emplace_back(txt->clone());
+				ret.push_back(obj);
 			}
 			else if(auto sep = dynamic_cast<const tree::Separator*>(obj.get()); sep)
 			{
-				ret.emplace_back(sep->clone());
+				ret.push_back(obj);
 			}
 			else if(auto span = dynamic_cast<const tree::InlineSpan*>(obj.get()); span)
 			{
@@ -86,7 +86,7 @@ namespace sap::interp
 	ErrorOr<EvalResult> TreeInlineExpr::evaluate_impl(Evaluator* ev) const
 	{
 		auto tios = TRY(evaluate_list_of_tios(ev, this->objects));
-		auto span = std::make_unique<tree::InlineSpan>(std::move(tios));
+		auto span = zst::make_shared<tree::InlineSpan>(std::move(tios));
 
 		return EvalResult::ofValue(Value::treeInlineObject(std::move(span)));
 	}
@@ -130,14 +130,14 @@ namespace sap::interp
 		return Ok();
 	}
 
-	static ErrorOr<EvalResult> evaluate_block_obj(Evaluator* ev, tree::BlockObject* obj)
+	static ErrorOr<EvalResult> evaluate_block_obj(Evaluator* ev, const zst::SharedPtr<tree::BlockObject>& obj)
 	{
-		auto make_para_from_tios = [](std::vector<std::unique_ptr<tree::InlineObject>> tios) {
-			auto new_para = std::make_unique<tree::Paragraph>(std::move(tios));
+		auto make_para_from_tios = [](std::vector<zst::SharedPtr<tree::InlineObject>> tios) {
+			auto new_para = zst::make_shared<tree::Paragraph>(std::move(tios));
 			return Value::treeBlockObject(std::move(new_para));
 		};
 
-		if(auto para = dynamic_cast<const tree::Paragraph*>(obj); para)
+		if(auto para = dynamic_cast<const tree::Paragraph*>(obj.get()); para)
 		{
 			if(para->contents().size() == 1)
 			{
@@ -153,7 +153,7 @@ namespace sap::interp
 					if(tmp.isOptional() && not tmp.haveOptionalValue())
 						return EvalResult::ofVoid();
 
-					std::unique_ptr<tree::BlockObject> blk {};
+					zst::SharedPtr<tree::BlockObject> blk {};
 					if(tmp.isOptional())
 						blk = std::move(**tmp.getOptional()).takeTreeBlockObj();
 					else
@@ -173,12 +173,12 @@ namespace sap::interp
 				return EvalResult::ofValue(make_para_from_tios(std::move(tios)));
 			}
 		}
-		else if(auto line = dynamic_cast<const tree::WrappedLine*>(obj); line)
+		else if(auto line = dynamic_cast<const tree::WrappedLine*>(obj.get()); line)
 		{
 			auto tios = TRY(evaluate_list_of_tios(ev, line->objects()));
-			return EvalResult::ofValue(Value::treeBlockObject(std::make_unique<tree::WrappedLine>(std::move(tios))));
+			return EvalResult::ofValue(Value::treeBlockObject(zst::make_shared<tree::WrappedLine>(std::move(tios))));
 		}
-		else if(auto sc = dynamic_cast<const tree::ScriptCall*>(obj); sc)
+		else if(auto sc = dynamic_cast<const tree::ScriptCall*>(obj.get()); sc)
 		{
 			auto value = TRY_VALUE(sc->call->evaluate(ev));
 
@@ -187,17 +187,17 @@ namespace sap::interp
 			else
 				return EvalResult::ofValue(make_para_from_tios(TRY(ev->convertValueToText(std::move(value)))));
 		}
-		else if(auto box = dynamic_cast<const tree::Container*>(obj); box)
+		else if(auto box = dynamic_cast<const tree::Container*>(obj.get()); box)
 		{
-			auto container = std::make_unique<tree::Container>(box->direction());
+			auto container = zst::make_shared<tree::Container>(box->direction());
 			for(auto& inner : box->contents())
-				container->contents().push_back(TRY_VALUE(evaluate_block_obj(ev, inner.get())).takeTreeBlockObj());
+				container->contents().push_back(TRY_VALUE(evaluate_block_obj(ev, inner)).takeTreeBlockObj());
 
 			return EvalResult::ofValue(Value::treeBlockObject(std::move(container)));
 		}
-		else if(auto raw = dynamic_cast<const tree::RawBlock*>(obj); raw)
+		else if(auto raw = dynamic_cast<const tree::RawBlock*>(obj.get()); raw)
 		{
-			return EvalResult::ofValue(Value::treeBlockObject(raw->clone()));
+			return EvalResult::ofValue(Value::treeBlockObject(obj));
 		}
 		else
 		{
@@ -219,6 +219,6 @@ namespace sap::interp
 
 	ErrorOr<EvalResult> TreeBlockExpr::evaluate_impl(Evaluator* ev) const
 	{
-		return evaluate_block_obj(ev, this->object.get());
+		return evaluate_block_obj(ev, this->object);
 	}
 }

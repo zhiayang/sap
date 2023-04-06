@@ -44,10 +44,10 @@ namespace sap::interp
 		DynLength getLength() const;
 
 		const tree::InlineSpan& getTreeInlineObj() const;
-		std::unique_ptr<tree::InlineSpan> takeTreeInlineObj() &&;
+		zst::SharedPtr<tree::InlineSpan> takeTreeInlineObj() &&;
 
 		const tree::BlockObject& getTreeBlockObj() const;
-		std::unique_ptr<tree::BlockObject> takeTreeBlockObj() &&;
+		zst::SharedPtr<tree::BlockObject> takeTreeBlockObj() &&;
 
 		const layout::LayoutObject& getLayoutObject() const;
 		std::unique_ptr<layout::LayoutObject> takeLayoutObject() &&;
@@ -128,8 +128,8 @@ namespace sap::interp
 		static Value function(const FunctionType* fn_type, FnType fn);
 		static Value string(const std::u32string& str);
 		static Value array(const Type* elm, std::vector<Value> arr, bool variadic = false);
-		static Value treeInlineObject(std::unique_ptr<tree::InlineSpan> obj);
-		static Value treeBlockObject(std::unique_ptr<tree::BlockObject> obj);
+		static Value treeInlineObject(zst::SharedPtr<tree::InlineSpan> obj);
+		static Value treeBlockObject(zst::SharedPtr<tree::BlockObject> obj);
 		static Value layoutObject(std::unique_ptr<layout::LayoutObject> obj);
 		static Value structure(const StructType* ty, std::vector<Value> fields);
 		static Value pointer(const Type* elm_type, const Value* value);
@@ -163,8 +163,8 @@ namespace sap::interp
 
 			FnType v_function;
 
-			std::unique_ptr<tree::InlineSpan> v_inline_obj;
-			std::unique_ptr<tree::BlockObject> v_block_obj;
+			zst::SharedPtr<tree::InlineSpan> v_inline_obj;
+			zst::SharedPtr<tree::BlockObject> v_block_obj;
 			std::unique_ptr<layout::LayoutObject> v_layout_obj;
 			std::vector<Value> v_array;
 			const Value* v_pointer;

@@ -26,16 +26,16 @@ namespace sap::tree
 	{
 		explicit Document(std::vector<std::unique_ptr<interp::Stmt>> preamble, bool have_doc_start);
 
-		void addObject(std::unique_ptr<BlockObject> obj);
+		void addObject(zst::SharedPtr<BlockObject> obj);
 		ErrorOr<std::unique_ptr<layout::Document>> layout(interp::Interpreter* cs);
 
 		bool haveDocStart() const { return m_have_document_start; }
 
-		std::unique_ptr<tree::Container> takeContainer() &&;
+		zst::SharedPtr<tree::Container> takeContainer() &&;
 		std::vector<std::unique_ptr<interp::Stmt>> takePreamble() &&;
 
 	private:
-		std::unique_ptr<tree::Container> m_container;
+		zst::SharedPtr<tree::Container> m_container;
 		std::vector<std::unique_ptr<interp::Stmt>> m_preamble;
 		bool m_have_document_start;
 	};

@@ -48,15 +48,15 @@ namespace sap::interp::builtin
 	{
 		assert(args.size() == 1);
 
-		auto span = std::make_unique<tree::InlineSpan>();
+		auto span = zst::make_shared<tree::InlineSpan>();
 
 		auto strings = std::move(args[0]).takeArray();
 		for(size_t i = 0; i < strings.size(); i++)
 		{
 			if(i != 0)
-				span->addObject(std::make_unique<tree::Separator>(tree::Separator::SPACE));
+				span->addObject(zst::make_shared<tree::Separator>(tree::Separator::SPACE));
 
-			span->addObject(std::make_unique<tree::Text>(strings[i].getUtf32String()));
+			span->addObject(zst::make_shared<tree::Text>(strings[i].getUtf32String()));
 		}
 
 		return EvalResult::ofValue(Value::treeInlineObject(std::move(span)));
@@ -67,7 +67,7 @@ namespace sap::interp::builtin
 		tree::Container::Direction direction,
 		bool glued = false)
 	{
-		auto box = std::make_unique<tree::Container>(direction, glued);
+		auto box = zst::make_shared<tree::Container>(direction, glued);
 
 		auto objs = std::move(arr).takeArray();
 		for(size_t i = 0; i < objs.size(); i++)
@@ -101,12 +101,12 @@ namespace sap::interp::builtin
 
 
 
-	static std::vector<std::unique_ptr<tree::InlineObject>> flatten_tio(std::unique_ptr<tree::InlineSpan> tio)
+	static std::vector<zst::SharedPtr<tree::InlineObject>> flatten_tio(zst::SharedPtr<tree::InlineSpan> tio)
 	{
 		if(tio->hasOverriddenWidth())
 		{
-			std::vector<std::unique_ptr<tree::InlineObject>> ret {};
-			ret.emplace_back(tio.release());
+			std::vector<zst::SharedPtr<tree::InlineObject>> ret {};
+			ret.emplace_back(std::move(tio));
 
 			return ret;
 		}
@@ -120,7 +120,7 @@ namespace sap::interp::builtin
 	{
 		assert(args.size() == 1);
 
-		auto span = std::make_unique<tree::InlineSpan>();
+		auto span = zst::make_shared<tree::InlineSpan>();
 
 		auto objs = std::move(args[0]).takeArray();
 		for(size_t i = 0; i < objs.size(); i++)
@@ -137,7 +137,7 @@ namespace sap::interp::builtin
 		assert(args.size() == 1);
 
 		auto objs = std::move(args[0]).takeArray();
-		std::vector<std::unique_ptr<tree::InlineObject>> inlines {};
+		std::vector<zst::SharedPtr<tree::InlineObject>> inlines {};
 
 		for(size_t i = 0; i < objs.size(); i++)
 		{
@@ -145,7 +145,7 @@ namespace sap::interp::builtin
 			std::move(flat.begin(), flat.end(), std::back_inserter(inlines));
 		}
 
-		auto para = std::make_unique<tree::Paragraph>();
+		auto para = zst::make_shared<tree::Paragraph>();
 
 		inlines = TRY(tree::Paragraph::processWordSeparators(std::move(inlines)));
 		para->addObjects(std::move(inlines));
@@ -157,10 +157,10 @@ namespace sap::interp::builtin
 	{
 		assert(args.size() == 1);
 
-		auto line = std::make_unique<tree::WrappedLine>();
+		auto line = zst::make_shared<tree::WrappedLine>();
 
 		auto objs = std::move(args[0]).takeArray();
-		std::vector<std::unique_ptr<tree::InlineObject>> inlines {};
+		std::vector<zst::SharedPtr<tree::InlineObject>> inlines {};
 
 		for(size_t i = 0; i < objs.size(); i++)
 		{
@@ -293,7 +293,7 @@ namespace sap::interp::builtin
 
 
 
-	static void apply_raise(std::vector<std::unique_ptr<tree::InlineObject>>& objs, Length raise)
+	static void apply_raise(std::vector<zst::SharedPtr<tree::InlineObject>>& objs, Length raise)
 	{
 		for(auto& obj : objs)
 		{

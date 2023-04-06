@@ -338,9 +338,9 @@ namespace sap::frontend
 	static ErrorOrUniquePtr<interp::Expr> parse_unary(Lexer& lexer);
 	static ErrorOrUniquePtr<interp::Expr> parse_primary(Lexer& lexer);
 
-	static ErrorOr<std::pair<std::unique_ptr<tree::InlineObject>, bool>> parse_inline_obj(Lexer& lexer);
-	static ErrorOr<std::vector<std::unique_ptr<BlockObject>>> parse_top_level(Lexer& lexer);
-	static ErrorOr<std::optional<std::unique_ptr<Paragraph>>> parse_paragraph(Lexer& lexer);
+	static ErrorOr<std::pair<zst::SharedPtr<InlineObject>, bool>> parse_inline_obj(Lexer& lexer);
+	static ErrorOr<std::vector<zst::SharedPtr<BlockObject>>> parse_top_level(Lexer& lexer);
+	static ErrorOr<std::optional<zst::SharedPtr<Paragraph>>> parse_paragraph(Lexer& lexer);
 
 
 	static ErrorOr<std::pair<interp::QualifiedId, uint32_t>> parse_qualified_id(Lexer& lexer)
@@ -886,7 +886,7 @@ namespace sap::frontend
 				if(not lexer.expect(TT::LBrace))
 					return ErrMsg(lexer.location(), "expected '{' after '\\{}'", KW_LINE_BLOCK);
 
-				std::vector<std::unique_ptr<tree::InlineObject>> inlines {};
+				std::vector<zst::SharedPtr<tree::InlineObject>> inlines {};
 				while(lexer.peek() != TT::RBrace)
 				{
 					auto [obj, end_para] = TRY(parse_inline_obj(lexer));
@@ -899,7 +899,7 @@ namespace sap::frontend
 				if(not lexer.expect(TT::RBrace))
 					return ErrMsg(lexer.location(), "unterminated inline text expression");
 
-				auto line = std::make_unique<tree::WrappedLine>(std::move(inlines));
+				auto line = zst::make_shared<tree::WrappedLine>(std::move(inlines));
 
 				blk->object = std::move(line);
 				return OkMove(blk);
@@ -938,7 +938,7 @@ namespace sap::frontend
 					return ErrMsg(lexer.location(), "unterminated block expression");
 
 				using enum tree::Container::Direction;
-				auto container = std::make_unique<tree::Container>(
+				auto container = zst::make_shared<tree::Container>(
 					x.text == KW_HBOX_BLOCK ? Horizontal
 					: x.text == KW_VBOX_BLOCK
 						? Vertical
@@ -1505,7 +1505,7 @@ namespace sap::frontend
 		return OkMove(stmt);
 	}
 
-	static ErrorOrUniquePtr<ScriptBlock> parse_script_block(Lexer& lexer)
+	static ErrorOr<zst::SharedPtr<ScriptBlock>> parse_script_block(Lexer& lexer)
 	{
 		auto lm = LexerModer(lexer, Lexer::Mode::Script);
 		must_expect(lexer, KW_SCRIPT_BLOCK);
@@ -1514,7 +1514,7 @@ namespace sap::frontend
 		if(lexer.expect(TT::At))
 			phase = TRY(parse_processing_phase(lexer));
 
-		auto block = std::make_unique<ScriptBlock>(phase);
+		auto block = zst::make_shared<ScriptBlock>(phase);
 
 		std::optional<interp::QualifiedId> target_scope;
 		if(lexer.peek() == TT::ColonColon || lexer.peek() == TT::Identifier)
@@ -1545,9 +1545,9 @@ namespace sap::frontend
 	}
 
 
-	static ErrorOr<std::pair<std::unique_ptr<ScriptCall>, bool>> parse_script_call(Lexer& lexer)
+	static ErrorOr<std::pair<zst::SharedPtr<ScriptCall>, bool>> parse_script_call(Lexer& lexer)
 	{
-		using PP = std::pair<std::unique_ptr<ScriptCall>, bool>;
+		using PP = std::pair<zst::SharedPtr<ScriptCall>, bool>;
 
 		auto lm = LexerModer(lexer, Lexer::Mode::Script);
 
@@ -1567,7 +1567,7 @@ namespace sap::frontend
 		if(open_paren != TT::LParen)
 			return ErrMsg(open_paren.loc, "expected '(' after qualified-id in inline script call");
 
-		auto sc = std::make_unique<ScriptCall>(phase);
+		auto sc = zst::make_shared<ScriptCall>(phase);
 		sc->call = TRY(parse_function_call(lexer, std::move(lhs)));
 
 		// check if we have trailing things
@@ -1640,9 +1640,9 @@ namespace sap::frontend
 		return Ok<PP>(std::move(sc), semi);
 	}
 
-	static ErrorOr<std::pair<std::unique_ptr<tree::InlineObject>, bool>> parse_inline_obj(Lexer& lexer)
+	static ErrorOr<std::pair<zst::SharedPtr<tree::InlineObject>, bool>> parse_inline_obj(Lexer& lexer)
 	{
-		using PP = std::pair<std::unique_ptr<tree::InlineObject>, bool>;
+		using PP = std::pair<zst::SharedPtr<tree::InlineObject>, bool>;
 
 		auto _ = LexerModer(lexer, Lexer::Mode::Text);
 
@@ -1650,7 +1650,7 @@ namespace sap::frontend
 		auto tok = TRY(lexer.next());
 		if(tok == TT::Text)
 		{
-			return Ok<PP>(std::make_unique<Text>(TRY(escape_word_text(tok.loc, tok.text))), false);
+			return Ok<PP>(zst::make_shared<Text>(TRY(escape_word_text(tok.loc, tok.text))), false);
 		}
 		else if(tok == TT::Backslash)
 		{
@@ -1667,9 +1667,9 @@ namespace sap::frontend
 	}
 
 
-	static ErrorOr<std::optional<std::unique_ptr<Paragraph>>> parse_paragraph(Lexer& lexer)
+	static ErrorOr<std::optional<zst::SharedPtr<Paragraph>>> parse_paragraph(Lexer& lexer)
 	{
-		auto para = std::make_unique<Paragraph>();
+		auto para = zst::make_shared<Paragraph>();
 		while(true)
 		{
 			auto peek = lexer.peek();
@@ -1700,14 +1700,14 @@ namespace sap::frontend
 		return OkMove(para);
 	}
 
-	static ErrorOr<std::vector<std::unique_ptr<BlockObject>>> parse_top_level(Lexer& lexer)
+	static ErrorOr<std::vector<zst::SharedPtr<BlockObject>>> parse_top_level(Lexer& lexer)
 	{
 		auto lm = LexerModer(lexer, Lexer::Mode::Text);
 
 		// this only needs to happen at the beginning
 		lexer.skipWhitespaceAndComments();
 
-		std::vector<std::unique_ptr<BlockObject>> objs {};
+		std::vector<zst::SharedPtr<BlockObject>> objs {};
 
 		while(true)
 		{
@@ -1756,7 +1756,7 @@ namespace sap::frontend
 					continue;
 				}
 
-				std::vector<std::unique_ptr<InlineObject>> inline_objs {};
+				std::vector<zst::SharedPtr<InlineObject>> inline_objs {};
 
 				while(true)
 				{
@@ -1768,11 +1768,11 @@ namespace sap::frontend
 					{
 						// eat a paragraph and go away. this means that this script call
 						// (and all preceeding ones) are just part of a paragraph.
-						std::unique_ptr<Paragraph> para {};
+						zst::SharedPtr<Paragraph> para {};
 						if(not end_para)
-							para = TRY(parse_paragraph(lexer)).value_or(std::make_unique<Paragraph>());
+							para = TRY(parse_paragraph(lexer)).value_or(zst::make_shared<Paragraph>());
 						else
-							para = std::make_unique<Paragraph>();
+							para = zst::make_shared<Paragraph>();
 
 						std::move(inline_objs.begin(), inline_objs.end(), std::back_inserter(para->contents()));
 						objs.push_back(std::move(para));
@@ -1811,7 +1811,7 @@ namespace sap::frontend
 				// put the current ones into a paragraph, then continue parsing other stuff.
 				if(not inline_objs.empty())
 				{
-					auto para = std::make_unique<Paragraph>();
+					auto para = zst::make_shared<Paragraph>();
 					std::move(inline_objs.begin(), inline_objs.end(), std::back_inserter(para->contents()));
 
 					objs.push_back(std::move(para));
@@ -1850,7 +1850,7 @@ namespace sap::frontend
 				auto text = unicode::u32StringFromUtf8(body.bytes());
 
 				// TODO: use attrs
-				objs.push_back(std::make_unique<tree::RawBlock>(std::move(text)));
+				objs.push_back(zst::make_shared<tree::RawBlock>(std::move(text)));
 				lexer.skipWhitespaceAndComments();
 			}
 			else

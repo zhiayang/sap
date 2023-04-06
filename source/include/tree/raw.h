@@ -13,7 +13,6 @@ namespace sap::tree
 		explicit RawBlock(zst::wstr_view str);
 
 		virtual ErrorOr<void> evaluateScripts(interp::Interpreter* cs) const override;
-		std::unique_ptr<RawBlock> clone() const;
 
 	private:
 		virtual ErrorOr<LayoutResult> create_layout_object_impl(interp::Interpreter* cs,
@@ -22,6 +21,6 @@ namespace sap::tree
 
 	private:
 		std::u32string m_text;
-		std::vector<std::unique_ptr<InlineObject>> m_lines;
+		std::vector<zst::SharedPtr<InlineObject>> m_lines;
 	};
 }

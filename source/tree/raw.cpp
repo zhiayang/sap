@@ -66,13 +66,6 @@ namespace sap::tree
 		return Ok();
 	}
 
-	std::unique_ptr<RawBlock> RawBlock::clone() const
-	{
-		auto ret = std::make_unique<RawBlock>(m_text);
-		ret->setStyle(m_style);
-		return ret;
-	}
-
 	ErrorOr<LayoutResult> RawBlock::create_layout_object_impl(interp::Interpreter* cs, //
 		const Style* parent_style,
 		Size2d available_space) const

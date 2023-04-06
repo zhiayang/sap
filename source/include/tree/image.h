@@ -13,7 +13,7 @@ namespace sap::tree
 		explicit Image(ImageBitmap image, Size2d size);
 
 		virtual ErrorOr<void> evaluateScripts(interp::Interpreter* cs) const override;
-		static ErrorOr<std::unique_ptr<Image>> fromImageFile(const Location& loc,
+		static ErrorOr<zst::SharedPtr<Image>> fromImageFile(const Location& loc,
 			zst::str_view file_path,
 			sap::Length width,
 			std::optional<sap::Length> height = std::nullopt);

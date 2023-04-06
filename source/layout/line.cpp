@@ -50,7 +50,7 @@ namespace sap::layout
 		return style->font()->getWordSize(sep_str, style->font_size().into()).x().into();
 	}
 
-	LineMetrics computeLineMetrics(std::span<const std::unique_ptr<tree::InlineObject>> objs, const Style* parent_style)
+	LineMetrics computeLineMetrics(std::span<const zst::SharedPtr<tree::InlineObject>> objs, const Style* parent_style)
 	{
 		LineMetrics ret {};
 
@@ -271,7 +271,7 @@ namespace sap::layout
 
 	std::unique_ptr<Line> Line::fromInlineObjects(interp::Interpreter* cs,
 		const Style* style,
-		std::span<const std::unique_ptr<tree::InlineObject>> objs,
+		std::span<const zst::SharedPtr<tree::InlineObject>> objs,
 		const LineMetrics& line_metrics,
 		Size2d available_space,
 		bool is_first_line,

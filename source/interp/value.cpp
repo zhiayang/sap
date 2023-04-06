@@ -67,7 +67,7 @@ namespace sap::interp
 		return *v_inline_obj;
 	}
 
-	auto Value::takeTreeInlineObj() && -> std::unique_ptr<tree::InlineSpan>
+	auto Value::takeTreeInlineObj() && -> zst::SharedPtr<tree::InlineSpan>
 	{
 		this->ensure_not_moved_from();
 		assert(m_type->isTreeInlineObj());
@@ -81,7 +81,7 @@ namespace sap::interp
 		return *v_block_obj;
 	}
 
-	auto Value::takeTreeBlockObj() && -> std::unique_ptr<tree::BlockObject>
+	auto Value::takeTreeBlockObj() && -> zst::SharedPtr<tree::BlockObject>
 	{
 		this->ensure_not_moved_from();
 		assert(m_type->isTreeBlockObj());
@@ -565,14 +565,14 @@ namespace sap::interp
 		return ret;
 	}
 
-	Value Value::treeInlineObject(std::unique_ptr<tree::InlineSpan> obj)
+	Value Value::treeInlineObject(zst::SharedPtr<tree::InlineSpan> obj)
 	{
 		auto ret = Value(Type::makeTreeInlineObj());
 		new(&ret.v_inline_obj) decltype(ret.v_inline_obj)(std::move(obj));
 		return ret;
 	}
 
-	Value Value::treeBlockObject(std::unique_ptr<tree::BlockObject> obj)
+	Value Value::treeBlockObject(zst::SharedPtr<tree::BlockObject> obj)
 	{
 		auto ret = Value(Type::makeTreeBlockObj());
 		new(&ret.v_block_obj) decltype(ret.v_block_obj)(std::move(obj));

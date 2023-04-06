@@ -90,9 +90,9 @@ namespace sap::interp
 		}
 	}
 
-	ErrorOr<std::vector<std::unique_ptr<tree::InlineObject>>> Evaluator::convertValueToText(Value&& value)
+	ErrorOr<std::vector<zst::SharedPtr<tree::InlineObject>>> Evaluator::convertValueToText(Value&& value)
 	{
-		std::vector<std::unique_ptr<tree::InlineObject>> ret {};
+		std::vector<zst::SharedPtr<tree::InlineObject>> ret {};
 
 		if(value.isTreeInlineObj())
 		{
@@ -245,7 +245,7 @@ namespace sap::interp
 		return nullptr;
 	}
 
-	ErrorOr<void> Evaluator::addAbsolutelyPositionedBlockObject(std::unique_ptr<tree::BlockObject> tbo_,
+	ErrorOr<void> Evaluator::addAbsolutelyPositionedBlockObject(zst::SharedPtr<tree::BlockObject> tbo_,
 		layout::AbsolutePagePos abs_pos)
 	{
 		if(m_page_layout == nullptr)

@@ -182,12 +182,12 @@ namespace sap::tree
 	}
 
 
-	void Document::addObject(std::unique_ptr<BlockObject> obj)
+	void Document::addObject(zst::SharedPtr<BlockObject> obj)
 	{
 		m_container->contents().push_back(std::move(obj));
 	}
 
-	std::unique_ptr<tree::Container> Document::takeContainer() &&
+	zst::SharedPtr<tree::Container> Document::takeContainer() &&
 	{
 		return std::move(m_container);
 	}

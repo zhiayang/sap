@@ -19,7 +19,7 @@ namespace sap::interp::builtin
 		assert(args.size() == 1);
 		assert(args[0].isLength());
 
-		auto spacer = std::make_unique<tree::Spacer>(
+		auto spacer = zst::make_shared<tree::Spacer>(
 			DynLength2d {
 				.x = DynLength(),
 				.y = args[0].getLength(),
@@ -34,7 +34,7 @@ namespace sap::interp::builtin
 		assert(args.size() == 1);
 		assert(args[0].isLength());
 
-		auto spacer = std::make_unique<tree::Spacer>(
+		auto spacer = zst::make_shared<tree::Spacer>(
 			DynLength2d {
 				.x = args[0].getLength(),
 				.y = DynLength(),
@@ -47,7 +47,7 @@ namespace sap::interp::builtin
 	ErrorOr<EvalResult> page_break(Evaluator* ev, std::vector<Value>& args)
 	{
 		assert(args.size() == 0);
-		return EvalResult::ofValue(Value::treeBlockObject(std::make_unique<tree::Spacer>(DynLength2d {},
+		return EvalResult::ofValue(Value::treeBlockObject(zst::make_shared<tree::Spacer>(DynLength2d {},
 			/* page break: */ true)));
 	}
 

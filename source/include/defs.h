@@ -9,7 +9,7 @@
 #include <unordered_set>
 
 #include <zpr.h>
-#include <zst.h>
+#include <zst/zst.h>
 
 #include "error.h"
 #include "units.h"

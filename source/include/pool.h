@@ -36,7 +36,7 @@ namespace util
 				void* ptr = 0;
 				if(posix_memalign(&ptr, alignment, capacity) != 0)
 					sap::internal_error("out of memory (trying to allocate {} bytes with {}-byte alignment)", capacity,
-					    alignment);
+						alignment);
 
 				this->memory = reinterpret_cast<uint8_t*>(ptr);
 				assert(this->memory != nullptr);
@@ -82,6 +82,26 @@ namespace util
 			return new(mem) T(static_cast<Args&&>(args)...);
 		}
 
+		void* allocate_raw(size_t bytes)
+		{
+			if(!this->region)
+				this->region = new Region(REGION_SIZE, nullptr);
+
+			assert(this->region != nullptr);
+			auto head = this->region;
+
+			if(head->capacity - head->consumed < bytes)
+			{
+				this->region = new Region(REGION_SIZE, head);
+				head = this->region;
+			}
+
+			assert(head->capacity - head->consumed >= bytes);
+			auto mem = head->memory + head->consumed;
+			head->consumed += bytes;
+
+			return mem;
+		}
 
 	private:
 		Region* region = 0;
@@ -93,4 +113,20 @@ namespace util
 		static Pool<T> pool;
 		return pool.allocate(static_cast<Args&&>(args)...);
 	}
+
+	template <typename T>
+	struct pool_allocator
+	{
+		using value_type = T;
+
+		T* allocate(size_t n) { return static_cast<T*>(s_pool.allocate_raw(n * sizeof(T))); }
+		void deallocate(T* ptr, size_t n)
+		{
+			(void) ptr;
+			(void) n;
+		}
+
+	private:
+		static inline Pool<T> s_pool;
+	};
 }

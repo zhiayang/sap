@@ -7,8 +7,12 @@
 #include <cstdio>
 #include <cstdlib>
 
+#include <string>
+#include <vector>
+#include <utility>
+
 #include <zpr.h>
-#include <zst.h>
+#include <zst/zst.h>
 
 #include "location.h"
 

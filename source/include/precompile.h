@@ -4,8 +4,6 @@
 
 #include <map>
 #include <set>
-#include <zpr.h>
-#include <zst.h>
 #include <memory>
 #include <string>
 #include <vector>
@@ -21,6 +19,10 @@
 #include <type_traits>
 #include <unordered_map>
 #include <unordered_set>
+
+#include <zpr.h>
+#include <zst/zst.h>
+#include <zst/SharedPtr.h>
 
 #include "defs.h"
 #include "pool.h"

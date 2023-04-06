@@ -101,7 +101,7 @@ namespace sap::tree
 
 
 
-	ErrorOr<std::unique_ptr<Image>> Image::fromImageFile(const Location& loc,
+	ErrorOr<zst::SharedPtr<Image>> Image::fromImageFile(const Location& loc,
 		zst::str_view file_path,
 		sap::Length width,
 		std::optional<sap::Length> height)
@@ -118,6 +118,6 @@ namespace sap::tree
 		if(not height.has_value())
 			height = width / aspect;
 
-		return Ok(std::make_unique<Image>(image, sap::Vector2(width, *height)));
+		return Ok(zst::make_shared<Image>(image, sap::Vector2(width, *height)));
 	}
 }

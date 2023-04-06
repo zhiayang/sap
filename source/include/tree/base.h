@@ -49,7 +49,7 @@ namespace sap::tree
 		}
 	};
 
-	struct InlineObject : Stylable
+	struct InlineObject : zst::IntrusiveRefCounted<InlineObject>, Stylable
 	{
 		virtual ~InlineObject() = 0;
 
@@ -70,26 +70,26 @@ namespace sap::tree
 	struct InlineSpan : InlineObject
 	{
 		InlineSpan();
-		explicit InlineSpan(std::vector<std::unique_ptr<InlineObject>> objs);
+		explicit InlineSpan(std::vector<zst::SharedPtr<InlineObject>> objs);
 
-		void addObject(std::unique_ptr<InlineObject> obj);
-		void addObjects(std::vector<std::unique_ptr<InlineObject>> objs);
+		void addObject(zst::SharedPtr<InlineObject> obj);
+		void addObjects(std::vector<zst::SharedPtr<InlineObject>> objs);
 
-		const std::vector<std::unique_ptr<InlineObject>>& objects() const { return m_objects; }
-		std::vector<std::unique_ptr<InlineObject>>& objects() { return m_objects; }
+		const std::vector<zst::SharedPtr<InlineObject>>& objects() const { return m_objects; }
+		std::vector<zst::SharedPtr<InlineObject>>& objects() { return m_objects; }
 
-		std::vector<std::unique_ptr<InlineObject>> flatten() &&;
+		std::vector<zst::SharedPtr<InlineObject>> flatten() &&;
 
 		void overrideWidth(Length length) { m_override_width = length; }
 		bool hasOverriddenWidth() const { return m_override_width.has_value(); }
 		std::optional<Length> getOverriddenWidth() const { return m_override_width; }
 
 	private:
-		std::vector<std::unique_ptr<InlineObject>> m_objects;
+		std::vector<zst::SharedPtr<InlineObject>> m_objects;
 		std::optional<Length> m_override_width {};
 	};
 
-	struct BlockObject : Stylable
+	struct BlockObject : zst::IntrusiveRefCounted<BlockObject>, Stylable
 	{
 		virtual ~BlockObject() = 0;
 
@@ -158,7 +158,7 @@ namespace sap::tree
 		std::unique_ptr<interp::FunctionCall> call;
 
 	private:
-		using ScriptEvalResult = Either<std::unique_ptr<InlineSpan>, std::unique_ptr<layout::LayoutObject>>;
+		using ScriptEvalResult = Either<zst::SharedPtr<InlineSpan>, std::unique_ptr<layout::LayoutObject>>;
 		ErrorOr<std::optional<ScriptEvalResult>> evaluate_script(interp::Interpreter* cs,
 			const Style* parent_style,
 			Size2d available_space) const;
@@ -171,6 +171,6 @@ namespace sap::tree
 		friend struct Paragraph;
 
 	private:
-		mutable std::vector<std::unique_ptr<BlockObject>> m_created_tbos;
+		mutable std::vector<zst::SharedPtr<BlockObject>> m_created_tbos;
 	};
 }

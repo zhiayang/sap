@@ -35,10 +35,10 @@ namespace sap::layout
 		Paragraph(const Style* style,
 			LayoutSize size,
 			std::vector<std::unique_ptr<Line>> lines,
-			std::vector<std::unique_ptr<tree::InlineObject>> para_inline_objs);
+			std::vector<zst::SharedPtr<tree::InlineObject>> para_inline_objs);
 
 	private:
 		std::vector<std::unique_ptr<Line>> m_lines {};
-		std::vector<std::unique_ptr<tree::InlineObject>> m_para_inline_objs;
+		std::vector<zst::SharedPtr<tree::InlineObject>> m_para_inline_objs;
 	};
 }

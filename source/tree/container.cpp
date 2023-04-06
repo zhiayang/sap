@@ -21,19 +21,19 @@ namespace sap::tree
 		this->setStyle(m_style->with_alignment(Alignment::Left));
 	}
 
-	std::unique_ptr<Container> Container::makeVertBox()
+	zst::SharedPtr<Container> Container::makeVertBox()
 	{
-		return std::make_unique<Container>(Direction::Vertical);
+		return zst::make_shared<Container>(Direction::Vertical);
 	}
 
-	std::unique_ptr<Container> Container::makeHorzBox()
+	zst::SharedPtr<Container> Container::makeHorzBox()
 	{
-		return std::make_unique<Container>(Direction::Horizontal);
+		return zst::make_shared<Container>(Direction::Horizontal);
 	}
 
-	std::unique_ptr<Container> Container::makeStackBox()
+	zst::SharedPtr<Container> Container::makeStackBox()
 	{
-		return std::make_unique<Container>(Direction::None);
+		return zst::make_shared<Container>(Direction::None);
 	}
 
 

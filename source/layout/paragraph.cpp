@@ -30,7 +30,7 @@ namespace sap::layout
 	Paragraph::Paragraph(const Style* style,
 		LayoutSize size,
 		std::vector<std::unique_ptr<Line>> lines,
-		std::vector<std::unique_ptr<tree::InlineObject>> para_inline_objs)
+		std::vector<zst::SharedPtr<tree::InlineObject>> para_inline_objs)
 		: LayoutObject(style, size), m_lines(std::move(lines)), m_para_inline_objs(std::move(para_inline_objs))
 	{
 	}
@@ -81,7 +81,7 @@ namespace sap::tree
 		size_t current_idx = 0;
 
 		// precompute line metrics (and the line bounds)
-		using WordSpan = std::span<const std::unique_ptr<tree::InlineObject>>;
+		using WordSpan = std::span<const zst::SharedPtr<tree::InlineObject>>;
 		std::vector<std::tuple<layout::LineMetrics, WordSpan>> the_lines {};
 
 		auto add_one_line = [&the_lines](auto words_begin, auto words_end, const Style* style) {

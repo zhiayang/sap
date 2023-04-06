@@ -21,8 +21,6 @@ namespace sap::tree
 		const std::u32string& contents() const { return m_contents; }
 		std::u32string& contents() { return m_contents; }
 
-		std::unique_ptr<Text> clone() const;
-
 	private:
 		friend struct layout::Line;
 
@@ -82,8 +80,6 @@ namespace sap::tree
 
 		int hyphenationCost() const { return m_hyphenation_cost; }
 
-		std::unique_ptr<Separator> clone() const;
-
 	private:
 		friend struct layout::Line;
 
@@ -99,20 +95,20 @@ namespace sap::tree
 	struct Paragraph : BlockObject
 	{
 		Paragraph() = default;
-		explicit Paragraph(std::vector<std::unique_ptr<InlineObject>> objs);
+		explicit Paragraph(std::vector<zst::SharedPtr<InlineObject>> objs);
 
-		void addObject(std::unique_ptr<InlineObject> obj);
-		void addObjects(std::vector<std::unique_ptr<InlineObject>> obj);
+		void addObject(zst::SharedPtr<InlineObject> obj);
+		void addObjects(std::vector<zst::SharedPtr<InlineObject>> obj);
 
 		virtual ErrorOr<void> evaluateScripts(interp::Interpreter* cs) const override;
 
-		std::vector<std::unique_ptr<InlineObject>>& contents() { return m_contents; }
-		const std::vector<std::unique_ptr<InlineObject>>& contents() const { return m_contents; }
+		std::vector<zst::SharedPtr<InlineObject>>& contents() { return m_contents; }
+		const std::vector<zst::SharedPtr<InlineObject>>& contents() const { return m_contents; }
 
-		static ErrorOr<std::vector<std::unique_ptr<InlineObject>>> processWordSeparators( //
-			std::vector<std::unique_ptr<InlineObject>> vec);
+		static ErrorOr<std::vector<zst::SharedPtr<InlineObject>>> processWordSeparators( //
+			std::vector<zst::SharedPtr<InlineObject>> vec);
 
-		using EvalScriptResult = zst::Either<std::unique_ptr<InlineSpan>, std::unique_ptr<layout::LayoutObject>>;
+		using EvalScriptResult = zst::Either<zst::SharedPtr<InlineSpan>, std::unique_ptr<layout::LayoutObject>>;
 		ErrorOr<std::optional<EvalScriptResult>> evaluate_scripts(interp::Interpreter* cs,
 			Size2d available_space) const;
 
@@ -127,6 +123,6 @@ namespace sap::tree
 			Size2d available_space) const override;
 
 	private:
-		std::vector<std::unique_ptr<InlineObject>> m_contents {};
+		std::vector<zst::SharedPtr<InlineObject>> m_contents {};
 	};
 }

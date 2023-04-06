@@ -837,7 +837,6 @@ namespace zst
 
 	namespace detail
 	{
-#if ZST_USE_STD && !ZST_FREESTANDING
 		template <typename ToUniquePtr, typename FromUniquePtr>
 		concept UniquePtrConvertible = requires(FromUniquePtr f)
 		{
@@ -856,7 +855,21 @@ namespace zst
 
 			{ f.release() } -> std::same_as<typename FromUniquePtr::pointer>;
 		};
-#endif
+
+		template <typename ToSharedPtr, typename FromSharedPtr>
+		concept SharedPtrConvertible = requires(FromSharedPtr f)
+		{
+			typename FromSharedPtr::element_type;
+			typename ToSharedPtr::element_type;
+
+			requires std::derived_from<
+				typename FromSharedPtr::element_type,
+				typename ToSharedPtr::element_type
+			>;
+
+			{ f.get() } -> std::same_as<typename FromSharedPtr::element_type*>;
+			{ f.use_count() } -> std::same_as<size_t>;
+		};
 	}
 
 	template <typename T>
@@ -1028,8 +1041,6 @@ namespace zst
 			impl::error_wrapper("invalid state of Result");
 		}
 
-#if ZST_USE_STD && !ZST_FREESTANDING
-
 		template <detail::UniquePtrConvertible<T> U>
 		operator Result<U, E>() &&
 		{
@@ -1040,7 +1051,16 @@ namespace zst
 			impl::error_wrapper("invalid state of Result");
 		}
 
-#endif
+		template <detail::SharedPtrConvertible<T> U>
+		operator Result<U, E>() &&
+		{
+			using R = Result<U, E>;
+			if(state == STATE_VAL)  return R(typename R::tag_ok{}, U(static_cast<T&&>(this->val)));
+			if(state == STATE_ERR)  return R(typename R::tag_err{}, static_cast<E&&>(this->err));
+
+			impl::error_wrapper("invalid state of Result");
+		}
+
 
 
 		const T& expect(str_view msg) const

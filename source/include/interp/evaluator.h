@@ -58,9 +58,7 @@ namespace sap::interp
 
 	private:
 		explicit StackFrame(Evaluator* ev, StackFrame* parent, size_t call_depth)
-			: m_evaluator(ev)
-			, m_parent(parent)
-			, m_call_depth(call_depth)
+			: m_evaluator(ev), m_parent(parent), m_call_depth(call_depth)
 		{
 		}
 
@@ -103,7 +101,7 @@ namespace sap::interp
 		void setGlobalValue(const Definition* defn, Value val);
 		Value* getGlobalValue(const Definition* defn);
 
-		ErrorOr<std::vector<std::unique_ptr<tree::InlineObject>>> convertValueToText(Value&& value);
+		ErrorOr<std::vector<zst::SharedPtr<tree::InlineObject>>> convertValueToText(Value&& value);
 
 		const Style* currentStyle() const;
 		void pushStyle(const Style* style);
@@ -123,7 +121,7 @@ namespace sap::interp
 		void setPageLayout(layout::PageLayout* page_layout);
 		layout::PageLayout* pageLayout() const { return m_page_layout; }
 
-		ErrorOr<void> addAbsolutelyPositionedBlockObject(std::unique_ptr<tree::BlockObject> tbo, layout::AbsolutePagePos pos);
+		ErrorOr<void> addAbsolutelyPositionedBlockObject(zst::SharedPtr<tree::BlockObject> tbo, layout::AbsolutePagePos pos);
 
 		Value* addToHeap(Value value);
 		Value addToHeapAndGetPointer(Value value);

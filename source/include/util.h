@@ -5,8 +5,6 @@
 #pragma once
 
 #include <bit> // for endian, endian::big, endian::native
-#include <zpr.h>
-#include <zst.h>
 #include <numeric>
 #include <variant>
 #include <concepts>
@@ -14,6 +12,9 @@
 #include <string_view> // for hash, string_view, u32string_view
 #include <unordered_map>
 #include <unordered_set>
+
+#include <zpr.h>
+#include <zst/zst.h>
 
 #include "types.h"
 

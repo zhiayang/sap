@@ -74,7 +74,7 @@ namespace sap::interp
 		virtual ErrorOr<TCResult> typecheck_impl(Typechecker* ts, const Type* infer = nullptr, bool keep_lvalue = false)
 			const override;
 
-		mutable std::vector<std::unique_ptr<tree::InlineObject>> objects;
+		mutable std::vector<zst::SharedPtr<tree::InlineObject>> objects;
 	};
 
 	struct TreeBlockExpr : Expr
@@ -85,7 +85,7 @@ namespace sap::interp
 		virtual ErrorOr<TCResult> typecheck_impl(Typechecker* ts, const Type* infer = nullptr, bool keep_lvalue = false)
 			const override;
 
-		mutable std::unique_ptr<tree::BlockObject> object;
+		mutable zst::SharedPtr<tree::BlockObject> object;
 	};
 
 

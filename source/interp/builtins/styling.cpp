@@ -48,10 +48,10 @@ namespace sap::interp::builtin
 		}
 		else
 		{
-			auto word = std::make_unique<tree::Text>(value.toString());
+			auto word = zst::make_shared<tree::Text>(value.toString());
 			word->setStyle(style);
 
-			auto span = std::make_unique<tree::InlineSpan>();
+			auto span = zst::make_shared<tree::InlineSpan>();
 			span->addObject(std::move(word));
 
 			return EvalResult::ofValue(Value::treeInlineObject(std::move(span)));

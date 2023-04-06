@@ -63,22 +63,21 @@ namespace sap::tree
 	{
 	}
 
-	InlineSpan::InlineSpan(std::vector<std::unique_ptr<InlineObject>> objs) : m_objects(std::move(objs))
+	InlineSpan::InlineSpan(std::vector<zst::SharedPtr<InlineObject>> objs) : m_objects(std::move(objs))
 	{
 	}
 
-	void InlineSpan::addObject(std::unique_ptr<InlineObject> obj)
+	void InlineSpan::addObject(zst::SharedPtr<InlineObject> obj)
 	{
 		m_objects.push_back(std::move(obj));
 	}
 
-	void InlineSpan::addObjects(std::vector<std::unique_ptr<InlineObject>> objs)
+	void InlineSpan::addObjects(std::vector<zst::SharedPtr<InlineObject>> objs)
 	{
 		std::move(objs.begin(), objs.end(), std::back_inserter(m_objects));
 	}
 
-	static void do_flatten(std::vector<std::unique_ptr<InlineObject>>& out,
-		std::vector<std::unique_ptr<InlineObject>> objs)
+	static void do_flatten(std::vector<zst::SharedPtr<InlineObject>>& out, std::vector<zst::SharedPtr<InlineObject>> objs)
 	{
 		for(auto& obj : objs)
 		{
@@ -96,9 +95,9 @@ namespace sap::tree
 		}
 	}
 
-	std::vector<std::unique_ptr<InlineObject>> InlineSpan::flatten() &&
+	std::vector<zst::SharedPtr<InlineObject>> InlineSpan::flatten() &&
 	{
-		std::vector<std::unique_ptr<InlineObject>> ret {};
+		std::vector<zst::SharedPtr<InlineObject>> ret {};
 		do_flatten(ret, std::move(m_objects));
 
 		return ret;
