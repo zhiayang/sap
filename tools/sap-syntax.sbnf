@@ -56,7 +56,7 @@ text-literal
     ;
 
 raw-block-x[name, scope]
-    : '(`{3,})(#[name])(\s+)([^`]*)$\n?'{1: punctuation.other, 2: constant.other}
+    : '(`{3,})(#[name])?(?!(\s+)([^`]*))?$\n?'{1: punctuation.other, 2: constant.other}
         %embed['(\1)']{scope:source.#[scope], 1: punctuation.other}
     ;
 
