@@ -31,11 +31,11 @@ namespace pdf
 				{ names::Subtype, names::Link.ptr() },
 				{
 					names::Rect,
-					Array::create(                                                  //
-						Decimal::create(m_position.x().value()),                    //
-						Decimal::create(m_position.y().value()),                    //
-						Decimal::create((m_position.x() + m_position.x()).value()), //
-						Decimal::create((m_position.y() + m_position.y()).value())),
+					Array::create(                                              //
+						Decimal::create(m_position.x().value()),                //
+						Decimal::create(m_position.y().value()),                //
+						Decimal::create((m_position.x() + m_size.x()).value()), //
+						Decimal::create((m_position.y() + m_size.y()).value())),
 				},
 				{ names::BS, Dictionary::create(names::Border, { { names::S, names::S.ptr() } }) },
 				{ names::C, Array::create(Decimal::create(1.0), Decimal::create(0), Decimal::create(0)) },

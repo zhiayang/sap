@@ -7,13 +7,14 @@
 #include "pdf/units.h"       // for pdf_typographic_unit, Size2d, Vector2_Y...
 #include "pdf/object.h"      // for Name, Dictionary, Object, IndirectRef
 #include "pdf/xobject.h"     //
+#include "pdf/annotation.h"  //
 #include "pdf/page_object.h" // for PageObject
 
 namespace pdf
 {
 	// TODO: support custom paper sizes
-	static const auto a4paper = Array::create(Integer::create(0), Integer::create(0), Decimal::create(595.276),
-	    Decimal::create(841.89));
+	static const auto a4paper = Array::
+		create(Integer::create(0), Integer::create(0), Decimal::create(595.276), Decimal::create(841.89));
 
 	Page::Page() : m_dictionary(Dictionary::createIndirect(names::Page, {}))
 	{
@@ -46,7 +47,7 @@ namespace pdf
 			res->serialise();
 	}
 
-	void Page::serialise() const
+	void Page::serialise(File* file) const
 	{
 		Object* contents = Null::get();
 		if(not m_objects.empty())
@@ -80,6 +81,15 @@ namespace pdf
 		m_dictionary->addOrReplace(names::Resources, resources);
 		m_dictionary->addOrReplace(names::MediaBox, a4paper);
 		m_dictionary->addOrReplace(names::Contents, contents);
+
+		m_dictionary->addOrReplace(names::Annots, Array::create(util::map(m_annotations, [&](auto annot) -> Object* {
+			return annot->toDictionary(file);
+		})));
+	}
+
+	void Page::addAnnotation(const Annotation* annotation)
+	{
+		m_annotations.push_back(annotation);
 	}
 
 	void Page::addObject(PageObject* pobj)

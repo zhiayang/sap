@@ -43,6 +43,7 @@ namespace pdf
 	struct Annotation
 	{
 		virtual Dictionary* toDictionary(File* file) const = 0;
+		virtual ~Annotation() = default;
 
 	protected:
 		Annotation(pdf::Position2d position, pdf::Size2d size);

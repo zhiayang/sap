@@ -1,4 +1,4 @@
-// outline_item.h
+// annotation.h
 // Copyright (c) 2022, zhiayang
 // SPDX-License-Identifier: Apache-2.0
 
@@ -13,5 +13,13 @@ namespace sap
 		std::string title;
 		layout::AbsolutePagePos position;
 		std::vector<OutlineItem> children;
+	};
+
+	struct LinkAnnotation
+	{
+		layout::AbsolutePagePos position;
+		Size2d size;
+
+		layout::AbsolutePagePos destination;
 	};
 }

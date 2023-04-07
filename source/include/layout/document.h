@@ -14,7 +14,7 @@
 
 #include "sap/style.h" // for Stylable
 #include "sap/units.h" // for Vector2
-#include "sap/outline_item.h"
+#include "sap/annotation.h"
 #include "sap/document_settings.h"
 
 #include "font/font_source.h"
@@ -115,8 +115,11 @@ namespace sap::layout
 		PageLayout& pageLayout() { return m_page_layout; }
 		const PageLayout& pageLayout() const { return m_page_layout; }
 
-		const std::vector<OutlineItem>& outlineItems() const { return m_outline_items; }
 		std::vector<OutlineItem>& outlineItems() { return m_outline_items; }
+		const std::vector<OutlineItem>& outlineItems() const { return m_outline_items; }
+
+		std::vector<LinkAnnotation>& annotations() { return m_annotations; }
+		const std::vector<LinkAnnotation>& annotations() const { return m_annotations; }
 
 	private:
 		pdf::File& pdf();
@@ -126,6 +129,7 @@ namespace sap::layout
 		PageLayout m_page_layout;
 
 		std::vector<OutlineItem> m_outline_items;
+		std::vector<LinkAnnotation> m_annotations;
 
 		std::vector<std::unique_ptr<LayoutObject>> m_objects {};
 	};

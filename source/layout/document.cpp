@@ -14,7 +14,7 @@
 #include "sap/style.h"       // for Style
 #include "sap/units.h"       // for Length
 #include "sap/font_family.h" // for FontSet, FontStyle, FontStyle::Regular
-#include "sap/outline_item.h"
+#include "sap/annotation.h"
 #include "sap/document_settings.h"
 
 #include "tree/document.h"
@@ -115,6 +115,23 @@ namespace sap::layout
 		return ret;
 	}
 
+	static void convert_annotation(const std::vector<pdf::Page*>& pages, sap::LinkAnnotation annot)
+	{
+		if(annot.position.page_num >= pages.size())
+			sap::internal_error("annotation out of range: page {} does not exist", annot.position.page_num);
+
+		auto page = pages[annot.position.page_num];
+		auto pdf_annot = util::make<pdf::LinkAnnotation>(page->convertVector2(annot.position.pos.into()),
+			annot.size.into(),
+			pdf::Destination {
+				.page = annot.destination.page_num,
+				.zoom = 0,
+				.position = page->convertVector2(annot.destination.pos.into()),
+			});
+
+		page->addAnnotation(pdf_annot);
+	}
+
 	void Document::write(pdf::Writer* stream)
 	{
 		auto pages = m_page_layout.render();
@@ -124,9 +141,18 @@ namespace sap::layout
 		for(auto& item : m_outline_items)
 			m_pdf_document.addOutlineItem(convert_outline_item(pages, std::move(item)));
 
+		for(auto& annot : m_annotations)
+			convert_annotation(pages, std::move(annot));
+
 		m_pdf_document.write(stream);
 	}
 }
+
+
+
+
+
+
 
 namespace sap::tree
 {
@@ -207,6 +233,7 @@ namespace sap::tree
 
 		auto doc_proxy = interp::builtin::BS_DocumentProxy::unmake(&cs->evaluator(), cs->evaluator().documentProxy());
 		layout_doc->outlineItems() = std::move(doc_proxy.outline_items);
+		layout_doc->annotations() = std::move(doc_proxy.link_annotations);
 
 		return Ok(std::move(layout_doc));
 	}

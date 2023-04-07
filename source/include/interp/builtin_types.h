@@ -6,7 +6,7 @@
 
 #include "util.h"
 
-#include "sap/outline_item.h"
+#include "sap/annotation.h"
 #include "sap/document_settings.h"
 
 #include "layout/cursor.h"
@@ -117,7 +117,9 @@ namespace sap::interp::builtin
 		static const Type* type;
 		static std::vector<StructDefn::Field> fields();
 
+		static Value make(Evaluator* ev, Size2d pos);
 		static Value make(Evaluator* ev, DynLength2d pos);
+
 		static DynLength2d unmake(Evaluator* ev, const Value& value);
 	};
 
@@ -165,6 +167,16 @@ namespace sap::interp::builtin
 		static OutlineItem unmake(Evaluator* ev, const Value& value);
 	};
 
+	struct BS_LinkAnnotation
+	{
+		static constexpr auto name = "LinkAnnotation";
+
+		static const Type* type;
+		static std::vector<StructDefn::Field> fields();
+
+		static Value make(Evaluator* ev, LinkAnnotation pos);
+		static LinkAnnotation unmake(Evaluator* ev, const Value& value);
+	};
 
 
 

@@ -61,6 +61,8 @@ namespace sap::interp
 
 		define_builtin_struct<builtin::BS_State>(interp);
 		define_builtin_struct<builtin::BS_OutlineItem>(interp);
+		define_builtin_struct<builtin::BS_LinkAnnotation>(interp);
+
 		define_builtin_struct<builtin::BS_DocumentProxy>(interp);
 	}
 

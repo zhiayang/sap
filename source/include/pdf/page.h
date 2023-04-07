@@ -12,12 +12,13 @@ namespace pdf
 {
 	struct File;
 	struct Resource;
+	struct Annotation;
 
 	struct Page
 	{
 		Page();
 
-		void serialise() const;
+		void serialise(File* file) const;
 		void serialiseResources() const;
 
 		void addObject(PageObject* obj);
@@ -28,11 +29,14 @@ namespace pdf
 		Vector2_YDown convertVector2(Vector2_YUp v2) const;
 
 		void addResource(const Resource* resource) const;
+		void addAnnotation(const Annotation* annotation);
+
 		Dictionary* dictionary() const { return m_dictionary; }
 
 	private:
 		Dictionary* m_dictionary;
 		std::vector<PageObject*> m_objects;
+		std::vector<const Annotation*> m_annotations;
 		mutable std::unordered_set<const Resource*> m_resources;
 
 		Size2d m_page_size {};

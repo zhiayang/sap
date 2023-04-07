@@ -373,6 +373,13 @@ namespace std
 
 	# generate outline items
 	@finalise {
+		let ref = g_sections[0].num_tbo_ref.layout_object();
+		builtin::document()!.link_annotations += [builtin::LinkAnnotation {
+			position: ref!.position(),
+			size: builtin::Size2d { x: 40mm, y: 6mm },
+			destination: g_sections[1].num_tbo_ref.layout_object()!.position(),
+		}];
+
 		var i = 0;
 		while(i < g_sections.size())
 		{

@@ -21,6 +21,14 @@ namespace sap::interp::builtin
 		);
 	}
 
+	Value BS_Size2d::make(Evaluator* ev, Size2d pos)
+	{
+		return StructMaker(BS_Size2d::type->toStruct()) //
+		    .set("x", Value::length(DynLength(pos.x())))
+		    .set("y", Value::length(DynLength(pos.y())))
+		    .make();
+	}
+
 	Value builtin::BS_Size2d::make(Evaluator* ev, DynLength2d pos)
 	{
 		return StructMaker(BS_Size2d::type->toStruct()) //

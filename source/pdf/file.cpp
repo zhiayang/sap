@@ -49,15 +49,6 @@ namespace pdf
 			{ names::Producer, String::create("sap-" GIT_REVISION) },
 		});
 
-		auto x = LinkAnnotation({ 50, 50 }, { 50, 50 },
-			Destination {
-				.page = 2,
-				.zoom = 0,
-				.position = { 100, 100 },
-			});
-
-		m_pages[0]->dictionary()->add(names::Annots, Array::create(x.toDictionary(this)));
-
 
 
 
@@ -104,11 +95,6 @@ namespace pdf
 	}
 
 
-	void File::addPage(Page* page)
-	{
-		m_pages.push_back(page);
-	}
-
 	Dictionary* File::create_page_tree()
 	{
 		// TODO: make this more efficient -- make some kind of balanced tree.
@@ -119,7 +105,7 @@ namespace pdf
 		auto array = Array::create({});
 		for(auto page : m_pages)
 		{
-			page->serialise();
+			page->serialise(this);
 			page->serialiseResources();
 
 			page->dictionary()->addOrReplace(names::Parent, pagetree);
@@ -154,6 +140,11 @@ namespace pdf
 			pdf::error("page number {} is out of range (have only {})", num, m_pages.size());
 
 		return m_pages[num];
+	}
+
+	void File::addPage(Page* page)
+	{
+		m_pages.push_back(page);
 	}
 
 	void File::addObject(Object* obj)

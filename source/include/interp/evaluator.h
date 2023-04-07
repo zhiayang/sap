@@ -7,7 +7,7 @@
 #include <deque>
 
 #include "util.h"
-#include "sap/outline_item.h"
+#include "sap/annotation.h"
 
 #include "interp/ast.h"
 #include "interp/value.h"
@@ -82,6 +82,7 @@ namespace sap::interp
 	struct DocumentProxy
 	{
 		std::vector<OutlineItem> outline_items;
+		std::vector<LinkAnnotation> link_annotations;
 	};
 
 	struct Evaluator
