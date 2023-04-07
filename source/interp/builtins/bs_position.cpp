@@ -23,9 +23,9 @@ namespace sap::interp::builtin
 		auto pt_int = PT::named(frontend::TYPE_INT);
 		auto pt_len = PT::named(frontend::TYPE_LENGTH);
 		return util::vectorOf(                       //
-		    Field { .name = "x", .type = pt_len },   //
-		    Field { .name = "y", .type = pt_len },   //
-		    Field { .name = "page", .type = pt_int } //
+			Field { .name = "x", .type = pt_len },   //
+			Field { .name = "y", .type = pt_len },   //
+			Field { .name = "page", .type = pt_int } //
 		);
 	}
 
@@ -38,7 +38,7 @@ namespace sap::interp::builtin
 		    .make();
 	}
 
-	ErrorOr<layout::RelativePos> builtin::BS_Position::unmake(Evaluator* ev, const Value& value)
+	layout::RelativePos builtin::BS_Position::unmake(Evaluator* ev, const Value& value)
 	{
 		auto sty = ev->currentStyle();
 
@@ -50,10 +50,10 @@ namespace sap::interp::builtin
 
 		auto p = get_struct_field<int64_t>(value, "page");
 
-		return Ok(layout::RelativePos {
-		    .pos = { x, y },
-		    .page_num = checked_cast<size_t>(p),
-		});
+		return layout::RelativePos {
+			.pos = { x, y },
+			.page_num = checked_cast<size_t>(p),
+		};
 	}
 
 
@@ -64,9 +64,9 @@ namespace sap::interp::builtin
 		auto pt_int = PT::named(frontend::TYPE_INT);
 		auto pt_len = PT::named(frontend::TYPE_LENGTH);
 		return util::vectorOf(                       //
-		    Field { .name = "x", .type = pt_len },   //
-		    Field { .name = "y", .type = pt_len },   //
-		    Field { .name = "page", .type = pt_int } //
+			Field { .name = "x", .type = pt_len },   //
+			Field { .name = "y", .type = pt_len },   //
+			Field { .name = "page", .type = pt_int } //
 		);
 	}
 
@@ -79,7 +79,7 @@ namespace sap::interp::builtin
 		    .make();
 	}
 
-	ErrorOr<layout::AbsolutePagePos> builtin::BS_AbsPosition::unmake(Evaluator* ev, const Value& value)
+	layout::AbsolutePagePos builtin::BS_AbsPosition::unmake(Evaluator* ev, const Value& value)
 	{
 		auto sty = ev->currentStyle();
 
@@ -91,9 +91,9 @@ namespace sap::interp::builtin
 
 		auto p = get_struct_field<int64_t>(value, "page");
 
-		return Ok(layout::AbsolutePagePos {
-		    .pos = { x, y },
-		    .page_num = checked_cast<size_t>(p),
-		});
+		return layout::AbsolutePagePos {
+			.pos = { x, y },
+			.page_num = checked_cast<size_t>(p),
+		};
 	}
 }

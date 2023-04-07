@@ -327,6 +327,19 @@ namespace util
 		return ret;
 	}
 
+	template <typename T, typename Fn>
+	auto map(const std::vector<T>& xs, Fn&& fn)
+	{
+		std::vector<decltype(fn(std::declval<T>()))> ret {};
+		ret.reserve(xs.size());
+
+		for(auto& x : xs)
+			ret.push_back(fn(x));
+
+		return ret;
+	}
+
+
 	inline uint16_t convertBEU16(uint16_t x)
 	{
 		// Untested cause who has big endian anyway

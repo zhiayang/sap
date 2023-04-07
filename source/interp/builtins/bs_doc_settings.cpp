@@ -60,13 +60,13 @@ namespace sap::interp::builtin
 		DocumentSettings settings {};
 
 		if(auto& x = value.getStructField("margins"); x.haveOptionalValue())
-			settings.margins = TRY(BS_DocumentMargins::unmake(ev, **x.getOptional()));
+			settings.margins = BS_DocumentMargins::unmake(ev, **x.getOptional());
 
 		if(auto& x = value.getStructField("font_family"); x.haveOptionalValue())
 			settings.font_family = TRY(BS_FontFamily::unmake(ev, **x.getOptional()));
 
 		if(auto& x = value.getStructField("paper_size"); x.haveOptionalValue())
-			settings.paper_size = TRY(BS_Size2d::unmake(ev, **x.getOptional()));
+			settings.paper_size = BS_Size2d::unmake(ev, **x.getOptional());
 
 		settings.font_size = get_optional_struct_field<DynLength>(value, "font_size", &Value::getLength);
 		settings.paragraph_spacing = get_optional_struct_field<DynLength>(value, "paragraph_spacing",
@@ -102,7 +102,7 @@ namespace sap::interp::builtin
 		    .make();
 	}
 
-	ErrorOr<DocumentSettings::Margins> builtin::BS_DocumentMargins::unmake(Evaluator* ev, const Value& value)
+	DocumentSettings::Margins builtin::BS_DocumentMargins::unmake(Evaluator* ev, const Value& value)
 	{
 		DocumentSettings::Margins margins {};
 
@@ -111,6 +111,6 @@ namespace sap::interp::builtin
 		margins.left = get_optional_struct_field<DynLength>(value, "left", &Value::getLength);
 		margins.right = get_optional_struct_field<DynLength>(value, "right", &Value::getLength);
 
-		return Ok(std::move(margins));
+		return margins;
 	}
 }

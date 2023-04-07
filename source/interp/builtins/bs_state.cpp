@@ -38,16 +38,16 @@ namespace sap::interp::builtin
 		    .make();
 	}
 
-	ErrorOr<GlobalState> builtin::BS_State::unmake(Evaluator* ev, const Value& value)
+	GlobalState builtin::BS_State::unmake(Evaluator* ev, const Value& value)
 	{
 		auto layout_pass = get_struct_field<int64_t>(value, "layout_pass");
 		auto page_count = get_struct_field<int64_t>(value, "page_count");
 		auto& page_size = value.getStructField("page_size");
 
-		return Ok(GlobalState {
+		return GlobalState {
 			.layout_pass = checked_cast<size_t>(layout_pass),
 			.page_count = checked_cast<size_t>(page_count),
-			.page_size = TRY(BS_Size2d::unmake(ev, page_size)),
-		});
+			.page_size = BS_Size2d::unmake(ev, page_size),
+		};
 	}
 }

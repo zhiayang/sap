@@ -16,8 +16,8 @@ namespace sap::interp::builtin
 	{
 		auto pt_len = PT::named(frontend::TYPE_LENGTH);
 		return util::vectorOf(                     //
-		    Field { .name = "x", .type = pt_len }, //
-		    Field { .name = "y", .type = pt_len }  //
+			Field { .name = "x", .type = pt_len }, //
+			Field { .name = "y", .type = pt_len }  //
 		);
 	}
 
@@ -29,10 +29,10 @@ namespace sap::interp::builtin
 		    .make();
 	}
 
-	ErrorOr<DynLength2d> builtin::BS_Size2d::unmake(Evaluator* ev, const Value& value)
+	DynLength2d builtin::BS_Size2d::unmake(Evaluator* ev, const Value& value)
 	{
 		auto x = get_struct_field<DynLength>(value, "x", &Value::getLength);
 		auto y = get_struct_field<DynLength>(value, "y", &Value::getLength);
-		return Ok(DynLength2d { x, y });
+		return DynLength2d { x, y };
 	}
 }

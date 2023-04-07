@@ -7,6 +7,7 @@
 #include <deque>
 
 #include "util.h"
+#include "sap/outline_item.h"
 
 #include "interp/ast.h"
 #include "interp/value.h"
@@ -80,6 +81,10 @@ namespace sap::interp
 		DynLength2d page_size;
 	};
 
+	struct DocumentProxy
+	{
+		std::vector<OutlineItem> outline_items;
+	};
 
 	struct Evaluator
 	{
@@ -122,6 +127,8 @@ namespace sap::interp
 		void setDocument(layout::Document* document) { m_document = document; }
 		layout::Document* document() const { return m_document; }
 
+		Value& documentProxy() { return m_document_proxy; }
+
 		ErrorOr<void> addAbsolutelyPositionedBlockObject(zst::SharedPtr<tree::BlockObject> tbo,
 			layout::AbsolutePagePos pos);
 
@@ -145,6 +152,8 @@ namespace sap::interp
 		bool m_relayout_requested = false;
 
 		layout::Document* m_document = nullptr;
+		Value m_document_proxy {};
+
 		mutable GlobalState m_global_state {};
 	};
 }

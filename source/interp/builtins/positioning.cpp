@@ -63,7 +63,7 @@ namespace sap::interp::builtin
 		assert(args.size() == 2);
 		assert(args[1].isTreeBlockObj());
 
-		auto abs_pos = TRY(BS_AbsPosition::unmake(ev, args[0]));
+		auto abs_pos = BS_AbsPosition::unmake(ev, args[0]);
 
 		auto tbo = std::move(args[1]).takeTreeBlockObj();
 		TRY(ev->addAbsolutelyPositionedBlockObject(std::move(tbo), abs_pos));
@@ -132,7 +132,7 @@ namespace sap::interp::builtin
 		if(ev->interpreter()->currentPhase() >= ProcessingPhase::Position)
 			return ErrMsg(ev, "offset_position() can only be called before `@position`");
 
-		auto offset = TRY(BS_Size2d::unmake(ev, args[1])).resolve(ev->currentStyle());
+		auto offset = BS_Size2d::unmake(ev, args[1]).resolve(ev->currentStyle());
 		if(args[0].isLayoutObjectRef())
 		{
 			auto obj = TRY(get_layout_object_ref(ev, args[0]));
@@ -153,7 +153,7 @@ namespace sap::interp::builtin
 		if(ev->interpreter()->currentPhase() >= ProcessingPhase::Position)
 			return ErrMsg(ev, "override_position() can only be called before `@position`");
 
-		auto pos = TRY(BS_AbsPosition::unmake(ev, args[1]));
+		auto pos = BS_AbsPosition::unmake(ev, args[1]);
 		if(args[0].isLayoutObjectRef())
 		{
 			auto obj = TRY(get_layout_object_ref(ev, args[0]));

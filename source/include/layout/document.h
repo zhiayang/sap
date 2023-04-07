@@ -14,6 +14,7 @@
 
 #include "sap/style.h" // for Stylable
 #include "sap/units.h" // for Vector2
+#include "sap/outline_item.h"
 #include "sap/document_settings.h"
 
 #include "font/font_source.h"
@@ -114,12 +115,17 @@ namespace sap::layout
 		PageLayout& pageLayout() { return m_page_layout; }
 		const PageLayout& pageLayout() const { return m_page_layout; }
 
+		const std::vector<OutlineItem>& outlineItems() const { return m_outline_items; }
+		std::vector<OutlineItem>& outlineItems() { return m_outline_items; }
+
 	private:
 		pdf::File& pdf();
 		const pdf::File& pdf() const;
 
 		pdf::File m_pdf_document {};
 		PageLayout m_page_layout;
+
+		std::vector<OutlineItem> m_outline_items;
 
 		std::vector<std::unique_ptr<LayoutObject>> m_objects {};
 	};

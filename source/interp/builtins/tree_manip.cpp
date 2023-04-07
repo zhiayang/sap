@@ -216,7 +216,7 @@ namespace sap::interp::builtin
 		if(ev->interpreter()->currentPhase() != ProcessingPhase::Layout)
 			return ErrMsg(ev, "`set_size()` can only be called during `@layout`");
 
-		auto size = TRY(BS_Size2d::unmake(ev, args[1])).resolve(ev->currentStyle());
+		auto size = BS_Size2d::unmake(ev, args[1]).resolve(ev->currentStyle());
 		auto tbo = value.isTreeBlockObj() ? &value.getTreeBlockObj() : value.getTreeBlockObjectRef();
 
 		const_cast<tree::BlockObject*>(tbo)->overrideLayoutWidth(size.x());

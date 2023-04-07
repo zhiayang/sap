@@ -30,6 +30,12 @@ namespace sap
 	{
 		struct Value;
 		struct GlobalState;
+		struct DocumentProxy;
+	}
+
+	namespace layout
+	{
+		struct Document;
 	}
 }
 
@@ -46,7 +52,7 @@ namespace sap::interp::builtin
 		static std::vector<StructDefn::Field> fields();
 
 		static Value make(Evaluator* ev, GlobalState style);
-		static ErrorOr<GlobalState> unmake(Evaluator* ev, const Value& value);
+		static GlobalState unmake(Evaluator* ev, const Value& value);
 	};
 
 	struct BS_Style
@@ -90,7 +96,7 @@ namespace sap::interp::builtin
 		static std::vector<StructDefn::Field> fields();
 
 		static Value make(Evaluator* ev, layout::RelativePos pos);
-		static ErrorOr<layout::RelativePos> unmake(Evaluator* ev, const Value& value);
+		static layout::RelativePos unmake(Evaluator* ev, const Value& value);
 	};
 
 	struct BS_AbsPosition
@@ -101,7 +107,7 @@ namespace sap::interp::builtin
 		static std::vector<StructDefn::Field> fields();
 
 		static Value make(Evaluator* ev, layout::AbsolutePagePos pos);
-		static ErrorOr<layout::AbsolutePagePos> unmake(Evaluator* ev, const Value& value);
+		static layout::AbsolutePagePos unmake(Evaluator* ev, const Value& value);
 	};
 
 	struct BS_Size2d
@@ -112,7 +118,7 @@ namespace sap::interp::builtin
 		static std::vector<StructDefn::Field> fields();
 
 		static Value make(Evaluator* ev, DynLength2d pos);
-		static ErrorOr<DynLength2d> unmake(Evaluator* ev, const Value& value);
+		static DynLength2d unmake(Evaluator* ev, const Value& value);
 	};
 
 	struct BS_DocumentSettings
@@ -134,7 +140,18 @@ namespace sap::interp::builtin
 		static std::vector<StructDefn::Field> fields();
 
 		static Value make(Evaluator* ev, DocumentSettings::Margins pos);
-		static ErrorOr<DocumentSettings::Margins> unmake(Evaluator* ev, const Value& value);
+		static DocumentSettings::Margins unmake(Evaluator* ev, const Value& value);
+	};
+
+	struct BS_DocumentProxy
+	{
+		static constexpr auto name = "DocumentProxy";
+
+		static const Type* type;
+		static std::vector<StructDefn::Field> fields();
+
+		static Value make(Evaluator* ev, layout::Document* doc);
+		static DocumentProxy unmake(Evaluator* ev, const Value& value);
 	};
 
 	struct BS_OutlineItem
@@ -145,7 +162,7 @@ namespace sap::interp::builtin
 		static std::vector<StructDefn::Field> fields();
 
 		static Value make(Evaluator* ev, OutlineItem pos);
-		static ErrorOr<OutlineItem> unmake(Evaluator* ev, const Value& value);
+		static OutlineItem unmake(Evaluator* ev, const Value& value);
 	};
 
 
@@ -199,6 +216,16 @@ namespace sap::interp::builtin
 		const StructType* m_type;
 		std::vector<Value> m_fields;
 	};
+
+	template <typename BS>
+	frontend::PType ptype_for_builtin()
+	{
+		return frontend::PType::named(QualifiedId {
+			.top_level = true,
+			.parents = { "builtin" },
+			.name = BS::name,
+		});
+	}
 
 
 	template <typename T>
