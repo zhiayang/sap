@@ -215,6 +215,7 @@ namespace std
 	struct Reference
 	{
 		num: int;
+		tio_ref: InlineRef;
 		record: &mut RefRecord;
 	}
 
@@ -262,13 +263,20 @@ namespace std
 
 		record!.used = true;
 
-		if(page?)
-			return builtin::make_text(f"[{record!.refnum}, p. {page!}]");
-		else
-			return builtin::make_text(f"[{record!.refnum}]");
+		var txt = "";
+		if(page?)   txt = f"[{record!.refnum!}, p. {page!}]";
+		else        txt = f"[{record!.refnum!}]";
+
+		let tio = builtin::make_text(txt);
+
+		g_references += [Reference {
+			num: record!.refnum!,
+			tio_ref: tio.ref(),
+			record: record,
+		}];
+
+		return tio;
 	}
-
-
 
 
 
@@ -373,13 +381,6 @@ namespace std
 
 	# generate outline items
 	@finalise {
-		let ref = g_sections[0].num_tbo_ref.layout_object();
-		builtin::document()!.link_annotations += [builtin::LinkAnnotation {
-			position: ref!.position(),
-			size: builtin::Size2d { x: 40mm, y: 6mm },
-			destination: g_sections[1].num_tbo_ref.layout_object()!.position(),
-		}];
-
 		var i = 0;
 		while(i < g_sections.size())
 		{
@@ -532,8 +533,69 @@ namespace std
 
 
 	global var g_saved_sections: [Section] = [];
+	global var g_toc_lines: [BlockRef] = [];
+	@layout g_toc_lines = [];
+
 	@post {
 		g_saved_sections = g_sections;
+	}
+
+	@finalise {
+		var i = 0;
+		var k = 0;
+		while(i < g_saved_sections.size())
+		{
+			let s = &g_saved_sections[i];
+			let dest = s!.num_tbo_ref.layout_object();
+			let toc_line = g_toc_lines[k].layout_object();
+			k += 1;
+
+			var sz = toc_line!.size();
+			sz.y -= 3mm;
+
+			builtin::document()!.link_annotations += [builtin::LinkAnnotation {
+				position: toc_line!.position(),
+				size: sz,
+				destination: dest!.position(),
+			}];
+
+			var si = 0;
+			while(si < s!.subsections.size())
+			{
+				let ss = &s!.subsections[si];
+				let dest = s!.subsections[si].num_tbo_ref.layout_object();
+				let toc_line = g_toc_lines[k].layout_object();
+				k += 1;
+
+				var sz = toc_line!.size();
+				sz.y -= 3mm;
+				builtin::document()!.link_annotations += [builtin::LinkAnnotation {
+					position: toc_line!.position(),
+					size: sz,
+					destination: dest!.position(),
+				}];
+
+				var ssi = 0;
+				while(ssi < ss!.subsubsections.size())
+				{
+					let sss = &ss!.subsubsections[ssi];
+					let dest = ss!.subsubsections[ssi].num_tbo_ref.layout_object();
+					let toc_line = g_toc_lines[k].layout_object();
+					k += 1;
+
+					var sz = toc_line!.size();
+					sz.y -= 3mm;
+					builtin::document()!.link_annotations += [builtin::LinkAnnotation {
+						position: toc_line!.position(),
+						size: sz,
+						destination: dest!.position(),
+					}];
+					ssi += 1;
+				}
+				si += 1;
+			}
+			i += 1;
+		}
 	}
 
 	fn output_table_of_contents() -> ?Block
@@ -572,6 +634,7 @@ namespace std
 			if(i != 0)
 				lines += [builtin::vspace(0.7em)];
 
+			g_toc_lines += [item.ref()];
 			lines += [*item];
 
 			var si = 0;
@@ -597,6 +660,7 @@ namespace std
 					alignment: .Justified
 				});
 
+				g_toc_lines += [item.ref()];
 				lines += [*item];
 
 				var ssi = 0;
@@ -622,6 +686,7 @@ namespace std
 						alignment: .Justified
 					});
 
+					g_toc_lines += [item.ref()];
 					lines += [*item];
 					ssi += 1;
 				}
@@ -650,6 +715,18 @@ namespace std
 		return ret;
 	}
 
+
+	global var list_of_refs: [BlockRef] = [];
+	@layout list_of_refs = [];
+
+	@finalise {
+		var i = 0;
+		while(i < g_references.size())
+		{
+
+			i += 1;
+		}
+	}
 
 
 	fn output_list_of_references() -> ?Block
@@ -709,6 +786,7 @@ namespace std
 				alignment: .Left
 			});
 
+			list_of_refs += [item.ref()];
 			lines += [*item];
 			i += 1;
 		}
