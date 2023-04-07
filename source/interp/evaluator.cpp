@@ -15,6 +15,7 @@
 #include "interp/ast.h"
 #include "interp/interp.h"
 #include "interp/evaluator.h"
+#include "interp/builtin_types.h"
 
 namespace sap::interp
 {
@@ -205,19 +206,14 @@ namespace sap::interp
 		util::log("layout pass: {}", pass_num);
 	}
 
+	void Evaluator::setDocument(layout::Document* document)
+	{
+		m_document = document;
+		m_document_proxy_value = builtin::BS_DocumentProxy::make(this, m_document);
+	}
+
 	const GlobalState& Evaluator::state() const
 	{
-		if(m_document != nullptr)
-		{
-			m_global_state.page_count = m_document->pageLayout().pageCount();
-
-			auto page_size = m_document->pageLayout().pageSize();
-			m_global_state.page_size = DynLength2d {
-				.x = DynLength(page_size.x()),
-				.y = DynLength(page_size.y()),
-			};
-		}
-
 		return m_global_state;
 	}
 

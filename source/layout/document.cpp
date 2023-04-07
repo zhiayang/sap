@@ -7,12 +7,14 @@
 #include "pdf/file.h"  // for File
 #include "pdf/font.h"  // for Font
 #include "pdf/units.h" // for PdfScalar
+#include "pdf/destination.h"
 
 #include "font/font_file.h"
 
 #include "sap/style.h"       // for Style
 #include "sap/units.h"       // for Length
 #include "sap/font_family.h" // for FontSet, FontStyle, FontStyle::Regular
+#include "sap/outline_item.h"
 #include "sap/document_settings.h"
 
 #include "tree/document.h"
@@ -91,11 +93,36 @@ namespace sap::layout
 		m_objects.push_back(std::move(obj));
 	}
 
+
+	static pdf::OutlineItem convert_outline_item(const std::vector<pdf::Page*>& pages, sap::OutlineItem item)
+	{
+		if(item.position.page_num >= pages.size())
+		{
+			sap::internal_error("outline item '{}' out of range: page {} does not exist", item.title,
+				item.position.page_num);
+		}
+
+		auto ret = pdf::OutlineItem(std::move(item.title),
+			pdf::Destination {
+				.page = item.position.page_num,
+				.zoom = 0,
+				.position = pages[item.position.page_num]->convertVector2(item.position.pos.into()),
+			});
+
+		for(auto& child : item.children)
+			ret.addChild(convert_outline_item(pages, std::move(child)));
+
+		return ret;
+	}
+
 	void Document::write(pdf::Writer* stream)
 	{
 		auto pages = m_page_layout.render();
 		for(auto& page : pages)
 			m_pdf_document.addPage(page);
+
+		for(auto& item : m_outline_items)
+			m_pdf_document.addOutlineItem(convert_outline_item(pages, std::move(item)));
 
 		m_pdf_document.write(stream);
 	}
@@ -177,6 +204,9 @@ namespace sap::tree
 			layout_doc->pageLayout().addObject(std::move(container));
 			break;
 		}
+
+		auto doc_proxy = interp::builtin::BS_DocumentProxy::unmake(&cs->evaluator(), cs->evaluator().documentProxy());
+		layout_doc->outlineItems() = std::move(doc_proxy.outline_items);
 
 		return Ok(std::move(layout_doc));
 	}

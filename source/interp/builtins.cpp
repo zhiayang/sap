@@ -60,6 +60,8 @@ namespace sap::interp
 		define_builtin_struct<builtin::BS_DocumentSettings>(interp);
 
 		define_builtin_struct<builtin::BS_State>(interp);
+		define_builtin_struct<builtin::BS_OutlineItem>(interp);
+		define_builtin_struct<builtin::BS_DocumentProxy>(interp);
 	}
 
 
@@ -114,6 +116,7 @@ namespace sap::interp
 		const auto t_bfontfamily = PType::named(make_builtin_name(builtin::BS_FontFamily::name));
 		const auto t_babsposition = PType::named(make_builtin_name(builtin::BS_AbsPosition::name));
 		const auto t_bdocsettings = PType::named(make_builtin_name(builtin::BS_DocumentSettings::name));
+		const auto t_bdocproxy = PType::named(make_builtin_name(builtin::BS_DocumentProxy::name));
 
 		const auto define_builtin = [&](auto&&... xs) {
 			auto ret = std::make_unique<BFD>(Location::builtin(), std::forward<decltype(xs)>(xs)...);
@@ -152,6 +155,10 @@ namespace sap::interp
 		define_builtin("state", makeParamList(), t_bstate, [](auto* ev, auto& args) {
 			assert(args.size() == 0);
 			return EvalResult::ofValue(builtin::BS_State::make(ev, ev->state()));
+		});
+
+		define_builtin("document", makeParamList(), t_mutptr(t_bdocproxy), [](auto* ev, auto& args) {
+			return EvalResult::ofValue(Value::mutablePointer(builtin::BS_DocumentProxy::type, &ev->documentProxy()));
 		});
 
 		define_builtin("ref", makeParamList(P("_", t_ptr(t_tio))), t_tio_ref, &B::ref_object);

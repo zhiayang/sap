@@ -135,6 +135,8 @@ namespace sap::interp
 		static Value pointer(const Type* elm_type, const Value* value);
 		static Value mutablePointer(const Type* elm_type, Value* value);
 		static Value optional(const Type* type, std::optional<Value> value);
+
+		static Value fromGenerator(const Type* type, std::function<Value()> func);
 		Value clone() const;
 
 		static Value treeInlineObjectRef(tree::InlineSpan* obj);
@@ -153,27 +155,28 @@ namespace sap::interp
 
 		const Type* m_type;
 		bool m_moved_from = false;
+		mutable std::function<Value()> m_gen_func {};
 
 		union
 		{
-			bool v_bool;
-			char32_t v_char;
-			int64_t v_integer;
-			double v_floating;
+			mutable bool v_bool;
+			mutable char32_t v_char;
+			mutable int64_t v_integer;
+			mutable double v_floating;
 
-			FnType v_function;
+			mutable FnType v_function;
 
 			zst::SharedPtr<tree::InlineSpan> v_inline_obj;
 			zst::SharedPtr<tree::BlockObject> v_block_obj;
 			std::unique_ptr<layout::LayoutObject> v_layout_obj;
-			std::vector<Value> v_array;
-			const Value* v_pointer;
-			DynLength v_length;
+			mutable std::vector<Value> v_array;
+			mutable const Value* v_pointer;
+			mutable DynLength v_length;
 
 			// these things need special handling
-			tree::InlineSpan* v_inline_obj_ref;
-			tree::BlockObject* v_block_obj_ref;
-			layout::LayoutObject* v_layout_obj_ref;
+			mutable tree::InlineSpan* v_inline_obj_ref;
+			mutable tree::BlockObject* v_block_obj_ref;
+			mutable layout::LayoutObject* v_layout_obj_ref;
 		};
 	};
 }

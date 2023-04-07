@@ -77,8 +77,6 @@ namespace sap::interp
 	struct GlobalState
 	{
 		size_t layout_pass;
-		size_t page_count;
-		DynLength2d page_size;
 	};
 
 	struct DocumentProxy
@@ -124,10 +122,10 @@ namespace sap::interp
 		void commenceLayoutPass(size_t pass_num);
 		const GlobalState& state() const;
 
-		void setDocument(layout::Document* document) { m_document = document; }
+		void setDocument(layout::Document* document);
 		layout::Document* document() const { return m_document; }
 
-		Value& documentProxy() { return m_document_proxy; }
+		Value& documentProxy() { return m_document_proxy_value; }
 
 		ErrorOr<void> addAbsolutelyPositionedBlockObject(zst::SharedPtr<tree::BlockObject> tbo,
 			layout::AbsolutePagePos pos);
@@ -152,7 +150,7 @@ namespace sap::interp
 		bool m_relayout_requested = false;
 
 		layout::Document* m_document = nullptr;
-		Value m_document_proxy {};
+		Value m_document_proxy_value {};
 
 		mutable GlobalState m_global_state {};
 	};

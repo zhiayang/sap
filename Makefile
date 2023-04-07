@@ -10,7 +10,7 @@ WARNINGS += -Wno-error=unused-function
 WARNINGS += -Wno-unused-but-set-variable
 WARNINGS += -Wno-error=shadow
 
-OPT_FLAGS           := -march=native -O2
+OPT_FLAGS           := -march=native -O0
 LINKER_OPT_FLAGS    :=
 COMMON_CFLAGS       := -g $(OPT_FLAGS)
 

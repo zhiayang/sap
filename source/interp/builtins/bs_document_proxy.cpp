@@ -29,16 +29,16 @@ namespace sap::interp::builtin
 
 	Value builtin::BS_DocumentProxy::make(Evaluator* ev, layout::Document* doc)
 	{
-		auto& pl = doc->pageLayout();
-		auto page_size = BS_Size2d::make(ev,
-			DynLength2d {
-				.x = DynLength(pl.pageSize().x()),
-				.y = DynLength(pl.pageSize().y()),
-			});
-
 		return StructMaker(BS_DocumentProxy::type->toStruct())
-		    .set("page_count", Value::integer(checked_cast<int64_t>(pl.pageCount())))
-		    .set("page_size", std::move(page_size))
+		    .set("page_count",
+				Value::fromGenerator(Type::makeInteger(),
+					[doc]() { return Value::integer(checked_cast<int64_t>(doc->pageLayout().pageCount())); }))
+		    .set("page_size",
+				Value::fromGenerator(BS_Size2d::type,
+					[ev, doc]() {
+						auto ps = doc->pageLayout().pageSize();
+						return BS_Size2d::make(ev, DynLength2d { .x = DynLength(ps.x()), .y = DynLength(ps.y()) });
+					}))
 		    .set("outline_items",
 				Value::array(BS_OutlineItem::type,
 					util::map(doc->outlineItems(), [ev](auto&& item) { return BS_OutlineItem::make(ev, item); })))

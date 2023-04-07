@@ -22,10 +22,8 @@ namespace sap::interp::builtin
 			.name = BS_Size2d::name,
 		});
 
-		return util::vectorOf(                               //
-			Field { .name = "layout_pass", .type = pt_int }, //
-			Field { .name = "page_count", .type = pt_int },  //
-			Field { .name = "page_size", .type = pt_size2d } //
+		return util::vectorOf(                              //
+			Field { .name = "layout_pass", .type = pt_int } //
 		);
 	}
 
@@ -33,21 +31,14 @@ namespace sap::interp::builtin
 	{
 		return StructMaker(BS_State::type->toStruct()) //
 		    .set("layout_pass", Value::integer(checked_cast<int64_t>(state.layout_pass)))
-		    .set("page_count", Value::integer(checked_cast<int64_t>(state.page_count)))
-		    .set("page_size", BS_Size2d::make(ev, state.page_size))
 		    .make();
 	}
 
 	GlobalState builtin::BS_State::unmake(Evaluator* ev, const Value& value)
 	{
 		auto layout_pass = get_struct_field<int64_t>(value, "layout_pass");
-		auto page_count = get_struct_field<int64_t>(value, "page_count");
-		auto& page_size = value.getStructField("page_size");
-
 		return GlobalState {
 			.layout_pass = checked_cast<size_t>(layout_pass),
-			.page_count = checked_cast<size_t>(page_count),
-			.page_size = BS_Size2d::unmake(ev, page_size),
 		};
 	}
 }

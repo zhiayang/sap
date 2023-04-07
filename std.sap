@@ -2,6 +2,11 @@
 
 namespace builtin
 {
+	fn to_string(sz: &Size2d) -> string
+	{
+		return f"(x: {sz!.x}, y: {sz!.y})";
+	}
+
 	fn to_string(pos: &Position) -> string
 	{
 		return f"\{xy: ({pos!.x}, {pos!.y}), page: {pos!.page}\}";
@@ -319,6 +324,7 @@ namespace std
 		return x;
 	}
 
+	# actually put the page numbers onto the page
 	@finalise {
 		var i = 0;
 		var rst_idx = 0;
@@ -326,11 +332,11 @@ namespace std
 
 		var page_num_offset = 0;
 
-		var page_num_pos = builtin::state().page_size;
+		var page_num_pos = builtin::document()!.page_size;
 		page_num_pos.x -= 34mm;
 		page_num_pos.y -= 30mm;
 
-		while(i < builtin::state().page_count)
+		while(i < builtin::document()!.page_count)
 		{
 			if(rst_idx < g_page_numbering_resets.size())
 			{
@@ -364,6 +370,61 @@ namespace std
 			i += 1;
 		}
 	}
+
+	# generate outline items
+	@finalise {
+		var i = 0;
+		while(i < g_sections.size())
+		{
+			let s = &mut g_sections[i];
+			let pos = s!.num_tbo_ref.layout_object()!.position();
+
+			var children1: [builtin::OutlineItem] = [];
+
+			var si = 0;
+			while(si < s!.subsections.size())
+			{
+				let ss = &mut s!.subsections[si];
+				let pos = ss!.num_tbo_ref.layout_object()!.position();
+
+				var children2: [builtin::OutlineItem] = [];
+
+				var ssi = 0;
+				while(ssi < ss!.subsubsections.size())
+				{
+					let sss = &mut ss!.subsubsections[ssi];
+					let pos = sss!.num_tbo_ref.layout_object()!.position();
+
+					children2 += [builtin::OutlineItem {
+						title: sss!.name,
+						position: pos,
+						children: [],
+					}];
+
+					ssi += 1;
+				}
+
+				children1 += [builtin::OutlineItem {
+					title: ss!.name,
+					position: pos,
+					children: *children2,
+				}];
+
+				si += 1;
+			}
+
+			builtin::document()!.outline_items += [builtin::OutlineItem {
+				title: s!.name,
+				position: pos,
+				children: *children1,
+			}];
+
+			i += 1;
+		}
+	}
+
+
+
 
 
 	@post {
@@ -459,7 +520,7 @@ namespace std
 
 	global var g_saved_sections: [Section] = [];
 	@post {
-		g_saved_sections = *g_sections;
+		g_saved_sections = g_sections;
 	}
 
 	fn output_table_of_contents() -> ?Block

@@ -18,10 +18,23 @@ namespace sap::interp
 		return m_type;
 	}
 
+#define REIFY_GEN_FUNC(field)           \
+	do                                  \
+	{                                   \
+		if(m_gen_func)                  \
+		{                               \
+			field = m_gen_func().field; \
+			m_gen_func = nullptr;       \
+		}                               \
+	} while(false)
+
+
 	bool Value::getBool() const
 	{
 		this->ensure_not_moved_from();
 		assert(m_type->isBool());
+		REIFY_GEN_FUNC(v_bool);
+
 		return v_bool;
 	}
 
@@ -29,6 +42,8 @@ namespace sap::interp
 	{
 		this->ensure_not_moved_from();
 		assert(m_type->isChar());
+		REIFY_GEN_FUNC(v_char);
+
 		return v_char;
 	}
 
@@ -36,6 +51,8 @@ namespace sap::interp
 	{
 		this->ensure_not_moved_from();
 		assert(m_type->isFloating());
+		REIFY_GEN_FUNC(v_floating);
+
 		return v_floating;
 	}
 
@@ -43,6 +60,8 @@ namespace sap::interp
 	{
 		this->ensure_not_moved_from();
 		assert(m_type->isInteger());
+		REIFY_GEN_FUNC(v_integer);
+
 		return v_integer;
 	}
 
@@ -50,6 +69,8 @@ namespace sap::interp
 	{
 		this->ensure_not_moved_from();
 		assert(m_type->isLength());
+		REIFY_GEN_FUNC(v_length);
+
 		return v_length;
 	}
 
@@ -57,55 +78,18 @@ namespace sap::interp
 	{
 		this->ensure_not_moved_from();
 		assert(m_type->isFunction());
+		REIFY_GEN_FUNC(v_function);
+
 		return v_function;
 	}
 
-	auto Value::getTreeInlineObj() const -> const tree::InlineSpan&
-	{
-		this->ensure_not_moved_from();
-		assert(m_type->isTreeInlineObj());
-		return *v_inline_obj;
-	}
-
-	auto Value::takeTreeInlineObj() && -> zst::SharedPtr<tree::InlineSpan>
-	{
-		this->ensure_not_moved_from();
-		assert(m_type->isTreeInlineObj());
-		return std::move(v_inline_obj);
-	}
-
-	auto Value::getTreeBlockObj() const -> const tree::BlockObject&
-	{
-		this->ensure_not_moved_from();
-		assert(m_type->isTreeBlockObj());
-		return *v_block_obj;
-	}
-
-	auto Value::takeTreeBlockObj() && -> zst::SharedPtr<tree::BlockObject>
-	{
-		this->ensure_not_moved_from();
-		assert(m_type->isTreeBlockObj());
-		return std::move(v_block_obj);
-	}
-
-	auto Value::getLayoutObject() const -> const layout::LayoutObject&
-	{
-		this->ensure_not_moved_from();
-		assert(m_type->isLayoutObject());
-		return *v_layout_obj;
-	}
-
-	auto Value::takeLayoutObject() && -> std::unique_ptr<layout::LayoutObject>
-	{
-		this->ensure_not_moved_from();
-		assert(m_type->isLayoutObject());
-		return std::move(v_layout_obj);
-	}
 
 	const std::vector<Value>& Value::getArray() const
 	{
 		this->ensure_not_moved_from();
 		assert(m_type->isArray());
+		REIFY_GEN_FUNC(v_array);
+
 		return v_array;
 	}
 
@@ -113,6 +97,8 @@ namespace sap::interp
 	{
 		this->ensure_not_moved_from();
 		assert(m_type->isArray());
+		REIFY_GEN_FUNC(v_array);
+
 		return std::move(v_array);
 	}
 
@@ -120,6 +106,8 @@ namespace sap::interp
 	{
 		this->ensure_not_moved_from();
 		assert(m_type->isEnum());
+		REIFY_GEN_FUNC(v_array);
+
 		return v_array[0];
 	}
 
@@ -127,6 +115,8 @@ namespace sap::interp
 	{
 		this->ensure_not_moved_from();
 		assert(m_type->isEnum());
+		REIFY_GEN_FUNC(v_array);
+
 		return std::move(v_array[0]);
 	}
 
@@ -137,6 +127,8 @@ namespace sap::interp
 	{
 		this->ensure_not_moved_from();
 		assert(m_type->isArray());
+		REIFY_GEN_FUNC(v_array);
+
 
 		std::string ret {};
 		ret.reserve(v_array.size());
@@ -155,6 +147,7 @@ namespace sap::interp
 	{
 		this->ensure_not_moved_from();
 		assert(m_type->isArray());
+		REIFY_GEN_FUNC(v_array);
 
 		std::u32string ret {};
 		ret.reserve(v_array.size());
@@ -170,6 +163,8 @@ namespace sap::interp
 	{
 		this->ensure_not_moved_from();
 		assert(m_type->isStruct());
+		REIFY_GEN_FUNC(v_array);
+
 		return v_array[idx];
 	}
 
@@ -177,6 +172,8 @@ namespace sap::interp
 	{
 		this->ensure_not_moved_from();
 		assert(this->isStruct());
+		REIFY_GEN_FUNC(v_array);
+
 		return v_array[idx];
 	}
 
@@ -184,6 +181,7 @@ namespace sap::interp
 	{
 		this->ensure_not_moved_from();
 		assert(m_type->isStruct());
+		REIFY_GEN_FUNC(v_array);
 
 		return v_array[m_type->toStruct()->getFieldIndex(name)];
 	}
@@ -192,6 +190,8 @@ namespace sap::interp
 	{
 		this->ensure_not_moved_from();
 		assert(m_type->isStruct());
+		REIFY_GEN_FUNC(v_array);
+
 		return v_array[m_type->toStruct()->getFieldIndex(name)];
 	}
 
@@ -200,6 +200,8 @@ namespace sap::interp
 	{
 		this->ensure_not_moved_from();
 		assert(m_type->isStruct());
+		REIFY_GEN_FUNC(v_array);
+
 		return std::move(v_array);
 	}
 
@@ -207,6 +209,8 @@ namespace sap::interp
 	{
 		this->ensure_not_moved_from();
 		assert(m_type->isStruct());
+		REIFY_GEN_FUNC(v_array);
+
 		return v_array;
 	}
 
@@ -214,6 +218,8 @@ namespace sap::interp
 	{
 		this->ensure_not_moved_from();
 		assert(m_type->isPointer());
+		REIFY_GEN_FUNC(v_pointer);
+
 		return v_pointer;
 	}
 
@@ -221,6 +227,8 @@ namespace sap::interp
 	{
 		this->ensure_not_moved_from();
 		assert(m_type->isMutablePointer());
+		REIFY_GEN_FUNC(v_pointer);
+
 		return const_cast<Value*>(v_pointer);
 	}
 
@@ -228,6 +236,8 @@ namespace sap::interp
 	{
 		this->ensure_not_moved_from();
 		assert(m_type->isTreeBlockObjRef());
+		REIFY_GEN_FUNC(v_block_obj_ref);
+
 		return v_block_obj_ref;
 	}
 
@@ -235,6 +245,8 @@ namespace sap::interp
 	{
 		this->ensure_not_moved_from();
 		assert(m_type->isLayoutObjectRef());
+		REIFY_GEN_FUNC(v_layout_obj_ref);
+
 		return v_layout_obj_ref;
 	}
 
@@ -242,6 +254,8 @@ namespace sap::interp
 	{
 		this->ensure_not_moved_from();
 		assert(m_type->isTreeInlineObjRef());
+		REIFY_GEN_FUNC(v_inline_obj_ref);
+
 		return v_inline_obj_ref;
 	}
 
@@ -249,6 +263,8 @@ namespace sap::interp
 	{
 		this->ensure_not_moved_from();
 		assert(m_type->isOptional());
+		REIFY_GEN_FUNC(v_array);
+
 		if(v_array.empty())
 			return std::nullopt;
 
@@ -259,6 +275,8 @@ namespace sap::interp
 	{
 		this->ensure_not_moved_from();
 		assert(m_type->isOptional());
+		REIFY_GEN_FUNC(v_array);
+
 		if(v_array.empty())
 			return std::nullopt;
 
@@ -269,6 +287,8 @@ namespace sap::interp
 	{
 		this->ensure_not_moved_from();
 		assert(m_type->isOptional());
+		REIFY_GEN_FUNC(v_array);
+
 		if(v_array.empty())
 			return std::nullopt;
 
@@ -281,14 +301,72 @@ namespace sap::interp
 	{
 		this->ensure_not_moved_from();
 		assert(m_type->isOptional());
+		REIFY_GEN_FUNC(v_array);
+
 		return v_array.size() > 0;
 	}
 
+	auto Value::getTreeInlineObj() const -> const tree::InlineSpan&
+	{
+		this->ensure_not_moved_from();
+		assert(m_type->isTreeInlineObj());
+		assert(not m_gen_func);
+
+		return *v_inline_obj;
+	}
+
+	auto Value::takeTreeInlineObj() && -> zst::SharedPtr<tree::InlineSpan>
+	{
+		this->ensure_not_moved_from();
+		assert(m_type->isTreeInlineObj());
+		assert(not m_gen_func);
+
+		return std::move(v_inline_obj);
+	}
+
+	auto Value::getTreeBlockObj() const -> const tree::BlockObject&
+	{
+		this->ensure_not_moved_from();
+		assert(m_type->isTreeBlockObj());
+		assert(not m_gen_func);
+
+		return *v_block_obj;
+	}
+
+	auto Value::takeTreeBlockObj() && -> zst::SharedPtr<tree::BlockObject>
+	{
+		this->ensure_not_moved_from();
+		assert(m_type->isTreeBlockObj());
+		assert(not m_gen_func);
+
+		return std::move(v_block_obj);
+	}
+
+	auto Value::getLayoutObject() const -> const layout::LayoutObject&
+	{
+		this->ensure_not_moved_from();
+		assert(m_type->isLayoutObject());
+		assert(not m_gen_func);
+
+		return *v_layout_obj;
+	}
+
+	auto Value::takeLayoutObject() && -> std::unique_ptr<layout::LayoutObject>
+	{
+		this->ensure_not_moved_from();
+		assert(m_type->isLayoutObject());
+		assert(not m_gen_func);
+
+		return std::move(v_layout_obj);
+	}
 
 
 	std::u32string Value::toString() const
 	{
 		this->ensure_not_moved_from();
+		if(m_gen_func)
+			return m_gen_func().toString();
+
 		if(m_type->isChar())
 		{
 			return &v_char;
@@ -660,6 +738,14 @@ namespace sap::interp
 		return ret;
 	}
 
+	Value Value::fromGenerator(const Type* type, std::function<Value()> gen_func)
+	{
+		auto ret = Value(type);
+		ret.m_gen_func = std::move(gen_func);
+
+		return ret;
+	}
+
 
 
 	Value Value::clone() const
@@ -667,7 +753,11 @@ namespace sap::interp
 		this->ensure_not_moved_from();
 
 		auto val = Value(m_type);
-		if(m_type->isBool())
+		if(m_gen_func)
+		{
+			val.m_gen_func = m_gen_func;
+		}
+		else if(m_type->isBool())
 		{
 			val.v_bool = v_bool;
 		}
@@ -765,7 +855,10 @@ namespace sap::interp
 
 	void Value::destroy()
 	{
-		if(m_type->isTreeInlineObj())
+		if(m_gen_func)
+			return;
+
+		else if(m_type->isTreeInlineObj())
 			v_inline_obj.~decltype(v_inline_obj)();
 
 		else if(m_type->isTreeBlockObj())
@@ -784,7 +877,10 @@ namespace sap::interp
 	void Value::steal_from(Value&& val)
 	{
 		m_type = val.m_type;
-		if(m_type->isBool())
+		if(val.m_gen_func)
+			m_gen_func = std::move(val.m_gen_func);
+
+		else if(m_type->isBool())
 			v_bool = std::move(val.v_bool);
 
 		else if(m_type->isChar())
