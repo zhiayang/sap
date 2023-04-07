@@ -49,6 +49,18 @@ namespace pdf
 			{ names::Producer, String::create("sap-" GIT_REVISION) },
 		});
 
+		auto x = LinkAnnotation({ 50, 50 }, { 50, 50 },
+			Destination {
+				.page = 2,
+				.zoom = 0,
+				.position = { 100, 100 },
+			});
+
+		m_pages[0]->dictionary()->add(names::Annots, Array::create(x.toDictionary(this)));
+
+
+
+
 		// first, traverse all objects that are reachable from the root
 		root->collectIndirectObjectsAndAssignIds(this);
 		info_dict->collectIndirectObjectsAndAssignIds(this);

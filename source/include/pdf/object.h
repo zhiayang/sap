@@ -381,5 +381,12 @@ namespace pdf
 		static const auto XHeight = pdf::Name("XHeight");
 		static const auto XObject = pdf::Name("XObject");
 		static const auto XYZ = pdf::Name("XYZ");
+		static const auto Annot = pdf::Name("Annot");
+		static const auto Annots = pdf::Name("Annots");
+		static const auto Link = pdf::Name("Link");
+		static const auto Rect = pdf::Name("Rect");
+		static const auto BS = pdf::Name("BS");
+		static const auto Border = pdf::Name("Border");
+		static const auto C = pdf::Name("C");
 	}
 }

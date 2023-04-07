@@ -7,7 +7,7 @@
 #include <vector>
 
 #include "pdf/object.h"
-#include "pdf/destination.h"
+#include "pdf/annotation.h"
 
 namespace pdf
 {

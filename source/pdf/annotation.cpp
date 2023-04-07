@@ -1,0 +1,50 @@
+// annotation.cpp
+// Copyright (c) 2022, zhiayang
+// SPDX-License-Identifier: Apache-2.0
+
+#include "pdf/file.h"
+#include "pdf/page.h"
+#include "pdf/object.h"
+#include "pdf/annotation.h"
+
+namespace pdf
+{
+	Annotation::Annotation(pdf::Position2d pos, pdf::Size2d size) : m_position(pos), m_size(size)
+	{
+	}
+
+	LinkAnnotation::LinkAnnotation(pdf::Position2d pos, pdf::Size2d size, Destination dest)
+		: Annotation(pos, size), m_destination(std::move(dest))
+	{
+	}
+
+	Dictionary* LinkAnnotation::toDictionary(File* file) const
+	{
+		auto dest = Array::create(IndirectRef::create(file->getPage(m_destination.page)->dictionary()),
+			names::XYZ.ptr(),
+			Decimal::create(m_destination.position.x().value()), //
+			Decimal::create(m_destination.position.y().value()), //
+			Decimal::create(m_destination.zoom));
+
+		auto dict = Dictionary::createIndirect(names::Annot,
+			{
+				{ names::Subtype, names::Link.ptr() },
+				{
+					names::Rect,
+					Array::create(                                                  //
+						Decimal::create(m_position.x().value()),                    //
+						Decimal::create(m_position.y().value()),                    //
+						Decimal::create((m_position.x() + m_position.x()).value()), //
+						Decimal::create((m_position.y() + m_position.y()).value())),
+				},
+				{ names::BS, Dictionary::create(names::Border, { { names::S, names::S.ptr() } }) },
+				{ names::C, Array::create(Decimal::create(1.0), Decimal::create(0), Decimal::create(0)) },
+				{
+					names::A,
+					Dictionary::create(names::Action, { { names::S, names::GoTo.ptr() }, { names::D, dest } }),
+				},
+			});
+
+		return dict;
+	}
+}

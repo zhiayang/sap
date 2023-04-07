@@ -3,7 +3,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #include "pdf/pdf.h"
-#include "pdf/destination.h"
+#include "pdf/annotation.h"
 
 namespace pdf
 {
