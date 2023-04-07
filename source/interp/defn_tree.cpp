@@ -50,6 +50,16 @@ namespace sap::interp
 
 	ErrorOr<std::vector<const Declaration*>> DefnTree::lookup(QualifiedId id) const
 	{
+		return this->lookup(std::move(id), /* recursive: */ false);
+	}
+
+	ErrorOr<std::vector<const Declaration*>> DefnTree::lookupRecursive(QualifiedId id) const
+	{
+		return this->lookup(std::move(id), /* recursive: */ true);
+	}
+
+	ErrorOr<std::vector<const Declaration*>> DefnTree::lookup(QualifiedId id, bool recursive) const
+	{
 		auto current = this;
 
 		if(id.top_level)
@@ -80,22 +90,27 @@ namespace sap::interp
 				return next.to_err();
 		}
 
+		std::vector<const Declaration*> decls {};
 		while(current != nullptr)
 		{
 			if(auto it = current->m_decls.find(id.name); it != current->m_decls.end())
 			{
-				std::vector<const Declaration*> decls {};
 				for(auto& d : it->second)
 					decls.push_back(d);
 
-				return Ok(decls);
+				if(not recursive)
+					return Ok(std::move(decls));
 			}
 
-			if(current->parent() == nullptr)
+			// if the id was qualified, then we shouldn't search in parents.
+			if(not id.parents.empty() || current->parent() == nullptr)
 				break;
 
 			current = current->parent();
 		}
+
+		if(not decls.empty())
+			return Ok(std::move(decls));
 
 		return ErrMsg(m_typechecker->loc(), "no declaration named '{}' (search started at '{}')", id.name, m_name);
 	}

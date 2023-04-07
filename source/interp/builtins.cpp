@@ -129,9 +129,8 @@ namespace sap::interp
 
 		namespace B = builtin;
 
-		// TODO: this is a huge hack!!!!!!!
-		// since we don't have generics, we make this accept 'any'...
-		define_builtin("size", makeParamList(P("_", t_any)), t_int,
+		// FIXME: make this not take &[void] when we get generics
+		define_builtin("size", makeParamList(P("_", t_ptr(PType::array(t_void)))), t_int,
 			[](Evaluator* ev, std::vector<Value>& args) -> ErrorOr<EvalResult> {
 				assert(args.size() == 1);
 				if(not args[0].isPointer() || !args[0].type()->pointerElement()->isArray())
@@ -140,7 +139,6 @@ namespace sap::interp
 				return EvalResult::ofValue(Value::integer(checked_cast<
 					int64_t>(args[0].getPointer()->getArray().size())));
 			});
-
 
 		auto _ = ts->pushTree(builtin_ns);
 
@@ -161,13 +159,39 @@ namespace sap::interp
 			return EvalResult::ofValue(Value::mutablePointer(builtin::BS_DocumentProxy::type, &ev->documentProxy()));
 		});
 
-		define_builtin("ref", makeParamList(P("_", t_ptr(t_tio))), t_tio_ref, &B::ref_object);
-		define_builtin("ref", makeParamList(P("_", t_ptr(t_tbo))), t_tbo_ref, &B::ref_object);
-		define_builtin("ref", makeParamList(P("_", t_ptr(t_lo))), t_lo_ref, &B::ref_object);
+		define_builtin("to_string", makeParamList(P("_", t_any)), t_str, &B::to_string);
 
 		define_builtin("vspace", makeParamList(P("_", t_length)), t_tbo, &B::vspace);
 		define_builtin("hspace", makeParamList(P("_", t_length)), t_tbo, &B::hspace);
 		define_builtin("page_break", makeParamList(), t_tbo, &B::page_break);
+
+
+		define_builtin("bold1", makeParamList(P("_", t_any)), t_tio, &B::bold1);
+		define_builtin("italic1", makeParamList(P("_", t_any)), t_tio, &B::italic1);
+		define_builtin("bold_italic1", makeParamList(P("_", t_any)), t_tio, &B::bold_italic1);
+
+		define_builtin("request_layout", makeParamList(), t_void, &B::request_layout);
+
+		define_builtin("make_hbox", makeParamList(P("1", PType::variadicArray(t_tbo))), t_tbo, &B::make_hbox);
+		define_builtin("make_zbox", makeParamList(P("1", PType::variadicArray(t_tbo))), t_tbo, &B::make_zbox);
+		define_builtin("make_vbox",
+			makeParamList(P("1", PType::variadicArray(t_tbo)), P("glue", t_bool, make_bool(false))), t_tbo,
+			&B::make_vbox);
+
+		define_builtin("make_span", makeParamList(P("1", PType::variadicArray(t_tio))), t_tio, &B::make_span);
+		define_builtin("make_text", makeParamList(P("1", PType::variadicArray(t_str))), t_tio, &B::make_text);
+		define_builtin("make_line", makeParamList(P("1", PType::variadicArray(t_tio))), t_tbo, &B::make_line);
+		define_builtin("make_paragraph", makeParamList(P("1", PType::variadicArray(t_tio))), t_tbo, &B::make_paragraph);
+
+		define_builtin("apply_style", makeParamList(P("obj", t_tio), P("style", t_bstyle)), t_tio, &B::apply_style_tio);
+		define_builtin("apply_style", makeParamList(P("obj", t_tbo), P("style", t_bstyle)), t_tbo, &B::apply_style_tbo);
+
+		define_builtin("apply_style", makeParamList(P("style", t_bstyle), P("obj", t_tio)), t_tio, &B::apply_style_tio);
+		define_builtin("apply_style", makeParamList(P("style", t_bstyle), P("obj", t_tbo)), t_tbo, &B::apply_style_tbo);
+
+		define_builtin("load_image",
+			makeParamList(P("1", t_str), P("2", t_length), P("3", t_opt(t_length), make_null())), t_tbo,
+			&B::load_image);
 
 		define_builtin("layout_object", makeParamList(P("_", t_ptr(t_tbo))), t_opt(t_lo_ref), &B::get_layout_object);
 		define_builtin("layout_object", makeParamList(P("_", t_ptr(t_tbo_ref))), t_opt(t_lo_ref),
@@ -175,6 +199,8 @@ namespace sap::interp
 
 		define_builtin("position", makeParamList(P("_", t_ptr(t_lo_ref))), t_babsposition,
 			&B::get_layout_object_position);
+
+		define_builtin("size", makeParamList(P("_", t_ptr(t_lo_ref))), t_bsize2d, &B::get_layout_object_size);
 
 		define_builtin("set_size", makeParamList(P("_", t_ptr(t_tbo)), P("size", t_bsize2d)), t_void, &B::set_tbo_size);
 		define_builtin("set_size", makeParamList(P("_", t_ptr(t_tbo_ref)), P("size", t_bsize2d)), t_void,
@@ -214,34 +240,9 @@ namespace sap::interp
 		define_builtin("override_position", makeParamList(P("_", t_ptr(t_lo_ref)), P("pos", t_babsposition)), t_void,
 			&B::override_object_position);
 
-
-
-		define_builtin("bold1", makeParamList(P("_", t_any)), t_tio, &B::bold1);
-		define_builtin("italic1", makeParamList(P("_", t_any)), t_tio, &B::italic1);
-		define_builtin("bold_italic1", makeParamList(P("_", t_any)), t_tio, &B::bold_italic1);
-
-		define_builtin("request_layout", makeParamList(), t_void, &B::request_layout);
-
-		define_builtin("make_hbox", makeParamList(P("1", PType::variadicArray(t_tbo))), t_tbo, &B::make_hbox);
-		define_builtin("make_zbox", makeParamList(P("1", PType::variadicArray(t_tbo))), t_tbo, &B::make_zbox);
-		define_builtin("make_vbox",
-			makeParamList(P("1", PType::variadicArray(t_tbo)), P("glue", t_bool, make_bool(false))), t_tbo,
-			&B::make_vbox);
-
-		define_builtin("make_span", makeParamList(P("1", PType::variadicArray(t_tio))), t_tio, &B::make_span);
-		define_builtin("make_text", makeParamList(P("1", PType::variadicArray(t_str))), t_tio, &B::make_text);
-		define_builtin("make_line", makeParamList(P("1", PType::variadicArray(t_tio))), t_tbo, &B::make_line);
-		define_builtin("make_paragraph", makeParamList(P("1", PType::variadicArray(t_tio))), t_tbo, &B::make_paragraph);
-
-		define_builtin("apply_style", makeParamList(P("style", t_bstyle), P("obj", t_tio)), t_tio, &B::apply_style_tio);
-		define_builtin("apply_style", makeParamList(P("style", t_bstyle), P("obj", t_tbo)), t_tbo, &B::apply_style_tbo);
-
-		define_builtin("apply_style", makeParamList(P("obj", t_tio), P("style", t_bstyle)), t_tio, &B::apply_style_tio);
-		define_builtin("apply_style", makeParamList(P("obj", t_tbo), P("style", t_bstyle)), t_tbo, &B::apply_style_tbo);
-
-		define_builtin("load_image",
-			makeParamList(P("1", t_str), P("2", t_length), P("3", t_opt(t_length), make_null())), t_tbo,
-			&B::load_image);
+		define_builtin("ref", makeParamList(P("_", t_ptr(t_tio))), t_tio_ref, &B::ref_object);
+		define_builtin("ref", makeParamList(P("_", t_ptr(t_tbo))), t_tbo_ref, &B::ref_object);
+		define_builtin("ref", makeParamList(P("_", t_ptr(t_lo))), t_lo_ref, &B::ref_object);
 
 		define_builtin("include", makeParamList(P("1", t_str)), t_tbo, &B::include_file);
 
@@ -256,8 +257,6 @@ namespace sap::interp
 
 		define_builtin("print", makeParamList(P("_", t_any)), t_void, &B::print);
 		define_builtin("println", makeParamList(P("_", t_any)), t_void, &B::println);
-
-		define_builtin("to_string", makeParamList(P("_", t_any)), t_str, &B::to_string);
 
 		define_builtin("find_font",
 			makeParamList(                                  //

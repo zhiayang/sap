@@ -10,9 +10,7 @@
 namespace sap::interp
 {
 	Typechecker::Typechecker(Interpreter* interp)
-		: m_interp(interp)
-		, m_top(new DefnTree(this, "__top_level", /* parent: */ nullptr))
-		, m_loop_body_nesting(0)
+		: m_interp(interp), m_top(new DefnTree(this, "__top_level", /* parent: */ nullptr)), m_loop_body_nesting(0)
 	{
 		this->pushTree(m_top.get()).cancel();
 	}
@@ -26,9 +24,7 @@ namespace sap::interp
 	[[nodiscard]] util::Defer<> Typechecker::pushLocation(const Location& loc)
 	{
 		m_location_stack.push_back(loc);
-		return util::Defer([this]() {
-			this->popLocation();
-		});
+		return util::Defer([this]() { this->popLocation(); });
 	}
 
 	void Typechecker::popLocation()
@@ -60,9 +56,7 @@ namespace sap::interp
 	[[nodiscard]] util::Defer<> Typechecker::pushTree(DefnTree* tree)
 	{
 		m_tree_stack.push_back(tree);
-		return util::Defer<>([this]() {
-			this->popTree();
-		});
+		return util::Defer<>([this]() { this->popTree(); });
 	}
 
 	void Typechecker::popTree()
@@ -81,8 +75,9 @@ namespace sap::interp
 		else if(from->isNullPtr() && to->isPointer())
 			return true;
 
-		else if(from->isPointer() && to->isPointer())
-			return from->pointerElement() == to->pointerElement() && from->isMutablePointer();
+		else if(from->isPointer() && to->isPointer() && from->pointerElement() == to->pointerElement()
+				&& from->isMutablePointer())
+			return true;
 
 		else if(from->isInteger() && to->isFloating())
 			return true;
@@ -99,7 +94,14 @@ namespace sap::interp
 		else if(from->isEnum() && from->toEnum()->elementType() == to)
 			return true;
 
-		else if(from->isArray() && from->arrayElement()->isVoid() && to->isArray())
+		// TODO: these are all hacky! we don't have generics yet.
+		else if(from->isArray() && to->isArray() && (from->arrayElement()->isVoid() || to->arrayElement()->isVoid()))
+			return true;
+
+		else if(
+			from->isPointer() && to->isPointer() && from->pointerElement()->isArray() && to->pointerElement()->isArray()
+			&& (from->pointerElement()->arrayElement()->isVoid() || to->pointerElement()->arrayElement()->isVoid())
+			&& (from->isMutablePointer() || not to->isMutablePointer()))
 			return true;
 
 		return false;
@@ -238,9 +240,7 @@ namespace sap::interp
 	[[nodiscard]] util::Defer<> Typechecker::enterFunctionWithReturnType(const Type* t)
 	{
 		m_expected_return_types.push_back(t);
-		return util::Defer<>([this]() {
-			this->leaveFunctionWithReturnType();
-		});
+		return util::Defer<>([this]() { this->leaveFunctionWithReturnType(); });
 	}
 
 	void Typechecker::leaveFunctionWithReturnType()
@@ -253,9 +253,7 @@ namespace sap::interp
 	[[nodiscard]] util::Defer<> Typechecker::enterLoopBody()
 	{
 		m_loop_body_nesting++;
-		return util::Defer([this]() {
-			m_loop_body_nesting--;
-		});
+		return util::Defer([this]() { m_loop_body_nesting--; });
 	}
 
 	bool Typechecker::isCurrentlyInLoopBody() const

@@ -84,6 +84,8 @@ namespace sap
 		zpr::fprintln(stderr, "{}{} |  {}{}{}{}{}", colour_blue, line_num_padding, colour_reset, colour_error,
 			caret_spaces, carets, colour_reset);
 		zpr::fprintln(stderr, "");
+
+		abort();
 	}
 
 

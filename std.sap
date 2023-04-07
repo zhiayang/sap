@@ -377,7 +377,9 @@ namespace std
 		while(i < g_sections.size())
 		{
 			let s = &mut g_sections[i];
-			let pos = s!.num_tbo_ref.layout_object()!.position();
+			let ref = s!.num_tbo_ref.layout_object();
+			var pos = ref!.position();
+			pos.y -= ref!.size().y;
 
 			var children1: [builtin::OutlineItem] = [];
 
@@ -385,7 +387,9 @@ namespace std
 			while(si < s!.subsections.size())
 			{
 				let ss = &mut s!.subsections[si];
-				let pos = ss!.num_tbo_ref.layout_object()!.position();
+				let ref = ss!.num_tbo_ref.layout_object();
+				var pos = ref!.position();
+				pos.y -= ref!.size().y;
 
 				var children2: [builtin::OutlineItem] = [];
 
@@ -393,7 +397,9 @@ namespace std
 				while(ssi < ss!.subsubsections.size())
 				{
 					let sss = &mut ss!.subsubsections[ssi];
-					let pos = sss!.num_tbo_ref.layout_object()!.position();
+					let ref = sss!.num_tbo_ref.layout_object();
+					var pos = ref!.position();
+					pos.y -= ref!.size().y;
 
 					children2 += [builtin::OutlineItem {
 						title: sss!.name,

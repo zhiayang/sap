@@ -29,6 +29,7 @@ namespace sap::interp
 		DefnTree* declareAnonymousNamespace();
 
 		ErrorOr<std::vector<const Declaration*>> lookup(QualifiedId id) const;
+		ErrorOr<std::vector<const Declaration*>> lookupRecursive(QualifiedId id) const;
 
 		ErrorOr<void> declare(const Declaration* decl);
 
@@ -36,12 +37,13 @@ namespace sap::interp
 
 	private:
 		explicit DefnTree(const Typechecker* ts, std::string name, DefnTree* parent)
-			: m_name(std::move(name))
-			, m_parent(parent)
-			, m_typechecker(ts)
+			: m_name(std::move(name)), m_parent(parent), m_typechecker(ts)
 		{
 		}
 
+		ErrorOr<std::vector<const Declaration*>> lookup(QualifiedId id, bool recursive) const;
+
+	private:
 		size_t m_anon_namespace_count = 0;
 
 		std::string m_name;

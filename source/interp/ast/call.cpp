@@ -68,7 +68,6 @@ namespace sap::interp
 
 		ArrangedArguments<const Type*> arg_arrangement {};
 
-
 		for(auto decl : decls)
 		{
 			auto result = get_calling_cost(ts, decl, arguments);
@@ -101,7 +100,13 @@ namespace sap::interp
 
 		if(best_decls.empty())
 		{
-			auto err = ErrorMessage(ts, "no matching function for call");
+			std::string arg_types {};
+			for(size_t i = 0; i < arguments.size(); i++)
+				arg_types += ((i == 0 ? "" : ", ") + arguments[i].value->str());
+
+			auto err = ErrorMessage(ts,
+				zpr::sprint("no matching function for call matching arguments ({})", arg_types));
+
 			for(auto& [decl, msg] : failed_decls)
 				err.addInfo(decl->loc(), msg.string());
 
@@ -194,7 +199,7 @@ namespace sap::interp
 			if(this->rewritten_ufcs)
 				lookup_in = TRY(ts->getDefnTreeForType(processed_args[0].value));
 
-			auto decls = TRY(lookup_in->lookup(ident->name));
+			auto decls = TRY(lookup_in->lookupRecursive(ident->name));
 			assert(decls.size() > 0);
 
 			auto [best_decl, arg_arrangement] = TRY(([&]() -> ResolvedOverloadSet {

@@ -107,6 +107,20 @@ namespace sap::interp::builtin
 
 
 
+	ErrorOr<EvalResult> get_layout_object_size(Evaluator* ev, std::vector<Value>& args)
+	{
+		assert(args.size() == 1);
+
+		if(ev->interpreter()->currentPhase() < ProcessingPhase::PostLayout)
+			return ErrMsg(ev, "LayoutObjectRef::size() can only be called during or after `@post`");
+
+		auto obj = TRY(get_layout_object_ref(ev, args[0]));
+		return EvalResult::ofValue(BS_Size2d::make(ev,
+			DynLength2d {
+				.x = DynLength(obj->layoutSize().width),
+				.y = DynLength(obj->layoutSize().total_height()),
+			}));
+	}
 
 	ErrorOr<EvalResult> get_layout_object_position(Evaluator* ev, std::vector<Value>& args)
 	{

@@ -82,9 +82,21 @@ namespace sap::interp
 		{
 			return std::move(value).takeEnumerator();
 		}
-		else if(from_type->isArray() && from_type->arrayElement()->isVoid() && to->isArray())
+		else if(from_type->isArray() && to->isArray()
+				&& (from_type->arrayElement()->isVoid() || to->arrayElement()->isVoid()))
 		{
-			return Value::array(to->arrayElement(), {});
+			return Value::array(to->arrayElement(), std::move(value).takeArray());
+		}
+		else if(from_type->isPointer() && to->isPointer() && from_type->pointerElement()->isArray()
+				&& to->pointerElement()->isArray()
+				&& (from_type->pointerElement()->arrayElement()->isVoid()
+					|| to->pointerElement()->arrayElement()->isVoid()))
+		{
+			assert(from_type->isMutablePointer() || not to->isMutablePointer());
+			if(to->isMutablePointer())
+				return Value::mutablePointer(to->pointerElement(), value.getMutablePointer());
+			else
+				return Value::pointer(to->pointerElement(), value.getPointer());
 		}
 		else
 		{
