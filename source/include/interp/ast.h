@@ -637,15 +637,6 @@ namespace sap::interp
 		frontend::PType m_return_type;
 	};
 
-	template <std::same_as<FunctionDecl::Param>... P>
-	std::vector<FunctionDecl::Param> makeParamList(P&&... params)
-	{
-		std::vector<FunctionDecl::Param> ret {};
-		(ret.push_back(std::move(params)), ...);
-
-		return ret;
-	}
-
 	struct FunctionDefn : Definition
 	{
 		FunctionDefn(Location loc,

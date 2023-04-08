@@ -85,6 +85,8 @@ namespace sap::interp
 		std::optional<Value> takeOptional() &&;
 		bool haveOptionalValue() const;
 
+		bool hasGenerator() const;
+
 		std::u32string toString() const;
 
 		bool isBool() const;

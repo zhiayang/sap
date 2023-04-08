@@ -185,10 +185,10 @@ namespace sap::interp
 			auto len = lval.getLength();
 
 			double multiplier = 0;
-			if(lval.isFloating())
-				multiplier = lval.getFloating();
+			if(rval.isFloating())
+				multiplier = rval.getFloating();
 			else
-				multiplier = static_cast<double>(lval.getInteger());
+				multiplier = static_cast<double>(rval.getInteger());
 
 			if(op == Op::Divide)
 				multiplier = 1.0 / multiplier;

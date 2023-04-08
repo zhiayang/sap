@@ -32,6 +32,7 @@ namespace sap
 
 namespace sap::layout
 {
+	struct Document;
 	struct LayoutBase;
 
 	struct PageCursor;
@@ -64,7 +65,13 @@ namespace sap::layout
 		virtual Payload limit_width(const Payload& payload, Length width) const = 0;
 		virtual Payload new_page(const Payload& payload) = 0;
 
+		Document* document() const { return m_document; }
+
 	protected:
+		LayoutBase(Document* doc) : m_document(doc) { }
+
+	protected:
+		Document* m_document;
 		std::vector<std::unique_ptr<LayoutObject>> m_objects {};
 	};
 
@@ -78,7 +85,7 @@ namespace sap::layout
 			Length right;
 		};
 
-		explicit PageLayout(Size2d size, PageLayout::Margins margins);
+		explicit PageLayout(Document* doc, Size2d size, PageLayout::Margins margins);
 		~PageLayout();
 
 		PageCursor newCursor() const;

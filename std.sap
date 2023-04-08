@@ -81,7 +81,7 @@ namespace std
 		num_line.set_width(14mm);
 
 		var name_line = builtin::make_line(builtin::make_text(name)).apply_style({
-			font_size: 2em,
+			font_size: 24pt,
 		});
 
 		let the_section = Section {
@@ -95,7 +95,7 @@ namespace std
 		var box = builtin::make_vbox(
 			builtin::vspace(0.5em),
 			builtin::make_hbox(*num_line, *name_line),
-			builtin::vspace(-0.9em),
+			builtin::vspace(-builtin::current_style().paragraph_spacing! / 2),
 		).apply_style({
 			font_family: g_sans_font,
 		});
@@ -126,7 +126,7 @@ namespace std
 		num_line.set_width(14mm);
 
 		var name_line = builtin::make_line(builtin::make_text(name)).apply_style({
-			font_size: 1.6em,
+			font_size: 19.5pt,
 		});
 
 		let the_sub = SubSection {
@@ -140,7 +140,7 @@ namespace std
 		var box = builtin::make_vbox(
 			builtin::vspace(0.5em),
 			builtin::make_hbox(*num_line, *name_line),
-			builtin::vspace(-0.9em),
+			builtin::vspace(-builtin::current_style().paragraph_spacing! / 2),
 		).apply_style({
 			font_family: g_sans_font,
 		});
@@ -177,7 +177,7 @@ namespace std
 		num_line.set_width(14mm);
 
 		var name_line = builtin::make_line(builtin::make_text(name)).apply_style({
-			font_size: 1.4em,
+			font_size: 17pt,
 		});
 
 		let the_subsub = SubSubSection {
@@ -190,7 +190,7 @@ namespace std
 		var box = builtin::make_vbox(
 			builtin::vspace(0.5em),
 			builtin::make_hbox(*num_line, *name_line),
-			builtin::vspace(-0.9em)
+			builtin::vspace(-builtin::current_style().paragraph_spacing! / 2)
 		).apply_style({
 			font_family: g_sans_font,
 		});
@@ -531,7 +531,6 @@ namespace std
 	}
 
 
-
 	global var g_saved_sections: [Section] = [];
 	global var g_toc_lines: [BlockRef] = [];
 	@layout g_toc_lines = [];
@@ -546,50 +545,31 @@ namespace std
 		while(i < g_saved_sections.size())
 		{
 			let s = &g_saved_sections[i];
-			let dest = s!.num_tbo_ref.layout_object();
+			let dest = s!.num_tbo_ref;
 			let toc_line = g_toc_lines[k].layout_object();
 			k += 1;
 
-			var sz = toc_line!.size();
-			sz.y -= 3mm;
-
-			builtin::document()!.link_annotations += [builtin::LinkAnnotation {
-				position: toc_line!.position(),
-				size: sz,
-				destination: dest!.position(),
-			}];
+			toc_line!.link_to(dest);
 
 			var si = 0;
 			while(si < s!.subsections.size())
 			{
 				let ss = &s!.subsections[si];
-				let dest = s!.subsections[si].num_tbo_ref.layout_object();
+				let dest = s!.subsections[si].num_tbo_ref;
 				let toc_line = g_toc_lines[k].layout_object();
 				k += 1;
 
-				var sz = toc_line!.size();
-				sz.y -= 3mm;
-				builtin::document()!.link_annotations += [builtin::LinkAnnotation {
-					position: toc_line!.position(),
-					size: sz,
-					destination: dest!.position(),
-				}];
+				toc_line!.link_to(dest);
 
 				var ssi = 0;
 				while(ssi < ss!.subsubsections.size())
 				{
 					let sss = &ss!.subsubsections[ssi];
-					let dest = ss!.subsubsections[ssi].num_tbo_ref.layout_object();
+					let dest = ss!.subsubsections[ssi].num_tbo_ref;
 					let toc_line = g_toc_lines[k].layout_object();
 					k += 1;
 
-					var sz = toc_line!.size();
-					sz.y -= 3mm;
-					builtin::document()!.link_annotations += [builtin::LinkAnnotation {
-						position: toc_line!.position(),
-						size: sz,
-						destination: dest!.position(),
-					}];
+					toc_line!.link_to(dest);
 					ssi += 1;
 				}
 				si += 1;
@@ -625,7 +605,7 @@ namespace std
 				builtin::make_line(builtin::bold1(builtin::make_text(f"{s!.page_num}")))
 			);
 
-			let item = builtin::make_hbox(
+			var item = builtin::make_hbox(
 				*heading, *pagenum
 			).apply_style({
 				alignment: .Justified
@@ -713,6 +693,10 @@ namespace std
 			builtin::request_layout();
 
 		return ret;
+	}
+
+	@finalise {
+
 	}
 
 
@@ -827,8 +811,8 @@ namespace std
 			i += 1;
 		}
 
-		return builtin::make_vbox(builtin::vspace(-0.5em), ...*lines)
-			.apply_style({ paragraph_spacing: 0.0em, });
+		return builtin::make_vbox(...*lines)
+			.apply_style({ paragraph_spacing: 0.5em, });
 	}
 
 	fn bulleted_list(items: [Inline...]) -> Block
@@ -846,8 +830,8 @@ namespace std
 			i += 1;
 		}
 
-		return builtin::make_vbox(builtin::vspace(-0.5em), ...*lines)
-			.apply_style({ paragraph_spacing: 0.0em, });
+		return builtin::make_vbox(...*lines)
+			.apply_style({ paragraph_spacing: 0.5em, });
 	}
 
 	fn bulleted_list(items: [string...]) -> Block

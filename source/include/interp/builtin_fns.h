@@ -72,6 +72,9 @@ namespace sap::interp
 		ErrorOr<EvalResult> set_tbo_height(Evaluator* ev, std::vector<Value>& args);
 		ErrorOr<EvalResult> set_tbo_size(Evaluator* ev, std::vector<Value>& args);
 
+		ErrorOr<EvalResult> set_lo_link_annotation(Evaluator* ev, std::vector<Value>& args);
+		ErrorOr<EvalResult> set_tbo_link_annotation(Evaluator* ev, std::vector<Value>& args);
+
 		ErrorOr<EvalResult> offset_object_position(Evaluator* ev, std::vector<Value>& args);
 		ErrorOr<EvalResult> override_object_position(Evaluator* ev, std::vector<Value>& args);
 

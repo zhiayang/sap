@@ -30,6 +30,11 @@ namespace sap::tree
 
 			if(m_rel_position_offset.has_value())
 				obj->addRelativePositionOffset(*m_rel_position_offset);
+
+			if(auto pos = std::get_if<layout::AbsolutePagePos>(&m_link_destination); pos)
+				obj->setLinkDestination(*pos);
+			else if(auto x = std::get_if<BlockObject*>(&m_link_destination); x)
+				obj->setLinkDestination(*x);
 		}
 
 		return Ok(std::move(result));
@@ -77,7 +82,8 @@ namespace sap::tree
 		std::move(objs.begin(), objs.end(), std::back_inserter(m_objects));
 	}
 
-	static void do_flatten(std::vector<zst::SharedPtr<InlineObject>>& out, std::vector<zst::SharedPtr<InlineObject>> objs)
+	static void do_flatten(std::vector<zst::SharedPtr<InlineObject>>& out,
+		std::vector<zst::SharedPtr<InlineObject>> objs)
 	{
 		for(auto& obj : objs)
 		{

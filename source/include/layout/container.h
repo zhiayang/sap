@@ -41,13 +41,4 @@ namespace sap::layout
 		std::vector<std::unique_ptr<LayoutObject>> m_objects;
 		std::optional<Length> m_override_obj_spacing {};
 	};
-
-	template <typename T>
-	layout::PageCursor position_children_in_container(layout::PageCursor cursor,
-		Length self_width,
-		Container::Direction direction,
-		Alignment horz_alignment,
-		Length vert_obj_spacing,
-		bool shift_by_ascent_of_first_child,
-		const std::vector<std::unique_ptr<T>>& objects);
 }

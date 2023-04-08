@@ -63,9 +63,9 @@ namespace sap::interp::builtin
 	}
 
 	static ErrorOr<EvalResult> make_box(Evaluator* ev,
-		Value& arr,
-		tree::Container::Direction direction,
-		bool glued = false)
+	    Value& arr,
+	    tree::Container::Direction direction,
+	    bool glued = false)
 	{
 		auto box = zst::make_shared<tree::Container>(direction, glued);
 
@@ -283,7 +283,7 @@ namespace sap::interp::builtin
 		if(args[0].isPointer())
 		{
 			return EvalResult::ofValue(Value::mutablePointer(Type::makeTreeInlineObj()->pointerTo(),
-				args[0].getMutablePointer()));
+			    args[0].getMutablePointer()));
 		}
 		else
 		{
@@ -330,11 +330,71 @@ namespace sap::interp::builtin
 		if(args[0].isPointer())
 		{
 			return EvalResult::ofValue(Value::mutablePointer(Type::makeTreeInlineObj()->pointerTo(),
-				args[0].getMutablePointer()));
+			    args[0].getMutablePointer()));
 		}
 		else
 		{
 			return EvalResult::ofValue(std::move(args[0]));
 		}
+	}
+
+	ErrorOr<EvalResult> set_lo_link_annotation(Evaluator* ev, std::vector<Value>& args)
+	{
+		assert(args.size() == 2);
+
+		auto& value = *args[0].getPointer();
+		assert(value.isLayoutObject() || value.isLayoutObjectRef());
+
+		auto obj = const_cast<layout::LayoutObject*>(
+		    args[0].isLayoutObject() //
+		        ? &value.getLayoutObject()
+		        : value.getLayoutObjectRef());
+
+		if(args[1].type() == BS_AbsPosition::type)
+		{
+			auto dest = BS_AbsPosition::unmake(ev, args[1]);
+			obj->setLinkDestination(dest);
+		}
+		else if(args[1].type()->isTreeBlockObjRef())
+		{
+			obj->setLinkDestination(args[1].getTreeBlockObjectRef());
+		}
+		else
+		{
+			return ErrMsg(ev, "unsupported link target '{}'", args[1].type());
+		}
+
+		return EvalResult::ofVoid();
+	}
+
+	ErrorOr<EvalResult> set_tbo_link_annotation(Evaluator* ev, std::vector<Value>& args)
+	{
+		auto& value = *args[0].getPointer();
+		assert(value.type()->isTreeBlockObj() || value.type()->isTreeBlockObjRef());
+
+		if(ev->interpreter()->currentPhase() != ProcessingPhase::Layout)
+			return ErrMsg(ev, "`link_to()` can only be called during `@layout`");
+
+		auto tbo = const_cast<tree::BlockObject*>(
+		    value.isTreeBlockObj() //
+		        ? &value.getTreeBlockObj()
+		        : value.getTreeBlockObjectRef());
+
+		if(args[1].type() == BS_AbsPosition::type)
+		{
+			auto dest = BS_AbsPosition::unmake(ev, args[1]);
+			tbo->setLinkDestination(dest);
+		}
+		else if(args[1].type()->isTreeBlockObjRef())
+		{
+			tbo->setLinkDestination(args[1].getTreeBlockObjectRef());
+		}
+		else
+		{
+			return ErrMsg(ev, "unsupported link target '{}'", args[1].type());
+		}
+
+
+		return EvalResult::ofVoid();
 	}
 }

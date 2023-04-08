@@ -51,7 +51,8 @@ namespace sap::layout
 
 
 
-	PageLayout::PageLayout(Size2d size, PageLayout::Margins margins) : m_size(size), m_margins(std::move(margins))
+	PageLayout::PageLayout(Document* doc, Size2d size, PageLayout::Margins margins)
+		: LayoutBase(doc), m_size(size), m_margins(std::move(margins))
 	{
 		m_content_size = {
 			size.x() - m_margins.left - m_margins.right,

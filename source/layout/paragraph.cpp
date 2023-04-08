@@ -46,10 +46,62 @@ namespace sap::layout
 		assert(not m_lines.empty());
 		this->positionRelatively(cursor.position());
 
-		// cursor = cursor.carriageReturn();
+		using enum Alignment;
+		using enum Container::Direction;
 
-		return position_children_in_container(cursor, m_layout_size.width, Container::Direction::Vertical,
-			m_style->alignment(), 0, /* shift_by_ascent_of_first_child: */ false, m_lines);
+		if(m_lines.empty())
+			return cursor;
+
+		auto initial_pos = cursor.position().pos;
+
+		bool is_first_child = true;
+
+		size_t prev_child_bottom_page = 0;
+		bool prev_child_was_phantom = false;
+
+		for(auto& line : m_lines)
+		{
+			// preserve horizontal alignment of the words within the line
+			cursor = cursor.carriageReturn();
+			cursor = cursor.moveRight(initial_pos.x() - cursor.position().pos.x());
+
+			auto horz_space = cursor.widthAtCursor();
+			auto space_width = std::max(Length(0), m_layout_size.width - line->layoutSize().width);
+
+			switch(m_style->alignment())
+			{
+				case Left:
+				case Justified: break;
+
+				case Right: {
+					cursor = cursor.moveRight(horz_space - m_layout_size.width);
+					cursor = cursor.moveRight(space_width);
+					break;
+				}
+
+				case Centre: {
+					cursor = cursor.moveRight((horz_space - m_layout_size.width) / 2);
+					cursor = cursor.moveRight(space_width / 2);
+					break;
+				}
+			}
+
+			if(not is_first_child)
+				cursor = cursor.newLine(line->metrics().default_line_spacing - line->metrics().descent_height);
+
+			if(line->requires_space_reservation())
+				cursor = cursor.ensureVerticalSpace(line->layoutSize().descent);
+
+			cursor = line->computePosition(cursor);
+
+			// note: we want where the line *ended*
+			prev_child_bottom_page = cursor.position().page_num;
+
+			is_first_child = false;
+			prev_child_was_phantom = line->is_phantom();
+		}
+
+		return cursor;
 	}
 }
 
@@ -142,7 +194,7 @@ namespace sap::tree
 			}
 			else
 			{
-				para_size.descent += line_size.total_height();
+				para_size.descent += layout_line->metrics().default_line_spacing;
 			}
 
 			layout_lines.push_back(std::move(layout_line));

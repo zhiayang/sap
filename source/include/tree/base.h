@@ -5,7 +5,8 @@
 #pragma once
 
 #include "sap/units.h"
-#include "sap/style.h" // for Stylable
+#include "sap/style.h"
+#include "sap/annotation.h"
 
 #include "layout/layout_object.h"
 
@@ -106,6 +107,9 @@ namespace sap::tree
 		void offsetRelativePosition(Size2d offset);
 		void overrideAbsolutePosition(layout::AbsolutePagePos pos);
 
+		void setLinkDestination(layout::AbsolutePagePos dest) { m_link_destination = dest; }
+		void setLinkDestination(BlockObject* dest) { m_link_destination = dest; }
+
 	protected:
 		mutable std::optional<layout::LayoutObject*> m_generated_layout_object = nullptr;
 
@@ -119,6 +123,8 @@ namespace sap::tree
 		std::optional<Length> m_override_height {};
 		std::optional<Size2d> m_rel_position_offset {};
 		std::optional<layout::AbsolutePagePos> m_abs_position_override {};
+
+		std::variant<std::monostate, layout::AbsolutePagePos, BlockObject*> m_link_destination {};
 	};
 
 	/*

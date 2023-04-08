@@ -81,4 +81,4 @@ SpacesInCStyleCastParentheses: false
 SpacesInParentheses: false
 Standard: Latest
 TabWidth: 4
-UseTab: AlignWithSpaces
+UseTab: ForIndentation

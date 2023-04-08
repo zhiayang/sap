@@ -133,6 +133,7 @@ namespace dim
 		constexpr value_type& value() { return this->_x; }
 		constexpr value_type value() const { return this->_x; }
 
+		constexpr self_type abs() const { return self_type(_x < 0 ? -_x : _x); }
 		constexpr value_type mm() const { return this->into<dim::units::millimetre>().value(); }
 
 		constexpr value_type& x() { return this->_x; }

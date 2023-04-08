@@ -11,6 +11,7 @@
 #include <cstddef>
 #include <cstdint>
 #include <utility>
+#include <variant>
 #include <concepts>
 #include <optional>
 #include <algorithm>

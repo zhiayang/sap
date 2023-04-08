@@ -29,10 +29,10 @@ namespace pdf
 		};
 
 		auto font_bbox = Array::create({
-		    scale_metric(font_metrics.xmin),
-		    scale_metric(font_metrics.ymin),
-		    scale_metric(font_metrics.xmax),
-		    scale_metric(font_metrics.ymax),
+			scale_metric(font_metrics.xmin),
+			scale_metric(font_metrics.ymin),
+			scale_metric(font_metrics.xmax),
+			scale_metric(font_metrics.ymax),
 		});
 
 		int cap_height = 0;
@@ -61,28 +61,28 @@ namespace pdf
 		// TODO: use the FontFile to determine what the flags should be. no idea how important this is
 		// for the pdf to display properly but it's probably entirely inconsequential.
 		auto font_desc = Dictionary::createIndirect(names::FontDescriptor,
-		    {
-		        { names::FontName, Name::create(name) },
-		        { names::Flags, Integer::create(4) },
-		        { names::FontBBox, font_bbox },
-		        { names::ItalicAngle, Integer::create(static_cast<int32_t>(font_metrics.italic_angle)) },
-		        { names::Ascent, scale_metric(font_metrics.hhea_ascent.value()) },
-		        { names::Descent, scale_metric(font_metrics.hhea_descent.value()) },
-		        { names::CapHeight, scale_metric(cap_height) },
-		        { names::XHeight, scale_metric(x_height) },
-		        { names::StemV, scale_metric(stem_v) },
-		    });
+			{
+				{ names::FontName, Name::create(name) },
+				{ names::Flags, Integer::create(4) },
+				{ names::FontBBox, font_bbox },
+				{ names::ItalicAngle, Integer::create(static_cast<int32_t>(font_metrics.italic_angle)) },
+				{ names::Ascent, scale_metric(font_metrics.hhea_ascent.value()) },
+				{ names::Descent, scale_metric(font_metrics.hhea_descent.value()) },
+				{ names::CapHeight, scale_metric(cap_height) },
+				{ names::XHeight, scale_metric(x_height) },
+				{ names::StemV, scale_metric(stem_v) },
+			});
 
 		return font_desc;
 	}
 
 	static int64_t g_font_ids = 0;
 	PdfFont::PdfFont(std::unique_ptr<pdf::BuiltinFont> source_)
-	    : Resource(KIND_FONT)
-	    , m_source(std::move(source_))
-	    , m_font_dictionary(Dictionary::createIndirect(names::Font, {}))
-	    , m_glyph_widths_array(Array::createIndirect())
-	    , m_font_id(++g_font_ids)
+		: Resource(KIND_FONT)
+		, m_source(std::move(source_))
+		, m_font_dictionary(Dictionary::createIndirect(names::Font, {}))
+		, m_glyph_widths_array(Array::createIndirect())
+		, m_font_id(++g_font_ids)
 	{
 		auto* builtin_src = static_cast<BuiltinFont*>(m_source.get());
 
@@ -101,11 +101,11 @@ namespace pdf
 	}
 
 	PdfFont::PdfFont(std::unique_ptr<font::FontFile> font_file_)
-	    : Resource(KIND_FONT)
-	    , m_source(std::move(font_file_))
-	    , m_font_dictionary(Dictionary::createIndirect(names::Font, {}))
-	    , m_glyph_widths_array(Array::createIndirect())
-	    , m_font_id(++g_font_ids)
+		: Resource(KIND_FONT)
+		, m_source(std::move(font_file_))
+		, m_font_dictionary(Dictionary::createIndirect(names::Font, {}))
+		, m_glyph_widths_array(Array::createIndirect())
+		, m_font_id(++g_font_ids)
 	{
 		auto file_src = static_cast<font::FontFile*>(m_source.get());
 
@@ -140,11 +140,11 @@ namespace pdf
 		cidfont_dict->add(names::FontDescriptor, descriptor);
 		cidfont_dict->add(names::BaseFont, basefont_name);
 		cidfont_dict->add(names::CIDSystemInfo,
-		    Dictionary::create({
-		        { names::Registry, String::create("Adobe") },
-		        { names::Ordering, String::create("Identity") },
-		        { names::Supplement, Integer::create(0) },
-		    }));
+			Dictionary::create({
+				{ names::Registry, String::create("Adobe") },
+				{ names::Ordering, String::create("Identity") },
+				{ names::Supplement, Integer::create(0) },
+			}));
 
 		if(file_src->hasTrueTypeOutlines())
 		{
@@ -213,8 +213,8 @@ namespace pdf
 	{
 		auto make_vec = [this, font_size](font::FontVector2d vec) -> Size2d_YDown {
 			return Size2d_YDown(                                  //
-			    this->scaleMetricForFontSize(vec.x(), font_size), //
-			    this->scaleMetricForFontSize(vec.y(), font_size));
+				this->scaleMetricForFontSize(vec.x(), font_size), //
+				this->scaleMetricForFontSize(vec.y(), font_size));
 		};
 
 		if(auto it = m_word_size_cache.find(text); it != m_word_size_cache.end())
@@ -232,10 +232,11 @@ namespace pdf
 
 	void PdfFont::addGlyphUnicodeMapping(GlyphId glyph, std::vector<char32_t> codepoints) const
 	{
-		if(auto it = m_extra_unicode_mappings.find(glyph); it != m_extra_unicode_mappings.end() && it->second != codepoints)
+		if(auto it = m_extra_unicode_mappings.find(glyph);
+			it != m_extra_unicode_mappings.end() && it->second != codepoints)
 		{
 			sap::warn("font", "conflicting unicode mapping for glyph '{}' (existing: {}, new: {})", glyph, it->second,
-			    codepoints);
+				codepoints);
 		}
 
 		m_extra_unicode_mappings[glyph] = std::move(codepoints);
@@ -275,14 +276,14 @@ namespace pdf
 
 
 
-	std::map<size_t, font::GlyphAdjustment> PdfFont::getPositioningAdjustmentsForGlyphSequence(zst::span<GlyphId> glyphs,
-	    const font::FeatureSet& features) const
+	std::map<size_t, font::GlyphAdjustment> PdfFont::
+		getPositioningAdjustmentsForGlyphSequence(zst::span<GlyphId> glyphs, const font::FeatureSet& features) const
 	{
 		return m_source->getPositioningAdjustmentsForGlyphSequence(glyphs, features);
 	}
 
 	std::optional<std::vector<GlyphId>> PdfFont::performSubstitutionsForGlyphSequence(zst::span<GlyphId> glyphs,
-	    const font::FeatureSet& features) const
+		const font::FeatureSet& features) const
 	{
 		auto subst = m_source->performSubstitutionsForGlyphSequence(glyphs, features);
 		if(not subst.has_value())

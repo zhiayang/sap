@@ -61,7 +61,7 @@ namespace sap::layout
 	}
 
 	Document::Document(const DocumentSettings& settings)
-		: m_page_layout(PageLayout(paper_size(settings), make_margins(settings)))
+		: m_page_layout(this, paper_size(settings), make_margins(settings))
 	{
 		auto default_style = util::make<sap::Style>();
 
@@ -145,6 +145,11 @@ namespace sap::layout
 			convert_annotation(pages, std::move(annot));
 
 		m_pdf_document.write(stream);
+	}
+
+	void Document::addAnnotation(LinkAnnotation annotation)
+	{
+		m_annotations.push_back(std::move(annotation));
 	}
 }
 

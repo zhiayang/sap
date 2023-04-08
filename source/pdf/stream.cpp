@@ -21,7 +21,7 @@ namespace pdf
 	}
 
 	Stream::Stream(Dictionary* dict, zst::byte_buffer bytes)
-		: m_bytes(std::move(bytes)), m_compressed(true), m_dict(dict)
+		: m_bytes(std::move(bytes)), m_compressed(false), m_dict(dict)
 	{
 	}
 

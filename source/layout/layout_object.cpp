@@ -2,7 +2,10 @@
 // Copyright (c) 2022, zhiayang
 // SPDX-License-Identifier: Apache-2.0
 
+#include "tree/base.h"
+
 #include "layout/base.h"
+#include "layout/document.h"
 #include "layout/layout_object.h"
 
 namespace sap::layout
@@ -63,6 +66,22 @@ namespace sap::layout
 			sap::internal_error("layout object was not positioned!");
 	}
 
+	void LayoutObject::setLinkDestination(AbsolutePagePos dest)
+	{
+		m_link_destination = std::move(dest);
+	}
+
+	void LayoutObject::setLinkDestination(LayoutObject* dest)
+	{
+		m_link_destination = std::move(dest);
+	}
+
+	void LayoutObject::setLinkDestination(tree::BlockObject* dest)
+	{
+		m_link_destination = std::move(dest);
+	}
+
+
 	void LayoutObject::overrideLayoutSizeX(Length x)
 	{
 		m_layout_size.width = x;
@@ -89,8 +108,8 @@ namespace sap::layout
 		if(m_absolute_pos_override.has_value())
 		{
 			cursor = cursor.moveToPosition(RelativePos {
-				.pos = RelativePos::Pos(m_absolute_pos_override->pos.x(), m_absolute_pos_override->pos.y()),
-				.page_num = m_absolute_pos_override->page_num,
+			    .pos = RelativePos::Pos(m_absolute_pos_override->pos.x(), m_absolute_pos_override->pos.y()),
+			    .page_num = m_absolute_pos_override->page_num,
 			});
 		}
 
@@ -113,5 +132,42 @@ namespace sap::layout
 			sap::internal_error("cannot render without position! ({})", (void*) this);
 
 		this->render_impl(layout, pages);
+		if(std::holds_alternative<std::monostate>(m_link_destination))
+			return;
+
+		static constexpr double POS_OFFSET_SCALE = 2.5;
+
+		AbsolutePagePos dest_pos {};
+		if(auto app = std::get_if<AbsolutePagePos>(&m_link_destination); app)
+		{
+			dest_pos = *app;
+		}
+		else
+		{
+			LayoutObject* lo = nullptr;
+			if(auto tbo = std::get_if<tree::BlockObject*>(&m_link_destination); tbo)
+			{
+				if(auto tmp = (*tbo)->getGeneratedLayoutObject(); not tmp.has_value())
+					sap::internal_error("link destination did not generate a layout object!");
+				else
+					lo = *tmp;
+			}
+			else if(auto tmp = std::get_if<LayoutObject*>(&m_link_destination); tmp)
+			{
+				lo = *tmp;
+			}
+
+			dest_pos = lo->resolveAbsPosition(layout);
+			dest_pos.pos.y() -= POS_OFFSET_SCALE * lo->layoutSize().ascent;
+		}
+
+		auto pos = this->resolveAbsPosition(layout);
+		pos.pos.y() += m_layout_size.descent;
+
+		layout->document()->addAnnotation(LinkAnnotation {
+		    .position = pos,
+		    .size = Size2d { m_layout_size.width, m_layout_size.total_height() },
+		    .destination = dest_pos,
+		});
 	}
 }

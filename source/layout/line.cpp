@@ -12,15 +12,29 @@
 
 namespace sap::layout
 {
-	static std::tuple<Length, Length, Length> calculate_word_size(zst::wstr_view text, const Style* style)
+	struct WordSize
+	{
+		Length width;
+		Length ascent;
+		Length descent;
+		Length default_line_spacing;
+	};
+
+	static WordSize calculate_word_size(zst::wstr_view text, const Style* style)
 	{
 		auto x = style->font()->getWordSize(text, style->font_size().into()).x();
 
 		auto& fm = style->font()->getFontMetrics();
-		auto asc = style->font()->scaleMetricForFontSize(fm.typo_ascent, style->font_size().into());
-		auto dsc = style->font()->scaleMetricForFontSize(fm.typo_descent, style->font_size().into());
+		auto asc = style->font()->scaleMetricForFontSize(fm.hhea_ascent, style->font_size().into()).abs();
+		auto dsc = style->font()->scaleMetricForFontSize(fm.hhea_descent, style->font_size().into()).abs();
+		auto dls = style->font()->scaleMetricForFontSize(fm.default_line_spacing, style->font_size().into());
 
-		return { x.into(), asc.into(), dsc.into() };
+		return {
+			.width = x.into(),
+			.ascent = asc.into(),
+			.descent = dsc.into(),
+			.default_line_spacing = dls.into(),
+		};
 	}
 
 	static Length calculate_preferred_sep_width(const tree::Separator* sep, const Style* style, bool is_end_of_line)
@@ -86,21 +100,16 @@ namespace sap::layout
 
 				word_chunk.text += word->contents();
 
-				auto [chunk_x, chunk_asc, chunk_dsc] = calculate_word_size(word_chunk.text, style);
+				auto word_size = calculate_word_size(word_chunk.text, style);
 
-				ret.widths.push_back(chunk_x - word_chunk.width);
+				ret.widths.push_back(word_size.width - word_chunk.width);
+				word_chunk.width = word_size.width;
 
-				word_chunk.width = chunk_x;
+				ret.ascent_height = std::max(ret.ascent_height, word_size.ascent);
+				ret.descent_height = std::max(ret.descent_height, word_size.descent);
 
-				ret.ascent_height = std::max(ret.ascent_height, chunk_asc * style->line_spacing());
-				ret.descent_height = std::max(ret.descent_height, chunk_dsc * style->line_spacing());
-
-				auto font_line_spacing = style->font()->getFontMetrics().default_line_spacing;
-				auto style_line_spacing = style->line_spacing()
-				                        * style->font()->scaleMetricForFontSize(font_line_spacing,
-											style->font_size().into());
-
-				ret.default_line_spacing = std::max(ret.default_line_spacing, style_line_spacing.into<Length>());
+				ret.default_line_spacing = std::max(ret.default_line_spacing,
+					word_size.default_line_spacing * style->line_spacing());
 			}
 			else if(auto span = dynamic_cast<const tree::InlineSpan*>(it->get()); span)
 			{
@@ -269,6 +278,15 @@ namespace sap::layout
 	}
 
 
+	layout::PageCursor Line::compute_position_impl(layout::PageCursor cursor)
+	{
+		// for now, lines only contain words; words are already positioned with their relative thingies.
+		this->positionRelatively(cursor.position());
+		return cursor.newLine(m_metrics.descent_height);
+	}
+
+
+
 	std::unique_ptr<Line> Line::fromInlineObjects(interp::Interpreter* cs,
 		const Style* style,
 		std::span<const zst::SharedPtr<tree::InlineObject>> objs,
@@ -352,18 +370,10 @@ namespace sap::layout
 		auto layout_size = LayoutSize {
 			.width = actual_width,
 			.ascent = line_metrics.ascent_height,
-			.descent = line_metrics.default_line_spacing - line_metrics.ascent_height,
+			.descent = line_metrics.descent_height,
 		};
 
 		return std::unique_ptr<Line>(new Line(style, layout_size, line_metrics, std::move(layout_objects)));
-	}
-
-
-	layout::PageCursor Line::compute_position_impl(layout::PageCursor cursor)
-	{
-		// for now, lines only contain words; words are already positioned with their relative thingies.
-		this->positionRelatively(cursor.position());
-		return cursor.newLine(m_layout_size.descent);
 	}
 
 

@@ -118,6 +118,8 @@ namespace sap::layout
 		std::vector<OutlineItem>& outlineItems() { return m_outline_items; }
 		const std::vector<OutlineItem>& outlineItems() const { return m_outline_items; }
 
+		void addAnnotation(LinkAnnotation annotation);
+
 		std::vector<LinkAnnotation>& annotations() { return m_annotations; }
 		const std::vector<LinkAnnotation>& annotations() const { return m_annotations; }
 

@@ -55,6 +55,9 @@ namespace sap::interp
 			if(m_lvalue != nullptr)
 				return m_lvalue->clone();
 
+			if(m_result->hasGenerator())
+				return m_result->clone();
+
 			return std::move(*m_result);
 		}
 
@@ -109,6 +112,7 @@ namespace sap::interp
 			return Err<E>(r.take_error());                                                  \
 		if(not r->hasValue())                                                               \
 			return ErrMsg(ev, "unexpected void value");                                     \
-		std::move(r)->take();                                                               \
+		auto ret = std::move(r)->take();                                                    \
+		ret.hasGenerator() ? ret.clone() : std::move(ret);                                  \
 	})
 }

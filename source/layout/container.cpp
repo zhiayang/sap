@@ -61,14 +61,14 @@ namespace sap::layout
 	}
 
 
-	template <typename T>
-	layout::PageCursor position_children_in_container(layout::PageCursor cursor,
+	static layout::PageCursor position_children_in_container(layout::PageCursor cursor,
 		Length self_width,
 		Container::Direction direction,
 		Alignment horz_alignment,
 		Length vert_obj_spacing,
 		bool shift_by_ascent_of_first_child,
-		const std::vector<std::unique_ptr<T>>& objects)
+		bool shift_by_ascent_of_remaining_children,
+		const std::vector<std::unique_ptr<LayoutObject>>& objects)
 	{
 		using enum Alignment;
 		using enum Container::Direction;
@@ -218,12 +218,19 @@ namespace sap::layout
 					}
 
 					/*
-					    first=0 shift=0 -> shift
-					    first=0 shift=1 -> shift
-					    first=1 shift=0 -> don't
-					    first=1 shift=1 -> shift
+					    first=0 shiftF=0 shiftR=0   -> 0
+					    first=0 shiftF=0 shiftR=1   -> 1
+					    first=0 shiftF=1 shiftR=0   -> 0
+					    first=0 shiftF=1 shiftR=1   -> 1
+					    first=1 shiftF=0 shiftR=0   -> 0
+					    first=1 shiftF=0 shiftR=1   -> 0
+					    first=1 shiftF=1 shiftR=0   -> 1
+					    first=1 shiftF=1 shiftR=1   -> 1
 					*/
-					if(not(is_first_child && not shift_by_ascent_of_first_child))
+					bool to_shift = (is_first_child ? shift_by_ascent_of_first_child
+													: shift_by_ascent_of_remaining_children);
+
+					if(to_shift)
 						cursor = cursor.newLine(child->layoutSize().ascent);
 
 					if(child->requires_space_reservation())
@@ -245,23 +252,6 @@ namespace sap::layout
 		return cursor;
 	}
 
-	template layout::PageCursor position_children_in_container(layout::PageCursor cursor,
-		Length self_width,
-		Container::Direction direction,
-		Alignment horz_alignment,
-		Length vert_obj_spacing,
-		bool shift_by_ascent_of_first_child,
-		const std::vector<std::unique_ptr<LayoutObject>>& objects);
-
-	template layout::PageCursor position_children_in_container(layout::PageCursor cursor,
-		Length self_width,
-		Container::Direction direction,
-		Alignment horz_alignment,
-		Length vert_obj_spacing,
-		bool shift_by_ascent_of_first_child,
-		const std::vector<std::unique_ptr<Line>>& objects);
-
-
 	layout::PageCursor Container::compute_position_impl(layout::PageCursor cursor)
 	{
 		using enum Alignment;
@@ -272,12 +262,15 @@ namespace sap::layout
 		if(m_objects.empty())
 			return cursor;
 
-		cursor = position_children_in_container(cursor,                    //
-			m_layout_size.width,                                           //
-			m_direction,                                                   //
-			m_style->alignment(),                                          //
-			m_override_obj_spacing.value_or(m_style->paragraph_spacing()), //
-			/* shift_by_ascent_of_first_child */ true,                     //
+		auto spacing = m_override_obj_spacing.value_or(m_style->paragraph_spacing());
+
+		cursor = position_children_in_container(cursor,       //
+			m_layout_size.width,                              //
+			m_direction,                                      //
+			m_style->alignment(),                             //
+			spacing,                                          //
+			/* shift_by_ascent_of_first_child */ true,        //
+			/* shift_by_ascent_of_remaining_children */ true, //
 			m_objects);
 
 		switch(m_direction)

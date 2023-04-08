@@ -18,15 +18,19 @@ namespace sap::interp
 		return m_type;
 	}
 
-#define REIFY_GEN_FUNC(field)           \
-	do                                  \
-	{                                   \
-		if(m_gen_func)                  \
-		{                               \
-			field = m_gen_func().field; \
-			m_gen_func = nullptr;       \
-		}                               \
+#define REIFY_GEN_FUNC(field)                                \
+	do                                                       \
+	{                                                        \
+		if(m_gen_func)                                       \
+		{                                                    \
+			new(&field) decltype(field)(m_gen_func().field); \
+		}                                                    \
 	} while(false)
+
+	bool Value::hasGenerator() const
+	{
+		return m_gen_func != nullptr;
+	}
 
 
 	bool Value::getBool() const
@@ -378,7 +382,7 @@ namespace sap::interp
 		else if(m_type->isLength())
 		{
 			return unicode::u32StringFromUtf8(zpr::sprint("{}{}", v_length.value(),
-				DynLength::unitToString(v_length.unit())));
+			    DynLength::unitToString(v_length.unit())));
 		}
 		else if(m_type->isInteger())
 		{
@@ -673,7 +677,7 @@ namespace sap::interp
 			if(ret.v_array[i].type() != ty->getFieldAtIndex(i))
 			{
 				sap::internal_error("mismatched field types! expected '{}', got '{}'", ty->getFieldAtIndex(i),
-					ret.v_array[i].type());
+				    ret.v_array[i].type());
 			}
 		}
 
@@ -753,37 +757,63 @@ namespace sap::interp
 		this->ensure_not_moved_from();
 
 		auto val = Value(m_type);
-		if(m_gen_func)
+		if(m_type->isBool())
 		{
-			val.m_gen_func = m_gen_func;
-		}
-		else if(m_type->isBool())
-		{
+			REIFY_GEN_FUNC(v_bool);
 			val.v_bool = v_bool;
 		}
 		else if(m_type->isChar())
 		{
+			REIFY_GEN_FUNC(v_char);
 			val.v_char = v_char;
 		}
 		else if(m_type->isInteger())
 		{
+			REIFY_GEN_FUNC(v_integer);
 			val.v_integer = v_integer;
 		}
 		else if(m_type->isFloating())
 		{
+			REIFY_GEN_FUNC(v_floating);
 			val.v_floating = v_floating;
 		}
 		else if(m_type->isPointer() || m_type->isNullPtr())
 		{
+			REIFY_GEN_FUNC(v_pointer);
 			val.v_pointer = v_pointer;
 		}
 		else if(m_type->isFunction())
 		{
+			REIFY_GEN_FUNC(v_function);
 			val.v_function = v_function;
 		}
 		else if(m_type->isLength())
 		{
+			REIFY_GEN_FUNC(v_length);
 			new(&val.v_length) decltype(v_length)(v_length);
+		}
+		else if(m_type->isArray() || m_type->isStruct() || m_type->isOptional() || m_type->isEnum())
+		{
+			REIFY_GEN_FUNC(v_array);
+
+			new(&val.v_array) decltype(v_array)();
+			for(auto& e : v_array)
+				val.v_array.push_back(e.clone());
+		}
+		else if(m_type->isTreeBlockObjRef())
+		{
+			REIFY_GEN_FUNC(v_block_obj_ref);
+			val.v_block_obj_ref = v_block_obj_ref;
+		}
+		else if(m_type->isLayoutObjectRef())
+		{
+			REIFY_GEN_FUNC(v_layout_obj_ref);
+			val.v_layout_obj_ref = v_layout_obj_ref;
+		}
+		else if(m_type->isTreeInlineObjRef())
+		{
+			REIFY_GEN_FUNC(v_inline_obj_ref);
+			val.v_inline_obj_ref = v_inline_obj_ref;
 		}
 		else if(m_type->isTreeBlockObj())
 		{
@@ -797,29 +827,14 @@ namespace sap::interp
 		{
 			sap::internal_error("cannot clone 'LayoutObject' value");
 		}
-		else if(m_type->isArray() || m_type->isStruct() || m_type->isOptional() || m_type->isEnum())
-		{
-			new(&val.v_array) decltype(v_array)();
-			for(auto& e : v_array)
-				val.v_array.push_back(e.clone());
-		}
-		else if(m_type->isTreeBlockObjRef())
-		{
-			val.v_block_obj_ref = v_block_obj_ref;
-		}
-		else if(m_type->isLayoutObjectRef())
-		{
-			val.v_layout_obj_ref = v_layout_obj_ref;
-		}
-		else if(m_type->isTreeInlineObjRef())
-		{
-			new(&val.v_inline_obj_ref) decltype(val.v_inline_obj_ref)(v_inline_obj_ref);
-		}
 		else
 		{
 			zpr::println("weird type: {}", m_type);
 			assert(false && "unreachable!");
 		}
+
+		if(m_gen_func)
+			m_gen_func = nullptr;
 
 		return val;
 	}
