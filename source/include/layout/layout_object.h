@@ -5,6 +5,8 @@
 #pragma once
 
 #include "sap/style.h"
+
+#include "tree/base.h"
 #include "layout/cursor.h"
 
 namespace pdf
@@ -49,9 +51,7 @@ namespace sap::layout
 		void overrideAbsolutePosition(AbsolutePagePos pos);
 		void addRelativePositionOffset(Size2d offset);
 
-		void setLinkDestination(tree::BlockObject* dest);
-		void setLinkDestination(AbsolutePagePos dest);
-		void setLinkDestination(LayoutObject* dest);
+		void setLinkDestination(tree::LinkDestination dest);
 
 		virtual bool is_phantom() const { return false; }
 		virtual bool requires_space_reservation() const { return false; }
@@ -66,6 +66,6 @@ namespace sap::layout
 	private:
 		std::optional<Size2d> m_relative_pos_offset {};
 		std::optional<AbsolutePagePos> m_absolute_pos_override {};
-		std::variant<std::monostate, AbsolutePagePos, LayoutObject*, tree::BlockObject*> m_link_destination {};
+		tree::LinkDestination m_link_destination {};
 	};
 }

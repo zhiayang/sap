@@ -66,20 +66,11 @@ namespace sap::layout
 			sap::internal_error("layout object was not positioned!");
 	}
 
-	void LayoutObject::setLinkDestination(AbsolutePagePos dest)
+	void LayoutObject::setLinkDestination(tree::LinkDestination dest)
 	{
 		m_link_destination = std::move(dest);
 	}
 
-	void LayoutObject::setLinkDestination(LayoutObject* dest)
-	{
-		m_link_destination = std::move(dest);
-	}
-
-	void LayoutObject::setLinkDestination(tree::BlockObject* dest)
-	{
-		m_link_destination = std::move(dest);
-	}
 
 
 	void LayoutObject::overrideLayoutSizeX(Length x)

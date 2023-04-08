@@ -114,10 +114,11 @@ namespace sap::interp
 		const auto make_null = []() { return std::make_unique<interp::NullLit>(Location::builtin()); };
 		const auto make_bool = [](bool x) { return std::make_unique<interp::BooleanLit>(Location::builtin(), x); };
 
-		const auto t_ptr = [](const PType& t) { return PType::pointer(t, false); };
-		const auto t_mutptr = [](const PType& t) { return PType::pointer(t, true); };
+		const auto T_P = [](const PType& t) { return PType::pointer(t, false); };
+		const auto T_MP = [](const PType& t) { return PType::pointer(t, true); };
 
-		const auto t_opt = [](const PType& t) { return PType::optional(t); };
+		const auto T_O = [](const PType& t) { return PType::optional(t); };
+		const auto T_VARR = [](const PType& t) { return PType::variadicArray(t); };
 
 		const auto t_bfont = PType::named(make_builtin_name(builtin::BS_Font::name));
 		const auto t_bstate = PType::named(make_builtin_name(builtin::BS_State::name));
@@ -125,12 +126,12 @@ namespace sap::interp
 		const auto t_bsize2d = PType::named(make_builtin_name(builtin::BS_Size2d::name));
 		const auto t_bposition = PType::named(make_builtin_name(builtin::BS_Position::name));
 		const auto t_bfontfamily = PType::named(make_builtin_name(builtin::BS_FontFamily::name));
-		const auto t_babsposition = PType::named(make_builtin_name(builtin::BS_AbsPosition::name));
+		const auto t_abspos = PType::named(make_builtin_name(builtin::BS_AbsPosition::name));
 		const auto t_bdocsettings = PType::named(make_builtin_name(builtin::BS_DocumentSettings::name));
 		const auto t_bdocproxy = PType::named(make_builtin_name(builtin::BS_DocumentProxy::name));
 		const auto t_blinkannot = PType::named(make_builtin_name(builtin::BS_LinkAnnotation::name));
 
-		const auto define_builtin = [&](auto&&... xs) {
+		const auto DEF = [&](auto&&... xs) {
 			auto ret = std::make_unique<BFD>(Location::builtin(), std::forward<decltype(xs)>(xs)...);
 			ts->addBuiltinDefinition(std::move(ret))->typecheck(ts).expect("builtin decl failed");
 		};
@@ -142,7 +143,7 @@ namespace sap::interp
 		namespace B = builtin;
 
 		// FIXME: make this not take &[void] when we get generics
-		define_builtin("size", PL(P("_", t_ptr(PType::array(t_void)))), t_int,
+		DEF("size", PL(P("_", T_P(PType::array(t_void)))), t_int,
 		    [](Evaluator* ev, std::vector<Value>& args) -> ErrorOr<EvalResult> {
 			    assert(args.size() == 1);
 			    if(not args[0].isPointer() || !args[0].type()->pointerElement()->isArray())
@@ -154,7 +155,7 @@ namespace sap::interp
 
 		auto _ = ts->pushTree(builtin_ns);
 
-		define_builtin("start_document",
+		DEF("start_document",
 		    PL(Param {
 		        .name = "_",
 		        .type = PType::optional(t_bdocsettings),
@@ -162,134 +163,117 @@ namespace sap::interp
 		    }),
 		    t_void, &builtin::start_document);
 
-		define_builtin("state", PL(), t_bstate, [](auto* ev, auto& args) {
+		DEF("state", PL(), t_bstate, [](auto* ev, auto& args) {
 			assert(args.size() == 0);
 			return EvalResult::ofValue(builtin::BS_State::make(ev, ev->state()));
 		});
 
-		define_builtin("document", PL(), t_mutptr(t_bdocproxy), [](auto* ev, auto& args) {
+		DEF("document", PL(), T_MP(t_bdocproxy), [](auto* ev, auto& args) {
 			return EvalResult::ofValue(Value::mutablePointer(builtin::BS_DocumentProxy::type, &ev->documentProxy()));
 		});
 
-		define_builtin("to_string", PL(P("_", t_any)), t_str, &B::to_string);
+		DEF("to_string", PL(P("_", t_any)), t_str, &B::to_string);
 
-		define_builtin("vspace", PL(P("_", t_length)), t_tbo, &B::vspace);
-		define_builtin("hspace", PL(P("_", t_length)), t_tbo, &B::hspace);
-		define_builtin("page_break", PL(), t_tbo, &B::page_break);
+		DEF("vspace", PL(P("_", t_length)), t_tbo, &B::vspace);
+		DEF("hspace", PL(P("_", t_length)), t_tbo, &B::hspace);
+		DEF("page_break", PL(), t_tbo, &B::page_break);
 
 
-		define_builtin("bold1", PL(P("_", t_any)), t_tio, &B::bold1);
-		define_builtin("italic1", PL(P("_", t_any)), t_tio, &B::italic1);
-		define_builtin("bold_italic1", PL(P("_", t_any)), t_tio, &B::bold_italic1);
+		DEF("bold1", PL(P("_", t_any)), t_tio, &B::bold1);
+		DEF("italic1", PL(P("_", t_any)), t_tio, &B::italic1);
+		DEF("bold_italic1", PL(P("_", t_any)), t_tio, &B::bold_italic1);
 
-		define_builtin("request_layout", PL(), t_void, &B::request_layout);
+		DEF("request_layout", PL(), t_void, &B::request_layout);
 
-		define_builtin("make_hbox", PL(P("1", PType::variadicArray(t_tbo))), t_tbo, &B::make_hbox);
-		define_builtin("make_zbox", PL(P("1", PType::variadicArray(t_tbo))), t_tbo, &B::make_zbox);
-		define_builtin("make_vbox", PL(P("1", PType::variadicArray(t_tbo)), P("glue", t_bool, make_bool(false))), t_tbo,
-		    &B::make_vbox);
+		DEF("make_hbox", PL(P("1", T_VARR(t_tbo))), t_tbo, &B::make_hbox);
+		DEF("make_zbox", PL(P("1", T_VARR(t_tbo))), t_tbo, &B::make_zbox);
+		DEF("make_vbox", PL(P("1", T_VARR(t_tbo)), P("glue", t_bool, make_bool(false))), t_tbo, &B::make_vbox);
 
-		define_builtin("make_span", PL(P("1", PType::variadicArray(t_tio))), t_tio, &B::make_span);
-		define_builtin("make_text", PL(P("1", PType::variadicArray(t_str))), t_tio, &B::make_text);
-		define_builtin("make_line", PL(P("1", PType::variadicArray(t_tio))), t_tbo, &B::make_line);
-		define_builtin("make_paragraph", PL(P("1", PType::variadicArray(t_tio))), t_tbo, &B::make_paragraph);
+		DEF("make_span", PL(P("1", T_VARR(t_tio))), t_tio, &B::make_span);
+		DEF("make_text", PL(P("1", T_VARR(t_str))), t_tio, &B::make_text);
+		DEF("make_line", PL(P("1", T_VARR(t_tio))), t_tbo, &B::make_line);
+		DEF("make_paragraph", PL(P("1", T_VARR(t_tio))), t_tbo, &B::make_paragraph);
 
-		define_builtin("apply_style", PL(P("obj", t_tio), P("style", t_bstyle)), t_tio, &B::apply_style_tio);
-		define_builtin("apply_style", PL(P("obj", t_tbo), P("style", t_bstyle)), t_tbo, &B::apply_style_tbo);
+		DEF("apply_style", PL(P("obj", t_tio), P("style", t_bstyle)), t_tio, &B::apply_style_tio);
+		DEF("apply_style", PL(P("obj", t_tbo), P("style", t_bstyle)), t_tbo, &B::apply_style_tbo);
 
-		define_builtin("apply_style", PL(P("style", t_bstyle), P("obj", t_tio)), t_tio, &B::apply_style_tio);
-		define_builtin("apply_style", PL(P("style", t_bstyle), P("obj", t_tbo)), t_tbo, &B::apply_style_tbo);
+		DEF("apply_style", PL(P("style", t_bstyle), P("obj", t_tio)), t_tio, &B::apply_style_tio);
+		DEF("apply_style", PL(P("style", t_bstyle), P("obj", t_tbo)), t_tbo, &B::apply_style_tbo);
 
-		define_builtin("load_image", PL(P("1", t_str), P("2", t_length), P("3", t_opt(t_length), make_null())), t_tbo,
+		DEF("load_image", PL(P("1", t_str), P("2", t_length), P("3", T_O(t_length), make_null())), t_tbo,
 		    &B::load_image);
 
-		define_builtin("layout_object", PL(P("_", t_ptr(t_tbo))), t_opt(t_lo_ref), &B::get_layout_object);
-		define_builtin("layout_object", PL(P("_", t_ptr(t_tbo_ref))), t_opt(t_lo_ref), &B::get_layout_object);
+		DEF("layout_object", PL(P("_", T_P(t_tbo))), T_O(t_lo_ref), &B::get_layout_object);
+		DEF("layout_object", PL(P("_", T_P(t_tbo_ref))), T_O(t_lo_ref), &B::get_layout_object);
 
-		define_builtin("position", PL(P("_", t_ptr(t_lo_ref))), t_babsposition, &B::get_layout_object_position);
+		DEF("position", PL(P("_", T_P(t_lo_ref))), t_abspos, &B::get_layout_object_position);
 
-		define_builtin("size", PL(P("_", t_ptr(t_lo_ref))), t_bsize2d, &B::get_layout_object_size);
+		DEF("size", PL(P("_", T_P(t_lo_ref))), t_bsize2d, &B::get_layout_object_size);
 
-		define_builtin("set_size", PL(P("_", t_ptr(t_tbo)), P("size", t_bsize2d)), t_void, &B::set_tbo_size);
-		define_builtin("set_size", PL(P("_", t_ptr(t_tbo_ref)), P("size", t_bsize2d)), t_void, &B::set_tbo_size);
+		DEF("set_size", PL(P("_", T_P(t_tbo)), P("size", t_bsize2d)), t_void, &B::set_tbo_size);
+		DEF("set_size", PL(P("_", T_P(t_tbo_ref)), P("size", t_bsize2d)), t_void, &B::set_tbo_size);
 
-		define_builtin("set_width", PL(P("_", t_ptr(t_tbo)), P("width", t_length)), t_void, &B::set_tbo_width);
-		define_builtin("set_width", PL(P("_", t_ptr(t_tbo_ref)), P("width", t_length)), t_void, &B::set_tbo_width);
+		DEF("set_width", PL(P("_", T_P(t_tbo)), P("width", t_length)), t_void, &B::set_tbo_width);
+		DEF("set_width", PL(P("_", T_P(t_tbo_ref)), P("width", t_length)), t_void, &B::set_tbo_width);
 
-		define_builtin("set_height", PL(P("_", t_ptr(t_tbo)), P("height", t_length)), t_void, &B::set_tbo_height);
-		define_builtin("set_height", PL(P("_", t_ptr(t_tbo_ref)), P("height", t_length)), t_void, &B::set_tbo_height);
+		DEF("set_height", PL(P("_", T_P(t_tbo)), P("height", t_length)), t_void, &B::set_tbo_height);
+		DEF("set_height", PL(P("_", T_P(t_tbo_ref)), P("height", t_length)), t_void, &B::set_tbo_height);
 
-		define_builtin("set_width", PL(P("_", t_mutptr(t_tio)), P("width", t_length)), t_mutptr(t_tio),
-		    &B::set_tio_width);
-		define_builtin("raise", PL(P("_", t_mutptr(t_tio)), P("width", t_length)), t_mutptr(t_tio), &B::raise_tio);
+		DEF("set_width", PL(P("_", T_MP(t_tio)), P("width", t_length)), T_MP(t_tio), &B::set_tio_width);
+		DEF("raise", PL(P("_", T_MP(t_tio)), P("width", t_length)), T_MP(t_tio), &B::raise_tio);
 
-		define_builtin("set_width", PL(P("_", t_tio), P("width", t_length)), t_tio, &B::set_tio_width);
-		define_builtin("raise", PL(P("_", t_tio), P("width", t_length)), t_tio, &B::raise_tio);
+		DEF("set_width", PL(P("_", t_tio), P("width", t_length)), t_tio, &B::set_tio_width);
+		DEF("raise", PL(P("_", t_tio), P("width", t_length)), t_tio, &B::raise_tio);
 
 
-		define_builtin("link_to", PL(P("_", t_mutptr(t_tbo)), P("pos", t_babsposition)), t_void,
-		    &B::set_tbo_link_annotation);
-		define_builtin("link_to", PL(P("_", t_mutptr(t_tbo_ref)), P("pos", t_babsposition)), t_void,
-		    &B::set_tbo_link_annotation);
+		DEF("link_to", PL(P("_", T_MP(t_tbo)), P("pos", t_abspos)), t_void, &B::set_tbo_link_annotation);
+		DEF("link_to", PL(P("_", T_MP(t_tbo_ref)), P("pos", t_abspos)), t_void, &B::set_tbo_link_annotation);
 
-		define_builtin("link_to", PL(P("_", t_mutptr(t_tbo)), P("obj", t_tbo_ref)), t_void,
-		    &B::set_tbo_link_annotation);
-		define_builtin("link_to", PL(P("_", t_mutptr(t_tbo_ref)), P("obj", t_tbo_ref)), t_void,
-		    &B::set_tbo_link_annotation);
+		DEF("link_to", PL(P("_", T_MP(t_tbo)), P("obj", t_tbo_ref)), t_void, &B::set_tbo_link_annotation);
+		DEF("link_to", PL(P("_", T_MP(t_tbo_ref)), P("obj", t_tbo_ref)), t_void, &B::set_tbo_link_annotation);
 
-		define_builtin("link_to", PL(P("_", t_mutptr(t_lo)), P("obj", t_babsposition)), t_void,
-		    &B::set_lo_link_annotation);
-		define_builtin("link_to", PL(P("_", t_mutptr(t_lo_ref)), P("obj", t_babsposition)), t_void,
-		    &B::set_lo_link_annotation);
+		DEF("link_to", PL(P("_", T_MP(t_lo)), P("obj", t_abspos)), t_void, &B::set_lo_link_annotation);
+		DEF("link_to", PL(P("_", T_MP(t_lo_ref)), P("obj", t_abspos)), t_void, &B::set_lo_link_annotation);
 
-		define_builtin("link_to", PL(P("_", t_mutptr(t_lo)), P("obj", t_tbo_ref)), t_void, &B::set_lo_link_annotation);
-		define_builtin("link_to", PL(P("_", t_mutptr(t_lo_ref)), P("obj", t_tbo_ref)), t_void,
-		    &B::set_lo_link_annotation);
+		DEF("link_to", PL(P("_", T_MP(t_lo)), P("obj", t_tbo_ref)), t_void, &B::set_lo_link_annotation);
+		DEF("link_to", PL(P("_", T_MP(t_lo_ref)), P("obj", t_tbo_ref)), t_void, &B::set_lo_link_annotation);
 
 
 
-		define_builtin("offset_position", PL(P("_", t_ptr(t_tbo)), P("offset", t_bsize2d)), t_void,
-		    &B::offset_object_position);
-		define_builtin("offset_position", PL(P("_", t_ptr(t_tbo_ref)), P("offset", t_bsize2d)), t_void,
-		    &B::offset_object_position);
-		define_builtin("offset_position", PL(P("_", t_ptr(t_lo_ref)), P("offset", t_bsize2d)), t_void,
-		    &B::offset_object_position);
+		DEF("offset_position", PL(P("_", T_P(t_tbo)), P("offset", t_bsize2d)), t_void, &B::offset_object_position);
+		DEF("offset_position", PL(P("_", T_P(t_tbo_ref)), P("offset", t_bsize2d)), t_void, &B::offset_object_position);
+		DEF("offset_position", PL(P("_", T_P(t_lo_ref)), P("offset", t_bsize2d)), t_void, &B::offset_object_position);
 
-		define_builtin("override_position", PL(P("_", t_ptr(t_tbo)), P("pos", t_babsposition)), t_void,
-		    &B::override_object_position);
-		define_builtin("override_position", PL(P("_", t_ptr(t_tbo_ref)), P("pos", t_babsposition)), t_void,
-		    &B::override_object_position);
-		define_builtin("override_position", PL(P("_", t_ptr(t_lo_ref)), P("pos", t_babsposition)), t_void,
-		    &B::override_object_position);
+		DEF("override_position", PL(P("_", T_P(t_tbo)), P("pos", t_abspos)), t_void, &B::override_object_position);
+		DEF("override_position", PL(P("_", T_P(t_tbo_ref)), P("pos", t_abspos)), t_void, &B::override_object_position);
+		DEF("override_position", PL(P("_", T_P(t_lo_ref)), P("pos", t_abspos)), t_void, &B::override_object_position);
 
-		define_builtin("ref", PL(P("_", t_ptr(t_tio))), t_tio_ref, &B::ref_object);
-		define_builtin("ref", PL(P("_", t_ptr(t_tbo))), t_tbo_ref, &B::ref_object);
-		define_builtin("ref", PL(P("_", t_ptr(t_lo))), t_lo_ref, &B::ref_object);
+		DEF("ref", PL(P("_", T_P(t_tio))), t_tio_ref, &B::ref_object);
+		DEF("ref", PL(P("_", T_P(t_tbo))), t_tbo_ref, &B::ref_object);
+		DEF("ref", PL(P("_", T_P(t_lo))), t_lo_ref, &B::ref_object);
 
-		define_builtin("include", PL(P("1", t_str)), t_tbo, &B::include_file);
+		DEF("include", PL(P("1", t_str)), t_tbo, &B::include_file);
 
-		define_builtin("push_style", PL(P("1", t_bstyle)), t_void, &B::push_style);
+		DEF("push_style", PL(P("1", t_bstyle)), t_void, &B::push_style);
 
-		define_builtin("pop_style", PL(), t_bstyle, &B::pop_style);
-		define_builtin("current_style", PL(), t_bstyle, &B::current_style);
+		DEF("pop_style", PL(), t_bstyle, &B::pop_style);
+		DEF("current_style", PL(), t_bstyle, &B::current_style);
 
-		define_builtin("output_at_absolute", PL(P("pos", t_babsposition), P("obj", t_tbo)), t_void,
-		    &B::output_at_absolute_pos_tbo);
+		DEF("output_at_absolute", PL(P("pos", t_abspos), P("obj", t_tbo)), t_void, &B::output_at_absolute_pos_tbo);
 
 
-		define_builtin("print", PL(P("_", t_any)), t_void, &B::print);
-		define_builtin("println", PL(P("_", t_any)), t_void, &B::println);
+		DEF("print", PL(P("_", t_any)), t_void, &B::print);
+		DEF("println", PL(P("_", t_any)), t_void, &B::println);
 
-		define_builtin("find_font",
-		    PL(                                             //
-		        P("names", PType::array(t_str)),            //
-		        P("weight", t_opt(t_int), make_null()),     //
-		        P("italic", t_opt(t_bool), make_null()),    //
-		        P("stretch", t_opt(t_float), make_null())), //
-		    t_opt(t_bfont), &B::find_font);
+		DEF("find_font",
+		    PL(                                           //
+		        P("names", PType::array(t_str)),          //
+		        P("weight", T_O(t_int), make_null()),     //
+		        P("italic", T_O(t_bool), make_null()),    //
+		        P("stretch", T_O(t_float), make_null())), //
+		    T_O(t_bfont), &B::find_font);
 
-		define_builtin("find_font_family", PL(P("names", PType::array(t_str))), t_opt(t_bfontfamily),
-		    &B::find_font_family);
+		DEF("find_font_family", PL(P("names", PType::array(t_str))), T_O(t_bfontfamily), &B::find_font_family);
 	}
 
 	void defineBuiltins(Interpreter* interp, DefnTree* ns)

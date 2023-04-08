@@ -8,8 +8,6 @@
 #include "sap/style.h"
 #include "sap/annotation.h"
 
-#include "layout/layout_object.h"
-
 namespace sap::layout
 {
 	struct PageCursor;
@@ -31,23 +29,30 @@ namespace sap::tree
 	    document, and is what the metaprogram will traverse/manipulate (in the future).
 	*/
 
+	struct InlineObject;
+	struct BlockObject;
+
+	using LinkDestination = std::variant<std::monostate, //
+	    layout::AbsolutePagePos,
+	    InlineObject*,
+	    BlockObject*,
+	    layout::LayoutObject*>;
+
 	struct LayoutResult
 	{
 		std::optional<std::unique_ptr<layout::LayoutObject>> object;
 
-		static LayoutResult empty()
-		{
-			return LayoutResult {
-				.object = std::nullopt,
-			};
-		}
+		// fucking hate c++
+		LayoutResult(LayoutResult&&) = default;
+		LayoutResult& operator=(LayoutResult&&) = default;
 
-		static LayoutResult make(std::unique_ptr<layout::LayoutObject> obj)
-		{
-			return LayoutResult {
-				.object = std::move(obj),
-			};
-		}
+		~LayoutResult();
+
+		static LayoutResult empty();
+		static LayoutResult make(std::unique_ptr<layout::LayoutObject> obj);
+
+	private:
+		LayoutResult(decltype(object) x);
 	};
 
 	struct InlineObject : zst::IntrusiveRefCounted<InlineObject>, Stylable
@@ -61,11 +66,14 @@ namespace sap::tree
 		void setRaiseHeight(Length raise) { m_raise_height = raise; }
 		void addRaiseHeight(Length raise) { m_raise_height += raise; }
 
+		void setLinkDestination(LinkDestination dest) { m_link_destination = std::move(dest); }
+
 	protected:
 		mutable std::optional<layout::LayoutObject*> m_generated_layout_object = nullptr;
 
 	private:
 		Length m_raise_height = 0;
+		LinkDestination m_link_destination {};
 	};
 
 	struct InlineSpan : InlineObject
@@ -96,8 +104,8 @@ namespace sap::tree
 
 		virtual ErrorOr<void> evaluateScripts(interp::Interpreter* cs) const = 0;
 		virtual ErrorOr<LayoutResult> createLayoutObject(interp::Interpreter* cs,
-			const Style* parent_style,
-			Size2d available_space) const final;
+		    const Style* parent_style,
+		    Size2d available_space) const final;
 
 		std::optional<layout::LayoutObject*> getGeneratedLayoutObject() const { return m_generated_layout_object; }
 
@@ -107,16 +115,15 @@ namespace sap::tree
 		void offsetRelativePosition(Size2d offset);
 		void overrideAbsolutePosition(layout::AbsolutePagePos pos);
 
-		void setLinkDestination(layout::AbsolutePagePos dest) { m_link_destination = dest; }
-		void setLinkDestination(BlockObject* dest) { m_link_destination = dest; }
+		void setLinkDestination(LinkDestination dest);
 
 	protected:
 		mutable std::optional<layout::LayoutObject*> m_generated_layout_object = nullptr;
 
 	private:
 		virtual ErrorOr<LayoutResult> create_layout_object_impl(interp::Interpreter* cs,
-			const Style* parent_style,
-			Size2d available_space) const = 0;
+		    const Style* parent_style,
+		    Size2d available_space) const = 0;
 
 	private:
 		std::optional<Length> m_override_width {};
@@ -124,7 +131,7 @@ namespace sap::tree
 		std::optional<Size2d> m_rel_position_offset {};
 		std::optional<layout::AbsolutePagePos> m_abs_position_override {};
 
-		std::variant<std::monostate, layout::AbsolutePagePos, BlockObject*> m_link_destination {};
+		LinkDestination m_link_destination {};
 	};
 
 	/*
@@ -151,8 +158,8 @@ namespace sap::tree
 
 	private:
 		virtual ErrorOr<LayoutResult> create_layout_object_impl(interp::Interpreter* cs,
-			const Style* parent_style,
-			Size2d available_space) const override;
+		    const Style* parent_style,
+		    Size2d available_space) const override;
 	};
 
 	struct ScriptCall : InlineObject, ScriptObject
@@ -166,12 +173,12 @@ namespace sap::tree
 	private:
 		using ScriptEvalResult = Either<zst::SharedPtr<InlineSpan>, std::unique_ptr<layout::LayoutObject>>;
 		ErrorOr<std::optional<ScriptEvalResult>> evaluate_script(interp::Interpreter* cs,
-			const Style* parent_style,
-			Size2d available_space) const;
+		    const Style* parent_style,
+		    Size2d available_space) const;
 
 		ErrorOr<LayoutResult> create_layout_object_impl(interp::Interpreter* cs,
-			const Style* parent_style,
-			Size2d available_space) const;
+		    const Style* parent_style,
+		    Size2d available_space) const;
 
 		// befriend Paragraph so it can use our evaluate_script
 		friend struct Paragraph;

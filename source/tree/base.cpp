@@ -10,9 +10,9 @@
 namespace sap::tree
 {
 	ErrorOr<LayoutResult> BlockObject::createLayoutObject( //
-		interp::Interpreter* cs,                           //
-		const Style* parent_style,
-		Size2d available_space) const
+	    interp::Interpreter* cs,                           //
+	    const Style* parent_style,
+	    Size2d available_space) const
 	{
 		auto result = TRY(this->create_layout_object_impl(cs, parent_style, available_space));
 		if(result.object.has_value())
@@ -31,10 +31,8 @@ namespace sap::tree
 			if(m_rel_position_offset.has_value())
 				obj->addRelativePositionOffset(*m_rel_position_offset);
 
-			if(auto pos = std::get_if<layout::AbsolutePagePos>(&m_link_destination); pos)
-				obj->setLinkDestination(*pos);
-			else if(auto x = std::get_if<BlockObject*>(&m_link_destination); x)
-				obj->setLinkDestination(*x);
+			if(not std::holds_alternative<std::monostate>(m_link_destination))
+				obj->setLinkDestination(m_link_destination);
 		}
 
 		return Ok(std::move(result));
@@ -61,6 +59,11 @@ namespace sap::tree
 		m_override_height = std::move(y);
 	}
 
+	void BlockObject::setLinkDestination(LinkDestination dest)
+	{
+		m_link_destination = std::move(dest);
+	}
+
 
 
 
@@ -83,7 +86,7 @@ namespace sap::tree
 	}
 
 	static void do_flatten(std::vector<zst::SharedPtr<InlineObject>>& out,
-		std::vector<zst::SharedPtr<InlineObject>> objs)
+	    std::vector<zst::SharedPtr<InlineObject>> objs)
 	{
 		for(auto& obj : objs)
 		{
@@ -107,5 +110,21 @@ namespace sap::tree
 		do_flatten(ret, std::move(m_objects));
 
 		return ret;
+	}
+
+	LayoutResult::~LayoutResult() = default;
+
+	LayoutResult LayoutResult::empty()
+	{
+		return LayoutResult(std::nullopt);
+	}
+
+	LayoutResult LayoutResult::make(std::unique_ptr<layout::LayoutObject> obj)
+	{
+		return LayoutResult(std::move(obj));
+	}
+
+	LayoutResult::LayoutResult(decltype(object) x) : object(std::move(x))
+	{
 	}
 }

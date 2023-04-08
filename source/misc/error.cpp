@@ -4,9 +4,9 @@
 
 #include <unistd.h>
 
-#include "sap/frontend.h"
-
 #include "error.h"
+
+#include "sap/frontend.h"
 #include "interp/interp.h"
 
 namespace sap
@@ -31,9 +31,9 @@ namespace sap
 	inline constexpr const char* COLOUR_GREY_BOLD = "\033[30;1m";
 
 	static void show_message(const char* error_text,
-		const char* _error_colour,
-		const Location& loc,
-		const std::string& message)
+	    const char* _error_colour,
+	    const Location& loc,
+	    const std::string& message)
 	{
 		bool coloured = isatty(STDERR_FILENO);
 
@@ -43,9 +43,9 @@ namespace sap
 		const char* colour_reset = coloured ? COLOUR_RESET : "";
 
 		zpr::fprintln(stderr, "{}{}:{} {}{}{}", colour_error, error_text, colour_reset, colour_black_bold, message,
-			colour_reset);
+		    colour_reset);
 		zpr::fprintln(stderr, "{} at:{} {}{}:{}:{}{}", colour_blue, colour_reset, colour_black_bold, loc.filename,
-			loc.line + 1, loc.column + 1, colour_reset);
+		    loc.line + 1, loc.column + 1, colour_reset);
 
 		if(loc.is_builtin)
 			return;
@@ -82,7 +82,7 @@ namespace sap
 		zpr::fprintln(stderr, "{}{} |{}", colour_blue, line_num_padding, colour_reset);
 		zpr::fprintln(stderr, "{}{} |  {} {}", colour_blue, line_num, colour_reset, current_line);
 		zpr::fprintln(stderr, "{}{} |  {}{}{}{}{}", colour_blue, line_num_padding, colour_reset, colour_error,
-			caret_spaces, carets, colour_reset);
+		    caret_spaces, carets, colour_reset);
 		zpr::fprintln(stderr, "");
 
 		abort();
