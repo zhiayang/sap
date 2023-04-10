@@ -66,7 +66,7 @@ namespace util
 	}
 
 	template <std::integral To, std::integral From>
-		requires requires() { requires sizeof(To) < sizeof(From); }
+	    requires requires() { requires sizeof(To) < sizeof(From); }
 	To checked_cast(From f)
 	{
 		if constexpr(std::signed_integral<To> && std::unsigned_integral<From>)
@@ -88,7 +88,7 @@ namespace util
 	}
 
 	template <std::integral To, std::integral From>
-		requires requires() { requires sizeof(To) == sizeof(From); }
+	    requires requires() { requires sizeof(To) == sizeof(From); }
 	To checked_cast(From f)
 	{
 		if constexpr(std::signed_integral<To> && std::unsigned_integral<From>)
@@ -107,7 +107,7 @@ namespace util
 	}
 
 	template <std::integral To, std::integral From>
-		requires requires() { requires sizeof(To) > sizeof(From); }
+	    requires requires() { requires sizeof(To) > sizeof(From); }
 	To checked_cast(From f)
 	{
 		if constexpr(std::signed_integral<To> && std::unsigned_integral<From>)
@@ -158,7 +158,7 @@ namespace util
 		size_t operator()(const std::u32string& str) const { return WH {}(str); }
 
 		template <has_hash_method T>
-			requires(not has_hash_specialisation<T>)
+		    requires(not has_hash_specialisation<T>)
 		size_t operator()(const T& x) const
 		{
 			return x.hash();
@@ -195,8 +195,8 @@ namespace util
 	// This exists because libstdc++ is a dum dum
 	template <typename To, typename From>
 	inline std::shared_ptr<To> dynamic_pointer_cast(const std::shared_ptr<From>& from) //
-		noexcept
-		requires std::derived_from<To, From>
+	    noexcept
+	    requires std::derived_from<To, From>
 	{
 		if(auto* to = dynamic_cast<typename std::shared_ptr<To>::element_type*>(from.get()))
 			return std::shared_ptr<To>(from, to);
@@ -205,8 +205,8 @@ namespace util
 
 	template <typename To, typename From>
 	inline std::unique_ptr<To> static_pointer_cast(std::unique_ptr<From>&& from) //
-		noexcept
-		requires std::derived_from<To, From>
+	    noexcept
+	    requires std::derived_from<To, From>
 	{
 		return std::unique_ptr<To>(static_cast<To*>(from.release()));
 	}

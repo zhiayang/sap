@@ -138,20 +138,20 @@ namespace sap::layout::linebreak
 
 
 	std::vector<BrokenLine> breakLines(const Style* parent_style,
-		const InlineObjVec& contents,
-		Length preferred_line_length)
+	    const InlineObjVec& contents,
+	    Length preferred_line_length)
 	{
 		auto path = util::dijkstra_shortest_path(
-			LineBreakNode {
-				.contents = &contents,
-				// .layout = layout,
-				.parent_style = parent_style,
-				.preferred_line_length = preferred_line_length,
-				.broken_until = contents.begin(),
-				.end = contents.end(),
-				.line = BrokenLine(parent_style),
-			},
-			LineBreakNode::make_end(contents.end()));
+		    LineBreakNode {
+		        .contents = &contents,
+		        // .layout = layout,
+		        .parent_style = parent_style,
+		        .preferred_line_length = preferred_line_length,
+		        .broken_until = contents.begin(),
+		        .end = contents.end(),
+		        .line = BrokenLine(parent_style),
+		    },
+		    LineBreakNode::make_end(contents.end()));
 
 		std::vector<BrokenLine> ret;
 		ret.reserve(path.size());

@@ -48,7 +48,6 @@ namespace util
 			return std::get<Distance>(lhs) > std::get<Distance>(rhs);
 		});
 
-		// Use set instead of priority_queue so that we can .extract it
 		std::priority_queue<Edge, std::vector<Edge>, EdgeComp> queue;
 
 		// Maps Tos to Froms

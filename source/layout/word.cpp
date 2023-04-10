@@ -20,7 +20,7 @@
 namespace sap::layout
 {
 	Word::Word(zst::wstr_view text, const Style* style, Length relative_offset, Length raise_height, LayoutSize size)
-		: LayoutObject(style, size), m_relative_offset(relative_offset), m_raise_height(raise_height), m_text(text)
+	    : LayoutObject(style, size), m_relative_offset(relative_offset), m_raise_height(raise_height), m_text(text)
 	{
 		assert(m_style != nullptr);
 	}
@@ -38,17 +38,17 @@ namespace sap::layout
 
 
 	void Word::render(AbsolutePagePos line_pos,
-		std::vector<pdf::Page*>& pages,
-		pdf::Text* text,
-		bool is_first_in_text,
-		Length offset_from_prev) const
+	    std::vector<pdf::Page*>& pages,
+	    pdf::Text* text,
+	    bool is_first_in_text,
+	    Length offset_from_prev) const
 	{
 		auto page = pages[line_pos.page_num];
 
 		if(not is_first_in_text)
 		{
 			text->offset(pdf::PdfFont::convertPDFScalarToTextSpaceForFontSize(offset_from_prev.into(),
-				text->currentFontSize()));
+			    text->currentFontSize()));
 		}
 		else
 		{
@@ -68,10 +68,7 @@ namespace sap::layout
 		text->setFont(font, font_size.into<pdf::PdfScalar>());
 
 		if(m_raise_height != 0)
-		{
-			text->rise(pdf::PdfFont::convertPDFScalarToTextSpaceForFontSize(m_raise_height.into(),
-				text->currentFontSize()));
-		}
+			text->rise(m_raise_height.into());
 
 		auto add_gid = [&font, text](GlyphId gid) {
 			if(font->isCIDFont())

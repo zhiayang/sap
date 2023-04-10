@@ -28,10 +28,10 @@
 namespace sap::layout
 {
 	Paragraph::Paragraph(const Style* style,
-		LayoutSize size,
-		std::vector<std::unique_ptr<Line>> lines,
-		std::vector<zst::SharedPtr<tree::InlineObject>> para_inline_objs)
-		: LayoutObject(style, size), m_lines(std::move(lines)), m_para_inline_objs(std::move(para_inline_objs))
+	    LayoutSize size,
+	    std::vector<std::unique_ptr<Line>> lines,
+	    std::vector<zst::SharedPtr<tree::InlineObject>> para_inline_objs)
+	    : LayoutObject(style, size), m_lines(std::move(lines)), m_para_inline_objs(std::move(para_inline_objs))
 	{
 	}
 
@@ -108,9 +108,22 @@ namespace sap::layout
 
 namespace sap::tree
 {
+	static void flatten_para(const std::vector<zst::SharedPtr<InlineObject>>& objs,
+	    std::vector<zst::SharedPtr<InlineObject>>& flattened)
+	{
+		for(auto& obj : objs)
+		{
+			if(auto span = dynamic_cast<InlineSpan*>(obj.get()); span && span->canSplit())
+				flatten_para(span->objects(), flattened);
+			else
+				flattened.push_back(obj);
+		}
+	}
+
+
 	auto Paragraph::create_layout_object_impl(interp::Interpreter* cs,
-		const Style* parent_style,
-		Size2d available_space) const -> ErrorOr<LayoutResult>
+	    const Style* parent_style,
+	    Size2d available_space) const -> ErrorOr<LayoutResult>
 	{
 		auto _ = cs->evaluator().pushBlockContext(this);
 
@@ -121,7 +134,7 @@ namespace sap::tree
 		else if(objs->is_right())
 			return Ok(LayoutResult::make(objs->take_right()));
 
-		auto para_objects = TRY(Paragraph::processWordSeparators(std::move(*objs->take_left()).flatten()));
+		auto para_objects = TRY(Paragraph::processWordSeparators(objs->take_left()->objects()));
 		if(para_objects.empty())
 			return Ok(LayoutResult::empty());
 
@@ -130,44 +143,48 @@ namespace sap::tree
 		std::vector<std::unique_ptr<layout::Line>> layout_lines {};
 		LayoutSize para_size {};
 
-		size_t current_idx = 0;
-
 		// precompute line metrics (and the line bounds)
 		using WordSpan = std::span<const zst::SharedPtr<tree::InlineObject>>;
 		std::vector<std::tuple<layout::LineMetrics, WordSpan>> the_lines {};
 
-		auto add_one_line = [&the_lines](auto words_begin, auto words_end, const Style* style) {
+		using Iter = std::vector<zst::SharedPtr<InlineObject>>::const_iterator;
+		auto add_one_line = [&the_lines](Iter words_begin, Iter words_end, const Style* style) {
 			if(dynamic_cast<const tree::Separator*>((*words_begin).get()) != nullptr)
 			{
 				sap::internal_error(
-					"line starting with non-Word found, "
-					"either line breaking algo is broken "
-					"or we had multiple separators in a row");
+				    "line starting with non-Word found, "
+				    "either line breaking algo is broken "
+				    "or we had multiple separators in a row");
 			}
 
 			// Ignore space at end of line
 			const auto& last_word = *(words_end - 1);
 			if(auto sep = dynamic_cast<const tree::Separator*>(last_word.get());
-				sep && (sep->isSpace() || sep->isSentenceEnding()))
+			    sep && (sep->isSpace() || sep->isSentenceEnding()))
 			{
 				--words_end;
 			}
 
-			auto words_span = std::span(words_begin, words_end);
+			auto words_span = std::span(&*words_begin, &*words_end);
 			the_lines.push_back({
-				layout::computeLineMetrics(words_span, style),
-				words_span,
+			    layout::computeLineMetrics(words_span, style),
+			    words_span,
 			});
 		};
 
-		auto broken_lines = layout::linebreak::breakLines(style, para_objects, available_space.x());
+		// break after flattening.
+		std::vector<zst::SharedPtr<InlineObject>> flat {};
+		flatten_para(para_objects, flat);
 
+		auto broken_lines = layout::linebreak::breakLines(style, flat, available_space.x());
+
+		size_t current_idx = 0;
 		for(auto line_it = broken_lines.begin(); line_it != broken_lines.end(); ++line_it)
 		{
 			auto& broken_line = *line_it;
 
-			auto words_begin = para_objects.begin() + (ssize_t) current_idx;
-			auto words_end = para_objects.begin() + (ssize_t) current_idx + (ssize_t) broken_line.numParts();
+			auto words_begin = flat.begin() + (ssize_t) current_idx;
+			auto words_end = flat.begin() + (ssize_t) current_idx + (ssize_t) broken_line.numParts();
 
 			add_one_line(words_begin, words_end, style);
 
@@ -182,7 +199,7 @@ namespace sap::tree
 			auto& [metrics, word_span] = the_lines[i];
 
 			auto layout_line = layout::Line::fromInlineObjects(cs, style, word_span, metrics, available_space,
-				is_first_line, is_last_line);
+			    is_first_line, is_last_line);
 
 			auto line_size = layout_line->layoutSize();
 
@@ -201,7 +218,7 @@ namespace sap::tree
 		}
 
 		auto layout_para = std::unique_ptr<layout::Paragraph>(new layout::Paragraph(style, para_size,
-			std::move(layout_lines), std::move(para_objects)));
+		    std::move(layout_lines), std::move(para_objects)));
 
 		m_generated_layout_object = layout_para.get();
 		return Ok(LayoutResult::make(std::move(layout_para)));

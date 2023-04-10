@@ -100,22 +100,6 @@ namespace sap::interp::builtin
 	}
 
 
-
-	static std::vector<zst::SharedPtr<tree::InlineObject>> flatten_tio(zst::SharedPtr<tree::InlineSpan> tio)
-	{
-		if(tio->hasOverriddenWidth())
-		{
-			std::vector<zst::SharedPtr<tree::InlineObject>> ret {};
-			ret.emplace_back(std::move(tio));
-
-			return ret;
-		}
-		else
-		{
-			return std::move(*tio).flatten();
-		}
-	}
-
 	ErrorOr<EvalResult> make_span(Evaluator* ev, std::vector<Value>& args)
 	{
 		assert(args.size() == 1);
@@ -124,10 +108,7 @@ namespace sap::interp::builtin
 
 		auto objs = std::move(args[0]).takeArray();
 		for(size_t i = 0; i < objs.size(); i++)
-		{
-			auto flat = flatten_tio(std::move(objs[i]).takeTreeInlineObj());
-			std::move(flat.begin(), flat.end(), std::back_inserter(span->objects()));
-		}
+			span->addObject(std::move(objs[i]).takeTreeInlineObj());
 
 		return EvalResult::ofValue(Value::treeInlineObject(std::move(span)));
 	}
@@ -140,10 +121,7 @@ namespace sap::interp::builtin
 		std::vector<zst::SharedPtr<tree::InlineObject>> inlines {};
 
 		for(size_t i = 0; i < objs.size(); i++)
-		{
-			auto flat = flatten_tio(std::move(objs[i]).takeTreeInlineObj());
-			std::move(flat.begin(), flat.end(), std::back_inserter(inlines));
-		}
+			inlines.push_back(std::move(objs[i]).takeTreeInlineObj());
 
 		auto para = zst::make_shared<tree::Paragraph>();
 
@@ -163,10 +141,7 @@ namespace sap::interp::builtin
 		std::vector<zst::SharedPtr<tree::InlineObject>> inlines {};
 
 		for(size_t i = 0; i < objs.size(); i++)
-		{
-			auto flat = flatten_tio(std::move(objs[i]).takeTreeInlineObj());
-			std::move(flat.begin(), flat.end(), std::back_inserter(inlines));
-		}
+			inlines.push_back(std::move(objs[i]).takeTreeInlineObj());
 
 		inlines = TRY(tree::Paragraph::processWordSeparators(std::move(inlines)));
 		line->addObjects(std::move(inlines));
@@ -299,6 +274,7 @@ namespace sap::interp::builtin
 		{
 			if(auto span = dynamic_cast<tree::InlineSpan*>(obj.get()))
 			{
+				span->addRaiseHeight(raise);
 				apply_raise(span->objects(), raise);
 			}
 			else
@@ -338,6 +314,26 @@ namespace sap::interp::builtin
 		}
 	}
 
+
+
+	template <typename T>
+	static ErrorOr<EvalResult> set_link_annotation(Evaluator* ev, T* obj, Value& arg)
+	{
+		if(ev->interpreter()->currentPhase() >= ProcessingPhase::Render)
+			return ErrMsg(ev, "`link_to()` can only be called before `@render`");
+
+		if(arg.type() == BS_AbsPosition::type)
+			obj->setLinkDestination(BS_AbsPosition::unmake(ev, arg));
+		else if(arg.type()->isTreeBlockObjRef())
+			obj->setLinkDestination(arg.getTreeBlockObjectRef());
+		else if(arg.type()->isTreeInlineObjRef())
+			obj->setLinkDestination(arg.getTreeInlineObjectRef());
+		else
+			return ErrMsg(ev, "unsupported link target '{}'", arg.type());
+
+		return EvalResult::ofVoid();
+	}
+
 	ErrorOr<EvalResult> set_lo_link_annotation(Evaluator* ev, std::vector<Value>& args)
 	{
 		assert(args.size() == 2);
@@ -350,21 +346,7 @@ namespace sap::interp::builtin
 		        ? &value.getLayoutObject()
 		        : value.getLayoutObjectRef());
 
-		if(args[1].type() == BS_AbsPosition::type)
-		{
-			auto dest = BS_AbsPosition::unmake(ev, args[1]);
-			obj->setLinkDestination(dest);
-		}
-		else if(args[1].type()->isTreeBlockObjRef())
-		{
-			obj->setLinkDestination(args[1].getTreeBlockObjectRef());
-		}
-		else
-		{
-			return ErrMsg(ev, "unsupported link target '{}'", args[1].type());
-		}
-
-		return EvalResult::ofVoid();
+		return set_link_annotation(ev, obj, args[1]);
 	}
 
 	ErrorOr<EvalResult> set_tbo_link_annotation(Evaluator* ev, std::vector<Value>& args)
@@ -372,29 +354,25 @@ namespace sap::interp::builtin
 		auto& value = *args[0].getPointer();
 		assert(value.type()->isTreeBlockObj() || value.type()->isTreeBlockObjRef());
 
-		if(ev->interpreter()->currentPhase() != ProcessingPhase::Layout)
-			return ErrMsg(ev, "`link_to()` can only be called during `@layout`");
-
 		auto tbo = const_cast<tree::BlockObject*>(
 		    value.isTreeBlockObj() //
 		        ? &value.getTreeBlockObj()
 		        : value.getTreeBlockObjectRef());
 
-		if(args[1].type() == BS_AbsPosition::type)
-		{
-			auto dest = BS_AbsPosition::unmake(ev, args[1]);
-			tbo->setLinkDestination(dest);
-		}
-		else if(args[1].type()->isTreeBlockObjRef())
-		{
-			tbo->setLinkDestination(args[1].getTreeBlockObjectRef());
-		}
-		else
-		{
-			return ErrMsg(ev, "unsupported link target '{}'", args[1].type());
-		}
+		return set_link_annotation(ev, tbo, args[1]);
+	}
 
 
-		return EvalResult::ofVoid();
+	ErrorOr<EvalResult> set_tio_link_annotation(Evaluator* ev, std::vector<Value>& args)
+	{
+		auto& value = *args[0].getPointer();
+		assert(value.type()->isTreeInlineObj() || value.type()->isTreeInlineObjRef());
+
+		auto tio = const_cast<tree::InlineSpan*>(
+		    value.isTreeInlineObj() //
+		        ? &value.getTreeInlineObj()
+		        : value.getTreeInlineObjectRef());
+
+		return set_link_annotation(ev, tio, args[1]);
 	}
 }

@@ -76,9 +76,8 @@ namespace pdf
 		this->insertPDFCommand(zpr::sprint(" {} {} Td\n", offset.x(), offset.y()));
 	}
 
-	void Text::rise(TextSpace1d rise)
+	void Text::rise(PdfScalar rise)
 	{
-		// positive is up
 		this->insertPDFCommand(zpr::sprint(" {} Ts", rise.value()));
 	}
 

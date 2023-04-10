@@ -83,14 +83,14 @@ namespace sap::interp
 			return std::move(value).takeEnumerator();
 		}
 		else if(from_type->isArray() && to->isArray()
-				&& (from_type->arrayElement()->isVoid() || to->arrayElement()->isVoid()))
+		        && (from_type->arrayElement()->isVoid() || to->arrayElement()->isVoid()))
 		{
 			return Value::array(to->arrayElement(), std::move(value).takeArray());
 		}
 		else if(from_type->isPointer() && to->isPointer() && from_type->pointerElement()->isArray()
-				&& to->pointerElement()->isArray()
-				&& (from_type->pointerElement()->arrayElement()->isVoid()
-					|| to->pointerElement()->arrayElement()->isVoid()))
+		        && to->pointerElement()->isArray()
+		        && (from_type->pointerElement()->arrayElement()->isVoid()
+		            || to->pointerElement()->arrayElement()->isVoid()))
 		{
 			assert(from_type->isMutablePointer() || not to->isMutablePointer());
 			if(to->isMutablePointer())
@@ -110,8 +110,7 @@ namespace sap::interp
 
 		if(value.isTreeInlineObj())
 		{
-			auto objs = std::move(value).takeTreeInlineObj();
-			std::move(objs->objects().begin(), objs->objects().end(), std::back_inserter(ret));
+			ret.push_back(std::move(value).takeTreeInlineObj());
 		}
 		else if(value.isPrintable())
 		{
@@ -250,7 +249,7 @@ namespace sap::interp
 	}
 
 	ErrorOr<void> Evaluator::addAbsolutelyPositionedBlockObject(zst::SharedPtr<tree::BlockObject> tbo_,
-		layout::AbsolutePagePos abs_pos)
+	    layout::AbsolutePagePos abs_pos)
 	{
 		if(m_document == nullptr)
 			return ErrMsg(this, "cannot output objects in this context");

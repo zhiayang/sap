@@ -227,16 +227,19 @@ namespace sap::interp
 
 
 		DEF("link_to", PL(P("_", T_MP(t_tbo)), P("pos", t_abspos)), t_void, &B::set_tbo_link_annotation);
-		DEF("link_to", PL(P("_", T_MP(t_tbo_ref)), P("pos", t_abspos)), t_void, &B::set_tbo_link_annotation);
-
 		DEF("link_to", PL(P("_", T_MP(t_tbo)), P("obj", t_tbo_ref)), t_void, &B::set_tbo_link_annotation);
+		DEF("link_to", PL(P("_", T_MP(t_tbo_ref)), P("pos", t_abspos)), t_void, &B::set_tbo_link_annotation);
 		DEF("link_to", PL(P("_", T_MP(t_tbo_ref)), P("obj", t_tbo_ref)), t_void, &B::set_tbo_link_annotation);
 
 		DEF("link_to", PL(P("_", T_MP(t_lo)), P("obj", t_abspos)), t_void, &B::set_lo_link_annotation);
-		DEF("link_to", PL(P("_", T_MP(t_lo_ref)), P("obj", t_abspos)), t_void, &B::set_lo_link_annotation);
-
 		DEF("link_to", PL(P("_", T_MP(t_lo)), P("obj", t_tbo_ref)), t_void, &B::set_lo_link_annotation);
+		DEF("link_to", PL(P("_", T_MP(t_lo_ref)), P("obj", t_abspos)), t_void, &B::set_lo_link_annotation);
 		DEF("link_to", PL(P("_", T_MP(t_lo_ref)), P("obj", t_tbo_ref)), t_void, &B::set_lo_link_annotation);
+
+		DEF("link_to", PL(P("_", T_MP(t_tio)), P("obj", t_abspos)), t_void, &B::set_tio_link_annotation);
+		DEF("link_to", PL(P("_", T_MP(t_tio)), P("obj", t_tbo_ref)), t_void, &B::set_tio_link_annotation);
+		DEF("link_to", PL(P("_", T_MP(t_tio_ref)), P("obj", t_abspos)), t_void, &B::set_tio_link_annotation);
+		DEF("link_to", PL(P("_", T_MP(t_tio_ref)), P("obj", t_tbo_ref)), t_void, &B::set_tio_link_annotation);
 
 
 

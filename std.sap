@@ -700,13 +700,22 @@ namespace std
 	}
 
 
-	global var list_of_refs: [BlockRef] = [];
-	@layout list_of_refs = [];
+	global var g_list_of_refs: [BlockRef] = [];
+	@layout g_list_of_refs = [];
 
 	@finalise {
 		var i = 0;
 		while(i < g_references.size())
 		{
+			var ref = g_references[i];
+			let record = ref.record!;
+			if(record.refnum?)
+			{
+				let refnum = record.refnum! - 1;
+				let refblk = g_list_of_refs[refnum];
+
+				# ref.tio_ref.link_to(refblk);
+			}
 
 			i += 1;
 		}
@@ -770,7 +779,7 @@ namespace std
 				alignment: .Left
 			});
 
-			list_of_refs += [item.ref()];
+			g_list_of_refs += [item.ref()];
 			lines += [*item];
 			i += 1;
 		}

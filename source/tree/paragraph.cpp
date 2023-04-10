@@ -24,9 +24,9 @@ namespace sap::tree
 	}
 
 	auto Paragraph::eval_single_script_in_para(interp::Interpreter* cs,
-		Size2d available_space,
-		ScriptCall* iscr,
-		bool allow_blocks) const -> ErrorOr<std::optional<EvalScriptResult>>
+	    Size2d available_space,
+	    ScriptCall* iscr,
+	    bool allow_blocks) const -> ErrorOr<std::optional<EvalScriptResult>>
 	{
 		if(iscr->runPhase() != ProcessingPhase::Layout)
 			return ErrMsg(iscr->call->loc(), "inline script calls must run at layout time");
@@ -47,7 +47,7 @@ namespace sap::tree
 
 
 	auto Paragraph::evaluate_scripts(interp::Interpreter* cs, Size2d available_space) const
-		-> ErrorOr<std::optional<EvalScriptResult>>
+	    -> ErrorOr<std::optional<EvalScriptResult>>
 	{
 		// if the paragraph has exactly one guy and that guy is a script call,
 		// then we can allow that guy to be promoted to a block object.
@@ -57,26 +57,29 @@ namespace sap::tree
 				return this->eval_single_script_in_para(cs, available_space, iscr, /* allow blocks: */ true);
 		}
 
-		auto span = zst::make_shared<InlineSpan>();
+		auto inlines = zst::make_shared<InlineSpan>();
 		for(auto& obj : m_contents)
 		{
-			if(auto txt = dynamic_cast<tree::Text*>(obj.get()); txt != nullptr)
+			if(auto txt = dynamic_cast<tree::Text*>(obj.get()))
 			{
-				span->addObject(obj);
+				inlines->addObject(obj);
 			}
-			else if(auto sep = dynamic_cast<tree::Separator*>(obj.get()); sep != nullptr)
+			else if(auto sep = dynamic_cast<tree::Separator*>(obj.get()))
 			{
-				span->addObject(obj);
+				inlines->addObject(obj);
 			}
-			else if(auto iscr = dynamic_cast<tree::ScriptCall*>(obj.get()); iscr != nullptr)
+			else if(auto iscr = dynamic_cast<tree::ScriptCall*>(obj.get()))
 			{
-				auto _tmp = TRY(this->eval_single_script_in_para(cs, available_space, iscr, /* allow blocks: */ false));
-				if(not _tmp.has_value())
+				auto tmp = TRY(this->eval_single_script_in_para(cs, available_space, iscr, /* allow blocks: */ false));
+				if(not tmp.has_value())
 					continue;
 
-				assert(_tmp->is_left());
-				auto tmp = std::move(*_tmp->take_left()).flatten();
-				span->addObjects(std::move(tmp));
+				assert(tmp->is_left());
+				inlines->addObject(tmp->take_left());
+			}
+			else if(auto span = dynamic_cast<tree::InlineSpan*>(obj.get()))
+			{
+				inlines->addObject(obj);
 			}
 			else
 			{
@@ -84,16 +87,24 @@ namespace sap::tree
 			}
 		}
 
-		return Ok(Left(std::move(span)));
+		return Ok(Left(std::move(inlines)));
 	}
 
 	static bool is_letter(char32_t c)
 	{
 		auto category = utf8proc_category((utf8proc_int32_t) c);
 		return util::is_one_of(category, UTF8PROC_CATEGORY_LU, UTF8PROC_CATEGORY_LL, UTF8PROC_CATEGORY_LT,
-			UTF8PROC_CATEGORY_LM, UTF8PROC_CATEGORY_LO);
+		    UTF8PROC_CATEGORY_LM, UTF8PROC_CATEGORY_LO);
 	}
 
+	static zst::SharedPtr<Text> new_text_from_existing(const zst::SharedPtr<InlineObject>& text,
+	    zst::wstr_view contents)
+	{
+		auto ret = zst::make_shared<Text>(contents.str());
+		ret->copyAttributesFrom(*text);
+
+		return ret;
+	}
 
 	static void make_separators_for_word(std::vector<zst::SharedPtr<InlineObject>>& vec, zst::SharedPtr<Text> text)
 	{
@@ -124,7 +135,7 @@ namespace sap::tree
 		}
 
 		if(not pre_chunk.empty())
-			vec.push_back(zst::make_shared<Text>(pre_chunk.str(), text->style()));
+			vec.push_back(new_text_from_existing(text, pre_chunk.str()));
 
 		bool manual_hyphenation = false;
 		for(size_t i = 0; i < orig_span.size(); i++)
@@ -141,11 +152,11 @@ namespace sap::tree
 			for(size_t i = 0; (i = orig_span.find_first_of(U"-/.")) != (size_t) -1;)
 			{
 				auto part = orig_span.take_prefix(i + 1);
-				vec.push_back(zst::make_shared<Text>(part.str(), text->style()));
+				vec.push_back(new_text_from_existing(text, part.str()));
 				vec.push_back(zst::make_shared<Separator>(Separator::BREAK_POINT));
 			}
 
-			vec.push_back(zst::make_shared<Text>(orig_span.str(), text->style()));
+			vec.push_back(new_text_from_existing(text, orig_span.str()));
 		}
 		else if(not orig_span.empty())
 		{
@@ -167,27 +178,29 @@ namespace sap::tree
 				}
 				else
 				{
-					// hyphenation preference increases from 1 to 3 to 5, so 5 has the lowest cost, and 1 the highest.
+					// hyphenation preference increases from 1 to 3 to 5, so 5 has the lowest cost, and 1 the
+					// highest.
 					auto part = orig_span.take_prefix(k);
-					vec.push_back(zst::make_shared<Text>(part.str(), text->style()));
-					vec.push_back(zst::make_shared<Separator>(Separator::HYPHENATION_POINT, /* cost: */ 6 - points[i]));
+					vec.push_back(new_text_from_existing(text, part.str()));
+					vec.push_back(zst::make_shared<Separator>(Separator::HYPHENATION_POINT,
+					    /* cost: */ 6 - points[i]));
 					k = 1;
 				}
 			}
 
 			if(orig_span.size() > 0)
-				vec.push_back(zst::make_shared<Text>(orig_span.str(), text->style()));
+				vec.push_back(new_text_from_existing(text, orig_span.str()));
 		}
 
 
 		if(not post_chunk.empty())
-			vec.push_back(zst::make_shared<Text>(post_chunk.str(), text->style()));
+			vec.push_back(new_text_from_existing(text, post_chunk.str()));
 	}
 
 
 
 	ErrorOr<std::vector<zst::SharedPtr<InlineObject>>> Paragraph::processWordSeparators( //
-		std::vector<zst::SharedPtr<InlineObject>> input)
+	    std::vector<zst::SharedPtr<InlineObject>> input)
 	{
 		std::vector<zst::SharedPtr<InlineObject>> ret {};
 		ret.reserve(input.size());
@@ -203,34 +216,18 @@ namespace sap::tree
 			}
 			else if(auto span = dynamic_cast<tree::InlineSpan*>(uwu.get()); span)
 			{
-				auto new_objs = TRY(processWordSeparators(std::move(span->objects())));
-				span->objects() = std::move(new_objs);
+				auto new_span = zst::make_shared<InlineSpan>(TRY(processWordSeparators(span->objects())));
+				new_span->copyAttributesFrom(*span);
 
-				ret.push_back(std::move(uwu));
-				continue;
-			}
-			else if(uwu->raiseHeight() != 0)
-			{
-				// FIXME: this is really dirty
-				auto raise = uwu->raiseHeight();
-				uwu->setRaiseHeight(0);
-
-				std::vector<zst::SharedPtr<InlineObject>> tmp {};
-				tmp.push_back(std::move(uwu));
-
-				auto new_objs = TRY(processWordSeparators(std::move(tmp)));
-				for(auto& x : new_objs)
-					x->setRaiseHeight(raise);
-
-				std::move(new_objs.begin(), new_objs.end(), std::back_inserter(ret));
+				ret.push_back(std::move(new_span));
+				seen_whitespace = false;
 				continue;
 			}
 
 			auto tree_text = dynamic_cast<tree::Text*>(uwu.get());
 			assert(tree_text != nullptr);
 
-			auto current_text = zst::make_shared<Text>(U"");
-			current_text->setStyle(tree_text->style());
+			auto current_text = new_text_from_existing(uwu, U"");
 
 			for(char32_t c : tree_text->contents())
 			{
@@ -246,10 +243,9 @@ namespace sap::tree
 							make_separators_for_word(ret, std::move(current_text));
 
 							ret.push_back(zst::make_shared<
-								Separator>(did_end_sentence ? Separator::SENTENCE_END : Separator::SPACE));
+							    Separator>(did_end_sentence ? Separator::SENTENCE_END : Separator::SPACE));
 
-							current_text = zst::make_shared<Text>(U"");
-							current_text->setStyle(tree_text->style());
+							current_text = new_text_from_existing(uwu, U"");
 						}
 						// if the current text is empty, we just put another separator unless
 						// we're the first object (don't start with a separator)

@@ -48,9 +48,9 @@ namespace sap::layout
 	}
 
 	Length calculatePreferredSeparatorWidth(const tree::Separator* sep,
-		bool is_end_of_line,
-		const Style* left_style,
-		const Style* right_style)
+	    bool is_end_of_line,
+	    const Style* left_style,
+	    const Style* right_style)
 	{
 		auto a = calculate_preferred_sep_width(sep, left_style, is_end_of_line);
 		auto b = calculate_preferred_sep_width(sep, right_style, is_end_of_line);
@@ -109,27 +109,42 @@ namespace sap::layout
 				ret.descent_height = std::max(ret.descent_height, word_size.descent);
 
 				ret.default_line_spacing = std::max(ret.default_line_spacing,
-					word_size.default_line_spacing * style->line_spacing());
+				    word_size.default_line_spacing * style->line_spacing());
 			}
 			else if(auto span = dynamic_cast<const tree::InlineSpan*>(it->get()); span)
 			{
-				assert(span->hasOverriddenWidth());
-
 				reset_chunk();
 				cur_chunk_begin = it + 1;
 
 				auto style = parent_style->extendWith(span->style());
-
 				auto span_metrics = computeLineMetrics(span->objects(), style);
-				auto span_width = *span->getOverriddenWidth();
 
 				ret.ascent_height = std::max(ret.ascent_height, span_metrics.ascent_height);
 				ret.descent_height = std::max(ret.descent_height, span_metrics.descent_height);
+				ret.default_line_spacing = std::max(ret.default_line_spacing, span_metrics.default_line_spacing);
 
-				ret.total_word_width += span_width;
+				if(span->canSplit())
+				{
+					ret.total_word_width += span_metrics.total_word_width;
+					ret.total_space_width += span_metrics.total_space_width;
 
-				ret.widths.push_back(span_width);
-				ret.nested_span_metrics.push_back(std::move(span_metrics));
+					std::move(span_metrics.widths.begin(), span_metrics.widths.end(), std::back_inserter(ret.widths));
+
+					std::move(span_metrics.preferred_sep_widths.begin(), span_metrics.preferred_sep_widths.end(),
+					    std::back_inserter(ret.preferred_sep_widths));
+
+					std::move(span_metrics.nested_span_metrics.begin(), span_metrics.nested_span_metrics.end(),
+					    std::back_inserter(ret.nested_span_metrics));
+				}
+				else
+				{
+					auto span_width = *span->getOverriddenWidth();
+
+					ret.total_word_width += span_width;
+
+					ret.widths.push_back(span_width);
+					ret.nested_span_metrics.push_back(std::move(span_metrics));
+				}
 			}
 			else if(auto sep = dynamic_cast<const tree::Separator*>(it->get()); sep)
 			{
@@ -139,7 +154,7 @@ namespace sap::layout
 				bool is_end_of_line = it + 1 == objs.end();
 
 				auto real_sep_width = calculateRealSeparatorWidth(sep, parent_style->extendWith((*it)->style()),
-					is_end_of_line);
+				    is_end_of_line);
 
 				auto pref_sep_width = [&]() -> Length {
 					if(it == objs.begin() && it + 1 == objs.end())
@@ -147,7 +162,7 @@ namespace sap::layout
 
 					auto calc_one = [sep, is_end_of_line, parent_style](auto iter) {
 						return calculate_preferred_sep_width(sep, parent_style->extendWith((*iter)->style()),
-							is_end_of_line);
+						    is_end_of_line);
 					};
 
 					if(it == objs.begin())
@@ -183,42 +198,43 @@ namespace sap::layout
 
 
 	Line::Line(const Style* style, //
-		LayoutSize size,
-		LineMetrics metrics,
-		std::vector<std::unique_ptr<LayoutObject>> objs)
-		: LayoutObject(style, size), m_metrics(std::move(metrics)), m_objects(std::move(objs))
+	    LayoutSize size,
+	    LineMetrics metrics,
+	    std::vector<std::unique_ptr<LayoutObject>> objs)
+	    : LayoutObject(style, size), m_metrics(std::move(metrics)), m_objects(std::move(objs))
 	{
 	}
 
 
-	static void compute_word_offsets_for_span(const tree::InlineSpan* span,
-		const Style* parent_style,
-		Length current_offset,
-		const LineMetrics& metrics,
-		std::vector<std::unique_ptr<LayoutObject>>& layout_objects)
+	static Length compute_word_offsets_for_span(size_t& metrics_idx,
+	    size_t& sep_idx,
+	    size_t& nested_span_idx,
+	    std::span<const zst::SharedPtr<tree::InlineObject>> objs,
+	    Length width,
+	    const Style* parent_style,
+	    Length& current_offset,
+	    const LineMetrics& metrics,
+	    bool is_last_line,
+	    std::vector<std::unique_ptr<LayoutObject>>& layout_objects)
 	{
-		assert(span->hasOverriddenWidth());
-		auto width = *span->getOverriddenWidth();
-
-		auto style = parent_style->extendWith(span->style());
-
 		auto desired_space_width = width - metrics.total_word_width;
 		double space_width_factor = desired_space_width / metrics.total_space_width;
 
 		// for centred and right-aligned, we need to calculate the left offset.
-		if(style->alignment() == Alignment::Right || style->alignment() == Alignment::Centre)
+		if(parent_style->alignment() == Alignment::Right || parent_style->alignment() == Alignment::Centre)
 		{
 			auto extra_space = width - (metrics.total_word_width + metrics.total_space_width);
-			if(style->alignment() == Alignment::Right)
+			if(parent_style->alignment() == Alignment::Right)
 				current_offset += extra_space;
 			else
 				current_offset += extra_space / 2;
 		}
 
-		auto& objs = span->objects();
-		for(size_t i = 0, sep_idx = 0, nested_span_idx = 0; i < objs.size(); i++)
+		Length actual_width = 0;
+		for(size_t i = 0; i < objs.size(); i++)
 		{
-			auto obj_width = metrics.widths[i];
+			auto obj_width = metrics.widths[metrics_idx];
+			auto style = parent_style->extendWith(objs[i]->style());
 
 			if(auto tree_word = dynamic_cast<const tree::Text*>(objs[i].get()); tree_word)
 			{
@@ -228,23 +244,60 @@ namespace sap::layout
 					.descent = metrics.descent_height,
 				};
 
-				auto word = std::make_unique<Word>(tree_word->contents(), style->extendWith(tree_word->style()),
-					current_offset, tree_word->raiseHeight(), word_size);
+				auto word = std::make_unique<Word>(tree_word->contents(), style, current_offset,
+				    tree_word->raiseHeight(), word_size);
 
 				tree_word->setGeneratedLayoutObject(word.get());
 
 				layout_objects.push_back(std::move(word));
 				current_offset += obj_width;
+				actual_width += obj_width;
+				metrics_idx += 1;
 			}
 			else if(auto tree_span = dynamic_cast<const tree::InlineSpan*>(objs[i].get()); tree_span)
 			{
-				assert(tree_span->hasOverriddenWidth());
+				if(tree_span->canSplit())
+				{
+					// don't make a copy here
+					actual_width += compute_word_offsets_for_span(metrics_idx, //
+					    sep_idx,                                               //
+					    nested_span_idx,                                       //
+					    tree_span->objects(),                                  //
+					    width - current_offset,                                //
+					    style,                                                 //
+					    current_offset,                                        //
+					    metrics,                                               //
+					    is_last_line,                                          //
+					    layout_objects);
 
-				compute_word_offsets_for_span(tree_span, style, current_offset,
-					metrics.nested_span_metrics[nested_span_idx], layout_objects);
+					// don't modify metrics_idx here
+				}
+				else
+				{
+					// make a copy, because we manually adjust current_offset
+					// by the overridden width later.
+					size_t inner_metrics_idx = 0;
+					size_t inner_sep_idx = 0;
+					size_t inner_nested_span_idx = 0;
+					Length cur_ofs = current_offset;
 
-				nested_span_idx += 1;
-				current_offset += obj_width;
+					compute_word_offsets_for_span(inner_metrics_idx,  //
+					    inner_sep_idx,                                //
+					    inner_nested_span_idx,                        //
+					    tree_span->objects(),                         //
+					    *tree_span->getOverriddenWidth(),             //
+					    style,                                        //
+					    cur_ofs,                                      //
+					    metrics.nested_span_metrics[nested_span_idx], //
+					    is_last_line,                                 //
+					    layout_objects);
+
+					nested_span_idx += 1;
+					current_offset += obj_width;
+					actual_width += obj_width;
+
+					metrics_idx += 1;
+				}
 			}
 			else if(auto tree_sep = dynamic_cast<const tree::Separator*>(objs[i].get()); tree_sep)
 			{
@@ -256,25 +309,36 @@ namespace sap::layout
 					.descent = metrics.descent_height,
 				};
 
+				// FIXME nocommit: broken
 				bool is_end_of_line = i + 1 == objs.size();
 				auto orig_offset = current_offset;
 
-				if(style->alignment() == Alignment::Justified)
+				if(style->alignment() == Alignment::Justified
+				    && (not is_last_line || (0.9 <= space_width_factor && space_width_factor <= 1.1)))
+				{
 					current_offset += preferred_sep_width * space_width_factor;
+					actual_width += preferred_sep_width * space_width_factor;
+				}
 				else
+				{
 					current_offset += preferred_sep_width;
+					actual_width += preferred_sep_width;
+				}
 
 				auto sep = std::make_unique<Word>(is_end_of_line ? tree_sep->endOfLine() : tree_sep->middleOfLine(),
-					style->extendWith(tree_sep->style()), orig_offset, tree_sep->raiseHeight(), sep_size);
+				    style->extendWith(tree_sep->style()), orig_offset, tree_sep->raiseHeight(), sep_size);
 
 				tree_sep->setGeneratedLayoutObject(sep.get());
 				layout_objects.push_back(std::move(sep));
+				metrics_idx += 1;
 			}
 			else
 			{
 				sap::internal_error("unsupported!");
 			}
 		}
+
+		return actual_width;
 	}
 
 
@@ -288,92 +352,30 @@ namespace sap::layout
 
 
 	std::unique_ptr<Line> Line::fromInlineObjects(interp::Interpreter* cs,
-		const Style* style,
-		std::span<const zst::SharedPtr<tree::InlineObject>> objs,
-		const LineMetrics& line_metrics,
-		Size2d available_space,
-		bool is_first_line,
-		bool is_last_line)
+	    const Style* parent_style,
+	    std::span<const zst::SharedPtr<tree::InlineObject>> objs,
+	    const LineMetrics& line_metrics,
+	    Size2d available_space,
+	    bool is_first_line,
+	    bool is_last_line)
 	{
-		auto desired_space_width = available_space.x() - line_metrics.total_word_width;
-		double space_width_factor = desired_space_width / line_metrics.total_space_width;
-
 		std::vector<std::unique_ptr<LayoutObject>> layout_objects {};
 
+		size_t metrics_idx = 0;
+		size_t sep_idx = 0;
+		size_t nested_span_idx = 0;
 		Length current_offset = 0;
-		for(size_t i = 0, sep_idx = 0, nested_span_idx = 0; i < objs.size(); i++)
-		{
-			auto obj_width = line_metrics.widths[i];
 
-			if(auto tree_word = dynamic_cast<const tree::Text*>(objs[i].get()); tree_word)
-			{
-				auto word_size = LayoutSize {
-					.width = obj_width,
-					.ascent = line_metrics.ascent_height,
-					.descent = line_metrics.descent_height,
-				};
+		auto actual_width = compute_word_offsets_for_span(metrics_idx, sep_idx, nested_span_idx, objs,
+		    available_space.x(), parent_style, current_offset, line_metrics, is_last_line, layout_objects);
 
-				auto word = std::make_unique<Word>(tree_word->contents(), style->extendWith(tree_word->style()),
-					current_offset, tree_word->raiseHeight(), word_size);
-
-				tree_word->setGeneratedLayoutObject(word.get());
-
-				layout_objects.push_back(std::move(word));
-				current_offset += obj_width;
-			}
-			else if(auto tree_span = dynamic_cast<const tree::InlineSpan*>(objs[i].get()); tree_span)
-			{
-				assert(tree_span->hasOverriddenWidth());
-
-				compute_word_offsets_for_span(tree_span, style, current_offset,
-					line_metrics.nested_span_metrics[nested_span_idx], layout_objects);
-
-				nested_span_idx += 1;
-				current_offset += *tree_span->getOverriddenWidth();
-			}
-			else if(auto tree_sep = dynamic_cast<const tree::Separator*>(objs[i].get()); tree_sep)
-			{
-				auto preferred_sep_width = line_metrics.preferred_sep_widths[sep_idx++];
-
-				auto sep_size = LayoutSize {
-					.width = obj_width,
-					.ascent = line_metrics.ascent_height,
-					.descent = line_metrics.descent_height,
-				};
-
-				bool is_end_of_line = i + 1 == objs.size();
-				auto orig_offset = current_offset;
-
-				if(style->alignment() == Alignment::Justified
-					&& (not is_last_line || (0.9 <= space_width_factor && space_width_factor <= 1.1)))
-				{
-					current_offset += preferred_sep_width * space_width_factor;
-				}
-				else
-				{
-					current_offset += preferred_sep_width;
-				}
-
-				auto sep = std::make_unique<Word>(is_end_of_line ? tree_sep->endOfLine() : tree_sep->middleOfLine(),
-					style->extendWith(tree_sep->style()), orig_offset, tree_sep->raiseHeight(), sep_size);
-
-				tree_sep->setGeneratedLayoutObject(sep.get());
-				layout_objects.push_back(std::move(sep));
-			}
-			else
-			{
-				sap::internal_error("unsupported!");
-			}
-		}
-
-		auto actual_width = current_offset;
 		auto layout_size = LayoutSize {
 			.width = actual_width,
 			.ascent = line_metrics.ascent_height,
 			.descent = line_metrics.descent_height,
 		};
 
-		return std::unique_ptr<Line>(new Line(style, layout_size, line_metrics, std::move(layout_objects)));
+		return std::unique_ptr<Line>(new Line(parent_style, layout_size, line_metrics, std::move(layout_objects)));
 	}
 
 

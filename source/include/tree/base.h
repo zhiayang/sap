@@ -67,6 +67,7 @@ namespace sap::tree
 		void addRaiseHeight(Length raise) { m_raise_height += raise; }
 
 		void setLinkDestination(LinkDestination dest) { m_link_destination = std::move(dest); }
+		void copyAttributesFrom(const InlineObject& obj);
 
 	protected:
 		mutable std::optional<layout::LayoutObject*> m_generated_layout_object = nullptr;
@@ -87,7 +88,7 @@ namespace sap::tree
 		const std::vector<zst::SharedPtr<InlineObject>>& objects() const { return m_objects; }
 		std::vector<zst::SharedPtr<InlineObject>>& objects() { return m_objects; }
 
-		std::vector<zst::SharedPtr<InlineObject>> flatten() &&;
+		bool canSplit() const { return not hasOverriddenWidth(); }
 
 		void overrideWidth(Length length) { m_override_width = length; }
 		bool hasOverriddenWidth() const { return m_override_width.has_value(); }
@@ -96,6 +97,8 @@ namespace sap::tree
 	private:
 		std::vector<zst::SharedPtr<InlineObject>> m_objects;
 		std::optional<Length> m_override_width {};
+
+		friend InlineObject;
 	};
 
 	struct BlockObject : zst::IntrusiveRefCounted<BlockObject>, Stylable

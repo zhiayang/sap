@@ -106,12 +106,18 @@ namespace sap::layout::linebreak
 
 		void add_span(const tree::InlineSpan* span)
 		{
-			assert(span->hasOverriddenWidth());
+			if(span->canSplit())
+			{
+				for(const auto& obj : span->objects())
+					this->add(obj.get());
+			}
+			else
+			{
+				this->add_span_or_word(span->style());
 
-			this->add_span_or_word(span->style());
-
-			m_last_obj_kind = SPAN;
-			m_last_span = span;
+				m_last_obj_kind = SPAN;
+				m_last_span = span;
+			}
 		}
 
 		void add_sep(const tree::Separator* sep)
@@ -165,7 +171,7 @@ namespace sap::layout::linebreak
 			if(m_last_sep != nullptr)
 			{
 				auto sep_width = calculatePreferredSeparatorWidth(m_last_sep, /* end of line: */ false, //
-					prev_word_style, word_style);
+				    prev_word_style, word_style);
 
 				m_line_width_excluding_last_word += sep_width;
 
@@ -183,6 +189,6 @@ namespace sap::layout::linebreak
 	};
 
 	std::vector<BrokenLine> breakLines(const Style* parent_style,
-		const std::vector<zst::SharedPtr<tree::InlineObject>>& contents,
-		Length preferred_line_length);
+	    const std::vector<zst::SharedPtr<tree::InlineObject>>& contents,
+	    Length preferred_line_length);
 }

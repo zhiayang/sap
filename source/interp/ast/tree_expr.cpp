@@ -16,7 +16,7 @@
 namespace sap::interp
 {
 	static ErrorOr<void> typecheck_list_of_tios(Typechecker* ts, //
-		const std::vector<zst::SharedPtr<tree::InlineObject>>& tios)
+	    const std::vector<zst::SharedPtr<tree::InlineObject>>& tios)
 	{
 		for(auto& obj : tios)
 		{
@@ -42,18 +42,24 @@ namespace sap::interp
 	}
 
 	static ErrorOr<std::vector<zst::SharedPtr<tree::InlineObject>>> evaluate_list_of_tios(Evaluator* ev,
-		const std::vector<zst::SharedPtr<tree::InlineObject>>& tios)
+	    const std::vector<zst::SharedPtr<tree::InlineObject>>& tios)
 	{
 		std::vector<zst::SharedPtr<tree::InlineObject>> ret {};
 		for(auto& obj : tios)
 		{
 			if(auto txt = dynamic_cast<const tree::Text*>(obj.get()); txt)
 			{
-				ret.push_back(obj);
+				auto new_text = zst::make_shared<tree::Text>(txt->contents());
+				new_text->copyAttributesFrom(*txt);
+
+				ret.push_back(std::move(new_text));
 			}
 			else if(auto sep = dynamic_cast<const tree::Separator*>(obj.get()); sep)
 			{
-				ret.push_back(obj);
+				auto new_sep = zst::make_shared<tree::Separator>(sep->kind(), sep->hyphenationCost());
+				new_sep->copyAttributesFrom(*sep);
+
+				ret.push_back(std::move(new_sep));
 			}
 			else if(auto span = dynamic_cast<const tree::InlineSpan*>(obj.get()); span)
 			{

@@ -65,7 +65,15 @@ namespace sap::tree
 	}
 
 
+	void InlineObject::copyAttributesFrom(const InlineObject& obj)
+	{
+		m_style = obj.m_style;
+		m_raise_height = obj.m_raise_height;
+		m_link_destination = obj.m_link_destination;
 
+		if(dynamic_cast<InlineSpan*>(this) && dynamic_cast<const InlineSpan*>(&obj))
+			static_cast<InlineSpan*>(this)->m_override_width = static_cast<const InlineSpan&>(obj).m_override_width;
+	}
 
 	InlineSpan::InlineSpan() : m_objects()
 	{
@@ -83,33 +91,6 @@ namespace sap::tree
 	void InlineSpan::addObjects(std::vector<zst::SharedPtr<InlineObject>> objs)
 	{
 		std::move(objs.begin(), objs.end(), std::back_inserter(m_objects));
-	}
-
-	static void do_flatten(std::vector<zst::SharedPtr<InlineObject>>& out,
-	    std::vector<zst::SharedPtr<InlineObject>> objs)
-	{
-		for(auto& obj : objs)
-		{
-			if(auto span = dynamic_cast<InlineSpan*>(obj.get()))
-			{
-				if(span->hasOverriddenWidth())
-					out.push_back(std::move(obj));
-				else
-					do_flatten(out, std::move(span->objects()));
-			}
-			else
-			{
-				out.push_back(std::move(obj));
-			}
-		}
-	}
-
-	std::vector<zst::SharedPtr<InlineObject>> InlineSpan::flatten() &&
-	{
-		std::vector<zst::SharedPtr<InlineObject>> ret {};
-		do_flatten(ret, std::move(m_objects));
-
-		return ret;
 	}
 
 	LayoutResult::~LayoutResult() = default;

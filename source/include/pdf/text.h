@@ -35,7 +35,7 @@ namespace pdf
 		PdfScalar currentFontSize() const;
 
 
-		void rise(TextSpace1d rise);
+		void rise(PdfScalar rise);
 
 		void moveAbs(Position2d pos);
 		void nextLine(Offset2d offset);
