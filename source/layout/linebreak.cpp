@@ -79,8 +79,6 @@ namespace sap::layout::linebreak
 					return ret;
 				}
 
-
-				// TODO: make it not ugly lol
 				auto& wordorsep = *neighbour_broken_until++;
 				neighbour_line.add(wordorsep.get());
 

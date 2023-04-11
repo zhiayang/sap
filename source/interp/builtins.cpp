@@ -189,8 +189,8 @@ namespace sap::interp
 		DEF("make_zbox", PL(P("1", T_VARR(t_tbo))), t_tbo, &B::make_zbox);
 		DEF("make_vbox", PL(P("1", T_VARR(t_tbo)), P("glue", t_bool, make_bool(false))), t_tbo, &B::make_vbox);
 
-		DEF("make_span", PL(P("1", T_VARR(t_tio))), t_tio, &B::make_span);
-		DEF("make_text", PL(P("1", T_VARR(t_str))), t_tio, &B::make_text);
+		DEF("make_span", PL(P("1", T_VARR(t_tio)), P("glue", t_bool, make_bool(false))), t_tio, &B::make_span);
+		DEF("make_text", PL(P("1", T_VARR(t_str)), P("glue", t_bool, make_bool(false))), t_tio, &B::make_text);
 		DEF("make_line", PL(P("1", T_VARR(t_tio))), t_tbo, &B::make_line);
 		DEF("make_paragraph", PL(P("1", T_VARR(t_tio))), t_tbo, &B::make_paragraph);
 

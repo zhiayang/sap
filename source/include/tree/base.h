@@ -119,8 +119,9 @@ namespace sap::tree
 
 	struct InlineSpan : InlineObject
 	{
-		InlineSpan();
-		explicit InlineSpan(std::vector<zst::SharedPtr<InlineObject>> objs);
+		explicit InlineSpan(bool glue);
+		explicit InlineSpan(bool glue, zst::SharedPtr<InlineObject> obj);
+		explicit InlineSpan(bool glue, std::vector<zst::SharedPtr<InlineObject>> objs);
 
 		void addObject(zst::SharedPtr<InlineObject> obj);
 		void addObjects(std::vector<zst::SharedPtr<InlineObject>> objs);
@@ -128,7 +129,7 @@ namespace sap::tree
 		const std::vector<zst::SharedPtr<InlineObject>>& objects() const { return m_objects; }
 		std::vector<zst::SharedPtr<InlineObject>>& objects() { return m_objects; }
 
-		bool canSplit() const { return not hasOverriddenWidth(); }
+		bool canSplit() const { return not m_override_width.has_value() and not m_is_glued; }
 
 		void overrideWidth(Length length) { m_override_width = length; }
 		bool hasOverriddenWidth() const { return m_override_width.has_value(); }
@@ -140,6 +141,7 @@ namespace sap::tree
 	private:
 		std::vector<zst::SharedPtr<InlineObject>> m_objects;
 		std::optional<Length> m_override_width {};
+		bool m_is_glued = false;
 
 		mutable std::vector<layout::LayoutSpan*> m_generated_layout_spans {};
 

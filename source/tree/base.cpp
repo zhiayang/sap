@@ -119,7 +119,12 @@ namespace sap::tree
 		m_parent_span = obj.m_parent_span;
 
 		if(m_kind == Kind::Span && obj.m_kind == Kind::Span)
-			static_cast<InlineSpan*>(this)->m_override_width = static_cast<const InlineSpan&>(obj).m_override_width;
+		{
+			auto self = static_cast<InlineSpan*>(this);
+			auto& other = static_cast<const InlineSpan&>(obj);
+			self->m_override_width = other.m_override_width;
+			self->m_is_glued = other.m_is_glued;
+		}
 	}
 
 
@@ -228,12 +233,19 @@ namespace sap::tree
 
 
 
-	InlineSpan::InlineSpan() : InlineObject(Kind::Span), m_objects()
+	InlineSpan::InlineSpan(bool glue) : InlineObject(Kind::Span), m_objects(), m_is_glued(glue)
 	{
 	}
 
-	InlineSpan::InlineSpan(std::vector<zst::SharedPtr<InlineObject>> objs)
-	    : InlineObject(Kind::Span), m_objects(std::move(objs))
+	InlineSpan::InlineSpan(bool glue, zst::SharedPtr<InlineObject> obj)
+	    : InlineObject(Kind::Span), m_objects(), m_is_glued(glue)
+	{
+		obj->setParentSpan(this);
+		m_objects.push_back(std::move(obj));
+	}
+
+	InlineSpan::InlineSpan(bool glue, std::vector<zst::SharedPtr<InlineObject>> objs)
+	    : InlineObject(Kind::Span), m_objects(std::move(objs)), m_is_glued(glue)
 	{
 		for(auto& obj : m_objects)
 			obj->setParentSpan(this);

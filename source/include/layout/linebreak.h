@@ -49,10 +49,16 @@ namespace sap::layout::linebreak
 			return style->font()->getWordSize(text, style->font_size().into()).into();
 		}
 
+		static Size2d calculateSpanSize(const tree::InlineSpan* span)
+		{
+			// FIXME: span heights not calculated correctly
+			assert(span->hasOverriddenWidth());
+			return { *span->getOverriddenWidth(), 0 };
+		}
+
 	public:
 		Length totalSpaceWidth() const { return m_total_space_width; }
 
-		// Getters
 		Length width()
 		{
 			auto last_word_style = m_parent_style->extendWith(m_current_style);
@@ -66,7 +72,7 @@ namespace sap::layout::linebreak
 				// if the previous thing wasn't even a word, we have to add its size as well,
 				// because it doesn't have text in m_last_word
 				if(m_last_obj_kind == SPAN)
-					ret += *m_last_span->getOverriddenWidth();
+					ret += calculateSpanSize(m_last_span).x();
 
 				m_last_word.erase(m_last_word.size() - m_last_sep->endOfLine().size());
 				return ret;
@@ -77,58 +83,70 @@ namespace sap::layout::linebreak
 			}
 		}
 
-		size_t numSpaces() const { return m_num_spaces; }
 		size_t numParts() const { return m_num_parts; }
+		size_t numSpaces() const { return m_num_spaces; }
 		Length lineHeight() const { return m_line_height; }
 
 		void add(const tree::InlineObject* obj)
 		{
-			if(obj->isText())
-				this->add_word(static_cast<const tree::Text*>(obj));
-			else if(obj->isSeparator())
-				this->add_sep(static_cast<const tree::Separator*>(obj));
-			else if(obj->isSpan())
-				this->add_span(static_cast<const tree::InlineSpan*>(obj));
+			this->_add(obj);
+			m_num_parts++;
+		}
+
+
+	private:
+		void _add(const tree::InlineObject* obj)
+		{
+			assert(obj != nullptr);
+
+			if(auto t = obj->castToText())
+			{
+				// zpr::println("add word ({})", t->contents());
+				this->add_word(t);
+			}
+			else if(auto s = obj->castToSeparator())
+			{
+				// zpr::println("add sep");
+				this->add_sep(s);
+			}
+			else if(auto ss = obj->castToSpan())
+			{
+				// zpr::println("add span ({})", ss->canSplit());
+				this->add_span(ss);
+			}
 			else
 				sap::internal_error("unsupported: {}", typeid(*obj).name());
 		}
 
-	private:
 		Size2d get_size_of_last_thing(const Style* style)
 		{
 			if(m_last_obj_kind == WORD)
 				return calculateWordSize(m_last_word, style);
 			else if(m_last_obj_kind == SPAN)
-				return { *m_last_span->getOverriddenWidth(), 0 }; // FIXME: spans don't have height set properly
+				return calculateSpanSize(m_last_span);
 			else
 				return { 0, 0 };
 		}
 
 		void add_span(const tree::InlineSpan* span)
 		{
-			if(span->canSplit())
-			{
-				for(const auto& obj : span->objects())
-					this->add(obj.get());
-			}
-			else
+			// since we're adding one entire span here, "splittability" isn't the deciding factor.
+			if(span->hasOverriddenWidth())
 			{
 				this->add_span_or_word(span->style());
 
 				m_last_obj_kind = SPAN;
 				m_last_span = span;
 			}
+			else
+			{
+				for(const auto& obj : span->objects())
+					this->_add(obj.get());
+			}
 		}
 
-		void add_sep(const tree::Separator* sep)
-		{
-			m_num_parts++;
+		void add_sep(const tree::Separator* sep) { m_last_sep = sep; }
 
-			m_last_span = nullptr;
-			m_last_sep = sep;
-		}
-
-		// Modifiers
 		void add_word(const tree::Text* word)
 		{
 			auto word_style = m_parent_style->extendWith(word->style());
@@ -182,7 +200,6 @@ namespace sap::layout::linebreak
 			m_current_style = style;
 			m_last_span = nullptr;
 			m_last_sep = nullptr;
-			m_num_parts++;
 
 			return replace_last_word;
 		}

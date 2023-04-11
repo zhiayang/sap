@@ -267,7 +267,7 @@ namespace std
 		if(page?)   txt = f"[{record!.refnum!}, p. {page!}]";
 		else        txt = f"[{record!.refnum!}]";
 
-		let tio = builtin::make_text(txt);
+		let tio = builtin::make_text(glue: true, txt);
 
 		g_references += [Reference {
 			num: record!.refnum!,

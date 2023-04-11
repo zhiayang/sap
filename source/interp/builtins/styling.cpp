@@ -48,13 +48,10 @@ namespace sap::interp::builtin
 		}
 		else
 		{
-			auto word = zst::make_shared<tree::Text>(value.toString());
+			auto word = TRY(ev->convertValueToText(std::move(value)));
 			word->setStyle(style);
 
-			auto span = zst::make_shared<tree::InlineSpan>();
-			span->addObject(std::move(word));
-
-			return EvalResult::ofValue(Value::treeInlineObject(std::move(span)));
+			return EvalResult::ofValue(Value::treeInlineObject(std::move(word)));
 		}
 	}
 

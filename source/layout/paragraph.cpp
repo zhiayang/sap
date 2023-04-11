@@ -152,6 +152,28 @@ namespace sap::tree
 
 		using Iter = std::vector<zst::SharedPtr<InlineObject>>::const_iterator;
 		auto add_one_line = [&the_lines](Iter words_begin, Iter words_end, const Style* style) {
+#if 0
+			zpr::print("line ({} parts): {", words_end - words_begin);
+
+			static constexpr void (*print_obj)(const InlineObject*) = [](const InlineObject* obj) {
+				if(auto t = obj->castToText())
+					zpr::print("[{}]", t->contents());
+				else if(auto s = obj->castToSeparator())
+					zpr::print("+");
+				else if(auto span = obj->castToSpan())
+				{
+					zpr::print("(");
+					for(auto& c : span->objects())
+						print_obj(c.get());
+					zpr::print(")");
+				}
+			};
+
+			for(auto it = words_begin; it != words_end; ++it)
+				print_obj(it->get());
+
+			zpr::println("}");
+#endif
 			if((*words_begin)->isSeparator())
 			{
 				sap::internal_error(

@@ -45,23 +45,6 @@ namespace sap::interp::builtin
 
 
 
-	ErrorOr<EvalResult> make_text(Evaluator* ev, std::vector<Value>& args)
-	{
-		assert(args.size() == 1);
-
-		auto span = zst::make_shared<tree::InlineSpan>();
-
-		auto strings = std::move(args[0]).takeArray();
-		for(size_t i = 0; i < strings.size(); i++)
-		{
-			if(i != 0)
-				span->addObject(zst::make_shared<tree::Separator>(tree::Separator::SPACE));
-
-			span->addObject(zst::make_shared<tree::Text>(strings[i].getUtf32String()));
-		}
-
-		return EvalResult::ofValue(Value::treeInlineObject(std::move(span)));
-	}
 
 	static ErrorOr<EvalResult> make_box(Evaluator* ev,
 	    Value& arr,
@@ -103,9 +86,8 @@ namespace sap::interp::builtin
 
 	ErrorOr<EvalResult> make_span(Evaluator* ev, std::vector<Value>& args)
 	{
-		assert(args.size() == 1);
-
-		auto span = zst::make_shared<tree::InlineSpan>();
+		assert(args.size() == 2);
+		auto span = zst::make_shared<tree::InlineSpan>(/* glued: */ args[1].getBool());
 
 		auto objs = std::move(args[0]).takeArray();
 		for(size_t i = 0; i < objs.size(); i++)
@@ -113,6 +95,28 @@ namespace sap::interp::builtin
 
 		return EvalResult::ofValue(Value::treeInlineObject(std::move(span)));
 	}
+
+	ErrorOr<EvalResult> make_text(Evaluator* ev, std::vector<Value>& args)
+	{
+		assert(args.size() == 2);
+		auto span = zst::make_shared<tree::InlineSpan>(/* glued: */ args[1].getBool());
+
+		auto strings = std::move(args[0]).takeArray();
+
+		std::vector<zst::SharedPtr<tree::InlineObject>> inlines {};
+		for(size_t i = 0; i < strings.size(); i++)
+		{
+			if(i != 0)
+				inlines.push_back(zst::make_shared<tree::Separator>(tree::Separator::SPACE));
+			inlines.push_back(zst::make_shared<tree::Text>(strings[i].getUtf32String()));
+		}
+
+		inlines = TRY(tree::Paragraph::processWordSeparators(std::move(inlines)));
+		span->addObjects(std::move(inlines));
+
+		return EvalResult::ofValue(Value::treeInlineObject(std::move(span)));
+	}
+
 
 	ErrorOr<EvalResult> make_paragraph(Evaluator* ev, std::vector<Value>& args)
 	{

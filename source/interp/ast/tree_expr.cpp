@@ -64,7 +64,8 @@ namespace sap::interp
 			else if(auto span = obj->castToSpan())
 			{
 				auto tmp = TRY(evaluate_list_of_tios(ev, span->objects()));
-				auto new_span = zst::make_shared<tree::InlineSpan>(std::move(tmp));
+
+				auto new_span = zst::make_shared<tree::InlineSpan>(/* glue: */ false, std::move(tmp));
 				new_span->copyAttributesFrom(*span);
 
 				ret.push_back(std::move(new_span));
@@ -72,7 +73,7 @@ namespace sap::interp
 			else if(auto sc = obj->castToScriptCall())
 			{
 				auto tmp = TRY(ev->convertValueToText(TRY_VALUE(sc->call->evaluate(ev))));
-				std::move(tmp.begin(), tmp.end(), std::back_inserter(ret));
+				ret.push_back(std::move(tmp));
 			}
 			else
 			{
@@ -95,7 +96,7 @@ namespace sap::interp
 	ErrorOr<EvalResult> TreeInlineExpr::evaluate_impl(Evaluator* ev) const
 	{
 		auto tios = TRY(evaluate_list_of_tios(ev, this->objects));
-		auto span = zst::make_shared<tree::InlineSpan>(std::move(tios));
+		auto span = zst::make_shared<tree::InlineSpan>(/* glue: */ false, std::move(tios));
 
 		return EvalResult::ofValue(Value::treeInlineObject(std::move(span)));
 	}
@@ -153,7 +154,11 @@ namespace sap::interp
 					auto ty = tmp.type();
 
 					if(not(ty->isTreeBlockObj() || (ty->isOptional() && ty->optionalElement()->isTreeBlockObj())))
-						return EvalResult::ofValue(make_para_from_tios(TRY(ev->convertValueToText(std::move(tmp)))));
+					{
+						return EvalResult::ofValue(make_para_from_tios({
+						    TRY(ev->convertValueToText(std::move(tmp))),
+						}));
+					}
 
 					if(tmp.isOptional() && not tmp.haveOptionalValue())
 						return EvalResult::ofVoid();

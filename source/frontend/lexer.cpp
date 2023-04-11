@@ -32,7 +32,7 @@ namespace sap::frontend
 
 	static ErrorOr<bool> parse_comment(zst::str_view& stream, Location& loc)
 	{
-		if(stream.starts_with("#/"))
+		if(stream.starts_with("/#"))
 		{
 			std::vector<Location> start_locs {};
 
@@ -42,7 +42,7 @@ namespace sap::frontend
 				if(i == (size_t) -1)
 				{
 					return ErrMsg(start_locs.back(), "unterminated block comment (reached end of file) '{}', {}, {}",
-						stream.take(10), loc.column, loc.line);
+					    stream.take(10), loc.column, loc.line);
 				}
 
 
@@ -50,13 +50,13 @@ namespace sap::frontend
 				stream.remove_prefix(i);
 
 				assert(not stream.empty());
-				if(stream.starts_with("#/"))
+				if(stream.starts_with("/#"))
 				{
 					start_locs.push_back(loc);
 					stream.remove_prefix(2);
 					loc.column += 2;
 				}
-				else if(stream.starts_with("/#"))
+				else if(stream.starts_with("#/"))
 				{
 					stream.remove_prefix(2);
 					loc.column += 2;
@@ -131,9 +131,9 @@ namespace sap::frontend
 		if(stream.empty())
 		{
 			return Ok(Token {
-				.loc = loc,
-				.type = TT::EndOfFile,
-				.text = stream.take_last(1),
+			    .loc = loc,
+			    .type = TT::EndOfFile,
+			    .text = stream.take_last(1),
 			});
 		}
 		else if(stream.starts_with("#"))
@@ -141,7 +141,7 @@ namespace sap::frontend
 			(void) TRY(parse_comment(stream, loc));
 			return consume_text_token(stream, loc);
 		}
-		else if(stream.starts_with("/#"))
+		else if(stream.starts_with("#/"))
 		{
 			return ErrMsg(loc, "unexpected end of block comment");
 		}
@@ -163,20 +163,20 @@ namespace sap::frontend
 			loc.line += lines;
 
 			return advance_and_return2(stream, loc,
-				Token { //
-					.loc = loc,
-					.type = TT::ParagraphBreak,
-					.text = stream.take(num) },
-				num);
+			    Token { //
+			        .loc = loc,
+			        .type = TT::ParagraphBreak,
+			        .text = stream.take(num) },
+			    num);
 		}
 		else if(stream[0] == '{' || stream[0] == '}')
 		{
 			return advance_and_return(stream, loc,
-				Token { //
-					.loc = loc,
-					.type = (stream[0] == '{' ? TT::LBrace : TT::RBrace),
-					.text = stream.take(1) },
-				1);
+			    Token { //
+			        .loc = loc,
+			        .type = (stream[0] == '{' ? TT::LBrace : TT::RBrace),
+			        .text = stream.take(1) },
+			    1);
 		}
 		else if(stream[0] == ';')
 		{
@@ -185,11 +185,11 @@ namespace sap::frontend
 		else if(stream[0] == '\\' && (stream.size() == 1 || not util::is_one_of(stream[1], '\\', '#', '{', '}', ';')))
 		{
 			return advance_and_return(stream, loc,
-				Token { //
-					.loc = loc,
-					.type = TT::Backslash,
-					.text = stream.take(1) },
-				1);
+			    Token { //
+			        .loc = loc,
+			        .type = TT::Backslash,
+			        .text = stream.take(1) },
+			    1);
 		}
 		else if(stream.starts_with("```"))
 		{
@@ -216,22 +216,22 @@ namespace sap::frontend
 
 			loc.column = checked_cast<uint32_t>(k);
 			return advance_and_return2(stream, loc,
-				Token {
-					.loc = loc,
-					.type = TT::RawBlock,
-					.text = text,
-				},
-				n);
+			    Token {
+			        .loc = loc,
+			        .type = TT::RawBlock,
+			        .text = text,
+			    },
+			    n);
 		}
 		else
 		{
 			auto finish_and_return = [&](size_t n) {
 				return advance_and_return2(stream, loc,
-					Token { //
-						.loc = loc,
-						.type = TT::Text,
-						.text = stream.take(n) },
-					n);
+				    Token { //
+				        .loc = loc,
+				        .type = TT::Text,
+				        .text = stream.take(n) },
+				    n);
 			};
 
 			// normal tokens, and parse escape sequences.
@@ -364,11 +364,11 @@ namespace sap::frontend
 		}
 
 		return advance_and_return(stream, loc,
-			Token { //
-				.loc = loc,
-				.type = tt,
-				.text = stream.drop(start).take(n - 1 - start) },
-			n);
+		    Token { //
+		        .loc = loc,
+		        .type = tt,
+		        .text = stream.drop(start).take(n - 1 - start) },
+		    n);
 	}
 
 
@@ -412,7 +412,7 @@ namespace sap::frontend
 			(void) TRY(parse_comment(stream, loc));
 			return consume_script_token(stream, loc);
 		}
-		else if(stream.starts_with("/#"))
+		else if(stream.starts_with("#/"))
 		{
 			return ErrMsg(loc, "unexpected end of block comment");
 		}
@@ -420,82 +420,82 @@ namespace sap::frontend
 		else if(stream.starts_with("::"))
 		{
 			return advance_and_return(stream, loc, //
-				Token { .loc = loc, .type = TT::ColonColon, .text = stream.take(2) }, 2);
+			    Token { .loc = loc, .type = TT::ColonColon, .text = stream.take(2) }, 2);
 		}
 		else if(stream.starts_with("&&"))
 		{
 			return advance_and_return(stream, loc, //
-				Token { .loc = loc, .type = TT::KW_And, .text = stream.take(2) }, 2);
+			    Token { .loc = loc, .type = TT::KW_And, .text = stream.take(2) }, 2);
 		}
 		else if(stream.starts_with("||"))
 		{
 			return advance_and_return(stream, loc, //
-				Token { .loc = loc, .type = TT::KW_Or, .text = stream.take(2) }, 2);
+			    Token { .loc = loc, .type = TT::KW_Or, .text = stream.take(2) }, 2);
 		}
 		else if(stream.starts_with("<="))
 		{
 			return advance_and_return(stream, loc, //
-				Token { .loc = loc, .type = TT::LAngleEqual, .text = stream.take(2) }, 2);
+			    Token { .loc = loc, .type = TT::LAngleEqual, .text = stream.take(2) }, 2);
 		}
 		else if(stream.starts_with(">="))
 		{
 			return advance_and_return(stream, loc, //
-				Token { .loc = loc, .type = TT::RAngleEqual, .text = stream.take(2) }, 2);
+			    Token { .loc = loc, .type = TT::RAngleEqual, .text = stream.take(2) }, 2);
 		}
 		else if(stream.starts_with("=="))
 		{
 			return advance_and_return(stream, loc, //
-				Token { .loc = loc, .type = TT::EqualEqual, .text = stream.take(2) }, 2);
+			    Token { .loc = loc, .type = TT::EqualEqual, .text = stream.take(2) }, 2);
 		}
 		else if(stream.starts_with("!="))
 		{
 			return advance_and_return(stream, loc, //
-				Token { .loc = loc, .type = TT::ExclamationEqual, .text = stream.take(2) }, 2);
+			    Token { .loc = loc, .type = TT::ExclamationEqual, .text = stream.take(2) }, 2);
 		}
 		else if(stream.starts_with("+="))
 		{
 			return advance_and_return(stream, loc, //
-				Token { .loc = loc, .type = TT::PlusEqual, .text = stream.take(2) }, 2);
+			    Token { .loc = loc, .type = TT::PlusEqual, .text = stream.take(2) }, 2);
 		}
 		else if(stream.starts_with("-="))
 		{
 			return advance_and_return(stream, loc, //
-				Token { .loc = loc, .type = TT::MinusEqual, .text = stream.take(2) }, 2);
+			    Token { .loc = loc, .type = TT::MinusEqual, .text = stream.take(2) }, 2);
 		}
 		else if(stream.starts_with("*="))
 		{
 			return advance_and_return(stream, loc, //
-				Token { .loc = loc, .type = TT::AsteriskEqual, .text = stream.take(2) }, 2);
+			    Token { .loc = loc, .type = TT::AsteriskEqual, .text = stream.take(2) }, 2);
 		}
 		else if(stream.starts_with("/="))
 		{
 			return advance_and_return(stream, loc, //
-				Token { .loc = loc, .type = TT::SlashEqual, .text = stream.take(2) }, 2);
+			    Token { .loc = loc, .type = TT::SlashEqual, .text = stream.take(2) }, 2);
 		}
 		else if(stream.starts_with("%="))
 		{
 			return advance_and_return(stream, loc, //
-				Token { .loc = loc, .type = TT::PercentEqual, .text = stream.take(2) }, 2);
+			    Token { .loc = loc, .type = TT::PercentEqual, .text = stream.take(2) }, 2);
 		}
 		else if(stream.starts_with("->"))
 		{
 			return advance_and_return(stream, loc, //
-				Token { .loc = loc, .type = TT::RArrow, .text = stream.take(2) }, 2);
+			    Token { .loc = loc, .type = TT::RArrow, .text = stream.take(2) }, 2);
 		}
 		else if(stream.starts_with("??"))
 		{
 			return advance_and_return(stream, loc, //
-				Token { .loc = loc, .type = TT::QuestionQuestion, .text = stream.take(2) }, 2);
+			    Token { .loc = loc, .type = TT::QuestionQuestion, .text = stream.take(2) }, 2);
 		}
 		else if(stream.starts_with("?."))
 		{
 			return advance_and_return(stream, loc, //
-				Token { .loc = loc, .type = TT::QuestionPeriod, .text = stream.take(2) }, 2);
+			    Token { .loc = loc, .type = TT::QuestionPeriod, .text = stream.take(2) }, 2);
 		}
 		else if(stream.starts_with("..."))
 		{
 			return advance_and_return(stream, loc, //
-				Token { .loc = loc, .type = TT::Ellipsis, .text = stream.take(3) }, 3);
+			    Token { .loc = loc, .type = TT::Ellipsis, .text = stream.take(3) }, 3);
 		}
 		else if(stream.starts_with("f\""))
 		{
@@ -572,7 +572,7 @@ namespace sap::frontend
 			}
 
 			return advance_and_return(stream, loc, //
-				Token { .loc = loc, .type = TT::Number, .text = stream.take(n) }, n);
+			    Token { .loc = loc, .type = TT::Number, .text = stream.take(n) }, n);
 		}
 		else
 		{

@@ -57,7 +57,7 @@ namespace sap::tree
 				return this->eval_single_script_in_para(cs, available_space, iscr, /* allow blocks: */ true);
 		}
 
-		auto inlines = zst::make_shared<InlineSpan>();
+		auto inlines = zst::make_shared<InlineSpan>(/* glue: */ false);
 		for(auto& obj : m_contents)
 		{
 			if(obj->isText() || obj->isSeparator() || obj->isSpan())

@@ -104,24 +104,23 @@ namespace sap::interp
 		}
 	}
 
-	ErrorOr<std::vector<zst::SharedPtr<tree::InlineObject>>> Evaluator::convertValueToText(Value&& value)
+	ErrorOr<zst::SharedPtr<tree::InlineSpan>> Evaluator::convertValueToText(Value&& value)
 	{
-		std::vector<zst::SharedPtr<tree::InlineObject>> ret {};
-
 		if(value.isTreeInlineObj())
 		{
-			ret.push_back(std::move(value).takeTreeInlineObj());
+			return Ok(std::move(value).takeTreeInlineObj());
 		}
 		else if(value.isPrintable())
 		{
-			ret.emplace_back(new tree::Text(value.toString()));
+			auto ret = zst::make_shared<tree::InlineSpan>(/* glue: */ false);
+			ret->addObject(zst::make_shared<tree::Text>(value.toString()));
+
+			return Ok(std::move(ret));
 		}
 		else
 		{
 			return ErrMsg(this, "cannot convert value of type '{}' into text", value.type());
 		}
-
-		return Ok(std::move(ret));
 	}
 
 

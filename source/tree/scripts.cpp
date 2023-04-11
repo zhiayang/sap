@@ -50,7 +50,7 @@ namespace sap::tree
 			assert(value.type()->isTreeInlineObj());
 
 			auto tmp = TRY(cs->evaluator().convertValueToText(std::move(value)));
-			return Ok(Left(zst::make_shared<InlineSpan>(std::move(tmp))));
+			return Ok(Left(zst::make_shared<InlineSpan>(/* glue: */ false, std::move(tmp))));
 		}
 
 

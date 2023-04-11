@@ -15,9 +15,9 @@ line-comment: '(#+).*\n?'{
 };
 
 block-comment {comment.block} :
-    '(#/)'{punctuation.definition.comment}
-     (block-comment | '(?!/#).')*
-    ~'(/#)'{punctuation.definition.comment}
+    '(/#)'{punctuation.definition.comment}
+     (block-comment | '(?!#/).')*
+    ~'(#/)'{punctuation.definition.comment}
     ;
 
 main: preamble paragraph*;

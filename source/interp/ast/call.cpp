@@ -15,7 +15,7 @@ namespace sap::interp
 {
 	template <typename TsEv>
 	static ErrorOr<std::vector<std::tuple<std::string, const Type*, const Expr*>>> convert_params(const TsEv* ts_ev,
-		const Declaration* decl)
+	    const Declaration* decl)
 	{
 		if(auto fdecl = dynamic_cast<const FunctionDecl*>(decl); fdecl != nullptr)
 		{
@@ -26,9 +26,9 @@ namespace sap::interp
 			for(size_t i = 0; i < decl_params.size(); i++)
 			{
 				params.push_back({
-					decl_params[i].name,
-					decl_type->parameterTypes()[i],
-					decl_params[i].default_value.get(),
+				    decl_params[i].name,
+				    decl_type->parameterTypes()[i],
+				    decl_params[i].default_value.get(),
 				});
 			}
 
@@ -41,15 +41,15 @@ namespace sap::interp
 	}
 
 	static ErrorOr<std::pair<int, ArrangedArguments<const Type*>>> get_calling_cost(Typechecker* ts,
-		const Declaration* decl,
-		const std::vector<ArrangeArg<const Type*>>& arguments)
+	    const Declaration* decl,
+	    const std::vector<ArrangeArg<const Type*>>& arguments)
 	{
 		auto params = TRY(convert_params(ts, decl));
 		auto ordered = TRY(arrangeArgumentTypes(ts, params, arguments, //
-			"function", "argument", "argument for parameter"));
+		    "function", "argument", "argument for parameter"));
 
 		auto cost = TRY(getCallingCost(ts, params, ordered.param_idx_to_args, "function", "argument",
-			"argument for parameter"));
+		    "argument for parameter"));
 
 		using X = std::pair<int, ArrangedArguments<const Type*>>;
 		return Ok<X>(cost, std::move(ordered));
@@ -58,8 +58,8 @@ namespace sap::interp
 	using ResolvedOverloadSet = ErrorOr<std::pair<const Declaration*, ArrangedArguments<const Type*>>>;
 
 	static ResolvedOverloadSet resolve_overload_set(Typechecker* ts,
-		const std::vector<const Declaration*>& decls,
-		const std::vector<ArrangeArg<const Type*>>& arguments)
+	    const std::vector<const Declaration*>& decls,
+	    const std::vector<ArrangeArg<const Type*>>& arguments)
 	{
 		std::vector<const Declaration*> best_decls {};
 		std::vector<std::pair<const Declaration*, ErrorMessage>> failed_decls {};
@@ -95,7 +95,7 @@ namespace sap::interp
 		if(best_decls.size() == 1)
 		{
 			return Ok<std::pair<const Declaration*, ArrangedArguments<const Type*>>>(best_decls[0],
-				std::move(arg_arrangement));
+			    std::move(arg_arrangement));
 		}
 
 		if(best_decls.empty())
@@ -105,7 +105,7 @@ namespace sap::interp
 				arg_types += ((i == 0 ? "" : ", ") + arguments[i].value->str());
 
 			auto err = ErrorMessage(ts,
-				zpr::sprint("no matching function for call matching arguments ({})", arg_types));
+			    zpr::sprint("no matching function for call matching arguments ({})", arg_types));
 
 			for(auto& [decl, msg] : failed_decls)
 				err.addInfo(decl->loc(), msg.string());
@@ -127,8 +127,7 @@ namespace sap::interp
 		{
 			auto& arg = this->arguments[i];
 
-			bool must_defer = [&arg]() {
-				auto* x = arg.value.get();
+			static constexpr bool (*check_must_defer)(const Expr*) = [](const Expr* x) -> bool {
 				if(auto str_lit = dynamic_cast<const StructLit*>(x); str_lit && str_lit->is_anonymous)
 				{
 					return true;
@@ -138,24 +137,22 @@ namespace sap::interp
 					return true;
 				}
 				else if(auto arr = dynamic_cast<const ArrayLit*>(x);
-						arr && not arr->elem_type.has_value() && not arr->elements.empty())
+				        arr && not arr->elem_type.has_value() && not arr->elements.empty())
 				{
-					const Expr* inside = arr->elements[0].get();
-					if(auto s = dynamic_cast<const StructLit*>(inside); s && s->is_anonymous)
-						return true;
-					else if(auto e = dynamic_cast<const EnumLit*>(inside); e)
-						return true;
+					return check_must_defer(arr->elements[0].get());
 				}
 
 				return false;
-			}();
+			};
+
+			bool must_defer = check_must_defer(arg.value.get());
 
 			if(must_defer)
 			{
 				processed_args.push_back({
-					.name = arg.name,
-					.value = Type::makeVoid(),
-					.deferred_typecheck = true,
+				    .name = arg.name,
+				    .value = Type::makeVoid(),
+				    .deferred_typecheck = true,
 				});
 				continue;
 			}
@@ -185,8 +182,8 @@ namespace sap::interp
 			}
 
 			processed_args.push_back({
-				.name = arg.name,
-				.value = ty,
+			    .name = arg.name,
+			    .value = ty,
 			});
 		}
 
@@ -251,7 +248,7 @@ namespace sap::interp
 				}
 
 				TRY(this->arguments[i].value->typecheck(ts, /* infer: */ param_type, /* keep_lvalue: */
-					is_ufcs_self));
+				    is_ufcs_self));
 			}
 		}
 		else
@@ -285,8 +282,8 @@ namespace sap::interp
 				if(m_ufcs_self_by_value)
 				{
 					processed_args.push_back({
-						.name = arg.name,
-						.value = val.take(),
+					    .name = arg.name,
+					    .value = val.take(),
 					});
 				}
 				else
@@ -304,8 +301,8 @@ namespace sap::interp
 						self = Value::pointer(ptr->type(), ptr);
 
 					processed_args.push_back({
-						.name = arg.name,
-						.value = std::move(self),
+					    .name = arg.name,
+					    .value = std::move(self),
 					});
 				}
 			}
@@ -314,13 +311,13 @@ namespace sap::interp
 				if(val.isLValue() && not val.get().type()->isCloneable())
 				{
 					return ErrMsg(arg.value->loc(),
-						"cannot pass a non-cloneable value of type '{}' as an argument; move with `*`",
-						val.get().type());
+					    "cannot pass a non-cloneable value of type '{}' as an argument; move with `*`",
+					    val.get().type());
 				}
 
 				processed_args.push_back({
-					.name = arg.name,
-					.value = val.take(),
+				    .name = arg.name,
+				    .value = val.take(),
 				});
 			}
 		}
@@ -336,7 +333,7 @@ namespace sap::interp
 			auto params = TRY(convert_params(ev, decl));
 
 			auto arg_arrangement = TRY(arrangeArgumentValues(ev, params, std::move(processed_args), "function",
-				"argument", "argument for parameter"));
+			    "argument", "argument for parameter"));
 
 			auto& ordered_args = arg_arrangement.param_idx_to_args;
 
