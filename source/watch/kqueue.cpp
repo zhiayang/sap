@@ -64,22 +64,22 @@ namespace sap::watch
 		if(fd < 0)
 		{
 			return ErrFmt("failed to open file '{}' for watching: {} ({})", //
-				path, strerror(errno), errno);
+			    path, strerror(errno), errno);
 		}
 
 		auto lk = std::unique_lock(g_state.mutex);
 		auto& event = g_state.event_contexts.emplace_back(Event {
-			.fd = fd,
-			.path = path.str(),
+		    .fd = fd,
+		    .path = path.str(),
 		});
 
 		auto& kevent = g_state.kevents.emplace_back();
 
 		// util::log("watching {}", path);
-		EV_SET(&kevent, fd, EVFILT_VNODE,                                                     //
-			(EV_ADD | EV_CLEAR | EV_ONESHOT),                                                 //
-			(NOTE_DELETE | NOTE_WRITE | NOTE_RENAME | NOTE_LINK | NOTE_ATTRIB | NOTE_REVOKE), //
-			0, &event);
+		EV_SET(&kevent, fd, EVFILT_VNODE,                                       //
+		    (EV_ADD | EV_CLEAR | EV_ONESHOT),                                   //
+		    (NOTE_DELETE | NOTE_WRITE | NOTE_RENAME | NOTE_LINK | NOTE_REVOKE), //
+		    0, &event);
 
 		return Ok();
 	}
@@ -98,18 +98,18 @@ namespace sap::watch
 		pthread_detach(pthread_self());
 		pthread_setcanceltype(PTHREAD_CANCEL_ASYNCHRONOUS, nullptr);
 		pthread_cleanup_push(
-			[](void*) {
-				auto elapsed = std::chrono::steady_clock::now() - g_state.compile_start;
-				auto ms_elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(elapsed).count();
+		    [](void*) {
+			    auto elapsed = std::chrono::steady_clock::now() - g_state.compile_start;
+			    auto ms_elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(elapsed).count();
 
-				// while we have the mutex, reset the compile thread (since we're going away)
-				g_state.current_compile_thread.reset();
-				zpr::println("-----------------------------");
-				zpr::println("compilation took {.2f} seconds", static_cast<double>(ms_elapsed) / 1000.0);
+			    // while we have the mutex, reset the compile thread (since we're going away)
+			    g_state.current_compile_thread.reset();
+			    zpr::println("-----------------------------");
+			    zpr::println("compilation took {.2f} seconds", static_cast<double>(ms_elapsed) / 1000.0);
 
-				g_state.mutex.unlock();
-			},
-			0);
+			    g_state.mutex.unlock();
+		    },
+		    0);
 
 		// lock the mutex, then tell the main thread that we're ready
 		g_state.mutex.lock();
@@ -145,7 +145,7 @@ namespace sap::watch
 			auto lk = std::unique_lock(g_state.mutex);
 
 			int num_events = kevent(*g_kqueue, g_state.kevents.data(), (int) g_state.kevents.size(), //
-				&new_events[0], NUM_EVENTS, nullptr);
+			    &new_events[0], NUM_EVENTS, nullptr);
 
 			if(num_events < 0)
 			{
@@ -164,8 +164,8 @@ namespace sap::watch
 				if(event.flags & EV_ERROR)
 				{
 					zpr::fprintln(stderr, "kevent error for '{}': {} ({})", //
-						static_cast<Event*>(event.udata)->path,             //
-						strerror(static_cast<int>(event.data)), event.data);
+					    static_cast<Event*>(event.udata)->path,             //
+					    strerror(static_cast<int>(event.data)), event.data);
 
 					continue;
 				}

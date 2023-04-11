@@ -31,7 +31,8 @@ namespace sap::tree
 
 	static util::hashmap<std::string, CachedImage> g_cached_images;
 
-	Image::Image(ImageBitmap image, sap::Vector2 size) : m_image(std::move(image)), m_size(size)
+	Image::Image(ImageBitmap image, sap::Vector2 size)
+	    : BlockObject(Kind::Image), m_image(std::move(image)), m_size(size)
 	{
 	}
 
@@ -53,7 +54,7 @@ namespace sap::tree
 		// always ask for 3 channels -- r g b.
 		int num_actual_channels = 0;
 		auto image_data_buf = stbi_load_from_memory(file_buf.get(), (int) file_buf.size(), &img_width_, &img_height_,
-			&num_actual_channels, 3);
+		    &num_actual_channels, 3);
 
 		if(image_data_buf == nullptr)
 			return ErrFmt("failed to load image '{}': {}", file_path, stbi_failure_reason());
@@ -62,7 +63,7 @@ namespace sap::tree
 		auto img_height = (size_t) img_height_;
 
 		auto image_rgb_data = zst::unique_span<uint8_t[]>(image_data_buf, img_height * img_width * 3, //
-			[](const void* ptr, size_t n) { stbi_image_free((void*) ptr); });
+		    [](const void* ptr, size_t n) { stbi_image_free((void*) ptr); });
 
 		auto image = OwnedImageBitmap {
 			.pixel_width = img_width,
@@ -102,9 +103,9 @@ namespace sap::tree
 
 
 	ErrorOr<zst::SharedPtr<Image>> Image::fromImageFile(const Location& loc,
-		zst::str_view file_path,
-		sap::Length width,
-		std::optional<sap::Length> height)
+	    zst::str_view file_path,
+	    sap::Length width,
+	    std::optional<sap::Length> height)
 	{
 		auto image = TRY(([&loc, &file_path]() -> ErrorOr<ImageBitmap> {
 			auto x = load_image_from_path(file_path);

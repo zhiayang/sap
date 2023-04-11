@@ -118,7 +118,7 @@ namespace sap::interp
 		if(auto it = g_type_cache.find(t); it != g_type_cache.end())
 		{
 			delete t;
-			return dynamic_cast<T*>(*it);
+			return static_cast<T*>(*it);
 		}
 		else
 		{
@@ -245,7 +245,7 @@ namespace sap::interp
 	}
 
 	const StructType* Type::makeStruct(const std::string& name,
-		const std::vector<std::pair<std::string, const Type*>>& foo)
+	    const std::vector<std::pair<std::string, const Type*>>& foo)
 	{
 		std::vector<StructType::Field> fields {};
 		for(auto& [n, t] : foo)

@@ -16,7 +16,8 @@
 
 namespace sap::tree
 {
-	Container::Container(Direction direction, bool glued) : m_glued(glued), m_direction(direction)
+	Container::Container(Direction direction, bool glued)
+	    : BlockObject(Kind::Container), m_glued(glued), m_direction(direction)
 	{
 		this->setStyle(m_style->with_alignment(Alignment::Left));
 	}
@@ -46,8 +47,8 @@ namespace sap::tree
 	}
 
 	auto Container::create_layout_object_impl(interp::Interpreter* cs,
-		const Style* parent_style,
-		Size2d available_space) const -> ErrorOr<LayoutResult>
+	    const Style* parent_style,
+	    Size2d available_space) const -> ErrorOr<LayoutResult>
 	{
 		auto _ = cs->evaluator().pushBlockContext(this);
 
@@ -85,7 +86,7 @@ namespace sap::tree
 					if(available_space.y() < obj_size.descent)
 					{
 						sap::warn("layout", "not enough space! need at least {}, but only {} remaining",
-							obj_size.descent, available_space.y());
+						    obj_size.descent, available_space.y());
 
 						available_space.y() = 0;
 					}

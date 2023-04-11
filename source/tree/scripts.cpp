@@ -11,12 +11,12 @@
 
 namespace sap::tree
 {
-	ScriptCall::ScriptCall(ProcessingPhase phase) : ScriptObject(phase)
+	ScriptCall::ScriptCall(ProcessingPhase phase) : InlineObject(Kind::ScriptCall), ScriptObject(phase)
 	{
 	}
 
 	auto ScriptCall::evaluate_script(interp::Interpreter* cs, const Style* style, Size2d available_space) const
-		-> ErrorOr<std::optional<ScriptEvalResult>>
+	    -> ErrorOr<std::optional<ScriptEvalResult>>
 	{
 		TRY(this->call->typecheck(&cs->typechecker()));
 		if(m_run_phase != cs->currentPhase())
@@ -63,9 +63,9 @@ namespace sap::tree
 		if(not util::is_one_of(value_type, t_tbo, t_otbo, t_lo, t_olo))
 		{
 			return ErrMsg(this->call->loc(),
-				"invalid result from document script call; got type '{}', expected either '{}' or '{}', "
-				"or optional types of them",
-				value_type, t_tbo, t_lo);
+			    "invalid result from document script call; got type '{}', expected either '{}' or '{}', "
+			    "or optional types of them",
+			    value_type, t_tbo, t_lo);
 		}
 
 		std::unique_ptr<layout::LayoutObject> layout_obj {};
@@ -112,8 +112,8 @@ namespace sap::tree
 	}
 
 	auto ScriptCall::create_layout_object_impl(interp::Interpreter* cs,
-		const Style* parent_style,
-		Size2d available_space) const -> ErrorOr<LayoutResult>
+	    const Style* parent_style,
+	    Size2d available_space) const -> ErrorOr<LayoutResult>
 	{
 		auto obj = TRY(this->evaluate_script(cs, parent_style, available_space));
 		if(obj.has_value())
@@ -127,7 +127,7 @@ namespace sap::tree
 
 
 
-	ScriptBlock::ScriptBlock(ProcessingPhase phase) : ScriptObject(phase)
+	ScriptBlock::ScriptBlock(ProcessingPhase phase) : BlockObject(Kind::ScriptBlock), ScriptObject(phase)
 	{
 	}
 
@@ -142,8 +142,8 @@ namespace sap::tree
 	}
 
 	auto ScriptBlock::create_layout_object_impl(interp::Interpreter* cs,
-		const Style* parent_style,
-		Size2d available_space) const -> ErrorOr<LayoutResult>
+	    const Style* parent_style,
+	    Size2d available_space) const -> ErrorOr<LayoutResult>
 	{
 		TRY(this->evaluateScripts(cs));
 		return Ok(LayoutResult::empty());

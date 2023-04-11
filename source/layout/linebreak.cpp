@@ -98,7 +98,7 @@ namespace sap::layout::linebreak
 					return ret;
 				}
 
-				if(auto sep = dynamic_cast<const tree::Separator*>(wordorsep.get()); sep)
+				if(auto sep = wordorsep->castToSeparator())
 				{
 					Distance cost = 0;
 					// If there are no spaces we pretend there's half a space,

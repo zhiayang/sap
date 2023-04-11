@@ -10,7 +10,7 @@ namespace sap::tree
 {
 	struct WrappedLine : BlockObject
 	{
-		WrappedLine() { }
+		WrappedLine() : BlockObject(Kind::WrappedLine) { }
 		explicit WrappedLine(std::vector<zst::SharedPtr<InlineObject>> objs);
 
 		virtual ErrorOr<void> evaluateScripts(interp::Interpreter* cs) const override;
@@ -20,8 +20,8 @@ namespace sap::tree
 
 	private:
 		virtual ErrorOr<LayoutResult> create_layout_object_impl(interp::Interpreter* cs,
-			const Style* parent_style,
-			Size2d available_space) const override;
+		    const Style* parent_style,
+		    Size2d available_space) const override;
 
 	private:
 		std::vector<zst::SharedPtr<InlineObject>> m_objects;

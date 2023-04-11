@@ -14,7 +14,7 @@
 
 namespace sap::tree
 {
-	RawBlock::RawBlock(zst::wstr_view str) : m_text(str.str())
+	RawBlock::RawBlock(zst::wstr_view str) : BlockObject(Kind::RawBlock), m_text(str.str())
 	{
 		size_t smallest_leading_spaces = std::numeric_limits<size_t>::max();
 		std::vector<std::u32string> lines {};
@@ -67,8 +67,8 @@ namespace sap::tree
 	}
 
 	ErrorOr<LayoutResult> RawBlock::create_layout_object_impl(interp::Interpreter* cs, //
-		const Style* parent_style,
-		Size2d available_space) const
+	    const Style* parent_style,
+	    Size2d available_space) const
 	{
 		// don't care about the space either
 		(void) available_space;
@@ -87,7 +87,7 @@ namespace sap::tree
 
 			auto metrics = layout::computeLineMetrics(span, style);
 			auto line = layout::Line::fromInlineObjects(cs, style, span, metrics, available_space,
-				/* is_first: */ true, /* is_last: */ true);
+			    /* is_first: */ true, /* is_last: */ true);
 
 			size.x() = std::max(size.x(), line->layoutSize().width);
 			size.y() += line->layoutSize().total_height();
@@ -97,15 +97,15 @@ namespace sap::tree
 		}
 
 		auto vbox = std::make_unique<layout::Container>(style,
-			LayoutSize {
-				.width = size.x(),
-				.ascent = 0,
-				.descent = size.y(),
-			},
-			layout::Container::Direction::Vertical, //
-			/* glue: */ false,                      //
-			std::move(lines),                       //
-			/* override obj spacing: */ Length(0));
+		    LayoutSize {
+		        .width = size.x(),
+		        .ascent = 0,
+		        .descent = size.y(),
+		    },
+		    layout::Container::Direction::Vertical, //
+		    /* glue: */ false,                      //
+		    std::move(lines),                       //
+		    /* override obj spacing: */ Length(0));
 
 		return Ok(LayoutResult::make(std::move(vbox)));
 	}

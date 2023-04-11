@@ -273,14 +273,14 @@ namespace sap::interp::builtin
 	{
 		for(auto& obj : objs)
 		{
-			if(auto span = dynamic_cast<tree::InlineSpan*>(obj.get()))
+			if(auto span = obj->castToSpan())
 			{
 				span->addRaiseHeight(raise);
 				apply_raise(span->objects(), raise);
 			}
 			else
 			{
-				assert(dynamic_cast<tree::Text*>(obj.get()) || dynamic_cast<tree::Separator*>(obj.get()));
+				assert(obj->isText() || obj->isSeparator());
 				obj->addRaiseHeight(raise);
 			}
 		}

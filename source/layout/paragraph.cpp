@@ -113,7 +113,7 @@ namespace sap::tree
 	{
 		for(auto& obj : objs)
 		{
-			if(auto span = dynamic_cast<InlineSpan*>(obj.get()); span && span->canSplit())
+			if(auto span = obj->castToSpan(); span && span->canSplit())
 				flatten_para(span->objects(), flattened);
 			else
 				flattened.push_back(obj);
@@ -152,7 +152,7 @@ namespace sap::tree
 
 		using Iter = std::vector<zst::SharedPtr<InlineObject>>::const_iterator;
 		auto add_one_line = [&the_lines](Iter words_begin, Iter words_end, const Style* style) {
-			if(dynamic_cast<const tree::Separator*>((*words_begin).get()) != nullptr)
+			if((*words_begin)->isSeparator())
 			{
 				sap::internal_error(
 				    "line starting with non-Word found, "
@@ -162,11 +162,8 @@ namespace sap::tree
 
 			// Ignore space at end of line
 			const auto& last_word = *(words_end - 1);
-			if(auto sep = dynamic_cast<const tree::Separator*>(last_word.get());
-			    sep && (sep->isSpace() || sep->isSentenceEnding()))
-			{
+			if(auto sep = last_word->castToSeparator(); sep && (sep->isSpace() || sep->isSentenceEnding()))
 				--words_end;
-			}
 
 			auto words_span = std::span(&*words_begin, &*words_end);
 			the_lines.push_back({

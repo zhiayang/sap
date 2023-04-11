@@ -8,7 +8,8 @@
 
 namespace sap::tree
 {
-	Spacer::Spacer(DynLength2d size, bool page_break) : m_size(size), m_page_break(page_break)
+	Spacer::Spacer(DynLength2d size, bool page_break)
+	    : BlockObject(Kind::Spacer), m_size(size), m_page_break(page_break)
 	{
 	}
 
@@ -18,7 +19,7 @@ namespace sap::tree
 	}
 
 	auto Spacer::create_layout_object_impl(interp::Interpreter* cs, const Style* parent_style, Size2d available_space)
-		const -> ErrorOr<LayoutResult>
+	    const -> ErrorOr<LayoutResult>
 	{
 		auto _ = cs->evaluator().pushBlockContext(this);
 

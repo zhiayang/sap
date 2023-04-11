@@ -16,7 +16,8 @@ namespace sap::tree
 		return Ok();
 	}
 
-	WrappedLine::WrappedLine(std::vector<zst::SharedPtr<InlineObject>> objs) : m_objects(std::move(objs))
+	WrappedLine::WrappedLine(std::vector<zst::SharedPtr<InlineObject>> objs)
+	    : BlockObject(Kind::WrappedLine), m_objects(std::move(objs))
 	{
 	}
 
@@ -26,15 +27,15 @@ namespace sap::tree
 	}
 
 	auto WrappedLine::create_layout_object_impl(interp::Interpreter* cs, //
-		const Style* parent_style,
-		Size2d available_space) const -> ErrorOr<LayoutResult>
+	    const Style* parent_style,
+	    Size2d available_space) const -> ErrorOr<LayoutResult>
 	{
 		auto _ = cs->evaluator().pushBlockContext(this);
 		auto cur_style = m_style->useDefaultsFrom(parent_style)->useDefaultsFrom(cs->evaluator().currentStyle());
 
 		auto metrics = layout::computeLineMetrics(m_objects, cur_style);
 		auto line = layout::Line::fromInlineObjects(cs, cur_style, m_objects, metrics, available_space,
-			/* is_first: */ true, /* is_last: */ true);
+		    /* is_first: */ true, /* is_last: */ true);
 
 		m_generated_layout_object = line.get();
 		return Ok(LayoutResult::make(std::move(line)));

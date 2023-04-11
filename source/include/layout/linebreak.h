@@ -83,12 +83,12 @@ namespace sap::layout::linebreak
 
 		void add(const tree::InlineObject* obj)
 		{
-			if(auto w = dynamic_cast<const tree::Text*>(obj); w)
-				this->add_word(w);
-			else if(auto s = dynamic_cast<const tree::Separator*>(obj); s)
-				this->add_sep(s);
-			else if(auto ss = dynamic_cast<const tree::InlineSpan*>(obj); ss)
-				this->add_span(ss);
+			if(obj->isText())
+				this->add_word(static_cast<const tree::Text*>(obj));
+			else if(obj->isSeparator())
+				this->add_sep(static_cast<const tree::Separator*>(obj));
+			else if(obj->isSpan())
+				this->add_span(static_cast<const tree::InlineSpan*>(obj));
 			else
 				sap::internal_error("unsupported: {}", typeid(*obj).name());
 		}

@@ -15,8 +15,8 @@ namespace sap::tree
 {
 	struct Text : InlineObject
 	{
-		explicit Text(std::u32string text) : m_contents(std::move(text)) { }
-		explicit Text(std::u32string text, const Style* style) : m_contents(std::move(text)) { this->setStyle(style); }
+		explicit Text(std::u32string text);
+		explicit Text(std::u32string text, const Style* style);
 
 		const std::u32string& contents() const { return m_contents; }
 		std::u32string& contents() { return m_contents; }
@@ -37,29 +37,7 @@ namespace sap::tree
 			SENTENCE_END,
 		};
 
-		explicit Separator(SeparatorKind kind, int hyphenation_cost = 0)
-			: m_kind(kind), m_hyphenation_cost(hyphenation_cost)
-		{
-			switch(m_kind)
-			{
-				case decltype(kind)::SPACE:
-				case decltype(kind)::SENTENCE_END:
-					m_end_of_line_char = 0;
-					m_middle_of_line_char = &s_space;
-					break;
-
-				case decltype(kind)::BREAK_POINT:
-					m_end_of_line_char = 0;
-					m_middle_of_line_char = 0;
-					break;
-
-				case decltype(kind)::HYPHENATION_POINT:
-					m_end_of_line_char = &s_hyphen;
-					m_middle_of_line_char = 0;
-					break;
-			}
-		}
-
+		explicit Separator(SeparatorKind kind, int hyphenation_cost = 0);
 
 		zst::wstr_view endOfLine() const
 		{
@@ -94,7 +72,7 @@ namespace sap::tree
 
 	struct Paragraph : BlockObject
 	{
-		Paragraph() = default;
+		Paragraph() : BlockObject(Kind::Paragraph) { }
 		explicit Paragraph(std::vector<zst::SharedPtr<InlineObject>> objs);
 
 		void addObject(zst::SharedPtr<InlineObject> obj);
@@ -106,21 +84,21 @@ namespace sap::tree
 		const std::vector<zst::SharedPtr<InlineObject>>& contents() const { return m_contents; }
 
 		static ErrorOr<std::vector<zst::SharedPtr<InlineObject>>> processWordSeparators( //
-			std::vector<zst::SharedPtr<InlineObject>> vec);
+		    std::vector<zst::SharedPtr<InlineObject>> vec);
 
 		using EvalScriptResult = zst::Either<zst::SharedPtr<InlineSpan>, std::unique_ptr<layout::LayoutObject>>;
 		ErrorOr<std::optional<EvalScriptResult>> evaluate_scripts(interp::Interpreter* cs,
-			Size2d available_space) const;
+		    Size2d available_space) const;
 
 	private:
 		ErrorOr<std::optional<EvalScriptResult>> eval_single_script_in_para(interp::Interpreter* cs,
-			Size2d available_space,
-			ScriptCall* script,
-			bool allow_blocks) const;
+		    Size2d available_space,
+		    ScriptCall* script,
+		    bool allow_blocks) const;
 
 		virtual ErrorOr<LayoutResult> create_layout_object_impl(interp::Interpreter* cs,
-			const Style* parent_style,
-			Size2d available_space) const override;
+		    const Style* parent_style,
+		    Size2d available_space) const override;
 
 	private:
 		std::vector<zst::SharedPtr<InlineObject>> m_contents {};

@@ -56,7 +56,11 @@ namespace sap::tree
 		LayoutResult(decltype(object) x);
 	};
 
+	struct Text;
+	struct Separator;
 	struct InlineSpan;
+	struct ScriptCall;
+
 	struct InlineObject : zst::IntrusiveRefCounted<InlineObject>, Stylable
 	{
 		virtual ~InlineObject() = 0;
@@ -75,7 +79,33 @@ namespace sap::tree
 		InlineSpan* parentSpan() const { return m_parent_span; }
 		void setParentSpan(InlineSpan* span) { m_parent_span = span; }
 
+		bool isSpan() const { return m_kind == Kind::Span; }
+		bool isText() const { return m_kind == Kind::Text; }
+		bool isSeparator() const { return m_kind == Kind::Separator; }
+		bool isScriptCall() const { return m_kind == Kind::ScriptCall; }
+
+		const Text* castToText() const;
+		const Separator* castToSeparator() const;
+		const InlineSpan* castToSpan() const;
+		const ScriptCall* castToScriptCall() const;
+
+		Text* castToText();
+		Separator* castToSeparator();
+		InlineSpan* castToSpan();
+		ScriptCall* castToScriptCall();
+
 	protected:
+		enum class Kind
+		{
+			Text,
+			Separator,
+			Span,
+			ScriptCall,
+		};
+
+		InlineObject(Kind kind) : m_kind(kind) { }
+
+		Kind m_kind;
 		mutable std::optional<layout::LayoutObject*> m_generated_layout_object = nullptr;
 
 	private:
@@ -113,6 +143,14 @@ namespace sap::tree
 		friend InlineObject;
 	};
 
+	struct Image;
+	struct Spacer;
+	struct RawBlock;
+	struct Container;
+	struct Paragraph;
+	struct ScriptBlock;
+	struct WrappedLine;
+
 	struct BlockObject : zst::IntrusiveRefCounted<BlockObject>, Stylable
 	{
 		virtual ~BlockObject() = 0;
@@ -133,7 +171,44 @@ namespace sap::tree
 		LinkDestination linkDestination() const;
 		void setLinkDestination(LinkDestination dest);
 
+		bool isImage() const { return m_kind == Kind::Image; }
+		bool isSpacer() const { return m_kind == Kind::Spacer; }
+		bool isRawBlock() const { return m_kind == Kind::RawBlock; }
+		bool isContainer() const { return m_kind == Kind::Container; }
+		bool isParagraph() const { return m_kind == Kind::Paragraph; }
+		bool isScriptBlock() const { return m_kind == Kind::ScriptBlock; }
+		bool isWrappedLine() const { return m_kind == Kind::WrappedLine; }
+
+		Image* castToImage();
+		Spacer* castToSpacer();
+		RawBlock* castToRawBlock();
+		Container* castToContainer();
+		Paragraph* castToParagraph();
+		ScriptBlock* castToScriptBlock();
+		WrappedLine* castToWrappedLine();
+		const Image* castToImage() const;
+		const Spacer* castToSpacer() const;
+		const RawBlock* castToRawBlock() const;
+		const Container* castToContainer() const;
+		const Paragraph* castToParagraph() const;
+		const ScriptBlock* castToScriptBlock() const;
+		const WrappedLine* castToWrappedLine() const;
+
 	protected:
+		enum class Kind
+		{
+			Image,
+			Spacer,
+			RawBlock,
+			Container,
+			Paragraph,
+			ScriptBlock,
+			WrappedLine,
+		};
+
+		BlockObject(Kind kind) : m_kind(kind) { }
+
+		Kind m_kind;
 		mutable std::optional<layout::LayoutObject*> m_generated_layout_object = nullptr;
 
 	private:

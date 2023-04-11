@@ -53,26 +53,18 @@ namespace sap::tree
 		// then we can allow that guy to be promoted to a block object.
 		if(m_contents.size() == 1)
 		{
-			if(auto iscr = dynamic_cast<tree::ScriptCall*>(m_contents.front().get()))
+			if(auto iscr = m_contents.front()->castToScriptCall())
 				return this->eval_single_script_in_para(cs, available_space, iscr, /* allow blocks: */ true);
 		}
 
 		auto inlines = zst::make_shared<InlineSpan>();
 		for(auto& obj : m_contents)
 		{
-			if(auto txt = dynamic_cast<tree::Text*>(obj.get()))
+			if(obj->isText() || obj->isSeparator() || obj->isSpan())
 			{
 				inlines->addObject(obj);
 			}
-			else if(auto sep = dynamic_cast<tree::Separator*>(obj.get()))
-			{
-				inlines->addObject(obj);
-			}
-			else if(auto span = dynamic_cast<tree::InlineSpan*>(obj.get()))
-			{
-				inlines->addObject(obj);
-			}
-			else if(auto iscr = dynamic_cast<tree::ScriptCall*>(obj.get()))
+			else if(auto iscr = obj->castToScriptCall())
 			{
 				auto tmp = TRY(this->eval_single_script_in_para(cs, available_space, iscr, /* allow blocks: */ false));
 				if(not tmp.has_value())
@@ -209,12 +201,12 @@ namespace sap::tree
 		bool seen_whitespace = false;
 		for(auto& uwu : input)
 		{
-			if(dynamic_cast<tree::Separator*>(uwu.get()))
+			if(uwu->isSeparator())
 			{
 				ret.push_back(std::move(uwu));
 				continue;
 			}
-			else if(auto span = dynamic_cast<tree::InlineSpan*>(uwu.get()); span)
+			else if(auto span = uwu->castToSpan())
 			{
 				// note: don't make a new span here, preserve the identities.
 				// if we ref a span, it needs to keep existing.
@@ -227,7 +219,7 @@ namespace sap::tree
 				continue;
 			}
 
-			auto tree_text = dynamic_cast<tree::Text*>(uwu.get());
+			auto tree_text = uwu->castToText();
 			assert(tree_text != nullptr);
 
 			auto current_text = new_thing_from_existing<Text>(uwu, U"");
@@ -283,7 +275,8 @@ namespace sap::tree
 	}
 
 
-	Paragraph::Paragraph(std::vector<zst::SharedPtr<InlineObject>> objs) : m_contents(std::move(objs))
+	Paragraph::Paragraph(std::vector<zst::SharedPtr<InlineObject>> objs)
+	    : BlockObject(Kind::Paragraph), m_contents(std::move(objs))
 	{
 	}
 
@@ -296,4 +289,39 @@ namespace sap::tree
 	{
 		m_contents.insert(m_contents.end(), std::move_iterator(objs.begin()), std::move_iterator(objs.end()));
 	}
+
+
+	Text::Text(std::u32string text) : InlineObject(Kind::Text), m_contents(std::move(text))
+	{
+	}
+
+	Text::Text(std::u32string text, const Style* style) : InlineObject(Kind::Text), m_contents(std::move(text))
+	{
+		this->setStyle(style);
+	}
+
+	Separator::Separator(SeparatorKind kind, int hyphenation_cost)
+	    : InlineObject(Kind::Separator), m_kind(kind), m_hyphenation_cost(hyphenation_cost)
+	{
+		switch(m_kind)
+		{
+			case decltype(kind)::SPACE:
+			case decltype(kind)::SENTENCE_END:
+				m_end_of_line_char = 0;
+				m_middle_of_line_char = &s_space;
+				break;
+
+			case decltype(kind)::BREAK_POINT:
+				m_end_of_line_char = 0;
+				m_middle_of_line_char = 0;
+				break;
+
+			case decltype(kind)::HYPHENATION_POINT:
+				m_end_of_line_char = &s_hyphen;
+				m_middle_of_line_char = 0;
+				break;
+		}
+	}
+
+
 }

@@ -20,15 +20,15 @@ namespace sap::interp
 	{
 		for(auto& obj : tios)
 		{
-			if(dynamic_cast<const tree::Text*>(obj.get()) || dynamic_cast<const tree::Separator*>(obj.get()))
+			if(obj->isText() || obj->isSeparator())
 			{
 				; // do nothing
 			}
-			else if(auto sp = dynamic_cast<const tree::InlineSpan*>(obj.get()); sp)
+			else if(auto sp = obj->castToSpan())
 			{
 				TRY(typecheck_list_of_tios(ts, sp->objects()));
 			}
-			else if(auto sc = dynamic_cast<const tree::ScriptCall*>(obj.get()); sc)
+			else if(auto sc = obj->castToScriptCall())
 			{
 				TRY(sc->call->typecheck(ts));
 			}
@@ -47,21 +47,21 @@ namespace sap::interp
 		std::vector<zst::SharedPtr<tree::InlineObject>> ret {};
 		for(auto& obj : tios)
 		{
-			if(auto txt = dynamic_cast<const tree::Text*>(obj.get()); txt)
+			if(auto txt = obj->castToText())
 			{
 				auto new_text = zst::make_shared<tree::Text>(txt->contents());
 				new_text->copyAttributesFrom(*txt);
 
 				ret.push_back(std::move(new_text));
 			}
-			else if(auto sep = dynamic_cast<const tree::Separator*>(obj.get()); sep)
+			else if(auto sep = obj->castToSeparator())
 			{
 				auto new_sep = zst::make_shared<tree::Separator>(sep->kind(), sep->hyphenationCost());
 				new_sep->copyAttributesFrom(*sep);
 
 				ret.push_back(std::move(new_sep));
 			}
-			else if(auto span = dynamic_cast<const tree::InlineSpan*>(obj.get()); span)
+			else if(auto span = obj->castToSpan())
 			{
 				auto tmp = TRY(evaluate_list_of_tios(ev, span->objects()));
 				auto new_span = zst::make_shared<tree::InlineSpan>(std::move(tmp));
@@ -69,7 +69,7 @@ namespace sap::interp
 
 				ret.push_back(std::move(new_span));
 			}
-			else if(auto sc = dynamic_cast<const tree::ScriptCall*>(obj.get()); sc)
+			else if(auto sc = obj->castToScriptCall())
 			{
 				auto tmp = TRY(ev->convertValueToText(TRY_VALUE(sc->call->evaluate(ev))));
 				std::move(tmp.begin(), tmp.end(), std::back_inserter(ret));
@@ -105,28 +105,24 @@ namespace sap::interp
 
 	static ErrorOr<void> typecheck_block_obj(Typechecker* ts, tree::BlockObject* obj)
 	{
-		if(auto para = dynamic_cast<const tree::Paragraph*>(obj); para)
+		if(auto para = obj->castToParagraph())
 		{
 			TRY(typecheck_list_of_tios(ts, para->contents()));
 		}
-		else if(auto sc = dynamic_cast<const tree::ScriptCall*>(obj); sc)
-		{
-			TRY(sc->call->typecheck(ts));
-		}
-		else if(auto sb = dynamic_cast<const tree::ScriptBlock*>(obj); sb)
+		else if(auto sb = obj->castToScriptBlock())
 		{
 			TRY(sb->body->typecheck(ts));
 		}
-		else if(auto box = dynamic_cast<const tree::Container*>(obj); box)
+		else if(auto box = obj->castToContainer())
 		{
 			for(auto& inner : box->contents())
 				TRY(typecheck_block_obj(ts, inner.get()));
 		}
-		else if(auto line = dynamic_cast<const tree::WrappedLine*>(obj); line)
+		else if(auto line = obj->castToWrappedLine())
 		{
 			TRY(typecheck_list_of_tios(ts, line->objects()));
 		}
-		else if(auto raw = dynamic_cast<const tree::RawBlock*>(obj); raw)
+		else if(obj->isRawBlock())
 		{
 			// nothing
 		}
@@ -146,12 +142,12 @@ namespace sap::interp
 			return Value::treeBlockObject(std::move(new_para));
 		};
 
-		if(auto para = dynamic_cast<const tree::Paragraph*>(obj.get()); para)
+		if(auto para = obj->castToParagraph())
 		{
 			if(para->contents().size() == 1)
 			{
 				auto& obj = para->contents()[0];
-				if(auto sc = dynamic_cast<tree::ScriptCall*>(obj.get()))
+				if(auto sc = obj->castToScriptCall())
 				{
 					auto tmp = TRY_VALUE(sc->call->evaluate(ev));
 					auto ty = tmp.type();
@@ -182,21 +178,12 @@ namespace sap::interp
 				return EvalResult::ofValue(make_para_from_tios(std::move(tios)));
 			}
 		}
-		else if(auto line = dynamic_cast<const tree::WrappedLine*>(obj.get()); line)
+		else if(auto line = obj->castToWrappedLine())
 		{
 			auto tios = TRY(evaluate_list_of_tios(ev, line->objects()));
 			return EvalResult::ofValue(Value::treeBlockObject(zst::make_shared<tree::WrappedLine>(std::move(tios))));
 		}
-		else if(auto sc = dynamic_cast<const tree::ScriptCall*>(obj.get()); sc)
-		{
-			auto value = TRY_VALUE(sc->call->evaluate(ev));
-
-			if(value.isTreeBlockObj())
-				return EvalResult::ofValue(std::move(value));
-			else
-				return EvalResult::ofValue(make_para_from_tios(TRY(ev->convertValueToText(std::move(value)))));
-		}
-		else if(auto box = dynamic_cast<const tree::Container*>(obj.get()); box)
+		else if(auto box = obj->castToContainer())
 		{
 			auto container = zst::make_shared<tree::Container>(box->direction());
 			for(auto& inner : box->contents())
@@ -204,9 +191,13 @@ namespace sap::interp
 
 			return EvalResult::ofValue(Value::treeBlockObject(std::move(container)));
 		}
-		else if(auto raw = dynamic_cast<const tree::RawBlock*>(obj.get()); raw)
+		else if(auto raw = obj->castToRawBlock())
 		{
 			return EvalResult::ofValue(Value::treeBlockObject(obj));
+		}
+		else if(auto sc = obj->castToScriptBlock())
+		{
+			sap::internal_error("nani??");
 		}
 		else
 		{

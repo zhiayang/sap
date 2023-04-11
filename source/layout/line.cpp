@@ -91,7 +91,7 @@ namespace sap::layout
 
 		for(auto it = objs.begin(); it != objs.end(); ++it)
 		{
-			if(auto word = dynamic_cast<const tree::Text*>(it->get()); word)
+			if(auto word = (*it)->castToText())
 			{
 				auto style = parent_style->extendWith(word->style());
 				if(it != cur_chunk_begin && word_chunk.style != style)
@@ -115,7 +115,7 @@ namespace sap::layout
 				ret.default_line_spacing = std::max(ret.default_line_spacing,
 				    word_size.default_line_spacing * style->line_spacing());
 			}
-			else if(auto span = dynamic_cast<const tree::InlineSpan*>(it->get()); span)
+			else if(auto span = (*it)->castToSpan())
 			{
 				reset_chunk();
 				cur_chunk_begin = it + 1;
@@ -151,7 +151,7 @@ namespace sap::layout
 					ret.nested_span_metrics.push_back(std::move(span_metrics));
 				}
 			}
-			else if(auto sep = dynamic_cast<const tree::Separator*>(it->get()); sep)
+			else if(auto sep = (*it)->castToSeparator())
 			{
 				reset_chunk();
 				cur_chunk_begin = it + 1;
@@ -308,7 +308,7 @@ namespace sap::layout
 			auto* obj = objs[i].get();
 			auto style = parent_style->extendWith(obj->style());
 
-			if(auto tree_word = dynamic_cast<const tree::Text*>(obj); tree_word)
+			if(auto tree_word = obj->castToText())
 			{
 				auto word_size = LayoutSize {
 					.width = obj_width,
@@ -329,7 +329,7 @@ namespace sap::layout
 				actual_width += obj_width;
 				metrics_idx += 1;
 			}
-			else if(auto tree_sep = dynamic_cast<const tree::Separator*>(obj); tree_sep)
+			else if(auto tree_sep = obj->castToSeparator())
 			{
 				auto preferred_sep_width = metrics.preferred_sep_widths[sep_idx++];
 
@@ -365,7 +365,7 @@ namespace sap::layout
 				actual_width += actual_sep_width;
 				metrics_idx += 1;
 			}
-			else if(auto tree_span = dynamic_cast<const tree::InlineSpan*>(obj); tree_span)
+			else if(auto tree_span = obj->castToSpan())
 			{
 				if(tree_span->canSplit())
 				{
