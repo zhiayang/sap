@@ -12,12 +12,10 @@
 
 namespace util
 {
-	template <typename T>
+	template <typename T, size_t REGION_SIZE = (1 << 12)>
 	struct Pool
 	{
 		using value_type = T;
-
-		static constexpr size_t REGION_SIZE = 1 << 12;
 		static_assert(REGION_SIZE >= sizeof(T));
 
 		struct Region
@@ -36,7 +34,7 @@ namespace util
 				void* ptr = 0;
 				if(posix_memalign(&ptr, alignment, capacity) != 0)
 					sap::internal_error("out of memory (trying to allocate {} bytes with {}-byte alignment)", capacity,
-						alignment);
+					    alignment);
 
 				this->memory = reinterpret_cast<uint8_t*>(ptr);
 				assert(this->memory != nullptr);

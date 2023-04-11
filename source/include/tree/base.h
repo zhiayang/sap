@@ -94,6 +94,9 @@ namespace sap::tree
 		InlineSpan* castToSpan();
 		ScriptCall* castToScriptCall();
 
+		static void* operator new(size_t count);
+		static void operator delete(void* ptr, size_t count);
+
 	protected:
 		enum class Kind
 		{
@@ -193,6 +196,9 @@ namespace sap::tree
 		const Paragraph* castToParagraph() const;
 		const ScriptBlock* castToScriptBlock() const;
 		const WrappedLine* castToWrappedLine() const;
+
+		static void* operator new(size_t count);
+		static void operator delete(void* ptr, size_t count);
 
 	protected:
 		enum class Kind

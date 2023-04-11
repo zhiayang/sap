@@ -81,6 +81,9 @@ namespace sap::layout
 		virtual PageCursor compute_position_impl(PageCursor cursor) = 0;
 		virtual void render_impl(const LayoutBase* layout, std::vector<pdf::Page*>& pages) const = 0;
 
+		static void* operator new(size_t count);
+		static void operator delete(void* ptr, size_t count);
+
 	protected:
 		std::optional<Either<RelativePos, AbsolutePagePos>> m_position {};
 		LayoutSize m_layout_size;

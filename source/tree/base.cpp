@@ -43,6 +43,33 @@ namespace sap::tree
 		return Ok(std::move(result));
 	}
 
+	void* InlineObject::operator new(size_t count)
+	{
+		thread_local static auto pool = util::Pool<uint8_t, /* region size: */ (1 << 16)>();
+		return pool.allocate_raw(count);
+	}
+
+	void InlineObject::operator delete(void* ptr, size_t count)
+	{
+	}
+
+	void* BlockObject::operator new(size_t count)
+	{
+		thread_local static auto pool = util::Pool<uint8_t, /* region size: */ (1 << 16)>();
+		return pool.allocate_raw(count);
+	}
+
+	void BlockObject::operator delete(void* ptr, size_t count)
+	{
+	}
+
+
+
+
+
+
+
+
 
 	void BlockObject::offsetRelativePosition(Size2d offset)
 	{

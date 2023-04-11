@@ -77,8 +77,8 @@ namespace zst
 
 		template <typename U>
 		explicit SharedPtr(const U* ptr)
-			requires(std::is_convertible_v<U*, T*>)
-			: m_ptr(const_cast<U*>(ptr))
+		    requires(std::is_convertible_v<U*, T*>)
+		    : m_ptr(const_cast<U*>(ptr))
 		{
 			this->retain_ptr();
 		}
@@ -87,8 +87,8 @@ namespace zst
 
 		template <typename U>
 		explicit SharedPtr(const U& ptr)
-			requires(std::is_convertible_v<U&, T&>)
-			: m_ptr(&const_cast<U&>(ptr))
+		    requires(std::is_convertible_v<U&, T&>)
+		    : m_ptr(&const_cast<U&>(ptr))
 		{
 			this->retain_ptr();
 		}
@@ -99,16 +99,16 @@ namespace zst
 
 		template <typename U>
 		SharedPtr(const SharedPtr<U>& other)
-			requires(std::is_convertible_v<U*, T*>)
-			: m_ptr(other.m_ptr)
+		    requires(std::is_convertible_v<U*, T*>)
+		    : m_ptr(other.m_ptr)
 		{
 			this->retain_ptr();
 		}
 
 		template <typename U>
 		SharedPtr(SharedPtr<U>&& other)
-			requires(std::is_convertible_v<U*, T*>)
-			: m_ptr(other.take_reference())
+		    requires(std::is_convertible_v<U*, T*>)
+		    : m_ptr(other.take_reference())
 		{
 		}
 
@@ -129,7 +129,7 @@ namespace zst
 
 		template <typename U>
 		SharedPtr& operator=(const SharedPtr<U>& other)
-			requires(std::is_convertible_v<U*, T*>)
+		    requires(std::is_convertible_v<U*, T*>)
 		{
 			SharedPtr tmp = other;
 			this->swap(tmp);
@@ -138,7 +138,7 @@ namespace zst
 
 		template <typename U>
 		SharedPtr& operator=(SharedPtr<U>&& other)
-			requires(std::is_convertible_v<U*, T*>)
+		    requires(std::is_convertible_v<U*, T*>)
 		{
 			auto tmp = SharedPtr(std::move(other));
 			this->swap(tmp);

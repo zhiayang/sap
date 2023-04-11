@@ -170,6 +170,16 @@ namespace sap::layout
 
 
 
+	void* LayoutObject::operator new(size_t count)
+	{
+		thread_local static auto pool = util::Pool<uint8_t, /* region size: */ (1 << 16)>();
+		return pool.allocate_raw(count);
+	}
+
+	void LayoutObject::operator delete(void* ptr, size_t count)
+	{
+	}
+
 
 	LayoutSpan::LayoutSpan(Length relative_offset, Length raise_height, LayoutSize size, LineMetrics metrics)
 	    : LayoutObject(Style::empty(), size)

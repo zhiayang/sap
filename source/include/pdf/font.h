@@ -41,7 +41,10 @@ namespace pdf
 
 		const font::FontMetrics& getFontMetrics() const { return m_source->metrics(); }
 		font::GlyphMetrics getMetricsForGlyph(GlyphId glyph) const { return m_source->getGlyphMetrics(glyph); }
-		GlyphId getGlyphIdFromCodepoint(char32_t codepoint) const { return m_source->getGlyphIndexForCodepoint(codepoint); }
+		GlyphId getGlyphIdFromCodepoint(char32_t codepoint) const
+		{
+			return m_source->getGlyphIndexForCodepoint(codepoint);
+		}
 
 		int64_t fontId() const { return m_font_id; }
 
@@ -109,7 +112,7 @@ namespace pdf
 		int64_t m_font_id;
 
 		// pool needs to be a friend because it needs the constructor
-		template <typename>
+		template <typename, size_t>
 		friend struct util::Pool;
 	};
 }
