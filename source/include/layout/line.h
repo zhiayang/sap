@@ -22,46 +22,27 @@ namespace sap::layout
 		struct BrokenLine;
 	}
 
-	struct LineMetrics
-	{
-		sap::Length total_space_width;
-		sap::Length total_word_width;
-
-		// there is one of this for every object in the line
-		std::vector<sap::Length> widths;
-
-		// there is one of this for every Separator
-		std::vector<sap::Length> preferred_sep_widths;
-
-		// there is one of this for every InlineSpan
-		std::vector<LineMetrics> nested_span_metrics;
-
-		sap::Length ascent_height;
-		sap::Length descent_height;
-		sap::Length default_line_spacing;
-	};
-
 	struct Line : LayoutObject
 	{
 		virtual layout::PageCursor compute_position_impl(layout::PageCursor cursor) override;
 		virtual void render_impl(const LayoutBase* layout, std::vector<pdf::Page*>& pages) const override;
 
 		static std::unique_ptr<Line> fromInlineObjects(interp::Interpreter* cs,
-			const Style* style,
-			std::span<const zst::SharedPtr<tree::InlineObject>> objs,
-			const LineMetrics& line_metrics,
-			Size2d available_space,
-			bool is_first_line,
-			bool is_last_line);
+		    const Style* style,
+		    std::span<const zst::SharedPtr<tree::InlineObject>> objs,
+		    const LineMetrics& line_metrics,
+		    Size2d available_space,
+		    bool is_first_line,
+		    bool is_last_line);
 
 		const LineMetrics& metrics() const { return m_metrics; }
 		const std::vector<std::unique_ptr<LayoutObject>>& objects() const { return m_objects; }
 
 	private:
 		explicit Line(const Style* style,
-			LayoutSize size,
-			LineMetrics metrics,
-			std::vector<std::unique_ptr<LayoutObject>> objs);
+		    LayoutSize size,
+		    LineMetrics metrics,
+		    std::vector<std::unique_ptr<LayoutObject>> objs);
 
 	private:
 		LineMetrics m_metrics;
@@ -71,7 +52,7 @@ namespace sap::layout
 	LineMetrics computeLineMetrics(std::span<const zst::SharedPtr<tree::InlineObject>> objs, const Style* parent_style);
 
 	Length calculatePreferredSeparatorWidth(const tree::Separator* sep,
-		bool is_end_of_line,
-		const Style* left_style,
-		const Style* right_style);
+	    bool is_end_of_line,
+	    const Style* left_style,
+	    const Style* right_style);
 }

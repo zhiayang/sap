@@ -714,7 +714,7 @@ namespace std
 				let refnum = record.refnum! - 1;
 				let refblk = g_list_of_refs[refnum];
 
-				# ref.tio_ref.link_to(refblk);
+				ref.tio_ref.link_to(refblk);
 			}
 
 			i += 1;

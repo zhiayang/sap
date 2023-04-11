@@ -22,8 +22,8 @@ namespace font
 		FontScalar hhea_linegap;
 		int units_per_em;
 
-		int x_height;
-		int cap_height;
+		FontScalar x_height;
+		FontScalar cap_height;
 
 		FontScalar typo_ascent;
 		FontScalar typo_descent;

@@ -384,14 +384,14 @@ namespace font
 		// note that FreeType also does this x1.2 "magic factor", and it seems to line up with
 		// what other programs (eg. word, pages) use.
 		m_metrics.default_line_spacing = std::max( //
-			FontScalar(m_metrics.units_per_em * 12) / 10,
-			m_metrics.typo_ascent - m_metrics.typo_descent + m_metrics.typo_linegap //
+		    FontScalar(m_metrics.units_per_em * 12) / 10,
+		    m_metrics.typo_ascent - m_metrics.typo_descent + m_metrics.typo_linegap //
 		);
 
 		if(version >= 2)
 		{
-			m_metrics.x_height = peek_i16(buf.drop(84));
-			m_metrics.cap_height = peek_i16(buf.drop(84 + 2));
+			m_metrics.x_height = FontScalar(peek_i16(buf.drop(84)));
+			m_metrics.cap_height = FontScalar(peek_i16(buf.drop(84 + 2)));
 		}
 	}
 
@@ -482,7 +482,7 @@ namespace font
 	}
 
 	std::unique_ptr<FontFile> FontFile::from_offset_table(zst::unique_span<uint8_t[]> file_buf,
-		size_t start_of_offset_table)
+	    size_t start_of_offset_table)
 	{
 		// this is perfectly fine, because we own the data referred to by 'buf'.
 		auto font = std::unique_ptr<FontFile>(new FontFile(std::move(file_buf)));
@@ -570,8 +570,8 @@ namespace font
 	}
 
 	std::optional<std::unique_ptr<FontFile>> FontFile::from_postscript_name_in_collection( //
-		zst::unique_span<uint8_t[]> file_buf,
-		zst::str_view postscript_name)
+	    zst::unique_span<uint8_t[]> file_buf,
+	    zst::str_view postscript_name)
 	{
 		assert(memcmp(file_buf.get(), "ttcf", 4) == 0);
 
@@ -608,7 +608,7 @@ namespace font
 		auto span = zst::byte_span(file.get(), file.size());
 
 		if(memcmp(span.data(), "OTTO", 4) == 0 || memcmp(span.data(), "true", 4) == 0
-			|| memcmp(span.data(), "\x00\x01\x00\x00", 4) == 0)
+		    || memcmp(span.data(), "\x00\x01\x00\x00", 4) == 0)
 		{
 			return FontFile::from_offset_table(std::move(file), /* offset: */ 0);
 		}

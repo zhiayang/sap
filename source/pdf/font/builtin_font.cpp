@@ -152,11 +152,11 @@ namespace pdf
 			}
 			else if(auto x = get_value("CapHeight"); x.has_value())
 			{
-				m_metrics.cap_height = to<int>(*x);
+				m_metrics.cap_height = FontScalar(to<int>(*x));
 			}
 			else if(auto x = get_value("XHeight"); x.has_value())
 			{
-				m_metrics.x_height = to<int>(*x);
+				m_metrics.x_height = FontScalar(to<int>(*x));
 			}
 			else if(auto x = get_value("Ascender"); x.has_value())
 			{
@@ -293,12 +293,12 @@ namespace pdf
 		// see the comment in font/loader.cpp about this 1.2x
 		m_metrics.units_per_em = 1000;
 		m_metrics.default_line_spacing = std::max(FontScalar(m_metrics.units_per_em * 12) / 10,
-			m_metrics.typo_ascent - m_metrics.typo_descent);
+		    m_metrics.typo_ascent - m_metrics.typo_descent);
 	}
 
 
 	std::map<size_t, font::GlyphAdjustment> BuiltinFont::
-		getPositioningAdjustmentsForGlyphSequence(zst::span<GlyphId> glyphs, const font::FeatureSet& features) const
+	    getPositioningAdjustmentsForGlyphSequence(zst::span<GlyphId> glyphs, const font::FeatureSet& features) const
 	{
 		if(glyphs.size() < 2)
 			return {};
@@ -314,7 +314,7 @@ namespace pdf
 	}
 
 	std::optional<font::SubstitutedGlyphString> BuiltinFont::
-		performSubstitutionsForGlyphSequence(zst::span<GlyphId> glyphs, const font::FeatureSet& features) const
+	    performSubstitutionsForGlyphSequence(zst::span<GlyphId> glyphs, const font::FeatureSet& features) const
 	{
 		if(glyphs.size() < 2)
 			return std::nullopt;

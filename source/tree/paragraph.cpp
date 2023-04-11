@@ -68,6 +68,10 @@ namespace sap::tree
 			{
 				inlines->addObject(obj);
 			}
+			else if(auto span = dynamic_cast<tree::InlineSpan*>(obj.get()))
+			{
+				inlines->addObject(obj);
+			}
 			else if(auto iscr = dynamic_cast<tree::ScriptCall*>(obj.get()))
 			{
 				auto tmp = TRY(this->eval_single_script_in_para(cs, available_space, iscr, /* allow blocks: */ false));
@@ -76,10 +80,6 @@ namespace sap::tree
 
 				assert(tmp->is_left());
 				inlines->addObject(tmp->take_left());
-			}
-			else if(auto span = dynamic_cast<tree::InlineSpan*>(obj.get()))
-			{
-				inlines->addObject(obj);
 			}
 			else
 			{
@@ -97,11 +97,11 @@ namespace sap::tree
 		    UTF8PROC_CATEGORY_LM, UTF8PROC_CATEGORY_LO);
 	}
 
-	static zst::SharedPtr<Text> new_text_from_existing(const zst::SharedPtr<InlineObject>& text,
-	    zst::wstr_view contents)
+	template <typename T, typename... Args>
+	static zst::SharedPtr<T> new_thing_from_existing(const zst::SharedPtr<InlineObject>& orig, Args&&... args)
 	{
-		auto ret = zst::make_shared<Text>(contents.str());
-		ret->copyAttributesFrom(*text);
+		auto ret = zst::make_shared<T>(static_cast<Args&&>(args)...);
+		ret->copyAttributesFrom(*orig);
 
 		return ret;
 	}
@@ -135,7 +135,7 @@ namespace sap::tree
 		}
 
 		if(not pre_chunk.empty())
-			vec.push_back(new_text_from_existing(text, pre_chunk.str()));
+			vec.push_back(new_thing_from_existing<Text>(text, pre_chunk.str()));
 
 		bool manual_hyphenation = false;
 		for(size_t i = 0; i < orig_span.size(); i++)
@@ -152,11 +152,11 @@ namespace sap::tree
 			for(size_t i = 0; (i = orig_span.find_first_of(U"-/.")) != (size_t) -1;)
 			{
 				auto part = orig_span.take_prefix(i + 1);
-				vec.push_back(new_text_from_existing(text, part.str()));
-				vec.push_back(zst::make_shared<Separator>(Separator::BREAK_POINT));
+				vec.push_back(new_thing_from_existing<Text>(text, part.str()));
+				vec.push_back(new_thing_from_existing<Separator>(text, Separator::BREAK_POINT));
 			}
 
-			vec.push_back(new_text_from_existing(text, orig_span.str()));
+			vec.push_back(new_thing_from_existing<Text>(text, orig_span.str()));
 		}
 		else if(not orig_span.empty())
 		{
@@ -181,20 +181,20 @@ namespace sap::tree
 					// hyphenation preference increases from 1 to 3 to 5, so 5 has the lowest cost, and 1 the
 					// highest.
 					auto part = orig_span.take_prefix(k);
-					vec.push_back(new_text_from_existing(text, part.str()));
-					vec.push_back(zst::make_shared<Separator>(Separator::HYPHENATION_POINT,
+					vec.push_back(new_thing_from_existing<Text>(text, part.str()));
+					vec.push_back(new_thing_from_existing<Separator>(text, Separator::HYPHENATION_POINT,
 					    /* cost: */ 6 - points[i]));
 					k = 1;
 				}
 			}
 
 			if(orig_span.size() > 0)
-				vec.push_back(new_text_from_existing(text, orig_span.str()));
+				vec.push_back(new_thing_from_existing<Text>(text, orig_span.str()));
 		}
 
 
 		if(not post_chunk.empty())
-			vec.push_back(new_text_from_existing(text, post_chunk.str()));
+			vec.push_back(new_thing_from_existing<Text>(text, post_chunk.str()));
 	}
 
 
@@ -216,10 +216,13 @@ namespace sap::tree
 			}
 			else if(auto span = dynamic_cast<tree::InlineSpan*>(uwu.get()); span)
 			{
-				auto new_span = zst::make_shared<InlineSpan>(TRY(processWordSeparators(span->objects())));
-				new_span->copyAttributesFrom(*span);
+				// note: don't make a new span here, preserve the identities.
+				// if we ref a span, it needs to keep existing.
+				auto objs = TRY(processWordSeparators(std::move(span->objects())));
+				span->objects().clear();
+				span->addObjects(std::move(objs));
 
-				ret.push_back(std::move(new_span));
+				ret.push_back(std::move(uwu));
 				seen_whitespace = false;
 				continue;
 			}
@@ -227,7 +230,7 @@ namespace sap::tree
 			auto tree_text = dynamic_cast<tree::Text*>(uwu.get());
 			assert(tree_text != nullptr);
 
-			auto current_text = new_text_from_existing(uwu, U"");
+			auto current_text = new_thing_from_existing<Text>(uwu, U"");
 
 			for(char32_t c : tree_text->contents())
 			{
@@ -242,16 +245,16 @@ namespace sap::tree
 
 							make_separators_for_word(ret, std::move(current_text));
 
-							ret.push_back(zst::make_shared<
-							    Separator>(did_end_sentence ? Separator::SENTENCE_END : Separator::SPACE));
+							ret.push_back(new_thing_from_existing<Separator>(uwu,
+							    did_end_sentence ? Separator::SENTENCE_END : Separator::SPACE));
 
-							current_text = new_text_from_existing(uwu, U"");
+							current_text = new_thing_from_existing<Text>(uwu, U"");
 						}
 						// if the current text is empty, we just put another separator unless
 						// we're the first object (don't start with a separator)
 						else if(not first_obj)
 						{
-							ret.push_back(zst::make_shared<Separator>(Separator::SPACE));
+							ret.push_back(new_thing_from_existing<Separator>(uwu, Separator::SPACE));
 						}
 
 						seen_whitespace = true;

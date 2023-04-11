@@ -13,6 +13,7 @@ namespace sap::layout
 	struct PageCursor;
 	struct LayoutBase;
 	struct LayoutObject;
+	struct PseudoSpan;
 }
 
 namespace sap::interp
@@ -55,6 +56,7 @@ namespace sap::tree
 		LayoutResult(decltype(object) x);
 	};
 
+	struct InlineSpan;
 	struct InlineObject : zst::IntrusiveRefCounted<InlineObject>, Stylable
 	{
 		virtual ~InlineObject() = 0;
@@ -66,8 +68,12 @@ namespace sap::tree
 		void setRaiseHeight(Length raise) { m_raise_height = raise; }
 		void addRaiseHeight(Length raise) { m_raise_height += raise; }
 
-		void setLinkDestination(LinkDestination dest) { m_link_destination = std::move(dest); }
+		LinkDestination linkDestination() const;
+		void setLinkDestination(LinkDestination dest);
 		void copyAttributesFrom(const InlineObject& obj);
+
+		InlineSpan* parentSpan() const { return m_parent_span; }
+		void setParentSpan(InlineSpan* span) { m_parent_span = span; }
 
 	protected:
 		mutable std::optional<layout::LayoutObject*> m_generated_layout_object = nullptr;
@@ -75,6 +81,7 @@ namespace sap::tree
 	private:
 		Length m_raise_height = 0;
 		LinkDestination m_link_destination {};
+		InlineSpan* m_parent_span = nullptr;
 	};
 
 	struct InlineSpan : InlineObject
@@ -94,9 +101,14 @@ namespace sap::tree
 		bool hasOverriddenWidth() const { return m_override_width.has_value(); }
 		std::optional<Length> getOverriddenWidth() const { return m_override_width; }
 
+		void addGeneratedLayoutSpan(layout::PseudoSpan* span) const;
+		const std::vector<layout::PseudoSpan*>& generatedLayoutSpans() { return m_generated_layout_spans; }
+
 	private:
 		std::vector<zst::SharedPtr<InlineObject>> m_objects;
 		std::optional<Length> m_override_width {};
+
+		mutable std::vector<layout::PseudoSpan*> m_generated_layout_spans {};
 
 		friend InlineObject;
 	};
@@ -118,6 +130,7 @@ namespace sap::tree
 		void offsetRelativePosition(Size2d offset);
 		void overrideAbsolutePosition(layout::AbsolutePagePos pos);
 
+		LinkDestination linkDestination() const;
 		void setLinkDestination(LinkDestination dest);
 
 	protected:

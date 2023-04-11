@@ -31,10 +31,10 @@ namespace sap::layout
 
 	private:
 		void render(AbsolutePagePos line_pos,
-			std::vector<pdf::Page*>& pages,
-			pdf::Text* text,
-			bool is_first_in_text,
-			Length offset_from_prev) const;
+		    std::vector<pdf::Page*>& pages,
+		    pdf::Text* text,
+		    bool is_first_in_text,
+		    Length offset_from_prev) const;
 
 		void render_to_text(pdf::Text* text) const;
 

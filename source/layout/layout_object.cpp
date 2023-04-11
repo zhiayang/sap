@@ -5,6 +5,7 @@
 #include "tree/base.h"
 
 #include "layout/base.h"
+#include "layout/line.h"
 #include "layout/document.h"
 #include "layout/layout_object.h"
 
@@ -71,6 +72,10 @@ namespace sap::layout
 		m_link_destination = std::move(dest);
 	}
 
+	tree::LinkDestination LayoutObject::linkDestination() const
+	{
+		return m_link_destination;
+	}
 
 
 	void LayoutObject::overrideLayoutSizeX(Length x)
@@ -160,5 +165,29 @@ namespace sap::layout
 		    .size = Size2d { m_layout_size.width, m_layout_size.total_height() },
 		    .destination = dest_pos,
 		});
+	}
+
+
+
+
+
+	PseudoSpan::PseudoSpan(Length relative_offset, Length raise_height, LayoutSize size, LineMetrics metrics)
+	    : LayoutObject(Style::empty(), size)
+	    , m_relative_offset(relative_offset)
+	    , m_raise_height(raise_height)
+	    , m_metrics(std::move(metrics))
+	{
+	}
+
+	layout::PageCursor PseudoSpan::compute_position_impl(layout::PageCursor cursor)
+	{
+		// does nothing
+		this->positionRelatively(cursor.position());
+		return cursor;
+	}
+
+	void PseudoSpan::render_impl(const LayoutBase* layout, std::vector<pdf::Page*>& pages) const
+	{
+		// do nothing (for now)
 	}
 }

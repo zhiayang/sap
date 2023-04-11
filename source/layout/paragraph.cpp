@@ -134,7 +134,10 @@ namespace sap::tree
 		else if(objs->is_right())
 			return Ok(LayoutResult::make(objs->take_right()));
 
-		auto para_objects = TRY(Paragraph::processWordSeparators(objs->take_left()->objects()));
+		// note: the InlineSpan must continue to live here, so don't `take` it;
+		// just steal its objects.
+		auto tmp = std::move(objs->left()->objects());
+		auto para_objects = TRY(Paragraph::processWordSeparators(std::move(tmp)));
 		if(para_objects.empty())
 			return Ok(LayoutResult::empty());
 

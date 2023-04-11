@@ -45,7 +45,7 @@ namespace sap
 			case EX: {
 				auto x_height = font->getFontMetrics().x_height;
 				return font
-				    ->scaleMetricForFontSize(font::FontScalar(x_height == 0.0 ? 400.0 : x_height), font_size.into())
+				    ->scaleMetricForFontSize(x_height.iszero() ? font::FontScalar(400.0) : x_height, font_size.into())
 				    .into();
 			}
 			default: return resolveWithoutFont(font_size, root_font_size);
@@ -98,12 +98,12 @@ namespace sap
 	sap::Size2d DynLength2d::resolve(const pdf::PdfFont* font, sap::Length font_size, sap::Length root_font_size) const
 	{
 		return sap::Size2d(this->x.resolve(font, font_size, root_font_size),
-			this->y.resolve(font, font_size, root_font_size));
+		    this->y.resolve(font, font_size, root_font_size));
 	}
 
 	sap::Size2d DynLength2d::resolveWithoutFont(sap::Length font_size, sap::Length root_font_size) const
 	{
 		return sap::Size2d(this->x.resolveWithoutFont(font_size, root_font_size),
-			this->y.resolveWithoutFont(font_size, root_font_size));
+		    this->y.resolveWithoutFont(font_size, root_font_size));
 	}
 }

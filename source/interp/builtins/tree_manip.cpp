@@ -19,6 +19,7 @@
 #include "interp/builtin_types.h" //
 
 #include "layout/base.h"
+#include "layout/word.h"
 
 namespace sap::interp::builtin
 {
@@ -373,6 +374,11 @@ namespace sap::interp::builtin
 		        ? &value.getTreeInlineObj()
 		        : value.getTreeInlineObjectRef());
 
-		return set_link_annotation(ev, tio, args[1]);
+		TRY(set_link_annotation(ev, tio, args[1]));
+
+		for(auto ls : tio->generatedLayoutSpans())
+			TRY(set_link_annotation(ev, ls, args[1]));
+
+		return EvalResult::ofVoid();
 	}
 }

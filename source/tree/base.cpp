@@ -64,12 +64,27 @@ namespace sap::tree
 		m_link_destination = std::move(dest);
 	}
 
+	LinkDestination BlockObject::linkDestination() const
+	{
+		return m_link_destination;
+	}
+
+	void InlineObject::setLinkDestination(LinkDestination dest)
+	{
+		m_link_destination = std::move(dest);
+	}
+
+	LinkDestination InlineObject::linkDestination() const
+	{
+		return m_link_destination;
+	}
 
 	void InlineObject::copyAttributesFrom(const InlineObject& obj)
 	{
 		m_style = obj.m_style;
 		m_raise_height = obj.m_raise_height;
 		m_link_destination = obj.m_link_destination;
+		m_parent_span = obj.m_parent_span;
 
 		if(dynamic_cast<InlineSpan*>(this) && dynamic_cast<const InlineSpan*>(&obj))
 			static_cast<InlineSpan*>(this)->m_override_width = static_cast<const InlineSpan&>(obj).m_override_width;
@@ -81,17 +96,30 @@ namespace sap::tree
 
 	InlineSpan::InlineSpan(std::vector<zst::SharedPtr<InlineObject>> objs) : m_objects(std::move(objs))
 	{
+		for(auto& obj : m_objects)
+			obj->setParentSpan(this);
 	}
 
 	void InlineSpan::addObject(zst::SharedPtr<InlineObject> obj)
 	{
+		obj->setParentSpan(this);
 		m_objects.push_back(std::move(obj));
 	}
 
 	void InlineSpan::addObjects(std::vector<zst::SharedPtr<InlineObject>> objs)
 	{
+		for(auto& x : objs)
+			x->setParentSpan(this);
+
 		std::move(objs.begin(), objs.end(), std::back_inserter(m_objects));
 	}
+
+	void InlineSpan::addGeneratedLayoutSpan(layout::PseudoSpan* span) const
+	{
+		m_generated_layout_spans.push_back(span);
+	}
+
+
 
 	LayoutResult::~LayoutResult() = default;
 

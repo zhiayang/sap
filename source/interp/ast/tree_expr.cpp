@@ -64,7 +64,10 @@ namespace sap::interp
 			else if(auto span = dynamic_cast<const tree::InlineSpan*>(obj.get()); span)
 			{
 				auto tmp = TRY(evaluate_list_of_tios(ev, span->objects()));
-				std::move(tmp.begin(), tmp.end(), std::back_inserter(ret));
+				auto new_span = zst::make_shared<tree::InlineSpan>(std::move(tmp));
+				new_span->copyAttributesFrom(*span);
+
+				ret.push_back(std::move(new_span));
 			}
 			else if(auto sc = dynamic_cast<const tree::ScriptCall*>(obj.get()); sc)
 			{
