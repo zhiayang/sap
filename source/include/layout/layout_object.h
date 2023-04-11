@@ -93,9 +93,9 @@ namespace sap::layout
 
 
 
-	struct PseudoSpan : LayoutObject
+	struct LayoutSpan : LayoutObject
 	{
-		PseudoSpan(Length relative_offset, Length raise_height, LayoutSize size, LineMetrics metrics);
+		LayoutSpan(Length relative_offset, Length raise_height, LayoutSize size, LineMetrics metrics);
 
 		virtual layout::PageCursor compute_position_impl(layout::PageCursor cursor) override;
 		virtual void render_impl(const LayoutBase* layout, std::vector<pdf::Page*>& pages) const override;

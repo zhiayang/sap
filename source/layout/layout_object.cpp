@@ -171,7 +171,7 @@ namespace sap::layout
 
 
 
-	PseudoSpan::PseudoSpan(Length relative_offset, Length raise_height, LayoutSize size, LineMetrics metrics)
+	LayoutSpan::LayoutSpan(Length relative_offset, Length raise_height, LayoutSize size, LineMetrics metrics)
 	    : LayoutObject(Style::empty(), size)
 	    , m_relative_offset(relative_offset)
 	    , m_raise_height(raise_height)
@@ -179,14 +179,14 @@ namespace sap::layout
 	{
 	}
 
-	layout::PageCursor PseudoSpan::compute_position_impl(layout::PageCursor cursor)
+	layout::PageCursor LayoutSpan::compute_position_impl(layout::PageCursor cursor)
 	{
 		// does nothing
 		this->positionRelatively(cursor.position());
 		return cursor;
 	}
 
-	void PseudoSpan::render_impl(const LayoutBase* layout, std::vector<pdf::Page*>& pages) const
+	void LayoutSpan::render_impl(const LayoutBase* layout, std::vector<pdf::Page*>& pages) const
 	{
 		// do nothing (for now)
 	}

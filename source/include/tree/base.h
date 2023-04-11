@@ -13,7 +13,7 @@ namespace sap::layout
 	struct PageCursor;
 	struct LayoutBase;
 	struct LayoutObject;
-	struct PseudoSpan;
+	struct LayoutSpan;
 }
 
 namespace sap::interp
@@ -101,14 +101,14 @@ namespace sap::tree
 		bool hasOverriddenWidth() const { return m_override_width.has_value(); }
 		std::optional<Length> getOverriddenWidth() const { return m_override_width; }
 
-		void addGeneratedLayoutSpan(layout::PseudoSpan* span) const;
-		const std::vector<layout::PseudoSpan*>& generatedLayoutSpans() { return m_generated_layout_spans; }
+		void addGeneratedLayoutSpan(layout::LayoutSpan* span) const;
+		const std::vector<layout::LayoutSpan*>& generatedLayoutSpans() { return m_generated_layout_spans; }
 
 	private:
 		std::vector<zst::SharedPtr<InlineObject>> m_objects;
 		std::optional<Length> m_override_width {};
 
-		mutable std::vector<layout::PseudoSpan*> m_generated_layout_spans {};
+		mutable std::vector<layout::LayoutSpan*> m_generated_layout_spans {};
 
 		friend InlineObject;
 	};

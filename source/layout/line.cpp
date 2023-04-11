@@ -237,7 +237,7 @@ namespace sap::layout
 		}
 
 		/*
-		    to (try and) preserve the "structure" of the text, we create PseudoSpans for
+		    to (try and) preserve the "structure" of the text, we create LayoutSpans for
 		    runs of objects that come from the same span. this allows them to get various
 		    attributes that were set on their original tree-span, even if the words
 		    were broken over a few lines.
@@ -249,12 +249,12 @@ namespace sap::layout
 		Length cur_span_offset = current_offset;
 		tree::InlineSpan* cur_span = nullptr;
 
-		auto make_pseudospan = [&metrics, &layout_objects](Length offset, Length width, const tree::InlineSpan* span) {
+		auto make_LayoutSpan = [&metrics, &layout_objects](Length offset, Length width, const tree::InlineSpan* span) {
 			if(not span)
 				return;
 
 			// make a new span.
-			auto ps = std::make_unique<PseudoSpan>(offset, span->raiseHeight(),
+			auto ps = std::make_unique<LayoutSpan>(offset, span->raiseHeight(),
 			    LayoutSize {
 			        .width = width,
 			        .ascent = metrics.ascent_height,
@@ -268,7 +268,7 @@ namespace sap::layout
 			layout_objects.push_back(std::move(ps));
 		};
 
-		auto add_to_pseudospan = [&](const tree::InlineObject* obj, Length width) {
+		auto add_to_LayoutSpan = [&](const tree::InlineObject* obj, Length width) {
 			if(obj->parentSpan() == nullptr)
 			{
 				cur_span = nullptr;
@@ -293,7 +293,7 @@ namespace sap::layout
 			{
 				assert(obj->parentSpan() != cur_span);
 
-				make_pseudospan(cur_span_offset, cur_span_width, cur_span);
+				make_LayoutSpan(cur_span_offset, cur_span_width, cur_span);
 				cur_span = obj->parentSpan();
 
 				cur_span_offset = current_offset;
@@ -323,7 +323,7 @@ namespace sap::layout
 
 				layout_objects.push_back(std::move(word));
 
-				add_to_pseudospan(obj, obj_width);
+				add_to_LayoutSpan(obj, obj_width);
 
 				current_offset += obj_width;
 				actual_width += obj_width;
@@ -359,7 +359,7 @@ namespace sap::layout
 				tree_sep->setGeneratedLayoutObject(sep.get());
 				layout_objects.push_back(std::move(sep));
 
-				add_to_pseudospan(obj, actual_sep_width);
+				add_to_LayoutSpan(obj, actual_sep_width);
 
 				current_offset += actual_sep_width;
 				actual_width += actual_sep_width;
@@ -386,7 +386,7 @@ namespace sap::layout
 					    layout_objects);
 
 					actual_width += span_width;
-					make_pseudospan(old_ofs, span_width, tree_span);
+					make_LayoutSpan(old_ofs, span_width, tree_span);
 
 					// don't modify metrics_idx here
 				}
@@ -399,7 +399,7 @@ namespace sap::layout
 					size_t inner_nested_span_idx = 0;
 					Length cur_ofs = current_offset;
 
-					make_pseudospan(cur_ofs, obj_width, tree_span);
+					make_LayoutSpan(cur_ofs, obj_width, tree_span);
 
 					compute_word_offsets_for_span(                    //
 					    inner_metrics_idx,                            //
@@ -427,7 +427,7 @@ namespace sap::layout
 			}
 		}
 
-		make_pseudospan(cur_span_offset, cur_span_width, cur_span);
+		make_LayoutSpan(cur_span_offset, cur_span_width, cur_span);
 		return actual_width;
 	}
 
@@ -510,13 +510,13 @@ namespace sap::layout
 
 				prev_word->word_end = word->relativeOffset() + word->layoutSize().width;
 			}
-			else if(auto ps = dynamic_cast<const PseudoSpan*>(obj.get()))
+			else if(auto ps = dynamic_cast<const LayoutSpan*>(obj.get()))
 			{
 				// do nothing
 				auto ps_pos = line_pos;
 				ps_pos.pos.x() += ps->relativeOffset();
 
-				const_cast<PseudoSpan*>(ps)->positionAbsolutely(ps_pos);
+				const_cast<LayoutSpan*>(ps)->positionAbsolutely(ps_pos);
 				ps->render(layout, pages);
 			}
 			else

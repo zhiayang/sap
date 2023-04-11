@@ -114,7 +114,7 @@ namespace sap::tree
 		std::move(objs.begin(), objs.end(), std::back_inserter(m_objects));
 	}
 
-	void InlineSpan::addGeneratedLayoutSpan(layout::PseudoSpan* span) const
+	void InlineSpan::addGeneratedLayoutSpan(layout::LayoutSpan* span) const
 	{
 		m_generated_layout_spans.push_back(span);
 	}
