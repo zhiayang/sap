@@ -216,6 +216,7 @@ namespace sap::tree
 
 				ret.push_back(std::move(uwu));
 				seen_whitespace = false;
+				first_obj = false;
 				continue;
 			}
 
