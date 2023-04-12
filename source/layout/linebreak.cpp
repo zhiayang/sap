@@ -84,16 +84,25 @@ namespace sap::layout::linebreak
 
 				auto neighbour_width = neighbour_line.width();
 
-				// TODO: allow shrinking of spaces by allowing lines to go past the end of the preferred_line_length
-				// by 10% of the space width * num_spaces
-				if(neighbour_width >= preferred_line_length)
+				if(neighbour_width >= preferred_line_length && ret.empty())
 				{
-					if(ret.empty())
-					{
-						sap::warn("line breaker", "ovErFUll \\hBOx, badNesS 10001!100!");
-						ret.emplace_back(this->make_neighbour(neighbour_broken_until, neighbour_line), 10000);
-					}
+					sap::warn("line breaker", "ovErFUll \\hBOx, badNesS 10001!100!");
+					ret.emplace_back(this->make_neighbour(neighbour_broken_until, neighbour_line), 10000);
 					return ret;
+				}
+				// don't allow shrinking more than 3%, otherwise it looks kinda bad
+				else if(neighbour_width / preferred_line_length > 1.03)
+				{
+					return ret;
+				}
+
+
+				double cost_mult = 1;
+				auto space_diff = (preferred_line_length - neighbour_width);
+				if(space_diff < 0)
+				{
+					space_diff = space_diff.abs();
+					cost_mult = 3.5;
 				}
 
 				if(auto sep = wordorsep->castToSeparator())
@@ -106,7 +115,7 @@ namespace sap::layout::linebreak
 					if(sep->isSpace() || sep->isSentenceEnding())
 					{
 						auto tmp = std::max((double) neighbour_line.numSpaces(), 0.5);
-						double extra_space_size = (preferred_line_length - neighbour_width).mm() / tmp;
+						double extra_space_size = space_diff.mm() / tmp;
 						cost += 3 * extra_space_size * extra_space_size;
 					}
 					else if(sep->isHyphenationPoint() || sep->isExplicitBreakPoint())
@@ -116,7 +125,7 @@ namespace sap::layout::linebreak
 
 						cost += 0.25 * (1 + sep->hyphenationCost()) * (avg_space_width * avg_space_width);
 
-						double extra_space_size = (preferred_line_length - neighbour_width).mm() / tmp;
+						double extra_space_size = space_diff.mm() / tmp;
 						cost += 3 * extra_space_size * extra_space_size;
 					}
 					else
@@ -124,7 +133,7 @@ namespace sap::layout::linebreak
 						sap::internal_error("handle other sep");
 					}
 
-					ret.emplace_back(this->make_neighbour(neighbour_broken_until, neighbour_line), cost);
+					ret.emplace_back(this->make_neighbour(neighbour_broken_until, neighbour_line), cost * cost_mult);
 				}
 			}
 		}

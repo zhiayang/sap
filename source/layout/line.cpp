@@ -225,7 +225,7 @@ namespace sap::layout
 	    std::vector<std::unique_ptr<LayoutObject>>& layout_objects)
 	{
 		const auto space_width_factor = outer_space_width_factor.value_or(
-		    (width - metrics.total_word_width) / metrics.total_space_width);
+		    (width - metrics.total_word_width).abs() / metrics.total_space_width);
 
 		// for centred and right-aligned, we need to calculate the left offset.
 		if(not outer_space_width_factor.has_value()
@@ -343,8 +343,7 @@ namespace sap::layout
 
 				Length actual_sep_width = 0;
 
-				if(style->alignment() == Alignment::Justified
-				    && (not is_last_line || (0.9 <= space_width_factor && space_width_factor <= 1.1)))
+				if(style->alignment() == Alignment::Justified && (not is_last_line || space_width_factor <= 1.1))
 				{
 					actual_sep_width = preferred_sep_width * space_width_factor;
 				}
