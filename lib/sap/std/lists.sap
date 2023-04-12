@@ -1,0 +1,55 @@
+# std/lists.sap
+
+namespace std
+{
+	fn numbered_list(items: [string...]) -> ?Block
+	{
+		var lines = [:Block];
+		var i = 0;
+		while(i < items.size())
+		{
+			lines += [builtin::make_hbox(
+				builtin::hspace(0.8em),
+				builtin::make_line(builtin::make_text(f"{i + 1}.")).apply_style({ alignment: .Right }),
+				builtin::hspace(0.6em),
+				builtin::make_line(builtin::make_text(items[i]))
+			)];
+			i += 1;
+		}
+
+		return builtin::make_vbox(...*lines)
+			.apply_style({ paragraph_spacing: 0.5em, });
+	}
+
+	fn bulleted_list(items: [Inline...]) -> Block
+	{
+		var lines = [:Block];
+		var i = 0;
+		while(i < items.size())
+		{
+			lines += [builtin::make_hbox(
+				builtin::hspace(0.8em),
+				builtin::make_line(builtin::make_text(f"•")).apply_style({ alignment: .Right }),
+				builtin::hspace(0.6em),
+				builtin::make_line(*items[i])
+			)];
+			i += 1;
+		}
+
+		return builtin::make_vbox(...*lines)
+			.apply_style({ paragraph_spacing: 0.5em, });
+	}
+
+	fn bulleted_list(items: [string...]) -> Block
+	{
+		var inlines = [:Inline];
+		var i = 0;
+		while(i < items.size())
+		{
+			inlines += [builtin::make_text(items[i])];
+			i += 1;
+		}
+
+		return bulleted_list(...*inlines);
+	}
+}

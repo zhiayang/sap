@@ -28,7 +28,8 @@ namespace font::coretext
 	};
 
 	template <typename T>
-	requires(std::is_pointer_v<T>) struct CFWrapper
+	    requires(std::is_pointer_v<T>)
+	struct CFWrapper
 	{
 		explicit CFWrapper(T ptr) : m_ptr(ptr) { CFRetain(m_ptr); }
 		explicit CFWrapper(T ptr, dont_retain_again _) : m_ptr(ptr) { }
@@ -58,7 +59,8 @@ namespace font::coretext
 	};
 
 	template <typename T>
-	requires(std::is_pointer_v<T>) static CFWrapper<T> cf_retain(T x)
+	    requires(std::is_pointer_v<T>)
+	static CFWrapper<T> cf_retain(T x)
 	{
 		if(x == nullptr)
 			abort();
@@ -67,7 +69,8 @@ namespace font::coretext
 	}
 
 	template <typename T>
-	requires(std::is_pointer_v<T>) static CFWrapper<T> cf_wrap_retained(T x)
+	    requires(std::is_pointer_v<T>)
+	static CFWrapper<T> cf_wrap_retained(T x)
 	{
 		if(x == nullptr)
 			abort();
@@ -171,7 +174,7 @@ namespace font::coretext
 		return Ok(cf_retain(trait_value));
 	}
 
-	static StrErrorOr<std::filesystem::path> get_font_path(CTFontDescriptorRef font)
+	static StrErrorOr<stdfs::path> get_font_path(CTFontDescriptorRef font)
 	{
 		auto url = TRY(get_font_attribute<CFURLRef>(font, kCTFontURLAttribute));
 
@@ -180,7 +183,7 @@ namespace font::coretext
 		if(not result)
 			return ErrFmt("failed to convert path");
 
-		return Ok(std::filesystem::path(&buf[0], &buf[strlen(buf)]));
+		return Ok(stdfs::path(&buf[0], &buf[strlen(buf)]));
 	}
 
 	static StrErrorOr<FontHandle> get_handle_from_descriptor(CTFontDescriptorRef font)
@@ -298,7 +301,8 @@ namespace font::coretext
 		    &kCFTypeArrayCallBacks));
 
 		auto options_dict = get_remove_dupes_option_dict();
-		auto collection = cf_wrap_retained(CTFontCollectionCreateWithFontDescriptors(cf_descriptor_array, options_dict));
+		auto collection = cf_wrap_retained(CTFontCollectionCreateWithFontDescriptors(cf_descriptor_array,
+		    options_dict));
 		auto found_descs = get_descriptors_from_collection(collection);
 
 		std::vector<FontHandle> handles {};
@@ -353,7 +357,8 @@ namespace font::coretext
 			return std::nullopt;
 
 		else if(handles.size() > 1)
-			sap::warn("CoreText", "postscript name '{}' matched {} fonts! returning first one", postscript_name, handles.size());
+			sap::warn("CoreText", "postscript name '{}' matched {} fonts! returning first one", postscript_name,
+			    handles.size());
 
 		return handles[0];
 	}

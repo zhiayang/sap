@@ -614,6 +614,20 @@ namespace sap::interp
 		return ret;
 	}
 
+	Value Value::string(const std::string& _str)
+	{
+		auto u32str = unicode::u32StringFromUtf8(_str.data());
+
+		auto ret = Value(Type::makeString());
+		new(&ret.v_array) decltype(ret.v_array)();
+		ret.v_array.resize(u32str.size());
+
+		for(size_t i = 0; i < u32str.size(); i++)
+			ret.v_array[i] = Value::character(u32str[i]);
+
+		return ret;
+	}
+
 	Value Value::string(const std::u32string& str)
 	{
 		auto ret = Value(Type::makeString());

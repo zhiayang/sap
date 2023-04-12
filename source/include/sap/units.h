@@ -41,6 +41,8 @@ namespace sap
 		Unit unit() const { return m_unit; }
 		double value() const { return m_value; }
 
+		std::string str() const;
+
 		DynLength negate() const { return DynLength(-m_value, m_unit); }
 
 		sap::Length resolve(const Style* style) const;

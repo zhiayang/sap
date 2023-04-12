@@ -33,6 +33,8 @@ namespace sap::watch
 	struct State
 	{
 		std::string main_file;
+		std::string output_file;
+
 		std::list<Event> event_contexts;
 		std::vector<struct kevent> kevents;
 		std::optional<pthread_t> current_compile_thread;
@@ -117,22 +119,25 @@ namespace sap::watch
 
 		g_state.ready_sem.release();
 
-		// zpr::println("\x1b[3J\x1b[2J\x1b[1;1H");
-
 		addFileToWatchList(g_state.main_file);
+
 		g_state.compile_start = std::chrono::steady_clock::now();
-		(void) sap::compile(g_state.main_file);
+		(void) sap::compile(g_state.main_file, g_state.output_file);
 
 		pthread_cleanup_pop(1);
 		return nullptr;
 	}
 
-	void start(zst::str_view main_file)
+	void start(zst::str_view main_file, zst::str_view output_file)
 	{
 		if(not g_kqueue.has_value())
 			return;
 
 		g_state.main_file = main_file.str();
+		g_state.output_file = output_file.str();
+
+		// do a first compile
+		(void) sap::compile(main_file, output_file);
 
 		constexpr static size_t NUM_EVENTS = 16;
 		auto new_events = new struct kevent[NUM_EVENTS];

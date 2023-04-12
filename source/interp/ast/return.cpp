@@ -38,16 +38,24 @@ namespace sap::interp
 			// check whether the thing exists in the current call frame
 			auto cur_call_depth = ev->frame().callDepth();
 			auto frame = &ev->frame();
+
+			bool found = false;
 			while(frame != nullptr && frame->callDepth() == cur_call_depth)
 			{
 				if(frame->containsValue(*value.lValuePointer()))
 				{
 					ret = ev->castValue(value.move(), this->return_value_type);
+					found = true;
 					break;
 				}
 
-				frame = ev->frame().parent();
+				frame = frame->parent();
 			}
+
+			// if we didn't find it, then it's a global of some kind;
+			// don't try to move it out, just return it.
+			if(not found)
+				ret = value.take();
 		}
 		else
 		{

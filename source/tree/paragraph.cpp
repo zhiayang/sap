@@ -4,6 +4,7 @@
 
 #include <utf8proc/utf8proc.h>
 
+#include "sap/paths.h"
 #include "tree/wrappers.h"
 #include "misc/hyphenator.h"
 
@@ -100,7 +101,13 @@ namespace sap::tree
 
 	static void make_separators_for_word(std::vector<zst::SharedPtr<InlineObject>>& vec, zst::SharedPtr<Text> text)
 	{
-		static auto hyphenator = hyph::Hyphenator::parseFromFile("hyph-en-gb.tex");
+		static auto hyphenator = []() {
+			auto resolved = paths::resolveLibrary(Location::builtin(), "hyphenation-defs/hyph-en-gb.tex");
+			if(resolved.is_err())
+				resolved.error().showAndExit();
+
+			return hyph::Hyphenator::parseFromFile(resolved.unwrap());
+		}();
 
 		// TODO: maybe cache at this level as well
 

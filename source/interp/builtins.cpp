@@ -126,6 +126,7 @@ namespace sap::interp
 		const auto t_bsize2d = PType::named(make_builtin_name(builtin::BS_Size2d::name));
 		const auto t_bposition = PType::named(make_builtin_name(builtin::BS_Position::name));
 		const auto t_bfontfamily = PType::named(make_builtin_name(builtin::BS_FontFamily::name));
+		const auto t_relpos = PType::named(make_builtin_name(builtin::BS_Position::name));
 		const auto t_abspos = PType::named(make_builtin_name(builtin::BS_AbsPosition::name));
 		const auto t_bdocsettings = PType::named(make_builtin_name(builtin::BS_DocumentSettings::name));
 		const auto t_bdocproxy = PType::named(make_builtin_name(builtin::BS_DocumentProxy::name));
@@ -173,6 +174,25 @@ namespace sap::interp
 		});
 
 		DEF("to_string", PL(P("_", t_any)), t_str, &B::to_string);
+
+		DEF("to_string", PL(P("_", T_P(t_bsize2d))), t_str, [](auto* ev, auto& args) {
+			auto pos = builtin::BS_Size2d::unmake(ev, args[0]);
+			return EvalResult::ofValue(Value::string(zpr::sprint("(x: {}, y: {})", pos.x.str(), pos.y.str())));
+		});
+
+		DEF("to_string", PL(P("_", T_P(t_abspos))), t_str, [](auto* ev, auto& args) {
+			auto pos = builtin::BS_AbsPosition::unmake(ev, args[0]);
+			return EvalResult::ofValue(Value::string(zpr::sprint("{{xy: ({}, {}), page: {}}}", pos.pos.x(), pos.pos.y(),
+			    pos.page_num)));
+		});
+
+		DEF("to_string", PL(P("_", T_P(t_relpos))), t_str, [](auto* ev, auto& args) {
+			auto pos = builtin::BS_Position::unmake(ev, args[0]);
+			return EvalResult::ofValue(Value::string(zpr::sprint("{{xy: ({}, {}), page: {}}}", pos.pos.x(), pos.pos.y(),
+			    pos.page_num)));
+		});
+
+
 
 		DEF("vspace", PL(P("_", t_length)), t_tbo, &B::vspace);
 		DEF("hspace", PL(P("_", t_length)), t_tbo, &B::hspace);

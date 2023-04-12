@@ -30,3 +30,5 @@
 #include "util.h"
 #include "units.h"
 #include "types.h"
+
+namespace stdfs = std::filesystem;

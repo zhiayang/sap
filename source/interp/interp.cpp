@@ -18,14 +18,25 @@ namespace sap::interp
 	extern void defineBuiltins(Interpreter* interp, DefnTree* builtin_ns);
 
 	Interpreter::Interpreter()
-		: m_typechecker(new Typechecker(this))
-		, m_evaluator(new Evaluator(this))
-		, m_current_phase(ProcessingPhase::Start)
+	    : m_typechecker(new Typechecker(this))
+	    , m_evaluator(new Evaluator(this))
+	    , m_current_phase(ProcessingPhase::Start)
 	{
 		m_typechecker->pushLocation(Location::builtin()).cancel();
 		m_evaluator->pushLocation(Location::builtin()).cancel();
 
 		defineBuiltins(this, m_typechecker->top()->lookupOrDeclareNamespace("builtin"));
+	}
+
+
+	void Interpreter::addImportedFile(std::string filename)
+	{
+		m_imported_files.insert(std::move(filename));
+	}
+
+	bool Interpreter::wasFileImported(const std::string& filename) const
+	{
+		return m_imported_files.contains(filename);
 	}
 
 	void Interpreter::addHookBlock(const HookBlock* block)

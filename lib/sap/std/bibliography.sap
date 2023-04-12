@@ -1,0 +1,169 @@
+# std/bibliography.sap
+
+import "std/state.sap";
+
+namespace std
+{
+	struct RefRecord
+	{
+		name: string;
+		text: string;
+
+		used: bool = false;
+		refnum: ?int = null;
+	}
+
+	struct Reference
+	{
+		num: int;
+		tio_ref: InlineRef;
+		record: &mut RefRecord;
+	}
+
+	global var g_ref_records: [RefRecord] = [];
+
+	fn install_references(records: [RefRecord])
+	{
+		if(builtin::state().layout_pass == 1)
+			g_ref_records = *records;
+	}
+
+	global var g_references: [Reference] = [];
+	global var g_citation_num = 0;
+
+	@layout {
+		g_references = [];
+		g_citation_num = 0;
+	}
+
+	fn cite(name: string, page: ?int = null) -> Inline
+	{
+		# look for an existing ref
+		var record: &mut RefRecord = null;
+
+		for(var i = 0; i < g_ref_records.size(); i += 1)
+		{
+			if(g_ref_records[i].name == name)
+			{
+				record = &mut g_ref_records[i];
+				break;
+			}
+		}
+
+		if(record == null)
+			return builtin::make_text(f"[??????]");
+
+		if(not record!.refnum?)
+		{
+			record!.refnum = 1 + g_citation_num;
+			g_citation_num += 1;
+		}
+
+		record!.used = true;
+
+		var txt = "";
+		if(page?)   txt = f"[{record!.refnum!}, p. {page!}]";
+		else        txt = f"[{record!.refnum!}]";
+
+		let tio = builtin::make_text(glue: true, txt);
+
+		g_references += [Reference {
+			num: record!.refnum!,
+			tio_ref: tio.ref(),
+			record: record,
+		}];
+
+		return tio;
+	}
+
+	global var g_list_of_refs: [BlockRef] = [];
+	@layout g_list_of_refs = [];
+
+	@finalise {
+		var i = 0;
+		while(i < g_references.size())
+		{
+			var ref = g_references[i];
+			let record = ref.record!;
+			if(record.refnum?)
+			{
+				let refnum = record.refnum! - 1;
+				let refblk = g_list_of_refs[refnum];
+
+				ref.tio_ref.link_to(refblk);
+			}
+
+			i += 1;
+		}
+	}
+
+
+	fn output_list_of_references() -> ?Block
+	{
+		# sort... the record list
+		var records: [RefRecord] = [];
+
+		var next = 1;
+		while(true)
+		{
+			var found = false;
+			var i = 0;
+			while(i < g_ref_records.size())
+			{
+				if(not g_ref_records[i].used || not g_ref_records[i].refnum?)
+				{
+					i += 1;
+					continue;
+				}
+
+				if(g_ref_records[i].refnum! == next)
+				{
+					records += [g_ref_records[i]];
+					found = true;
+					next += 1;
+					break;
+				}
+
+				i += 1;
+			}
+
+			if(not found)
+				break;
+		}
+
+		var lines = [:Block];
+
+		var i = 0;
+		while(i < records.size())
+		{
+			let rec = *records[i];
+
+			let number = builtin::make_hbox(builtin::make_line(builtin::make_text(f"[{rec.refnum!}]"))).apply_style({
+				alignment: .Right,
+			});
+
+			number.set_width(10mm);
+
+			let item = builtin::make_hbox(
+				*number,
+				builtin::hspace(1em),
+				builtin::make_paragraph(builtin::make_text(rec.text)).apply_style({
+					line_spacing: 1.1,
+					alignment: .Justified
+				})
+			).apply_style({
+				alignment: .Left
+			});
+
+			g_list_of_refs += [item.ref()];
+			lines += [*item];
+			i += 1;
+		}
+
+		return builtin::make_vbox(builtin::make_hbox(
+				builtin::make_line(builtin::make_text("References"))
+			).apply_style({alignment: .Left, font_size: 20pt, font_family: impl::fonts.sans}),
+			...*lines
+		);
+	}
+}

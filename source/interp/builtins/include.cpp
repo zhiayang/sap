@@ -2,6 +2,7 @@
 // Copyright (c) 2022, zhiayang
 // SPDX-License-Identifier: Apache-2.0
 
+#include "sap/paths.h"
 #include "sap/frontend.h"
 
 #include "tree/base.h"
@@ -19,14 +20,15 @@ namespace sap::interp::builtin
 
 		auto file_path = args[0].getUtf8String();
 
-		auto cs = ev->interpreter();
-		auto file = cs->loadFile(file_path);
-		auto doc = TRY(frontend::parse(cs->keepStringAlive(file_path), file.chars()));
-
-		if(auto e = watch::addFileToWatchList(file_path); e.is_err())
+		auto resolved = TRY(sap::paths::resolveLibrary(ev->loc(), file_path));
+		if(auto e = watch::addFileToWatchList(resolved); e.is_err())
 			return ErrMsg(ev, "{}", e.error());
 
-		util::log("included file '{}'", file_path);
+		auto cs = ev->interpreter();
+		auto file = cs->loadFile(resolved);
+		auto doc = TRY(frontend::parse(cs->keepStringAlive(resolved), file.chars()));
+
+		util::log("included file '{}'", resolved);
 		return EvalResult::ofValue(ev->addToHeapAndGetPointer(Value::treeBlockObject(std::move(doc).takeContainer())));
 	}
 }

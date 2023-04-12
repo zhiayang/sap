@@ -30,11 +30,11 @@ namespace sap
 	using zst::Result;
 	using zst::Failable;
 
-	bool compile(zst::str_view filename);
+	bool compile(zst::str_view input_file, zst::str_view output_file);
 
 	namespace watch
 	{
-		void start(zst::str_view main_file);
+		void start(zst::str_view main_file, zst::str_view output_file);
 		StrErrorOr<void> addFileToWatchList(zst::str_view path);
 	}
 }

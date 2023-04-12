@@ -2,17 +2,24 @@
 // Copyright (c) 2021, zhiayang
 // SPDX-License-Identifier: Apache-2.0
 
-#include "pdf/font.h"   //
-#include "pdf/writer.h" // for Writer
+#define ZARG_IMPLEMENTATION
+#include <zarg.h>
 
-#include "sap/frontend.h" // for parse
+#include "pdf/font.h"
+#include "pdf/writer.h"
+
+#include "sap/paths.h"
+#include "sap/frontend.h"
 
 #include "tree/document.h"
 #include "tree/container.h"
 
-#include "layout/document.h" // for Document
+#include "layout/document.h"
+#include "interp/interp.h"
 
-#include "interp/interp.h" // for Interpreter
+#if !defined(SAP_PREFIX)
+#error SAP_PREFIX must be defined!
+#endif
 
 #if 0
 CLEANUP:
@@ -33,12 +40,12 @@ layout:
 
 #endif
 
-bool sap::compile(zst::str_view filename)
+bool sap::compile(zst::str_view input_file, zst::str_view output_file)
 {
 	auto interp = interp::Interpreter();
-	auto file = interp.loadFile(filename);
+	auto file = interp.loadFile(input_file);
 
-	auto document = frontend::parse(filename, file.chars());
+	auto document = frontend::parse(input_file, file.chars());
 	if(document.is_err())
 		return document.error().display(), false;
 
@@ -47,8 +54,8 @@ bool sap::compile(zst::str_view filename)
 		return layout_doc.error().display(), false;
 
 	interp.setCurrentPhase(ProcessingPhase::Render);
-	auto out_path = std::filesystem::path(filename.str()).replace_extension(".pdf");
-	auto writer = pdf::Writer(out_path.string());
+
+	auto writer = pdf::Writer(output_file);
 	layout_doc.unwrap()->write(&writer);
 	writer.close();
 
@@ -57,55 +64,45 @@ bool sap::compile(zst::str_view filename)
 
 int main(int argc, char** argv)
 {
-	if(argc < 2)
-	{
-		zpr::println("Usage: {} [options...] <input file>", argv[0]);
-		return 1;
-	}
+	auto pppp = zarg::Parser();
+	pppp.add_option('o', true, "output filename")
+	    .add_option('I', true, "additional include search path")
+	    .add_option('L', true, "additional library search path")
+	    .add_option("watch", false, "watch mode: automatically recompile when files change")
+	    .allow_options_after_positionals(true) //
+	    ;
 
-	bool is_watching = false;
-	bool no_more_opts = false;
+	auto args = pppp.parse(argc, argv).set();
+	bool is_watching = args.options.contains("watch");
 
-	int last = 1;
-	for(; last < argc && (not no_more_opts); last++)
-	{
-		auto sv = zst::str_view(argv[last]);
-		if(sv == "--")
-		{
-			no_more_opts = true;
-		}
-		else if(not no_more_opts && sv.starts_with("--"))
-		{
-			if(sv == "--watch")
-			{
-				is_watching = true;
-			}
-			else
-			{
-				zpr::fprintln(stderr, "unsupported option '{}'", sv);
-				return 1;
-			}
-		}
-	}
-
-	if(last != argc)
+	if(args.positional.size() != 1)
 	{
 		zpr::fprintln(stderr, "expected exactly one input file");
-		return 1;
+		exit(1);
 	}
 
-	auto input_file = argv[last - 1];
+	auto filename = args.positional[0];
+	auto abs_filename = stdfs::weakly_canonical(filename);
+
+	// change directory to the input file so that all searches are (by default) relative to it,
+	// regardless of our actual CWD
+	stdfs::current_path(abs_filename.parent_path());
+
+	auto input_file = abs_filename.string();
+	auto output_file = args.options["o"].value.value_or(stdfs::path(abs_filename).replace_extension(".pdf"));
+
+	// add the default search paths
+	sap::paths::addLibrarySearchPath(stdfs::path(SAP_PREFIX) / "lib" / "sap");
+	sap::paths::addIncludeSearchPath(stdfs::path(SAP_PREFIX) / "include" / "sap");
+
 	if(is_watching)
 	{
 		sap::watch::addFileToWatchList(input_file);
-
-		(void) sap::compile(input_file);
-
-		sap::watch::start(input_file);
+		sap::watch::start(input_file, output_file);
 	}
 	else
 	{
-		return sap::compile(input_file) ? 0 : 1;
+		return sap::compile(input_file, output_file) ? 0 : 1;
 	}
 }
 

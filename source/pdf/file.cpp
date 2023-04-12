@@ -45,8 +45,8 @@ namespace pdf
 		}
 
 		auto info_dict = Dictionary::createIndirect({
-			{ names::Creator, String::create("sap-" GIT_REVISION) },
-			{ names::Producer, String::create("sap-" GIT_REVISION) },
+		    { names::Creator, String::create("sap-" GIT_REVISION) },
+		    { names::Producer, String::create("sap-" GIT_REVISION) },
 		});
 
 
@@ -80,9 +80,9 @@ namespace pdf
 		w->writeln();
 
 		auto trailer = Dictionary::create({
-			{ names::Size, Integer::create(util::checked_cast<int64_t>(num_objects)) },
-			{ names::Info, IndirectRef::create(info_dict) },
-			{ names::Root, IndirectRef::create(root) },
+		    { names::Size, Integer::create(util::checked_cast<int64_t>(num_objects)) },
+		    { names::Info, IndirectRef::create(info_dict) },
+		    { names::Root, IndirectRef::create(root) },
 		});
 
 		w->writeln("trailer");
@@ -100,7 +100,7 @@ namespace pdf
 		// TODO: make this more efficient -- make some kind of balanced tree.
 
 		auto pagetree = Dictionary::createIndirect(names::Pages,
-			{ { names::Count, Integer::create(util::checked_cast<int64_t>(m_pages.size())) } });
+		    { { names::Count, Integer::create(util::checked_cast<int64_t>(m_pages.size())) } });
 
 		auto array = Array::create({});
 		for(auto page : m_pages)

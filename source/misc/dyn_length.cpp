@@ -52,6 +52,11 @@ namespace sap
 		}
 	}
 
+	std::string DynLength::str() const
+	{
+		return zpr::sprint("{}{}", m_value, unitToString(m_unit));
+	}
+
 	auto DynLength::stringToUnit(zst::str_view sv) -> std::optional<Unit>
 	{
 		if(sv == "mm")

@@ -54,7 +54,7 @@ namespace font
 		std::string postscript_name;
 		FontProperties properties;
 
-		std::filesystem::path path;
+		stdfs::path path;
 
 		size_t hash() const
 		{

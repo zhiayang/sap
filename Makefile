@@ -91,6 +91,10 @@ endif
 
 OUTPUT_BIN      := $(OUTPUT_DIR)/sap
 
+PREFIX  := $(shell pwd)
+DEFINES += -DSAP_PREFIX=\"$(PREFIX)\"
+
+
 .PHONY: all clean build test format iwyu %.pdf.gdb %.pdf.lldb compile_commands.json
 .PRECIOUS: $(PRECOMP_GCH) $(OUTPUT_DIR)/%.cpp.o
 .DEFAULT_GOAL = all

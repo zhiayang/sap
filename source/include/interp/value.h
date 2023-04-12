@@ -128,6 +128,7 @@ namespace sap::interp
 		static Value character(char32_t ch);
 		static Value enumerator(const EnumType* type, Value value);
 		static Value function(const FunctionType* fn_type, FnType fn);
+		static Value string(const std::string& str);
 		static Value string(const std::u32string& str);
 		static Value array(const Type* elm, std::vector<Value> arr, bool variadic = false);
 		static Value treeInlineObject(zst::SharedPtr<tree::InlineSpan> obj);

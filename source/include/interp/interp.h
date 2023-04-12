@@ -54,6 +54,9 @@ namespace sap::interp
 		void addHookBlock(const HookBlock* block);
 		ErrorOr<void> runHooks();
 
+		void addImportedFile(std::string filename);
+		bool wasFileImported(const std::string& filename) const;
+
 		tree::BlockObject* addAbsolutelyPositionedBlockObject(zst::SharedPtr<tree::BlockObject> tbo);
 
 	private:
@@ -68,6 +71,8 @@ namespace sap::interp
 		util::hashmap<int64_t, std::unique_ptr<pdf::PdfFont>> m_loaded_fonts;
 
 		std::vector<zst::SharedPtr<tree::BlockObject>> m_abs_tbos;
+
+		std::unordered_set<std::string> m_imported_files;
 
 		std::vector<std::string> m_leaked_strings;
 		std::vector<std::u32string> m_leaked_strings32;

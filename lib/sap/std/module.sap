@@ -1,39 +1,18 @@
-# std.sap
+# module.sap
 
-namespace builtin
-{
-	fn to_string(sz: &Size2d) -> string
-	{
-		return f"(x: {sz!.x}, y: {sz!.y})";
-	}
-
-	fn to_string(pos: &Position) -> string
-	{
-		return f"\{xy: ({pos!.x}, {pos!.y}), page: {pos!.page}\}";
-	}
-
-	fn to_string(pos: &AbsPosition) -> string
-	{
-		return f"\{xy: ({pos!.x}, {pos!.y}), page: {pos!.page}\}";
-	}
-}
+import "std/lists.sap";
+import "std/state.sap";
+import "std/bibliography.sap";
 
 namespace std
 {
-	fn centre(blk: Block) -> Block
-	{
-		return (*blk).apply_style({
-			alignment: .Centred,
-		});
-	}
-
 	struct SubSubSection
 	{
 		num: int;
 		name: string;
 		page_num: int;
 		num_tbo_ref: BlockRef;
-	};
+	}
 
 	struct SubSection
 	{
@@ -43,7 +22,7 @@ namespace std
 		num_tbo_ref: BlockRef;
 
 		subsubsections: [SubSubSection];
-	};
+	}
 
 	struct Section
 	{
@@ -53,7 +32,7 @@ namespace std
 		num_tbo_ref: BlockRef;
 
 		subsections: [SubSection];
-	};
+	}
 
 
 	global var g_sections: [Section] = [];
@@ -61,19 +40,11 @@ namespace std
 		g_sections = [];
 	}
 
-	global let g_sans_font = builtin::find_font_family([
-		"Myriad Pro", "sans-serif"
-	]);
-
-	global let g_mono_font = builtin::find_font_family([
-		"Fantasque Sans Mono", "Menlo", "monospace"
-	]);
-
 	fn section(name: string) -> ?Block
 	{
 		let section_num = 1 + g_sections.size();
 
-		var num_line = builtin::make_hbox(builtin::make_line(builtin::make_text(f"{section_num}")), builtin::hspace(3mm))
+		var num_line = builtin::make_hbox(\line { \builtin::make_text(f"{section_num}") }, builtin::hspace(3mm))
 			.apply_style({
 				alignment: .Right,
 				font_size: 13pt,
@@ -97,7 +68,7 @@ namespace std
 			builtin::make_hbox(*num_line, *name_line),
 			builtin::vspace(-builtin::current_style().paragraph_spacing! / 2),
 		).apply_style({
-			font_family: g_sans_font,
+			font_family: impl::fonts.sans,
 		});
 
 		box.offset_position({ x: -14mm, y: 0mm });
@@ -142,7 +113,7 @@ namespace std
 			builtin::make_hbox(*num_line, *name_line),
 			builtin::vspace(-builtin::current_style().paragraph_spacing! / 2),
 		).apply_style({
-			font_family: g_sans_font,
+			font_family: impl::fonts.sans,
 		});
 
 		box.offset_position({ x: -14mm, y: 0mm });
@@ -192,7 +163,7 @@ namespace std
 			builtin::make_hbox(*num_line, *name_line),
 			builtin::vspace(-builtin::current_style().paragraph_spacing! / 2)
 		).apply_style({
-			font_family: g_sans_font,
+			font_family: impl::fonts.sans,
 		});
 
 		box.offset_position({ x: -14mm, y: 0mm });
@@ -201,82 +172,6 @@ namespace std
 	}
 
 
-
-
-	struct RefRecord
-	{
-		name: string;
-		text: string;
-
-		used: bool = false;
-		refnum: ?int = null;
-	}
-
-	struct Reference
-	{
-		num: int;
-		tio_ref: InlineRef;
-		record: &mut RefRecord;
-	}
-
-	global var g_ref_records: [RefRecord] = [];
-
-	fn install_references(records: [RefRecord])
-	{
-		if(builtin::state().layout_pass == 1)
-			g_ref_records = *records;
-	}
-
-	global var g_references: [Reference] = [];
-	global var g_citation_num = 0;
-
-	@layout {
-		g_references = [];
-		g_citation_num = 0;
-	}
-
-	fn cite(name: string, page: ?int = null) -> Inline
-	{
-		# look for an existing ref
-		var record: &mut RefRecord = null;
-
-		var i = 0;
-		while(i < g_ref_records.size())
-		{
-			if(g_ref_records[i].name == name)
-			{
-				record = &mut g_ref_records[i];
-				break;
-			}
-
-			i += 1;
-		}
-
-		if(record == null)
-			return builtin::make_text(f"[??????]");
-
-		if(not record!.refnum?)
-		{
-			record!.refnum = 1 + g_citation_num;
-			g_citation_num += 1;
-		}
-
-		record!.used = true;
-
-		var txt = "";
-		if(page?)   txt = f"[{record!.refnum!}, p. {page!}]";
-		else        txt = f"[{record!.refnum!}]";
-
-		let tio = builtin::make_text(glue: true, txt);
-
-		g_references += [Reference {
-			num: record!.refnum!,
-			tio_ref: tio.ref(),
-			record: record,
-		}];
-
-		return tio;
-	}
 
 
 
@@ -334,7 +229,6 @@ namespace std
 
 	# actually put the page numbers onto the page
 	@finalise {
-		var i = 0;
 		var rst_idx = 0;
 		var enabled = true;
 
@@ -344,7 +238,7 @@ namespace std
 		page_num_pos.x -= 34mm;
 		page_num_pos.y -= 30mm;
 
-		while(i < builtin::document()!.page_count)
+		for(var i = 0; i < builtin::document()!.page_count; i += 1)
 		{
 			if(rst_idx < g_page_numbering_resets.size())
 			{
@@ -374,8 +268,6 @@ namespace std
 					y: page_num_pos.y,
 				}, *item);
 			}
-
-			i += 1;
 		}
 	}
 
@@ -434,11 +326,10 @@ namespace std
 
 	@post {
 
-		var i = 0;
 		var rst_idx = 0;
 		var page_offset = 0;
 
-		while(i < g_sections.size())
+		for(var i = 0; i < g_sections.size(); i += 1)
 		{
 			let s = &mut g_sections[i];
 			let tmp = s!.num_tbo_ref.layout_object()!.position();
@@ -462,8 +353,7 @@ namespace std
 
 			g_sections[i].page_num = 1 + tmp.page - page_offset;
 
-			var si = 0;
-			while(si < s!.subsections.size())
+			for(var si = 0; si < s!.subsections.size(); si += 1)
 			{
 				let ss = &mut s!.subsections[si];
 				let tmp = ss!.num_tbo_ref.layout_object()!.position();
@@ -487,8 +377,7 @@ namespace std
 
 				ss!.page_num = 1 + tmp.page - page_offset;
 
-				var ssi = 0;
-				while(ssi < ss!.subsubsections.size())
+				for(var ssi = 0; ssi < ss!.subsubsections.size(); ssi += 1)
 				{
 					let sss = &mut ss!.subsubsections[ssi];
 					let tmp = sss!.num_tbo_ref.layout_object()!.position();
@@ -511,13 +400,8 @@ namespace std
 					}
 
 					sss!.page_num = 1 + tmp.page - page_offset;
-					ssi += 1;
 				}
-
-				si += 1;
 			}
-
-			i += 1;
 		}
 	}
 
@@ -675,7 +559,7 @@ namespace std
 		ret = builtin::make_vbox(
 			builtin::make_hbox(
 				builtin::make_line(builtin::make_text("Contents"))
-			).apply_style({ alignment: .Left, font_size: 20pt, font_family: g_sans_font }),
+			).apply_style({ alignment: .Left, font_size: 20pt, font_family: impl::fonts.sans }),
 			*ret
 		);
 
@@ -686,101 +570,6 @@ namespace std
 		return ret;
 	}
 
-	@finalise {
-
-	}
-
-
-	global var g_list_of_refs: [BlockRef] = [];
-	@layout g_list_of_refs = [];
-
-	@finalise {
-		var i = 0;
-		while(i < g_references.size())
-		{
-			var ref = g_references[i];
-			let record = ref.record!;
-			if(record.refnum?)
-			{
-				let refnum = record.refnum! - 1;
-				let refblk = g_list_of_refs[refnum];
-
-				ref.tio_ref.link_to(refblk);
-			}
-
-			i += 1;
-		}
-	}
-
-
-	fn output_list_of_references() -> ?Block
-	{
-		# sort... the record list
-		var records: [RefRecord] = [];
-
-		var next = 1;
-		while(true)
-		{
-			var found = false;
-			var i = 0;
-			while(i < g_ref_records.size())
-			{
-				if(not g_ref_records[i].used || not g_ref_records[i].refnum?)
-				{
-					i += 1;
-					continue;
-				}
-
-				if(g_ref_records[i].refnum! == next)
-				{
-					records += [g_ref_records[i]];
-					found = true;
-					next += 1;
-					break;
-				}
-
-				i += 1;
-			}
-
-			if(not found)
-				break;
-		}
-
-		var lines = [:Block];
-
-		var i = 0;
-		while(i < records.size())
-		{
-			let rec = *records[i];
-
-			let number = builtin::make_hbox(builtin::make_line(builtin::make_text(f"[{rec.refnum!}]"))).apply_style({
-				alignment: .Right,
-			});
-
-			number.set_width(10mm);
-
-			let item = builtin::make_hbox(
-				*number,
-				builtin::hspace(1em),
-				builtin::make_paragraph(builtin::make_text(rec.text)).apply_style({
-					line_spacing: 1.1,
-					alignment: .Justified
-				})
-			).apply_style({
-				alignment: .Left
-			});
-
-			g_list_of_refs += [item.ref()];
-			lines += [*item];
-			i += 1;
-		}
-
-		return builtin::make_vbox(builtin::make_hbox(
-				builtin::make_line(builtin::make_text("References"))
-			).apply_style({alignment: .Left, font_size: 20pt, font_family: g_sans_font}),
-			...*lines
-		);
-	}
 
 
 
@@ -790,62 +579,6 @@ namespace std
 
 
 
-
-
-
-
-
-
-	fn numbered_list(items: [string...]) -> ?Block
-	{
-		var lines = [:Block];
-		var i = 0;
-		while(i < items.size())
-		{
-			lines += [builtin::make_hbox(
-				builtin::hspace(0.8em),
-				builtin::make_line(builtin::make_text(f"{i + 1}.")).apply_style({ alignment: .Right }),
-				builtin::hspace(0.6em),
-				builtin::make_line(builtin::make_text(items[i]))
-			)];
-			i += 1;
-		}
-
-		return builtin::make_vbox(...*lines)
-			.apply_style({ paragraph_spacing: 0.5em, });
-	}
-
-	fn bulleted_list(items: [Inline...]) -> Block
-	{
-		var lines = [:Block];
-		var i = 0;
-		while(i < items.size())
-		{
-			lines += [builtin::make_hbox(
-				builtin::hspace(0.8em),
-				builtin::make_line(builtin::make_text(f"•")).apply_style({ alignment: .Right }),
-				builtin::hspace(0.6em),
-				builtin::make_line(*items[i])
-			)];
-			i += 1;
-		}
-
-		return builtin::make_vbox(...*lines)
-			.apply_style({ paragraph_spacing: 0.5em, });
-	}
-
-	fn bulleted_list(items: [string...]) -> Block
-	{
-		var inlines = [:Inline];
-		var i = 0;
-		while(i < items.size())
-		{
-			inlines += [builtin::make_text(items[i])];
-			i += 1;
-		}
-
-		return bulleted_list(...*inlines);
-	}
 
 
 
@@ -869,7 +602,7 @@ namespace std
 	fn mono(x: string) -> Inline
 	{
 		return builtin::make_text(x).apply_style({
-			font_family: g_mono_font
+			font_family: impl::fonts.mono
 		});
 	}
 

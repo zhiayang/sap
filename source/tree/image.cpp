@@ -21,8 +21,6 @@
 
 namespace sap::tree
 {
-	namespace stdfs = std::filesystem;
-
 	struct CachedImage
 	{
 		OwnedImageBitmap image;
