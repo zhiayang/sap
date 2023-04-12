@@ -21,7 +21,6 @@ CLEANUP:
 TODO:
 scripting:
 - dereferencing optionals might need to clone them (which is weird)
-- unify script handling between ScriptCall and Paragraph::evaluate_scripts
 
 layout:
 - em/en dashes

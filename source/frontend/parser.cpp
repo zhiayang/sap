@@ -333,7 +333,7 @@ namespace sap::frontend
 	template <typename T>
 	using ErrorOrUniquePtr = ErrorOr<std::unique_ptr<T>>;
 
-	static ErrorOrUniquePtr<interp::Stmt> parse_stmt(Lexer& lexer, bool is_top_level);
+	static ErrorOrUniquePtr<interp::Stmt> parse_stmt(Lexer& lexer, bool is_top_level, bool expect_semi = true);
 	static ErrorOrUniquePtr<interp::Expr> parse_expr(Lexer& lexer);
 	static ErrorOrUniquePtr<interp::Expr> parse_unary(Lexer& lexer);
 	static ErrorOrUniquePtr<interp::Expr> parse_primary(Lexer& lexer);
@@ -1348,6 +1348,41 @@ namespace sap::frontend
 		return OkMove(loop);
 	}
 
+	static ErrorOrUniquePtr<interp::Stmt> parse_for_loop(Lexer& lexer)
+	{
+		auto loc = lexer.location();
+		must_expect(lexer, TT::KW_For);
+
+		if(not lexer.expect(TT::LParen))
+			return ErrMsg(lexer.location(), "expected '(' after 'for'");
+
+		auto loop = std::make_unique<interp::ForLoop>(loc);
+
+		if(not lexer.expect(TT::Semicolon))
+		{
+			loop->init = TRY(parse_stmt(lexer, /* top level: */ false, /* expect_semi: */ false));
+			if(not lexer.expect(TT::Semicolon))
+				return ErrMsg(lexer.location(), "expected ';' after init statement in for-loop");
+		}
+
+		if(not lexer.expect(TT::Semicolon))
+		{
+			loop->cond = TRY(parse_expr(lexer));
+			if(not lexer.expect(TT::Semicolon))
+				return ErrMsg(lexer.location(), "expected ';' after conditional expression in for-loop");
+		}
+
+		if(not lexer.expect(TT::RParen))
+		{
+			loop->update = TRY(parse_stmt(lexer, /* top level: */ false, /* expect semi: */ false));
+			if(not lexer.expect(TT::RParen))
+				return ErrMsg(lexer.location(), "expected ')' after update statement in for-loop");
+		}
+
+		loop->body = TRY(parse_block_or_stmt(lexer, /* is_top_level: */ false, /* braces: */ false));
+		return OkMove(loop);
+	}
+
 
 	static ErrorOrUniquePtr<interp::ReturnStmt> parse_return_stmt(Lexer& lexer)
 	{
@@ -1411,7 +1446,7 @@ namespace sap::frontend
 
 
 
-	static ErrorOrUniquePtr<interp::Stmt> parse_stmt(Lexer& lexer, bool is_top_level)
+	static ErrorOrUniquePtr<interp::Stmt> parse_stmt(Lexer& lexer, bool is_top_level, bool expect_semi)
 	{
 		auto lm = LexerModer(lexer, Lexer::Mode::Script);
 
@@ -1419,7 +1454,7 @@ namespace sap::frontend
 			return ErrMsg(lexer.location(), "unexpected end of file");
 
 		// just consume empty statements
-		while(lexer.expect(TT::Semicolon))
+		while(expect_semi && lexer.expect(TT::Semicolon))
 			;
 
 		auto tok = lexer.peek();
@@ -1454,6 +1489,11 @@ namespace sap::frontend
 		else if(tok == TT::KW_Namespace)
 		{
 			stmt = TRY(parse_namespace(lexer));
+			optional_semicolon = true;
+		}
+		else if(tok == TT::KW_For)
+		{
+			stmt = TRY(parse_for_loop(lexer));
 			optional_semicolon = true;
 		}
 		else if(tok == TT::KW_While)
@@ -1499,7 +1539,7 @@ namespace sap::frontend
 				stmt = TRY(parse_assignment(util::static_pointer_cast<interp::Expr>(std::move(stmt)), lexer));
 		}
 
-		if(not lexer.expect(TT::Semicolon) && not optional_semicolon)
+		if(expect_semi && not lexer.expect(TT::Semicolon) && not optional_semicolon)
 			return ErrMsg(lexer.previous().loc, "expected ';' after statement, found '{}'", lexer.peek().text);
 
 		return OkMove(stmt);

@@ -381,8 +381,7 @@ namespace std
 
 	# generate outline items
 	@finalise {
-		var i = 0;
-		while(i < g_sections.size())
+		for(var i = 0; i < g_sections.size(); i += 1)
 		{
 			let s = &mut g_sections[i];
 			let ref = s!.num_tbo_ref.layout_object();
@@ -391,20 +390,18 @@ namespace std
 
 			var children1: [builtin::OutlineItem] = [];
 
-			var si = 0;
-			while(si < s!.subsections.size())
+			for(var i = 0; i < s!.subsections.size(); i += 1)
 			{
-				let ss = &mut s!.subsections[si];
+				let ss = &mut s!.subsections[i];
 				let ref = ss!.num_tbo_ref.layout_object();
 				var pos = ref!.position();
 				pos.y -= ref!.size().y;
 
 				var children2: [builtin::OutlineItem] = [];
 
-				var ssi = 0;
-				while(ssi < ss!.subsubsections.size())
+				for(var i = 0; i < ss!.subsubsections.size(); i += 1)
 				{
-					let sss = &mut ss!.subsubsections[ssi];
+					let sss = &mut ss!.subsubsections[i];
 					let ref = sss!.num_tbo_ref.layout_object();
 					var pos = ref!.position();
 					pos.y -= ref!.size().y;
@@ -414,8 +411,6 @@ namespace std
 						position: pos,
 						children: [],
 					}];
-
-					ssi += 1;
 				}
 
 				children1 += [builtin::OutlineItem {
@@ -423,8 +418,6 @@ namespace std
 					position: pos,
 					children: *children2,
 				}];
-
-				si += 1;
 			}
 
 			builtin::document()!.outline_items += [builtin::OutlineItem {
@@ -432,8 +425,6 @@ namespace std
 				position: pos,
 				children: *children1,
 			}];
-
-			i += 1;
 		}
 	}
 

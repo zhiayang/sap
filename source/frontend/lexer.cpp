@@ -521,6 +521,10 @@ namespace sap::frontend
 				tt = TT::KW_Fn;
 			else if(text == "or")
 				tt = TT::KW_Or;
+			else if(text == "in")
+				tt = TT::KW_In;
+			else if(text == "for")
+				tt = TT::KW_For;
 			else if(text == "not")
 				tt = TT::KW_Not;
 			else if(text == "and")

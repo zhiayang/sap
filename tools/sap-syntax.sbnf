@@ -254,6 +254,20 @@ if-stmt{meta.control-flow.if-stmt}:
     block-stmt
     ;
 
+for-loop:
+    `for`{keyword.for} `(`{punctuation.paren.while-start}
+        (
+            (('var|let'{storage.type}
+                IDENTIFIER{meta.name.variable} (':'{punctuation.colon} type)? ('='{keyword.operator} expr)?)?
+            `;`{punctuation.semicolon} expr? `;`{punctuation.semicolon} expr?)
+            |
+            ((`&`{keyword.operator.type} `mut`{storage.modifier.mut}?)? IDENTIFIER{meta.name.variable} `in`{keyword.in} expr)
+        )
+    `)`{punctuation.paren.while-end}
+    block-stmt
+    ;
+
+
 while-loop:
     `while`{keyword.while} `(`{punctuation.paren.while-start} expr `)`{punctuation.paren.while-end}
     block-stmt
@@ -285,6 +299,7 @@ stmt: block-comment
     | import-stmt
     | namespace-defn
     | while-loop
+    | for-loop
     | hook-exec-block
     | expr `;`{punctuation.terminator}
     | `;`{punctuation.terminator}

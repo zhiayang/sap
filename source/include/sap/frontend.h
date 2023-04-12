@@ -79,6 +79,8 @@ namespace sap::frontend
 		KW_If,
 		KW_Fn,
 		KW_Or,
+		KW_In,
+		KW_For,
 		KW_Mut,
 		KW_Let,
 		KW_Var,
