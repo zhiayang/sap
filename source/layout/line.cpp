@@ -228,7 +228,8 @@ namespace sap::layout
 		    (width - metrics.total_word_width) / metrics.total_space_width);
 
 		// for centred and right-aligned, we need to calculate the left offset.
-		if(parent_style->alignment() == Alignment::Right || parent_style->alignment() == Alignment::Centre)
+		if(not outer_space_width_factor.has_value()
+		    && (parent_style->alignment() == Alignment::Right || parent_style->alignment() == Alignment::Centre))
 		{
 			auto extra_space = width - (metrics.total_word_width + metrics.total_space_width);
 			if(parent_style->alignment() == Alignment::Right)
