@@ -33,8 +33,8 @@ namespace font::off
 				auto last = consume_u16(cov_table);
 				auto start_cov = consume_u16(cov_table);
 
-				for(auto i = first; i < last + 1; i++)
-					coverage_map[start_cov + (i - first)] = GlyphId { i };
+				for(auto k = first; k < last + 1; k++)
+					coverage_map[start_cov + (k - first)] = GlyphId { k };
 			}
 		}
 		else

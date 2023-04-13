@@ -83,12 +83,9 @@ namespace sap::tree
 		std::vector<zst::SharedPtr<InlineObject>>& contents() { return m_contents; }
 		const std::vector<zst::SharedPtr<InlineObject>>& contents() const { return m_contents; }
 
-		static ErrorOr<std::vector<zst::SharedPtr<InlineObject>>> processWordSeparators( //
-		    std::vector<zst::SharedPtr<InlineObject>> vec);
-
 		using EvalScriptResult = zst::Either<zst::SharedPtr<InlineSpan>, std::unique_ptr<layout::LayoutObject>>;
-		ErrorOr<std::optional<EvalScriptResult>> evaluate_scripts(interp::Interpreter* cs,
-		    Size2d available_space) const;
+		ErrorOr<std::optional<EvalScriptResult>>
+		evaluate_scripts(interp::Interpreter* cs, Size2d available_space) const;
 
 	private:
 		ErrorOr<std::optional<EvalScriptResult>> eval_single_script_in_para(interp::Interpreter* cs,
@@ -96,9 +93,9 @@ namespace sap::tree
 		    ScriptCall* script,
 		    bool allow_blocks) const;
 
-		virtual ErrorOr<LayoutResult> create_layout_object_impl(interp::Interpreter* cs,
-		    const Style* parent_style,
-		    Size2d available_space) const override;
+		virtual ErrorOr<LayoutResult>
+		create_layout_object_impl(interp::Interpreter* cs, const Style* parent_style, Size2d available_space)
+		    const override;
 
 	private:
 		std::vector<zst::SharedPtr<InlineObject>> m_contents {};

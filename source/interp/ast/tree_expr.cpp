@@ -96,7 +96,7 @@ namespace sap::interp
 	ErrorOr<EvalResult> TreeInlineExpr::evaluate_impl(Evaluator* ev) const
 	{
 		auto tios = TRY(evaluate_list_of_tios(ev, this->objects));
-		tios = TRY(tree::Paragraph::processWordSeparators(std::move(tios)));
+		tios = TRY(tree::processWordSeparators(std::move(tios)));
 
 		auto span = zst::make_shared<tree::InlineSpan>(/* glue: */ false, std::move(tios));
 
@@ -149,8 +149,8 @@ namespace sap::interp
 		{
 			if(para->contents().size() == 1)
 			{
-				auto& obj = para->contents()[0];
-				if(auto sc = obj->castToScriptCall())
+				auto& first = para->contents()[0];
+				if(auto sc = first->castToScriptCall())
 				{
 					auto tmp = TRY_VALUE(sc->call->evaluate(ev));
 					auto ty = tmp.type();
@@ -188,7 +188,7 @@ namespace sap::interp
 		else if(auto line = obj->castToWrappedLine())
 		{
 			auto tios = TRY(evaluate_list_of_tios(ev, line->objects()));
-			tios = TRY(tree::Paragraph::processWordSeparators(std::move(tios)));
+			tios = TRY(tree::processWordSeparators(std::move(tios)));
 
 			return EvalResult::ofValue(Value::treeBlockObject(zst::make_shared<tree::WrappedLine>(std::move(tios))));
 		}

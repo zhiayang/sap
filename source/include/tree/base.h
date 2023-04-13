@@ -161,9 +161,8 @@ namespace sap::tree
 		virtual ~BlockObject() = 0;
 
 		virtual ErrorOr<void> evaluateScripts(interp::Interpreter* cs) const = 0;
-		virtual ErrorOr<LayoutResult> createLayoutObject(interp::Interpreter* cs,
-		    const Style* parent_style,
-		    Size2d available_space) const final;
+		virtual ErrorOr<LayoutResult>
+		createLayoutObject(interp::Interpreter* cs, const Style* parent_style, Size2d available_space) const final;
 
 		std::optional<layout::LayoutObject*> getGeneratedLayoutObject() const { return m_generated_layout_object; }
 
@@ -220,9 +219,8 @@ namespace sap::tree
 		mutable std::optional<layout::LayoutObject*> m_generated_layout_object = nullptr;
 
 	private:
-		virtual ErrorOr<LayoutResult> create_layout_object_impl(interp::Interpreter* cs,
-		    const Style* parent_style,
-		    Size2d available_space) const = 0;
+		virtual ErrorOr<LayoutResult>
+		create_layout_object_impl(interp::Interpreter* cs, const Style* parent_style, Size2d available_space) const = 0;
 
 	private:
 		std::optional<Length> m_override_width {};
@@ -271,13 +269,11 @@ namespace sap::tree
 
 	private:
 		using ScriptEvalResult = Either<zst::SharedPtr<InlineSpan>, std::unique_ptr<layout::LayoutObject>>;
-		ErrorOr<std::optional<ScriptEvalResult>> evaluate_script(interp::Interpreter* cs,
-		    const Style* parent_style,
-		    Size2d available_space) const;
+		ErrorOr<std::optional<ScriptEvalResult>>
+		evaluate_script(interp::Interpreter* cs, const Style* parent_style, Size2d available_space) const;
 
-		ErrorOr<LayoutResult> create_layout_object_impl(interp::Interpreter* cs,
-		    const Style* parent_style,
-		    Size2d available_space) const;
+		ErrorOr<LayoutResult>
+		create_layout_object_impl(interp::Interpreter* cs, const Style* parent_style, Size2d available_space) const;
 
 		// befriend Paragraph so it can use our evaluate_script
 		friend struct Paragraph;
@@ -285,4 +281,11 @@ namespace sap::tree
 	private:
 		mutable std::vector<zst::SharedPtr<BlockObject>> m_created_tbos;
 	};
+
+
+	ErrorOr<std::vector<zst::SharedPtr<InlineObject>>>
+	processWordSeparators(std::vector<zst::SharedPtr<InlineObject>> vec);
+
+	ErrorOr<std::vector<zst::SharedPtr<InlineObject>>>
+	performReplacements(const Style* parent_style, std::vector<zst::SharedPtr<InlineObject>> vec);
 }

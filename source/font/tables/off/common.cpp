@@ -20,8 +20,8 @@ namespace font::off
 		const Script* script = nullptr;
 		if(auto it = table.scripts.find(features.script); it != table.scripts.end())
 			script = &it->second;
-		else if(auto it = table.scripts.find(DEFAULT); it != table.scripts.end())
-			script = &it->second;
+		else if(auto it2 = table.scripts.find(DEFAULT); it2 != table.scripts.end())
+			script = &it2->second;
 		else
 			return {}; // found nothing
 
@@ -31,8 +31,8 @@ namespace font::off
 		const Language* lang = nullptr;
 		if(auto it = script->languages.find(features.language); it != script->languages.end())
 			lang = &it->second;
-		else if(auto it = script->languages.find(DEFAULT); it != script->languages.end())
-			lang = &it->second;
+		else if(auto it2 = script->languages.find(DEFAULT); it2 != script->languages.end())
+			lang = &it2->second;
 		else
 			return {}; // nothing again
 
@@ -56,8 +56,10 @@ namespace font::off
 		return lookups;
 	}
 
-	template std::vector<uint16_t> getLookupTablesForFeatures<GPosTable>(const GPosTable& table, const FeatureSet& features);
-	template std::vector<uint16_t> getLookupTablesForFeatures<GSubTable>(const GSubTable& table, const FeatureSet& features);
+	template std::vector<uint16_t>
+	getLookupTablesForFeatures<GPosTable>(const GPosTable& table, const FeatureSet& features);
+	template std::vector<uint16_t>
+	getLookupTablesForFeatures<GSubTable>(const GSubTable& table, const FeatureSet& features);
 
 	static Language parse_one_language(Tag tag, zst::byte_span buf)
 	{
@@ -158,7 +160,7 @@ namespace font::off
 			if(lookup.type == gpos::LOOKUP_EXTENSION_POS || lookup.type == gsub::LOOKUP_EXTENSION_SUBST)
 			{
 				auto num_subtables = consume_u16(tbl_buf);
-				for(uint16_t i = 0; i < num_subtables; i++)
+				for(uint16_t k = 0; k < num_subtables; k++)
 				{
 					auto proxy = lookup_start.drop(consume_u16(tbl_buf));
 					auto proxy_start = proxy;
@@ -178,7 +180,7 @@ namespace font::off
 			else
 			{
 				auto num_subtables = consume_u16(tbl_buf);
-				for(uint16_t i = 0; i < num_subtables; i++)
+				for(uint16_t k = 0; k < num_subtables; k++)
 					lookup.subtables.push_back(lookup_start.drop(consume_u16(tbl_buf)));
 			}
 

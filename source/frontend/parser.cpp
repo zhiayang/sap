@@ -86,6 +86,15 @@ namespace sap::frontend
 
 				text.remove_prefix(2);
 			}
+			else if(text[0] == '-')
+			{
+				if(text.chars().starts_with("---"))
+					ret += U'\u2014', text.remove_prefix(3);
+				else if(text.chars().starts_with("--"))
+					ret += U'\u2013', text.remove_prefix(2);
+				else
+					ret += U'-', text.remove_prefix(1);
+			}
 			else
 			{
 				ret += unicode::consumeCodepointFromUtf8(text);
@@ -376,8 +385,8 @@ namespace sap::frontend
 		return Ok<std::pair<interp::QualifiedId, uint32_t>>(std::move(qid), len);
 	}
 
-	static ErrorOrUniquePtr<interp::FunctionCall> parse_function_call(Lexer& lexer,
-	    std::unique_ptr<interp::Expr> callee)
+	static ErrorOrUniquePtr<interp::FunctionCall>
+	parse_function_call(Lexer& lexer, std::unique_ptr<interp::Expr> callee)
 	{
 		if(not lexer.expect(TT::LParen))
 			return ErrMsg(lexer.location(), "expected '(' to begin function call");
@@ -452,10 +461,8 @@ namespace sap::frontend
 		return OkMove(ret);
 	}
 
-	static ErrorOrUniquePtr<interp::FunctionCall> parse_ufcs(Lexer& lexer,
-	    std::unique_ptr<interp::Expr> first_arg,
-	    const std::string& method_name,
-	    bool is_optional)
+	static ErrorOrUniquePtr<interp::FunctionCall>
+	parse_ufcs(Lexer& lexer, std::unique_ptr<interp::Expr> first_arg, const std::string& method_name, bool is_optional)
 	{
 		auto method = std::make_unique<interp::Ident>(lexer.location());
 		method->name.top_level = false;
@@ -475,9 +482,8 @@ namespace sap::frontend
 		return OkMove(call);
 	}
 
-	static ErrorOrUniquePtr<interp::Expr> parse_postfix_unary(Lexer& lexer,
-	    std::unique_ptr<interp::Expr> lhs,
-	    bool* success)
+	static ErrorOrUniquePtr<interp::Expr>
+	parse_postfix_unary(Lexer& lexer, std::unique_ptr<interp::Expr> lhs, bool* success)
 	{
 		*success = true;
 
@@ -489,19 +495,19 @@ namespace sap::frontend
 		{
 			return parse_subscript(lexer, std::move(lhs));
 		}
-		else if(auto t = lexer.match(TT::Question); t.has_value())
+		else if(auto t0 = lexer.match(TT::Question); t0.has_value())
 		{
-			auto ret = std::make_unique<interp::OptionalCheckOp>(t->loc);
+			auto ret = std::make_unique<interp::OptionalCheckOp>(t0->loc);
 			ret->expr = std::move(lhs);
 			return OkMove(ret);
 		}
-		else if(auto t = lexer.match(TT::Exclamation); t.has_value())
+		else if(auto t1 = lexer.match(TT::Exclamation); t1.has_value())
 		{
-			auto ret = std::make_unique<interp::DereferenceOp>(t->loc);
+			auto ret = std::make_unique<interp::DereferenceOp>(t1->loc);
 			ret->expr = std::move(lhs);
 			return OkMove(ret);
 		}
-		else if(auto t = lexer.peek(); t == TT::Period || t == TT::QuestionPeriod)
+		else if(auto t2 = lexer.peek(); t2 == TT::Period || t2 == TT::QuestionPeriod)
 		{
 			auto op_tok = TRY(lexer.next());
 
@@ -961,42 +967,42 @@ namespace sap::frontend
 
 	static ErrorOrUniquePtr<interp::Expr> parse_unary(Lexer& lexer)
 	{
-		if(auto t = lexer.match(TT::Ampersand); t.has_value())
+		if(auto t0 = lexer.match(TT::Ampersand); t0.has_value())
 		{
 			bool is_mutable = lexer.expect(TT::KW_Mut);
 
-			auto ret = std::make_unique<interp::AddressOfOp>(t->loc);
+			auto ret = std::make_unique<interp::AddressOfOp>(t0->loc);
 			ret->expr = TRY(parse_unary(lexer));
 			ret->is_mutable = is_mutable;
 			return OkMove(ret);
 		}
-		else if(auto t = lexer.match(TT::Asterisk); t.has_value())
+		else if(auto t1 = lexer.match(TT::Asterisk); t1.has_value())
 		{
-			auto ret = std::make_unique<interp::MoveExpr>(t->loc);
+			auto ret = std::make_unique<interp::MoveExpr>(t1->loc);
 			ret->expr = TRY(parse_unary(lexer));
 			return OkMove(ret);
 		}
-		else if(auto t = lexer.match(TT::Ellipsis); t.has_value())
+		else if(auto t2 = lexer.match(TT::Ellipsis); t2.has_value())
 		{
-			return Ok(std::make_unique<interp::ArraySpreadOp>(t->loc, TRY(parse_unary(lexer))));
+			return Ok(std::make_unique<interp::ArraySpreadOp>(t2->loc, TRY(parse_unary(lexer))));
 		}
-		else if(auto t = lexer.match(TT::Minus); t.has_value())
+		else if(auto t3 = lexer.match(TT::Minus); t3.has_value())
 		{
-			auto ret = std::make_unique<interp::UnaryOp>(t->loc);
+			auto ret = std::make_unique<interp::UnaryOp>(t3->loc);
 			ret->expr = TRY(parse_unary(lexer));
 			ret->op = interp::UnaryOp::Op::Minus;
 			return OkMove(ret);
 		}
-		else if(auto t = lexer.match(TT::Plus); t.has_value())
+		else if(auto t4 = lexer.match(TT::Plus); t4.has_value())
 		{
-			auto ret = std::make_unique<interp::UnaryOp>(t->loc);
+			auto ret = std::make_unique<interp::UnaryOp>(t4->loc);
 			ret->expr = TRY(parse_unary(lexer));
 			ret->op = interp::UnaryOp::Op::Plus;
 			return OkMove(ret);
 		}
-		else if(auto t = lexer.match(TT::KW_Not); t.has_value())
+		else if(auto t5 = lexer.match(TT::KW_Not); t5.has_value())
 		{
-			auto ret = std::make_unique<interp::UnaryOp>(t->loc);
+			auto ret = std::make_unique<interp::UnaryOp>(t5->loc);
 			ret->expr = TRY(parse_unary(lexer));
 			ret->op = interp::UnaryOp::Op::LogicalNot;
 			return OkMove(ret);
@@ -1635,10 +1641,10 @@ namespace sap::frontend
 
 		if(lexer.expect(TT::LBrace))
 		{
-			auto loc = lexer.location();
+			auto brace_loc = lexer.location();
 			if(is_block)
 			{
-				auto obj = std::make_unique<interp::TreeBlockExpr>(loc);
+				auto obj = std::make_unique<interp::TreeBlockExpr>(brace_loc);
 				auto container = tree::Container::makeVertBox();
 				auto inner = TRY(parse_top_level(lexer));
 
@@ -1657,7 +1663,7 @@ namespace sap::frontend
 			}
 			else
 			{
-				auto obj = std::make_unique<interp::TreeInlineExpr>(loc);
+				auto obj = std::make_unique<interp::TreeInlineExpr>(brace_loc);
 
 				while(not lexer.expect(TT::RBrace))
 				{

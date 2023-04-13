@@ -109,7 +109,7 @@ namespace sap::interp::builtin
 			inlines.push_back(zst::make_shared<tree::Text>(strings[i].getUtf32String()));
 		}
 
-		inlines = TRY(tree::Paragraph::processWordSeparators(std::move(inlines)));
+		inlines = TRY(tree::processWordSeparators(std::move(inlines)));
 		span->addObjects(std::move(inlines));
 
 		return EvalResult::ofValue(Value::treeInlineObject(std::move(span)));
@@ -128,7 +128,7 @@ namespace sap::interp::builtin
 
 		auto para = zst::make_shared<tree::Paragraph>();
 
-		inlines = TRY(tree::Paragraph::processWordSeparators(std::move(inlines)));
+		inlines = TRY(tree::processWordSeparators(std::move(inlines)));
 		para->addObjects(std::move(inlines));
 
 		return EvalResult::ofValue(Value::treeBlockObject(std::move(para)));
@@ -146,7 +146,7 @@ namespace sap::interp::builtin
 		for(size_t i = 0; i < objs.size(); i++)
 			inlines.push_back(std::move(objs[i]).takeTreeInlineObj());
 
-		inlines = TRY(tree::Paragraph::processWordSeparators(std::move(inlines)));
+		inlines = TRY(tree::processWordSeparators(std::move(inlines)));
 		line->addObjects(std::move(inlines));
 
 		return EvalResult::ofValue(Value::treeBlockObject(std::move(line)));

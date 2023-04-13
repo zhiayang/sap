@@ -90,7 +90,9 @@ namespace font::cff
 		inline void push(Operand oper) { stack.push_back(std::move(oper)); }
 	};
 
-	static bool run_charstring(zst::byte_span instrs, std::vector<Subroutine>& global_subrs, std::vector<Subroutine>& local_subrs,
+	static bool run_charstring(zst::byte_span instrs,
+	    std::vector<Subroutine>& global_subrs,
+	    std::vector<Subroutine>& local_subrs,
 	    InterpState& interp)
 	{
 		auto calculate_bias = [](const std::vector<Subroutine>& subrs) {
@@ -155,7 +157,8 @@ namespace font::cff
 					{
 						subr_num += local_bias;
 						if(subr_num >= (int32_t) local_subrs.size())
-							sap::error("font/cff", "local subr {} out of bounds (max {})", subr_num, local_subrs.size());
+							sap::error("font/cff", "local subr {} out of bounds (max {})", subr_num,
+							    local_subrs.size());
 
 						subr_cs = local_subrs[util::checked_cast<size_t>(subr_num)].charstring;
 						local_subrs[util::checked_cast<size_t>(subr_num)].used = true;
@@ -164,7 +167,8 @@ namespace font::cff
 					{
 						subr_num += global_bias;
 						if(subr_num >= (int32_t) global_subrs.size())
-							sap::error("font/cff", "global subr {} out of bounds (max {})", subr_num, global_subrs.size());
+							sap::error("font/cff", "global subr {} out of bounds (max {})", subr_num,
+							    global_subrs.size());
 
 						subr_cs = global_subrs[util::checked_cast<size_t>(subr_num)].charstring;
 						global_subrs[util::checked_cast<size_t>(subr_num)].used = true;
@@ -202,10 +206,10 @@ namespace font::cff
 				case CMD_HHCURVETO: interp.ensure(4); break;
 
 				case CMD_ESCAPE: {
-					auto x = instrs[0];
+					auto esc = instrs[0];
 					instrs.remove_prefix(1);
 
-					switch(x)
+					switch(esc)
 					{
 						case CMD_ESC_HFLEX: interp.ensure(7); break;
 						case CMD_ESC_HFLEX1: interp.ensure(9); break;
@@ -326,7 +330,7 @@ namespace font::cff
 							interp.pop();
 							clear_stack = false;
 
-						default: sap::error("font/cff", "invalid opcode '0c {x}'", x); break;
+						default: sap::error("font/cff", "invalid opcode '0c {x}'", esc); break;
 					}
 					break;
 				}
@@ -342,7 +346,8 @@ namespace font::cff
 		return true;
 	}
 
-	void interpretCharStringAndMarkSubrs(zst::byte_span instrs, std::vector<Subroutine>& global_subrs,
+	void interpretCharStringAndMarkSubrs(zst::byte_span instrs,
+	    std::vector<Subroutine>& global_subrs,
 	    std::vector<Subroutine>& local_subrs)
 	{
 		InterpState interp {};

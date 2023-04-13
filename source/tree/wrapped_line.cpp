@@ -33,6 +33,9 @@ namespace sap::tree
 		auto _ = cs->evaluator().pushBlockContext(this);
 		auto cur_style = m_style->useDefaultsFrom(parent_style)->useDefaultsFrom(cs->evaluator().currentStyle());
 
+		auto objs = TRY(tree::processWordSeparators(m_objects));
+		objs = TRY(tree::performReplacements(cur_style, std::move(objs)));
+
 		auto metrics = layout::computeLineMetrics(m_objects, cur_style);
 		auto line = layout::Line::fromInlineObjects(cs, cur_style, m_objects, metrics, available_space,
 		    /* is_first: */ true, /* is_last: */ true);

@@ -123,11 +123,7 @@ namespace font::aat
 
 
 		buf.remove_prefix(len - 3 * sizeof(uint32_t));
-		std::visit(
-		    [&com](auto& v) {
-			    v.common = com;
-		    },
-		    subtable);
+		std::visit([&com](auto& v) { v.common = com; }, subtable);
 
 		return subtable;
 	}
@@ -174,7 +170,8 @@ namespace font::aat
 	}
 
 	template <size_t EntrySize, typename Action>
-	static void run_state_machine(const StateTable& machine, zst::span<GlyphId>& glyphs, bool is_reverse, Action&& action)
+	static void
+	run_state_machine(const StateTable& machine, zst::span<GlyphId>& glyphs, bool is_reverse, Action&& action)
 	{
 		// this is the same for all the tables
 		constexpr uint16_t FLAG_DONT_ADVANCE = 0x4000;
@@ -223,8 +220,8 @@ namespace font::aat
 
 
 
-	std::optional<SubstitutedGlyphString> apply_table(const MorxLigatureSubtable& table, zst::span<GlyphId> glyphs,
-	    bool is_reverse, size_t num_font_glyphs)
+	std::optional<SubstitutedGlyphString>
+	apply_table(const MorxLigatureSubtable& table, zst::span<GlyphId> glyphs, bool is_reverse, size_t num_font_glyphs)
 	{
 		constexpr uint16_t PERFORM_ACTION = 0x2000;
 		constexpr uint16_t SET_COMPONENT = 0x8000;
@@ -283,8 +280,8 @@ namespace font::aat
 						replacements[idx] = output_lig;
 
 						std::vector<GlyphId> constituent_glyphs {};
-						for(auto i : constituent_glyph_idxs)
-							constituent_glyphs.push_back(glyphs[i]);
+						for(auto k : constituent_glyph_idxs)
+							constituent_glyphs.push_back(glyphs[k]);
 
 						ret.mapping.contractions[output_lig] = std::move(constituent_glyphs);
 
@@ -326,8 +323,10 @@ namespace font::aat
 	}
 
 
-	std::optional<SubstitutedGlyphString> apply_table(const MorxRearrangementSubtable& table, zst::span<GlyphId> input,
-	    bool is_reverse, size_t num_font_glyphs)
+	std::optional<SubstitutedGlyphString> apply_table(const MorxRearrangementSubtable& table,
+	    zst::span<GlyphId> input,
+	    bool is_reverse,
+	    size_t num_font_glyphs)
 	{
 		constexpr uint16_t MARK_FIRST = 0x8000;
 		constexpr uint16_t MARK_LAST = 0x2000;
@@ -510,8 +509,8 @@ namespace font::aat
 		return std::move(ret);
 	}
 
-	std::optional<SubstitutedGlyphString> apply_table(const MorxContextualSubtable& table, zst::span<GlyphId> glyphs,
-	    bool is_reverse, size_t num_font_glyphs)
+	std::optional<SubstitutedGlyphString>
+	apply_table(const MorxContextualSubtable& table, zst::span<GlyphId> glyphs, bool is_reverse, size_t num_font_glyphs)
 	{
 		constexpr uint16_t SET_MARK = 0x8000;
 		constexpr size_t EntrySize = 4 * sizeof(uint16_t);
@@ -533,7 +532,8 @@ namespace font::aat
 				auto offset = subst_offsets[mark_idx];
 				auto lookup_table = table.substitution_tables.drop(offset);
 
-				if(auto rep = searchLookupTable(lookup_table, num_font_glyphs, glyphs[marked_glyph_idx]); rep.has_value())
+				if(auto rep = searchLookupTable(lookup_table, num_font_glyphs, glyphs[marked_glyph_idx]);
+				    rep.has_value())
 					replacements[marked_glyph_idx] = GlyphId(*rep);
 			}
 
@@ -569,8 +569,10 @@ namespace font::aat
 		return std::move(ret);
 	}
 
-	std::optional<SubstitutedGlyphString> apply_table(const MorxNonContextualSubtable& table, zst::span<GlyphId> glyphs,
-	    bool is_reverse, size_t num_font_glyphs)
+	std::optional<SubstitutedGlyphString> apply_table(const MorxNonContextualSubtable& table,
+	    zst::span<GlyphId> glyphs,
+	    bool is_reverse,
+	    size_t num_font_glyphs)
 	{
 		bool did_substitute = false;
 
@@ -597,8 +599,8 @@ namespace font::aat
 		return std::move(ret);
 	}
 
-	std::optional<SubstitutedGlyphString> apply_table(const MorxInsertionSubtable& table, zst::span<GlyphId> glyphs,
-	    bool is_reverse, size_t num_font_glyphs)
+	std::optional<SubstitutedGlyphString>
+	apply_table(const MorxInsertionSubtable& table, zst::span<GlyphId> glyphs, bool is_reverse, size_t num_font_glyphs)
 	{
 		constexpr uint16_t SET_MARK = 0x8000;
 		constexpr uint16_t CURRENT_INSERT_BEFORE = 0x800;
@@ -613,9 +615,7 @@ namespace font::aat
 
 		size_t marked_glyph_idx = 0;
 
-		auto update_span = [&ret]() {
-			return zst::span<GlyphId>(ret.glyphs.data(), ret.glyphs.size());
-		};
+		auto update_span = [&ret]() { return zst::span<GlyphId>(ret.glyphs.data(), ret.glyphs.size()); };
 
 		glyphs = update_span();
 
@@ -626,7 +626,8 @@ namespace font::aat
 			for(size_t i = 0; i < count; i++)
 				to_insert.push_back(GlyphId(tmp[i]));
 
-			ret.glyphs.insert(ret.glyphs.begin() + ssize_t(at) + (insert_before ? 0 : 1), to_insert.begin(), to_insert.end());
+			ret.glyphs.insert(ret.glyphs.begin() + ssize_t(at) + (insert_before ? 0 : 1), to_insert.begin(),
+			    to_insert.end());
 			ret.mapping.extra_glyphs.insert(to_insert.begin(), to_insert.end());
 
 			glyphs = update_span();
@@ -666,15 +667,18 @@ namespace font::aat
 
 	static SubstitutionMapping& combine_subst_mapping(SubstitutionMapping& to, SubstitutionMapping&& from)
 	{
-		to.extra_glyphs.insert(std::move_iterator(from.extra_glyphs.begin()), std::move_iterator(from.extra_glyphs.end()));
-		to.contractions.insert(std::move_iterator(from.contractions.begin()), std::move_iterator(from.contractions.end()));
-		to.replacements.insert(std::move_iterator(from.replacements.begin()), std::move_iterator(from.replacements.end()));
+		to.extra_glyphs.insert(std::move_iterator(from.extra_glyphs.begin()),
+		    std::move_iterator(from.extra_glyphs.end()));
+		to.contractions.insert(std::move_iterator(from.contractions.begin()),
+		    std::move_iterator(from.contractions.end()));
+		to.replacements.insert(std::move_iterator(from.replacements.begin()),
+		    std::move_iterator(from.replacements.end()));
 		return to;
 	}
 
 
-	std::optional<SubstitutedGlyphString> performSubstitutionsForGlyphSequence(const MorxTable& morx, zst::span<GlyphId> glyphs,
-	    const FeatureSet& features)
+	std::optional<SubstitutedGlyphString>
+	performSubstitutionsForGlyphSequence(const MorxTable& morx, zst::span<GlyphId> glyphs, const FeatureSet& features)
 	{
 		std::optional<SubstitutedGlyphString> ret {};
 

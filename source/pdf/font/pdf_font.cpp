@@ -283,8 +283,8 @@ namespace pdf
 		return m_source->getPositioningAdjustmentsForGlyphSequence(glyphs, features);
 	}
 
-	std::optional<std::vector<GlyphId>> PdfFont::performSubstitutionsForGlyphSequence(zst::span<GlyphId> glyphs,
-	    const font::FeatureSet& features) const
+	std::optional<std::vector<GlyphId>>
+	PdfFont::performSubstitutionsForGlyphSequence(zst::span<GlyphId> glyphs, const font::FeatureSet& features) const
 	{
 		auto subst = m_source->performSubstitutionsForGlyphSequence(glyphs, features);
 		if(not subst.has_value())
@@ -320,9 +320,9 @@ namespace pdf
 			{
 				return { x->second };
 			}
-			else if(auto x = m_extra_unicode_mappings.find(gid); x != m_extra_unicode_mappings.end())
+			else if(auto y = m_extra_unicode_mappings.find(gid); y != m_extra_unicode_mappings.end())
 			{
-				return x->second;
+				return y->second;
 			}
 			else
 			{
@@ -360,11 +360,11 @@ namespace pdf
 	std::unique_ptr<PdfFont> PdfFont::fromSource(std::unique_ptr<font::FontSource> font)
 	{
 		auto ptr = font.release();
-		if(auto x = dynamic_cast<font::FontFile*>(ptr); x != nullptr)
-			return std::unique_ptr<PdfFont>(new PdfFont(std::unique_ptr<font::FontFile>(x)));
+		if(auto file = dynamic_cast<font::FontFile*>(ptr); file != nullptr)
+			return std::unique_ptr<PdfFont>(new PdfFont(std::unique_ptr<font::FontFile>(file)));
 
-		else if(auto x = dynamic_cast<pdf::BuiltinFont*>(ptr); x != nullptr)
-			return std::unique_ptr<PdfFont>(new PdfFont(std::unique_ptr<pdf::BuiltinFont>(x)));
+		else if(auto builtin = dynamic_cast<pdf::BuiltinFont*>(ptr); builtin != nullptr)
+			return std::unique_ptr<PdfFont>(new PdfFont(std::unique_ptr<pdf::BuiltinFont>(builtin)));
 
 		else
 			sap::internal_error("unsupported font source");

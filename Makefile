@@ -8,6 +8,7 @@ WARNINGS += -Wno-error=unused-parameter
 WARNINGS += -Wno-error=unused-variable
 WARNINGS += -Wno-error=unused-function
 WARNINGS += -Wno-unused-but-set-variable
+WARNINGS += -Wshadow
 WARNINGS += -Wno-error=shadow
 
 OPT_FLAGS           := -march=native -O0 -fsanitize=address

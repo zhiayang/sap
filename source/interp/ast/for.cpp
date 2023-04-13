@@ -18,16 +18,16 @@ namespace sap::interp
 
 		if(this->cond != nullptr)
 		{
-			auto cond = TRY(this->cond->typecheck(ts, Type::makeBool()));
-			if(not cond.type()->isBool())
-				return ErrMsg(ts, "cannot convert '{}' to boolean condition", cond.type());
+			auto cond_res = TRY(this->cond->typecheck(ts, Type::makeBool()));
+			if(not cond_res.type()->isBool())
+				return ErrMsg(ts, "cannot convert '{}' to boolean condition", cond_res.type());
 		}
 
 		if(this->update != nullptr)
 			TRY(this->update->typecheck(ts));
 
 		{
-			auto _ = ts->enterLoopBody();
+			auto t = ts->enterLoopBody();
 			TRY(this->body->typecheck(ts));
 		}
 
@@ -45,8 +45,8 @@ namespace sap::interp
 		{
 			if(this->cond != nullptr)
 			{
-				auto cond = TRY_VALUE(this->cond->evaluate(ev));
-				loop_cond = ev->castValue(std::move(cond), Type::makeBool()).getBool();
+				auto cond_val = TRY_VALUE(this->cond->evaluate(ev));
+				loop_cond = ev->castValue(std::move(cond_val), Type::makeBool()).getBool();
 				if(not loop_cond)
 					break;
 			}

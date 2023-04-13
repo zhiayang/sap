@@ -134,61 +134,61 @@ namespace pdf
 		{
 			auto get_value = [&line](zst::str_view key) { return get_value_for_key(line, key); };
 
-			if(auto x = get_value("FontName"); x.has_value())
+			if(auto x0 = get_value("FontName"); x0.has_value())
 			{
-				m_name = x->str();
+				m_name = x0->str();
 			}
-			else if(auto x = get_value("FontBBox"); x.has_value())
+			else if(auto x1 = get_value("FontBBox"); x1.has_value())
 			{
-				auto bbox = split_by(*x, ' ');
+				auto bbox = split_by(*x1, ' ');
 				m_metrics.xmin = to<int>(bbox[0]);
 				m_metrics.ymin = to<int>(bbox[1]);
 				m_metrics.xmax = to<int>(bbox[2]);
 				m_metrics.ymax = to<int>(bbox[3]);
 			}
-			else if(auto x = get_value("ItalicAngle"); x.has_value())
+			else if(auto x2 = get_value("ItalicAngle"); x2.has_value())
 			{
-				m_metrics.italic_angle = to<double>(*x);
+				m_metrics.italic_angle = to<double>(*x2);
 			}
-			else if(auto x = get_value("CapHeight"); x.has_value())
+			else if(auto x3 = get_value("CapHeight"); x3.has_value())
 			{
-				m_metrics.cap_height = FontScalar(to<int>(*x));
+				m_metrics.cap_height = FontScalar(to<int>(*x3));
 			}
-			else if(auto x = get_value("XHeight"); x.has_value())
+			else if(auto x4 = get_value("XHeight"); x4.has_value())
 			{
-				m_metrics.x_height = FontScalar(to<int>(*x));
+				m_metrics.x_height = FontScalar(to<int>(*x4));
 			}
-			else if(auto x = get_value("Ascender"); x.has_value())
+			else if(auto x5 = get_value("Ascender"); x5.has_value())
 			{
-				m_metrics.typo_ascent = FontScalar(to<int>(*x));
+				m_metrics.typo_ascent = FontScalar(to<int>(*x5));
 				m_metrics.hhea_ascent = m_metrics.typo_ascent;
 			}
-			else if(auto x = get_value("Descender"); x.has_value())
+			else if(auto x6 = get_value("Descender"); x6.has_value())
 			{
-				m_metrics.typo_descent = FontScalar(to<int>(*x));
+				m_metrics.typo_descent = FontScalar(to<int>(*x6));
 				m_metrics.hhea_descent = m_metrics.typo_descent;
 			}
-			else if(auto x = get_value("StdVW"); x.has_value())
+			else if(auto x7 = get_value("StdVW"); x7.has_value())
 			{
-				m_metrics.stem_v = to<int>(*x);
+				m_metrics.stem_v = to<int>(*x7);
 			}
-			else if(auto x = get_value("StdHW"); x.has_value())
+			else if(auto x8 = get_value("StdHW"); x8.has_value())
 			{
-				m_metrics.stem_h = to<int>(*x);
+				m_metrics.stem_h = to<int>(*x8);
 			}
-			else if(auto x = get_value("StartCharMetrics"); x.has_value())
+			else if(auto x9 = get_value("StartCharMetrics"); x9.has_value())
 			{
-				expected_glyphs = to<size_t>(*x);
+				expected_glyphs = to<size_t>(*x9);
 			}
-			else if(auto x = get_value("StartKernPairs"); x.has_value())
+			else if(auto x10 = get_value("StartKernPairs"); x10.has_value())
 			{
-				expected_kerns = to<size_t>(*x);
+				expected_kerns = to<size_t>(*x10);
 			}
-			else if(auto x = get_value("C"); x.has_value() && expected_glyphs > 0)
+			else if(auto x11 = get_value("C"); x11.has_value() && expected_glyphs > 0)
 			{
 				expected_glyphs--;
 
-				auto parts = split_by(*x, ';');
+				auto parts = split_by(*x11, ';');
 
 				// if this is not encoded, we can't do anything about it, so just bail
 				auto gid = to<int>(parts[0]);
@@ -199,32 +199,32 @@ namespace pdf
 				font::GlyphMetrics metrics {};
 				for(auto part : parts)
 				{
-					if(auto x = get_value_for_key(part, "B"); x.has_value())
+					if(auto t0 = get_value_for_key(part, "B"); t0.has_value())
 					{
-						auto bbox = split_by(*x, ' ');
+						auto bbox = split_by(*t0, ' ');
 						metrics.xmin = FontScalar(to<int>(bbox[0]));
 						metrics.ymin = FontScalar(to<int>(bbox[1]));
 						metrics.xmax = FontScalar(to<int>(bbox[2]));
 						metrics.ymax = FontScalar(to<int>(bbox[3]));
 					}
-					else if(auto x = get_value_for_key(part, "WX"); x.has_value())
+					else if(auto t1 = get_value_for_key(part, "WX"); t1.has_value())
 					{
-						metrics.horz_advance = FontScalar(to<int>(*x));
+						metrics.horz_advance = FontScalar(to<int>(*t1));
 					}
-					else if(auto x = get_value_for_key(part, "WY"); x.has_value())
+					else if(auto t2 = get_value_for_key(part, "WY"); t2.has_value())
 					{
-						metrics.vert_advance = FontScalar(to<int>(*x));
+						metrics.vert_advance = FontScalar(to<int>(*t2));
 					}
-					else if(auto x = get_value_for_key(part, "N"); x.has_value())
+					else if(auto t3 = get_value_for_key(part, "N"); t3.has_value())
 					{
-						glyph_name = *x;
+						glyph_name = *t3;
 					}
-					else if(auto x = get_value_for_key(part, "L"); x.has_value())
+					else if(auto t4 = get_value_for_key(part, "L"); t4.has_value())
 					{
-						auto parts = split_by(*x, ' ');
-						assert(parts.size() == 2);
+						auto lig_parts = split_by(*t4, ' ');
+						assert(lig_parts.size() == 2);
 
-						ligature_pairs[{ GlyphId(gid), parts[0].str() }] = parts[1].str();
+						ligature_pairs[{ GlyphId(gid), lig_parts[0].str() }] = lig_parts[1].str();
 					}
 				}
 
@@ -243,11 +243,11 @@ namespace pdf
 
 				name_to_gid_map[glyph_name.str()] = ggid;
 			}
-			else if(auto x = get_value("KPX"); x.has_value() && expected_kerns > 0)
+			else if(auto x12 = get_value("KPX"); x12.has_value() && expected_kerns > 0)
 			{
 				--expected_kerns;
 
-				auto parts = split_by(*x, ' ');
+				auto parts = split_by(*x12, ' ');
 				assert(parts.size() == 3);
 
 				GlyphId lgid;
@@ -313,8 +313,8 @@ namespace pdf
 		return kerns;
 	}
 
-	std::optional<font::SubstitutedGlyphString> BuiltinFont::
-	    performSubstitutionsForGlyphSequence(zst::span<GlyphId> glyphs, const font::FeatureSet& features) const
+	std::optional<font::SubstitutedGlyphString>
+	BuiltinFont::performSubstitutionsForGlyphSequence(zst::span<GlyphId> glyphs, const font::FeatureSet& features) const
 	{
 		if(glyphs.size() < 2)
 			return std::nullopt;

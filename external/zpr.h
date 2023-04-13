@@ -1612,7 +1612,7 @@ namespace zpr
 				this->len += static_cast<size_t>(end - begin);
 			}
 
-			ZPR_ALWAYS_INLINE void operator() (const char* begin, size_t len) { (*callback)(begin, len); this->len += len; }
+			ZPR_ALWAYS_INLINE void operator() (const char* begin, size_t n) { (*callback)(begin, n); this->len += n; }
 			ZPR_ALWAYS_INLINE void operator() (char c, size_t n)
 			{
 				for(size_t i = 0; i < n; i++)
@@ -1666,9 +1666,9 @@ namespace zpr
 				this->len += l;
 			}
 
-			ZPR_ALWAYS_INLINE void operator() (const char* begin, size_t len)
+			ZPR_ALWAYS_INLINE void operator() (const char* begin, size_t n)
 			{
-				auto l = this->remaining(len);
+				auto l = this->remaining(n);
 				memmove(&this->buf[this->len], begin, l);
 				this->len += l;
 			}

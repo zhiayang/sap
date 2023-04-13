@@ -30,7 +30,6 @@ scripting:
 - dereferencing optionals might need to clone them (which is weird)
 
 layout:
-- em/en dashes
 - microtype-like stuff (hanging punctuation)
 - dijkstra linebreaking might accidentally make an extra page;
 	- when rendering, use some mechanism (eg. proxy object) to only make the page if

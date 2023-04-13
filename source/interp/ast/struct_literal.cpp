@@ -8,9 +8,8 @@
 
 namespace sap::interp
 {
-	static std::vector<std::tuple<std::string, const Type*, const Expr*>> get_field_things(
-		const StructDefn* struct_defn,
-		const StructType* struct_type)
+	static std::vector<std::tuple<std::string, const Type*, const Expr*>>
+	get_field_things(const StructDefn* struct_defn, const StructType* struct_type)
 	{
 		std::vector<std::tuple<std::string, const Type*, const Expr*>> fields {};
 
@@ -18,9 +17,9 @@ namespace sap::interp
 		for(size_t i = 0; i < struct_fields.size(); i++)
 		{
 			fields.push_back({
-				struct_fields[i].name,
-				struct_fields[i].type,
-				struct_defn->fields()[i].initialiser.get(),
+			    struct_fields[i].name,
+			    struct_fields[i].type,
+			    struct_defn->fields()[i].initialiser.get(),
 			});
 		}
 
@@ -75,15 +74,15 @@ namespace sap::interp
 				return ErrMsg(ts, "positional field initialiser not allowed after named field initialiser");
 
 
-			const Type* infer = nullptr;
+			const Type* infer_type = nullptr;
 			if(f.name.has_value() && struct_type->hasFieldNamed(*f.name))
-				infer = struct_type->getFieldNamed(*f.name);
+				infer_type = struct_type->getFieldNamed(*f.name);
 			else if(not f.name.has_value())
-				infer = struct_type->getFieldAtIndex(i);
+				infer_type = struct_type->getFieldAtIndex(i);
 
 			processed_fields.push_back({
-				.name = f.name,
-				.value = TRY(f.value->typecheck(ts, infer)).type(),
+			    .name = f.name,
+			    .value = TRY(f.value->typecheck(ts, infer_type)).type(),
 			});
 		}
 
@@ -106,14 +105,14 @@ namespace sap::interp
 		for(auto& f : this->field_inits)
 		{
 			processed_fields.push_back({
-				.name = f.name,
-				.value = TRY_VALUE(f.value->evaluate(ev)),
+			    .name = f.name,
+			    .value = TRY_VALUE(f.value->evaluate(ev)),
 			});
 		}
 
 		auto fields = get_field_things(m_struct_defn, struct_type);
 		auto ordered = TRY(arrangeArgumentValues(ev, fields, std::move(processed_fields), //
-			"struct", "field", "field"));
+		    "struct", "field", "field"));
 
 		std::vector<Value> field_values {};
 
