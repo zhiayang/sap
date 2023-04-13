@@ -198,8 +198,8 @@ namespace sap::tree
 
 
 
-	ErrorOr<std::vector<zst::SharedPtr<InlineObject>>> Paragraph::processWordSeparators( //
-	    std::vector<zst::SharedPtr<InlineObject>> input)
+	ErrorOr<std::vector<zst::SharedPtr<InlineObject>>>
+	Paragraph::processWordSeparators(std::vector<zst::SharedPtr<InlineObject>> input)
 	{
 		std::vector<zst::SharedPtr<InlineObject>> ret {};
 		ret.reserve(input.size());
@@ -218,6 +218,7 @@ namespace sap::tree
 				// note: don't make a new span here, preserve the identities.
 				// if we ref a span, it needs to keep existing.
 				auto objs = TRY(processWordSeparators(std::move(span->objects())));
+
 				span->objects().clear();
 				span->addObjects(std::move(objs));
 
@@ -266,6 +267,15 @@ namespace sap::tree
 						// we should not get those things inside Texts anyway.
 					}
 				}
+				// else if(text_style->smart_quotes_enabled() && (c == U'\'' || c == U'"'))
+				// {
+				// 	if(current_text->contents().empty())
+				// 		current_text->contents() += (c == U'\'' ? U'\u2018' : U'\u201C'); // left quotes
+				// 	else
+				// 		current_text->contents() += (c == U'\'' ? U'\u2019' : U'\u201D'); // right quotes
+
+				// 	seen_whitespace = false;
+				// }
 				else
 				{
 					current_text->contents() += c;

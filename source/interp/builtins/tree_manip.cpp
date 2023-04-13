@@ -46,10 +46,8 @@ namespace sap::interp::builtin
 
 
 
-	static ErrorOr<EvalResult> make_box(Evaluator* ev,
-	    Value& arr,
-	    tree::Container::Direction direction,
-	    bool glued = false)
+	static ErrorOr<EvalResult>
+	make_box(Evaluator* ev, Value& arr, tree::Container::Direction direction, bool glued = false)
 	{
 		auto box = zst::make_shared<tree::Container>(direction, glued);
 
@@ -169,9 +167,10 @@ namespace sap::interp::builtin
 		if(ev->interpreter()->currentPhase() <= ProcessingPhase::Layout)
 			return ErrMsg(ev, "`layout_object()` can only be called after the layout phase");
 
-		auto layout_obj = value.isTreeBlockObj()
-		                    ? value.getTreeBlockObj().getGeneratedLayoutObject()
-		                    : value.getTreeBlockObjectRef()->getGeneratedLayoutObject();
+		auto layout_obj =
+		    value.isTreeBlockObj()
+		        ? value.getTreeBlockObj().getGeneratedLayoutObject()
+		        : value.getTreeBlockObjectRef()->getGeneratedLayoutObject();
 
 		auto ref_type = Type::makeLayoutObjectRef();
 

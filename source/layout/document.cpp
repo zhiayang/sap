@@ -36,9 +36,9 @@ namespace sap::layout
 
 	static Length resolve_len(const DocumentSettings& settings, DynLength len)
 	{
-		auto pt = [](auto x) { return sap::Length(25.4 * (x / 72.0)); };
+		auto sz = sap::Length(25.4 * (DocumentSettings::DEFAULT_FONT_SIZE / 72.0));
 
-		auto font_size = settings.font_size->resolveWithoutFont(pt(12), pt(12));
+		auto font_size = settings.font_size->resolveWithoutFont(sz, sz);
 		return len.resolveWithoutFont(font_size, font_size);
 	}
 
@@ -61,18 +61,19 @@ namespace sap::layout
 	}
 
 	Document::Document(const DocumentSettings& settings)
-		: m_page_layout(this, paper_size(settings), make_margins(settings))
+	    : m_page_layout(this, paper_size(settings), make_margins(settings))
 	{
 		auto default_style = util::make<sap::Style>();
 
 		default_style->set_font_family(*settings.font_family)
-			.set_font_style(sap::FontStyle::Regular)
-			.set_font_size(resolve_len(settings, *settings.font_size))
-			.set_root_font_size(resolve_len(settings, *settings.font_size))
-			.set_line_spacing(*settings.line_spacing)
-			.set_sentence_space_stretch(*settings.sentence_space_stretch)
-			.set_paragraph_spacing(resolve_len(settings, *settings.paragraph_spacing))
-			.set_alignment(Alignment::Justified);
+		    .set_font_style(sap::FontStyle::Regular)
+		    .set_font_size(resolve_len(settings, *settings.font_size))
+		    .set_root_font_size(resolve_len(settings, *settings.font_size))
+		    .set_line_spacing(*settings.line_spacing)
+		    .set_sentence_space_stretch(*settings.sentence_space_stretch)
+		    .set_paragraph_spacing(resolve_len(settings, *settings.paragraph_spacing))
+		    .set_alignment(Alignment::Justified)
+		    .enable_smart_quotes(true);
 
 		this->setStyle(default_style);
 	}
@@ -99,15 +100,15 @@ namespace sap::layout
 		if(item.position.page_num >= pages.size())
 		{
 			sap::internal_error("outline item '{}' out of range: page {} does not exist", item.title,
-				item.position.page_num);
+			    item.position.page_num);
 		}
 
 		auto ret = pdf::OutlineItem(std::move(item.title),
-			pdf::Destination {
-				.page = item.position.page_num,
-				.zoom = 0,
-				.position = pages[item.position.page_num]->convertVector2(item.position.pos.into()),
-			});
+		    pdf::Destination {
+		        .page = item.position.page_num,
+		        .zoom = 0,
+		        .position = pages[item.position.page_num]->convertVector2(item.position.pos.into()),
+		    });
 
 		for(auto& child : item.children)
 			ret.addChild(convert_outline_item(pages, std::move(child)));
@@ -122,12 +123,12 @@ namespace sap::layout
 
 		auto page = pages[annot.position.page_num];
 		auto pdf_annot = util::make<pdf::LinkAnnotation>(page->convertVector2(annot.position.pos.into()),
-			annot.size.into(),
-			pdf::Destination {
-				.page = annot.destination.page_num,
-				.zoom = 0,
-				.position = page->convertVector2(annot.destination.pos.into()),
-			});
+		    annot.size.into(),
+		    pdf::Destination {
+		        .page = annot.destination.page_num,
+		        .zoom = 0,
+		        .position = page->convertVector2(annot.destination.pos.into()),
+		    });
 
 		page->addAnnotation(pdf_annot);
 	}
@@ -260,9 +261,9 @@ namespace sap::tree
 	}
 
 	Document::Document(std::vector<std::unique_ptr<interp::Stmt>> preamble, bool have_doc_start)
-		: m_container(tree::Container::makeVertBox())
-		, m_preamble(std::move(preamble))
-		, m_have_document_start(have_doc_start)
+	    : m_container(tree::Container::makeVertBox())
+	    , m_preamble(std::move(preamble))
+	    , m_have_document_start(have_doc_start)
 	{
 		m_container->setStyle(m_container->style()->with_alignment(Alignment::Justified));
 	}

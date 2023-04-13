@@ -121,9 +121,9 @@ namespace sap::tree
 	}
 
 
-	auto Paragraph::create_layout_object_impl(interp::Interpreter* cs,
-	    const Style* parent_style,
-	    Size2d available_space) const -> ErrorOr<LayoutResult>
+	auto
+	Paragraph::create_layout_object_impl(interp::Interpreter* cs, const Style* parent_style, Size2d available_space)
+	    const -> ErrorOr<LayoutResult>
 	{
 		auto _ = cs->evaluator().pushBlockContext(this);
 
@@ -134,14 +134,14 @@ namespace sap::tree
 		else if(objs->is_right())
 			return Ok(LayoutResult::make(objs->take_right()));
 
+		auto style = parent_style->extendWith(this->style());
+
 		// note: the InlineSpan must continue to live here, so don't `take` it;
 		// just steal its objects.
 		auto tmp = std::move(objs->left()->objects());
 		auto para_objects = TRY(Paragraph::processWordSeparators(std::move(tmp)));
 		if(para_objects.empty())
 			return Ok(LayoutResult::empty());
-
-		auto style = parent_style->extendWith(this->style());
 
 		std::vector<std::unique_ptr<layout::Line>> layout_lines {};
 		LayoutSize para_size {};

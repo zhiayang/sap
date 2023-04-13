@@ -46,6 +46,7 @@ namespace sap
 		DEFINE_ACCESSOR(double, m_sentence_space_stretch, sentence_space_stretch);
 		DEFINE_ACCESSOR(Length, m_paragraph_spacing, paragraph_spacing);
 		DEFINE_ACCESSOR(Alignment, m_alignment, alignment);
+		DEFINE_ACCESSOR(bool, m_enable_smart_quotes, smart_quotes_enabled);
 #undef DEFINE_ACCESSOR
 
 #define DEFINE_SETTER(field_type, field_name, method_name, method_name2) \
@@ -72,6 +73,7 @@ namespace sap
 		DEFINE_SETTER(double, m_sentence_space_stretch, set_sentence_space_stretch, with_sentence_space_stretch);
 		DEFINE_SETTER(Length, m_paragraph_spacing, set_paragraph_spacing, with_paragraph_spacing);
 		DEFINE_SETTER(Alignment, m_alignment, set_alignment, with_alignment);
+		DEFINE_SETTER(bool, m_enable_smart_quotes, enable_smart_quotes, with_smart_quotes_enabled);
 
 #undef DEFINE_SETTER
 
@@ -100,6 +102,7 @@ namespace sap
 		std::optional<double> m_sentence_space_stretch;
 		std::optional<Length> m_paragraph_spacing;
 		std::optional<Alignment> m_alignment;
+		std::optional<bool> m_enable_smart_quotes;
 
 		static Style s_empty_style;
 	};

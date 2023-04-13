@@ -11,6 +11,8 @@ namespace sap
 {
 	struct DocumentSettings
 	{
+		static Length DEFAULT_FONT_SIZE;
+
 		struct Margins
 		{
 			std::optional<DynLength> top;

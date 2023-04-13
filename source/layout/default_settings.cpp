@@ -14,15 +14,15 @@ namespace sap::layout
 	static FontFamily get_default_font_family(interp::Interpreter* cs)
 	{
 		static auto ret = sap::FontFamily(                                                //
-			&cs->addLoadedFont(pdf::PdfFont::fromBuiltin(pdf::BuiltinFont::TimesRoman)),  //
-			&cs->addLoadedFont(pdf::PdfFont::fromBuiltin(pdf::BuiltinFont::TimesItalic)), //
-			&cs->addLoadedFont(pdf::PdfFont::fromBuiltin(pdf::BuiltinFont::TimesBold)),   //
-			&cs->addLoadedFont(pdf::PdfFont::fromBuiltin(pdf::BuiltinFont::TimesBoldItalic)));
+		    &cs->addLoadedFont(pdf::PdfFont::fromBuiltin(pdf::BuiltinFont::TimesRoman)),  //
+		    &cs->addLoadedFont(pdf::PdfFont::fromBuiltin(pdf::BuiltinFont::TimesItalic)), //
+		    &cs->addLoadedFont(pdf::PdfFont::fromBuiltin(pdf::BuiltinFont::TimesBold)),   //
+		    &cs->addLoadedFont(pdf::PdfFont::fromBuiltin(pdf::BuiltinFont::TimesBoldItalic)));
 
 		return ret;
 	}
 
-	static constexpr double DEFAULT_FONT_SIZE_PT = 12;
+	static constexpr double DEFAULT_FONT_SIZE_PT = 11;
 	static constexpr double DEFAULT_LINE_SPACING = 1.0;
 	static constexpr double DEFAULT_SENTENCE_SPACE_STRETCH = 1.5;
 
@@ -32,26 +32,22 @@ namespace sap::layout
 
 		auto font_size = pdf::PdfScalar(DEFAULT_FONT_SIZE_PT).into();
 		default_style->set_font_family(get_default_font_family(cs))
-			.set_font_style(sap::FontStyle::Regular)
-			.set_font_size(font_size)
-			.set_root_font_size(font_size)
-			.set_line_spacing(DEFAULT_LINE_SPACING)
-			.set_sentence_space_stretch(DEFAULT_SENTENCE_SPACE_STRETCH)
-			.set_paragraph_spacing(Length(0))
-			.set_alignment(Alignment::Justified);
+		    .set_font_style(sap::FontStyle::Regular)
+		    .set_font_size(font_size)
+		    .set_root_font_size(font_size)
+		    .set_line_spacing(DEFAULT_LINE_SPACING)
+		    .set_sentence_space_stretch(DEFAULT_SENTENCE_SPACE_STRETCH)
+		    .set_paragraph_spacing(Length(0))
+		    .set_alignment(Alignment::Justified)
+		    .enable_smart_quotes(true);
 
 		return default_style;
 	}
 
 	DocumentSettings fillDefaultSettings(interp::Interpreter* cs, DocumentSettings settings)
 	{
-		auto mm = [](auto x) {
-			return DynLength(x, DynLength::MM);
-		};
-
-		auto pt = [](auto x) {
-			return sap::Length(25.4 * (x / 72.0));
-		};
+		auto pt = [](auto x) { return Length(x); };
+		auto mm = [](auto x) { return DynLength(x, DynLength::MM); };
 
 		using Margins = DocumentSettings::Margins;
 
@@ -61,8 +57,9 @@ namespace sap::layout
 		settings.sentence_space_stretch = settings.sentence_space_stretch.value_or(DEFAULT_SENTENCE_SPACE_STRETCH);
 		settings.paragraph_spacing = settings.paragraph_spacing.value_or(DynLength(0, DynLength::MM));
 
-		auto paper_width = settings.paper_size->x.resolveWithoutFont(pt(12), pt(12));
-		auto paper_height = settings.paper_size->y.resolveWithoutFont(pt(12), pt(12));
+		constexpr auto FONT_SZ = DEFAULT_FONT_SIZE_PT;
+		auto paper_width = settings.paper_size->x.resolveWithoutFont(pt(FONT_SZ), pt(FONT_SZ));
+		auto paper_height = settings.paper_size->y.resolveWithoutFont(pt(FONT_SZ), pt(FONT_SZ));
 
 		if(settings.margins.has_value())
 		{
@@ -127,4 +124,14 @@ namespace sap::layout
 
 		return settings;
 	}
+}
+
+namespace sap
+{
+	static Length pt(double x)
+	{
+		return sap::Length(25.4 * (x / 72.0));
+	}
+
+	Length DocumentSettings::DEFAULT_FONT_SIZE = pt(layout::DEFAULT_FONT_SIZE_PT);
 }

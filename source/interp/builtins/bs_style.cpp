@@ -13,6 +13,7 @@ namespace sap::interp::builtin
 	using PT = frontend::PType;
 	using Field = StructDefn::Field;
 
+	static auto pt_bool = PT::named(frontend::TYPE_BOOL);
 	static auto pt_float = PT::named(frontend::TYPE_FLOAT);
 	static auto pt_length = PT::named(frontend::TYPE_LENGTH);
 
@@ -40,24 +41,25 @@ namespace sap::interp::builtin
 	std::vector<Field> builtin::BS_Style::fields()
 	{
 		auto pt_font_family = PT::named(QualifiedId {
-			.top_level = true,
-			.parents = { "builtin" },
-			.name = BS_FontFamily::name,
+		    .top_level = true,
+		    .parents = { "builtin" },
+		    .name = BS_FontFamily::name,
 		});
 
 		auto pt_alignment = PT::named(QualifiedId {
-			.top_level = true,
-			.parents = { "builtin" },
-			.name = BE_Alignment::name,
+		    .top_level = true,
+		    .parents = { "builtin" },
+		    .name = BE_Alignment::name,
 		});
 
 		return util::vectorOf(                                                                                     //
-			Field { .name = "font_family", .type = PT::optional(pt_font_family), .initialiser = get_null() },      //
-			Field { .name = "font_size", .type = PT::optional(pt_length), .initialiser = get_null() },             //
-			Field { .name = "line_spacing", .type = PT::optional(pt_float), .initialiser = get_null() },           //
-			Field { .name = "sentence_space_stretch", .type = PT::optional(pt_float), .initialiser = get_null() }, //
-			Field { .name = "paragraph_spacing", .type = PT::optional(pt_length), .initialiser = get_null() },     //
-			Field { .name = "alignment", .type = PT::optional(pt_alignment), .initialiser = get_null() }           //
+		    Field { .name = "font_family", .type = PT::optional(pt_font_family), .initialiser = get_null() },      //
+		    Field { .name = "font_size", .type = PT::optional(pt_length), .initialiser = get_null() },             //
+		    Field { .name = "line_spacing", .type = PT::optional(pt_float), .initialiser = get_null() },           //
+		    Field { .name = "sentence_space_stretch", .type = PT::optional(pt_float), .initialiser = get_null() }, //
+		    Field { .name = "paragraph_spacing", .type = PT::optional(pt_length), .initialiser = get_null() },     //
+		    Field { .name = "alignment", .type = PT::optional(pt_alignment), .initialiser = get_null() },          //
+		    Field { .name = "enable_smart_quotes", .type = PT::optional(pt_bool), .initialiser = get_null() }      //
 		);
 	}
 
@@ -70,8 +72,9 @@ namespace sap::interp::builtin
 		    .set("sentence_space_stretch", Value::floating(style->sentence_space_stretch()))
 		    .set("paragraph_spacing", Value::length(DynLength(style->paragraph_spacing())))
 		    .set("alignment",
-				Value::enumerator(BE_Alignment::type->toEnum(),
-					Value::integer(static_cast<int64_t>(style->alignment()))))
+		        Value::enumerator(BE_Alignment::type->toEnum(),
+		            Value::integer(static_cast<int64_t>(style->alignment()))))
+		    .set("enable_smart_quotes", Value::boolean(style->smart_quotes_enabled()))
 		    .make();
 	}
 
@@ -95,6 +98,7 @@ namespace sap::interp::builtin
 		style->set_alignment(get_optional_enumerator_field<Alignment>(value, "alignment"));
 
 		style->set_paragraph_spacing(resolve_length_field(value, "paragraph_spacing"));
+		style->enable_smart_quotes(get_optional_struct_field<bool>(value, "enable_smart_quotes"));
 
 		if(auto& x = value.getStructField("font_family"); x.haveOptionalValue())
 			style->set_font_family(TRY(BS_FontFamily::unmake(ev, **x.getOptional())));

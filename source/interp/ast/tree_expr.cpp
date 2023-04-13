@@ -41,8 +41,8 @@ namespace sap::interp
 		return Ok();
 	}
 
-	static ErrorOr<std::vector<zst::SharedPtr<tree::InlineObject>>> evaluate_list_of_tios(Evaluator* ev,
-	    const std::vector<zst::SharedPtr<tree::InlineObject>>& tios)
+	static ErrorOr<std::vector<zst::SharedPtr<tree::InlineObject>>>
+	evaluate_list_of_tios(Evaluator* ev, const std::vector<zst::SharedPtr<tree::InlineObject>>& tios)
 	{
 		std::vector<zst::SharedPtr<tree::InlineObject>> ret {};
 		for(auto& obj : tios)

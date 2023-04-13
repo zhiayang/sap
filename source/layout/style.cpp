@@ -30,14 +30,15 @@ namespace sap
 
 		auto style = Style();
 		style.set_font_family(flat_value_or(main->m_font_family, m_font_family))
-			.set_font_style(flat_value_or(main->m_font_style, m_font_style))
-			.set_font_size(flat_value_or(main->m_font_size, m_font_size))
-			.set_line_spacing(flat_value_or(main->m_line_spacing, m_line_spacing))
-			.set_sentence_space_stretch(flat_value_or(main->m_sentence_space_stretch, m_sentence_space_stretch))
-			.set_paragraph_spacing(flat_value_or(main->m_paragraph_spacing, m_paragraph_spacing))
-			.set_alignment(flat_value_or(main->m_alignment, m_alignment))
-			.set_root_font_size(flat_value_or(main->m_root_font_size, m_root_font_size)) //
-			;
+		    .set_font_style(flat_value_or(main->m_font_style, m_font_style))
+		    .set_font_size(flat_value_or(main->m_font_size, m_font_size))
+		    .set_line_spacing(flat_value_or(main->m_line_spacing, m_line_spacing))
+		    .set_sentence_space_stretch(flat_value_or(main->m_sentence_space_stretch, m_sentence_space_stretch))
+		    .set_paragraph_spacing(flat_value_or(main->m_paragraph_spacing, m_paragraph_spacing))
+		    .set_alignment(flat_value_or(main->m_alignment, m_alignment))
+		    .set_root_font_size(flat_value_or(main->m_root_font_size, m_root_font_size))
+		    .enable_smart_quotes(flat_value_or(main->m_enable_smart_quotes, m_enable_smart_quotes)) //
+		    ;
 
 		if(style == *main)
 		{
@@ -71,14 +72,15 @@ namespace sap
 
 		auto style = Style();
 		style.set_font_family(flat_value_or(m_font_family, fallback->m_font_family))
-			.set_font_style(flat_value_or(m_font_style, fallback->m_font_style))
-			.set_font_size(flat_value_or(m_font_size, fallback->m_font_size))
-			.set_line_spacing(flat_value_or(m_line_spacing, fallback->m_line_spacing))
-			.set_sentence_space_stretch(flat_value_or(m_sentence_space_stretch, fallback->m_sentence_space_stretch))
-			.set_paragraph_spacing(flat_value_or(m_paragraph_spacing, fallback->m_paragraph_spacing))
-			.set_alignment(flat_value_or(m_alignment, fallback->m_alignment))
-			.set_root_font_size(flat_value_or(m_root_font_size, fallback->m_root_font_size)) //
-			;
+		    .set_font_style(flat_value_or(m_font_style, fallback->m_font_style))
+		    .set_font_size(flat_value_or(m_font_size, fallback->m_font_size))
+		    .set_line_spacing(flat_value_or(m_line_spacing, fallback->m_line_spacing))
+		    .set_sentence_space_stretch(flat_value_or(m_sentence_space_stretch, fallback->m_sentence_space_stretch))
+		    .set_paragraph_spacing(flat_value_or(m_paragraph_spacing, fallback->m_paragraph_spacing))
+		    .set_alignment(flat_value_or(m_alignment, fallback->m_alignment))
+		    .set_root_font_size(flat_value_or(m_root_font_size, fallback->m_root_font_size))
+		    .enable_smart_quotes(flat_value_or(m_enable_smart_quotes, fallback->m_enable_smart_quotes)) //
+		    ;
 
 		if(style == *fallback)
 		{
