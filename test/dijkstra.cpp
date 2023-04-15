@@ -26,7 +26,10 @@ namespace test
 		Fraction reciprocal() const { return { denom, numer, no_reduce }; }
 		Fraction operator*(Fraction other) const { return { numer * other.numer, denom * other.denom }; }
 		Fraction operator/(Fraction other) const { return { numer * other.denom, denom * other.numer }; }
-		Fraction operator+(Fraction other) const { return { numer * other.denom + other.numer * denom, denom * other.denom }; }
+		Fraction operator+(Fraction other) const
+		{
+			return { numer * other.denom + other.numer * denom, denom * other.denom };
+		}
 		Fraction operator-() const { return { -numer, denom, no_reduce }; };
 		Fraction operator-(Fraction other) const { return *this + (-other); }
 
@@ -102,6 +105,12 @@ int main()
 	static_assert(zpr::detail::is_iterable_by_member<util::subrange<std::vector<test::Node>::iterator>>::value);
 	static_assert(zpr::detail::is_iterable<util::subrange<std::vector<test::Node>::iterator>>::value);
 	static_assert(zpr::detail::has_formatter<util::subrange<std::vector<test::Node>::iterator>>::value);
-	auto wow = util::dijkstra_shortest_path(test::Node { test::Fraction::zero() }, test::Node { test::Fraction { 7, 12 } });
+	auto wow = util::dijkstra_shortest_path(test::Node { test::Fraction::zero() },
+	    test::Node { test::Fraction { 7, 12 } });
 	zpr::println("{}", util::subrange(wow.begin() + 1, wow.end()));
+}
+
+bool sap::compile(zst::str_view input_file, zst::str_view output_file)
+{
+	return false;
 }

@@ -150,10 +150,13 @@ namespace sap::tree
 
 		// precompute line metrics (and the line bounds)
 		using WordSpan = std::span<const zst::SharedPtr<tree::InlineObject>>;
-		std::vector<std::tuple<layout::LineMetrics, WordSpan>> the_lines {};
+		std::vector<std::tuple<layout::LineMetrics, WordSpan, layout::LineAdjustment>> the_lines {};
 
 		using Iter = std::vector<zst::SharedPtr<InlineObject>>::const_iterator;
-		auto add_one_line = [&the_lines](Iter words_begin, Iter words_end, const Style* style) {
+		auto add_one_line =
+		    [&the_lines](layout::linebreak::BrokenLine& line, //
+		        Iter words_begin, Iter words_end, const Style* style) {
+
 #if 0
 			zpr::print("line ({} parts): {", words_end - words_begin);
 
@@ -176,25 +179,30 @@ namespace sap::tree
 
 			zpr::println("}");
 #endif
-			if((*words_begin)->isSeparator())
-			{
-				sap::internal_error(
-				    "line starting with non-Word found, "
-				    "either line breaking algo is broken "
-				    "or we had multiple separators in a row");
-			}
+			    if((*words_begin)->isSeparator())
+			    {
+				    sap::internal_error(
+				        "line starting with non-Word found, "
+				        "either line breaking algo is broken "
+				        "or we had multiple separators in a row");
+			    }
 
-			// Ignore space at end of line
-			const auto& last_word = *(words_end - 1);
-			if(auto sep = last_word->castToSeparator(); sep && (sep->isSpace() || sep->isSentenceEnding()))
-				--words_end;
+			    // Ignore space at end of line
+			    const auto& last_word = *(words_end - 1);
+			    if(auto sep = last_word->castToSeparator(); sep && (sep->hasWhitespace()))
+				    --words_end;
 
-			auto words_span = std::span(&*words_begin, &*words_end);
-			the_lines.push_back({
-			    layout::computeLineMetrics(words_span, style),
-			    words_span,
-			});
-		};
+			    auto words_span = std::span(&*words_begin, &*words_end);
+			    the_lines.push_back({
+			        layout::computeLineMetrics(words_span, style),
+			        words_span,
+			        layout::LineAdjustment {
+			            .left_protrusion = line.leftProtrusion(),
+			            .right_protrusion = line.rightProtrusion(),
+			            .piece_adjustments = line.pieceAdjustments(),
+			        },
+			    });
+		    };
 
 		// break after flattening.
 		std::vector<zst::SharedPtr<InlineObject>> flat {};
@@ -210,7 +218,7 @@ namespace sap::tree
 			auto words_begin = flat.begin() + (ssize_t) current_idx;
 			auto words_end = flat.begin() + (ssize_t) current_idx + (ssize_t) broken_line.numParts();
 
-			add_one_line(words_begin, words_end, style);
+			add_one_line(broken_line, words_begin, words_end, style);
 
 			current_idx += broken_line.numParts();
 		}
@@ -220,10 +228,10 @@ namespace sap::tree
 			bool is_last_line = (i + 1 == the_lines.size());
 			bool is_first_line = (i == 0);
 
-			auto& [metrics, word_span] = the_lines[i];
+			auto& [metrics, word_span, line_adj] = the_lines[i];
 
 			auto layout_line = layout::Line::fromInlineObjects(cs, style, word_span, metrics, available_space,
-			    is_first_line, is_last_line);
+			    is_first_line, is_last_line, line_adj);
 
 			auto line_size = layout_line->layoutSize();
 

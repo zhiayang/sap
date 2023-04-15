@@ -1,4 +1,4 @@
-# module.sap
+# std.sap
 
 import "std/lists.sap";
 import "std/state.sap";

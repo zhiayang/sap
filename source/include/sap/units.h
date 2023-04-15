@@ -77,4 +77,28 @@ namespace sap
 
 		Length total_height() const { return this->ascent + this->descent; }
 	};
+
+
+
+	constexpr sap::Length operator""_mm(long double x)
+	{
+		return Length(static_cast<double>(x));
+	}
+
+	constexpr sap::Length operator""_mm(unsigned long long x)
+	{
+		return Length(static_cast<double>(x));
+	}
+
+
+
+	constexpr sap::Length operator""_pt(unsigned long long x)
+	{
+		return Length(static_cast<double>(x) * 25.4 / 72);
+	}
+
+	constexpr sap::Length operator""_pt(long double x)
+	{
+		return Length(static_cast<double>(x) * 25.4 / 72);
+	}
 }

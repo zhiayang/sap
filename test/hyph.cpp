@@ -6,7 +6,7 @@
 
 int main(int argc, char** argv)
 {
-	std::string hyph_path = "hyph-en-gb.tex";
+	std::string hyph_path = "lib/sap/data/hyphenation/hyph-en-gb.tex";
 	if(argc == 3)
 		hyph_path = argv[2];
 
@@ -78,4 +78,9 @@ int main(int argc, char** argv)
 		test(U"university");
 		test(U"universities");
 	}
+}
+
+bool sap::compile(zst::str_view input_file, zst::str_view output_file)
+{
+	return false;
 }

@@ -22,6 +22,13 @@ namespace sap::layout
 		struct BrokenLine;
 	}
 
+	struct LineAdjustment
+	{
+		Length left_protrusion;
+		Length right_protrusion;
+		util::hashmap<size_t, Length> piece_adjustments;
+	};
+
 	struct Line : LayoutObject
 	{
 		virtual layout::PageCursor compute_position_impl(layout::PageCursor cursor) override;
@@ -33,7 +40,8 @@ namespace sap::layout
 		    const LineMetrics& line_metrics,
 		    Size2d available_space,
 		    bool is_first_line,
-		    bool is_last_line);
+		    bool is_last_line,
+		    std::optional<LineAdjustment> adjustment = std::nullopt);
 
 		const LineMetrics& metrics() const { return m_metrics; }
 		const std::vector<std::unique_ptr<LayoutObject>>& objects() const { return m_objects; }

@@ -30,7 +30,7 @@ namespace sap::tree
 	static void make_separators_for_word(std::vector<zst::SharedPtr<InlineObject>>& vec, zst::SharedPtr<Text> text)
 	{
 		static auto hyphenator = []() {
-			auto resolved = paths::resolveLibrary(Location::builtin(), "hyphenation-defs/hyph-en-gb.tex");
+			auto resolved = paths::resolveLibrary(Location::builtin(), "data/hyphenation/hyph-en-gb.tex");
 			if(resolved.is_err())
 				resolved.error().showAndExit();
 
@@ -137,7 +137,7 @@ namespace sap::tree
 		{
 			if(auto sep = input[i]->castToSeparator())
 			{
-				last_sep_was_space = sep->isSpace() || sep->isSentenceEnding();
+				last_sep_was_space = sep->hasWhitespace();
 				ret.push_back(std::move(input[i]));
 			}
 			else if(auto text = input[i]->castToText())
@@ -191,7 +191,7 @@ namespace sap::tree
 					if(auto span = obj->castToSpan())
 						return last_span_obj_is_space(span->objects());
 					else if(auto sep = obj->castToSeparator())
-						return sep->isSpace() || sep->isSentenceEnding();
+						return sep->hasWhitespace();
 					else
 						return false;
 				};

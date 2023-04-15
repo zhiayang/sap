@@ -52,7 +52,11 @@ namespace sap::layout
 		}
 		else
 		{
-			text->moveAbs(page->convertVector2(line_pos.pos.into()));
+			auto pos = line_pos.pos;
+			if(offset_from_prev != 0)
+				pos.x() += offset_from_prev;
+
+			text->moveAbs(page->convertVector2(pos.into()));
 		}
 
 		this->render_to_text(text);

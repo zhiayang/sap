@@ -20,9 +20,12 @@ namespace sap::interp
 		auto resolved = TRY(sap::paths::resolveLibrary(m_location, this->file_path));
 		if(auto dir = stdfs::path(resolved); stdfs::is_directory(dir))
 		{
-			auto lib_file = dir / "module.sap";
+			auto name = dir.stem();
+			name.replace_extension(".sap");
+
+			auto lib_file = dir / name;
 			if(not stdfs::exists(lib_file))
-				return ErrMsg(ts, "imported folder '{}' does not contain a 'module.sap' file", resolved);
+				return ErrMsg(ts, "imported folder '{}' does not contain a '{}' file", resolved, name.string());
 
 			resolved = lib_file.string();
 		}

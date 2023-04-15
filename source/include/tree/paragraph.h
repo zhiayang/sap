@@ -56,6 +56,8 @@ namespace sap::tree
 		bool isSentenceEnding() const { return m_kind == SENTENCE_END; }
 		bool isSpace() const { return m_kind == SPACE; }
 
+		bool hasWhitespace() const { return m_kind == SPACE || m_kind == SENTENCE_END; }
+
 		int hyphenationCost() const { return m_hyphenation_cost; }
 
 	private:
@@ -93,9 +95,9 @@ namespace sap::tree
 		    ScriptCall* script,
 		    bool allow_blocks) const;
 
-		virtual ErrorOr<LayoutResult>
-		create_layout_object_impl(interp::Interpreter* cs, const Style* parent_style, Size2d available_space)
-		    const override;
+		virtual ErrorOr<LayoutResult> create_layout_object_impl(interp::Interpreter* cs,
+		    const Style* parent_style,
+		    Size2d available_space) const override;
 
 	private:
 		std::vector<zst::SharedPtr<InlineObject>> m_contents {};

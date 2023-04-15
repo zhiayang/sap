@@ -181,7 +181,7 @@ namespace sap::layout
 					return calculatePreferredSeparatorWidth(sep, is_end_of_line, left_style, right_style);
 				}();
 
-				if(sep->isSpace() || sep->isSentenceEnding())
+				if(sep->hasWhitespace())
 					ret.total_space_width += pref_sep_width;
 				else
 					ret.total_word_width += pref_sep_width;
@@ -215,28 +215,62 @@ namespace sap::layout
 	    size_t& sep_idx,
 	    size_t& nested_span_idx,
 	    std::span<const zst::SharedPtr<tree::InlineObject>> objs,
-	    Length width,
+	    const Length _width,
 	    const Style* parent_style,
 	    Length& current_offset,
 	    const LineMetrics& metrics,
 	    bool is_last_line,
 	    bool is_last_span,
 	    std::optional<double> outer_space_width_factor,
-	    std::vector<std::unique_ptr<LayoutObject>>& layout_objects)
+	    std::vector<std::unique_ptr<LayoutObject>>& layout_objects,
+	    std::optional<LineAdjustment> line_adjustment)
 	{
-		const auto space_width_factor = outer_space_width_factor.value_or(
-		    (width - metrics.total_word_width).abs() / metrics.total_space_width);
+		const auto get_piece_offset_adjustment = [&line_adjustment](size_t idx) -> Length {
+			if(not line_adjustment.has_value())
+				return 0;
+
+			auto& adjs = line_adjustment->piece_adjustments;
+			if(auto it = adjs.find(idx); it != adjs.end())
+				return it->second;
+			else
+				return 0;
+		};
+
+		const auto line_width = _width;
+		const auto total_word_width = [&]() {
+			if(auto horz_align = parent_style->alignment();
+			    line_adjustment.has_value() && horz_align != Alignment::Centre)
+			{
+				auto left = (horz_align == Alignment::Right ? 0 : line_adjustment->left_protrusion);
+				auto right = (horz_align == Alignment::Left ? 0 : line_adjustment->right_protrusion);
+				return metrics.total_word_width - left - right;
+			}
+			else
+			{
+				return metrics.total_word_width;
+			}
+		}();
+
+		const auto space_width_factor = [&]() {
+			if(outer_space_width_factor.has_value())
+				return *outer_space_width_factor;
+
+			return (line_width - total_word_width).abs() / metrics.total_space_width;
+		}();
 
 		// for centred and right-aligned, we need to calculate the left offset.
 		if(not outer_space_width_factor.has_value()
 		    && (parent_style->alignment() == Alignment::Right || parent_style->alignment() == Alignment::Centre))
 		{
-			auto extra_space = width - (metrics.total_word_width + metrics.total_space_width);
+			auto extra_space = line_width - (total_word_width + metrics.total_space_width);
 			if(parent_style->alignment() == Alignment::Right)
 				current_offset += extra_space;
 			else
 				current_offset += extra_space / 2;
 		}
+
+		if(line_adjustment.has_value())
+			current_offset -= line_adjustment->left_protrusion;
 
 		/*
 		    to (try and) preserve the "structure" of the text, we create LayoutSpans for
@@ -303,12 +337,15 @@ namespace sap::layout
 			}
 		};
 
-		for(size_t i = 0; i < objs.size(); i++)
+		for(size_t obj_idx = 0; obj_idx < objs.size(); obj_idx++)
 		{
 			auto obj_width = metrics.widths[metrics_idx];
 
-			auto* obj = objs[i].get();
+			auto* obj = objs[obj_idx].get();
 			auto style = parent_style->extendWith(obj->style());
+
+			if(auto adj = get_piece_offset_adjustment(obj_idx); adj != 0)
+				current_offset += adj;
 
 			if(auto tree_word = obj->castToText())
 			{
@@ -352,10 +389,14 @@ namespace sap::layout
 					actual_sep_width = preferred_sep_width;
 				}
 
-				bool is_end_of_line = is_last_span && i + 1 == objs.size();
+				bool is_end_of_line = is_last_span && obj_idx + 1 == objs.size();
 
-				auto sep = std::make_unique<Word>(is_end_of_line ? tree_sep->endOfLine() : tree_sep->middleOfLine(),
-				    style->extendWith(tree_sep->style()), current_offset, tree_sep->raiseHeight(), sep_size);
+				auto sep = std::make_unique<Word>(                                     //
+				    is_end_of_line ? tree_sep->endOfLine() : tree_sep->middleOfLine(), //
+				    style->extendWith(tree_sep->style()),                              //
+				    current_offset,                                                    //
+				    tree_sep->raiseHeight(),                                           //
+				    sep_size);
 
 				tree_sep->setGeneratedLayoutObject(sep.get());
 				layout_objects.push_back(std::move(sep));
@@ -368,6 +409,10 @@ namespace sap::layout
 			}
 			else if(auto tree_span = obj->castToSpan())
 			{
+				/*
+				    note: for spans, do not propagate adjustments
+				    since they are line-broken as a single object
+				*/
 				if(tree_span->hasOverriddenWidth())
 				{
 					// make a copy, because we manually adjust current_offset
@@ -379,20 +424,22 @@ namespace sap::layout
 
 					make_layout_span(cur_ofs, obj_width, tree_span);
 
-					compute_word_offsets_for_span(                    //
-					    inner_metrics_idx,                            //
-					    inner_sep_idx,                                //
-					    inner_nested_span_idx,                        //
-					    tree_span->objects(),                         //
-					    obj_width,                                    //
-					    style,                                        //
-					    cur_ofs,                                      //
-					    metrics.nested_span_metrics[nested_span_idx], //
-					    is_last_line,                                 //
-					    /* is last span: */ i + 1 == objs.size(),     //
-					    /* outer_space_width_factor: */ std::nullopt, // let the inner span calculate the space width
-					                                                  // factor, since it's fixed width
-					    layout_objects);
+					compute_word_offsets_for_span(                      //
+					    inner_metrics_idx,                              //
+					    inner_sep_idx,                                  //
+					    inner_nested_span_idx,                          //
+					    tree_span->objects(),                           //
+					    obj_width,                                      //
+					    style,                                          //
+					    cur_ofs,                                        //
+					    metrics.nested_span_metrics[nested_span_idx],   //
+					    is_last_line,                                   //
+					    /* is last span: */ obj_idx + 1 == objs.size(), //
+					    /* outer_space_width_factor: */ std::nullopt,   // let the inner span calculate the space width
+					                                                    // factor, since it's fixed width
+					    layout_objects,                                 //
+					    std::nullopt                                    //
+					);
 
 					nested_span_idx += 1;
 
@@ -407,19 +454,21 @@ namespace sap::layout
 					auto old_ofs = current_offset;
 
 					// don't make a copy here
-					auto span_width = compute_word_offsets_for_span( //
-					    metrics_idx,                                 //
-					    sep_idx,                                     //
-					    nested_span_idx,                             //
-					    tree_span->objects(),                        //
-					    width - current_offset,                      //
-					    style,                                       //
-					    current_offset,                              //
-					    metrics,                                     //
-					    is_last_line,                                //
-					    /* is last span: */ i + 1 == objs.size(),    //
-					    space_width_factor,                          // propagate our space width factor
-					    layout_objects);
+					auto span_width = compute_word_offsets_for_span(    //
+					    metrics_idx,                                    //
+					    sep_idx,                                        //
+					    nested_span_idx,                                //
+					    tree_span->objects(),                           //
+					    line_width - current_offset,                    //
+					    style,                                          //
+					    current_offset,                                 //
+					    metrics,                                        //
+					    is_last_line,                                   //
+					    /* is last span: */ obj_idx + 1 == objs.size(), //
+					    space_width_factor,                             // propagate our space width factor
+					    layout_objects,                                 //
+					    std::nullopt                                    //
+					);
 
 					actual_width += span_width;
 					make_layout_span(old_ofs, span_width, tree_span);
@@ -453,7 +502,8 @@ namespace sap::layout
 	    const LineMetrics& line_metrics,
 	    Size2d available_space,
 	    bool is_first_line,
-	    bool is_last_line)
+	    bool is_last_line,
+	    std::optional<LineAdjustment> line_adjustment)
 	{
 		std::vector<std::unique_ptr<LayoutObject>> layout_objects {};
 
@@ -474,7 +524,8 @@ namespace sap::layout
 		    is_last_line,                                  //
 		    /* is last span: */ true,                      //
 		    /* outer_space_width_factor: */ std::nullopt,  //
-		    layout_objects);
+		    layout_objects,                                //
+		    line_adjustment);
 
 		auto layout_size = LayoutSize {
 			.width = actual_width,
@@ -508,7 +559,7 @@ namespace sap::layout
 				{
 					prev_word = PrevWord {
 						.pdf_text = util::make<pdf::Text>(),
-						.word_end = {},
+						.word_end = 0,
 					};
 				}
 

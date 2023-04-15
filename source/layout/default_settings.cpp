@@ -22,7 +22,7 @@ namespace sap::layout
 		return ret;
 	}
 
-	static constexpr double DEFAULT_FONT_SIZE_PT = 11;
+	static constexpr auto DEFAULT_FONT_SIZE_PT = 11_pt;
 	static constexpr double DEFAULT_LINE_SPACING = 1.0;
 	static constexpr double DEFAULT_SENTENCE_SPACE_STRETCH = 1.5;
 
@@ -30,14 +30,14 @@ namespace sap::layout
 	{
 		auto default_style = util::make<sap::Style>();
 
-		auto font_size = pdf::PdfScalar(DEFAULT_FONT_SIZE_PT).into();
+		auto font_size = DEFAULT_FONT_SIZE_PT;
 		default_style->set_font_family(get_default_font_family(cs))
 		    .set_font_style(sap::FontStyle::Regular)
-		    .set_font_size(font_size)
-		    .set_root_font_size(font_size)
+		    .set_font_size(font_size.into())
+		    .set_root_font_size(font_size.into())
 		    .set_line_spacing(DEFAULT_LINE_SPACING)
 		    .set_sentence_space_stretch(DEFAULT_SENTENCE_SPACE_STRETCH)
-		    .set_paragraph_spacing(Length(0))
+		    .set_paragraph_spacing(0_mm)
 		    .set_alignment(Alignment::Justified)
 		    .enable_smart_quotes(true);
 
@@ -46,20 +46,17 @@ namespace sap::layout
 
 	DocumentSettings fillDefaultSettings(interp::Interpreter* cs, DocumentSettings settings)
 	{
-		auto pt = [](auto x) { return Length(x); };
-		auto mm = [](auto x) { return DynLength(x, DynLength::MM); };
-
 		using Margins = DocumentSettings::Margins;
 
-		settings.font_size = settings.font_size.value_or(DynLength(DEFAULT_FONT_SIZE_PT, DynLength::PT));
-		settings.paper_size = settings.paper_size.value_or(DynLength2d { mm(210), mm(297) });
+		settings.font_size = settings.font_size.value_or(DynLength(DEFAULT_FONT_SIZE_PT));
+		settings.paper_size = settings.paper_size.value_or(DynLength2d { DynLength(210_mm), DynLength(297_mm) });
 		settings.line_spacing = settings.line_spacing.value_or(DEFAULT_LINE_SPACING);
 		settings.sentence_space_stretch = settings.sentence_space_stretch.value_or(DEFAULT_SENTENCE_SPACE_STRETCH);
 		settings.paragraph_spacing = settings.paragraph_spacing.value_or(DynLength(0, DynLength::MM));
 
 		constexpr auto FONT_SZ = DEFAULT_FONT_SIZE_PT;
-		auto paper_width = settings.paper_size->x.resolveWithoutFont(pt(FONT_SZ), pt(FONT_SZ));
-		auto paper_height = settings.paper_size->y.resolveWithoutFont(pt(FONT_SZ), pt(FONT_SZ));
+		auto paper_width = settings.paper_size->x.resolveWithoutFont(FONT_SZ, FONT_SZ);
+		auto paper_height = settings.paper_size->y.resolveWithoutFont(FONT_SZ, FONT_SZ);
 
 		if(settings.margins.has_value())
 		{
@@ -128,10 +125,5 @@ namespace sap::layout
 
 namespace sap
 {
-	static Length pt(double x)
-	{
-		return sap::Length(25.4 * (x / 72.0));
-	}
-
-	Length DocumentSettings::DEFAULT_FONT_SIZE = pt(layout::DEFAULT_FONT_SIZE_PT);
+	Length DocumentSettings::DEFAULT_FONT_SIZE = layout::DEFAULT_FONT_SIZE_PT;
 }

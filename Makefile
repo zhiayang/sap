@@ -128,7 +128,7 @@ $(OUTPUT_BIN): $(PRECOMP_OBJ) $(CXXOBJ) $(UTF8PROC_OBJS) $(LIBDEFLATE_OBJS)
 	@mkdir -p $(shell dirname $@)
 	@$(CXX) $(CXXFLAGS) $(WARNINGS) $(DEFINES) $(LDFLAGS) $(LINKER_OPT_FLAGS) -Iexternal -o $@ $^
 
-$(TEST_DIR)/%: $(OUTPUT_DIR)/test/%.cpp.o $(CXXLIBOBJ) $(UTF8PROC_OBJS) $(PRECOMP_OBJ)
+$(TEST_DIR)/%: $(OUTPUT_DIR)/test/%.cpp.o $(CXXLIBOBJ) $(UTF8PROC_OBJS) $(PRECOMP_OBJ) $(LIBDEFLATE_OBJS)
 	@echo "  $(notdir $@)"
 	@mkdir -p $(shell dirname $@)
 	@$(CXX) $(CXXFLAGS) $(NONGCH_CXXFLAGS) $(WARNINGS) $(DEFINES) $(LDFLAGS) -Iexternal -o $@ $^
