@@ -222,7 +222,7 @@ namespace sap::tree
 		virtual ErrorOr<LayoutResult>
 		create_layout_object_impl(interp::Interpreter* cs, const Style* parent_style, Size2d available_space) const = 0;
 
-	private:
+	protected:
 		std::optional<Length> m_override_width {};
 		std::optional<Length> m_override_height {};
 		std::optional<Size2d> m_rel_position_offset {};

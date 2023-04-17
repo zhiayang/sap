@@ -128,7 +128,7 @@ namespace sap::layout::linebreak
 				if(space_diff < 0)
 				{
 					space_diff = space_diff.abs();
-					cost_mult = 1.2;
+					cost_mult = 1.05;
 				}
 
 				if(auto sep = wordorsep->castToSeparator())
@@ -143,18 +143,54 @@ namespace sap::layout::linebreak
 						auto tmp = std::max((double) neighbour_line.numSpaces() - 1, 0.5);
 						auto avg_space_width = neighbour_line.totalSpaceWidth().mm() / tmp;
 
-						cost += 0.25 * (1 + sep->hyphenationCost()) * (avg_space_width * avg_space_width);
-
 						double extra_space_size = space_diff.mm() / tmp;
 						cost += 3 * extra_space_size * extra_space_size;
+						cost += 0.25 * (1 + sep->hyphenationCost()) * (avg_space_width * avg_space_width);
 
-						// TODO: adjust hyphenation here.
+						// add a large cost for doing shit like e-ducational
+						auto last_it = neighbour_broken_until - 2;
+						auto& last_item = *last_it;
+						if(auto txt = last_item->castToText())
+						{
+							assert(not txt->contents().empty());
+							auto frag = neighbour_line.lastWordFragment();
+							cost += pow(2, 1.0 / static_cast<double>(frag.size()));
+						}
+
+						// TODO: adjust hyphenation protrusion here
+						if(sep->isHyphenationPoint())
+						{
+							assert(not sep->endOfLine().empty());
+
+							auto sty = m_parent_style->extendWith(sep->style());
+							if(auto p = m_interp->getMicrotypeProtrusionFor(sep->endOfLine()[0], sty))
+							{
+								auto w = sty->font()->getWordSize(sep->endOfLine(), sty->font_size().into()).x();
+								neighbour_line.setRightProtrusion((p->right * w).into());
+							}
+						}
+						else
+						{
+							assert(sep->isExplicitBreakPoint());
+							if(auto txt = last_item->castToText())
+							{
+								assert(not txt->contents().empty());
+								auto frag = neighbour_line.lastWordFragment();
+								auto sty = m_parent_style->extendWith(txt->style());
+
+								if(auto p = m_interp->getMicrotypeProtrusionFor(frag.back(), sty))
+								{
+									auto w = sty->font()->getWordSize(frag.take_last(1), sty->font_size().into()).x();
+									neighbour_line.setRightProtrusion((p->right * w).into());
+								}
+							}
+						}
 					}
 					else if(sep->hasWhitespace())
 					{
 						auto tmp = std::max((double) neighbour_line.numSpaces(), 0.5);
 						double extra_space_size = space_diff.mm() / tmp;
-						cost += 2.99 * extra_space_size * extra_space_size;
+						cost += 5 * extra_space_size * extra_space_size;
 
 						// see if we can adjust the right side of the line.
 						// note that *neighbour_broken_until is now *TWO* guys

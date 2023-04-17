@@ -258,17 +258,6 @@ namespace sap::layout
 			return (line_width - total_word_width).abs() / metrics.total_space_width;
 		}();
 
-		// for centred and right-aligned, we need to calculate the left offset.
-		if(not outer_space_width_factor.has_value()
-		    && (parent_style->alignment() == Alignment::Right || parent_style->alignment() == Alignment::Centre))
-		{
-			auto extra_space = line_width - (total_word_width + metrics.total_space_width);
-			if(parent_style->alignment() == Alignment::Right)
-				current_offset += extra_space;
-			else
-				current_offset += extra_space / 2;
-		}
-
 		if(line_adjustment.has_value())
 			current_offset -= line_adjustment->left_protrusion;
 
@@ -381,25 +370,25 @@ namespace sap::layout
 				Length actual_sep_width = 0;
 
 				if(style->alignment() == Alignment::Justified && (not is_last_line || space_width_factor <= 1.1))
-				{
 					actual_sep_width = preferred_sep_width * space_width_factor;
-				}
 				else
-				{
 					actual_sep_width = preferred_sep_width;
-				}
 
 				bool is_end_of_line = is_last_span && obj_idx + 1 == objs.size();
 
-				auto sep = std::make_unique<Word>(                                     //
-				    is_end_of_line ? tree_sep->endOfLine() : tree_sep->middleOfLine(), //
-				    style->extendWith(tree_sep->style()),                              //
-				    current_offset,                                                    //
-				    tree_sep->raiseHeight(),                                           //
-				    sep_size);
+				auto sep_str = is_end_of_line ? tree_sep->endOfLine() : tree_sep->middleOfLine();
+				if(not sep_str.empty())
+				{
+					auto sep = std::make_unique<Word>(        //
+					    sep_str,                              //
+					    style->extendWith(tree_sep->style()), //
+					    current_offset,                       //
+					    tree_sep->raiseHeight(),              //
+					    sep_size);
 
-				tree_sep->setGeneratedLayoutObject(sep.get());
-				layout_objects.push_back(std::move(sep));
+					tree_sep->setGeneratedLayoutObject(sep.get());
+					layout_objects.push_back(std::move(sep));
+				}
 
 				add_to_layout_span(obj, actual_sep_width);
 
@@ -549,7 +538,6 @@ namespace sap::layout
 		std::optional<PrevWord> prev_word {};
 
 		auto line_pos = this->resolveAbsPosition(layout);
-
 		for(auto& obj : m_objects)
 		{
 			if(auto word = dynamic_cast<const Word*>(obj.get()))

@@ -19,7 +19,14 @@ namespace sap::tree
 	    const Style* parent_style,
 	    Size2d available_space) const
 	{
+		if(m_override_width.has_value())
+			available_space.x() = *m_override_width;
+
+		if(m_override_height.has_value())
+			available_space.y() = *m_override_height;
+
 		auto result = TRY(this->create_layout_object_impl(cs, parent_style, available_space));
+
 		if(result.object.has_value())
 		{
 			auto& obj = *result.object;

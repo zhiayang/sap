@@ -63,6 +63,7 @@ namespace sap::layout::linebreak
 
 	public:
 		Length totalSpaceWidth() const { return m_total_space_width; }
+		zst::wstr_view lastWordFragment() const { return m_last_word; }
 
 		Length width()
 		{
