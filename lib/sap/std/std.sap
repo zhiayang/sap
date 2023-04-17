@@ -417,7 +417,7 @@ namespace std
 	@finalise {
 		var i = 0;
 		var k = 0;
-		while(i < g_saved_sections.size())
+		while(k < g_toc_lines.size() && i < g_saved_sections.size())
 		{
 			let s = &g_saved_sections[i];
 			let dest = s!.num_tbo_ref;
@@ -427,7 +427,7 @@ namespace std
 			toc_line!.link_to(dest);
 
 			var si = 0;
-			while(si < s!.subsections.size())
+			while(k < g_toc_lines.size() && si < s!.subsections.size())
 			{
 				let ss = &s!.subsections[si];
 				let dest = s!.subsections[si].num_tbo_ref;
@@ -437,7 +437,7 @@ namespace std
 				toc_line!.link_to(dest);
 
 				var ssi = 0;
-				while(ssi < ss!.subsubsections.size())
+				while(k < g_toc_lines.size() && ssi < ss!.subsubsections.size())
 				{
 					let sss = &ss!.subsubsections[ssi];
 					let dest = ss!.subsubsections[ssi].num_tbo_ref;

@@ -86,8 +86,6 @@ namespace sap::layout::linebreak
 						// protrusion is defined as proportion of the glyph width.
 						// so, we must calculate that.
 						auto glyph_width = sty->font()->getWordSize(sv.take(1), sty->font_size().into()).x();
-						zpr::println("width('{}') = {}", (char) sv[0], sap::Length(glyph_width.into()));
-
 						left_protrusion = (p->left * glyph_width).into();
 					}
 				}

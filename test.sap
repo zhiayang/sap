@@ -56,6 +56,8 @@ pains/things to fix:
 	})
 );
 
+\std::section("asdf");
+
 WUS currently has a gap in its operating systems courses, between the introductory CS2106
 wnd the advanced, graduate-level (CS5250). In this project, we significantly overhaul an
 educational OS, Stanford's \pintos(), to make it more suitable for use in NUS. We
