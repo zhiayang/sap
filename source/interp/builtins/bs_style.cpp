@@ -63,46 +63,46 @@ namespace sap::interp::builtin
 		);
 	}
 
-	Value builtin::BS_Style::make(Evaluator* ev, const Style* style)
+	Value builtin::BS_Style::make(Evaluator* ev, const Style& style)
 	{
 		return StructMaker(BS_Style::type->toStruct()) //
-		    .set("font_family", BS_FontFamily::make(ev, style->font_family()))
-		    .set("font_size", Value::length(DynLength(style->font_size())))
-		    .set("line_spacing", Value::floating(style->line_spacing()))
-		    .set("sentence_space_stretch", Value::floating(style->sentence_space_stretch()))
-		    .set("paragraph_spacing", Value::length(DynLength(style->paragraph_spacing())))
+		    .set("font_family", BS_FontFamily::make(ev, style.font_family()))
+		    .set("font_size", Value::length(DynLength(style.font_size())))
+		    .set("line_spacing", Value::floating(style.line_spacing()))
+		    .set("sentence_space_stretch", Value::floating(style.sentence_space_stretch()))
+		    .set("paragraph_spacing", Value::length(DynLength(style.paragraph_spacing())))
 		    .set("alignment",
 		        Value::enumerator(BE_Alignment::type->toEnum(),
-		            Value::integer(static_cast<int64_t>(style->alignment()))))
-		    .set("enable_smart_quotes", Value::boolean(style->smart_quotes_enabled()))
+		            Value::integer(static_cast<int64_t>(style.horz_alignment()))))
+		    .set("enable_smart_quotes", Value::boolean(style.smart_quotes_enabled()))
 		    .make();
 	}
 
 
 
-	ErrorOr<const Style*> builtin::BS_Style::unmake(Evaluator* ev, const Value& value)
+	ErrorOr<Style> builtin::BS_Style::unmake(Evaluator* ev, const Value& value)
 	{
 		auto cur_style = ev->currentStyle();
-		auto style = util::make<Style>();
+		Style style {};
 
 		auto resolve_length_field = [&cur_style](const Value& str, zst::str_view field_name) -> std::optional<Length> {
 			if(auto x = get_optional_struct_field<DynLength>(str, field_name, &Value::getLength); x.has_value())
-				return x->resolve(cur_style->font(), cur_style->font_size(), cur_style->root_font_size());
+				return x->resolve(cur_style.font(), cur_style.font_size(), cur_style.root_font_size());
 
 			return std::nullopt;
 		};
 
-		style->set_font_size(resolve_length_field(value, "font_size"));
-		style->set_line_spacing(get_optional_struct_field<double>(value, "line_spacing"));
-		style->set_sentence_space_stretch(get_optional_struct_field<double>(value, "sentence_space_stretch"));
-		style->set_alignment(get_optional_enumerator_field<Alignment>(value, "alignment"));
+		style.set_font_size(resolve_length_field(value, "font_size"));
+		style.set_line_spacing(get_optional_struct_field<double>(value, "line_spacing"));
+		style.set_sentence_space_stretch(get_optional_struct_field<double>(value, "sentence_space_stretch"));
+		style.set_alignment(get_optional_enumerator_field<Alignment>(value, "alignment"));
 
-		style->set_paragraph_spacing(resolve_length_field(value, "paragraph_spacing"));
-		style->enable_smart_quotes(get_optional_struct_field<bool>(value, "enable_smart_quotes"));
+		style.set_paragraph_spacing(resolve_length_field(value, "paragraph_spacing"));
+		style.enable_smart_quotes(get_optional_struct_field<bool>(value, "enable_smart_quotes"));
 
 		if(auto& x = value.getStructField("font_family"); x.haveOptionalValue())
-			style->set_font_family(TRY(BS_FontFamily::unmake(ev, **x.getOptional())));
+			style.set_font_family(TRY(BS_FontFamily::unmake(ev, **x.getOptional())));
 
-		return Ok(style);
+		return Ok(std::move(style));
 	}
 }

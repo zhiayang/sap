@@ -18,10 +18,10 @@ namespace sap::layout::linebreak
 {
 	struct BrokenLine
 	{
-		explicit BrokenLine(const Style* parent_style) : m_parent_style(parent_style) { }
+		explicit BrokenLine(const Style& parent_style) : m_parent_style(parent_style) { }
 
 	private:
-		const Style* m_parent_style;
+		Style m_parent_style;
 
 		enum
 		{
@@ -38,7 +38,7 @@ namespace sap::layout::linebreak
 		const tree::Separator* m_last_sep = nullptr;
 		const tree::InlineSpan* m_last_span = nullptr;
 
-		const Style* m_current_style = Style::empty();
+		Style m_current_style = Style::empty();
 
 		util::hashmap<size_t, Length> m_adjustments {};
 
@@ -49,9 +49,9 @@ namespace sap::layout::linebreak
 		size_t m_num_parts = 0;
 
 		// Helper functions
-		static Size2d calc_word_size(zst::wstr_view text, const Style* style)
+		static Size2d calc_word_size(zst::wstr_view text, const Style& style)
 		{
-			return style->font()->getWordSize(text, style->font_size().into()).into();
+			return style.font()->getWordSize(text, style.font_size().into()).into();
 		}
 
 		static Size2d calc_span_size(const tree::InlineSpan* span)
@@ -67,7 +67,7 @@ namespace sap::layout::linebreak
 
 		Length width()
 		{
-			auto last_word_style = m_parent_style->extendWith(m_current_style);
+			auto last_word_style = m_parent_style.extendWith(m_current_style);
 			if(m_last_sep != nullptr)
 			{
 				m_last_word += m_last_sep->endOfLine().sv();
@@ -139,7 +139,7 @@ namespace sap::layout::linebreak
 				sap::internal_error("unsupported: {}", typeid(*obj).name());
 		}
 
-		Size2d get_size_of_last_thing(const Style* style)
+		Size2d get_size_of_last_thing(const Style& style)
 		{
 			if(m_last_obj_kind == WORD)
 				return calc_word_size(m_last_word, style);
@@ -170,9 +170,9 @@ namespace sap::layout::linebreak
 
 		void add_word(const tree::Text* word)
 		{
-			auto word_style = m_parent_style->extendWith(word->style());
+			auto word_style = m_parent_style.extendWith(word->style());
 
-			auto lh = calc_word_size(word->contents(), word_style).y() * word_style->line_spacing();
+			auto lh = calc_word_size(word->contents(), word_style).y() * word_style.line_spacing();
 			m_line_height = std::max(m_line_height, lh);
 
 			if(bool replace_last_word = this->add_span_or_word(word->style()))
@@ -183,10 +183,10 @@ namespace sap::layout::linebreak
 			m_last_obj_kind = WORD;
 		}
 
-		bool add_span_or_word(const Style* style)
+		bool add_span_or_word(const Style& style)
 		{
-			auto prev_word_style = m_parent_style->extendWith(m_current_style);
-			auto word_style = m_parent_style->extendWith(style);
+			auto prev_word_style = m_parent_style.extendWith(m_current_style);
+			auto word_style = m_parent_style.extendWith(style);
 
 			bool replace_last_word = false;
 			if(m_last_sep != nullptr && m_last_sep->hasWhitespace())
@@ -196,7 +196,7 @@ namespace sap::layout::linebreak
 				m_line_width_excluding_last_word += get_size_of_last_thing(prev_word_style).x();
 				replace_last_word = true;
 			}
-			else if(m_last_span != nullptr || (m_current_style != nullptr && m_current_style != style))
+			else if(m_last_span != nullptr || m_current_style != style)
 			{
 				m_line_width_excluding_last_word += get_size_of_last_thing(prev_word_style).x();
 				replace_last_word = true;
@@ -227,7 +227,7 @@ namespace sap::layout::linebreak
 	};
 
 	std::vector<BrokenLine> breakLines(interp::Interpreter* cs,
-	    const Style* parent_style,
+	    const Style& parent_style,
 	    const std::vector<zst::SharedPtr<tree::InlineObject>>& contents,
 	    Length preferred_line_length);
 }

@@ -62,7 +62,7 @@ namespace sap::interp
 		tree::BlockObject* addAbsolutelyPositionedBlockObject(zst::SharedPtr<tree::BlockObject> tbo);
 
 		void addMicrotypeConfig(config::MicrotypeConfig config);
-		std::optional<CharacterProtrusion> getMicrotypeProtrusionFor(char32_t ch, const Style* style) const;
+		std::optional<CharacterProtrusion> getMicrotypeProtrusionFor(char32_t ch, const Style& style) const;
 
 	private:
 		std::unique_ptr<Typechecker> m_typechecker;

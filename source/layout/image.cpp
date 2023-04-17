@@ -11,8 +11,8 @@
 
 namespace sap::layout
 {
-	Image::Image(const Style* style, LayoutSize size, ImageBitmap image)
-		: LayoutObject(style, size), m_image(std::move(image))
+	Image::Image(const Style& style, LayoutSize size, ImageBitmap image)
+	    : LayoutObject(style, size), m_image(std::move(image))
 	{
 	}
 
@@ -35,9 +35,9 @@ namespace sap::layout
 		auto pdf_size = pdf::Size2d(m_layout_size.width.into(), m_layout_size.total_height().into());
 
 		auto page_obj = util::make<pdf::Image>( //
-			m_image,                            //
-			pdf_size,                           //
-			page->convertVector2(pos.pos.into<pdf::Position2d_YDown>()));
+		    m_image,                            //
+		    pdf_size,                           //
+		    page->convertVector2(pos.pos.into<pdf::Position2d_YDown>()));
 
 		page->addObject(page_obj);
 	}
@@ -51,8 +51,8 @@ namespace sap::tree
 		return Ok();
 	}
 
-	auto Image::create_layout_object_impl(interp::Interpreter* cs, const Style* parent_style, Size2d available_space)
-		const -> ErrorOr<LayoutResult>
+	auto Image::create_layout_object_impl(interp::Interpreter* cs, const Style& parent_style, Size2d available_space)
+	    const -> ErrorOr<LayoutResult>
 	{
 		// images are always fixed size, and don't care about the available space.
 		// (for now, at least...)

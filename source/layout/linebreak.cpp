@@ -66,7 +66,7 @@ namespace sap::layout::linebreak
 		std::vector<std::pair<LineBreakNode, Distance>> neighbours()
 		{
 			auto neighbour_broken_until = m_broken_until;
-			auto neighbour_line = BrokenLine(m_parent_style);
+			auto neighbour_line = BrokenLine(m_parent_style ? *m_parent_style : Style::empty());
 			std::vector<std::pair<LineBreakNode, Distance>> ret;
 
 			// adjust left-side protrusion once per line
@@ -85,7 +85,7 @@ namespace sap::layout::linebreak
 					{
 						// protrusion is defined as proportion of the glyph width.
 						// so, we must calculate that.
-						auto glyph_width = sty->font()->getWordSize(sv.take(1), sty->font_size().into()).x();
+						auto glyph_width = sty.font()->getWordSize(sv.take(1), sty.font_size().into()).x();
 						left_protrusion = (p->left * glyph_width).into();
 					}
 				}
@@ -165,7 +165,7 @@ namespace sap::layout::linebreak
 							auto sty = m_parent_style->extendWith(sep->style());
 							if(auto p = m_interp->getMicrotypeProtrusionFor(sep->endOfLine()[0], sty))
 							{
-								auto w = sty->font()->getWordSize(sep->endOfLine(), sty->font_size().into()).x();
+								auto w = sty.font()->getWordSize(sep->endOfLine(), sty.font_size().into()).x();
 								neighbour_line.setRightProtrusion((p->right * w).into());
 							}
 						}
@@ -180,7 +180,7 @@ namespace sap::layout::linebreak
 
 								if(auto p = m_interp->getMicrotypeProtrusionFor(frag.back(), sty))
 								{
-									auto w = sty->font()->getWordSize(frag.take_last(1), sty->font_size().into()).x();
+									auto w = sty.font()->getWordSize(frag.take_last(1), sty.font_size().into()).x();
 									neighbour_line.setRightProtrusion((p->right * w).into());
 								}
 							}
@@ -207,7 +207,7 @@ namespace sap::layout::linebreak
 							auto sty = m_parent_style->extendWith(txt->style());
 							if(auto p = m_interp->getMicrotypeProtrusionFor(sv.back(), sty))
 							{
-								auto w = sty->font()->getWordSize(sv.take_last(1), sty->font_size().into()).x();
+								auto w = sty.font()->getWordSize(sv.take_last(1), sty.font_size().into()).x();
 								neighbour_line.setRightProtrusion((p->right * w).into());
 							}
 						}
@@ -230,7 +230,7 @@ namespace sap::layout::linebreak
 
 
 	std::vector<BrokenLine> breakLines(interp::Interpreter* cs,
-	    const Style* parent_style,
+	    const Style& parent_style,
 	    const InlineObjVec& contents,
 	    Length preferred_line_length)
 	{
@@ -238,7 +238,7 @@ namespace sap::layout::linebreak
 		    LineBreakNode {
 		        .m_interp = cs,
 		        .m_contents = &contents,
-		        .m_parent_style = parent_style,
+		        .m_parent_style = &parent_style,
 		        .m_preferred_line_length = preferred_line_length,
 		        .m_broken_until = contents.begin(),
 		        .m_end = contents.end(),

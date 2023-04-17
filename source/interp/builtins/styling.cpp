@@ -29,13 +29,13 @@ namespace sap::interp::builtin
 		return style;
 	}();
 
-	static ErrorOr<EvalResult> do_apply_style(Evaluator* ev, Value& value, const Style* style)
+	static ErrorOr<EvalResult> do_apply_style(Evaluator* ev, Value& value, const Style& style)
 	{
 		if(value.isTreeInlineObj())
 		{
 			auto& tios = value.getTreeInlineObj();
 			for(auto& obj : tios.objects())
-				obj->setStyle(obj->style()->extendWith(style));
+				obj->setStyle(obj->style().extendWith(style));
 
 			return EvalResult::ofValue(std::move(value));
 		}
@@ -80,21 +80,21 @@ namespace sap::interp::builtin
 	{
 		// TODO: maybe don't assert?
 		assert(args.size() == 1);
-		return do_apply_style(ev, args[0], &g_bold_style);
+		return do_apply_style(ev, args[0], g_bold_style);
 	}
 
 	ErrorOr<EvalResult> italic1(Evaluator* ev, std::vector<Value>& args)
 	{
 		// TODO: maybe don't assert?
 		assert(args.size() == 1);
-		return do_apply_style(ev, args[0], &g_italic_style);
+		return do_apply_style(ev, args[0], g_italic_style);
 	}
 
 	ErrorOr<EvalResult> bold_italic1(Evaluator* ev, std::vector<Value>& args)
 	{
 		// TODO: maybe don't assert?
 		assert(args.size() == 1);
-		return do_apply_style(ev, args[0], &g_bold_italic_style);
+		return do_apply_style(ev, args[0], g_bold_italic_style);
 	}
 
 

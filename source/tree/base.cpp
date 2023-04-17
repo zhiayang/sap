@@ -16,7 +16,7 @@ namespace sap::tree
 {
 	ErrorOr<LayoutResult> BlockObject::createLayoutObject( //
 	    interp::Interpreter* cs,                           //
-	    const Style* parent_style,
+	    const Style& parent_style,
 	    Size2d available_space) const
 	{
 		if(m_override_width.has_value())

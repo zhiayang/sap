@@ -15,7 +15,7 @@ namespace sap::tree
 	{
 	}
 
-	auto ScriptCall::evaluate_script(interp::Interpreter* cs, const Style* style, Size2d available_space) const
+	auto ScriptCall::evaluate_script(interp::Interpreter* cs, const Style& style, Size2d available_space) const
 	    -> ErrorOr<std::optional<ScriptEvalResult>>
 	{
 		TRY(this->call->typecheck(&cs->typechecker()));
@@ -112,7 +112,7 @@ namespace sap::tree
 	}
 
 	auto ScriptCall::create_layout_object_impl(interp::Interpreter* cs,
-	    const Style* parent_style,
+	    const Style& parent_style,
 	    Size2d available_space) const -> ErrorOr<LayoutResult>
 	{
 		auto obj = TRY(this->evaluate_script(cs, parent_style, available_space));
@@ -142,7 +142,7 @@ namespace sap::tree
 	}
 
 	auto ScriptBlock::create_layout_object_impl(interp::Interpreter* cs,
-	    const Style* parent_style,
+	    const Style& parent_style,
 	    Size2d available_space) const -> ErrorOr<LayoutResult>
 	{
 		TRY(this->evaluateScripts(cs));

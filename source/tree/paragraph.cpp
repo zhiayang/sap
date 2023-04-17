@@ -102,7 +102,7 @@ namespace sap::tree
 	{
 	}
 
-	Text::Text(std::u32string text, const Style* style) : InlineObject(Kind::Text), m_contents(std::move(text))
+	Text::Text(std::u32string text, const Style& style) : InlineObject(Kind::Text), m_contents(std::move(text))
 	{
 		this->setStyle(style);
 	}

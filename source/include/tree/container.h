@@ -31,8 +31,8 @@ namespace sap::tree
 
 	private:
 		virtual ErrorOr<LayoutResult> create_layout_object_impl(interp::Interpreter* cs,
-			const Style* parent_style,
-			Size2d available_space) const override;
+		    const Style& parent_style,
+		    Size2d available_space) const override;
 
 	private:
 		bool m_glued;

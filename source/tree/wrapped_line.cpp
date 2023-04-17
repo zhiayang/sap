@@ -27,11 +27,11 @@ namespace sap::tree
 	}
 
 	auto WrappedLine::create_layout_object_impl(interp::Interpreter* cs, //
-	    const Style* parent_style,
+	    const Style& parent_style,
 	    Size2d available_space) const -> ErrorOr<LayoutResult>
 	{
 		auto _ = cs->evaluator().pushBlockContext(this);
-		auto cur_style = m_style->useDefaultsFrom(parent_style)->useDefaultsFrom(cs->evaluator().currentStyle());
+		auto cur_style = m_style.useDefaultsFrom(parent_style).useDefaultsFrom(cs->evaluator().currentStyle());
 
 		auto objs = TRY(tree::processWordSeparators(m_objects));
 		objs = TRY(tree::performReplacements(cur_style, std::move(objs)));

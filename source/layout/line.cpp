@@ -21,15 +21,15 @@ namespace sap::layout
 		Length cap_height;
 	};
 
-	static WordSize calculate_word_size(zst::wstr_view text, const Style* style)
+	static WordSize calculate_word_size(zst::wstr_view text, const Style& style)
 	{
-		auto x = style->font()->getWordSize(text, style->font_size().into()).x();
+		auto x = style.font()->getWordSize(text, style.font_size().into()).x();
 
-		auto& fm = style->font()->getFontMetrics();
-		auto asc = style->font()->scaleMetricForFontSize(fm.hhea_ascent, style->font_size().into()).abs();
-		auto dsc = style->font()->scaleMetricForFontSize(fm.hhea_descent, style->font_size().into()).abs();
-		auto dls = style->font()->scaleMetricForFontSize(fm.default_line_spacing, style->font_size().into());
-		auto ch = style->font()->scaleMetricForFontSize(fm.cap_height, style->font_size().into());
+		auto& fm = style.font()->getFontMetrics();
+		auto asc = style.font()->scaleMetricForFontSize(fm.hhea_ascent, style.font_size().into()).abs();
+		auto dsc = style.font()->scaleMetricForFontSize(fm.hhea_descent, style.font_size().into()).abs();
+		auto dls = style.font()->scaleMetricForFontSize(fm.default_line_spacing, style.font_size().into());
+		auto ch = style.font()->scaleMetricForFontSize(fm.cap_height, style.font_size().into());
 
 		return {
 			.width = x.into(),
@@ -40,20 +40,20 @@ namespace sap::layout
 		};
 	}
 
-	static Length calculate_preferred_sep_width(const tree::Separator* sep, const Style* style, bool is_end_of_line)
+	static Length calculate_preferred_sep_width(const tree::Separator* sep, const Style& style, bool is_end_of_line)
 	{
-		double multiplier = sep->isSentenceEnding() ? style->sentence_space_stretch() : 1.0;
+		double multiplier = sep->isSentenceEnding() ? style.sentence_space_stretch() : 1.0;
 
 		auto sep_str = is_end_of_line ? sep->endOfLine() : sep->middleOfLine();
-		auto ret = style->font()->getWordSize(sep_str, style->font_size().into()).x();
+		auto ret = style.font()->getWordSize(sep_str, style.font_size().into()).x();
 
 		return (ret * multiplier).into();
 	}
 
 	Length calculatePreferredSeparatorWidth(const tree::Separator* sep,
 	    bool is_end_of_line,
-	    const Style* left_style,
-	    const Style* right_style)
+	    const Style& left_style,
+	    const Style& right_style)
 	{
 		auto a = calculate_preferred_sep_width(sep, left_style, is_end_of_line);
 		auto b = calculate_preferred_sep_width(sep, right_style, is_end_of_line);
@@ -61,13 +61,13 @@ namespace sap::layout
 		return (a + b) / 2.0;
 	}
 
-	static Length calculateRealSeparatorWidth(const tree::Separator* sep, const Style* style, bool is_end_of_line)
+	static Length calculateRealSeparatorWidth(const tree::Separator* sep, const Style& style, bool is_end_of_line)
 	{
 		auto sep_str = is_end_of_line ? sep->endOfLine() : sep->middleOfLine();
-		return style->font()->getWordSize(sep_str, style->font_size().into()).x().into();
+		return style.font()->getWordSize(sep_str, style.font_size().into()).x().into();
 	}
 
-	LineMetrics computeLineMetrics(std::span<const zst::SharedPtr<tree::InlineObject>> objs, const Style* parent_style)
+	LineMetrics computeLineMetrics(std::span<const zst::SharedPtr<tree::InlineObject>> objs, const Style& parent_style)
 	{
 		LineMetrics ret {};
 
@@ -75,7 +75,7 @@ namespace sap::layout
 		{
 			Length width = 0;
 			std::u32string text;
-			const Style* style = nullptr;
+			Style style;
 		};
 
 		WordChunk word_chunk {};
@@ -84,7 +84,7 @@ namespace sap::layout
 		auto reset_chunk = [&]() {
 			ret.total_word_width += word_chunk.width;
 
-			word_chunk.style = nullptr;
+			word_chunk.style = Style {};
 			word_chunk.width = 0;
 			word_chunk.text.clear();
 		};
@@ -93,7 +93,7 @@ namespace sap::layout
 		{
 			if(auto word = (*it)->castToText())
 			{
-				auto style = parent_style->extendWith(word->style());
+				auto style = parent_style.extendWith(word->style());
 				if(it != cur_chunk_begin && word_chunk.style != style)
 				{
 					reset_chunk();
@@ -113,14 +113,14 @@ namespace sap::layout
 				ret.descent_height = std::max(ret.descent_height, word_size.descent);
 
 				ret.default_line_spacing = std::max(ret.default_line_spacing,
-				    word_size.default_line_spacing * style->line_spacing());
+				    word_size.default_line_spacing * style.line_spacing());
 			}
 			else if(auto span = (*it)->castToSpan())
 			{
 				reset_chunk();
 				cur_chunk_begin = it + 1;
 
-				auto style = parent_style->extendWith(span->style());
+				auto style = parent_style.extendWith(span->style());
 				auto span_metrics = computeLineMetrics(span->objects(), style);
 
 				ret.cap_height = std::max(ret.cap_height, span_metrics.cap_height);
@@ -158,7 +158,7 @@ namespace sap::layout
 
 				bool is_end_of_line = it + 1 == objs.end();
 
-				auto real_sep_width = calculateRealSeparatorWidth(sep, parent_style->extendWith((*it)->style()),
+				auto real_sep_width = calculateRealSeparatorWidth(sep, parent_style.extendWith((*it)->style()),
 				    is_end_of_line);
 
 				auto pref_sep_width = [&]() -> Length {
@@ -166,7 +166,7 @@ namespace sap::layout
 						sap::internal_error("??? line with only separator");
 
 					auto calc_one = [sep, is_end_of_line, parent_style](auto iter) {
-						return calculate_preferred_sep_width(sep, parent_style->extendWith((*iter)->style()),
+						return calculate_preferred_sep_width(sep, parent_style.extendWith((*iter)->style()),
 						    is_end_of_line);
 					};
 
@@ -176,8 +176,8 @@ namespace sap::layout
 					else if(it + 1 == objs.end())
 						return calc_one(it - 1);
 
-					auto left_style = parent_style->extendWith((*(it - 1))->style());
-					auto right_style = parent_style->extendWith((*(it + 1))->style());
+					auto left_style = parent_style.extendWith((*(it - 1))->style());
+					auto right_style = parent_style.extendWith((*(it + 1))->style());
 					return calculatePreferredSeparatorWidth(sep, is_end_of_line, left_style, right_style);
 				}();
 
@@ -202,7 +202,7 @@ namespace sap::layout
 	}
 
 
-	Line::Line(const Style* style, //
+	Line::Line(const Style& style, //
 	    LayoutSize size,
 	    LineMetrics metrics,
 	    std::vector<std::unique_ptr<LayoutObject>> objs)
@@ -216,7 +216,7 @@ namespace sap::layout
 	    size_t& nested_span_idx,
 	    std::span<const zst::SharedPtr<tree::InlineObject>> objs,
 	    const Length _width,
-	    const Style* parent_style,
+	    const Style& parent_style,
 	    Length& current_offset,
 	    const LineMetrics& metrics,
 	    bool is_last_line,
@@ -238,7 +238,7 @@ namespace sap::layout
 
 		const auto line_width = _width;
 		const auto total_word_width = [&]() {
-			if(auto horz_align = parent_style->alignment();
+			if(auto horz_align = parent_style.horz_alignment();
 			    line_adjustment.has_value() && horz_align != Alignment::Centre)
 			{
 				auto left = (horz_align == Alignment::Right ? 0 : line_adjustment->left_protrusion);
@@ -331,7 +331,7 @@ namespace sap::layout
 			auto obj_width = metrics.widths[metrics_idx];
 
 			auto* obj = objs[obj_idx].get();
-			auto style = parent_style->extendWith(obj->style());
+			auto style = parent_style.extendWith(obj->style());
 
 			if(auto adj = get_piece_offset_adjustment(obj_idx); adj != 0)
 				current_offset += adj;
@@ -369,7 +369,7 @@ namespace sap::layout
 
 				Length actual_sep_width = 0;
 
-				if(style->alignment() == Alignment::Justified && (not is_last_line || space_width_factor <= 1.1))
+				if(style.horz_alignment() == Alignment::Justified && (not is_last_line || space_width_factor <= 1.1))
 					actual_sep_width = preferred_sep_width * space_width_factor;
 				else
 					actual_sep_width = preferred_sep_width;
@@ -379,11 +379,11 @@ namespace sap::layout
 				auto sep_str = is_end_of_line ? tree_sep->endOfLine() : tree_sep->middleOfLine();
 				if(not sep_str.empty())
 				{
-					auto sep = std::make_unique<Word>(        //
-					    sep_str,                              //
-					    style->extendWith(tree_sep->style()), //
-					    current_offset,                       //
-					    tree_sep->raiseHeight(),              //
+					auto sep = std::make_unique<Word>(       //
+					    sep_str,                             //
+					    style.extendWith(tree_sep->style()), //
+					    current_offset,                      //
+					    tree_sep->raiseHeight(),             //
 					    sep_size);
 
 					tree_sep->setGeneratedLayoutObject(sep.get());
@@ -486,7 +486,7 @@ namespace sap::layout
 
 
 	std::unique_ptr<Line> Line::fromInlineObjects(interp::Interpreter* cs,
-	    const Style* parent_style,
+	    const Style& parent_style,
 	    std::span<const zst::SharedPtr<tree::InlineObject>> objs,
 	    const LineMetrics& line_metrics,
 	    Size2d available_space,

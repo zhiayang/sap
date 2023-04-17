@@ -26,12 +26,12 @@ namespace sap::layout
 	static constexpr double DEFAULT_LINE_SPACING = 1.0;
 	static constexpr double DEFAULT_SENTENCE_SPACE_STRETCH = 1.5;
 
-	const Style* getDefaultStyle(interp::Interpreter* cs)
+	Style getDefaultStyle(interp::Interpreter* cs)
 	{
-		auto default_style = util::make<sap::Style>();
+		Style default_style {};
 
 		auto font_size = DEFAULT_FONT_SIZE_PT;
-		default_style->set_font_family(get_default_font_family(cs))
+		default_style.set_font_family(get_default_font_family(cs))
 		    .set_font_style(sap::FontStyle::Regular)
 		    .set_font_size(font_size.into())
 		    .set_root_font_size(font_size.into())

@@ -127,7 +127,7 @@ namespace sap::tree
 
 	using InlineObjVec = std::vector<zst::SharedPtr<InlineObject>>;
 
-	ErrorOr<InlineObjVec> performReplacements(const Style* parent_style, InlineObjVec input)
+	ErrorOr<InlineObjVec> performReplacements(const Style& parent_style, InlineObjVec input)
 	{
 		std::vector<zst::SharedPtr<InlineObject>> ret {};
 		ret.reserve(input.size());
@@ -142,8 +142,8 @@ namespace sap::tree
 			}
 			else if(auto text = input[i]->castToText())
 			{
-				auto style = parent_style->extendWith(text->style());
-				if(not style->smart_quotes_enabled())
+				auto style = parent_style.extendWith(text->style());
+				if(not style.smart_quotes_enabled())
 				{
 					ret.push_back(std::move(input[i]));
 					last_sep_was_space = false;
@@ -181,7 +181,7 @@ namespace sap::tree
 			}
 			else if(auto span = input[i]->castToSpan())
 			{
-				span->objects() = TRY(performReplacements(parent_style->extendWith(span->style()),
+				span->objects() = TRY(performReplacements(parent_style.extendWith(span->style()),
 				    std::move(span->objects())));
 
 				// drill down as deep as possible

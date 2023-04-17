@@ -19,7 +19,7 @@ namespace sap::tree
 	Container::Container(Direction direction, bool glued)
 	    : BlockObject(Kind::Container), m_glued(glued), m_direction(direction)
 	{
-		this->setStyle(m_style->with_alignment(Alignment::Left));
+		this->setStyle(m_style.with_alignment(Alignment::Left));
 	}
 
 	zst::SharedPtr<Container> Container::makeVertBox()
@@ -47,12 +47,12 @@ namespace sap::tree
 	}
 
 	auto Container::create_layout_object_impl(interp::Interpreter* cs,
-	    const Style* parent_style,
+	    const Style& parent_style,
 	    Size2d available_space) const -> ErrorOr<LayoutResult>
 	{
 		auto _ = cs->evaluator().pushBlockContext(this);
 
-		auto cur_style = m_style->useDefaultsFrom(parent_style)->useDefaultsFrom(cs->evaluator().currentStyle());
+		auto cur_style = m_style.useDefaultsFrom(parent_style).useDefaultsFrom(cs->evaluator().currentStyle());
 		std::vector<std::unique_ptr<layout::LayoutObject>> objects;
 
 		LayoutSize total_size {};
@@ -123,7 +123,7 @@ namespace sap::tree
 			else
 			{
 				if(not prev_child_was_phantom && not is_phantom)
-					total_size.descent += cur_style->paragraph_spacing();
+					total_size.descent += cur_style.paragraph_spacing();
 
 				total_size.descent += obj_size.total_height();
 			}

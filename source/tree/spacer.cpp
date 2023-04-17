@@ -18,12 +18,12 @@ namespace sap::tree
 		return Ok();
 	}
 
-	auto Spacer::create_layout_object_impl(interp::Interpreter* cs, const Style* parent_style, Size2d available_space)
+	auto Spacer::create_layout_object_impl(interp::Interpreter* cs, const Style& parent_style, Size2d available_space)
 	    const -> ErrorOr<LayoutResult>
 	{
 		auto _ = cs->evaluator().pushBlockContext(this);
 
-		auto cur_style = m_style->useDefaultsFrom(parent_style)->useDefaultsFrom(cs->evaluator().currentStyle());
+		auto cur_style = m_style.useDefaultsFrom(parent_style).useDefaultsFrom(cs->evaluator().currentStyle());
 		auto size = m_size.resolve(cur_style);
 
 		auto layout_size = LayoutSize {

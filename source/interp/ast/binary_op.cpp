@@ -47,7 +47,7 @@ namespace sap::interp
 				if(not arr_type->isCloneable())
 				{
 					return ErrMsg(ts, "cannot copy array of type '{}' because array element type cannot be copied",
-						arr_type);
+					    arr_type);
 				}
 
 				return TCResult::ofRValue(ltype->isArray() ? ltype : rtype);
@@ -70,7 +70,7 @@ namespace sap::interp
 		}
 
 		return ErrMsg(ts, "unsupported operation '{}' between types '{}' and '{}'", op_to_string(this->op), ltype,
-			rtype);
+		    rtype);
 	}
 
 
@@ -155,8 +155,8 @@ namespace sap::interp
 
 			auto style = ev->currentStyle();
 
-			auto left = lval.getLength().resolve(style->font(), style->font_size(), style->root_font_size());
-			auto right = rval.getLength().resolve(style->font(), style->font_size(), style->root_font_size());
+			auto left = lval.getLength().resolve(style.font(), style.font_size(), style.root_font_size());
+			auto right = rval.getLength().resolve(style.font(), style.font_size(), style.root_font_size());
 
 			sap::Length result = 0;
 			if(op == Op::Add)
@@ -205,6 +205,6 @@ namespace sap::interp
 		auto rval = TRY_VALUE(this->rhs->evaluate(ev));
 
 		return EvalResult::ofValue(TRY(evaluateBinaryOperationOnValues(ev, //
-			this->op, std::move(lval), std::move(rval))));
+		    this->op, std::move(lval), std::move(rval))));
 	}
 }

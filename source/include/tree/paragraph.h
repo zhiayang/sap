@@ -16,7 +16,7 @@ namespace sap::tree
 	struct Text : InlineObject
 	{
 		explicit Text(std::u32string text);
-		explicit Text(std::u32string text, const Style* style);
+		explicit Text(std::u32string text, const Style& style);
 
 		const std::u32string& contents() const { return m_contents; }
 		std::u32string& contents() { return m_contents; }
@@ -96,7 +96,7 @@ namespace sap::tree
 		    bool allow_blocks) const;
 
 		virtual ErrorOr<LayoutResult> create_layout_object_impl(interp::Interpreter* cs,
-		    const Style* parent_style,
+		    const Style& parent_style,
 		    Size2d available_space) const override;
 
 	private:

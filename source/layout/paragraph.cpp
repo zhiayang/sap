@@ -27,7 +27,7 @@
 
 namespace sap::layout
 {
-	Paragraph::Paragraph(const Style* style,
+	Paragraph::Paragraph(const Style& style,
 	    LayoutSize size,
 	    std::vector<std::unique_ptr<Line>> lines,
 	    std::vector<zst::SharedPtr<tree::InlineObject>> para_inline_objs)
@@ -68,7 +68,7 @@ namespace sap::layout
 			auto horz_space = cursor.widthAtCursor();
 			auto space_width = std::max(Length(0), m_layout_size.width - line->layoutSize().width);
 
-			switch(m_style->alignment())
+			switch(m_style.horz_alignment())
 			{
 				case Left:
 				case Justified: break;
@@ -122,7 +122,7 @@ namespace sap::tree
 
 
 	auto Paragraph::create_layout_object_impl(interp::Interpreter* cs,
-	    const Style* parent_style,
+	    const Style& parent_style,
 	    Size2d available_space) const -> ErrorOr<LayoutResult>
 	{
 		auto _ = cs->evaluator().pushBlockContext(this);
@@ -134,7 +134,7 @@ namespace sap::tree
 		else if(objs->is_right())
 			return Ok(LayoutResult::make(objs->take_right()));
 
-		auto style = parent_style->extendWith(this->style());
+		auto style = parent_style.extendWith(this->style());
 
 		// note: the InlineSpan must continue to live here, so don't `take` it;
 		// just steal its objects.
@@ -155,7 +155,7 @@ namespace sap::tree
 		using Iter = std::vector<zst::SharedPtr<InlineObject>>::const_iterator;
 		auto add_one_line =
 		    [&the_lines](layout::linebreak::BrokenLine& line, //
-		        Iter words_begin, Iter words_end, const Style* style) {
+		        Iter words_begin, Iter words_end, const Style& style) {
 
 #if 0
 			zpr::print("line ({} parts): {", words_end - words_begin);

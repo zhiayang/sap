@@ -20,12 +20,12 @@ namespace sap::layout
 			Horizontal,
 		};
 
-		explicit Container(const Style* style,
-			LayoutSize size,
-			Direction direction,
-			bool glue_objects,
-			std::vector<std::unique_ptr<LayoutObject>> objs,
-			std::optional<Length> override_obj_spacing = std::nullopt);
+		explicit Container(const Style& style,
+		    LayoutSize size,
+		    Direction direction,
+		    bool glue_objects,
+		    std::vector<std::unique_ptr<LayoutObject>> objs,
+		    std::optional<Length> override_obj_spacing = std::nullopt);
 
 		void addObject(std::unique_ptr<LayoutObject> obj);
 		std::vector<std::unique_ptr<LayoutObject>>& objects();

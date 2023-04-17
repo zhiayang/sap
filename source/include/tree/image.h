@@ -14,16 +14,16 @@ namespace sap::tree
 
 		virtual ErrorOr<void> evaluateScripts(interp::Interpreter* cs) const override;
 		static ErrorOr<zst::SharedPtr<Image>> fromImageFile(const Location& loc,
-			zst::str_view file_path,
-			sap::Length width,
-			std::optional<sap::Length> height = std::nullopt);
+		    zst::str_view file_path,
+		    sap::Length width,
+		    std::optional<sap::Length> height = std::nullopt);
 
 		ImageBitmap image() const { return m_image; }
 
 	private:
 		virtual ErrorOr<LayoutResult> create_layout_object_impl(interp::Interpreter* cs,
-			const Style* parent_style,
-			Size2d available_space) const override;
+		    const Style& parent_style,
+		    Size2d available_space) const override;
 
 	private:
 		ImageBitmap m_image;

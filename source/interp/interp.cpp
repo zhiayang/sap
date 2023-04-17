@@ -104,11 +104,11 @@ namespace sap::interp
 		m_microtype_configs.push_back(std::move(config));
 	}
 
-	std::optional<CharacterProtrusion> Interpreter::getMicrotypeProtrusionFor(char32_t ch, const Style* style) const
+	std::optional<CharacterProtrusion> Interpreter::getMicrotypeProtrusionFor(char32_t ch, const Style& style) const
 	{
-		auto font = style->font();
+		auto font = style.font();
 		auto font_name = font->source().name();
-		auto font_style = style->font_style();
+		auto font_style = style.font_style();
 
 		using enum FontStyle;
 		for(auto& config : m_microtype_configs)

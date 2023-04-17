@@ -4,6 +4,8 @@
 
 #pragma once
 
+#include <vector>
+
 #include "util.h"
 
 namespace sap::interp
@@ -86,8 +88,8 @@ namespace sap::interp
 
 		static const FunctionType* makeFunction(std::vector<const Type*> param_types, const Type* return_type);
 		static const ArrayType* makeArray(const Type* element_type, bool is_variadic = false);
-		static const StructType* makeStruct(const std::string& name,
-			const std::vector<std::pair<std::string, const Type*>>& fields);
+		static const StructType*
+		makeStruct(const std::string& name, const std::vector<std::pair<std::string, const Type*>>& fields);
 
 		static const EnumType* makeEnum(const std::string& name, const Type* enumerator_type);
 
@@ -154,9 +156,7 @@ namespace sap::interp
 
 	private:
 		PointerType(const Type* elm, bool is_mutable)
-			: Type(KIND_POINTER)
-			, m_element_type(elm)
-			, m_is_mutable(is_mutable)
+		    : Type(KIND_POINTER), m_element_type(elm), m_is_mutable(is_mutable)
 		{
 		}
 

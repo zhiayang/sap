@@ -48,7 +48,7 @@ namespace sap::layout
 
 	struct LayoutObject : Stylable
 	{
-		explicit LayoutObject(const Style* style, LayoutSize size);
+		explicit LayoutObject(const Style& style, LayoutSize size);
 		virtual ~LayoutObject() = default;
 
 		LayoutSize layoutSize() const;

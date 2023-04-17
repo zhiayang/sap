@@ -67,14 +67,14 @@ namespace sap::tree
 	}
 
 	ErrorOr<LayoutResult> RawBlock::create_layout_object_impl(interp::Interpreter* cs, //
-	    const Style* parent_style,
+	    const Style& parent_style,
 	    Size2d available_space) const
 	{
 		// don't care about the space either
 		(void) available_space;
 
 		auto _ = cs->evaluator().pushBlockContext(this);
-		auto style = m_style->useDefaultsFrom(parent_style)->useDefaultsFrom(cs->evaluator().currentStyle());
+		auto style = m_style.useDefaultsFrom(parent_style).useDefaultsFrom(cs->evaluator().currentStyle());
 
 		std::vector<std::unique_ptr<layout::LayoutObject>> lines {};
 

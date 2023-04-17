@@ -162,7 +162,7 @@ namespace sap::tree
 
 		virtual ErrorOr<void> evaluateScripts(interp::Interpreter* cs) const = 0;
 		virtual ErrorOr<LayoutResult>
-		createLayoutObject(interp::Interpreter* cs, const Style* parent_style, Size2d available_space) const final;
+		createLayoutObject(interp::Interpreter* cs, const Style& parent_style, Size2d available_space) const final;
 
 		std::optional<layout::LayoutObject*> getGeneratedLayoutObject() const { return m_generated_layout_object; }
 
@@ -220,7 +220,7 @@ namespace sap::tree
 
 	private:
 		virtual ErrorOr<LayoutResult>
-		create_layout_object_impl(interp::Interpreter* cs, const Style* parent_style, Size2d available_space) const = 0;
+		create_layout_object_impl(interp::Interpreter* cs, const Style& parent_style, Size2d available_space) const = 0;
 
 	protected:
 		std::optional<Length> m_override_width {};
@@ -255,7 +255,7 @@ namespace sap::tree
 
 	private:
 		virtual ErrorOr<LayoutResult> create_layout_object_impl(interp::Interpreter* cs,
-		    const Style* parent_style,
+		    const Style& parent_style,
 		    Size2d available_space) const override;
 	};
 
@@ -270,10 +270,10 @@ namespace sap::tree
 	private:
 		using ScriptEvalResult = Either<zst::SharedPtr<InlineSpan>, std::unique_ptr<layout::LayoutObject>>;
 		ErrorOr<std::optional<ScriptEvalResult>>
-		evaluate_script(interp::Interpreter* cs, const Style* parent_style, Size2d available_space) const;
+		evaluate_script(interp::Interpreter* cs, const Style& parent_style, Size2d available_space) const;
 
 		ErrorOr<LayoutResult>
-		create_layout_object_impl(interp::Interpreter* cs, const Style* parent_style, Size2d available_space) const;
+		create_layout_object_impl(interp::Interpreter* cs, const Style& parent_style, Size2d available_space) const;
 
 		// befriend Paragraph so it can use our evaluate_script
 		friend struct Paragraph;
@@ -287,5 +287,5 @@ namespace sap::tree
 	processWordSeparators(std::vector<zst::SharedPtr<InlineObject>> vec);
 
 	ErrorOr<std::vector<zst::SharedPtr<InlineObject>>>
-	performReplacements(const Style* parent_style, std::vector<zst::SharedPtr<InlineObject>> vec);
+	performReplacements(const Style& parent_style, std::vector<zst::SharedPtr<InlineObject>> vec);
 }

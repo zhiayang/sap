@@ -35,7 +35,7 @@ namespace sap::layout
 		virtual void render_impl(const LayoutBase* layout, std::vector<pdf::Page*>& pages) const override;
 
 		static std::unique_ptr<Line> fromInlineObjects(interp::Interpreter* cs,
-		    const Style* style,
+		    const Style& style,
 		    std::span<const zst::SharedPtr<tree::InlineObject>> objs,
 		    const LineMetrics& line_metrics,
 		    Size2d available_space,
@@ -47,7 +47,7 @@ namespace sap::layout
 		const std::vector<std::unique_ptr<LayoutObject>>& objects() const { return m_objects; }
 
 	private:
-		explicit Line(const Style* style,
+		explicit Line(const Style& style,
 		    LayoutSize size,
 		    LineMetrics metrics,
 		    std::vector<std::unique_ptr<LayoutObject>> objs);
@@ -57,10 +57,10 @@ namespace sap::layout
 		std::vector<std::unique_ptr<LayoutObject>> m_objects;
 	};
 
-	LineMetrics computeLineMetrics(std::span<const zst::SharedPtr<tree::InlineObject>> objs, const Style* parent_style);
+	LineMetrics computeLineMetrics(std::span<const zst::SharedPtr<tree::InlineObject>> objs, const Style& parent_style);
 
 	Length calculatePreferredSeparatorWidth(const tree::Separator* sep,
 	    bool is_end_of_line,
-	    const Style* left_style,
-	    const Style* right_style);
+	    const Style& left_style,
+	    const Style& right_style);
 }

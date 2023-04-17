@@ -9,7 +9,7 @@
 
 namespace sap::layout
 {
-	Container::Container(const Style* style, //
+	Container::Container(const Style& style, //
 	    LayoutSize size,
 	    Direction direction,
 	    bool glued,
@@ -262,12 +262,12 @@ namespace sap::layout
 		if(m_objects.empty())
 			return cursor;
 
-		auto spacing = m_override_obj_spacing.value_or(m_style->paragraph_spacing());
+		auto spacing = m_override_obj_spacing.value_or(m_style.paragraph_spacing());
 
 		cursor = position_children_in_container(cursor,       //
 		    m_layout_size.width,                              //
 		    m_direction,                                      //
-		    m_style->alignment(),                             //
+		    m_style.horz_alignment(),                         //
 		    spacing,                                          //
 		    /* shift_by_ascent_of_first_child */ true,        //
 		    /* shift_by_ascent_of_remaining_children */ true, //

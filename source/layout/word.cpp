@@ -19,10 +19,9 @@
 
 namespace sap::layout
 {
-	Word::Word(zst::wstr_view text, const Style* style, Length relative_offset, Length raise_height, LayoutSize size)
+	Word::Word(zst::wstr_view text, const Style& style, Length relative_offset, Length raise_height, LayoutSize size)
 	    : LayoutObject(style, size), m_relative_offset(relative_offset), m_raise_height(raise_height), m_text(text)
 	{
-		assert(m_style != nullptr);
 	}
 
 	void Word::render_impl(const LayoutBase* layout, std::vector<pdf::Page*>& pages) const
@@ -67,8 +66,8 @@ namespace sap::layout
 
 	void Word::render_to_text(pdf::Text* text) const
 	{
-		const auto font = m_style->font();
-		const auto font_size = m_style->font_size();
+		const auto font = m_style.font();
+		const auto font_size = m_style.font_size();
 		text->setFont(font, font_size.into<pdf::PdfScalar>());
 
 		if(m_raise_height != 0)

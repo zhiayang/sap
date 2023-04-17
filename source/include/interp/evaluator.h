@@ -108,9 +108,9 @@ namespace sap::interp
 
 		ErrorOr<zst::SharedPtr<tree::InlineSpan>> convertValueToText(Value&& value);
 
-		const Style* currentStyle() const;
-		void pushStyle(const Style* style);
-		const Style* popStyle();
+		const Style& currentStyle() const;
+		void pushStyle(const Style& style);
+		Style popStyle();
 
 		const BlockContext& getBlockContext() const;
 		[[nodiscard]] util::Defer<> pushBlockContext(std::optional<const tree::BlockObject*> obj);
@@ -128,8 +128,8 @@ namespace sap::interp
 
 		Value& documentProxy() { return m_document_proxy_value; }
 
-		ErrorOr<void> addAbsolutelyPositionedBlockObject(zst::SharedPtr<tree::BlockObject> tbo,
-		    layout::AbsolutePagePos pos);
+		ErrorOr<void>
+		addAbsolutelyPositionedBlockObject(zst::SharedPtr<tree::BlockObject> tbo, layout::AbsolutePagePos pos);
 
 		Value* addToHeap(Value value);
 		Value addToHeapAndGetPointer(Value value);
@@ -139,7 +139,7 @@ namespace sap::interp
 
 		std::vector<std::unique_ptr<StackFrame>> m_stack_frames;
 
-		std::vector<const Style*> m_style_stack;
+		std::vector<Style> m_style_stack;
 		std::vector<BlockContext> m_block_context_stack;
 
 		std::vector<Location> m_location_stack;

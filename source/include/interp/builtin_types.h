@@ -62,8 +62,8 @@ namespace sap::interp::builtin
 		static const Type* type;
 		static std::vector<StructDefn::Field> fields();
 
-		static Value make(Evaluator* ev, const Style* style);
-		static ErrorOr<const Style*> unmake(Evaluator* ev, const Value& value);
+		static Value make(Evaluator* ev, const Style& style);
+		static ErrorOr<Style> unmake(Evaluator* ev, const Value& value);
 	};
 
 	struct BS_Font
@@ -233,9 +233,9 @@ namespace sap::interp::builtin
 	frontend::PType ptype_for_builtin()
 	{
 		return frontend::PType::named(QualifiedId {
-			.top_level = true,
-			.parents = { "builtin" },
-			.name = BS::name,
+		    .top_level = true,
+		    .parents = { "builtin" },
+		    .name = BS::name,
 		});
 	}
 

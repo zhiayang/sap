@@ -45,7 +45,7 @@ namespace sap
 
 		DynLength negate() const { return DynLength(-m_value, m_unit); }
 
-		sap::Length resolve(const Style* style) const;
+		sap::Length resolve(const Style& style) const;
 		sap::Length resolve(const pdf::PdfFont* font, sap::Length font_size, sap::Length root_font_size) const;
 
 		sap::Length resolveWithoutFont(sap::Length font_size, sap::Length root_font_size) const;
@@ -63,7 +63,7 @@ namespace sap
 		DynLength x;
 		DynLength y;
 
-		sap::Size2d resolve(const Style* style) const;
+		sap::Size2d resolve(const Style& style) const;
 		sap::Size2d resolve(const pdf::PdfFont* font, sap::Length font_size, sap::Length root_font_size) const;
 
 		sap::Size2d resolveWithoutFont(sap::Length font_size, sap::Length root_font_size) const;

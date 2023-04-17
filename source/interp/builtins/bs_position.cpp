@@ -23,9 +23,9 @@ namespace sap::interp::builtin
 		auto pt_int = PT::named(frontend::TYPE_INT);
 		auto pt_len = PT::named(frontend::TYPE_LENGTH);
 		return util::vectorOf(                       //
-			Field { .name = "x", .type = pt_len },   //
-			Field { .name = "y", .type = pt_len },   //
-			Field { .name = "page", .type = pt_int } //
+		    Field { .name = "x", .type = pt_len },   //
+		    Field { .name = "y", .type = pt_len },   //
+		    Field { .name = "page", .type = pt_int } //
 		);
 	}
 
@@ -42,11 +42,8 @@ namespace sap::interp::builtin
 	{
 		auto sty = ev->currentStyle();
 
-		auto x = get_struct_field<DynLength>(value, "x", &Value::getLength)
-		             .resolve(sty->font(), sty->font_size(), sty->root_font_size());
-
-		auto y = get_struct_field<DynLength>(value, "y", &Value::getLength)
-		             .resolve(sty->font(), sty->font_size(), sty->root_font_size());
+		auto x = get_struct_field<DynLength>(value, "x", &Value::getLength).resolve(sty);
+		auto y = get_struct_field<DynLength>(value, "y", &Value::getLength).resolve(sty);
 
 		auto p = get_struct_field<int64_t>(value, "page");
 
@@ -64,9 +61,9 @@ namespace sap::interp::builtin
 		auto pt_int = PT::named(frontend::TYPE_INT);
 		auto pt_len = PT::named(frontend::TYPE_LENGTH);
 		return util::vectorOf(                       //
-			Field { .name = "x", .type = pt_len },   //
-			Field { .name = "y", .type = pt_len },   //
-			Field { .name = "page", .type = pt_int } //
+		    Field { .name = "x", .type = pt_len },   //
+		    Field { .name = "y", .type = pt_len },   //
+		    Field { .name = "page", .type = pt_int } //
 		);
 	}
 
@@ -83,11 +80,8 @@ namespace sap::interp::builtin
 	{
 		auto sty = ev->currentStyle();
 
-		auto x = get_struct_field<DynLength>(value, "x", &Value::getLength)
-		             .resolve(sty->font(), sty->font_size(), sty->root_font_size());
-
-		auto y = get_struct_field<DynLength>(value, "y", &Value::getLength)
-		             .resolve(sty->font(), sty->font_size(), sty->root_font_size());
+		auto x = get_struct_field<DynLength>(value, "x", &Value::getLength).resolve(sty);
+		auto y = get_struct_field<DynLength>(value, "y", &Value::getLength).resolve(sty);
 
 		auto p = get_struct_field<int64_t>(value, "page");
 

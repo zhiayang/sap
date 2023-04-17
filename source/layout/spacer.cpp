@@ -6,7 +6,7 @@
 
 namespace sap::layout
 {
-	Spacer::Spacer(const Style* style, LayoutSize size) : LayoutObject(style, std::move(size))
+	Spacer::Spacer(const Style& style, LayoutSize size) : LayoutObject(style, std::move(size))
 	{
 	}
 

@@ -31,7 +31,7 @@
 
 namespace sap::layout
 {
-	const Style* getDefaultStyle(interp::Interpreter* cs);
+	Style getDefaultStyle(interp::Interpreter* cs);
 	DocumentSettings fillDefaultSettings(interp::Interpreter* cs, DocumentSettings settings);
 
 	static Length resolve_len(const DocumentSettings& settings, DynLength len)
@@ -63,9 +63,9 @@ namespace sap::layout
 	Document::Document(const DocumentSettings& settings)
 	    : m_page_layout(this, paper_size(settings), make_margins(settings))
 	{
-		auto default_style = util::make<sap::Style>();
+		Style default_style {};
 
-		default_style->set_font_family(*settings.font_family)
+		default_style.set_font_family(*settings.font_family)
 		    .set_font_style(sap::FontStyle::Regular)
 		    .set_font_size(resolve_len(settings, *settings.font_size))
 		    .set_root_font_size(resolve_len(settings, *settings.font_size))
@@ -265,7 +265,7 @@ namespace sap::tree
 	    , m_preamble(std::move(preamble))
 	    , m_have_document_start(have_doc_start)
 	{
-		m_container->setStyle(m_container->style()->with_alignment(Alignment::Justified));
+		m_container->setStyle(m_container->style().with_alignment(Alignment::Justified));
 	}
 
 	BlockObject::~BlockObject()

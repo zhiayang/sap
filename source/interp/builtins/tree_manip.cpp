@@ -32,11 +32,11 @@ namespace sap::interp::builtin
 
 		auto style = ev->currentStyle();
 
-		auto img_width = args[1].getLength().resolve(style->font(), style->font_size(), style->root_font_size());
+		auto img_width = args[1].getLength().resolve(style);
 
 		std::optional<sap::Length> img_height {};
 		if(auto tmp = std::move(args[2]).takeOptional(); tmp.has_value())
-			img_height = tmp->getLength().resolve(style->font(), style->font_size(), style->root_font_size());
+			img_height = tmp->getLength().resolve(style);
 
 		auto img_obj = TRY(tree::Image::fromImageFile(ev->loc(), img_path, img_width, img_height));
 		return EvalResult::ofValue(Value::treeBlockObject(std::move(img_obj)));

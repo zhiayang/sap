@@ -20,22 +20,14 @@ namespace sap
 		Justified,
 	};
 
-
-
 	struct Style
 	{
-		inline Style() { }
-
-#define DEFINE_ACCESSOR(field_type, field_name, method_name)                   \
-	inline field_type method_name(const Style* default_parent = nullptr) const \
-	{                                                                          \
-		if(default_parent == this)                                             \
-			default_parent = nullptr;                                          \
-		if(field_name.has_value())                                             \
-			return *field_name;                                                \
-		else if(default_parent)                                                \
-			return default_parent->method_name();                              \
-		sap::internal_error("Accessed unset style field");                     \
+#define DEFINE_ACCESSOR(field_type, field_name, method_name)            \
+	inline field_type method_name() const                               \
+	{                                                                   \
+		if(m_present_styles & (STY_##field_name))                       \
+			return *field_name;                                         \
+		sap::internal_error("accessed unset style field " #field_name); \
 	}
 
 		DEFINE_ACCESSOR(FontFamily, m_font_family, font_family);
@@ -45,25 +37,29 @@ namespace sap
 		DEFINE_ACCESSOR(double, m_line_spacing, line_spacing);
 		DEFINE_ACCESSOR(double, m_sentence_space_stretch, sentence_space_stretch);
 		DEFINE_ACCESSOR(Length, m_paragraph_spacing, paragraph_spacing);
-		DEFINE_ACCESSOR(Alignment, m_alignment, alignment);
+		DEFINE_ACCESSOR(Alignment, m_horz_alignment, horz_alignment);
 		DEFINE_ACCESSOR(bool, m_enable_smart_quotes, smart_quotes_enabled);
 #undef DEFINE_ACCESSOR
+
+
 
 #define DEFINE_SETTER(field_type, field_name, method_name, method_name2) \
 	inline Style& method_name(std::optional<field_type> new_value)       \
 	{                                                                    \
 		if(new_value.has_value())                                        \
-			field_name = std::move(new_value);                           \
+		{                                                                \
+			field_name.set(std::move(*new_value));                       \
+			m_present_styles |= STY_##field_name;                        \
+		}                                                                \
 		return *this;                                                    \
 	}                                                                    \
                                                                          \
-	inline const Style* method_name2(field_type new_value) const         \
+	inline Style method_name2(field_type new_value) const                \
 	{                                                                    \
-		auto copy = util::make<Style>(*this);                            \
-		copy->method_name(new_value);                                    \
-		return this->extendWith(copy);                                   \
+		auto copy = *this;                                               \
+		copy.method_name(std::move(new_value));                          \
+		return copy;                                                     \
 	}
-
 
 		DEFINE_SETTER(FontFamily, m_font_family, set_font_family, with_font_family);
 		DEFINE_SETTER(FontStyle, m_font_style, set_font_style, with_font_style);
@@ -72,52 +68,123 @@ namespace sap
 		DEFINE_SETTER(double, m_line_spacing, set_line_spacing, with_line_spacing);
 		DEFINE_SETTER(double, m_sentence_space_stretch, set_sentence_space_stretch, with_sentence_space_stretch);
 		DEFINE_SETTER(Length, m_paragraph_spacing, set_paragraph_spacing, with_paragraph_spacing);
-		DEFINE_SETTER(Alignment, m_alignment, set_alignment, with_alignment);
+		DEFINE_SETTER(Alignment, m_horz_alignment, set_alignment, with_alignment);
 		DEFINE_SETTER(bool, m_enable_smart_quotes, enable_smart_quotes, with_smart_quotes_enabled);
 
 #undef DEFINE_SETTER
 
+#define NONE
+#define VALUE_OR_ELSE(field_name, left, right)                             \
+	__extension__({                                                        \
+		std::optional<typename decltype(field_name)::value_type> __ret {}; \
+		if((left).m_present_styles & (STY_##field_name))                   \
+			__ret = *(left).field_name;                                    \
+		else if((right).m_present_styles & (STY_##field_name))             \
+			__ret = *(right).field_name;                                   \
+		__ret;                                                             \
+	})
+
 		/*
 		    with the current style as the reference, change all of our fields to those that `main` has.
 		*/
-		const Style* extendWith(const Style* main) const;
+		Style extendWith(const Style& main) const
+		{
+			auto style = Style();
+			style.set_font_family(VALUE_OR_ELSE(m_font_family, main, *this))
+			    .set_font_style(VALUE_OR_ELSE(m_font_style, main, *this))
+			    .set_font_size(VALUE_OR_ELSE(m_font_size, main, *this))
+			    .set_line_spacing(VALUE_OR_ELSE(m_line_spacing, main, *this))
+			    .set_sentence_space_stretch(VALUE_OR_ELSE(m_sentence_space_stretch, main, *this))
+			    .set_paragraph_spacing(VALUE_OR_ELSE(m_paragraph_spacing, main, *this))
+			    .set_alignment(VALUE_OR_ELSE(m_horz_alignment, main, *this))
+			    .set_root_font_size(VALUE_OR_ELSE(m_root_font_size, main, *this))
+			    .enable_smart_quotes(VALUE_OR_ELSE(m_enable_smart_quotes, main, *this)) //
+			    ;
+
+			return style;
+		}
 
 		/*
 		    use `fallback` to fill in any fields that the current style does not have.
 		*/
-		const Style* useDefaultsFrom(const Style* fallback) const;
+		Style useDefaultsFrom(const Style& fallback) const
+		{
+			auto style = Style();
+			style.set_font_family(VALUE_OR_ELSE(m_font_family, *this, fallback))
+			    .set_font_style(VALUE_OR_ELSE(m_font_style, *this, fallback))
+			    .set_font_size(VALUE_OR_ELSE(m_font_size, *this, fallback))
+			    .set_line_spacing(VALUE_OR_ELSE(m_line_spacing, *this, fallback))
+			    .set_sentence_space_stretch(VALUE_OR_ELSE(m_sentence_space_stretch, *this, fallback))
+			    .set_paragraph_spacing(VALUE_OR_ELSE(m_paragraph_spacing, *this, fallback))
+			    .set_alignment(VALUE_OR_ELSE(m_horz_alignment, *this, fallback))
+			    .set_root_font_size(VALUE_OR_ELSE(m_root_font_size, *this, fallback))
+			    .enable_smart_quotes(VALUE_OR_ELSE(m_enable_smart_quotes, *this, fallback)) //
+			    ;
 
-		constexpr bool operator==(const Style& other) const = default;
+			return style;
+		}
+#undef NONE
+#undef VALUE_OR_ELSE
 
+
+		bool operator!=(const Style& other) const = default;
+		bool operator==(const Style& other) const
+		{
+			if(m_present_styles != other.m_present_styles)
+				return false;
+
+			return (not(m_present_styles & STY_m_font_family) || *m_font_family == *other.m_font_family)
+			    && (not(m_present_styles & STY_m_font_style) || *m_font_style == *other.m_font_style)
+			    && (not(m_present_styles & STY_m_font_size) || *m_font_size == *other.m_font_size)
+			    && (not(m_present_styles & STY_m_root_font_size) || *m_root_font_size == *other.m_root_font_size)
+			    && (not(m_present_styles & STY_m_line_spacing) || *m_line_spacing == *other.m_line_spacing)
+			    && (not(m_present_styles & STY_m_sentence_space_stretch)
+			        || *m_sentence_space_stretch == *other.m_sentence_space_stretch)
+			    && (not(m_present_styles & STY_m_paragraph_spacing)
+			        || *m_paragraph_spacing == *other.m_paragraph_spacing)
+			    && (not(m_present_styles & STY_m_horz_alignment) || *m_horz_alignment == *other.m_horz_alignment)
+			    && (not(m_present_styles & STY_m_enable_smart_quotes)
+			        || *m_enable_smart_quotes == *other.m_enable_smart_quotes);
+		}
+
+		static const Style& empty();
 		const pdf::PdfFont* font() const { return this->font_family().getFontForStyle(this->font_style()); }
 
-		static const Style* empty() { return &s_empty_style; }
+
+		static constexpr uint32_t STY_m_font_family = (1u << 0);
+		static constexpr uint32_t STY_m_font_style = (1u << 1);
+		static constexpr uint32_t STY_m_font_size = (1u << 2);
+		static constexpr uint32_t STY_m_root_font_size = (1u << 3);
+		static constexpr uint32_t STY_m_line_spacing = (1u << 4);
+		static constexpr uint32_t STY_m_sentence_space_stretch = (1u << 5);
+		static constexpr uint32_t STY_m_paragraph_spacing = (1u << 6);
+		static constexpr uint32_t STY_m_horz_alignment = (1u << 7);
+		static constexpr uint32_t STY_m_enable_smart_quotes = (1u << 8);
 
 	private:
-		std::optional<FontFamily> m_font_family;
-		std::optional<FontStyle> m_font_style;
-		std::optional<Length> m_font_size;
-		std::optional<Length> m_root_font_size;
-		std::optional<double> m_line_spacing;
-		std::optional<double> m_sentence_space_stretch;
-		std::optional<Length> m_paragraph_spacing;
-		std::optional<Alignment> m_alignment;
-		std::optional<bool> m_enable_smart_quotes;
+		uint32_t m_present_styles = 0;
 
-		static Style s_empty_style;
+		Uninitialised<FontFamily> m_font_family;
+		Uninitialised<FontStyle> m_font_style;
+		Uninitialised<Length> m_font_size;
+		Uninitialised<Length> m_root_font_size;
+		Uninitialised<double> m_line_spacing;
+		Uninitialised<double> m_sentence_space_stretch;
+		Uninitialised<Length> m_paragraph_spacing;
+		Uninitialised<Alignment> m_horz_alignment;
+		Uninitialised<bool> m_enable_smart_quotes;
 	};
+
 
 
 	struct Stylable
 	{
-		explicit inline Stylable(const Style* style = Style::empty()) : m_style(style) { }
+		explicit inline Stylable(const Style& style = Style::empty()) : m_style(style) { }
 
-		const Style* style() const { return m_style; }
-		void setStyle(const Style* s) { m_style = s; }
+		const Style& style() const { return m_style; }
+		void setStyle(const Style& s) { m_style = s; }
 
 	protected:
-		const Style* m_style;
+		Style m_style;
 	};
-
-
 }

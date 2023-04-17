@@ -33,9 +33,9 @@ namespace sap
 		}
 	}
 
-	sap::Length DynLength::resolve(const Style* style) const
+	sap::Length DynLength::resolve(const Style& style) const
 	{
-		return this->resolve(style->font(), style->font_size(), style->root_font_size());
+		return this->resolve(style.font(), style.font_size(), style.root_font_size());
 	}
 
 	sap::Length DynLength::resolve(const pdf::PdfFont* font, sap::Length font_size, sap::Length root_font_size) const
@@ -95,7 +95,7 @@ namespace sap
 	}
 
 
-	sap::Size2d DynLength2d::resolve(const Style* style) const
+	sap::Size2d DynLength2d::resolve(const Style& style) const
 	{
 		return sap::Size2d(this->x.resolve(style), this->y.resolve(style));
 	}

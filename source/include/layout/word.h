@@ -20,7 +20,7 @@ namespace sap::layout
 {
 	struct Word : LayoutObject
 	{
-		Word(zst::wstr_view text, const Style* style, Length relative_offset, Length raise_height, LayoutSize size);
+		Word(zst::wstr_view text, const Style& style, Length relative_offset, Length raise_height, LayoutSize size);
 
 		virtual layout::PageCursor compute_position_impl(layout::PageCursor cursor) override;
 		virtual void render_impl(const LayoutBase* layout, std::vector<pdf::Page*>& pages) const override;

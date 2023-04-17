@@ -87,10 +87,11 @@ namespace sap::interp
 		{
 			return Value::array(to->arrayElement(), std::move(value).takeArray());
 		}
-		else if(from_type->isPointer() && to->isPointer() && from_type->pointerElement()->isArray()
-		        && to->pointerElement()->isArray()
-		        && (from_type->pointerElement()->arrayElement()->isVoid()
-		            || to->pointerElement()->arrayElement()->isVoid()))
+		else if(
+		    from_type->isPointer() && to->isPointer() && from_type->pointerElement()->isArray()
+		    && to->pointerElement()->isArray()
+		    && (from_type->pointerElement()->arrayElement()->isVoid()
+		        || to->pointerElement()->arrayElement()->isVoid()))
 		{
 			assert(from_type->isMutablePointer() || not to->isMutablePointer());
 			if(to->isMutablePointer())
@@ -156,7 +157,7 @@ namespace sap::interp
 	}
 
 
-	const Style* Evaluator::currentStyle() const
+	const Style& Evaluator::currentStyle() const
 	{
 		if(m_style_stack.empty())
 			return Style::empty();
@@ -164,15 +165,16 @@ namespace sap::interp
 		return m_style_stack.back();
 	}
 
-	void Evaluator::pushStyle(const Style* style)
+	void Evaluator::pushStyle(const Style& style)
 	{
+		auto tmp = style;
 		if(not m_style_stack.empty())
-			style = m_style_stack.back()->extendWith(style);
+			tmp = m_style_stack.back().extendWith(style);
 
-		m_style_stack.push_back(style);
+		m_style_stack.push_back(std::move(tmp));
 	}
 
-	const Style* Evaluator::popStyle()
+	Style Evaluator::popStyle()
 	{
 		if(m_style_stack.empty())
 			return Style::empty();

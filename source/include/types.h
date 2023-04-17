@@ -92,6 +92,41 @@ namespace sap
 		double left;
 		double right;
 	};
+
+
+	template <typename T>
+	struct Uninitialised
+	{
+		static_assert(std::is_trivially_destructible_v<T>);
+
+		Uninitialised() { }
+		~Uninitialised() { }
+
+		Uninitialised(Uninitialised&&) = default;
+		Uninitialised(const Uninitialised&) = default;
+		Uninitialised& operator=(Uninitialised&&) = default;
+		Uninitialised& operator=(const Uninitialised&) = default;
+
+		using value_type = T;
+
+		template <typename... Args>
+		void init(Args&&... args)
+		{
+			new(&value) T(static_cast<Args&&>(args)...);
+		}
+
+		void set(T val) { new(&value) T(static_cast<T&&>(val)); }
+		void destroy() { value.~T(); };
+
+		const T& operator*() const { return this->value; }
+		T& operator*() { return this->value; }
+
+		union alignas(alignof(T))
+		{
+			uint8_t buf[sizeof(T)];
+			T value;
+		};
+	};
 }
 
 namespace zpr

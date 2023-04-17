@@ -32,10 +32,10 @@ namespace sap::layout
 
 	private:
 		friend struct tree::Paragraph;
-		Paragraph(const Style* style,
-			LayoutSize size,
-			std::vector<std::unique_ptr<Line>> lines,
-			std::vector<zst::SharedPtr<tree::InlineObject>> para_inline_objs);
+		Paragraph(const Style& style,
+		    LayoutSize size,
+		    std::vector<std::unique_ptr<Line>> lines,
+		    std::vector<zst::SharedPtr<tree::InlineObject>> para_inline_objs);
 
 	private:
 		std::vector<std::unique_ptr<Line>> m_lines {};
