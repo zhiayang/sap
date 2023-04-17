@@ -29,17 +29,20 @@ namespace sap::layout
 
 	void Image::render_impl(const LayoutBase* layout, std::vector<pdf::Page*>& pages) const
 	{
-		auto pos = this->resolveAbsPosition(layout);
-		auto page = pages[pos.page_num];
+		if(not sap::isDraftMode())
+		{
+			auto pos = this->resolveAbsPosition(layout);
+			auto page = pages[pos.page_num];
 
-		auto pdf_size = pdf::Size2d(m_layout_size.width.into(), m_layout_size.total_height().into());
+			auto pdf_size = pdf::Size2d(m_layout_size.width.into(), m_layout_size.total_height().into());
 
-		auto page_obj = util::make<pdf::Image>( //
-		    m_image,                            //
-		    pdf_size,                           //
-		    page->convertVector2(pos.pos.into<pdf::Position2d_YDown>()));
+			auto page_obj = util::make<pdf::Image>( //
+			    m_image,                            //
+			    pdf_size,                           //
+			    page->convertVector2(pos.pos.into<pdf::Position2d_YDown>()));
 
-		page->addObject(page_obj);
+			page->addObject(page_obj);
+		}
 	}
 }
 

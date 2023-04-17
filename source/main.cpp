@@ -23,9 +23,6 @@
 #endif
 
 #if 0
-CLEANUP:
-- maybe wrapper around (const Style*)
-
 TODO:
 scripting:
 - dereferencing optionals might need to clone them (which is weird)
@@ -38,76 +35,86 @@ layout:
 
 #endif
 
-bool sap::compile(zst::str_view input_file, zst::str_view output_file)
+namespace sap
 {
-	auto interp = interp::Interpreter();
-	auto file = interp.loadFile(input_file);
-
-	// load microtype configs
-	for(auto& lib_path : paths::librarySearchPaths())
+	bool compile(zst::str_view input_file, zst::str_view output_file)
 	{
-		auto tmp = stdfs::path(lib_path) / "data" / "microtype";
-		if(not stdfs::exists(tmp))
-			continue;
+		auto interp = interp::Interpreter();
+		auto file = interp.loadFile(input_file);
 
-		for(auto& de : stdfs::directory_iterator(tmp))
+		// load microtype configs
+		for(auto& lib_path : paths::librarySearchPaths())
 		{
-			if(not de.is_regular_file() || de.path().extension() != ".cfg")
+			auto tmp = stdfs::path(lib_path) / "data" / "microtype";
+			if(not stdfs::exists(tmp))
 				continue;
 
-			util::log("loading microtype cfg '{}'", de.path().filename().string());
-
-			auto cfg = interp.loadFile(de.path().string()).chars();
-			while(not cfg.empty())
+			for(auto& de : stdfs::directory_iterator(tmp))
 			{
-				auto ret = config::parseMicrotypeConfig(cfg);
-				if(ret.is_err())
-				{
-					ErrorMessage(Location::builtin(),
-					    zpr::sprint("failed to load {}: {}", de.path().filename().string(), ret.error()))
-					    .display();
-					return false;
-				}
+				if(not de.is_regular_file() || de.path().extension() != ".cfg")
+					continue;
 
-				interp.addMicrotypeConfig(std::move(*ret));
+				util::log("loading microtype cfg '{}'", de.path().filename().string());
+
+				auto cfg = interp.loadFile(de.path().string()).chars();
+				while(not cfg.empty())
+				{
+					auto ret = config::parseMicrotypeConfig(cfg);
+					if(ret.is_err())
+					{
+						ErrorMessage(Location::builtin(),
+						    zpr::sprint("failed to load {}: {}", de.path().filename().string(), ret.error()))
+						    .display();
+						return false;
+					}
+
+					interp.addMicrotypeConfig(std::move(*ret));
+				}
 			}
 		}
+
+
+		auto document = frontend::parse(input_file, file.chars());
+		if(document.is_err())
+			return document.error().display(), false;
+
+		auto layout_doc = document.unwrap().layout(&interp);
+		if(layout_doc.is_err())
+			return layout_doc.error().display(), false;
+
+		interp.setCurrentPhase(ProcessingPhase::Render);
+
+		auto writer = pdf::Writer(output_file);
+		layout_doc.unwrap()->write(&writer);
+		writer.close();
+
+		return true;
 	}
 
-
-	auto document = frontend::parse(input_file, file.chars());
-	if(document.is_err())
-		return document.error().display(), false;
-
-	auto layout_doc = document.unwrap().layout(&interp);
-	if(layout_doc.is_err())
-		return layout_doc.error().display(), false;
-
-	interp.setCurrentPhase(ProcessingPhase::Render);
-
-	auto writer = pdf::Writer(output_file);
-	layout_doc.unwrap()->write(&writer);
-	writer.close();
-
-	return true;
+	static bool g_draft_mode = false;
+	bool isDraftMode()
+	{
+		return g_draft_mode;
+	}
 }
-
-
 
 
 
 int main(int argc, char** argv)
 {
-	auto pppp = zarg::Parser();
-	pppp.add_option('o', true, "output filename")
-	    .add_option('I', true, "additional include search path")
-	    .add_option('L', true, "additional library search path")
-	    .add_option("watch", false, "watch mode: automatically recompile when files change")
-	    .allow_options_after_positionals(true) //
-	    ;
+	auto args =
+	    zarg::Parser()
+	        .add_option('o', true, "output filename")
+	        .add_option('I', true, "additional include search path")
+	        .add_option('L', true, "additional library search path")
+	        .add_option("watch", false, "watch mode: automatically recompile when files change")
+	        .add_option("draft", false, "draft mode")
+	        .allow_options_after_positionals(true)
+	        .parse(argc, argv)
+	        .set();
 
-	auto args = pppp.parse(argc, argv).set();
 	bool is_watching = args.options.contains("watch");
+	sap::g_draft_mode = args.options.contains("draft");
 
 	if(args.positional.size() != 1)
 	{

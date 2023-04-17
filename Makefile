@@ -21,7 +21,7 @@ TEST_DIR            := $(OUTPUT_DIR)/test
 CC                  := clang
 CXX                 := clang++
 
-CFLAGS              = $(COMMON_CFLAGS) -std=c99 -fPIC -O3
+CFLAGS              = $(COMMON_CFLAGS) -std=c99 -fPIC -O3 -march=native
 CXXFLAGS            = $(COMMON_CFLAGS) -Wno-old-style-cast -std=c++20 -fno-exceptions
 
 CXXSRC              := $(shell find source -iname "*.cpp" -print)
@@ -47,6 +47,10 @@ UTF8PROC_OBJS       := $(UTF8PROC_SRCS:%.c=$(OUTPUT_DIR)/%.c.o)
 
 LIBDEFLATE_SRCS     := $(shell find external/libdeflate/lib -iname "*.c" -print)
 LIBDEFLATE_OBJS     := $(LIBDEFLATE_SRCS:%.c=$(OUTPUT_DIR)/%.c.o)
+
+STB_IMAGE_SRCS      := external/stb_image.c
+STB_IMAGE_OBJS      := $(STB_IMAGE_SRCS:%.c=$(OUTPUT_DIR)/%.c.o)
+
 
 PRECOMP_HDR         := source/include/precompile.h
 PRECOMP_GCH         := $(PRECOMP_HDR:%.h=$(OUTPUT_DIR)/%.h.gch)
@@ -123,12 +127,12 @@ check: test
 		$$test; \
 	done
 
-$(OUTPUT_BIN): $(PRECOMP_OBJ) $(CXXOBJ) $(UTF8PROC_OBJS) $(LIBDEFLATE_OBJS)
+$(OUTPUT_BIN): $(PRECOMP_OBJ) $(CXXOBJ) $(UTF8PROC_OBJS) $(LIBDEFLATE_OBJS) $(STB_IMAGE_OBJS)
 	@echo "  $(notdir $@)"
 	@mkdir -p $(shell dirname $@)
 	@$(CXX) $(CXXFLAGS) $(WARNINGS) $(DEFINES) $(LDFLAGS) $(LINKER_OPT_FLAGS) -Iexternal -o $@ $^
 
-$(TEST_DIR)/%: $(OUTPUT_DIR)/test/%.cpp.o $(CXXLIBOBJ) $(UTF8PROC_OBJS) $(PRECOMP_OBJ) $(LIBDEFLATE_OBJS)
+$(TEST_DIR)/%: $(OUTPUT_DIR)/test/%.cpp.o $(CXXLIBOBJ) $(UTF8PROC_OBJS) $(PRECOMP_OBJ) $(LIBDEFLATE_OBJS) $(STB_IMAGE_OBJS)
 	@echo "  $(notdir $@)"
 	@mkdir -p $(shell dirname $@)
 	@$(CXX) $(CXXFLAGS) $(NONGCH_CXXFLAGS) $(WARNINGS) $(DEFINES) $(LDFLAGS) -Iexternal -o $@ $^
@@ -141,7 +145,7 @@ $(OUTPUT_DIR)/%.cpp.o: %.cpp $(PRECOMP_GCH)
 $(OUTPUT_DIR)/%.c.o: %.c
 	@echo "  $<"
 	@mkdir -p $(shell dirname $@)
-	@$(CC) $(CFLAGS) -MMD -MP -O3 -c -o $@ $<
+	@$(CC) $(CFLAGS) -MMD -MP -c -o $@ $<
 
 $(PRECOMP_GCH): $(PRECOMP_HDR)
 	@printf "# precompiling header $<\n"

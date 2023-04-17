@@ -5,19 +5,10 @@
 #include <chrono>
 #include <filesystem>
 
+#include <stb_image.h>
+
 #include "tree/image.h"
-
 #include "layout/image.h"
-
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wsign-conversion"
-#pragma GCC diagnostic ignored "-Wimplicit-int-conversion"
-
-#define STB_IMAGE_IMPLEMENTATION
-#include "stb_image.h"
-
-#pragma GCC diagnostic pop
-
 
 namespace sap::tree
 {
@@ -51,8 +42,33 @@ namespace sap::tree
 
 		// always ask for 3 channels -- r g b.
 		int num_actual_channels = 0;
-		auto image_data_buf = stbi_load_from_memory(file_buf.get(), (int) file_buf.size(), &img_width_, &img_height_,
-		    &num_actual_channels, 3);
+
+		if(sap::isDraftMode())
+		{
+			int ret = stbi_info_from_memory(file_buf.get(), checked_cast<int>(file_buf.size()), &img_width_,
+			    &img_height_, &num_actual_channels);
+
+			if(ret != 1)
+				return ErrFmt("failed to load image '{}': {}", file_path, stbi_failure_reason());
+
+			auto img = OwnedImageBitmap {
+				.pixel_width = checked_cast<size_t>(img_width_),
+				.pixel_height = checked_cast<size_t>(img_height_),
+				.bits_per_pixel = 8,
+				.rgb {},
+				.alpha {},
+			};
+
+			auto& tmp = g_cached_images[file_path.str()] = CachedImage {
+				.image = std::move(img),
+				.mtime = file_mtime,
+			};
+
+			return Ok(tmp.image.span());
+		}
+
+		auto image_data_buf = stbi_load_from_memory(file_buf.get(), checked_cast<int>(file_buf.size()), &img_width_,
+		    &img_height_, &num_actual_channels, 3);
 
 		if(image_data_buf == nullptr)
 			return ErrFmt("failed to load image '{}': {}", file_path, stbi_failure_reason());

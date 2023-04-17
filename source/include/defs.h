@@ -30,6 +30,7 @@ namespace sap
 	using zst::Result;
 	using zst::Failable;
 
+	bool isDraftMode();
 	bool compile(zst::str_view input_file, zst::str_view output_file);
 
 	namespace watch
