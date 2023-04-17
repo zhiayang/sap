@@ -208,7 +208,7 @@ namespace sap::tree
 		std::vector<zst::SharedPtr<InlineObject>> flat {};
 		flatten_para(para_objects, flat);
 
-		auto broken_lines = layout::linebreak::breakLines(style, flat, available_space.x());
+		auto broken_lines = layout::linebreak::breakLines(cs, style, flat, available_space.x());
 
 		size_t current_idx = 0;
 		for(auto line_it = broken_lines.begin(); line_it != broken_lines.end(); ++line_it)

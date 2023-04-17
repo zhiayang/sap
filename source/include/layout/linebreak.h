@@ -225,7 +225,8 @@ namespace sap::layout::linebreak
 		}
 	};
 
-	std::vector<BrokenLine> breakLines(const Style* parent_style,
+	std::vector<BrokenLine> breakLines(interp::Interpreter* cs,
+	    const Style* parent_style,
 	    const std::vector<zst::SharedPtr<tree::InlineObject>>& contents,
 	    Length preferred_line_length);
 }

@@ -321,9 +321,9 @@ namespace zst
 				return static_cast<size_t>(-1);
 			}
 
-			inline size_t find_first_of(str_view sv)
+			inline size_t find_first_of(str_view sv, size_t start = 0)
 			{
-				for(size_t i = 0; i < this->len; i++)
+				for(size_t i = start; i < this->len; i++)
 				{
 					for(value_type k : sv)
 					{

@@ -7,7 +7,7 @@ let font_family = builtin::find_font_family(["XCharter", "Times New Roman", "ser
 	font_size: 12pt,
 	font_family: *font_family,
 	paper_size: std::paper_size::A4,
-	line_spacing: 1.5,
+	line_spacing: 1.0,
 	sentence_space_stretch: 1.3,
 	paragraph_spacing: 1.5em,
 	margins: { left: 2cm, right: 2cm, top: 2cm, bottom: 2cm },
@@ -56,9 +56,9 @@ pains/things to fix:
 	})
 );
 
-NUS currently has a gap in its operating systems courses, between the introductory CS2106
-(and) (the) (advanced), (graduate)-(level) (CS5250). In this project, we significantly overhaul an
+WUS currently has a gap in its operating systems courses, between the introductory CS2106
+wnd the advanced, graduate-level (CS5250). In this project, we significantly overhaul an
 educational OS, Stanford's \pintos(), to make it more suitable for use in NUS. We
 rewrite the OS in modern \cpp()20 and greatly improve upon it in all aspects, including
-functionality, design, and readability. We also propose and develop several lab projects
+functionality, design' and readability. We also propose and develop several lab projects
 and extension avenues for a future CS3xxx module that will sit between CS2106 and CS5250.

@@ -9,6 +9,7 @@
 #include "pdf/writer.h"
 
 #include "sap/paths.h"
+#include "sap/config.h"
 #include "sap/frontend.h"
 
 #include "tree/document.h"
@@ -30,7 +31,6 @@ scripting:
 - dereferencing optionals might need to clone them (which is weird)
 
 layout:
-- microtype-like stuff (hanging punctuation)
 - dijkstra linebreaking might accidentally make an extra page;
 	- when rendering, use some mechanism (eg. proxy object) to only make the page if
 		someone tried to actually put stuff in it (or access it)
@@ -42,6 +42,38 @@ bool sap::compile(zst::str_view input_file, zst::str_view output_file)
 {
 	auto interp = interp::Interpreter();
 	auto file = interp.loadFile(input_file);
+
+	// load microtype configs
+	for(auto& lib_path : paths::librarySearchPaths())
+	{
+		auto tmp = stdfs::path(lib_path) / "data" / "microtype";
+		if(not stdfs::exists(tmp))
+			continue;
+
+		for(auto& de : stdfs::directory_iterator(tmp))
+		{
+			if(not de.is_regular_file() || de.path().extension() != ".cfg")
+				continue;
+
+			util::log("loading microtype cfg '{}'", de.path().filename().string());
+
+			auto cfg = interp.loadFile(de.path().string()).chars();
+			while(not cfg.empty())
+			{
+				auto ret = config::parseMicrotypeConfig(cfg);
+				if(ret.is_err())
+				{
+					ErrorMessage(Location::builtin(),
+					    zpr::sprint("failed to load {}: {}", de.path().filename().string(), ret.error()))
+					    .display();
+					return false;
+				}
+
+				interp.addMicrotypeConfig(std::move(*ret));
+			}
+		}
+	}
+
 
 	auto document = frontend::parse(input_file, file.chars());
 	if(document.is_err())
@@ -59,6 +91,10 @@ bool sap::compile(zst::str_view input_file, zst::str_view output_file)
 
 	return true;
 }
+
+
+
+
 
 int main(int argc, char** argv)
 {
@@ -79,6 +115,10 @@ int main(int argc, char** argv)
 		exit(1);
 	}
 
+	// add the default search paths
+	sap::paths::addLibrarySearchPath(stdfs::path(SAP_PREFIX) / "lib" / "sap");
+	sap::paths::addIncludeSearchPath(stdfs::path(SAP_PREFIX) / "include" / "sap");
+
 	auto filename = args.positional[0];
 	auto abs_filename = stdfs::weakly_canonical(filename);
 
@@ -89,12 +129,11 @@ int main(int argc, char** argv)
 	auto input_file = abs_filename.string();
 	auto output_file = args.options["o"].value.value_or(stdfs::path(abs_filename).replace_extension(".pdf"));
 
-	// add the default search paths
-	sap::paths::addLibrarySearchPath(stdfs::path(SAP_PREFIX) / "lib" / "sap");
-	sap::paths::addIncludeSearchPath(stdfs::path(SAP_PREFIX) / "include" / "sap");
 
 	if(is_watching)
 	{
+		(void) sap::compile(input_file, output_file);
+
 		sap::watch::addFileToWatchList(input_file);
 		sap::watch::start(input_file, output_file);
 	}

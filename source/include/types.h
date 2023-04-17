@@ -86,6 +86,12 @@ namespace sap
 			};
 		}
 	};
+
+	struct CharacterProtrusion
+	{
+		double left;
+		double right;
+	};
 }
 
 namespace zpr
@@ -106,7 +112,7 @@ namespace zpr
 		template <typename Cb>
 		void print(char32_t x, Cb&& cb, format_args args)
 		{
-			detail::print(static_cast<Cb&&>(cb), "char32({})", static_cast<uint32_t>(x));
+			detail::print(static_cast<Cb&&>(cb), "char32({x})", static_cast<uint32_t>(x));
 		}
 	};
 }

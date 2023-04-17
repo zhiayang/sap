@@ -146,6 +146,7 @@ namespace sap::tree
 				if(not style->smart_quotes_enabled())
 				{
 					ret.push_back(std::move(input[i]));
+					last_sep_was_space = false;
 					continue;
 				}
 
@@ -154,6 +155,7 @@ namespace sap::tree
 				if(k == std::string::npos)
 				{
 					ret.push_back(std::move(input[i]));
+					last_sep_was_space = false;
 					continue;
 				}
 

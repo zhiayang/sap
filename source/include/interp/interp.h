@@ -10,6 +10,8 @@
 #include "util.h"  // for Defer, hashmap
 #include "value.h" // for Value
 
+#include "sap/config.h"
+
 #include "interp/type.h"        // for Type
 #include "interp/basedefs.h"    // for InlineObject
 #include "interp/eval_result.h" // for EvalResult
@@ -59,6 +61,9 @@ namespace sap::interp
 
 		tree::BlockObject* addAbsolutelyPositionedBlockObject(zst::SharedPtr<tree::BlockObject> tbo);
 
+		void addMicrotypeConfig(config::MicrotypeConfig config);
+		std::optional<CharacterProtrusion> getMicrotypeProtrusionFor(char32_t ch, const Style* style) const;
+
 	private:
 		std::unique_ptr<Typechecker> m_typechecker;
 		std::unique_ptr<Evaluator> m_evaluator;
@@ -76,5 +81,7 @@ namespace sap::interp
 
 		std::vector<std::string> m_leaked_strings;
 		std::vector<std::u32string> m_leaked_strings32;
+
+		std::vector<config::MicrotypeConfig> m_microtype_configs;
 	};
 }

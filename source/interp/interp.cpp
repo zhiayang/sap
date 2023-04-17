@@ -99,6 +99,43 @@ namespace sap::interp
 
 
 
+	void Interpreter::addMicrotypeConfig(config::MicrotypeConfig config)
+	{
+		m_microtype_configs.push_back(std::move(config));
+	}
+
+	std::optional<CharacterProtrusion> Interpreter::getMicrotypeProtrusionFor(char32_t ch, const Style* style) const
+	{
+		auto font = style->font();
+		auto font_name = font->source().name();
+		auto font_style = style->font_style();
+
+		using enum FontStyle;
+		for(auto& config : m_microtype_configs)
+		{
+			if(not config.matched_fonts.contains(font_name))
+				continue;
+
+			if(config.enable_if_italic && not util::is_one_of(font_style, Italic, BoldItalic))
+				continue;
+
+			// ok, it should match. TODO: check features.
+			if(auto it = config.protrusions.find(ch); it != config.protrusions.end())
+				return CharacterProtrusion { it->second.left, it->second.right };
+		}
+
+		return std::nullopt;
+	}
+
+
+
+
+
+
+
+
+
+
 	ErrorOr<EvalResult> Stmt::evaluate(Evaluator* ev) const
 	{
 		auto _ = ev->pushLocation(m_location);

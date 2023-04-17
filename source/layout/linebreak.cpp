@@ -9,6 +9,8 @@
 #include "sap/style.h" // for Style
 #include "sap/units.h" // for Length
 
+#include "interp/interp.h"
+
 #include "layout/base.h"      // for RectPageLayout, Cursor
 #include "layout/line.h"      // for Line, breakLines
 #include "layout/word.h"      // for Separator, Word
@@ -22,6 +24,7 @@ namespace sap::layout::linebreak
 
 	struct LineBreakNode
 	{
+		interp::Interpreter* m_interp;
 		const InlineObjVec* m_contents;
 		const Style* m_parent_style;
 
@@ -37,6 +40,7 @@ namespace sap::layout::linebreak
 		static LineBreakNode make_end(VecIter end)
 		{
 			return LineBreakNode {
+				.m_interp = nullptr,
 				.m_contents = nullptr,
 				.m_parent_style = nullptr,
 				.m_preferred_line_length = 0,
@@ -49,6 +53,7 @@ namespace sap::layout::linebreak
 		LineBreakNode make_neighbour(VecIter neighbour_broken_until, BrokenLine neighbour_line) const
 		{
 			return LineBreakNode {
+				.m_interp = m_interp,
 				.m_contents = m_contents,
 				.m_parent_style = m_parent_style,
 				.m_preferred_line_length = m_preferred_line_length,
@@ -64,8 +69,35 @@ namespace sap::layout::linebreak
 			auto neighbour_line = BrokenLine(m_parent_style);
 			std::vector<std::pair<LineBreakNode, Distance>> ret;
 
+			// adjust left-side protrusion once per line
+			Length left_protrusion = 0;
+			{
+				auto first_it = neighbour_broken_until - checked_cast<ptrdiff_t>(neighbour_line.numParts());
+
+				auto& first_item = *first_it;
+				if(auto txt = first_item->castToText())
+				{
+					assert(not txt->contents().empty());
+					auto sv = zst::wstr_view(txt->contents());
+
+					auto sty = m_parent_style->extendWith(txt->style());
+					if(auto p = m_interp->getMicrotypeProtrusionFor(sv[0], sty))
+					{
+						// protrusion is defined as proportion of the glyph width.
+						// so, we must calculate that.
+						auto glyph_width = sty->font()->getWordSize(sv.take(1), sty->font_size().into()).x();
+						zpr::println("width('{}') = {}", (char) sv[0], sap::Length(glyph_width.into()));
+
+						left_protrusion = (p->left * glyph_width).into();
+					}
+				}
+			}
+
+
 			while(true)
 			{
+				neighbour_line.setLeftProtrusion(left_protrusion);
+
 				if(neighbour_broken_until == m_end)
 				{
 					// last line cost calculation has 0 cost
@@ -78,36 +110,6 @@ namespace sap::layout::linebreak
 				auto& wordorsep = *neighbour_broken_until++;
 				neighbour_line.add(wordorsep.get());
 
-				// perform micro-typography
-				{
-					auto first_it = neighbour_broken_until - checked_cast<ptrdiff_t>(neighbour_line.numParts());
-
-					auto& first_item = *first_it;
-					if(auto txt = first_item->castToText())
-					{
-						assert(not txt->contents().empty());
-						auto ch0 = txt->contents()[0];
-
-						if(ch0 == U'\'' || ch0 == U'"'
-						    || util::is_one_of(utf8proc_category((int32_t) ch0),
-						        UTF8PROC_CATEGORY_PS, //
-						        UTF8PROC_CATEGORY_PF, //
-						        UTF8PROC_CATEGORY_PI))
-						{
-							const auto adjust = 2.0_mm;
-							neighbour_line.setLeftProtrusion(adjust);
-						}
-					}
-				}
-
-
-
-
-
-
-
-
-
 				auto neighbour_width = neighbour_line.width();
 
 				if(neighbour_width >= m_preferred_line_length && ret.empty())
@@ -116,8 +118,8 @@ namespace sap::layout::linebreak
 					ret.emplace_back(this->make_neighbour(neighbour_broken_until, neighbour_line), 10000);
 					return ret;
 				}
-				// don't allow shrinking more than 3%, otherwise it looks kinda bad
-				else if(neighbour_width / m_preferred_line_length > 1.5)
+				// don't allow shrinking more than 5%, otherwise it looks kinda bad
+				else if(neighbour_width / m_preferred_line_length > 1.05)
 				{
 					return ret;
 				}
@@ -166,18 +168,13 @@ namespace sap::layout::linebreak
 						if(auto txt = last_item->castToText())
 						{
 							assert(not txt->contents().empty());
-							auto ch = txt->contents().back();
+							auto sv = zst::wstr_view(txt->contents());
 
-							// note: using this list
-							// https://developer.mozilla.org/en-US/docs/Web/CSS/hanging-punctuation
-							if(util::is_one_of(ch, U'\u002C', U'\u002E', U'\u060C', U'\u06D4', U'\u3001', U'\u3002',
-							       U'\uFF0C', U'\uFF0E', U'\uFE50', U'\uFE51', U'\uFE52', U'\uFF61', U'\uFF64')
-							    || util::is_one_of(ch, U'\'', U'\"')
-							    || util::is_one_of(utf8proc_category((int32_t) ch), UTF8PROC_CATEGORY_PE,
-							        UTF8PROC_CATEGORY_PF, UTF8PROC_CATEGORY_PI))
+							auto sty = m_parent_style->extendWith(txt->style());
+							if(auto p = m_interp->getMicrotypeProtrusionFor(sv.back(), sty))
 							{
-								const auto adjust = 2.0_mm;
-								neighbour_line.setRightProtrusion(adjust);
+								auto w = sty->font()->getWordSize(sv.take_last(1), sty->font_size().into()).x();
+								neighbour_line.setRightProtrusion((p->right * w).into());
 							}
 						}
 					}
@@ -198,11 +195,14 @@ namespace sap::layout::linebreak
 
 
 
-	std::vector<BrokenLine>
-	breakLines(const Style* parent_style, const InlineObjVec& contents, Length preferred_line_length)
+	std::vector<BrokenLine> breakLines(interp::Interpreter* cs,
+	    const Style* parent_style,
+	    const InlineObjVec& contents,
+	    Length preferred_line_length)
 	{
 		auto path = util::dijkstra_shortest_path(
 		    LineBreakNode {
+		        .m_interp = cs,
 		        .m_contents = &contents,
 		        .m_parent_style = parent_style,
 		        .m_preferred_line_length = preferred_line_length,

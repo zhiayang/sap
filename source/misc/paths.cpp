@@ -11,6 +11,11 @@ namespace sap::paths
 	static std::vector<std::string> g_include_paths;
 	static std::vector<std::string> g_library_paths;
 
+	const std::vector<std::string>& librarySearchPaths()
+	{
+		return g_library_paths;
+	}
+
 	void addIncludeSearchPath(std::string path)
 	{
 		g_include_paths.push_back(std::move(path));
@@ -21,9 +26,8 @@ namespace sap::paths
 		g_library_paths.push_back(std::move(path));
 	}
 
-	static ErrorOr<std::string> resolve_path(const Location& loc,
-	    zst::str_view _path,
-	    const std::vector<std::string>& search)
+	static ErrorOr<std::string>
+	resolve_path(const Location& loc, zst::str_view _path, const std::vector<std::string>& search)
 	{
 		// first, try to resolve it relative to the current directory
 		auto cwd = stdfs::current_path();

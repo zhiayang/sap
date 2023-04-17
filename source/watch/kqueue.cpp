@@ -77,7 +77,6 @@ namespace sap::watch
 
 		auto& kevent = g_state.kevents.emplace_back();
 
-		// util::log("watching {}", path);
 		EV_SET(&kevent, fd, EVFILT_VNODE,                                       //
 		    (EV_ADD | EV_CLEAR | EV_ONESHOT),                                   //
 		    (NOTE_DELETE | NOTE_WRITE | NOTE_RENAME | NOTE_LINK | NOTE_REVOKE), //
@@ -135,9 +134,6 @@ namespace sap::watch
 
 		g_state.main_file = main_file.str();
 		g_state.output_file = output_file.str();
-
-		// do a first compile
-		(void) sap::compile(main_file, output_file);
 
 		constexpr static size_t NUM_EVENTS = 16;
 		auto new_events = new struct kevent[NUM_EVENTS];
