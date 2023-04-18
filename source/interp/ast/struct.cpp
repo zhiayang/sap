@@ -22,7 +22,7 @@ namespace sap::interp
 		this->declaration->resolve(this);
 		auto struct_type = TRY(this->declaration->typecheck(ts)).type()->toStruct();
 
-		std::unordered_set<std::string> seen_names;
+		util::hashset<std::string> seen_names;
 		std::vector<StructType::Field> field_types {};
 
 		for(auto& [name, type, init_value] : m_fields)

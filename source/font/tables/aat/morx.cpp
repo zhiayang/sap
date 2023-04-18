@@ -231,8 +231,8 @@ namespace font::aat
 		bool did_substitute = false;
 		SubstitutedGlyphString ret;
 
-		std::unordered_set<size_t> deleted_glyphs {};
-		std::unordered_map<size_t, GlyphId> replacements {};
+		util::hashset<size_t> deleted_glyphs {};
+		util::hashmap<size_t, GlyphId> replacements {};
 
 		std::vector<size_t> glyph_stack {};
 
@@ -517,7 +517,7 @@ namespace font::aat
 
 		bool did_substitute = false;
 
-		std::unordered_map<size_t, GlyphId> replacements {};
+		util::hashmap<size_t, GlyphId> replacements {};
 		size_t marked_glyph_idx = 0;
 
 		auto runner = [&](size_t idx, uint16_t flags, zst::byte_span extra) {
@@ -576,7 +576,7 @@ namespace font::aat
 	{
 		bool did_substitute = false;
 
-		std::unordered_map<size_t, GlyphId> replacements {};
+		util::hashmap<size_t, GlyphId> replacements {};
 		for(size_t i = 0; i < glyphs.size(); i++)
 		{
 			if(auto ret = searchLookupTable(table.lookup, num_font_glyphs, glyphs[i]); ret.has_value())
@@ -682,8 +682,8 @@ namespace font::aat
 	{
 		std::optional<SubstitutedGlyphString> ret {};
 
-		std::unordered_set<aat::Feature> enabled_features {};
-		std::unordered_set<aat::Feature> disabled_features {};
+		util::hashset<aat::Feature> enabled_features {};
+		util::hashset<aat::Feature> disabled_features {};
 
 		for(auto& f : features.enabled_features)
 		{

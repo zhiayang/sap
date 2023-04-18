@@ -39,7 +39,7 @@ namespace font::aat
 	*/
 	struct Lookup
 	{
-		std::unordered_map<GlyphId, uint64_t> map;
+		util::hashmap<GlyphId, uint64_t> map;
 	};
 
 	std::optional<Lookup> parseLookupTable(zst::byte_span buf, size_t num_font_glyphs);
@@ -51,7 +51,7 @@ namespace font::aat
 	struct StateTable
 	{
 		size_t num_classes;
-		std::unordered_map<GlyphId, uint16_t> glyph_classes;
+		util::hashmap<GlyphId, uint16_t> glyph_classes;
 
 		zst::byte_span state_array;
 		size_t state_row_size;
@@ -102,8 +102,8 @@ namespace font::aat
 	{
 		KernSubTableCoverage coverage;
 
-		std::unordered_map<GlyphId, uint16_t> left_glyph_classes;
-		std::unordered_map<GlyphId, uint16_t> right_glyph_classes;
+		util::hashmap<GlyphId, uint16_t> left_glyph_classes;
+		util::hashmap<GlyphId, uint16_t> right_glyph_classes;
 
 		zst::byte_span lookup_array;
 	};
@@ -122,7 +122,8 @@ namespace font::aat
 		std::vector<KernSubTable3> subtables_f3;
 	};
 
-	std::map<size_t, GlyphAdjustment> getPositioningAdjustmentsForGlyphSequence(const KernTable& font, zst::span<GlyphId> glyphs,
+	std::map<size_t, GlyphAdjustment> getPositioningAdjustmentsForGlyphSequence(const KernTable& font,
+	    zst::span<GlyphId> glyphs,
 	    const FeatureSet& features);
 
 
@@ -185,8 +186,11 @@ namespace font::aat
 		zst::byte_span insertion_glyph_table;
 	};
 
-	using MorxSubtable = std::variant<MorxRearrangementSubtable, MorxContextualSubtable, MorxLigatureSubtable,
-	    MorxNonContextualSubtable, MorxInsertionSubtable>;
+	using MorxSubtable = std::variant<MorxRearrangementSubtable,
+	    MorxContextualSubtable,
+	    MorxLigatureSubtable,
+	    MorxNonContextualSubtable,
+	    MorxInsertionSubtable>;
 
 	struct MorxChain
 	{
@@ -202,8 +206,8 @@ namespace font::aat
 		size_t num_font_glyphs;
 	};
 
-	std::optional<SubstitutedGlyphString> performSubstitutionsForGlyphSequence(const MorxTable& morx, zst::span<GlyphId> glyphs,
-	    const FeatureSet& features);
+	std::optional<SubstitutedGlyphString>
+	performSubstitutionsForGlyphSequence(const MorxTable& morx, zst::span<GlyphId> glyphs, const FeatureSet& features);
 }
 
 template <>

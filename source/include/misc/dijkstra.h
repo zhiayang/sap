@@ -51,7 +51,7 @@ namespace util
 		std::priority_queue<Edge, std::vector<Edge>, EdgeComp> queue;
 
 		// Maps Tos to Froms
-		std::unordered_map<Node, Node, util::hasher> parents;
+		util::hashmap<Node, Node, util::hasher> parents;
 
 		queue.emplace(start, start, Distance {});
 		while(!queue.empty())

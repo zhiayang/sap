@@ -18,17 +18,17 @@ namespace sap::interp
 
 	template <typename TsEv, typename T, bool MoveValue>
 	ErrorOr<ArrangedArguments<T>> arrange_arguments(const TsEv* ts_ev,
-		const ExpectedParams& expected, //
-		ArgList<T, MoveValue> args,     //
-		const char* fn_or_struct,       //
-		const char* thing_name,         //
-		const char* thing_name2)
+	    const ExpectedParams& expected, //
+	    ArgList<T, MoveValue> args,     //
+	    const char* fn_or_struct,       //
+	    const char* thing_name,         //
+	    const char* thing_name2)
 	{
 		// note: we can't really assume anything about the number of arguments, since we might have less
 		// than expected (due to optional args), but also more than expected (due to variadic arrays)
 		ArrangedArguments<T> ret {};
 
-		std::unordered_map<std::string, size_t> param_names {};
+		util::hashmap<std::string, size_t> param_names {};
 		for(size_t i = 0; i < expected.size(); i++)
 			param_names[std::get<0>(expected[i])] = i;
 
@@ -101,7 +101,7 @@ namespace sap::interp
 					else
 					{
 						return ErrMsg(ts_ev, "too many arguments specified; expected at most {}, got {}",
-							expected.size(), cur_idx);
+						    expected.size(), cur_idx);
 					}
 				}
 				else
@@ -121,32 +121,32 @@ namespace sap::interp
 
 	template ErrorOr<ArrangedArguments<const Type*>>    //
 	arrange_arguments<Typechecker, const Type*, false>( //
-		const Typechecker*,
-		const ExpectedParams&,
-		const std::vector<ArrangeArg<const Type*>>&,
-		const char*,
-		const char*,
-		const char*);
+	    const Typechecker*,
+	    const ExpectedParams&,
+	    const std::vector<ArrangeArg<const Type*>>&,
+	    const char*,
+	    const char*,
+	    const char*);
 
 	template ErrorOr<ArrangedArguments<Value>> //
 	arrange_arguments<Evaluator, Value, true>( //
-		const Evaluator*,
-		const ExpectedParams&,
-		std::vector<ArrangeArg<Value>>&&,
-		const char*,
-		const char*,
-		const char*);
+	    const Evaluator*,
+	    const ExpectedParams&,
+	    std::vector<ArrangeArg<Value>>&&,
+	    const char*,
+	    const char*,
+	    const char*);
 
 
 
 
 
 	ErrorOr<int> getCallingCost(Typechecker* ts,
-		const std::vector<std::tuple<std::string, const Type*, const Expr*>>& expected,
-		const std::unordered_map<size_t, std::vector<ArgPair<const Type*>>>& param_idx_to_args,
-		const char* fn_or_struct,
-		const char* thing_name,
-		const char* thing_name2)
+	    const std::vector<std::tuple<std::string, const Type*, const Expr*>>& expected,
+	    const util::hashmap<size_t, std::vector<ArgPair<const Type*>>>& param_idx_to_args,
+	    const char* fn_or_struct,
+	    const char* thing_name,
+	    const char* thing_name2)
 	{
 		int cost = 0;
 
@@ -211,7 +211,7 @@ namespace sap::interp
 						variadic_cost += 2;
 					else
 						return ErrMsg(ts, "mismatched types in variadic argument; expected '{}', got '{}",
-							variadic_element_type, arg_type);
+						    variadic_element_type, arg_type);
 
 					continue;
 				}
@@ -243,7 +243,7 @@ namespace sap::interp
 				else
 				{
 					return ErrMsg(ts, "mismatched types for {} {}: expected '{}', got '{}'", //
-						thing_name, 1 + param_idx, param_type, arg_type);
+					    thing_name, 1 + param_idx, param_type, arg_type);
 				}
 			}
 		}

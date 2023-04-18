@@ -49,7 +49,7 @@ namespace font::aat
 			auto first_glyph = consume_u16(table);
 			auto num_glyphs = consume_u16(table);
 
-			std::unordered_map<GlyphId, uint16_t> ret {};
+			util::hashmap<GlyphId, uint16_t> ret {};
 			for(auto i = 0u; i < num_glyphs; i++)
 				ret[GlyphId(first_glyph + i)] = consume_u16(table);
 
@@ -215,7 +215,8 @@ namespace font::aat
 					auto tmp_r = consume_u16(arr);
 					auto shift = FontScalar(consume_i16(arr));
 
-					auto tmp = ((static_cast<uint32_t>(tmp_l) & 0xffff) << 16) | (static_cast<uint32_t>(tmp_r) & 0xffff);
+					auto
+					    tmp = ((static_cast<uint32_t>(tmp_l) & 0xffff) << 16) | (static_cast<uint32_t>(tmp_r) & 0xffff);
 
 					if(tmp == search_u32)
 					{
@@ -262,7 +263,8 @@ namespace font::aat
 			return std::nullopt;
 	}
 
-	std::map<size_t, GlyphAdjustment> getPositioningAdjustmentsForGlyphSequence(const KernTable& table, zst::span<GlyphId> glyphs,
+	std::map<size_t, GlyphAdjustment> getPositioningAdjustmentsForGlyphSequence(const KernTable& table,
+	    zst::span<GlyphId> glyphs,
 	    const FeatureSet& features)
 	{
 		if(glyphs.size() < 2 || features.is_disabled(feature::kern))

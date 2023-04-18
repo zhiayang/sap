@@ -65,7 +65,7 @@ namespace font
 		std::string license_info;   // name 13
 
 		// other names
-		std::unordered_map<uint16_t, std::string> others;
+		util::hashmap<uint16_t, std::string> others;
 	};
 
 	struct FontFile : FontSource
@@ -127,8 +127,8 @@ namespace font
 
 		static std::unique_ptr<FontFile> from_offset_table(zst::unique_span<uint8_t[]> bytes, //
 		    size_t start_of_offset_table);
-		static std::optional<std::unique_ptr<FontFile>> from_postscript_name_in_collection(zst::unique_span<uint8_t[]> bytes,
-		    zst::str_view postscript_name);
+		static std::optional<std::unique_ptr<FontFile>>
+		from_postscript_name_in_collection(zst::unique_span<uint8_t[]> bytes, zst::str_view postscript_name);
 
 		FontNames m_names;
 

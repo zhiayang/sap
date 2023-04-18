@@ -4,17 +4,18 @@
 
 #pragma once
 
-#include <bit> // for endian, endian::big, endian::native
+#include <bit>
 #include <numeric>
 #include <variant>
 #include <concepts>
 #include <optional>
-#include <string_view> // for hash, string_view, u32string_view
+#include <string_view>
 #include <unordered_map>
 #include <unordered_set>
 
 #include <zpr.h>
 #include <zst/zst.h>
+#include <ankerl/unordered_dense.h>
 
 #include "types.h"
 
@@ -191,6 +192,19 @@ namespace util
 		}
 	};
 
+	template <typename K, typename V, typename H = hasher, typename E = std::equal_to<>>
+	using hashmap = ankerl::unordered_dense::map<K, V, H, E>;
+	// using hashmap = phmap::flat_hash_map<K, V, H, E>;
+	// using hashmap = std::unordered_map<K, V, H, E>;
+
+	template <typename T, typename H = hasher, typename E = std::equal_to<>>
+	using hashset = ankerl::unordered_dense::set<T, H, E>;
+	// using hashset = std::unordered_set<T, H, E>;
+
+
+
+
+
 	// Convert type of `shared_ptr`, via `dynamic_cast`
 	// This exists because libstdc++ is a dum dum
 	template <typename To, typename From>
@@ -211,12 +225,6 @@ namespace util
 		return std::unique_ptr<To>(static_cast<To*>(from.release()));
 	}
 
-
-	template <typename K, typename V, typename H = hasher>
-	using hashmap = std::unordered_map<K, V, H, std::equal_to<>>;
-
-	template <typename T>
-	using hashset = std::unordered_set<T, hasher, std::equal_to<>>;
 
 	namespace impl
 	{

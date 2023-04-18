@@ -109,7 +109,7 @@ namespace sap::interp
 		std::vector<const Type*> m_expected_return_types;
 
 		std::vector<std::unique_ptr<Definition>> m_builtin_defns;
-		std::unordered_map<const Type*, const Definition*> m_type_definitions;
+		util::hashmap<const Type*, const Definition*> m_type_definitions;
 
 		std::vector<Location> m_location_stack;
 		size_t m_loop_body_nesting;

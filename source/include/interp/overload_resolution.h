@@ -33,25 +33,25 @@ namespace sap::interp
 	template <typename T>
 	struct ArrangedArguments
 	{
-		std::unordered_map<size_t, std::vector<ArgPair<T>>> param_idx_to_args;
-		std::unordered_map<size_t, size_t> arg_idx_to_param_idx;
+		util::hashmap<size_t, std::vector<ArgPair<T>>> param_idx_to_args;
+		util::hashmap<size_t, size_t> arg_idx_to_param_idx;
 	};
 
 	template <typename TsEv, typename T, bool MoveValue>
 	ErrorOr<ArrangedArguments<T>> arrange_arguments(const TsEv* ts_ev,
-		const ExpectedParams& expected,                                                                      //
-		std::conditional_t<MoveValue, std::vector<ArrangeArg<T>>&&, const std::vector<ArrangeArg<T>>&> args, //
-		const char* fn_or_struct,                                                                            //
-		const char* thing_name,                                                                              //
-		const char* thing_name2);
+	    const ExpectedParams& expected,                                                                      //
+	    std::conditional_t<MoveValue, std::vector<ArrangeArg<T>>&&, const std::vector<ArrangeArg<T>>&> args, //
+	    const char* fn_or_struct,                                                                            //
+	    const char* thing_name,                                                                              //
+	    const char* thing_name2);
 
 	inline constexpr auto arrangeArgumentTypes = arrange_arguments<Typechecker, const Type*, /* move: */ false>;
 	inline constexpr auto arrangeArgumentValues = arrange_arguments<Evaluator, Value, /* move: */ true>;
 
-	ErrorOr<int> getCallingCost(Typechecker* ts,                                           //
-		const std::vector<std::tuple<std::string, const Type*, const Expr*>>& expected,    //
-		const std::unordered_map<size_t, std::vector<ArgPair<const Type*>>>& ordered_args, //
-		const char* fn_or_struct,                                                          //
-		const char* thing_name,                                                            //
-		const char* thing_name2);
+	ErrorOr<int> getCallingCost(Typechecker* ts,                                        //
+	    const std::vector<std::tuple<std::string, const Type*, const Expr*>>& expected, //
+	    const util::hashmap<size_t, std::vector<ArgPair<const Type*>>>& ordered_args,   //
+	    const char* fn_or_struct,                                                       //
+	    const char* thing_name,                                                         //
+	    const char* thing_name2);
 }

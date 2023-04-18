@@ -77,7 +77,7 @@ namespace sap::interp
 
 		std::vector<zst::SharedPtr<tree::BlockObject>> m_abs_tbos;
 
-		std::unordered_set<std::string> m_imported_files;
+		util::hashset<std::string> m_imported_files;
 
 		std::vector<std::string> m_leaked_strings;
 		std::vector<std::u32string> m_leaked_strings32;

@@ -37,7 +37,7 @@ namespace pdf
 		Dictionary* m_dictionary;
 		std::vector<PageObject*> m_objects;
 		std::vector<const Annotation*> m_annotations;
-		mutable std::unordered_set<const Resource*> m_resources;
+		mutable util::hashset<const Resource*> m_resources;
 
 		Size2d m_page_size {};
 	};

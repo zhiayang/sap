@@ -17,11 +17,14 @@ namespace font
 		Tag script;
 		Tag language;
 
-		std::unordered_set<Tag> enabled_features {};
-		std::unordered_set<Tag> disabled_features {};
+		util::hashset<Tag> enabled_features {};
+		util::hashset<Tag> disabled_features {};
 
 		bool is_disabled(Tag feat) const { return disabled_features.contains(feat); }
-		bool is_enabled(Tag feat) const { return enabled_features.contains(feat) && not disabled_features.contains(feat); }
+		bool is_enabled(Tag feat) const
+		{
+			return enabled_features.contains(feat) && not disabled_features.contains(feat);
+		}
 	};
 
 #define DECLARE_FEATURE(name) inline constexpr auto name = Tag(#name)

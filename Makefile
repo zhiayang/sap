@@ -11,7 +11,7 @@ WARNINGS += -Wno-unused-but-set-variable
 WARNINGS += -Wshadow
 WARNINGS += -Wno-error=shadow
 
-OPT_FLAGS           := -march=native -O0 -fsanitize=address
+OPT_FLAGS           := -march=native -O2
 LINKER_OPT_FLAGS    :=
 COMMON_CFLAGS       := -g $(OPT_FLAGS)
 
@@ -42,14 +42,11 @@ TESTOBJ             = $(TESTSRC:%.cpp=$(OUTPUT_DIR)/%.cpp.o)
 TESTDEPS            = $(TESTOBJ:.o=.d)
 TESTS               = $(TESTSRC:test/%.cpp=$(TEST_DIR)/%)
 
-UTF8PROC_SRCS       := external/utf8proc/utf8proc.c
-UTF8PROC_OBJS       := $(UTF8PROC_SRCS:%.c=$(OUTPUT_DIR)/%.c.o)
-
-LIBDEFLATE_SRCS     := $(shell find external/libdeflate/lib -iname "*.c" -print)
-LIBDEFLATE_OBJS     := $(LIBDEFLATE_SRCS:%.c=$(OUTPUT_DIR)/%.c.o)
-
-STB_IMAGE_SRCS      := external/stb_image.c
-STB_IMAGE_OBJS      := $(STB_IMAGE_SRCS:%.c=$(OUTPUT_DIR)/%.c.o)
+EXTERNAL_SRCS       := $(shell find external/libdeflate/lib -iname "*.c" -print) \
+						external/utf8proc/utf8proc.c \
+						external/stb_image.c \
+						external/xxhash.c
+EXTERNAL_OBJS       := $(EXTERNAL_SRCS:%.c=$(OUTPUT_DIR)/%.c.o)
 
 
 PRECOMP_HDR         := source/include/precompile.h
@@ -127,12 +124,12 @@ check: test
 		$$test; \
 	done
 
-$(OUTPUT_BIN): $(PRECOMP_OBJ) $(CXXOBJ) $(UTF8PROC_OBJS) $(LIBDEFLATE_OBJS) $(STB_IMAGE_OBJS)
+$(OUTPUT_BIN): $(PRECOMP_OBJ) $(CXXOBJ) $(EXTERNAL_OBJS)
 	@echo "  $(notdir $@)"
 	@mkdir -p $(shell dirname $@)
 	@$(CXX) $(CXXFLAGS) $(WARNINGS) $(DEFINES) $(LDFLAGS) $(LINKER_OPT_FLAGS) -Iexternal -o $@ $^
 
-$(TEST_DIR)/%: $(OUTPUT_DIR)/test/%.cpp.o $(CXXLIBOBJ) $(UTF8PROC_OBJS) $(PRECOMP_OBJ) $(LIBDEFLATE_OBJS) $(STB_IMAGE_OBJS)
+$(TEST_DIR)/%: $(OUTPUT_DIR)/test/%.cpp.o $(CXXLIBOBJ) $(EXTERNAL_OBJS) $(PRECOMP_OBJ)
 	@echo "  $(notdir $@)"
 	@mkdir -p $(shell dirname $@)
 	@$(CXX) $(CXXFLAGS) $(NONGCH_CXXFLAGS) $(WARNINGS) $(DEFINES) $(LDFLAGS) -Iexternal -o $@ $^
@@ -174,8 +171,7 @@ compile_commands.json:
 	@echo "  $@"
 	@# first build list of commands
 	@echo -n > $(OUTPUT_DIR)/cmds
-	@for f in $(UTF8PROC_SRCS); do echo $(CC) $(CFLAGS) -MMD -MP -c -o $(OUTPUT_DIR)/$$f.o $(OUTPUT_DIR)/$$f; done >> $(OUTPUT_DIR)/cmds
-	@for f in $(LIBDEFLATE_SRCS); do echo $(CC) $(CFLAGS) -MMD -MP -c -o $(OUTPUT_DIR)/$$f.o $(OUTPUT_DIR)/$$f; done >> $(OUTPUT_DIR)/cmds
+	@for f in $(EXTERNAL_SRCS); do echo $(CC) $(CFLAGS) -MMD -MP -c -o $(OUTPUT_DIR)/$$f.o $(OUTPUT_DIR)/$$f; done >> $(OUTPUT_DIR)/cmds
 	@for f in $(CXXSRC); do echo $(CXX) -include $(PRECOMP_HDR) $(CXXFLAGS) $(NONGCH_CXXFLAGS) $(WARNINGS) $(INCLUDES) $(DEFINES) -MMD -MP -c -o $(OUTPUT_DIR)/$$f $$f; done >> $(OUTPUT_DIR)/cmds
 	@# now convert cmd list to compile_commands.json
 	@cat $(OUTPUT_DIR)/cmds | awk -v CWD=$$(pwd) 'BEGIN { print "[" } END { print "]"} { print "{\"arguments\": ["; for (i = 1; i <= NF; i++) { print "\"" $$i "\"," } print "], \"directory\": \"" CWD "\", \"file\": \"" $$NF "\", \"output\": \"" $$(NF - 1) "\"}, " }' > $@

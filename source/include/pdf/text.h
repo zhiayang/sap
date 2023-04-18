@@ -88,6 +88,6 @@ namespace pdf
 		sap::Colour m_current_colour = sap::Colour::black();
 
 		std::vector<Group> m_groups {};
-		std::unordered_set<const PdfFont*> m_used_fonts {};
+		util::hashset<const PdfFont*> m_used_fonts {};
 	};
 }

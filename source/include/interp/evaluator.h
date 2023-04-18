@@ -69,7 +69,7 @@ namespace sap::interp
 		Evaluator* m_evaluator;
 		StackFrame* m_parent = nullptr;
 		size_t m_call_depth;
-		std::unordered_map<const Definition*, Value> m_values;
+		util::hashmap<const Definition*, Value> m_values;
 		std::deque<Value> m_temporaries;
 	};
 
@@ -144,7 +144,7 @@ namespace sap::interp
 
 		std::vector<Location> m_location_stack;
 
-		std::unordered_map<const Definition*, Value> m_global_values;
+		util::hashmap<const Definition*, Value> m_global_values;
 
 		std::deque<Value> m_value_heap;
 

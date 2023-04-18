@@ -110,7 +110,7 @@ namespace sap::interp
 		size_t operator()(const Type* type) const { return std::hash<std::string> {}(type->str()); }
 	};
 
-	std::unordered_set<Type*, type_hash, type_eq> g_type_cache;
+	util::hashset<Type*, type_hash, type_eq> g_type_cache;
 
 	template <typename T>
 	static const T* get_or_add_type(T* t)
@@ -244,8 +244,8 @@ namespace sap::interp
 		return get_or_add_type(new ArrayType(elem, is_variadic));
 	}
 
-	const StructType* Type::makeStruct(const std::string& name,
-	    const std::vector<std::pair<std::string, const Type*>>& foo)
+	const StructType*
+	Type::makeStruct(const std::string& name, const std::vector<std::pair<std::string, const Type*>>& foo)
 	{
 		std::vector<StructType::Field> fields {};
 		for(auto& [n, t] : foo)
