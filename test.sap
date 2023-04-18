@@ -19,6 +19,9 @@ using builtin;
 
 \script::{
 
+	println(f"hello, world");
+
+
 	fn rgb(r: float, g: float, b: float) -> Colour
 	{
 		return Colour {
