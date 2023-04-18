@@ -3,6 +3,10 @@
 import "std";
 
 let font_family = builtin::find_font_family(["XCharter", "Times New Roman", "serif"]);
+
+using std;
+using builtin;
+
 \start_document({
 	font_size: 12pt,
 	font_family: *font_family,
@@ -15,9 +19,9 @@ let font_family = builtin::find_font_family(["XCharter", "Times New Roman", "ser
 
 \script::{
 
-	fn rgb(r: float, g: float, b: float) -> builtin::Colour
+	fn rgb(r: float, g: float, b: float) -> Colour
 	{
-		return builtin::Colour {
+		return Colour {
 			type: .RGB,
 			rgb: { r, g, b }
 		};
@@ -25,7 +29,7 @@ let font_family = builtin::find_font_family(["XCharter", "Times New Roman", "ser
 
 
 	fn pintos() -> Inline  {
-		return std::emph("Pintos").apply_style({
+		return emph("Pintos").apply_style({
 			colour: rgb(1, 0, 0)
 		});
 	}
@@ -33,14 +37,14 @@ let font_family = builtin::find_font_family(["XCharter", "Times New Roman", "ser
 	fn cpp() -> Inline
 	{
 		let c = \{C}.set_width(0.56em);
-		var p1 = builtin::bold1(\{+}).apply_style({ font_size:10.5pt, });
-		var p2 = builtin::bold1(\{+}).apply_style({ font_size:10.5pt, });
+		var p1 = bold1(\{+}).apply_style({ font_size:10.5pt, });
+		var p2 = bold1(\{+}).apply_style({ font_size:10.5pt, });
 
 		p1.set_width(0.6em);
 		p1.raise(0.05em);
 		p2.raise(0.05em);
 
-		return builtin::make_span(glue: true, *c, *p1, *p2);
+		return make_span(glue: true, *c, *p1, *p2);
 	}
 }
 
@@ -60,9 +64,9 @@ pains/things to fix:
 	foo({line_spacing:1em});
 #/
 
-\std::disable_page_numbering();
+\disable_page_numbering();
 
-\std::section("asdf");
+\section("asdf");
 
 NUS currently has a gap in its operating systems courses, between the introductory CS2106
 and the advanced, graduate-level CS5250. In this project, we significantly overhaul an

@@ -43,12 +43,12 @@ namespace sap::interp
 				auto initialiser_type = TRY(init_value->typecheck(ts)).type();
 				if(not ts->canImplicitlyConvert(initialiser_type, field_type))
 					return ErrMsg(ts, "cannot initialise field of type '{}' with value of type '{}'", field_type,
-						initialiser_type);
+					    initialiser_type);
 			}
 
 			field_types.push_back(StructType::Field {
-				.name = name,
-				.type = field_type,
+			    .name = name,
+			    .type = field_type,
 			});
 		}
 

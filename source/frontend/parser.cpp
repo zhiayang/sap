@@ -1421,6 +1421,32 @@ namespace sap::frontend
 		return OkMove(ret);
 	}
 
+	static ErrorOrUniquePtr<interp::UsingStmt> parse_using_stmt(Lexer& lexer)
+	{
+		auto loc = lexer.location();
+		must_expect(lexer, TT::KW_Using);
+
+		auto ret = std::make_unique<interp::UsingStmt>(loc);
+
+		auto qid = TRY(parse_qualified_id(lexer)).first;
+		if(not qid.top_level && qid.parents.empty() && lexer.expect(TT::Equal))
+		{
+			ret->alias = std::move(qid.name);
+			ret->module = TRY(parse_qualified_id(lexer)).first;
+		}
+		else
+		{
+			ret->alias = "";
+			ret->module = std::move(qid);
+		}
+
+		return OkMove(ret);
+	}
+
+
+
+
+
 	static ErrorOrUniquePtr<interp::Block> parse_namespace(Lexer& lexer)
 	{
 		must_expect(lexer, TT::KW_Namespace);
@@ -1514,6 +1540,10 @@ namespace sap::frontend
 		else if(tok == TT::KW_Import)
 		{
 			stmt = TRY(parse_import_stmt(lexer));
+		}
+		else if(tok == TT::KW_Using)
+		{
+			stmt = TRY(parse_using_stmt(lexer));
 		}
 		else if(tok == TT::At)
 		{

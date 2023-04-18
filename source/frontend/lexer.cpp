@@ -547,6 +547,8 @@ namespace sap::frontend
 				tt = TT::KW_Break;
 			else if(text == "while")
 				tt = TT::KW_While;
+			else if(text == "using")
+				tt = TT::KW_Using;
 			else if(text == "struct")
 				tt = TT::KW_Struct;
 			else if(text == "return")

@@ -285,6 +285,17 @@ continue-stmt:
     `continue`{keyword.continue} `;`{punctuation.terminator}
     ;
 
+using-stmt:
+    # note: strictly speaking this accepts a superset of what we actually accept;
+    # if we do `using foo = ...`, then `foo` must just be an identifier, and not a qualified id
+    `using`{keyword.using}
+        (`::`{punctuation.scope})? (IDENTIFIER{meta.name.namespace})
+        (`::`{punctuation.scope} IDENTIFIER{meta.name.namespace})*
+        (`=`{punctuation.equal} (`::`{punctuation.scope})? (IDENTIFIER{meta.name.namespace})
+        (`::`{punctuation.scope} IDENTIFIER{meta.name.namespace})*)?
+    `;`{punctuation.terminator}
+    ;
+
 stmt: block-comment
     | line-comment
     | func-defn
@@ -297,6 +308,7 @@ stmt: block-comment
     | break-stmt
     | continue-stmt
     | import-stmt
+    | using-stmt
     | namespace-defn
     | while-loop
     | for-loop

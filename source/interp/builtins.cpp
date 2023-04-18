@@ -15,14 +15,13 @@
 namespace sap::interp
 {
 	template <typename T>
-	void define_builtin_struct(Interpreter* interp)
+	void define_builtin_struct(Interpreter* cs)
 	{
 		auto s = std::make_unique<StructDefn>(Location::builtin(), T::name, T::fields());
 		auto defn = s.get();
 
-		T::type =
-		    interp->typechecker().addBuiltinDefinition(std::move(s))->typecheck(&interp->typechecker()).unwrap().type();
-		defn->evaluate(&interp->evaluator()).expect("builtin decl failed");
+		T::type = cs->typechecker().addBuiltinDefinition(std::move(s))->typecheck(&cs->typechecker()).unwrap().type();
+		defn->evaluate(&cs->evaluator()).expect("builtin decl failed");
 	}
 
 	template <typename T>

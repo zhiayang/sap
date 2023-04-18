@@ -30,10 +30,8 @@ namespace sap
 	inline constexpr const char* COLOUR_WHITE_BOLD = "\033[1m\033[37m";
 	inline constexpr const char* COLOUR_GREY_BOLD = "\033[30;1m";
 
-	static void show_message(const char* error_text,
-	    const char* _error_colour,
-	    const Location& loc,
-	    const std::string& message)
+	static void
+	show_message(const char* error_text, const char* _error_colour, const Location& loc, const std::string& message)
 	{
 		bool coloured = isatty(STDERR_FILENO);
 
@@ -84,8 +82,6 @@ namespace sap
 		zpr::fprintln(stderr, "{}{} |  {}{}{}{}{}", colour_blue, line_num_padding, colour_reset, colour_error,
 		    caret_spaces, carets, colour_reset);
 		zpr::fprintln(stderr, "");
-
-		abort();
 	}
 
 
@@ -128,6 +124,8 @@ namespace sap
 		show_message("error", COLOUR_RED_BOLD, m_location, m_message);
 		for(auto& [loc, info] : m_infos)
 			show_message("note", COLOUR_GREY_BOLD, loc, info);
+
+		abort();
 	}
 
 	[[noreturn]] void ErrorMessage::showAndExit() const

@@ -9,16 +9,60 @@
 
 namespace sap::interp
 {
-	ErrorOr<DefnTree*> DefnTree::lookupNamespace(std::string_view name) const
+	DefnTree* DefnTree::declareAnonymousNamespace()
 	{
-		if(auto it = m_children.find(name); it != m_children.end())
-			return Ok(it->second.get());
+		return this->lookupOrDeclareNamespace(zpr::sprint("__$anon{}", m_anon_namespace_count++));
+	}
 
-		return ErrMsg(m_typechecker->loc(), "namespace '{}' was not found in {}", name, m_name);
+	ErrorOr<void> DefnTree::useNamespace(const Location& loc, DefnTree* tree, const std::string& alias)
+	{
+		if(alias.empty())
+		{
+			// import all the decls in the guy into ourselves.
+			for(auto& [name, decls] : tree->m_decls)
+				m_imported_decls[name] = decls;
+		}
+		else
+		{
+			if(m_imported_trees.contains(alias))
+				return ErrMsg(loc, "using of '{}' conflicts with existing declaration", alias);
+
+			m_imported_trees[alias] = tree;
+		}
+
+		return Ok();
+	}
+
+	ErrorOr<void> DefnTree::useDeclaration(const Location& loc, const Declaration* decl, const std::string& alias)
+	{
+		if(alias.empty())
+			m_imported_decls[decl->name].push_back(decl);
+		else
+			m_imported_decls[alias].push_back(decl);
+
+		return Ok();
+	}
+
+
+
+
+	DefnTree* DefnTree::lookupNamespace(std::string_view name) const
+	{
+		if(auto it = m_imported_trees.find(name); it != m_imported_trees.end())
+			return it->second;
+
+		if(auto it = m_children.find(name); it != m_children.end())
+			return it->second.get();
+
+		return nullptr;
 	}
 
 	DefnTree* DefnTree::lookupOrDeclareNamespace(std::string_view name)
 	{
+		// FIXME: not sure if we should be checking the imported trees here...
+		if(auto it = m_imported_trees.find(name); it != m_imported_trees.end())
+			return it->second;
+
 		if(auto it = m_children.find(name); it != m_children.end())
 			return it->second.get();
 
@@ -26,9 +70,28 @@ namespace sap::interp
 		return m_children.insert_or_assign(std::string(name), std::move(ret)).first->second.get();
 	}
 
-	DefnTree* DefnTree::declareAnonymousNamespace()
+
+
+	DefnTree* DefnTree::lookupScope(const std::vector<std::string>& scope, bool is_top_level)
 	{
-		return this->lookupOrDeclareNamespace(zpr::sprint("__$anon{}", m_anon_namespace_count++));
+		auto current = this;
+
+		if(is_top_level)
+		{
+			while(current->parent() != nullptr)
+				current = current->parent();
+		}
+
+		// this is always additive, so don't do any looking upwards
+		for(auto& ns : scope)
+		{
+			if(auto tmp = current->lookupNamespace(ns))
+				current = tmp;
+			else
+				return nullptr;
+		}
+
+		return current;
 	}
 
 	DefnTree* DefnTree::lookupOrDeclareScope(const std::vector<std::string>& scope, bool is_top_level)
@@ -73,7 +136,7 @@ namespace sap::interp
 		{
 			while(true)
 			{
-				if(current->lookupNamespace(id.parents[0]).ok())
+				if(current->lookupNamespace(id.parents[0]))
 					break;
 
 				current = current->parent();
@@ -84,22 +147,38 @@ namespace sap::interp
 
 		for(auto& t : id.parents)
 		{
-			if(auto next = current->lookupNamespace(t); next.ok())
-				current = next.unwrap();
+			if(auto next = current->lookupNamespace(t))
+				current = next;
 			else
-				return next.to_err();
+				return ErrMsg(m_typechecker->loc(), "undeclared namespace '{}'", t);
 		}
 
-		std::vector<const Declaration*> decls {};
+		util::hashset<const Declaration*> decls {};
+
+		auto decls_vec = [](util::hashset<const Declaration*>& decls) {
+			return std::vector(std::move_iterator(decls.begin()), std::move_iterator(decls.end()));
+		};
+
+
 		while(current != nullptr)
 		{
+			// check imported decls first
+			if(auto it = current->m_imported_decls.find(id.name); it != current->m_imported_decls.end())
+			{
+				for(auto& d : it->second)
+					decls.insert(d);
+
+				if(not recursive)
+					return Ok(decls_vec(decls));
+			}
+
 			if(auto it = current->m_decls.find(id.name); it != current->m_decls.end())
 			{
 				for(auto& d : it->second)
-					decls.push_back(d);
+					decls.insert(d);
 
 				if(not recursive)
-					return Ok(std::move(decls));
+					return Ok(decls_vec(decls));
 			}
 
 			// if the id was qualified, then we shouldn't search in parents.
@@ -110,7 +189,7 @@ namespace sap::interp
 		}
 
 		if(not decls.empty())
-			return Ok(std::move(decls));
+			return Ok(decls_vec(decls));
 
 		return ErrMsg(m_typechecker->loc(), "no declaration named '{}' (search started at '{}')", id.name, m_name);
 	}
@@ -127,7 +206,6 @@ namespace sap::interp
 	ErrorOr<void> DefnTree::declare(const Declaration* new_decl)
 	{
 		auto& name = new_decl->name;
-
 		if(auto foo = m_decls.find(name); foo != m_decls.end())
 		{
 			auto& existing_decls = foo->second;

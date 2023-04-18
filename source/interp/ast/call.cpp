@@ -14,8 +14,8 @@
 namespace sap::interp
 {
 	template <typename TsEv>
-	static ErrorOr<std::vector<std::tuple<std::string, const Type*, const Expr*>>> convert_params(const TsEv* ts_ev,
-	    const Declaration* decl)
+	static ErrorOr<std::vector<std::tuple<std::string, const Type*, const Expr*>>>
+	convert_params(const TsEv* ts_ev, const Declaration* decl)
 	{
 		if(auto fdecl = dynamic_cast<const FunctionDecl*>(decl); fdecl != nullptr)
 		{
@@ -40,9 +40,8 @@ namespace sap::interp
 		}
 	}
 
-	static ErrorOr<std::pair<int, ArrangedArguments<const Type*>>> get_calling_cost(Typechecker* ts,
-	    const Declaration* decl,
-	    const std::vector<ArrangeArg<const Type*>>& arguments)
+	static ErrorOr<std::pair<int, ArrangedArguments<const Type*>>>
+	get_calling_cost(Typechecker* ts, const Declaration* decl, const std::vector<ArrangeArg<const Type*>>& arguments)
 	{
 		auto params = TRY(convert_params(ts, decl));
 		auto ordered = TRY(arrangeArgumentTypes(ts, params, arguments, //
@@ -105,7 +104,8 @@ namespace sap::interp
 				arg_types += ((i == 0 ? "" : ", ") + arguments[i].value->str());
 
 			auto err = ErrorMessage(ts,
-			    zpr::sprint("no matching function for call matching arguments ({})", arg_types));
+			    zpr::sprint("no matching function for call matching arguments ({}) among {} candidate{}", arg_types,
+			        failed_decls.size(), failed_decls.size() == 1 ? "" : "s"));
 
 			for(auto& [decl, msg] : failed_decls)
 				err.addInfo(decl->loc(), msg.string());

@@ -21,9 +21,10 @@ namespace sap::interp
 		std::string_view name() const { return m_name; }
 		DefnTree* parent() const { return m_parent; }
 
-		ErrorOr<DefnTree*> lookupNamespace(std::string_view name) const;
+		DefnTree* lookupNamespace(std::string_view name) const;
 		DefnTree* lookupOrDeclareNamespace(std::string_view name);
 
+		DefnTree* lookupScope(const std::vector<std::string>& scope, bool is_top_level);
 		DefnTree* lookupOrDeclareScope(const std::vector<std::string>& scope, bool is_top_level);
 
 		DefnTree* declareAnonymousNamespace();
@@ -35,9 +36,12 @@ namespace sap::interp
 
 		void dump(int indent = 0) const;
 
+		ErrorOr<void> useNamespace(const Location& loc, DefnTree* other, const std::string& alias);
+		ErrorOr<void> useDeclaration(const Location& loc, const Declaration* other, const std::string& alias);
+
 	private:
 		explicit DefnTree(const Typechecker* ts, std::string name, DefnTree* parent)
-			: m_name(std::move(name)), m_parent(parent), m_typechecker(ts)
+		    : m_name(std::move(name)), m_parent(parent), m_typechecker(ts)
 		{
 		}
 
@@ -50,7 +54,9 @@ namespace sap::interp
 		util::hashmap<std::string, std::unique_ptr<DefnTree>> m_children;
 		util::hashmap<std::string, std::vector<const Declaration*>> m_decls;
 
-		std::vector<Definition*> m_definitions;
+		util::hashmap<std::string, DefnTree*> m_imported_trees;
+		util::hashmap<std::string, std::vector<const Declaration*>> m_imported_decls;
+
 		DefnTree* m_parent = nullptr;
 
 		const Typechecker* m_typechecker;

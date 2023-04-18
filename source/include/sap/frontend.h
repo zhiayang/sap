@@ -92,6 +92,7 @@ namespace sap::frontend
 		KW_False,
 		KW_While,
 		KW_Break,
+		KW_Using,
 		KW_Struct,
 		KW_Return,
 		KW_Import,

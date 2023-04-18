@@ -10,7 +10,7 @@
 namespace sap::interp
 {
 	Typechecker::Typechecker(Interpreter* interp)
-		: m_interp(interp), m_top(new DefnTree(this, "__top_level", /* parent: */ nullptr)), m_loop_body_nesting(0)
+	    : m_interp(interp), m_top(new DefnTree(this, "__top_level", /* parent: */ nullptr)), m_loop_body_nesting(0)
 	{
 		this->pushTree(m_top.get()).cancel();
 	}
@@ -76,7 +76,7 @@ namespace sap::interp
 			return true;
 
 		else if(from->isPointer() && to->isPointer() && from->pointerElement() == to->pointerElement()
-				&& from->isMutablePointer())
+		        && from->isMutablePointer())
 			return true;
 
 		else if(from->isInteger() && to->isFloating())
@@ -99,9 +99,9 @@ namespace sap::interp
 			return true;
 
 		else if(
-			from->isPointer() && to->isPointer() && from->pointerElement()->isArray() && to->pointerElement()->isArray()
-			&& (from->pointerElement()->arrayElement()->isVoid() || to->pointerElement()->arrayElement()->isVoid())
-			&& (from->isMutablePointer() || not to->isMutablePointer()))
+		    from->isPointer() && to->isPointer() && from->pointerElement()->isArray() && to->pointerElement()->isArray()
+		    && (from->pointerElement()->arrayElement()->isVoid() || to->pointerElement()->arrayElement()->isVoid())
+		    && (from->isMutablePointer() || not to->isMutablePointer()))
 			return true;
 
 		return false;
@@ -206,9 +206,15 @@ namespace sap::interp
 
 		auto it = m_type_definitions.find(type);
 		if(it != m_type_definitions.end())
+		{
 			return Ok(it->second->declaration->declaredTree());
+		}
 		else
-			return this->top()->lookupNamespace("builtin");
+		{
+			auto n = this->top()->lookupNamespace("builtin");
+			assert(n != nullptr);
+			return Ok(n);
+		}
 	}
 
 	ErrorOr<void> Typechecker::addTypeDefinition(const Type* type, const Definition* defn)
