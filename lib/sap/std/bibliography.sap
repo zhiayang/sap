@@ -139,7 +139,7 @@ namespace std
 			let rec = *records[i];
 
 			let number = builtin::make_hbox(builtin::make_line(builtin::make_text(f"[{rec.refnum!}]"))).apply_style({
-				alignment: .Right,
+				horz_alignment: .Right,
 			});
 
 			number.set_width(10mm);
@@ -149,10 +149,10 @@ namespace std
 				builtin::hspace(1em),
 				builtin::make_paragraph(builtin::make_text(rec.text)).apply_style({
 					line_spacing: 1.1,
-					alignment: .Justified
+					horz_alignment: .Justified
 				})
 			).apply_style({
-				alignment: .Left
+				horz_alignment: .Left
 			});
 
 			g_list_of_refs += [item.ref()];
@@ -162,7 +162,7 @@ namespace std
 
 		return builtin::make_vbox(builtin::make_hbox(
 				builtin::make_line(builtin::make_text("References"))
-			).apply_style({alignment: .Left, font_size: 20pt, font_family: impl::fonts.sans}),
+			).apply_style({horz_alignment: .Left, font_size: 20pt, font_family: impl::fonts.sans}),
 			...*lines
 		);
 	}

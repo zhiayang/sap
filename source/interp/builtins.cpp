@@ -20,50 +20,48 @@ namespace sap::interp
 		auto s = std::make_unique<StructDefn>(Location::builtin(), T::name, T::fields());
 		auto defn = s.get();
 
-		T::type = interp->typechecker()
-		              .addBuiltinDefinition(std::move(s))
-		              ->typecheck(&interp->typechecker())
-		              .unwrap()
-		              .type();
+		T::type =
+		    interp->typechecker().addBuiltinDefinition(std::move(s))->typecheck(&interp->typechecker()).unwrap().type();
 		defn->evaluate(&interp->evaluator()).expect("builtin decl failed");
 	}
 
 	template <typename T>
-	void define_builtin_enum(Interpreter* interp)
+	void define_builtin_enum(Interpreter* cs)
 	{
 		auto e = std::make_unique<EnumDefn>(Location::builtin(), T::name, T::enumeratorType(), T::enumerators());
 		auto defn = e.get();
 
-		T::type = interp->typechecker()
-		              .addBuiltinDefinition(std::move(e))
-		              ->typecheck(&interp->typechecker())
-		              .unwrap()
-		              .type();
-		defn->evaluate(&interp->evaluator()).expect("builtin decl failed");
+		T::type = cs->typechecker().addBuiltinDefinition(std::move(e))->typecheck(&cs->typechecker()).unwrap().type();
+		defn->evaluate(&cs->evaluator()).expect("builtin decl failed");
 	}
 
-	static void define_builtin_types(Interpreter* interp, DefnTree* builtin_ns)
+	static void define_builtin_types(Interpreter* cs, DefnTree* builtin_ns)
 	{
-		auto _ = interp->typechecker().pushTree(builtin_ns);
+		auto _ = cs->typechecker().pushTree(builtin_ns);
 
-		define_builtin_enum<builtin::BE_Alignment>(interp);
+		define_builtin_enum<builtin::BE_Alignment>(cs);
+		define_builtin_enum<builtin::BE_ColourType>(cs);
+
+		define_builtin_struct<builtin::BS_ColourRGB>(cs);
+		define_builtin_struct<builtin::BS_ColourCMYK>(cs);
+		define_builtin_struct<builtin::BS_Colour>(cs);
 
 		// this needs a careful ordering
-		define_builtin_struct<builtin::BS_Size2d>(interp);
-		define_builtin_struct<builtin::BS_Position>(interp);
-		define_builtin_struct<builtin::BS_AbsPosition>(interp);
-		define_builtin_struct<builtin::BS_Font>(interp);
-		define_builtin_struct<builtin::BS_FontFamily>(interp);
-		define_builtin_struct<builtin::BS_Style>(interp);
+		define_builtin_struct<builtin::BS_Size2d>(cs);
+		define_builtin_struct<builtin::BS_Position>(cs);
+		define_builtin_struct<builtin::BS_AbsPosition>(cs);
+		define_builtin_struct<builtin::BS_Font>(cs);
+		define_builtin_struct<builtin::BS_FontFamily>(cs);
+		define_builtin_struct<builtin::BS_Style>(cs);
 
-		define_builtin_struct<builtin::BS_DocumentMargins>(interp);
-		define_builtin_struct<builtin::BS_DocumentSettings>(interp);
+		define_builtin_struct<builtin::BS_DocumentMargins>(cs);
+		define_builtin_struct<builtin::BS_DocumentSettings>(cs);
 
-		define_builtin_struct<builtin::BS_State>(interp);
-		define_builtin_struct<builtin::BS_OutlineItem>(interp);
-		define_builtin_struct<builtin::BS_LinkAnnotation>(interp);
+		define_builtin_struct<builtin::BS_State>(cs);
+		define_builtin_struct<builtin::BS_OutlineItem>(cs);
+		define_builtin_struct<builtin::BS_LinkAnnotation>(cs);
 
-		define_builtin_struct<builtin::BS_DocumentProxy>(interp);
+		define_builtin_struct<builtin::BS_DocumentProxy>(cs);
 	}
 
 

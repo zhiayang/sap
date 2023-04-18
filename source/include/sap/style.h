@@ -5,10 +5,11 @@
 #pragma once
 
 #include "util.h"
-#include "units.h" // for Scalar
+#include "units.h"
 
-#include "sap/units.h"       // for Length
-#include "sap/font_family.h" // for FontSet, FontStyle
+#include "sap/units.h"
+#include "sap/colour.h"
+#include "sap/font_family.h"
 
 namespace sap
 {
@@ -38,6 +39,7 @@ namespace sap
 		DEFINE_ACCESSOR(double, m_sentence_space_stretch, sentence_space_stretch);
 		DEFINE_ACCESSOR(Length, m_paragraph_spacing, paragraph_spacing);
 		DEFINE_ACCESSOR(Alignment, m_horz_alignment, horz_alignment);
+		DEFINE_ACCESSOR(Colour, m_colour, colour);
 		DEFINE_ACCESSOR(bool, m_enable_smart_quotes, smart_quotes_enabled);
 #undef DEFINE_ACCESSOR
 
@@ -68,7 +70,8 @@ namespace sap
 		DEFINE_SETTER(double, m_line_spacing, set_line_spacing, with_line_spacing);
 		DEFINE_SETTER(double, m_sentence_space_stretch, set_sentence_space_stretch, with_sentence_space_stretch);
 		DEFINE_SETTER(Length, m_paragraph_spacing, set_paragraph_spacing, with_paragraph_spacing);
-		DEFINE_SETTER(Alignment, m_horz_alignment, set_alignment, with_alignment);
+		DEFINE_SETTER(Alignment, m_horz_alignment, set_horz_alignment, with_horz_alignment);
+		DEFINE_SETTER(Colour, m_colour, set_colour, with_colour);
 		DEFINE_SETTER(bool, m_enable_smart_quotes, enable_smart_quotes, with_smart_quotes_enabled);
 
 #undef DEFINE_SETTER
@@ -96,8 +99,9 @@ namespace sap
 			    .set_line_spacing(VALUE_OR_ELSE(m_line_spacing, main, *this))
 			    .set_sentence_space_stretch(VALUE_OR_ELSE(m_sentence_space_stretch, main, *this))
 			    .set_paragraph_spacing(VALUE_OR_ELSE(m_paragraph_spacing, main, *this))
-			    .set_alignment(VALUE_OR_ELSE(m_horz_alignment, main, *this))
+			    .set_horz_alignment(VALUE_OR_ELSE(m_horz_alignment, main, *this))
 			    .set_root_font_size(VALUE_OR_ELSE(m_root_font_size, main, *this))
+			    .set_colour(VALUE_OR_ELSE(m_colour, main, *this))
 			    .enable_smart_quotes(VALUE_OR_ELSE(m_enable_smart_quotes, main, *this)) //
 			    ;
 
@@ -116,8 +120,9 @@ namespace sap
 			    .set_line_spacing(VALUE_OR_ELSE(m_line_spacing, *this, fallback))
 			    .set_sentence_space_stretch(VALUE_OR_ELSE(m_sentence_space_stretch, *this, fallback))
 			    .set_paragraph_spacing(VALUE_OR_ELSE(m_paragraph_spacing, *this, fallback))
-			    .set_alignment(VALUE_OR_ELSE(m_horz_alignment, *this, fallback))
+			    .set_horz_alignment(VALUE_OR_ELSE(m_horz_alignment, *this, fallback))
 			    .set_root_font_size(VALUE_OR_ELSE(m_root_font_size, *this, fallback))
+			    .set_colour(VALUE_OR_ELSE(m_colour, *this, fallback))
 			    .enable_smart_quotes(VALUE_OR_ELSE(m_enable_smart_quotes, *this, fallback)) //
 			    ;
 
@@ -143,6 +148,7 @@ namespace sap
 			    && (not(m_present_styles & STY_m_paragraph_spacing)
 			        || *m_paragraph_spacing == *other.m_paragraph_spacing)
 			    && (not(m_present_styles & STY_m_horz_alignment) || *m_horz_alignment == *other.m_horz_alignment)
+			    && (not(m_present_styles & STY_m_colour) || *m_colour == *other.m_colour)
 			    && (not(m_present_styles & STY_m_enable_smart_quotes)
 			        || *m_enable_smart_quotes == *other.m_enable_smart_quotes);
 		}
@@ -159,7 +165,8 @@ namespace sap
 		static constexpr uint32_t STY_m_sentence_space_stretch = (1u << 5);
 		static constexpr uint32_t STY_m_paragraph_spacing = (1u << 6);
 		static constexpr uint32_t STY_m_horz_alignment = (1u << 7);
-		static constexpr uint32_t STY_m_enable_smart_quotes = (1u << 8);
+		static constexpr uint32_t STY_m_colour = (1u << 8);
+		static constexpr uint32_t STY_m_enable_smart_quotes = (1u << 9);
 
 	private:
 		uint32_t m_present_styles = 0;
@@ -172,6 +179,8 @@ namespace sap
 		Uninitialised<double> m_sentence_space_stretch;
 		Uninitialised<Length> m_paragraph_spacing;
 		Uninitialised<Alignment> m_horz_alignment;
+		Uninitialised<Colour> m_colour;
+
 		Uninitialised<bool> m_enable_smart_quotes;
 	};
 

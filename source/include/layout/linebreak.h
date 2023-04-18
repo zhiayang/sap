@@ -67,7 +67,7 @@ namespace sap::layout::linebreak
 
 		Length width()
 		{
-			auto last_word_style = m_parent_style.extendWith(m_current_style);
+			auto last_word_style = m_current_style;
 			if(m_last_sep != nullptr)
 			{
 				m_last_word += m_last_sep->endOfLine().sv();
@@ -185,7 +185,7 @@ namespace sap::layout::linebreak
 
 		bool add_span_or_word(const Style& style)
 		{
-			auto prev_word_style = m_parent_style.extendWith(m_current_style);
+			auto prev_word_style = m_current_style;
 			auto word_style = m_parent_style.extendWith(style);
 
 			bool replace_last_word = false;
@@ -218,7 +218,7 @@ namespace sap::layout::linebreak
 					m_total_space_width += sep_width;
 			}
 
-			m_current_style = style;
+			m_current_style = m_parent_style.extendWith(style);
 			m_last_span = nullptr;
 			m_last_sep = nullptr;
 

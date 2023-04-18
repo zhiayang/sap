@@ -19,7 +19,7 @@ namespace sap::tree
 	Container::Container(Direction direction, bool glued)
 	    : BlockObject(Kind::Container), m_glued(glued), m_direction(direction)
 	{
-		this->setStyle(m_style.with_alignment(Alignment::Left));
+		this->setStyle(m_style.with_horz_alignment(Alignment::Left));
 	}
 
 	zst::SharedPtr<Container> Container::makeVertBox()

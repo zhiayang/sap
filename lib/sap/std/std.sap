@@ -46,7 +46,7 @@ namespace std
 
 		var num_line = builtin::make_hbox(\line { \builtin::make_text(f"{section_num}") }, builtin::hspace(3mm))
 			.apply_style({
-				alignment: .Right,
+				horz_alignment: .Right,
 				font_size: 13pt,
 			});
 		num_line.set_width(14mm);
@@ -91,7 +91,7 @@ namespace std
 
 		var num_line = builtin::make_hbox(builtin::make_line(builtin::make_text(f"{sec!.num}.{subnum}")), builtin::hspace(3mm))
 			.apply_style({
-				alignment: .Right,
+				horz_alignment: .Right,
 				font_size: 13pt,
 			});
 		num_line.set_width(14mm);
@@ -142,7 +142,7 @@ namespace std
 
 		var num_line = builtin::make_hbox(builtin::make_line(builtin::make_text(f"{sec!.num}.{subsec!.num}.{subsubnum}")),
 			builtin::hspace(3mm)).apply_style({
-				alignment: .Right,
+				horz_alignment: .Right,
 				font_size: 13pt,
 			});
 		num_line.set_width(14mm);
@@ -258,7 +258,7 @@ namespace std
 			if(enabled)
 			{
 				let item = builtin::make_line(builtin::make_text(f"{page_num}")).apply_style({
-					alignment: .Right,
+					horz_alignment: .Right,
 					font_size: 11pt,
 				});
 
@@ -483,7 +483,7 @@ namespace std
 			var item = builtin::make_hbox(
 				*heading, *pagenum
 			).apply_style({
-				alignment: .Justified
+				horz_alignment: .Justified
 			});
 
 			if(i != 0)
@@ -512,7 +512,7 @@ namespace std
 				let item = builtin::make_hbox(
 					*heading, *pagenum
 				).apply_style({
-					alignment: .Justified
+					horz_alignment: .Justified
 				});
 
 				g_toc_lines += [item.ref()];
@@ -538,7 +538,7 @@ namespace std
 					let item = builtin::make_hbox(
 						*heading, *pagenum
 					).apply_style({
-						alignment: .Justified
+						horz_alignment: .Justified
 					});
 
 					g_toc_lines += [item.ref()];
@@ -559,7 +559,7 @@ namespace std
 		ret = builtin::make_vbox(
 			builtin::make_hbox(
 				builtin::make_line(builtin::make_text("Contents"))
-			).apply_style({ alignment: .Left, font_size: 20pt, font_family: impl::fonts.sans }),
+			).apply_style({ horz_alignment: .Left, font_size: 20pt, font_family: impl::fonts.sans }),
 			*ret
 		);
 

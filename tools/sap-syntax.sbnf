@@ -305,7 +305,7 @@ stmt: block-comment
     | `;`{punctuation.terminator}
     ;
 
-type: '\b(any|int|bool|char|void|float|string|Inline(Ref)?|Block(Ref)?|LayoutObject(Ref)?|Length|Position|AbsPosition)\b'{support.type.builtin}
+type: '\b(any|int|bool|char|void|float|string|Inline(Ref)?|Block(Ref)?|LayoutObject(Ref)?|Length|Position|AbsPosition|Colour|ColourRGB|ColourCMYK)\b'{support.type.builtin}
     | `?`{keyword.operator.type} type
     | `&`{keyword.operator.type} `mut`{storage.modifier.mut}? type
     | '([A-Za-z_][[:word:]]*)(?:\s*(::)\s*([A-Za-z_][[:word:]]*))*'{

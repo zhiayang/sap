@@ -178,6 +178,38 @@ namespace sap::interp::builtin
 		static LinkAnnotation unmake(Evaluator* ev, const Value& value);
 	};
 
+	struct BS_Colour
+	{
+		static constexpr auto name = "Colour";
+
+		static const Type* type;
+		static std::vector<StructDefn::Field> fields();
+
+		static Value make(Evaluator* ev, Colour colour);
+		static Colour unmake(Evaluator* ev, const Value& value);
+	};
+
+	struct BS_ColourRGB
+	{
+		static constexpr auto name = "ColourRGB";
+
+		static const Type* type;
+		static std::vector<StructDefn::Field> fields();
+
+		static Value make(Evaluator* ev, Colour::RGB colour);
+		static Colour::RGB unmake(Evaluator* ev, const Value& value);
+	};
+
+	struct BS_ColourCMYK
+	{
+		static constexpr auto name = "ColourCMYK";
+
+		static const Type* type;
+		static std::vector<StructDefn::Field> fields();
+
+		static Value make(Evaluator* ev, Colour::CMYK colour);
+		static Colour::CMYK unmake(Evaluator* ev, const Value& value);
+	};
 
 
 	struct BE_Alignment
@@ -192,6 +224,23 @@ namespace sap::interp::builtin
 		static Value make(Alignment alignment);
 		static Alignment unmake(const Value& value);
 	};
+
+	struct BE_ColourType
+	{
+		static constexpr auto name = "ColourType";
+
+		static const Type* type;
+
+		static frontend::PType enumeratorType();
+		static std::vector<EnumDefn::EnumeratorDefn> enumerators();
+
+		static Value make(Colour::Type alignment);
+		static Colour::Type unmake(const Value& value);
+	};
+
+
+
+
 
 	// o no builder pattern
 	struct StructMaker

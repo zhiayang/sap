@@ -60,22 +60,19 @@ namespace sap::layout
 		};
 	}
 
-	Document::Document(const DocumentSettings& settings)
+	Document::Document(interp::Interpreter* cs, const DocumentSettings& settings)
 	    : m_page_layout(this, paper_size(settings), make_margins(settings))
 	{
-		Style default_style {};
-
-		default_style.set_font_family(*settings.font_family)
-		    .set_font_style(sap::FontStyle::Regular)
+		auto style = getDefaultStyle(cs);
+		style.set_font_family(*settings.font_family)
 		    .set_font_size(resolve_len(settings, *settings.font_size))
 		    .set_root_font_size(resolve_len(settings, *settings.font_size))
 		    .set_line_spacing(*settings.line_spacing)
 		    .set_sentence_space_stretch(*settings.sentence_space_stretch)
 		    .set_paragraph_spacing(resolve_len(settings, *settings.paragraph_spacing))
-		    .set_alignment(Alignment::Justified)
-		    .enable_smart_quotes(true);
+		    .set_horz_alignment(Alignment::Justified);
 
-		this->setStyle(default_style);
+		this->setStyle(style);
 	}
 
 
@@ -191,7 +188,7 @@ namespace sap::tree
 			}
 		}
 
-		auto layout_doc = std::make_unique<layout::Document>(layout::fillDefaultSettings(cs, std::move(settings)));
+		auto layout_doc = std::make_unique<layout::Document>(cs, layout::fillDefaultSettings(cs, std::move(settings)));
 		cs->evaluator().pushStyle(layout_doc->style());
 		cs->evaluator().setDocument(layout_doc.get());
 
@@ -265,7 +262,7 @@ namespace sap::tree
 	    , m_preamble(std::move(preamble))
 	    , m_have_document_start(have_doc_start)
 	{
-		m_container->setStyle(m_container->style().with_alignment(Alignment::Justified));
+		m_container->setStyle(m_container->style().with_horz_alignment(Alignment::Justified));
 	}
 
 	BlockObject::~BlockObject()

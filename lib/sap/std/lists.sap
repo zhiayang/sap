@@ -10,7 +10,7 @@ namespace std
 		{
 			lines += [builtin::make_hbox(
 				builtin::hspace(0.8em),
-				builtin::make_line(builtin::make_text(f"{i + 1}.")).apply_style({ alignment: .Right }),
+				builtin::make_line(builtin::make_text(f"{i + 1}.")).apply_style({ horz_alignment: .Right }),
 				builtin::hspace(0.6em),
 				builtin::make_line(builtin::make_text(items[i]))
 			)];
@@ -29,7 +29,7 @@ namespace std
 		{
 			lines += [builtin::make_hbox(
 				builtin::hspace(0.8em),
-				builtin::make_line(builtin::make_text(f"•")).apply_style({ alignment: .Right }),
+				builtin::make_line(builtin::make_text(f"•")).apply_style({ horz_alignment: .Right }),
 				builtin::hspace(0.6em),
 				builtin::make_line(*items[i])
 			)];

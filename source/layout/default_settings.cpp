@@ -38,7 +38,8 @@ namespace sap::layout
 		    .set_line_spacing(DEFAULT_LINE_SPACING)
 		    .set_sentence_space_stretch(DEFAULT_SENTENCE_SPACE_STRETCH)
 		    .set_paragraph_spacing(0_mm)
-		    .set_alignment(Alignment::Justified)
+		    .set_horz_alignment(Alignment::Justified)
+		    .set_colour(Colour::black())
 		    .enable_smart_quotes(true);
 
 		return default_style;

@@ -100,7 +100,7 @@ namespace sap::layout
 
 	struct Document : Stylable
 	{
-		explicit Document(const DocumentSettings& settings);
+		explicit Document(interp::Interpreter* cs, const DocumentSettings& settings);
 
 		Document(const Document&) = delete;
 		Document& operator=(const Document&) = delete;
