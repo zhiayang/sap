@@ -66,8 +66,8 @@ namespace sap
 			};
 		}
 
-		constexpr static Colour white() { return grey(1.0); }
-		constexpr static Colour black() { return grey(0.0); }
+		constexpr static Colour white() { return grey(0.0); }
+		constexpr static Colour black() { return grey(1.0); }
 
 		constexpr bool operator!=(const Colour& other) const = default;
 		constexpr bool operator==(const Colour& other) const
@@ -92,3 +92,20 @@ namespace sap
 		};
 	};
 }
+
+
+template <>
+struct zpr::print_formatter<sap::Colour>
+{
+	template <typename _Cb>
+	void print(const sap::Colour& colour, _Cb&& cb, format_args args)
+	{
+		if(colour.isRGB())
+			detail::print(static_cast<_Cb&&>(cb), "rgb({}, {}, {})", colour.rgb().r, colour.rgb().g, colour.rgb().b);
+		else if(colour.isCMYK())
+			detail::print(static_cast<_Cb&&>(cb), "cmyk({}, {}, {})", colour.cmyk().c, colour.cmyk().m, colour.cmyk().y,
+			    colour.cmyk().k);
+		else
+			detail::print(static_cast<_Cb&&>(cb), "colour(???)");
+	}
+};

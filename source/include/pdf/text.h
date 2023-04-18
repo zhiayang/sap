@@ -4,6 +4,8 @@
 
 #pragma once
 
+#include "sap/colour.h"
+
 #include "pdf/units.h"       // for PdfScalar, Offset2d, Position2d, TextSp...
 #include "pdf/page_object.h" // for Page, PageObject
 
@@ -31,6 +33,7 @@ namespace pdf
 
 		// must be called before the first text item is inserted (addText).
 		void setFont(const PdfFont* font, PdfScalar height);
+		void setColour(const sap::Colour& colour);
 
 		PdfScalar currentFontSize() const;
 
@@ -81,6 +84,8 @@ namespace pdf
 			const PdfFont* font = nullptr;
 			PdfScalar height {};
 		} m_current_font {};
+
+		sap::Colour m_current_colour = sap::Colour::black();
 
 		std::vector<Group> m_groups {};
 		std::unordered_set<const PdfFont*> m_used_fonts {};

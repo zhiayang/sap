@@ -14,8 +14,21 @@ let font_family = builtin::find_font_family(["XCharter", "Times New Roman", "ser
 });
 
 \script::{
-	fn taros() -> Inline  { return std::emph("Taros"); }
-	fn pintos() -> Inline { return std::emph("Pintos"); }
+
+	fn rgb(r: float, g: float, b: float) -> builtin::Colour
+	{
+		return builtin::Colour {
+			type: .RGB,
+			rgb: { r, g, b }
+		};
+	}
+
+
+	fn pintos() -> Inline  {
+		return std::emph("Pintos").apply_style({
+			colour: rgb(1, 0, 0)
+		});
+	}
 
 	fn cpp() -> Inline
 	{

@@ -69,6 +69,7 @@ namespace sap::layout
 		const auto font = m_style.font();
 		const auto font_size = m_style.font_size();
 		text->setFont(font, font_size.into<pdf::PdfScalar>());
+		text->setColour(m_style.colour());
 
 		if(m_raise_height != 0)
 			text->rise(m_raise_height.into());

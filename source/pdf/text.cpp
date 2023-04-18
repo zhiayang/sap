@@ -48,6 +48,28 @@ namespace pdf
 		m_current_font.height = height;
 	}
 
+	void Text::setColour(const sap::Colour& colour)
+	{
+		if(m_current_colour == colour)
+			return;
+
+		m_current_colour = colour;
+		if(m_current_colour.isRGB())
+		{
+			auto rgb = m_current_colour.rgb();
+			this->insertPDFCommand(zpr::sprint(" {} {} {} rg\n", rgb.r, rgb.g, rgb.b));
+		}
+		else if(m_current_colour.isCMYK())
+		{
+			auto cmyk = m_current_colour.cmyk();
+			this->insertPDFCommand(zpr::sprint(" {} {} {} {} k\n", cmyk.c, cmyk.m, cmyk.y, cmyk.k));
+		}
+		else
+		{
+			sap::internal_error("invalid colour type");
+		}
+	}
+
 	PdfScalar Text::currentFontSize() const
 	{
 		return m_current_font.height;
