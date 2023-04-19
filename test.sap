@@ -17,23 +17,9 @@ using builtin;
 	margins: { left: 2cm, right: 2cm, top: 2cm, bottom: 2cm },
 });
 
-# baseline: 878.9 ms ± 3.5 ms
-# parallel: 846.3 ms ± 5.0 ms
-# ankerl:   857.1 ms ± 4.4 ms
-
 \script::{
 
-	println(f"hello, world");
-
-
-	fn rgb(r: float, g: float, b: float) -> Colour
-	{
-		return Colour {
-			type: .RGB,
-			rgb: { r, g, b }
-		};
-	}
-
+	hexcolour("ffffff");
 
 	fn pintos() -> Inline  {
 		return emph("Pintos").apply_style({

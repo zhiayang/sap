@@ -41,7 +41,7 @@ namespace sap::interp
 				auto t2 = TRY(this->elements[i]->typecheck(ts, et)).type();
 				if(t2 != et)
 					return ErrMsg(this->elements[i]->loc(),
-						"mismatched types in array literal: expected '{}', got '{}'", et, t2);
+					    "mismatched types in array literal: expected '{}', got '{}'", et, t2);
 			}
 
 			return TCResult::ofRValue(Type::makeArray(et));
@@ -158,6 +158,17 @@ namespace sap::interp
 	ErrorOr<EvalResult> StringLit::evaluate_impl(Evaluator* ev) const
 	{
 		return EvalResult::ofValue(Value::string(this->string));
+	}
+
+
+	ErrorOr<TCResult> CharLit::typecheck_impl(Typechecker* ts, const Type* infer, bool keep_lvalue) const
+	{
+		return TCResult::ofRValue(Type::makeChar());
+	}
+
+	ErrorOr<EvalResult> CharLit::evaluate_impl(Evaluator* ev) const
+	{
+		return EvalResult::ofValue(Value::character(this->character));
 	}
 
 

@@ -15,6 +15,8 @@
 
 #include <zpr.h>
 #include <zst/zst.h>
+
+#include <xxhash.h>
 #include <ankerl/unordered_dense.h>
 
 #include "types.h"
@@ -149,6 +151,7 @@ namespace util
 		using H = std::hash<std::string_view>;
 		using WH = std::hash<std::u32string_view>;
 
+#if 0
 		size_t operator()(const char* str) const { return H {}(str); }
 		size_t operator()(zst::str_view str) const { return H {}(str.sv()); }
 		size_t operator()(std::string_view str) const { return H {}(str); }
@@ -157,6 +160,25 @@ namespace util
 		size_t operator()(zst::wstr_view str) const { return WH {}(str.sv()); }
 		size_t operator()(std::u32string_view str) const { return WH {}(str); }
 		size_t operator()(const std::u32string& str) const { return WH {}(str); }
+#else
+		static constexpr uint64_t SEED = 0xe575ed3ae41ead6dull;
+		size_t operator()(const char* str) const { return XXH64(str, strlen(str), SEED); }
+		size_t operator()(zst::str_view str) const { return XXH64(str.data(), str.size(), SEED); }
+		size_t operator()(std::string_view str) const { return XXH64(str.data(), str.size(), SEED); }
+
+		size_t operator()(const std::string& str) const { return XXH64(str.data(), str.size(), SEED); }
+
+		size_t operator()(zst::wstr_view str) const { return XXH64(str.data(), str.size() * sizeof(char32_t), SEED); }
+		size_t operator()(std::u32string_view str) const
+		{
+			return XXH64(str.data(), str.size() * sizeof(char32_t), SEED);
+		}
+		size_t operator()(const std::u32string& str) const
+		{
+			return XXH64(str.data(), str.size() * sizeof(char32_t), SEED);
+		}
+
+#endif
 
 		template <has_hash_method T>
 		    requires(not has_hash_specialisation<T>)

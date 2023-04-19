@@ -107,7 +107,7 @@ namespace sap::interp
 
 	struct type_hash
 	{
-		size_t operator()(const Type* type) const { return std::hash<std::string> {}(type->str()); }
+		size_t operator()(const Type* type) const { return util::hasher {}(type->str()); }
 	};
 
 	util::hashset<Type*, type_hash, type_eq> g_type_cache;

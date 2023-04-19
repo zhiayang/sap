@@ -884,7 +884,7 @@ namespace sap::interp
 
 	void Value::destroy()
 	{
-		if(m_gen_func)
+		if(m_gen_func || m_moved_from)
 			return;
 
 		else if(m_type->isTreeInlineObj())

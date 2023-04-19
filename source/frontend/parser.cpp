@@ -729,6 +729,22 @@ namespace sap::frontend
 		return OkMove(ret);
 	}
 
+	static ErrorOrUniquePtr<interp::CharLit> parse_char_literal(Lexer& lexer, Token ch_token)
+	{
+		auto ch_text = ch_token.text;
+
+		auto [str, len] = TRY(unescape_string_part(lexer.location(), ch_text.bytes()));
+		ch_text.remove_prefix(len);
+
+		if(not ch_text.empty())
+			return ErrMsg(ch_token.loc, "extraneous characters in character literal");
+
+		assert(str.size() == 1);
+		return Ok(std::make_unique<interp::CharLit>(ch_token.loc, str[0]));
+	}
+
+
+
 	static ErrorOr<PType> parse_type(Lexer& lexer);
 
 	static ErrorOrUniquePtr<interp::Expr> parse_primary(Lexer& lexer)
@@ -804,6 +820,10 @@ namespace sap::frontend
 		else if(auto fstr = lexer.match(TT::FString); fstr)
 		{
 			return parse_fstring(lexer, *fstr);
+		}
+		else if(auto chr = lexer.match(TT::CharLiteral); chr)
+		{
+			return parse_char_literal(lexer, *chr);
 		}
 		else if(auto bool_true = lexer.match(TT::KW_True); bool_true)
 		{

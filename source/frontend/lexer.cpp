@@ -289,7 +289,8 @@ namespace sap::frontend
 		}
 	}
 
-	static ErrorOr<Token> consume_string(zst::str_view& stream, Location& loc, size_t start, TokenType tt)
+	static ErrorOr<Token>
+	consume_string(zst::str_view& stream, Location& loc, size_t start, TokenType tt, char terminating_char)
 	{
 		size_t n = start;
 		while(true)
@@ -354,7 +355,7 @@ namespace sap::frontend
 			{
 				return ErrMsg(loc, "unescaped newline in string literal");
 			}
-			else if(stream[n] == '"')
+			else if(stream[n] == terminating_char)
 			{
 				n++;
 				break;
@@ -499,11 +500,15 @@ namespace sap::frontend
 		}
 		else if(stream.starts_with("f\""))
 		{
-			return consume_string(stream, loc, /* start: */ 2, TT::FString);
+			return consume_string(stream, loc, /* start: */ 2, TT::FString, '"');
 		}
 		else if(stream[0] == '"')
 		{
-			return consume_string(stream, loc, /* start: */ 1, TT::String);
+			return consume_string(stream, loc, /* start: */ 1, TT::String, '"');
+		}
+		else if(stream[0] == '\'')
+		{
+			return consume_string(stream, loc, /* start: */ 1, TT::CharLiteral, '\'');
 		}
 		// TODO: unicode identifiers
 		else if(isascii(stream[0]) && (isalpha(stream[0]) || stream[0] == '_'))

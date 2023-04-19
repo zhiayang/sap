@@ -160,6 +160,8 @@ struct-literal-field:
 
 struct-literal-field-list: (struct-literal-field (`,`{punctuation.comma})?)*;
 
+cast-expr: `cast`{keyword.cast} `(`{punctuation.paren} expr (`,`{punctuation.comma} type)? `)`{punctuation.paren};
+
 primary-expr
     : length-literal
     | number-literal
@@ -169,6 +171,8 @@ primary-expr
     | array-literal
     | enum-literal
     | text-literal
+    | char-literal
+    | cast-expr
     | `(`{punctuation.paren} expr `)`{punctuation.paren}
     | (`{`{punctuation.brace.struct-start} struct-literal-field-list `}`{punctuation.brace.struct-end})
     | '(::)?(?!not)([A-Za-z_][[:word:]]*)(?:\s*(::)\s*([A-Za-z_][[:word:]]*))*'{
@@ -317,7 +321,8 @@ stmt: block-comment
     | `;`{punctuation.terminator}
     ;
 
-type: '\b(any|int|bool|char|void|float|string|Inline(Ref)?|Block(Ref)?|LayoutObject(Ref)?|Length|Position|AbsPosition|Colour|ColourRGB|ColourCMYK)\b'{support.type.builtin}
+type: '\b(any|int|bool|char|void|float|string|Inline(Ref)?|Block(Ref)?|LayoutObject(Ref)?|Length)\b'{support.type.builtin}
+    | '(builtin::)?Position|AbsPosition|Colour|ColourRGB|ColourCMYK'{support.type.builtin}
     | `?`{keyword.operator.type} type
     | `&`{keyword.operator.type} `mut`{storage.modifier.mut}? type
     | '([A-Za-z_][[:word:]]*)(?:\s*(::)\s*([A-Za-z_][[:word:]]*))*'{
@@ -333,7 +338,7 @@ type: '\b(any|int|bool|char|void|float|string|Inline(Ref)?|Block(Ref)?|LayoutObj
     ;
 
 
-
+char-literal: '\'.*\''{string.quoted.single};
 
 number-literal: '\b([[:digit:]]+(\.([[:digit:]]+))?)\b'{constant.numeric};
 

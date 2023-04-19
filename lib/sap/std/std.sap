@@ -2,6 +2,7 @@
 
 import "std/lists.sap";
 import "std/state.sap";
+import "std/colour.sap";
 import "std/bibliography.sap";
 
 namespace std

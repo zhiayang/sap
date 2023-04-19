@@ -179,6 +179,17 @@ namespace sap::interp
 		std::u32string string;
 	};
 
+	struct CharLit : Expr
+	{
+		explicit CharLit(Location loc, char32_t ch) : Expr(std::move(loc)), character(ch) { }
+
+		virtual ErrorOr<EvalResult> evaluate_impl(Evaluator* ev) const override;
+		virtual ErrorOr<TCResult>
+		typecheck_impl(Typechecker* ts, const Type* infer = nullptr, bool keep_lvalue = false) const override;
+
+		char32_t character;
+	};
+
 	struct ArrayLit : Expr
 	{
 		explicit ArrayLit(Location loc) : Expr(std::move(loc)) { }

@@ -1,0 +1,45 @@
+# std/colour.sap
+
+namespace std
+{
+	fn rgb(r: float, g: float, b: float) -> builtin::Colour
+	{
+		return builtin::Colour {
+			type: .RGB,
+			rgb: { r, g, b }
+		};
+	}
+
+	fn cmyk(c: float, m: float, y: float, k: float) -> builtin::Colour
+	{
+		return builtin::Colour {
+			type: .CMYK,
+			cmyk: { c, m, y, k }
+		};
+	}
+
+	namespace impl
+	{
+		fn parse_hex_char(a: char) -> int
+		{
+			return 0;
+		}
+	}
+
+	fn hexcolour(a: string) -> builtin::Colour
+	{
+		var r = 0.0;
+		var g = 0.0;
+		var b = 0.0;
+
+		if(a.size() == 3)
+		{
+
+		}
+		else
+		{
+		}
+
+		return rgb(0, 0, 0);
+	}
+}
