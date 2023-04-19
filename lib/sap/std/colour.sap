@@ -1,5 +1,18 @@
 # std/colour.sap
 
+namespace builtin
+{
+	fn to_string(colour: Colour) -> string
+	{
+		if(colour.type == ColourType::RGB)
+			return f"rgb({colour.rgb.r}, {colour.rgb.g}, {colour.rgb.b})";
+		else if(colour.type == ColourType::CMYK)
+			return f"cmyk({colour.cmyk.c}, {colour.cmyk.m}, {colour.cmyk.y}, {colour.cmyk.k})";
+		else
+			return f"colour(???)";
+	}
+}
+
 namespace std
 {
 	fn rgb(r: float, g: float, b: float) -> builtin::Colour
@@ -22,24 +35,46 @@ namespace std
 	{
 		fn parse_hex_char(a: char) -> int
 		{
-			return 0;
+			if('0' <= a <= '9')
+				return cast(a, $int) - cast('0', $int);
+			else if('a' <= a <= 'f')
+				return cast(a, $int) - cast('a', $int) + 10;
+			else if('A' <= a <= 'F')
+				return cast(a, $int) - cast('A', $int) + 10;
+			else
+			{
+				builtin::println(f"invalid hex digit '{a}'");
+				return 0;
+			}
 		}
 	}
 
 	fn hexcolour(a: string) -> builtin::Colour
 	{
+		using impl::parse_hex_char;
+
 		var r = 0.0;
 		var g = 0.0;
 		var b = 0.0;
 
 		if(a.size() == 3)
 		{
+			r = parse_hex_char(a[0]);
+			g = parse_hex_char(a[1]);
+			b = parse_hex_char(a[2]);
 
+			# convert F to FF, etc.
+			r = 16.0 * r + r;
+			g = 16.0 * g + g;
+			b = 16.0 * b + b;
 		}
 		else
 		{
+			r = 16 * parse_hex_char(a[0]) + parse_hex_char(a[1]);
+			g = 16 * parse_hex_char(a[2]) + parse_hex_char(a[3]);
+			b = 16 * parse_hex_char(a[4]) + parse_hex_char(a[5]);
 		}
 
-		return rgb(0, 0, 0);
+		return rgb(r / 255.0, g / 255.0, b / 255.0);
 	}
 }

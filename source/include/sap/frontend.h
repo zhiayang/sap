@@ -41,6 +41,7 @@ namespace sap::frontend
 		RSquare,
 		LAngle,
 		RAngle,
+		Dollar,
 		Colon,
 		Comma,
 		Period,

@@ -160,7 +160,9 @@ struct-literal-field:
 
 struct-literal-field-list: (struct-literal-field (`,`{punctuation.comma})?)*;
 
-cast-expr: `cast`{keyword.cast} `(`{punctuation.paren} expr (`,`{punctuation.comma} type)? `)`{punctuation.paren};
+cast-expr: `cast`{keyword.cast} `(`{punctuation.paren} expr (`,`{punctuation.comma} expr)? `)`{punctuation.paren};
+
+type-expr: `$`{support.type} type;
 
 primary-expr
     : length-literal
@@ -173,6 +175,7 @@ primary-expr
     | text-literal
     | char-literal
     | cast-expr
+    | type-expr
     | `(`{punctuation.paren} expr `)`{punctuation.paren}
     | (`{`{punctuation.brace.struct-start} struct-literal-field-list `}`{punctuation.brace.struct-end})
     | '(::)?(?!not)([A-Za-z_][[:word:]]*)(?:\s*(::)\s*([A-Za-z_][[:word:]]*))*'{
@@ -338,7 +341,7 @@ type: '\b(any|int|bool|char|void|float|string|Inline(Ref)?|Block(Ref)?|LayoutObj
     ;
 
 
-char-literal: '\'.*\''{string.quoted.single};
+char-literal: '\'.*?\''{string.quoted.single};
 
 number-literal: '\b([[:digit:]]+(\.([[:digit:]]+))?)\b'{constant.numeric};
 

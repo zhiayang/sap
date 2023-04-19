@@ -605,6 +605,7 @@ namespace sap::frontend
 				case '/': tt = TT::Slash; break;
 				case '%': tt = TT::Percent; break;
 				case '=': tt = TT::Equal; break;
+				case '$': tt = TT::Dollar; break;
 				case ';': tt = TT::Semicolon; break;
 				case '<': tt = TT::LAngle; break;
 				case '>': tt = TT::RAngle; break;

@@ -19,7 +19,10 @@ using builtin;
 
 \script::{
 
-	hexcolour("ffffff");
+	let k = hexcolour("331FAE");
+	builtin::println(f"{k.rgb.r}, {k.rgb.g}, {k.rgb.b}");
+
+
 
 	fn pintos() -> Inline  {
 		return emph("Pintos").apply_style({

@@ -23,6 +23,7 @@
 namespace sap::frontend
 {
 	constexpr auto KW_NULL = "null";
+	constexpr auto KW_CAST = "cast";
 
 	constexpr auto KW_BOX_BLOCK = "box";
 	constexpr auto KW_PARA_BLOCK = "para";
@@ -732,20 +733,33 @@ namespace sap::frontend
 	static ErrorOrUniquePtr<interp::CharLit> parse_char_literal(Lexer& lexer, Token ch_token)
 	{
 		auto ch_text = ch_token.text;
+		auto bytes = ch_text.bytes();
 
-		auto [str, len] = TRY(unescape_string_part(lexer.location(), ch_text.bytes()));
-		ch_text.remove_prefix(len);
+		char32_t codepoint = 0;
+		auto [str, len] = TRY(unescape_string_part(lexer.location(), bytes));
 
-		if(not ch_text.empty())
+		if(len == 0)
+			codepoint = unicode::consumeCodepointFromUtf8(bytes);
+		else
+			codepoint = str[0], bytes.remove_prefix(len);
+
+		if(not bytes.empty())
 			return ErrMsg(ch_token.loc, "extraneous characters in character literal");
 
-		assert(str.size() == 1);
-		return Ok(std::make_unique<interp::CharLit>(ch_token.loc, str[0]));
+		return Ok(std::make_unique<interp::CharLit>(ch_token.loc, codepoint));
 	}
 
-
-
 	static ErrorOr<PType> parse_type(Lexer& lexer);
+
+	static ErrorOrUniquePtr<interp::TypeExpr> parse_type_expr(Lexer& lexer)
+	{
+		auto loc = lexer.location();
+		must_expect(lexer, TT::Dollar);
+
+		auto type = TRY(parse_type(lexer));
+		return Ok(std::make_unique<interp::TypeExpr>(loc, std::move(type)));
+	}
+
 
 	static ErrorOrUniquePtr<interp::Expr> parse_primary(Lexer& lexer)
 	{
@@ -753,7 +767,29 @@ namespace sap::frontend
 		if(auto t = lexer.peek(); t == TT::Identifier || t == TT::ColonColon)
 		{
 			if(t.text == KW_NULL)
+			{
 				return Ok(std::make_unique<interp::NullLit>(TRY(lexer.next()).loc));
+			}
+			else if(t.text == KW_CAST)
+			{
+				lexer.next();
+				if(not lexer.expect(TT::LParen))
+					return ErrMsg(lexer.location(), "expected '(' after 'cast'");
+
+				auto cast_expr = std::make_unique<interp::CastExpr>(t.loc);
+				cast_expr->expr = TRY(parse_expr(lexer));
+
+				// TODO: make the type optional for an auto-cast
+				if(not lexer.expect(TT::Comma))
+					return ErrMsg(lexer.location(), "expected ',' after expression");
+
+				cast_expr->target_type = TRY(parse_type_expr(lexer));
+
+				if(not lexer.expect(TT::RParen))
+					return ErrMsg(lexer.location(), "expected ')' after cast expression");
+
+				return OkMove(cast_expr);
+			}
 
 			auto loc = t.loc;
 			auto [qid, len] = TRY(parse_qualified_id(lexer));
@@ -779,6 +815,10 @@ namespace sap::frontend
 			ret->is_anonymous = true;
 
 			return OkMove(ret);
+		}
+		else if(lexer.peek() == TT::Dollar)
+		{
+			return parse_type_expr(lexer);
 		}
 		else if(auto num = lexer.match(TT::Number); num)
 		{
