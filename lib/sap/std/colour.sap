@@ -2,12 +2,12 @@
 
 namespace builtin
 {
-	fn to_string(colour: Colour) -> string
+	fn to_string(colour: &Colour) -> string
 	{
-		if(colour.type == ColourType::RGB)
-			return f"rgb({colour.rgb.r}, {colour.rgb.g}, {colour.rgb.b})";
-		else if(colour.type == ColourType::CMYK)
-			return f"cmyk({colour.cmyk.c}, {colour.cmyk.m}, {colour.cmyk.y}, {colour.cmyk.k})";
+		if(colour!.type == ColourType::RGB)
+			return f"rgb({colour!.rgb.r}, {colour!.rgb.g}, {colour!.rgb.b})";
+		else if(colour!.type == ColourType::CMYK)
+			return f"cmyk({colour!.cmyk.c}, {colour!.cmyk.m}, {colour!.cmyk.y}, {colour!.cmyk.k})";
 		else
 			return f"colour(???)";
 	}

@@ -206,7 +206,7 @@ namespace sap::interp
 					else if(arg_type == variadic_element_type)
 						variadic_cost += 1;
 					else if(variadic_element_type->isAny())
-						variadic_cost += 3;
+						variadic_cost += 5;
 					else if(ts->canImplicitlyConvert(arg_type, variadic_element_type))
 						variadic_cost += 2;
 					else
@@ -230,7 +230,7 @@ namespace sap::interp
 
 				if(param_type->isAny())
 				{
-					cost += 2;
+					cost += 5;
 				}
 				else if(param_type->isVariadicArray() && ts->canImplicitlyConvert(arg_type, param_type->arrayElement()))
 				{

@@ -22,11 +22,11 @@ namespace sap::interp
 				call->callee = std::move(name);
 				call->rewritten_ufcs = true;
 				call->arguments.push_back(FunctionCall::Arg {
-					.name = std::nullopt,
-					.value = std::move(*const_cast<std::unique_ptr<Expr>*>(expr)),
+				    .name = std::nullopt,
+				    .value = std::move(*const_cast<std::unique_ptr<Expr>*>(expr)),
 				});
 
-				if(auto t = TRY(call->typecheck(ts, Type::makeString())).type(); not t->isString())
+				if(auto t = TRY(call->typecheck(ts)).type(); not t->isString())
 					return ErrMsg(loc, "`to_string` method returned non-string type '{}'", t);
 
 				*expr = std::move(call);
