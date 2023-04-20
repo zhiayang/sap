@@ -22,9 +22,9 @@ using builtin;
 	let k = hexcolour("331FAE");
 	builtin::println(f"{k}");
 
-	fn pintos($T, $U)(a: T, b: T)
+	fn pintos[$T, $U](a: T, b: T)
 	{
-		pintos($int, $int)(1, 2);
+		pintos[$int, $int](1, 2);
 	}
 
 
