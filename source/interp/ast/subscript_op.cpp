@@ -1,4 +1,4 @@
-// subop.cpp
+// subscript_op.cpp
 // Copyright (c) 2022, zhiayang
 // SPDX-License-Identifier: Apache-2.0
 
@@ -10,7 +10,7 @@ namespace sap::interp
 	ErrorOr<TCResult> SubscriptOp::typecheck_impl(Typechecker* ts, const Type* infer, bool keep_lvalue) const
 	{
 		auto lhs = TRY(this->array->typecheck(ts));
-		auto rhs = TRY(this->index->typecheck(ts));
+		auto rhs = TRY(this->indices[0]->typecheck(ts));
 
 		auto ltype = lhs.type();
 		auto rtype = rhs.type();
@@ -28,7 +28,7 @@ namespace sap::interp
 	ErrorOr<EvalResult> SubscriptOp::evaluate_impl(Evaluator* ev) const
 	{
 		auto lhs_res = TRY(this->array->evaluate(ev));
-		auto rhs = TRY_VALUE(this->index->evaluate(ev));
+		auto rhs = TRY_VALUE(this->indices[0]->evaluate(ev));
 
 		auto idx = checked_cast<size_t>(rhs.getInteger());
 

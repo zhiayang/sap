@@ -474,7 +474,7 @@ namespace sap::interp
 		    bool keep_lvalue = false) const override;
 
 		std::unique_ptr<Expr> array;
-		std::unique_ptr<Expr> index;
+		std::vector<std::unique_ptr<Expr>> indices;
 	};
 
 	struct LengthExpr : Expr
@@ -769,7 +769,9 @@ namespace sap::interp
 		ErrorOr<EvalResult> call(Evaluator* ev, std::vector<Value>& args) const;
 
 		std::unique_ptr<Block> body;
+		std::vector<std::string> generic_params;
 
+	private:
 		mutable std::vector<std::unique_ptr<VariableDefn>> param_defns;
 	};
 

@@ -164,7 +164,7 @@ namespace sap::interp
 		}
 
 		int variadic_cost = 0;
-		for(size_t param_idx = 0; param_idx < param_idx_to_args.size(); param_idx++)
+		for(size_t param_idx = 0; param_idx < expected.size(); param_idx++)
 		{
 			auto arg_pairs = TRY(([&](size_t k) -> ErrorOr<std::vector<ArgPair<const Type*>>> {
 				if(not param_idx_to_args.contains(k))
@@ -216,7 +216,6 @@ namespace sap::interp
 					continue;
 				}
 
-				// if the param is an any, we can just do it, but with extra cost.
 				auto param_type = std::get<1>(expected[param_idx]);
 
 				// no conversion = no cost

@@ -19,15 +19,15 @@ using builtin;
 
 \script::{
 
-	let k = hexcolour("331FAE");
-	builtin::println(f"{k}");
+	# let k = hexcolour("331FAE");
+	# builtin::println(f"{k}");
 
-	fn pintos[$T, $U](a: T, b: T)
+	fn foozle[T](a: int, b: int)
 	{
-		pintos[$int, $int](1, 2);
+		builtin::println(f"a={a}, b={b}");
 	}
 
-
+	foozle[$int](10, 20);
 
 
 
@@ -41,8 +41,8 @@ using builtin;
 	fn cpp() -> Inline
 	{
 		let c = \{C}.set_width(0.56em);
-		var p1 = bold1(\{+}).apply_style({ font_size:10.5pt, });
-		var p2 = bold1(\{+}).apply_style({ font_size:10.5pt, });
+		var p1 = bold1(\{+}).apply_style({ font_size: 10.5pt, });
+		var p2 = bold1(\{+}).apply_style({ font_size: 10.5pt, });
 
 		p1.set_width(0.6em);
 		p1.raise(0.05em);

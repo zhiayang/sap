@@ -22,7 +22,7 @@ block-comment {comment.block} :
 
 main: preamble paragraph*;
 
-preamble{meta.document.preamble}
+preamble{meta.script.preamble}
     : stmt stmt* document-start
     ;
 
@@ -33,11 +33,11 @@ document-start
     ;
 
 
-paragraph{meta.para.contents}
+paragraph{meta.para}
     : special-token-escape
     | `{`{keyword.brace} paragraph* `}`{keyword.brace}
     | ~(script-block | script-call | raw-block)
-    | '.*?'
+    | '.*?'{meta.para.text}
     ;
 
 special-token-escape
@@ -85,7 +85,7 @@ script-call-tail
     ;
 
 
-script-block:
+script-block{meta.script.block}:
     ( '(\\script)\s*(@\s*(layout|position|post|finalise|render))?\s*(\{)'{1: keyword.block.script, 2: storage.modifier, 4: punctuation.brace}
     | '(\\script)\s*(@\s*(layout|position|post|finalise|render))?\s*(::)?'{1: keyword.block.script, 2: storage.modifier, 4: punctuation.scope}
       (IDENTIFIER{entity.name.namespace} '(::)'{punctuation.scope})*
@@ -107,9 +107,9 @@ func-defn:
     IDENTIFIER{entity.name.function}
     (
         # note: if you have the first set of parens, you must have a generic guy inside.
-        '(\[)(\$)'{1: punctuation.paren.generic-params-start, 2: support.type}
+        `[`{punctuation.paren.generic-params-start}
         IDENTIFIER{support.type.generic}
-        (`,`{punctuation.comma} `$`{support.type} IDENTIFIER{support.type.generic})*
+        (`,`{punctuation.comma} IDENTIFIER{support.type.generic})*
         `]`{punctuation.paren.generic-params-end}
     )?
 

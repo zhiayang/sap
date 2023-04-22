@@ -44,12 +44,20 @@ namespace sap::interp
 
 	ErrorOr<TCResult> FunctionDefn::typecheck_impl(Typechecker* ts, const Type* infer, bool keep_lvalue) const
 	{
+		if(not this->generic_params.empty())
+		{
+			// declare the generic function
+
+
+			return TCResult::ofVoid();
+		}
+
 		this->declaration->resolve(this);
 		auto decl_type = TRY(this->declaration->typecheck(ts)).type();
 
 		// TODO: maybe a less weird mangling solution? idk
 		auto tree = ts->current()->lookupOrDeclareNamespace(zpr::sprint("{}${}", this->declaration->name,
-			decl_type->str()));
+		    decl_type->str()));
 		auto _ = ts->pushTree(tree);
 
 		// make definitions for our parameters
@@ -62,9 +70,9 @@ namespace sap::interp
 				if(not ts->canImplicitlyConvert(ty, resolved_type))
 				{
 					return ErrMsg(ts,
-						"default value for parameter '{}' has type '{}', "
-						"which is incompatible with parameter type '{}'",
-						param.name, resolved_type, ty);
+					    "default value for parameter '{}' has type '{}', "
+					    "which is incompatible with parameter type '{}'",
+					    param.name, resolved_type, ty);
 				}
 			}
 
@@ -74,7 +82,7 @@ namespace sap::interp
 				param_type = frontend::PType::array(param_type.getArrayElement());
 
 			this->param_defns.push_back(std::make_unique<VariableDefn>(param.loc, param.name, //
-				/* mutable: */ false, /* is_global: */ false, /* init: */ nullptr, param_type));
+			    /* mutable: */ false, /* is_global: */ false, /* init: */ nullptr, param_type));
 
 			TRY(this->param_defns.back()->typecheck(ts));
 		}

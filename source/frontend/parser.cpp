@@ -448,17 +448,22 @@ namespace sap::frontend
 
 	static ErrorOrUniquePtr<interp::Expr> parse_subscript(Lexer& lexer, std::unique_ptr<interp::Expr> lhs)
 	{
-		auto loc = lexer.peek().loc;
+		auto ret = std::make_unique<interp::SubscriptOp>(lexer.peek().loc);
+		ret->array = std::move(lhs);
 
 		must_expect(lexer, TT::LSquare);
-		auto subscript = TRY(parse_expr(lexer));
 
-		if(not lexer.expect(TT::RSquare))
-			return ErrMsg(lexer.location(), "expected ']'");
+		for(bool first = true; not lexer.expect(TT::RSquare); first = false)
+		{
+			if(not first && not lexer.expect(TT::Comma))
+				return ErrMsg(lexer.location(), "expected ',' or ']'");
 
-		auto ret = std::make_unique<interp::SubscriptOp>(loc);
-		ret->array = std::move(lhs);
-		ret->index = std::move(subscript);
+			ret->indices.push_back(TRY(parse_expr(lexer)));
+		}
+
+		if(ret->indices.empty())
+			return ErrMsg(lexer.location(), "subscript must have at least one index");
+
 		return OkMove(ret);
 	}
 
@@ -1259,6 +1264,26 @@ namespace sap::frontend
 		else
 			name = name_tok->text.str();
 
+		std::vector<std::string> generic_params {};
+
+		if(lexer.match(TT::LSquare))
+		{
+			for(bool first = true; not lexer.match(TT::RSquare); first = false)
+			{
+				if(not first && not lexer.expect(TT::Comma))
+					return ErrMsg(lexer.location(), "expected ',' or ']' in generic parameter list");
+
+				if(auto p = lexer.match(TT::Identifier); not p.has_value())
+					return ErrMsg(lexer.location(), "expected identifier in generic parameter list");
+				else
+					generic_params.push_back(p->text.str());
+			}
+
+			if(generic_params.empty())
+				return ErrMsg(loc, "generic parameter list cannot be empty");
+		}
+
+
 		if(not lexer.expect(TT::LParen))
 			return ErrMsg(lexer.location(), "expected '(' in function definition");
 
@@ -1276,6 +1301,8 @@ namespace sap::frontend
 			return_type = TRY(parse_type(lexer));
 
 		auto defn = std::make_unique<interp::FunctionDefn>(loc, name, std::move(params), return_type);
+		defn->generic_params = std::move(generic_params);
+
 		if(lexer.peek() != TT::LBrace)
 			return ErrMsg(lexer.location(), "expected '{' to begin function body");
 

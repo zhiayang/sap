@@ -7,7 +7,6 @@
 #include "util.h"
 #include "units.h" // for MAKE_UNITS_COMPATIBLE, Vector2, DEFINE_UNIT_IN_NA...
 
-#include "pdf/units.h"
 
 /*
     72 units is 1 inch, 1 inch is 25.4mm. we don't want to assume
