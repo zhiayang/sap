@@ -53,11 +53,11 @@ namespace pdf
 		Size2d_YDown getWordSize(zst::wstr_view text, PdfScalar font_size) const;
 
 		// A very thin wrapper around the identically-named methods taking a FontFile
-		std::map<size_t, font::GlyphAdjustment> getPositioningAdjustmentsForGlyphSequence(zst::span<GlyphId> glyphs,
-		    const font::FeatureSet& features) const;
+		std::map<size_t, font::GlyphAdjustment>
+		getPositioningAdjustmentsForGlyphSequence(zst::span<GlyphId> glyphs, const font::FeatureSet& features) const;
 
-		std::optional<std::vector<GlyphId>> performSubstitutionsForGlyphSequence(zst::span<GlyphId> glyphs,
-		    const font::FeatureSet& features) const;
+		std::optional<std::vector<GlyphId>>
+		performSubstitutionsForGlyphSequence(zst::span<GlyphId> glyphs, const font::FeatureSet& features) const;
 
 		// add an explicit mapping from glyph id to a list of codepoints. This is useful for
 		// ligature substitutions (eg. 'ffi' -> 'f', 'f', 'i') and for single replacements.
@@ -72,6 +72,8 @@ namespace pdf
 		// this converts the metric to an **abstract size**, which is the text space. when
 		// drawing text, the /Tf directive already specifies the font scale!
 		TextSpace1d scaleMetricForPDFTextSpace(font::FontScalar metric) const;
+
+		char32_t getOutputCodepointForGlyph(GlyphId glyph) const;
 
 		int font_type = 0;
 
@@ -90,12 +92,17 @@ namespace pdf
 		PdfFont(std::unique_ptr<font::FontFile> font);
 
 		void writeUnicodeCMap() const;
+		void writeUTF8CMap() const;
 		void writeCIDSet() const;
 
 		mutable util::hashmap<std::u32string, font::FontVector2d> m_word_size_cache {};
 		mutable util::hashmap<std::u32string, std::vector<font::GlyphInfo>> m_glyph_infos_cache {};
 
-		mutable std::map<GlyphId, std::vector<char32_t>> m_extra_unicode_mappings {};
+		mutable util::hashmap<GlyphId, std::vector<char32_t>> m_extra_unicode_mappings {};
+
+		mutable util::hashmap<GlyphId, char32_t> m_extra_glyph_to_private_use_mapping {};
+		mutable char32_t m_cur_unicode_private_use_codepoint = 0;
+
 		mutable bool m_did_serialise = false;
 
 		std::unique_ptr<font::FontSource> m_source {};
@@ -103,7 +110,8 @@ namespace pdf
 		Array* m_glyph_widths_array = nullptr;
 
 		Stream* m_embedded_contents = nullptr;
-		Stream* m_unicode_cmap = nullptr;
+		Stream* m_tounicode_cmap = nullptr;
+		Stream* m_utf8_cmap = nullptr;
 		Stream* m_cidset = nullptr;
 
 		// what goes in BaseName. for subsets, this includes the ABCDEF+ part.

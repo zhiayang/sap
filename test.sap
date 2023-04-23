@@ -27,7 +27,7 @@ using builtin;
 		builtin::println(f"a={a}, b={b}");
 	}
 
-	foozle[$int](10, 20);
+	# foozle[$int](10, 20);
 
 
 
@@ -70,11 +70,6 @@ pains/things to fix:
 
 \disable_page_numbering();
 
-\section("asdf");
+# \section("asdf");
 
-NUS currently has a gap in its operating systems courses, between the introductory CS2106
-and the advanced, graduate-level CS5250. In this project, we significantly overhaul an
-edu-cational OS, Stanford's \pintos(), to make it more suitable for use in NUS. We
-rewrite the OS in modern \cpp()20 and greatly improve upon it in all aspects, including
-functionality, design' and readability. We also propose and develop several lab projects
-and extension avenues for a future CS3xxx module that will sit between CS2106 and CS5250.
+Hello, world! Please save me. ff

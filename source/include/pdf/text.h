@@ -66,6 +66,11 @@ namespace pdf
 		*/
 		void addEncoded(size_t bytes, uint32_t encodedValue);
 
+		/*
+		    add text to the text stream, leaving encoding details to the implementation.
+		*/
+		void addUnicodeText(zst::wstr_view text);
+
 		virtual void addResources(const Page* page) const override;
 
 	private:
@@ -77,6 +82,7 @@ namespace pdf
 		{
 			std::vector<std::string> commands;
 			std::string text;
+			bool is_unicode = false;
 		};
 
 		struct

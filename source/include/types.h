@@ -129,6 +129,12 @@ namespace sap
 	};
 }
 
+template <>
+struct std::hash<GlyphId>
+{
+	size_t operator()(const GlyphId& gid) const { return std::hash<size_t>()(static_cast<size_t>(gid)); }
+};
+
 namespace zpr
 {
 	template <>

@@ -79,10 +79,13 @@ namespace pdf
 
 		w->writeln();
 
+		auto file_id = zst::str_view("\x37\x5c\xf3\xfc\xa4\xe6\x42\x59\x7c\xb9\x6a\xb6\xc2\x80\xc3\xbb");
+
 		auto trailer = Dictionary::create({
 		    { names::Size, Integer::create(util::checked_cast<int64_t>(num_objects)) },
 		    { names::Info, IndirectRef::create(info_dict) },
 		    { names::Root, IndirectRef::create(root) },
+		    { names::ID, Array::create(String::create(file_id), String::create(file_id)) },
 		});
 
 		w->writeln("trailer");

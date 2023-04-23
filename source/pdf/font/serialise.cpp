@@ -38,7 +38,8 @@ namespace pdf
 			for(auto g = source->getFirstGlyphId(); g != source->getLastGlyphId(); g = g + 1)
 			{
 				auto w = this->getMetricsForGlyph(g).horz_advance;
-				m_glyph_widths_array->append(Integer::create(static_cast<int>(this->scaleMetricForPDFTextSpace(w).value())));
+				m_glyph_widths_array
+				    ->append(Integer::create(static_cast<int>(this->scaleMetricForPDFTextSpace(w).value())));
 			}
 		}
 		else
@@ -68,7 +69,8 @@ namespace pdf
 				else
 				{
 					auto& prev = widths2.back();
-					if(static_cast<uint64_t>(prev.first->value()) + prev.second.size() == static_cast<uint64_t>(widths[i].first))
+					if(static_cast<uint64_t>(prev.first->value()) + prev.second.size()
+					    == static_cast<uint64_t>(widths[i].first))
 						prev.second.push_back(Integer::create(static_cast<uint32_t>(widths[i].second)));
 					else
 						goto foo;
@@ -89,6 +91,7 @@ namespace pdf
 
 			// write the cmap we'll use for /ToUnicode.
 			this->writeUnicodeCMap();
+			this->writeUTF8CMap();
 
 			// and the cidset
 			this->writeCIDSet();

@@ -129,13 +129,14 @@ int main(int argc, char** argv)
 	auto filename = args.positional[0];
 	auto abs_filename = stdfs::weakly_canonical(filename);
 
+	auto input_file = abs_filename.string();
+
+	auto output_name = args.options["o"].value.value_or(stdfs::path(abs_filename).replace_extension(".pdf"));
+	auto output_file = stdfs::weakly_canonical(output_name).string();
+
 	// change directory to the input file so that all searches are (by default) relative to it,
 	// regardless of our actual CWD
 	stdfs::current_path(abs_filename.parent_path());
-
-	auto input_file = abs_filename.string();
-	auto output_file = args.options["o"].value.value_or(stdfs::path(abs_filename).replace_extension(".pdf"));
-
 
 	if(is_watching)
 	{

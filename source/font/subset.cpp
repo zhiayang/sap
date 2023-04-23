@@ -20,7 +20,8 @@ namespace font
 
 	static bool should_exclude_table(const Tag& tag)
 	{
-		return tag == Tag("GPOS") || tag == Tag("GSUB") || tag == Tag("GDEF") || tag == Tag("BASE") || tag == Tag("FFTM");
+		return tag == Tag("GPOS") || tag == Tag("GSUB") || tag == Tag("GDEF") || tag == Tag("BASE")
+		    || tag == Tag("FFTM");
 	}
 
 	static void write_num_tables_and_other_stuff(Stream* stream, size_t num_tables)
@@ -69,12 +70,12 @@ namespace font
 	void FontFile::writeSubset(zst::str_view subset_name, Stream* stream)
 	{
 		auto file_contents = this->bytes();
-		if(this->hasCffOutlines())
-		{
-			auto subset = this->createCFFSubset(subset_name);
-			stream->setContents(subset.cff.span());
-			return;
-		}
+		// if(this->hasCffOutlines())
+		// {
+		// 	auto subset = this->createCFFSubset(subset_name);
+		// 	stream->setContents(subset.cff.span());
+		// 	return;
+		// }
 
 		// stream->append(file_contents);
 		// return;
@@ -105,7 +106,8 @@ namespace font
 
 		// not exactly the current offset; this includes the size of the header
 		// and of *all* the table records. makes writing the table offset easy.
-		size_t current_table_offset = sizeof(uint32_t) + (4 * sizeof(uint16_t)) + included_tables.size() * TableRecordSize;
+		size_t
+		    current_table_offset = sizeof(uint32_t) + (4 * sizeof(uint16_t)) + included_tables.size() * TableRecordSize;
 
 		auto write_table_record = [&stream, &current_table_offset](const Tag& tag, uint32_t checksum, uint32_t size) {
 			stream->append_bytes(util::convertBEU32(tag.value));
@@ -137,7 +139,8 @@ namespace font
 					checksum = compute_checksum(subset.loca_table.span());
 				}
 
-				write_table_record(table.tag, util::checked_cast<uint32_t>(checksum), util::checked_cast<uint32_t>(size));
+				write_table_record(table.tag, util::checked_cast<uint32_t>(checksum),
+				    util::checked_cast<uint32_t>(size));
 			}
 
 			for(auto& table : included_tables)
@@ -168,7 +171,8 @@ namespace font
 					size = cff_subset.cmap.size();
 					checksum = compute_checksum(cff_subset.cmap.span());
 				}
-				write_table_record(table.tag, util::checked_cast<uint32_t>(checksum), util::checked_cast<uint32_t>(size));
+				write_table_record(table.tag, util::checked_cast<uint32_t>(checksum),
+				    util::checked_cast<uint32_t>(size));
 			}
 
 			for(auto& table : included_tables)

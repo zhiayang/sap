@@ -2,6 +2,8 @@
 // Copyright (c) 2021, zhiayang
 // SPDX-License-Identifier: Apache-2.0
 
+#include <utf8proc/utf8proc.h>
+
 #include "types.h" // for GlyphId
 
 #include "pdf/font.h"  // for Font, Font::ENCODING_CID
@@ -74,16 +76,15 @@ namespace sap::layout
 		if(m_raise_height != 0)
 			text->rise(m_raise_height.into());
 
-		auto add_gid = [&font, text](GlyphId gid) {
-			if(font->isCIDFont())
-				text->addEncoded(2, static_cast<uint32_t>(gid));
-			else
-				text->addEncoded(1, static_cast<uint32_t>(gid));
-		};
-
 		for(auto& glyph : font->getGlyphInfosForString(m_text))
 		{
-			add_gid(glyph.gid);
+#if 1
+			text->addEncoded(font->isCIDFont() ? 2 : 1, static_cast<uint32_t>(glyph.gid));
+#else
+			// note: UTF-8 encoding is broken, see the note in pdf_font.cpp
+			auto codepoint = font->getOutputCodepointForGlyph(glyph.gid);
+			text->addUnicodeText(zst::wstr_view(&codepoint, 1));
+#endif
 
 			// TODO: handle placement as well
 			text->offset(font->scaleMetricForPDFTextSpace(glyph.adjustments.horz_advance));

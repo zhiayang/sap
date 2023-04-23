@@ -77,9 +77,12 @@ namespace pdf
 		return font_desc;
 	}
 
+	static constexpr char32_t PRIVATE_USE_AREA_START = char32_t(0xF0000);
+
 	static int64_t g_font_ids = 0;
 	PdfFont::PdfFont(std::unique_ptr<pdf::BuiltinFont> source_)
 	    : Resource(KIND_FONT)
+	    , m_cur_unicode_private_use_codepoint(PRIVATE_USE_AREA_START)
 	    , m_source(std::move(source_))
 	    , m_font_dictionary(Dictionary::createIndirect(names::Font, {}))
 	    , m_glyph_widths_array(Array::createIndirect())
@@ -103,6 +106,7 @@ namespace pdf
 
 	PdfFont::PdfFont(std::unique_ptr<font::FontFile> font_file_)
 	    : Resource(KIND_FONT)
+	    , m_cur_unicode_private_use_codepoint(PRIVATE_USE_AREA_START)
 	    , m_source(std::move(font_file_))
 	    , m_font_dictionary(Dictionary::createIndirect(names::Font, {}))
 	    , m_glyph_widths_array(Array::createIndirect())
@@ -147,28 +151,6 @@ namespace pdf
 		        { names::Supplement, Integer::create(0) },
 		    }));
 
-		if(file_src->hasTrueTypeOutlines())
-		{
-			this->font_type = FONT_TRUETYPE_CID;
-			cidfont_dict->add(names::Subtype, names::CIDFontType2.ptr());
-		}
-		else
-		{
-			this->font_type = FONT_CFF_CID;
-			cidfont_dict->add(names::Subtype, names::CIDFontType0.ptr());
-		}
-
-		/*
-		    TODO:
-		    for now we are outputting glyph IDs to the pdf, which is pretty dumb. in the future
-		    we probably want to either:
-
-		    (a) find a way to make a CMap that reads utf-8 from the text stream and converts that to GIDs
-		    (b) use some font-specific weirdness to directly map utf-16 (or rather ucs-2) to GIDs. with
-		        otf-cmap format types 6, 10, 12, and 13, we can very easily make a CMap that is not
-		        monstrous in size.
-		*/
-
 		// we need a CIDSet for subset fonts
 		m_cidset = Stream::create();
 		descriptor->add(names::CIDSet, IndirectRef::create(m_cidset));
@@ -176,36 +158,111 @@ namespace pdf
 		m_embedded_contents = Stream::create();
 		m_embedded_contents->setCompressed(true);
 
+		// see notes below
 		if(file_src->hasTrueTypeOutlines())
 		{
-			descriptor->add(names::FontFile2, m_embedded_contents);
+			this->font_type = FONT_TRUETYPE_CID;
+			cidfont_dict->add(names::Subtype, names::CIDFontType2.ptr());
 			cidfont_dict->add(names::CIDToGIDMap, names::Identity.ptr());
+
+			descriptor->add(names::FontFile2, m_embedded_contents);
 		}
 		else
 		{
-			// the spec is very very poorly worded on this, BUT from what I can gather, for CFF fonts we can
-			// just always use FontFile3 and CIDFontType0C.
-			m_embedded_contents->dictionary()->add(names::Subtype, names::CIDFontType0C.ptr());
+			this->font_type = FONT_CFF_CID;
+			cidfont_dict->add(names::Subtype, names::CIDFontType0.ptr());
 
 			descriptor->add(names::FontFile3, m_embedded_contents);
+			m_embedded_contents->dictionary()->add(names::Subtype, names::OpenType.ptr());
 		}
 
 		// make a cmap to use for ToUnicode
-		m_unicode_cmap = Stream::create();
-		m_unicode_cmap->setCompressed(true);
+		m_tounicode_cmap = Stream::create();
+		m_tounicode_cmap->setCompressed(true);
 
 		// finally, construct the top-level Type0 font.
 		m_font_dictionary = Dictionary::createIndirect(names::Font, {});
 		m_font_dictionary->add(names::Subtype, names::Type0.ptr());
 		m_font_dictionary->add(names::BaseFont, basefont_name);
 
-		// TODO: here's the thing about CMap. if we use Identity-H then we don't need a CMap, but it forces the text
-		// stream to contain glyph IDs instead of anything sensible.
+		// see notes below
 		m_font_dictionary->add(names::Encoding, Name::create("Identity-H"));
 
 		// add the unicode map so text selection isn't completely broken
-		m_font_dictionary->add(names::ToUnicode, m_unicode_cmap);
+		m_font_dictionary->add(names::ToUnicode, m_tounicode_cmap);
 		m_font_dictionary->add(names::DescendantFonts, Array::create(IndirectRef::create(cidfont_dict)));
+
+
+		// unfortunately, this won't work.
+#if 0
+		m_utf8_cmap = Stream::create();
+		m_utf8_cmap->setCompressed(true);
+		m_font_dictionary->add(names::Encoding, m_utf8_cmap);
+#endif
+
+		/*
+		    font encoding notes
+		    ===================
+
+		    Font encoding is a massive pain. There are a few issues:
+
+
+		    1. Font Embedding
+		    -----------------
+
+		    Since PDF 1.6, we can use /FontFile3 together with /Subtype /OpenType to embed OTF
+		    fonts that contain both truetype and CFF outlines... BUT:
+
+		    (a) No other PDF producer seems to do this. They all seem to do one of the following:
+		        - extract the Type1 CFF file out of the OTF, and embed it as Type1 directly (MS Word, Mac Pages)
+		        - slap the whole OTF in, but using /Subtype /CIDFontType0C
+
+		    (b) Some viewers have problems if we always use the /Subtype /OpenType, especially for TrueType fonts
+
+		    For now, we stick to using /FontFile2 for TrueType files, and /FontFile3 /Subtype /OpenType for CFF fonts.
+
+
+
+		    2. CIDToGID Mapping
+		    -------------------
+		    ref: https://stackoverflow.com/questions/74165171/
+		    ref: PDF 1.7: 9.7.4.2 Glyph Selection in CIDFonts
+
+		    Quote:
+
+		        The “CFF” font program has a Top DICT that uses CIDFont operators: The CIDs shall be used to determine
+		        the GID value for the glyph procedure using the charset table in the CFF program. The GID value shall
+		        then be used to look up the glyph procedure using the CharStrings INDEX table.
+
+		    Apparently, there are some fonts where the CID-to-GID mapping is not 1:1. The SO post above gives
+		    NotoSansHK as an example of such a font. In this case, we *apparently* need to parse the charset array
+		    in the CFF to get the CID to GID mapping, and use that instead of `/Identity`.
+
+		    For now, this hasn't been a problem.
+
+
+
+		    3. Unicode Output
+		    -----------------
+		    ref: https://adobe-type-tools.github.io/font-tech-notes/pdfs/5099.CMapResources.pdf
+		         1.3.4 Code Space Range
+
+		    In theory, we can take advantage of custom CMaps in font /Encodings to be able to put UTF-8 verbatim into
+		    the text stream instead of glyph IDs. Currently we use Identity-H which means we must use GIDs.
+
+		    HOWEVER, while it works in *SOME* viewers, it does not work in all viewers. From the document above,
+		    "compatibility mode" PostScript only supports two-byte encodings, but "native mode" PS supports four-byte
+		    encodings.
+
+		    Unfortunately, macOS preview (or rather, Quartz) does not seem to support PS native; it does not like
+		    anything larger than 2-byte encodings. (eg. µ works, but ff ligature doesn't)
+
+		    This means that UTf-8 encoding is functionally dead in the water on macOS.
+
+		    The main reason we wanted to try this approach was that it makes the raw PDF somewhat searchable and
+		    debuggable, since words would be at least partially recognisable. Unfortunately, we are now stuck with
+		    glyph ids. There's no mitigation, since even the private-use area in the BMP requires 3 bytes.
+		*/
 	}
 
 
@@ -241,8 +298,24 @@ namespace pdf
 		}
 
 		m_extra_unicode_mappings[glyph] = std::move(codepoints);
+
+		// the PUA we use has this many glyphs... we should never run out.
+		if(m_extra_glyph_to_private_use_mapping.size() == 65534)
+			sap::internal_error("out of space in the unicode private use!");
+
+		m_extra_glyph_to_private_use_mapping[glyph] = m_cur_unicode_private_use_codepoint++;
 	}
 
+	char32_t PdfFont::getOutputCodepointForGlyph(GlyphId glyph) const
+	{
+		if(auto it = m_source->characterMapping().reverse.find(glyph); it != m_source->characterMapping().reverse.end())
+			return it->second;
+
+		if(auto it = m_extra_glyph_to_private_use_mapping.find(glyph); it != m_extra_glyph_to_private_use_mapping.end())
+			return it->second;
+		else
+			sap::internal_error("no output codepoint for glyph {}", glyph);
+	}
 
 	const std::vector<font::GlyphInfo>& PdfFont::getGlyphInfosForString(zst::wstr_view text) const
 	{
@@ -253,8 +326,8 @@ namespace pdf
 		font::FeatureSet features {};
 
 		// REMOVE: this is just for testing!
-		features.script = Tag("cyrl");
-		features.language = Tag("BGR ");
+		features.script = Tag("latn");
+		features.language = Tag("dflt");
 		features.enabled_features = { Tag("kern"), Tag("liga"), Tag("locl") };
 
 		std::vector<GlyphId> glyphs {};

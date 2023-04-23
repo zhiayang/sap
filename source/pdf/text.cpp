@@ -2,11 +2,13 @@
 // Copyright (c) 2021, zhiayang
 // SPDX-License-Identifier: Apache-2.0
 
-#include "pdf/font.h"  // for Font
-#include "pdf/misc.h"  // for error
-#include "pdf/page.h"  // for Page
-#include "pdf/text.h"  // for Text::Group, Text, Text::(anonymous)
-#include "pdf/units.h" // for Offset2d, Position2d, TextSpace1d, PdfScalar
+#include <utf8proc/utf8proc.h>
+
+#include "pdf/font.h"
+#include "pdf/misc.h"
+#include "pdf/page.h"
+#include "pdf/text.h"
+#include "pdf/units.h"
 
 namespace pdf
 {
@@ -16,12 +18,19 @@ namespace pdf
 		auto appender = [&str_buf](const char* c, size_t n) { str_buf.append(c, n); };
 
 		zpr::cprint(appender, "q BT\n");
-		for(auto& group : m_groups)
+		for(size_t i = 0; i < m_groups.size(); i++)
 		{
+			auto& group = m_groups[i];
+
 			for(auto& cmd : group.commands)
 				appender(cmd.data(), cmd.size());
 
-			zpr::cprint(appender, "[{}] TJ\n", group.text);
+			// the last group won't have a closing ')' if it's unicode
+			if(not group.text.empty())
+			{
+				zpr::cprint(appender, "[{}{}] TJ\n", group.text,
+				    group.is_unicode && i + 1 == m_groups.size() ? ")" : "");
+			}
 		}
 
 		zpr::cprint(appender, "ET Q\n");
@@ -79,7 +88,12 @@ namespace pdf
 	{
 		// if we have no groups yet, *OR* the last group has text in it, we must create a new group.
 		if(m_groups.empty() || !m_groups.back().text.empty())
+		{
+			if(not m_groups.empty() && m_groups.back().is_unicode && not m_groups.back().text.empty())
+				m_groups.back().text += ")";
+
 			m_groups.emplace_back();
+		}
 
 		m_groups.back().commands.push_back(sv.str());
 	}
@@ -108,17 +122,33 @@ namespace pdf
 		if(ofs.iszero())
 			return;
 
+		Group* grp = nullptr;
 		if(m_groups.empty())
-			m_groups.emplace_back();
+			grp = &m_groups.emplace_back();
+		else
+			grp = &m_groups.back();
 
 		// note that we specify that a positive offset moves the glyph to the right
-		m_groups.back().text += zpr::sprint(" {} ", -1 * ofs.value());
+		if(grp->is_unicode && not grp->text.empty())
+			grp->text += ")";
+
+		grp->text += zpr::sprint(" {} ", -1 * ofs.value());
+
+		if(grp->is_unicode)
+			grp->text += "(";
 	}
 
 	void Text::addEncoded(size_t bytes, uint32_t encodedValue)
 	{
 		if(m_groups.empty())
+		{
 			m_groups.emplace_back();
+		}
+		else if(m_groups.back().is_unicode)
+		{
+			m_groups.back().text += ")";
+			m_groups.emplace_back();
+		}
 
 		if(bytes == 1)
 			m_groups.back().text += zpr::sprint("<{02x}>", encodedValue & 0xFF);
@@ -128,5 +158,49 @@ namespace pdf
 			m_groups.back().text += zpr::sprint("<{08x}>", encodedValue & 0xFFFF'FFFF);
 		else
 			pdf::error("invalid number of bytes");
+	}
+
+	void Text::addUnicodeText(zst::wstr_view text)
+	{
+		Group* grp = nullptr;
+		if(m_groups.empty() || not m_groups.back().is_unicode)
+		{
+			grp = &m_groups.emplace_back();
+			grp->is_unicode = true;
+			grp->text += "(";
+		}
+		else
+		{
+			grp = &m_groups.back();
+		}
+
+		for(auto& cp : text)
+		{
+			if(cp == U'(')
+			{
+				grp->text += "\\(";
+			}
+			else if(cp == U')')
+			{
+				grp->text += "\\)";
+			}
+			else if(cp == U'\\')
+			{
+				grp->text += "\\\\";
+			}
+			else
+			{
+				if(m_current_font.font->isCIDFont())
+				{
+					uint8_t tmp[4] {};
+					auto n = utf8proc_encode_char(static_cast<int32_t>(cp), &tmp[0]);
+					grp->text += zst::byte_span(&tmp[0], static_cast<size_t>(n)).chars().sv();
+				}
+				else
+				{
+					grp->text += static_cast<char>(cp);
+				}
+			}
+		}
 	}
 }

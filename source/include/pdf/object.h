@@ -233,6 +233,8 @@ namespace pdf
 		void clear();
 		void setContents(zst::byte_span bytes);
 
+		zst::byte_span contents() const { return m_bytes.span(); }
+
 		template <typename T>
 		void append_bytes(const T& value)
 		{
@@ -388,5 +390,7 @@ namespace pdf
 		static const auto BS = pdf::Name("BS");
 		static const auto Border = pdf::Name("Border");
 		static const auto C = pdf::Name("C");
+		static const auto F = pdf::Name("F");
+		static const auto ID = pdf::Name("ID");
 	}
 }

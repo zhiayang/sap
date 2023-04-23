@@ -14,6 +14,7 @@ namespace pdf
 	    , m_display_position(display_position)
 	{
 		auto dict = m_stream->dictionary();
+		m_stream->setCompressed(true);
 
 		dict->add(names::Subtype, names::Image.ptr());
 		dict->add(names::Width, Integer::create(checked_cast<int64_t>(m_image.pixel_width)));
@@ -51,14 +52,13 @@ namespace pdf
 	void Image::writePdfCommands(Stream* stream) const
 	{
 		auto buf = zst::buffer<char>();
-		auto appender = [&buf](const char* c, size_t n) {
-			buf.append(c, n);
-		};
+		auto appender = [&buf](const char* c, size_t n) { buf.append(c, n); };
 
 		zpr::cprint(appender,
 		    "q\n"                           // save state
 		    "1 0 0 1 {} {} cm\n"            // move to the position
 		    "{} 0 0 {} 0 -{} cm\n"          // scale and move so we draw at the right place for y-down
+		    "/DeviceRGB CS\n"               // set colour space to RGB (FIXME: support cmyk/greyscale images)
 		    "/{} Do\n"                      // draw the image (xobject)
 		    "Q\n",                          // restore state
 		    m_display_position.x().value(), //
