@@ -7,6 +7,12 @@ import "std/bibliography.sap";
 
 namespace std
 {
+	fn serif_font() -> builtin::FontFamily { return builtin::state().serif_font_family; }
+	fn sans_font() -> builtin::FontFamily { return builtin::state().sans_font_family; }
+	fn mono_font() -> builtin::FontFamily { return builtin::state().mono_font_family; }
+
+
+
 	struct SubSubSection
 	{
 		num: int;
@@ -69,7 +75,7 @@ namespace std
 			builtin::make_hbox(*num_line, *name_line),
 			builtin::vspace(-builtin::current_style().paragraph_spacing! / 2),
 		).apply_style({
-			font_family: impl::fonts.sans,
+			font_family: sans_font(),
 		});
 
 		box.offset_position({ x: -14mm, y: 0mm });
@@ -114,7 +120,7 @@ namespace std
 			builtin::make_hbox(*num_line, *name_line),
 			builtin::vspace(-builtin::current_style().paragraph_spacing! / 2),
 		).apply_style({
-			font_family: impl::fonts.sans,
+			font_family: sans_font(),
 		});
 
 		box.offset_position({ x: -14mm, y: 0mm });
@@ -164,7 +170,7 @@ namespace std
 			builtin::make_hbox(*num_line, *name_line),
 			builtin::vspace(-builtin::current_style().paragraph_spacing! / 2)
 		).apply_style({
-			font_family: impl::fonts.sans,
+			font_family: sans_font(),
 		});
 
 		box.offset_position({ x: -14mm, y: 0mm });
@@ -560,7 +566,7 @@ namespace std
 		ret = builtin::make_vbox(
 			builtin::make_hbox(
 				builtin::make_line(builtin::make_text("Contents"))
-			).apply_style({ horz_alignment: .Left, font_size: 20pt, font_family: impl::fonts.sans }),
+			).apply_style({ horz_alignment: .Left, font_size: 20pt, font_family: sans_font() }),
 			*ret
 		);
 
@@ -603,7 +609,7 @@ namespace std
 	fn mono(x: string) -> Inline
 	{
 		return builtin::make_text(x).apply_style({
-			font_family: impl::fonts.mono,
+			font_family: mono_font(),
 			enable_smart_quotes: false,
 		});
 	}

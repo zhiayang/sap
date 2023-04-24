@@ -51,8 +51,10 @@ namespace sap::interp::builtin
 		static const Type* type;
 		static std::vector<StructDefn::Field> fields();
 
-		static Value make(Evaluator* ev, GlobalState style);
-		static GlobalState unmake(Evaluator* ev, const Value& value);
+		static Value make(Evaluator* ev, const GlobalState& style);
+
+		// note: we don't have an unmake, since there shouldn't ever be a reason
+		// to make a State -- we only ever pass that to the user scripts, not the other way around.
 	};
 
 	struct BS_Style

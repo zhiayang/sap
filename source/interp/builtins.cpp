@@ -161,8 +161,10 @@ namespace sap::interp
 		    }),
 		    t_void, &builtin::start_document);
 
-		DEF("state", PL(), t_bstate, [](auto* ev, auto& args) {
-			assert(args.size() == 0);
+		DEF("state", PL(), t_bstate, [](auto* ev, auto& args) -> ErrorOr<EvalResult> {
+			if(not(ev->interpreter()->currentPhase() > ProcessingPhase::Preamble))
+				return ErrMsg(ev, "state() can only be called after the preamble phase");
+
 			return EvalResult::ofValue(builtin::BS_State::make(ev, ev->state()));
 		});
 

@@ -8,6 +8,7 @@
 
 #include "util.h"
 #include "sap/annotation.h"
+#include "sap/document_settings.h"
 
 #include "interp/ast.h"
 #include "interp/value.h"
@@ -77,6 +78,10 @@ namespace sap::interp
 	struct GlobalState
 	{
 		size_t layout_pass;
+
+		// these are optional, because when we initialise the global state,
+		// the preamble hasn't been run yet.
+		std::optional<sap::DocumentSettings> document_settings;
 	};
 
 	struct DocumentProxy
@@ -122,6 +127,7 @@ namespace sap::interp
 
 		void commenceLayoutPass(size_t pass_num);
 		const GlobalState& state() const;
+		GlobalState& state();
 
 		void setDocument(layout::Document* document);
 		layout::Document* document() const { return m_document; }

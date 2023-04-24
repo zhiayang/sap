@@ -229,6 +229,11 @@ namespace sap::interp
 		return m_global_state;
 	}
 
+	GlobalState& Evaluator::state()
+	{
+		return m_global_state;
+	}
+
 
 
 	bool Evaluator::isGlobalValue(const Definition* defn) const

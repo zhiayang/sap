@@ -27,8 +27,8 @@ namespace sap::interp
 			auto ret = TRY(decls[0]->typecheck(ts));
 			m_resolved_decl = decls[0];
 
-			bool cannot_be_copied = (ret.type()->isTreeBlockObj() || ret.type()->isTreeInlineObj()
-									 || ret.type()->isLayoutObject());
+			bool cannot_be_copied =
+			    (ret.type()->isTreeBlockObj() || ret.type()->isTreeInlineObj() || ret.type()->isLayoutObject());
 
 			if(ret.isLValue() && not keep_lvalue && cannot_be_copied)
 				return ErrMsg(ts, "'{}' values cannot be copied; use '*' to move", ret.type());

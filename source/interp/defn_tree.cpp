@@ -205,10 +205,7 @@ namespace sap::interp
 
 	ErrorOr<void> DefnTree::declare(const Declaration* new_decl)
 	{
-		auto& name = new_decl->name;
-		if(auto foo = m_decls.find(name); foo != m_decls.end())
-		{
-			auto& existing_decls = foo->second;
+		auto check_existing = [this, new_decl](const std::vector<const Declaration*>& existing_decls) -> ErrorOr<void> {
 			for(auto& decl : existing_decls)
 			{
 				// no error for re-*declaration*, just return ok (and throw away the duplicate decl)
@@ -221,18 +218,27 @@ namespace sap::interp
 				if(af == nullptr || bf == nullptr)
 				{
 					// otherwise, if at least one of them is not a function, they conflict
-					return ErrMsg(m_typechecker->loc(), "redeclaration of '{}'", name);
+					return ErrMsg(m_typechecker->loc(), "redeclaration of '{}'", new_decl->name);
 				}
 				else if(function_decls_conflict(af, bf))
 				{
 					// otherwise, they are both functions, but we must make sure they are not redefinitions
 					// TODO: print the previous one
-					return ErrMsg(m_typechecker->loc(), "conflicting declarations of '{}'", name);
+					return ErrMsg(m_typechecker->loc(), "conflicting declarations of '{}'", new_decl->name);
 				}
 
 				// otherwise, we're ok
 			}
-		}
+
+			return Ok();
+		};
+
+		auto& name = new_decl->name;
+		if(auto foo = m_decls.find(name); foo != m_decls.end())
+			TRY(check_existing(foo->second));
+
+		if(auto foo = m_imported_decls.find(name); foo != m_imported_decls.end())
+			TRY(check_existing(foo->second));
 
 		m_decls[name].push_back(new_decl);
 		const_cast<Declaration*>(new_decl)->declareAt(this);
