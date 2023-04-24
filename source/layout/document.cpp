@@ -64,7 +64,7 @@ namespace sap::layout
 	    : m_page_layout(this, paper_size(settings), make_margins(settings))
 	{
 		auto style = getDefaultStyle(cs);
-		style.set_font_family(*settings.font_family)
+		style.set_font_family(*settings.serif_font_family)
 		    .set_font_size(resolve_len(settings, *settings.font_size))
 		    .set_root_font_size(resolve_len(settings, *settings.font_size))
 		    .set_line_spacing(*settings.line_spacing)

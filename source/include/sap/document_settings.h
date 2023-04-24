@@ -21,8 +21,11 @@ namespace sap
 			std::optional<DynLength> right;
 		};
 
+		std::optional<FontFamily> serif_font_family;
+		std::optional<FontFamily> sans_font_family;
+		std::optional<FontFamily> mono_font_family;
+
 		std::optional<DynLength> font_size;
-		std::optional<FontFamily> font_family;
 		std::optional<DynLength2d> paper_size;
 		std::optional<Margins> margins;
 

@@ -11,7 +11,7 @@
 
 namespace sap::layout
 {
-	static FontFamily get_default_font_family(interp::Interpreter* cs)
+	static FontFamily default_serif_font_family(interp::Interpreter* cs)
 	{
 		static auto ret = sap::FontFamily(                                                //
 		    &cs->addLoadedFont(pdf::PdfFont::fromBuiltin(pdf::BuiltinFont::TimesRoman)),  //
@@ -22,6 +22,30 @@ namespace sap::layout
 		return ret;
 	}
 
+	static FontFamily default_sans_font_family(interp::Interpreter* cs)
+	{
+		static auto ret = sap::FontFamily(                                                     //
+		    &cs->addLoadedFont(pdf::PdfFont::fromBuiltin(pdf::BuiltinFont::Helvetica)),        //
+		    &cs->addLoadedFont(pdf::PdfFont::fromBuiltin(pdf::BuiltinFont::HelveticaOblique)), //
+		    &cs->addLoadedFont(pdf::PdfFont::fromBuiltin(pdf::BuiltinFont::HelveticaBold)),    //
+		    &cs->addLoadedFont(pdf::PdfFont::fromBuiltin(pdf::BuiltinFont::HelveticaBoldOblique)));
+
+		return ret;
+	}
+
+	static FontFamily default_mono_font_family(interp::Interpreter* cs)
+	{
+		static auto ret = sap::FontFamily(                                                   //
+		    &cs->addLoadedFont(pdf::PdfFont::fromBuiltin(pdf::BuiltinFont::Courier)),        //
+		    &cs->addLoadedFont(pdf::PdfFont::fromBuiltin(pdf::BuiltinFont::CourierOblique)), //
+		    &cs->addLoadedFont(pdf::PdfFont::fromBuiltin(pdf::BuiltinFont::CourierBold)),    //
+		    &cs->addLoadedFont(pdf::PdfFont::fromBuiltin(pdf::BuiltinFont::CourierBoldOblique)));
+
+		return ret;
+	}
+
+
+
 	static constexpr auto DEFAULT_FONT_SIZE_PT = 11_pt;
 	static constexpr double DEFAULT_LINE_SPACING = 1.0;
 	static constexpr double DEFAULT_SENTENCE_SPACE_STRETCH = 1.5;
@@ -31,7 +55,7 @@ namespace sap::layout
 		Style default_style {};
 
 		auto font_size = DEFAULT_FONT_SIZE_PT;
-		default_style.set_font_family(get_default_font_family(cs))
+		default_style.set_font_family(default_serif_font_family(cs))
 		    .set_font_style(sap::FontStyle::Regular)
 		    .set_font_size(font_size.into())
 		    .set_root_font_size(font_size.into())
@@ -117,8 +141,14 @@ namespace sap::layout
 			};
 		}
 
-		if(not settings.font_family.has_value())
-			settings.font_family = get_default_font_family(cs);
+		if(not settings.serif_font_family.has_value())
+			settings.serif_font_family = default_serif_font_family(cs);
+
+		if(not settings.sans_font_family.has_value())
+			settings.sans_font_family = default_sans_font_family(cs);
+
+		if(not settings.mono_font_family.has_value())
+			settings.mono_font_family = default_mono_font_family(cs);
 
 		return settings;
 	}
