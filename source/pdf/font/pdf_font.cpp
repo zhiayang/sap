@@ -344,17 +344,61 @@ namespace pdf
 
 		glyph_span = zst::span<GlyphId>(glyphs.data(), glyphs.size());
 
-		auto glyph_infos = m_source->getGlyphInfosForSubstitutedString(glyph_span, features);
+		auto glyph_infos = this->getGlyphInfosForSubstitutedString(glyph_span, features);
 		return m_glyph_infos_cache.emplace(text.str(), std::move(glyph_infos)).first->second;
 	}
 
 
-
-	std::map<size_t, font::GlyphAdjustment> PdfFont::
-	    getPositioningAdjustmentsForGlyphSequence(zst::span<GlyphId> glyphs, const font::FeatureSet& features) const
+	void PdfFont::addAdditionalGlyphPositioningAdjustment(std::vector<GlyphId> gids, GlyphPosAdjMap adjustments)
 	{
-		return m_source->getPositioningAdjustmentsForGlyphSequence(glyphs, features);
+		m_custom_glyph_pos_adjustments[std::move(gids)].push_back(std::move(adjustments));
 	}
+
+	std::vector<font::GlyphInfo>
+	PdfFont::getGlyphInfosForSubstitutedString(zst::span<GlyphId> glyphs, const font::FeatureSet& features) const
+	{
+		auto span = [](auto& foo) { return zst::span<GlyphId>(foo.data(), foo.size()); };
+
+		// next, get base metrics for each glyph.
+		std::vector<font::GlyphInfo> glyph_infos {};
+		for(auto g : glyphs)
+		{
+			glyph_infos.push_back(font::GlyphInfo {
+			    .gid = g,
+			    .metrics = m_source->getGlyphMetrics(g),
+			});
+		}
+
+		// finally, use GPOS
+		auto adjustment_map = m_source->getPositioningAdjustmentsForGlyphSequence(span(glyphs), features);
+		for(auto& [i, adj] : adjustment_map)
+		{
+			auto& info = glyph_infos[i];
+			info.adjustments.horz_advance += adj.horz_advance;
+			info.adjustments.vert_advance += adj.vert_advance;
+			info.adjustments.horz_placement += adj.horz_placement;
+			info.adjustments.vert_placement += adj.vert_placement;
+		}
+
+		if(auto it = m_custom_glyph_pos_adjustments.find(glyphs); it != m_custom_glyph_pos_adjustments.end())
+		{
+			for(auto& adjs : it->second)
+			{
+				for(auto& [idx, adj] : adjs)
+				{
+					assert(idx < glyph_infos.size());
+
+					glyph_infos[idx].adjustments.horz_advance += adj.horz_advance;
+					glyph_infos[idx].adjustments.vert_advance += adj.vert_advance;
+					glyph_infos[idx].adjustments.horz_placement += adj.horz_placement;
+					glyph_infos[idx].adjustments.vert_placement += adj.vert_placement;
+				}
+			}
+		}
+
+		return glyph_infos;
+	}
+
 
 	std::optional<std::vector<GlyphId>>
 	PdfFont::performSubstitutionsForGlyphSequence(zst::span<GlyphId> glyphs, const font::FeatureSet& features) const

@@ -80,5 +80,8 @@ namespace sap::interp
 		ErrorOr<EvalResult> override_object_position(Evaluator* ev, std::vector<Value>& args);
 
 		ErrorOr<EvalResult> output_at_absolute_pos_tbo(Evaluator* ev, std::vector<Value>& args);
+
+
+		ErrorOr<EvalResult> adjust_glyph_spacing(Evaluator* ev, std::vector<Value>& args);
 	}
 }

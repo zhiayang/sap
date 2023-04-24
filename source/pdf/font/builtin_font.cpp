@@ -297,13 +297,14 @@ namespace pdf
 	}
 
 
-	std::map<size_t, font::GlyphAdjustment> BuiltinFont::
-	    getPositioningAdjustmentsForGlyphSequence(zst::span<GlyphId> glyphs, const font::FeatureSet& features) const
+	util::hashmap<size_t, font::GlyphAdjustment> BuiltinFont::getPositioningAdjustmentsForGlyphSequence( //
+	    zst::span<GlyphId> glyphs,
+	    const font::FeatureSet& features) const
 	{
 		if(glyphs.size() < 2)
 			return {};
 
-		std::map<size_t, font::GlyphAdjustment> kerns {};
+		util::hashmap<size_t, font::GlyphAdjustment> kerns {};
 		for(size_t i = 0; i < glyphs.size() - 1; i++)
 		{
 			if(auto k = m_kerning_pairs.find({ glyphs[i], glyphs[i + 1] }); k != m_kerning_pairs.end())

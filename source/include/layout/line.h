@@ -43,17 +43,17 @@ namespace sap::layout
 		    bool is_last_line,
 		    std::optional<LineAdjustment> adjustment = std::nullopt);
 
-		const LineMetrics& metrics() const { return m_metrics; }
+		sap::Length lineSpacing() const { return m_line_spacing; }
 		const std::vector<std::unique_ptr<LayoutObject>>& objects() const { return m_objects; }
 
 	private:
 		explicit Line(const Style& style,
 		    LayoutSize size,
-		    LineMetrics metrics,
+		    sap::Length line_spacing,
 		    std::vector<std::unique_ptr<LayoutObject>> objs);
 
 	private:
-		LineMetrics m_metrics;
+		sap::Length m_line_spacing;
 		std::vector<std::unique_ptr<LayoutObject>> m_objects;
 	};
 

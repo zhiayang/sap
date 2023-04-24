@@ -87,7 +87,7 @@ namespace sap::layout
 			}
 
 			if(not is_first_child)
-				cursor = cursor.newLine(line->metrics().default_line_spacing - line->metrics().descent_height);
+				cursor = cursor.newLine(line->lineSpacing() - line->layoutSize().descent);
 
 			if(line->requires_space_reservation())
 				cursor = cursor.ensureVerticalSpace(line->layoutSize().descent);
@@ -150,7 +150,7 @@ namespace sap::tree
 
 		// precompute line metrics (and the line bounds)
 		using WordSpan = std::span<const zst::SharedPtr<tree::InlineObject>>;
-		std::vector<std::tuple<layout::LineMetrics, WordSpan, layout::LineAdjustment>> the_lines {};
+		std::vector<std::pair<WordSpan, layout::LineAdjustment>> the_lines {};
 
 		using Iter = std::vector<zst::SharedPtr<InlineObject>>::const_iterator;
 		auto add_one_line =
@@ -194,7 +194,6 @@ namespace sap::tree
 
 			    auto words_span = std::span(&*words_begin, &*words_end);
 			    the_lines.push_back({
-			        layout::computeLineMetrics(words_span, style),
 			        words_span,
 			        layout::LineAdjustment {
 			            .left_protrusion = line.leftProtrusion(),
@@ -228,8 +227,9 @@ namespace sap::tree
 			bool is_last_line = (i + 1 == the_lines.size());
 			bool is_first_line = (i == 0);
 
-			auto& [metrics, word_span, line_adj] = the_lines[i];
+			auto& [word_span, line_adj] = the_lines[i];
 
+			auto metrics = layout::computeLineMetrics(word_span, style);
 			auto layout_line = layout::Line::fromInlineObjects(cs, style, word_span, metrics, available_space,
 			    is_first_line, is_last_line, line_adj);
 
@@ -243,7 +243,7 @@ namespace sap::tree
 			}
 			else
 			{
-				para_size.descent += layout_line->metrics().default_line_spacing;
+				para_size.descent += layout_line->lineSpacing();
 			}
 
 			layout_lines.push_back(std::move(layout_line));

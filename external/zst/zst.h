@@ -528,6 +528,32 @@ namespace zst
 
 			template <typename C>
 			inline bool operator!= (str_view<C> sv, std::basic_string_view<C> other) { return sv != str_view<C>(other); }
+
+
+			// for vector
+			template <typename T, auto E>
+			inline bool operator== (str_view<T,E> sv, const std::vector<T>& other)
+			{
+				return sv == str_view<T>(other.data(), other.size());
+			}
+
+			template <typename T, auto E>
+			inline bool operator== (const std::vector<T>& other, str_view<T,E> sv)
+			{
+				return sv == str_view<T>(other.data(), other.size());
+			}
+
+			template <typename T, auto E>
+			inline bool operator!= (str_view<T,E> sv, const std::vector<T>& other)
+			{
+				return sv == str_view<T>(other.data(), other.size());
+			}
+			template <typename T, auto E>
+			inline bool operator!= (const std::vector<T>& other, str_view<T,E> sv)
+			{
+				return sv == str_view<T>(other.data(), other.size());
+			}
+
 		#endif // ZST_USE_STD
 
 		template <typename C> inline const C* begin(const str_view<C>& sv) { return sv.begin(); }

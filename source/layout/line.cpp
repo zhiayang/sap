@@ -153,6 +153,8 @@ namespace sap::layout
 			}
 			else if(auto sep = (*it)->castToSeparator())
 			{
+				// TODO: for separators that don't do anything, don't break up the word_chunk!
+
 				reset_chunk();
 				cur_chunk_begin = it + 1;
 
@@ -204,9 +206,9 @@ namespace sap::layout
 
 	Line::Line(const Style& style, //
 	    LayoutSize size,
-	    LineMetrics metrics,
+	    sap::Length line_spacing,
 	    std::vector<std::unique_ptr<LayoutObject>> objs)
-	    : LayoutObject(style, size), m_metrics(std::move(metrics)), m_objects(std::move(objs))
+	    : LayoutObject(style, size), m_line_spacing(std::move(line_spacing)), m_objects(std::move(objs))
 	{
 	}
 
@@ -480,7 +482,7 @@ namespace sap::layout
 	{
 		// for now, lines only contain words; words are already positioned with their relative thingies.
 		this->positionRelatively(cursor.position());
-		return cursor.newLine(m_metrics.descent_height);
+		return cursor.newLine(m_layout_size.descent);
 	}
 
 
@@ -522,7 +524,8 @@ namespace sap::layout
 			.descent = line_metrics.descent_height,
 		};
 
-		return std::unique_ptr<Line>(new Line(parent_style, layout_size, line_metrics, std::move(layout_objects)));
+		return std::unique_ptr<Line>(new Line(parent_style, layout_size, line_metrics.default_line_spacing,
+		    std::move(layout_objects)));
 	}
 
 

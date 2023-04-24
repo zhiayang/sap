@@ -3,13 +3,19 @@
 import "std";
 
 let serif = builtin::find_font_family(["XCharter", "Times New Roman", "serif"]);
+let sans = builtin::find_font_family(["Myriad Pro", "Helvetica", "sans-serif"]);
 
-using std;
-using builtin;
+serif!.regular.adjust_glyph_spacing({
+	match: [
+		".1",
+	],
+	adjust: [-0.5, 0.0],
+});
 
 \start_document({
 	font_size: 12pt,
 	serif_font_family: *serif,
+	sans_font_family: *sans,
 	paper_size: std::paper_size::A4,
 	line_spacing: 1.3,
 	sentence_space_stretch: 1.3,
@@ -18,6 +24,9 @@ using builtin;
 });
 
 \script::{
+
+	using std;
+	using builtin;
 
 	# let k = hexcolour("331FAE");
 	# builtin::println(f"{k}");
@@ -71,5 +80,14 @@ pains/things to fix:
 \disable_page_numbering();
 
 \section("asdf");
+
+\subsection("bsdf");
+\subsection("csdf");
+
+\section("dsdf");
+
+\subsection("esdf");
+\subsection("fsdf");
+
 
 Hello, world! Please save me. ff

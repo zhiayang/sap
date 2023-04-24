@@ -214,6 +214,27 @@ namespace sap::interp::builtin
 	};
 
 
+	struct GlyphSpacingAdjustment
+	{
+		std::vector<std::vector<char32_t>> match;
+		std::vector<double> adjust;
+	};
+
+	struct BS_GlyphSpacingAdjustment
+	{
+		static constexpr auto name = "GlyphSpacingAdjustment";
+
+		static const Type* type;
+		static std::vector<StructDefn::Field> fields();
+
+		static Value make(Evaluator* ev, const GlyphSpacingAdjustment& colour);
+		static GlyphSpacingAdjustment unmake(Evaluator* ev, const Value& value);
+	};
+
+
+
+
+
 	struct BE_Alignment
 	{
 		static constexpr auto name = "Alignment";
@@ -346,5 +367,26 @@ namespace sap::interp::builtin
 			return std::move(val).get<T>();
 		else
 			return default_value;
+	}
+
+
+	template <typename T, typename Cb>
+	static Value make_array(const Type* elm_type, const std::vector<T>& arr, Cb&& each_elem)
+	{
+		std::vector<Value> values {};
+		for(auto& x : arr)
+			values.push_back(each_elem(x));
+
+		return Value::array(elm_type, std::move(values));
+	}
+
+	template <typename T, typename Cb>
+	static std::vector<T> unmake_array(const Value& value, Cb&& each_elem)
+	{
+		std::vector<T> ret {};
+		for(auto& val : value.getArray())
+			ret.push_back(each_elem(val));
+
+		return ret;
 	}
 };

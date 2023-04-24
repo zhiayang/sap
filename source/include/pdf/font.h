@@ -31,6 +31,8 @@ namespace pdf
 
 	struct PdfFont : Resource
 	{
+		using GlyphPosAdjMap = util::hashmap<size_t, font::GlyphAdjustment>;
+
 		virtual Object* resourceObject() const override;
 		virtual void serialise() const override;
 
@@ -52,9 +54,10 @@ namespace pdf
 
 		Size2d_YDown getWordSize(zst::wstr_view text, PdfScalar font_size) const;
 
-		// A very thin wrapper around the identically-named methods taking a FontFile
-		std::map<size_t, font::GlyphAdjustment>
-		getPositioningAdjustmentsForGlyphSequence(zst::span<GlyphId> glyphs, const font::FeatureSet& features) const;
+		// returns the GlyphInfos for the given glyph string. note that this *DOES NOT* perform GSUB/morx, ie.
+		// ligatures and/or language-specific glyphs are not done -- hence 'substituted string'
+		std::vector<font::GlyphInfo>
+		getGlyphInfosForSubstitutedString(zst::span<GlyphId> glyphs, const font::FeatureSet& features) const;
 
 		std::optional<std::vector<GlyphId>>
 		performSubstitutionsForGlyphSequence(zst::span<GlyphId> glyphs, const font::FeatureSet& features) const;
@@ -74,6 +77,8 @@ namespace pdf
 		TextSpace1d scaleMetricForPDFTextSpace(font::FontScalar metric) const;
 
 		char32_t getOutputCodepointForGlyph(GlyphId glyph) const;
+
+		void addAdditionalGlyphPositioningAdjustment(std::vector<GlyphId> gids, GlyphPosAdjMap adjustments);
 
 		int font_type = 0;
 
@@ -104,6 +109,8 @@ namespace pdf
 		mutable char32_t m_cur_unicode_private_use_codepoint = 0;
 
 		mutable bool m_did_serialise = false;
+
+		util::hashmap<std::vector<GlyphId>, std::vector<GlyphPosAdjMap>> m_custom_glyph_pos_adjustments {};
 
 		std::unique_ptr<font::FontSource> m_source {};
 		Dictionary* m_font_dictionary = nullptr;

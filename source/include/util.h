@@ -178,6 +178,20 @@ namespace util
 			return XXH64(str.data(), str.size() * sizeof(char32_t), SEED);
 		}
 
+		template <typename T>
+		    requires(std::regular<T>)
+		size_t operator()(const std::vector<T>& vec) const
+		{
+			return XXH64(vec.data(), vec.size() * sizeof(T), SEED);
+		}
+
+		template <typename T>
+		    requires(std::regular<T>)
+		size_t operator()(const zst::span<T>& span) const
+		{
+			return XXH64(span.data(), span.size() * sizeof(T), SEED);
+		}
+
 #endif
 
 		template <has_hash_method T>

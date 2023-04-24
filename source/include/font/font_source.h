@@ -30,21 +30,18 @@ namespace font
 		GlyphId getGlyphIndexForCodepoint(char32_t codepoint) const;
 		GlyphMetrics getGlyphMetrics(GlyphId glyphId) const;
 
-		// returns the GlyphInfos for the given glyph string. note that this *DOES NOT* perform GSUB/morx, ie.
-		// ligatures and/or language-specific glyphs are not done here -- they are handled by the PDF layer.
-		// this only looks up positioning stuff, eg. GPOS and kern.
-		std::vector<GlyphInfo> getGlyphInfosForSubstitutedString(zst::span<GlyphId> glyphs, const FeatureSet& features) const;
-
-
 		bool isGlyphUsed(GlyphId glyph_id) const;
 		void markGlyphAsUsed(GlyphId glyph_id) const;
 		const util::hashset<GlyphId>& usedGlyphs() const;
 
 		virtual bool isBuiltin() const = 0;
-		virtual std::map<size_t, GlyphAdjustment> getPositioningAdjustmentsForGlyphSequence(zst::span<GlyphId> glyphs,
+
+		virtual util::hashmap<size_t, GlyphAdjustment>
+		getPositioningAdjustmentsForGlyphSequence(zst::span<GlyphId> glyphs,
 		    const font::FeatureSet& features) const = 0;
-		virtual std::optional<SubstitutedGlyphString> performSubstitutionsForGlyphSequence(zst::span<GlyphId> glyphs,
-		    const font::FeatureSet& features) const = 0;
+
+		virtual std::optional<SubstitutedGlyphString>
+		performSubstitutionsForGlyphSequence(zst::span<GlyphId> glyphs, const font::FeatureSet& features) const = 0;
 
 	protected:
 		virtual GlyphMetrics get_glyph_metrics_impl(GlyphId glyphid) const = 0;

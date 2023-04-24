@@ -91,4 +91,51 @@ namespace sap::interp::builtin
 
 		return EvalResult::ofValue(Value::optional(BS_FontFamily::type, BS_FontFamily::make(ev, std::move(fam))));
 	}
+
+
+
+
+
+	ErrorOr<EvalResult> adjust_glyph_spacing(Evaluator* ev, std::vector<Value>& args)
+	{
+		assert(args.size() == 2);
+		auto ptr = args[0].getPointer();
+		if(ptr == nullptr)
+			return ErrMsg(ev, "null pointer!");
+
+		auto font = TRY(BS_Font::unmake(ev, *ptr));
+		auto gsa = BS_GlyphSpacingAdjustment::unmake(ev, args[1]);
+
+		// TODO: the user script should give the adjustments in terms of glyphs, NOT characters.
+		// For now, we do the conversion here. The problem is that there are some things we can't
+		// do with text, eg. ligatures, special glyphs, etc.
+
+		const auto units_per_em = font->getFontMetrics().units_per_em;
+
+		util::hashmap<size_t, font::GlyphAdjustment> glyph_adjustments {};
+		for(size_t i = 0; i < gsa.adjust.size(); i++)
+		{
+			// note that the adjustment here is a percentage; 1 = 100% of the glyph width, 0 = 0%
+			// we scale by units_per_em so it checks out.
+			glyph_adjustments[i] = { .horz_placement = font::FontScalar(gsa.adjust[i] * units_per_em) };
+		}
+
+		for(auto& match : gsa.match)
+		{
+			if(match.size() != gsa.adjust.size())
+			{
+				return ErrMsg(ev, "mismatched adjustment size; expected {}, got {} glyphs", gsa.adjust.size(),
+				    match.size());
+			}
+
+			std::vector<GlyphId> glyph_ids {};
+			for(char32_t ch : match)
+				glyph_ids.push_back(font->getGlyphIdFromCodepoint(ch));
+
+			zpr::println("doing stuff to {}", (void*) font);
+			font->addAdditionalGlyphPositioningAdjustment(std::move(glyph_ids), glyph_adjustments);
+		}
+
+		return EvalResult::ofVoid();
+	}
 }

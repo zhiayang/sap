@@ -36,31 +36,35 @@ namespace sap::interp
 
 	static void define_builtin_types(Interpreter* cs, DefnTree* builtin_ns)
 	{
+		using namespace builtin;
+
 		auto _ = cs->typechecker().pushTree(builtin_ns);
 
-		define_builtin_enum<builtin::BE_Alignment>(cs);
-		define_builtin_enum<builtin::BE_ColourType>(cs);
+		define_builtin_enum<BE_Alignment>(cs);
+		define_builtin_enum<BE_ColourType>(cs);
 
-		define_builtin_struct<builtin::BS_ColourRGB>(cs);
-		define_builtin_struct<builtin::BS_ColourCMYK>(cs);
-		define_builtin_struct<builtin::BS_Colour>(cs);
+		define_builtin_struct<BS_ColourRGB>(cs);
+		define_builtin_struct<BS_ColourCMYK>(cs);
+		define_builtin_struct<BS_Colour>(cs);
 
 		// this needs a careful ordering
-		define_builtin_struct<builtin::BS_Size2d>(cs);
-		define_builtin_struct<builtin::BS_Position>(cs);
-		define_builtin_struct<builtin::BS_AbsPosition>(cs);
-		define_builtin_struct<builtin::BS_Font>(cs);
-		define_builtin_struct<builtin::BS_FontFamily>(cs);
-		define_builtin_struct<builtin::BS_Style>(cs);
+		define_builtin_struct<BS_Size2d>(cs);
+		define_builtin_struct<BS_Position>(cs);
+		define_builtin_struct<BS_AbsPosition>(cs);
+		define_builtin_struct<BS_Font>(cs);
+		define_builtin_struct<BS_FontFamily>(cs);
+		define_builtin_struct<BS_Style>(cs);
 
-		define_builtin_struct<builtin::BS_DocumentMargins>(cs);
-		define_builtin_struct<builtin::BS_DocumentSettings>(cs);
+		define_builtin_struct<BS_DocumentMargins>(cs);
+		define_builtin_struct<BS_DocumentSettings>(cs);
 
-		define_builtin_struct<builtin::BS_State>(cs);
-		define_builtin_struct<builtin::BS_OutlineItem>(cs);
-		define_builtin_struct<builtin::BS_LinkAnnotation>(cs);
+		define_builtin_struct<BS_State>(cs);
+		define_builtin_struct<BS_OutlineItem>(cs);
+		define_builtin_struct<BS_LinkAnnotation>(cs);
 
-		define_builtin_struct<builtin::BS_DocumentProxy>(cs);
+		define_builtin_struct<BS_DocumentProxy>(cs);
+
+		define_builtin_struct<BS_GlyphSpacingAdjustment>(cs);
 	}
 
 
@@ -260,8 +264,6 @@ namespace sap::interp
 		DEF("link_to", PL(P("_", T_MP(t_tio_ref)), P("obj", t_abspos)), t_void, &B::set_tio_link_annotation);
 		DEF("link_to", PL(P("_", T_MP(t_tio_ref)), P("obj", t_tbo_ref)), t_void, &B::set_tio_link_annotation);
 
-
-
 		DEF("offset_position", PL(P("_", T_P(t_tbo)), P("offset", t_bsize2d)), t_void, &B::offset_object_position);
 		DEF("offset_position", PL(P("_", T_P(t_tbo_ref)), P("offset", t_bsize2d)), t_void, &B::offset_object_position);
 		DEF("offset_position", PL(P("_", T_P(t_lo_ref)), P("offset", t_bsize2d)), t_void, &B::offset_object_position);
@@ -296,6 +298,12 @@ namespace sap::interp
 		    T_O(t_bfont), &B::find_font);
 
 		DEF("find_font_family", PL(P("names", PType::array(t_str))), T_O(t_bfontfamily), &B::find_font_family);
+
+
+		DEF("adjust_glyph_spacing",
+		    PL(P("self", T_MP(builtin::ptype_for_builtin<builtin::BS_Font>())),
+		        P("_", builtin::ptype_for_builtin<builtin::BS_GlyphSpacingAdjustment>())),
+		    t_void, &B::adjust_glyph_spacing);
 	}
 
 	void defineBuiltins(Interpreter* interp, DefnTree* ns)

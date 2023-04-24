@@ -76,8 +76,11 @@ namespace sap::layout
 		if(m_raise_height != 0)
 			text->rise(m_raise_height.into());
 
+		zpr::println("word = '{}'", m_text);
 		for(auto& glyph : font->getGlyphInfosForString(m_text))
 		{
+			text->offset(font->scaleMetricForPDFTextSpace(glyph.adjustments.horz_placement));
+
 #if 1
 			text->addEncoded(font->isCIDFont() ? 2 : 1, static_cast<uint32_t>(glyph.gid));
 #else

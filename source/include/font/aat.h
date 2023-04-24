@@ -122,7 +122,7 @@ namespace font::aat
 		std::vector<KernSubTable3> subtables_f3;
 	};
 
-	std::map<size_t, GlyphAdjustment> getPositioningAdjustmentsForGlyphSequence(const KernTable& font,
+	util::hashmap<size_t, GlyphAdjustment> getPositioningAdjustmentsForGlyphSequence(const KernTable& font,
 	    zst::span<GlyphId> glyphs,
 	    const FeatureSet& features);
 

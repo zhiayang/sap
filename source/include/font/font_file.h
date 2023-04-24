@@ -87,8 +87,10 @@ namespace font
 		virtual bool isBuiltin() const override { return false; }
 		virtual std::string name() const override { return m_names.postscript_name; }
 
-		virtual std::map<size_t, GlyphAdjustment> getPositioningAdjustmentsForGlyphSequence(zst::span<GlyphId> glyphs,
+		virtual util::hashmap<size_t, GlyphAdjustment>
+		getPositioningAdjustmentsForGlyphSequence(zst::span<GlyphId> glyphs,
 		    const font::FeatureSet& features) const override;
+
 		virtual std::optional<SubstitutedGlyphString> performSubstitutionsForGlyphSequence(zst::span<GlyphId> glyphs,
 		    const font::FeatureSet& features) const override;
 

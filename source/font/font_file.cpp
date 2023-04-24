@@ -101,8 +101,8 @@ namespace font
 	}
 
 
-	std::map<size_t, GlyphAdjustment> FontFile::getPositioningAdjustmentsForGlyphSequence(zst::span<GlyphId> glyphs,
-	    const FeatureSet& features) const
+	util::hashmap<size_t, GlyphAdjustment>
+	FontFile::getPositioningAdjustmentsForGlyphSequence(zst::span<GlyphId> glyphs, const FeatureSet& features) const
 	{
 		if(m_gpos_table.has_value())
 			return off::getPositioningAdjustmentsForGlyphSequence(*m_gpos_table, glyphs, features);
@@ -112,8 +112,8 @@ namespace font
 			return {};
 	}
 
-	std::optional<SubstitutedGlyphString> FontFile::performSubstitutionsForGlyphSequence(zst::span<GlyphId> glyphs,
-	    const FeatureSet& features) const
+	std::optional<SubstitutedGlyphString>
+	FontFile::performSubstitutionsForGlyphSequence(zst::span<GlyphId> glyphs, const FeatureSet& features) const
 	{
 		if(m_gsub_table.has_value())
 			return off::performSubstitutionsForGlyphSequence(*m_gsub_table, glyphs, features);
