@@ -360,10 +360,7 @@ constant-literal: '\b(true|false|null)\b'{constant.language};
 array-literal:
     (`[`{punctuation.bracket})
     (`:`{punctuation.colon} type)?
-    (
-        expr
-        (`,`{punctuation.comma} expr)*
-    )?
+        (expr (`,`{punctuation.comma})?)*
     (`]`{punctuation.bracket})
     ;
 
