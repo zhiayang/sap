@@ -56,29 +56,29 @@ namespace sap::interp::builtin
 		    .name = BS_Font::name,
 		});
 
-		return util::vectorOf(                                 //
-		    Field { .name = "regular_font", .type = pt_font }, //
-		    Field { .name = "italic_font", .type = pt_font },  //
-		    Field { .name = "bold_font", .type = pt_font },    //
-		    Field { .name = "bold_italic_font", .type = pt_font });
+		return util::vectorOf(                            //
+		    Field { .name = "regular", .type = pt_font }, //
+		    Field { .name = "italic", .type = pt_font },  //
+		    Field { .name = "bold", .type = pt_font },    //
+		    Field { .name = "bold_italic", .type = pt_font });
 	}
 
 	Value builtin::BS_FontFamily::make(Evaluator* ev, FontFamily font)
 	{
 		return StructMaker(BS_FontFamily::type->toStruct()) //
-		    .set("regular_font", BS_Font::make(ev, font.regular()))
-		    .set("italic_font", BS_Font::make(ev, font.italic()))
-		    .set("bold_font", BS_Font::make(ev, font.bold()))
-		    .set("bold_italic_font", BS_Font::make(ev, font.boldItalic()))
+		    .set("regular", BS_Font::make(ev, font.regular()))
+		    .set("italic", BS_Font::make(ev, font.italic()))
+		    .set("bold", BS_Font::make(ev, font.bold()))
+		    .set("bold_italic", BS_Font::make(ev, font.boldItalic()))
 		    .make();
 	}
 
 	ErrorOr<FontFamily> builtin::BS_FontFamily::unmake(Evaluator* ev, const Value& value)
 	{
-		auto& rg = value.getStructField("regular_font");
-		auto& it = value.getStructField("italic_font");
-		auto& bd = value.getStructField("bold_font");
-		auto& bi = value.getStructField("bold_italic_font");
+		auto& rg = value.getStructField("regular");
+		auto& it = value.getStructField("italic");
+		auto& bd = value.getStructField("bold");
+		auto& bi = value.getStructField("bold_italic");
 
 		return Ok(FontFamily(             //
 		    TRY(BS_Font::unmake(ev, rg)), //

@@ -14,14 +14,13 @@
 
 namespace sap::interp::builtin
 {
-	static ErrorOr<pdf::PdfFont*> find_font(Evaluator* ev,
+	static ErrorOr<pdf::PdfFont*> find_font( //
+	    Evaluator* ev,
 	    const std::vector<std::string>& font_names,
 	    int64_t weight,
 	    bool is_italic,
 	    double stretch)
 	{
-		static util::hashmap<font::FontHandle, pdf::PdfFont*> s_cached_handles {};
-
 		auto maybe_handle = font::findFont(font_names,
 		    font::FontProperties {
 		        .style = is_italic ? font::FontStyle::ITALIC : font::FontStyle::NORMAL,
@@ -31,9 +30,6 @@ namespace sap::interp::builtin
 
 		if(not maybe_handle.has_value())
 			return ErrMsg(ev, "failed to find font matching given properties");
-
-		if(auto it = s_cached_handles.find(*maybe_handle); it != s_cached_handles.end())
-			return Ok(it->second);
 
 		auto font_file = font::FontFile::fromHandle(*maybe_handle);
 		if(not font_file.has_value())
