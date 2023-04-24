@@ -70,15 +70,6 @@ namespace font
 	void FontFile::writeSubset(zst::str_view subset_name, Stream* stream)
 	{
 		auto file_contents = this->bytes();
-		// if(this->hasCffOutlines())
-		// {
-		// 	auto subset = this->createCFFSubset(subset_name);
-		// 	stream->setContents(subset.cff.span());
-		// 	return;
-		// }
-
-		// stream->append(file_contents);
-		// return;
 
 		// it's easier to keep a list of which tables we want to keep, so we at least
 		// know how many there are because we need to compute the offsets.

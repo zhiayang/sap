@@ -391,6 +391,15 @@ namespace pdf
 		static const auto Border = pdf::Name("Border");
 		static const auto C = pdf::Name("C");
 		static const auto F = pdf::Name("F");
+		static const auto N = pdf::Name("N");
 		static const auto ID = pdf::Name("ID");
+		static const auto Type1C = pdf::Name("Type1C");
+		static const auto OutputIntent = pdf::Name("OutputIntent");
+		static const auto OutputIntents = pdf::Name("OutputIntents");
+		static const auto OutputCondition = pdf::Name("OutputCondition");
+		static const auto OutputConditionIdentifier = pdf::Name("OutputConditionIdentifier");
+		static const auto GTS_PDFA1 = pdf::Name("GTS_PDFA1");
+		static const auto RegistryName = pdf::Name("RegistryName");
+		static const auto DestOutputProfile = pdf::Name("DestOutputProfile");
 	}
 }

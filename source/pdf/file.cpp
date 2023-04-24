@@ -3,6 +3,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #include "util.h" // for checked_cast
+#include "sap/paths.h"
 
 #include "pdf/file.h"   // for File
 #include "pdf/font.h"   // for Font
@@ -44,12 +45,29 @@ namespace pdf
 			root->add(names::PageMode, names::UseOutlines.ptr());
 		}
 
+		auto srgb_icc_profile = Stream::create();
+		srgb_icc_profile->setCompressed(true);
+		srgb_icc_profile->dictionary()->add(names::N, Integer::create(3));
+		srgb_icc_profile->append(
+		    util::readEntireFile( //
+		        sap::paths::resolveLibrary(sap::Location::builtin(), "data/colour/sRGB2014.icc").unwrap())
+		        .span());
+
+		auto output_intent = Dictionary::createIndirect({
+		    { names::Type, names::OutputIntent.ptr() },
+		    { names::S, names::GTS_PDFA1.ptr() },
+		    { names::RegistryName, String::create("https://color.org") },
+		    { names::OutputCondition, String::create("sRGB") },
+		    { names::OutputConditionIdentifier, String::create("sRGB") },
+		    { names::DestOutputProfile, srgb_icc_profile },
+		});
+
+		root->add(names::OutputIntents, Array::create(output_intent));
+
 		auto info_dict = Dictionary::createIndirect({
 		    { names::Creator, String::create("sap-" GIT_REVISION) },
 		    { names::Producer, String::create("sap-" GIT_REVISION) },
 		});
-
-
 
 
 		// first, traverse all objects that are reachable from the root

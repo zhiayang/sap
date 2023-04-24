@@ -132,7 +132,7 @@ namespace pdf
 		    /FontDescriptor:
 		        /bunch of metrics;
 		        /FontFile0/1/2/3: the stream containing the actual file
-		        /CIDSet: if we're doing a subset (which we aren't for now)
+		        /CIDSet: if we're doing a subset
 		*/
 		m_pdf_font_name = font::generateSubsetName(file_src);
 		auto basefont_name = Name::create(m_pdf_font_name);

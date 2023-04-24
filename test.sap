@@ -70,6 +70,6 @@ pains/things to fix:
 
 \disable_page_numbering();
 
-# \section("asdf");
+\section("asdf");
 
 Hello, world! Please save me. ff
