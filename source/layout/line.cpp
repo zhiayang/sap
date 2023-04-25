@@ -17,8 +17,8 @@ namespace sap::layout
 		Length width;
 		Length ascent;
 		Length descent;
-		Length default_line_spacing;
 		Length cap_height;
+		Length line_spacing;
 	};
 
 	static WordSize calculate_word_size(zst::wstr_view text, const Style& style)
@@ -35,8 +35,8 @@ namespace sap::layout
 			.width = x.into(),
 			.ascent = asc.into(),
 			.descent = dsc.into(),
-			.default_line_spacing = dls.into(),
 			.cap_height = ch.into(),
+			.line_spacing = dls.into(),
 		};
 	}
 
@@ -67,144 +67,6 @@ namespace sap::layout
 		return style.font()->getWordSize(sep_str, style.font_size().into()).x().into();
 	}
 
-	static LineMetrics
-	compute_line_metrics(std::span<const zst::SharedPtr<tree::InlineObject>> objs, const Style& parent_style)
-	{
-		LineMetrics ret {};
-
-		struct WordChunk
-		{
-			Length width = 0;
-			std::u32string text;
-			Style style;
-		};
-
-		WordChunk word_chunk {};
-		auto cur_chunk_begin = objs.begin();
-
-		auto reset_chunk = [&]() {
-			ret.total_word_width += word_chunk.width;
-
-			word_chunk.style = Style {};
-			word_chunk.width = 0;
-			word_chunk.text.clear();
-		};
-
-		for(auto it = objs.begin(); it != objs.end(); ++it)
-		{
-			if(auto word = (*it)->castToText())
-			{
-				auto style = parent_style.extendWith(word->style());
-				if(it != cur_chunk_begin && word_chunk.style != style)
-				{
-					reset_chunk();
-					word_chunk.style = style;
-					cur_chunk_begin = it;
-				}
-
-				word_chunk.text += word->contents();
-
-				auto word_size = calculate_word_size(word_chunk.text, style);
-
-				ret.widths.push_back(word_size.width - word_chunk.width);
-				word_chunk.width = word_size.width;
-
-				ret.cap_height = std::max(ret.cap_height, word_size.cap_height);
-				ret.ascent_height = std::max(ret.ascent_height, word_size.ascent);
-				ret.descent_height = std::max(ret.descent_height, word_size.descent);
-
-				ret.default_line_spacing = std::max(ret.default_line_spacing,
-				    word_size.default_line_spacing * style.line_spacing());
-			}
-			else if(auto span = (*it)->castToSpan())
-			{
-				reset_chunk();
-				cur_chunk_begin = it + 1;
-
-				auto style = parent_style.extendWith(span->style());
-				auto span_metrics = compute_line_metrics(span->objects(), style);
-
-				ret.cap_height = std::max(ret.cap_height, span_metrics.cap_height);
-				ret.ascent_height = std::max(ret.ascent_height, span_metrics.ascent_height);
-				ret.descent_height = std::max(ret.descent_height, span_metrics.descent_height);
-				ret.default_line_spacing = std::max(ret.default_line_spacing, span_metrics.default_line_spacing);
-
-				if(span->hasOverriddenWidth())
-				{
-					auto span_width = *span->getOverriddenWidth();
-
-					ret.total_word_width += span_width;
-
-					ret.widths.push_back(span_width);
-					ret.nested_span_metrics.push_back(std::move(span_metrics));
-				}
-				else
-				{
-					ret.total_word_width += span_metrics.total_word_width;
-					ret.total_space_width += span_metrics.total_space_width;
-
-					std::move(span_metrics.widths.begin(), span_metrics.widths.end(), std::back_inserter(ret.widths));
-
-					std::move(span_metrics.preferred_sep_widths.begin(), span_metrics.preferred_sep_widths.end(),
-					    std::back_inserter(ret.preferred_sep_widths));
-
-					std::move(span_metrics.nested_span_metrics.begin(), span_metrics.nested_span_metrics.end(),
-					    std::back_inserter(ret.nested_span_metrics));
-				}
-			}
-			else if(auto sep = (*it)->castToSeparator())
-			{
-				// TODO: for separators that don't do anything, don't break up the word_chunk!
-
-				reset_chunk();
-				cur_chunk_begin = it + 1;
-
-				bool is_end_of_line = it + 1 == objs.end();
-
-				auto real_sep_width = calculateRealSeparatorWidth(sep, parent_style.extendWith((*it)->style()),
-				    is_end_of_line);
-
-				auto pref_sep_width = [&]() -> Length {
-					if(it == objs.begin() && it + 1 == objs.end())
-						sap::internal_error("??? line with only separator");
-
-					auto calc_one = [sep, is_end_of_line, parent_style](auto iter) {
-						return calculate_preferred_sep_width(sep, parent_style.extendWith((*iter)->style()),
-						    is_end_of_line);
-					};
-
-					if(it == objs.begin())
-						return calc_one(it + 1);
-
-					else if(it + 1 == objs.end())
-						return calc_one(it - 1);
-
-					auto left_style = parent_style.extendWith((*(it - 1))->style());
-					auto right_style = parent_style.extendWith((*(it + 1))->style());
-					return calculatePreferredSeparatorWidth(sep, is_end_of_line, left_style, right_style);
-				}();
-
-				if(sep->hasWhitespace())
-					ret.total_space_width += pref_sep_width;
-				else
-					ret.total_word_width += pref_sep_width;
-
-				ret.widths.push_back(real_sep_width);
-				ret.preferred_sep_widths.push_back(pref_sep_width);
-			}
-			else
-			{
-				// NOTE: decide how inline objects should be laid out -- is (0, 0) at the baseline? does this mean that
-				// images "drop down" from the line, instead of going up? weirdge idk.
-				sap::internal_error("unsupported inline object!");
-			}
-		}
-
-		ret.total_word_width += word_chunk.width;
-		return ret;
-	}
-
-
 	Line::Line(const Style& style, //
 	    LayoutSize size,
 	    sap::Length line_spacing,
@@ -214,31 +76,244 @@ namespace sap::layout
 	}
 
 
-	static Length place_line_objects(size_t& metrics_idx,
-	    size_t& sep_idx,
-	    size_t& nested_span_idx,
+	struct WordChunk
+	{
+		std::u32string text;
+		size_t num_objs = 0;
+
+		Style style;
+		Length width = 0;
+		Length raise = 0;
+
+		const tree::InlineSpan* span = nullptr;
+	};
+
+	struct NestedSpan;
+	struct LineMetrics
+	{
+		sap::Length total_space_width;
+		sap::Length total_word_width;
+
+		Length ascent;
+		Length descent;
+		Length cap_height;
+		Length line_spacing;
+
+		struct Sep
+		{
+			Length real_width;
+			Length preferred_width;
+
+			Style style;
+			std::u32string text;
+		};
+
+		enum ItemType : unsigned char
+		{
+			ITEM_WORD_CHUNK,
+			ITEM_SEPARATOR,
+			ITEM_SPAN,
+		};
+
+		// note: all of these should be iterated IN REVERSE
+		std::vector<ItemType> item_types;
+
+		std::vector<WordChunk> word_chunks;
+		std::vector<Sep> separators;
+
+		std::vector<NestedSpan> nested_fixed_spans;
+	};
+
+	struct NestedSpan
+	{
+		std::span<const zst::SharedPtr<tree::InlineObject>> objs;
+		Length width;
+		Style style;
+		LineMetrics metrics;
+		bool fixed_width = false;
+	};
+
+
+
+	static LineMetrics process_line_objects( //
+	    std::span<const zst::SharedPtr<tree::InlineObject>> objs,
+	    const Style& parent_style,
+	    bool is_last_span,
+	    bool do_reverse)
+	{
+		WordChunk word_chunk {};
+		LineMetrics metrics {};
+
+		auto flush_word_chunk_if_necessary = [&](size_t cur_obj_idx, const Style& obj_style, bool force_flush = false) {
+			// if there's any style discontinuity (including raises), then we need to reset
+			// the current word chunk and make another one.
+			if(auto obj = objs[cur_obj_idx];
+			    not force_flush
+			    && (cur_obj_idx == 0
+			        || (obj_style == word_chunk.style && obj->raiseHeight() == word_chunk.raise
+			            && obj->parentSpan() == word_chunk.span)))
+			{
+				// not necessary; just return.
+				return;
+			}
+
+			// if the word is empty, then there's also nothing to do.
+			if(word_chunk.text.empty())
+				return;
+
+			auto word_size = calculate_word_size(word_chunk.text, word_chunk.style);
+			word_chunk.width = word_size.width;
+
+			metrics.total_word_width += word_size.width;
+
+			metrics.cap_height = std::max(metrics.cap_height, word_size.cap_height);
+			metrics.ascent = std::max(metrics.ascent, word_size.ascent);
+			metrics.descent = std::max(metrics.descent, word_size.descent);
+			metrics.line_spacing = std::max(metrics.line_spacing, word_size.line_spacing);
+
+			metrics.item_types.push_back(LineMetrics::ITEM_WORD_CHUNK);
+			metrics.word_chunks.push_back(std::move(word_chunk));
+
+			word_chunk = WordChunk();
+		};
+
+
+		for(size_t obj_idx = 0; obj_idx < objs.size(); obj_idx++)
+		{
+			auto* obj = objs[obj_idx].get();
+			auto style = parent_style.extendWith(obj->style());
+
+			if(auto tree_word = obj->castToText())
+			{
+				flush_word_chunk_if_necessary(obj_idx, style);
+
+				word_chunk.style = std::move(style);
+				word_chunk.raise = tree_word->raiseHeight();
+				word_chunk.span = tree_word->parentSpan();
+
+				word_chunk.text += tree_word->contents();
+				word_chunk.num_objs += 1;
+			}
+			else if(auto tree_sep = obj->castToSeparator())
+			{
+				// if this separator doesn't take up space, then we don't do anything with it.
+				bool is_end_of_line = is_last_span && obj_idx + 1 == objs.size();
+				if((is_end_of_line ? tree_sep->endOfLine() : tree_sep->middleOfLine()).empty())
+				{
+					word_chunk.num_objs += 1;
+					continue;
+				}
+
+				flush_word_chunk_if_necessary(obj_idx, style, /* force: */ true);
+
+				auto real_sep_width = calculateRealSeparatorWidth(tree_sep, style, is_end_of_line);
+
+				auto preferred_sep_width = [&]() -> Length {
+					if(obj_idx == 0 && obj_idx + 1 == objs.size())
+						sap::internal_error("??? line with only separator");
+
+					auto calc_one = [tree_sep, is_end_of_line, &parent_style, &objs](size_t k) {
+						return calculate_preferred_sep_width(tree_sep, parent_style.extendWith(objs[k]->style()),
+						    is_end_of_line);
+					};
+
+					if(obj_idx == 0)
+						return calc_one(obj_idx + 1);
+
+					else if(obj_idx + 1 == objs.size())
+						return calc_one(obj_idx - 1);
+
+					auto left_style = parent_style.extendWith(objs[obj_idx - 1]->style());
+					auto right_style = parent_style.extendWith(objs[obj_idx + 1]->style());
+					return calculatePreferredSeparatorWidth(tree_sep, is_end_of_line, left_style, right_style);
+				}();
+
+				metrics.item_types.push_back(LineMetrics::ITEM_SEPARATOR);
+				metrics.separators.push_back(LineMetrics::Sep {
+				    .real_width = real_sep_width,
+				    .preferred_width = preferred_sep_width,
+				    .style = std::move(style),
+				    .text = (is_end_of_line ? tree_sep->endOfLine() : tree_sep->middleOfLine()).str(),
+				});
+
+				if(tree_sep->hasWhitespace())
+					metrics.total_space_width += preferred_sep_width;
+				else
+					metrics.total_word_width += preferred_sep_width;
+			}
+			else if(auto tree_span = obj->castToSpan())
+			{
+				bool has_fixed_width = tree_span->hasOverriddenWidth();
+
+				flush_word_chunk_if_necessary(obj_idx, style, /* force flush: */ has_fixed_width);
+
+				auto span_metrics = process_line_objects(tree_span->objects(), style,
+				    /* is last span: */ obj_idx + 1 == objs.size(), /* do reverse: */ true);
+
+				metrics.cap_height = std::max(metrics.cap_height, span_metrics.cap_height);
+				metrics.ascent = std::max(metrics.ascent, span_metrics.ascent);
+				metrics.descent = std::max(metrics.descent, span_metrics.descent);
+				metrics.line_spacing = std::max(metrics.line_spacing, span_metrics.line_spacing);
+
+				if(tree_span->hasOverriddenWidth())
+				{
+					metrics.item_types.push_back(LineMetrics::ITEM_SPAN);
+					metrics.nested_fixed_spans.push_back({
+					    .objs = tree_span->objects(),
+					    .width = *tree_span->getOverriddenWidth(),
+					    .style = std::move(style),
+					    .metrics = std::move(span_metrics),
+					});
+
+					metrics.total_word_width += *tree_span->getOverriddenWidth();
+				}
+				else
+				{
+					metrics.total_word_width += span_metrics.total_word_width;
+					metrics.total_space_width += span_metrics.total_space_width;
+
+					metrics.item_types.push_back(LineMetrics::ITEM_SPAN);
+					metrics.nested_fixed_spans.push_back({
+					    .objs = tree_span->objects(),
+					    .width = 0,
+					    .style = std::move(style),
+					    .metrics = std::move(span_metrics),
+					    .fixed_width = false,
+					});
+				}
+			}
+			else
+			{
+				sap::internal_error("unsupported!");
+			}
+		}
+
+		flush_word_chunk_if_necessary(objs.size() - 1, Style::empty(), /* force: */ true);
+
+		if(do_reverse)
+		{
+			std::reverse(metrics.item_types.begin(), metrics.item_types.end());
+			std::reverse(metrics.separators.begin(), metrics.separators.end());
+			std::reverse(metrics.word_chunks.begin(), metrics.word_chunks.end());
+			std::reverse(metrics.nested_fixed_spans.begin(), metrics.nested_fixed_spans.end());
+		}
+
+		return metrics;
+	}
+
+
+
+	static Length place_line_objects(LineMetrics& metrics,
 	    std::span<const zst::SharedPtr<tree::InlineObject>> objs,
 	    const Length _width,
 	    const Style& parent_style,
 	    Length& current_offset,
-	    const LineMetrics& metrics,
 	    bool is_last_line,
 	    bool is_last_span,
 	    std::optional<double> outer_space_width_factor,
 	    std::vector<std::unique_ptr<LayoutObject>>& layout_objects,
 	    std::optional<LineAdjustment> line_adjustment)
 	{
-		const auto get_piece_offset_adjustment = [&line_adjustment](size_t idx) -> Length {
-			if(not line_adjustment.has_value())
-				return 0;
-
-			auto& adjs = line_adjustment->piece_adjustments;
-			if(auto it = adjs.find(idx); it != adjs.end())
-				return it->second;
-			else
-				return 0;
-		};
-
 		const auto line_width = _width;
 		const auto total_word_width = [&]() {
 			if(auto horz_align = parent_style.horz_alignment();
@@ -271,8 +346,6 @@ namespace sap::layout
 		    were broken over a few lines.
 		*/
 
-		Length actual_width = 0;
-
 		Length cur_span_width = 0;
 		Length cur_span_offset = current_offset;
 		tree::InlineSpan* cur_span = nullptr;
@@ -285,10 +358,9 @@ namespace sap::layout
 			auto ps = std::make_unique<LayoutSpan>(offset, span->raiseHeight(),
 			    LayoutSize {
 			        .width = width,
-			        .ascent = metrics.ascent_height,
-			        .descent = metrics.descent_height,
-			    },
-			    metrics);
+			        .ascent = metrics.ascent,
+			        .descent = metrics.descent,
+			    });
 
 			ps->setLinkDestination(span->linkDestination());
 
@@ -296,8 +368,8 @@ namespace sap::layout
 			layout_objects.push_back(std::move(ps));
 		};
 
-		auto add_to_layout_span = [&](const tree::InlineObject* obj, Length width) {
-			if(obj->parentSpan() == nullptr)
+		auto add_to_layout_span = [&](tree::InlineSpan* parent_span, Length width) {
+			if(parent_span == nullptr)
 			{
 				cur_span = nullptr;
 				cur_span_width = 0;
@@ -306,125 +378,130 @@ namespace sap::layout
 				return;
 			}
 
-			if(obj->parentSpan() == cur_span)
+			if(parent_span == cur_span)
 			{
 				cur_span_width += width;
 			}
 			else if(cur_span == nullptr)
 			{
-				cur_span = obj->parentSpan();
+				cur_span = parent_span;
 
 				cur_span_offset = current_offset;
 				cur_span_width = width;
 			}
 			else
 			{
-				assert(obj->parentSpan() != cur_span);
+				assert(parent_span != cur_span);
 
 				make_layout_span(cur_span_offset, cur_span_width, cur_span);
-				cur_span = obj->parentSpan();
+				cur_span = parent_span;
 
 				cur_span_offset = current_offset;
 				cur_span_width = width;
 			}
 		};
 
-		for(size_t obj_idx = 0; obj_idx < objs.size(); obj_idx++)
+		Length actual_width = 0;
+
+		for(size_t obj_idx = 0; obj_idx < objs.size();)
 		{
-			auto obj_width = metrics.widths[metrics_idx];
+			auto tree_obj = objs[obj_idx];
 
-			auto* obj = objs[obj_idx].get();
-			auto style = parent_style.extendWith(obj->style());
+			// zpr::println("obj={}, items left: {}", obj_idx, metrics.item_types.size());
 
-			if(auto adj = get_piece_offset_adjustment(obj_idx); adj != 0)
-				current_offset += adj;
+			auto item_type = metrics.item_types.back();
+			metrics.item_types.pop_back();
 
-			if(auto tree_word = obj->castToText())
+			// note that the metrics are reversed, so we pop them from the back.
+			if(item_type == LineMetrics::ITEM_WORD_CHUNK)
 			{
-				auto word_size = LayoutSize {
-					.width = obj_width,
-					.ascent = metrics.ascent_height,
-					.descent = metrics.descent_height,
-				};
+				auto word_chunk = std::move(metrics.word_chunks.back());
+				metrics.word_chunks.pop_back();
 
-				auto word = std::make_unique<Word>(tree_word->contents(), style, current_offset,
-				    tree_word->raiseHeight(), word_size);
+				auto layout_word = std::make_unique<Word>(std::move(word_chunk.text), std::move(word_chunk.style),
+				    current_offset, word_chunk.raise,
+				    LayoutSize {
+				        .width = word_chunk.width,
+				        .ascent = metrics.ascent,
+				        .descent = metrics.descent,
+				    });
 
-				tree_word->setGeneratedLayoutObject(word.get());
+				// set the generated layout object for all the InlineObjects to the word we just made.
+				// TODO: this might be problematic if we're doing multiple transformations on TIOs that end up
+				// applying multiple times to the LayoutObject.
+				for(size_t k = obj_idx; k < word_chunk.num_objs; k++)
+					objs[k]->setGeneratedLayoutObject(layout_word.get());
 
-				layout_objects.push_back(std::move(word));
+				// we are guaranteed that all the objects in this current word_chunk are contiguous and have
+				// the same style and the same parent span. this means we can manually add them to the current
+				// span and just increase the combined span width by the total word width.
+				add_to_layout_span(tree_obj->parentSpan(), word_chunk.width);
 
-				add_to_layout_span(obj, obj_width);
+				layout_objects.push_back(std::move(layout_word));
 
-				current_offset += obj_width;
-				actual_width += obj_width;
-				metrics_idx += 1;
+				current_offset += word_chunk.width;
+				actual_width += word_chunk.width;
+
+				obj_idx += word_chunk.num_objs;
 			}
-			else if(auto tree_sep = obj->castToSeparator())
+			else if(item_type == LineMetrics::ITEM_SEPARATOR)
 			{
-				auto preferred_sep_width = metrics.preferred_sep_widths[sep_idx++];
-
-				auto sep_size = LayoutSize {
-					.width = obj_width,
-					.ascent = metrics.ascent_height,
-					.descent = metrics.descent_height,
-				};
+				auto sep = std::move(metrics.separators.back());
+				metrics.separators.pop_back();
 
 				Length actual_sep_width = 0;
 
-				if(style.horz_alignment() == Alignment::Justified && (not is_last_line || space_width_factor <= 1.1))
-					actual_sep_width = preferred_sep_width * space_width_factor;
-				else
-					actual_sep_width = preferred_sep_width;
-
-				bool is_end_of_line = is_last_span && obj_idx + 1 == objs.size();
-
-				auto sep_str = is_end_of_line ? tree_sep->endOfLine() : tree_sep->middleOfLine();
-				if(not sep_str.empty())
+				if(parent_style.horz_alignment() == Alignment::Justified
+				    && (not is_last_line || space_width_factor <= 1.1))
 				{
-					auto sep = std::make_unique<Word>(       //
-					    sep_str,                             //
-					    style.extendWith(tree_sep->style()), //
-					    current_offset,                      //
-					    tree_sep->raiseHeight(),             //
-					    sep_size);
-
-					tree_sep->setGeneratedLayoutObject(sep.get());
-					layout_objects.push_back(std::move(sep));
+					actual_sep_width = sep.preferred_width * space_width_factor;
+				}
+				else
+				{
+					actual_sep_width = sep.preferred_width;
 				}
 
-				add_to_layout_span(obj, actual_sep_width);
+				if(not sep.text.empty())
+				{
+					auto layout_sep = std::make_unique<Word>( //
+					    sep.text,                             //
+					    std::move(sep.style),                 //
+					    current_offset,                       //
+					    tree_obj->raiseHeight(),              //
+					    LayoutSize {
+					        .width = sep.real_width,
+					        .ascent = metrics.ascent,
+					        .descent = metrics.descent,
+					    });
+
+					tree_obj->setGeneratedLayoutObject(layout_sep.get());
+					layout_objects.push_back(std::move(layout_sep));
+				}
+
+				add_to_layout_span(tree_obj->parentSpan(), actual_sep_width);
 
 				current_offset += actual_sep_width;
 				actual_width += actual_sep_width;
-				metrics_idx += 1;
+
+				obj_idx += 1;
 			}
-			else if(auto tree_span = obj->castToSpan())
+			else if(item_type == LineMetrics::ITEM_SPAN)
 			{
-				/*
-				    note: for spans, do not propagate adjustments
-				    since they are line-broken as a single object
-				*/
-				if(tree_span->hasOverriddenWidth())
+				auto nested_span = std::move(metrics.nested_fixed_spans.back());
+				metrics.nested_fixed_spans.pop_back();
+
+				if(nested_span.fixed_width)
 				{
-					// make a copy, because we manually adjust current_offset
-					// by the overridden width later.
-					size_t inner_metrics_idx = 0;
-					size_t inner_sep_idx = 0;
-					size_t inner_nested_span_idx = 0;
 					Length cur_ofs = current_offset;
+					auto span_width = nested_span.width;
 
-					make_layout_span(cur_ofs, obj_width, tree_span);
+					make_layout_span(cur_ofs, span_width, tree_obj->castToSpan());
 
-					place_line_objects(                                 //
-					    inner_metrics_idx,                              //
-					    inner_sep_idx,                                  //
-					    inner_nested_span_idx,                          //
-					    tree_span->objects(),                           //
-					    obj_width,                                      //
-					    style,                                          //
+					place_line_objects(nested_span.metrics,             //
+					    nested_span.objs,                               //
+					    span_width,                                     //
+					    std::move(nested_span.style),                   //
 					    cur_ofs,                                        //
-					    metrics.nested_span_metrics[nested_span_idx],   //
 					    is_last_line,                                   //
 					    /* is last span: */ obj_idx + 1 == objs.size(), //
 					    /* outer_space_width_factor: */ std::nullopt,   // let the inner span calculate the space width
@@ -433,40 +510,31 @@ namespace sap::layout
 					    std::nullopt                                    //
 					);
 
-					nested_span_idx += 1;
-
-					auto span_width = *tree_span->getOverriddenWidth();
-
 					current_offset += span_width;
 					actual_width += span_width;
-					metrics_idx += 1;
 				}
 				else
 				{
 					auto old_ofs = current_offset;
 
 					// don't make a copy here
-					auto span_width = place_line_objects(               //
-					    metrics_idx,                                    //
-					    sep_idx,                                        //
-					    nested_span_idx,                                //
-					    tree_span->objects(),                           //
-					    line_width - current_offset,                    //
-					    style,                                          //
-					    current_offset,                                 //
-					    metrics,                                        //
-					    is_last_line,                                   //
-					    /* is last span: */ obj_idx + 1 == objs.size(), //
-					    space_width_factor,                             // propagate our space width factor
-					    layout_objects,                                 //
-					    std::nullopt                                    //
+					auto span_width = place_line_objects(nested_span.metrics, //
+					    nested_span.objs,                                     //
+					    line_width - current_offset,                          //
+					    std::move(nested_span.style),                         //
+					    current_offset,                                       //
+					    is_last_line,                                         //
+					    /* is last span: */ obj_idx + 1 == objs.size(),       //
+					    space_width_factor,                                   // propagate our space width factor
+					    layout_objects,                                       //
+					    std::nullopt                                          //
 					);
 
 					actual_width += span_width;
-					make_layout_span(old_ofs, span_width, tree_span);
-
-					// don't modify metrics_idx here
+					make_layout_span(old_ofs, span_width, tree_obj->castToSpan());
 				}
+
+				obj_idx += 1;
 			}
 			else
 			{
@@ -497,35 +565,29 @@ namespace sap::layout
 	    std::optional<LineAdjustment> line_adjustment)
 	{
 		std::vector<std::unique_ptr<LayoutObject>> layout_objects {};
-
-		size_t metrics_idx = 0;
-		size_t sep_idx = 0;
-		size_t nested_span_idx = 0;
 		Length current_offset = 0;
 
-		auto line_metrics = compute_line_metrics(objs, parent_style);
-		auto actual_width = place_line_objects(           //
-		    metrics_idx,                                  //
-		    sep_idx,                                      //
-		    nested_span_idx,                              //
-		    objs,                                         //
-		    available_space.x(),                          //
-		    parent_style,                                 //
-		    current_offset,                               //
-		    line_metrics,                                 //
-		    is_last_line,                                 //
-		    /* is last span: */ true,                     //
-		    /* outer_space_width_factor: */ std::nullopt, //
-		    layout_objects,                               //
+		auto line_metrics = process_line_objects(objs, parent_style, /* is last line: */ is_last_line,
+		    /* do reverse: */ true);
+
+		auto actual_width = place_line_objects(line_metrics, //
+		    objs,                                            //
+		    available_space.x(),                             //
+		    parent_style,                                    //
+		    current_offset,                                  //
+		    is_last_line,                                    //
+		    /* is last span: */ true,                        //
+		    /* outer_space_width_factor: */ std::nullopt,    //
+		    layout_objects,                                  //
 		    line_adjustment);
 
 		auto layout_size = LayoutSize {
 			.width = actual_width,
-			.ascent = line_metrics.ascent_height,
-			.descent = line_metrics.descent_height,
+			.ascent = line_metrics.ascent,
+			.descent = line_metrics.descent,
 		};
 
-		return std::unique_ptr<Line>(new Line(parent_style, layout_size, line_metrics.default_line_spacing,
+		return std::unique_ptr<Line>(new Line(parent_style, layout_size, line_metrics.line_spacing,
 		    std::move(layout_objects)));
 	}
 

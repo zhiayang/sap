@@ -5,11 +5,18 @@ import "std";
 let serif = builtin::find_font_family(["XCharter", "Times New Roman", "serif"]);
 let sans = builtin::find_font_family(["Myriad Pro", "Helvetica", "sans-serif"]);
 
-serif!.regular.adjust_glyph_spacing({
+sans!.regular.adjust_glyph_spacing({
 	match: [
-		".1",
+		"1.2",
 	],
-	adjust: [-0.5, 0.0],
+	adjust: [0.0, -0.08, 0.0],
+});
+
+sans!.regular.adjust_glyph_spacing({
+	match: [
+		"2.1",
+	],
+	adjust: [0.0, 0.05, 0.0],
 });
 
 \start_document({

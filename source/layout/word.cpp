@@ -21,8 +21,11 @@
 
 namespace sap::layout
 {
-	Word::Word(zst::wstr_view text, const Style& style, Length relative_offset, Length raise_height, LayoutSize size)
-	    : LayoutObject(style, size), m_relative_offset(relative_offset), m_raise_height(raise_height), m_text(text)
+	Word::Word(std::u32string text, const Style& style, Length relative_offset, Length raise_height, LayoutSize size)
+	    : LayoutObject(style, size)
+	    , m_relative_offset(relative_offset)
+	    , m_raise_height(raise_height)
+	    , m_text(std::move(text))
 	{
 	}
 
@@ -76,10 +79,13 @@ namespace sap::layout
 		if(m_raise_height != 0)
 			text->rise(m_raise_height.into());
 
-		zpr::println("word = '{}'", m_text);
 		for(auto& glyph : font->getGlyphInfosForString(m_text))
 		{
-			text->offset(font->scaleMetricForPDFTextSpace(glyph.adjustments.horz_placement));
+			auto placement = font->scaleMetricForPDFTextSpace(glyph.adjustments.horz_placement);
+
+			// FIXME: not sure if this is correct, but it works for our purposes.
+			// adjust by placement, put the glyph, then adjust back...
+			text->offset(placement);
 
 #if 1
 			text->addEncoded(font->isCIDFont() ? 2 : 1, static_cast<uint32_t>(glyph.gid));
@@ -88,6 +94,7 @@ namespace sap::layout
 			auto codepoint = font->getOutputCodepointForGlyph(glyph.gid);
 			text->addUnicodeText(zst::wstr_view(&codepoint, 1));
 #endif
+			text->offset(-placement);
 
 			// TODO: handle placement as well
 			text->offset(font->scaleMetricForPDFTextSpace(glyph.adjustments.horz_advance));

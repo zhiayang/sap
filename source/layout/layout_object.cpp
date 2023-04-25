@@ -181,11 +181,8 @@ namespace sap::layout
 	}
 
 
-	LayoutSpan::LayoutSpan(Length relative_offset, Length raise_height, LayoutSize size, LineMetrics metrics)
-	    : LayoutObject(Style::empty(), size)
-	    , m_relative_offset(relative_offset)
-	    , m_raise_height(raise_height)
-	    , m_metrics(std::move(metrics))
+	LayoutSpan::LayoutSpan(Length relative_offset, Length raise_height, LayoutSize size)
+	    : LayoutObject(Style::empty(), size), m_relative_offset(relative_offset), m_raise_height(raise_height)
 	{
 	}
 

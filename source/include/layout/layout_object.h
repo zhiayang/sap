@@ -22,27 +22,6 @@ namespace sap::tree
 
 namespace sap::layout
 {
-	struct LineMetrics
-	{
-		sap::Length total_space_width;
-		sap::Length total_word_width;
-
-		// there is one of this for every object in the line
-		std::vector<sap::Length> widths;
-
-		// there is one of this for every Separator
-		std::vector<sap::Length> preferred_sep_widths;
-
-		// there is one of this for every InlineSpan
-		std::vector<LineMetrics> nested_span_metrics;
-
-		sap::Length ascent_height;
-		sap::Length descent_height;
-		sap::Length default_line_spacing;
-		sap::Length cap_height;
-	};
-
-
 	struct LayoutBase;
 	struct PageLayout;
 
@@ -98,17 +77,15 @@ namespace sap::layout
 
 	struct LayoutSpan : LayoutObject
 	{
-		LayoutSpan(Length relative_offset, Length raise_height, LayoutSize size, LineMetrics metrics);
+		LayoutSpan(Length relative_offset, Length raise_height, LayoutSize size);
 
 		virtual layout::PageCursor compute_position_impl(layout::PageCursor cursor) override;
 		virtual void render_impl(const LayoutBase* layout, std::vector<pdf::Page*>& pages) const override;
 
-		const LineMetrics& metrics() const { return m_metrics; }
 		Length relativeOffset() const { return m_relative_offset; }
 
 	private:
 		Length m_relative_offset {};
 		Length m_raise_height {};
-		LineMetrics m_metrics {};
 	};
 }
