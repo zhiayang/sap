@@ -67,7 +67,8 @@ namespace sap::layout
 		return style.font()->getWordSize(sep_str, style.font_size().into()).x().into();
 	}
 
-	LineMetrics computeLineMetrics(std::span<const zst::SharedPtr<tree::InlineObject>> objs, const Style& parent_style)
+	static LineMetrics
+	compute_line_metrics(std::span<const zst::SharedPtr<tree::InlineObject>> objs, const Style& parent_style)
 	{
 		LineMetrics ret {};
 
@@ -121,7 +122,7 @@ namespace sap::layout
 				cur_chunk_begin = it + 1;
 
 				auto style = parent_style.extendWith(span->style());
-				auto span_metrics = computeLineMetrics(span->objects(), style);
+				auto span_metrics = compute_line_metrics(span->objects(), style);
 
 				ret.cap_height = std::max(ret.cap_height, span_metrics.cap_height);
 				ret.ascent_height = std::max(ret.ascent_height, span_metrics.ascent_height);
@@ -213,7 +214,7 @@ namespace sap::layout
 	}
 
 
-	static Length compute_word_offsets_for_span(size_t& metrics_idx,
+	static Length place_line_objects(size_t& metrics_idx,
 	    size_t& sep_idx,
 	    size_t& nested_span_idx,
 	    std::span<const zst::SharedPtr<tree::InlineObject>> objs,
@@ -415,7 +416,7 @@ namespace sap::layout
 
 					make_layout_span(cur_ofs, obj_width, tree_span);
 
-					compute_word_offsets_for_span(                      //
+					place_line_objects(                                 //
 					    inner_metrics_idx,                              //
 					    inner_sep_idx,                                  //
 					    inner_nested_span_idx,                          //
@@ -445,7 +446,7 @@ namespace sap::layout
 					auto old_ofs = current_offset;
 
 					// don't make a copy here
-					auto span_width = compute_word_offsets_for_span(    //
+					auto span_width = place_line_objects(               //
 					    metrics_idx,                                    //
 					    sep_idx,                                        //
 					    nested_span_idx,                                //
@@ -490,7 +491,6 @@ namespace sap::layout
 	std::unique_ptr<Line> Line::fromInlineObjects(interp::Interpreter* cs,
 	    const Style& parent_style,
 	    std::span<const zst::SharedPtr<tree::InlineObject>> objs,
-	    const LineMetrics& line_metrics,
 	    Size2d available_space,
 	    bool is_first_line,
 	    bool is_last_line,
@@ -503,19 +503,20 @@ namespace sap::layout
 		size_t nested_span_idx = 0;
 		Length current_offset = 0;
 
-		auto actual_width = compute_word_offsets_for_span( //
-		    metrics_idx,                                   //
-		    sep_idx,                                       //
-		    nested_span_idx,                               //
-		    objs,                                          //
-		    available_space.x(),                           //
-		    parent_style,                                  //
-		    current_offset,                                //
-		    line_metrics,                                  //
-		    is_last_line,                                  //
-		    /* is last span: */ true,                      //
-		    /* outer_space_width_factor: */ std::nullopt,  //
-		    layout_objects,                                //
+		auto line_metrics = compute_line_metrics(objs, parent_style);
+		auto actual_width = place_line_objects(           //
+		    metrics_idx,                                  //
+		    sep_idx,                                      //
+		    nested_span_idx,                              //
+		    objs,                                         //
+		    available_space.x(),                          //
+		    parent_style,                                 //
+		    current_offset,                               //
+		    line_metrics,                                 //
+		    is_last_line,                                 //
+		    /* is last span: */ true,                     //
+		    /* outer_space_width_factor: */ std::nullopt, //
+		    layout_objects,                               //
 		    line_adjustment);
 
 		auto layout_size = LayoutSize {

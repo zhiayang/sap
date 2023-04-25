@@ -36,8 +36,7 @@ namespace sap::tree
 		auto objs = TRY(tree::processWordSeparators(m_objects));
 		objs = TRY(tree::performReplacements(cur_style, std::move(objs)));
 
-		auto metrics = layout::computeLineMetrics(m_objects, cur_style);
-		auto line = layout::Line::fromInlineObjects(cs, cur_style, m_objects, metrics, available_space,
+		auto line = layout::Line::fromInlineObjects(cs, cur_style, m_objects, available_space,
 		    /* is_first: */ true, /* is_last: */ true);
 
 		m_generated_layout_object = line.get();

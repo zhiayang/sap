@@ -37,7 +37,6 @@ namespace sap::layout
 		static std::unique_ptr<Line> fromInlineObjects(interp::Interpreter* cs,
 		    const Style& style,
 		    std::span<const zst::SharedPtr<tree::InlineObject>> objs,
-		    const LineMetrics& line_metrics,
 		    Size2d available_space,
 		    bool is_first_line,
 		    bool is_last_line,
@@ -56,8 +55,6 @@ namespace sap::layout
 		sap::Length m_line_spacing;
 		std::vector<std::unique_ptr<LayoutObject>> m_objects;
 	};
-
-	LineMetrics computeLineMetrics(std::span<const zst::SharedPtr<tree::InlineObject>> objs, const Style& parent_style);
 
 	Length calculatePreferredSeparatorWidth(const tree::Separator* sep,
 	    bool is_end_of_line,

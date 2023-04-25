@@ -229,9 +229,8 @@ namespace sap::tree
 
 			auto& [word_span, line_adj] = the_lines[i];
 
-			auto metrics = layout::computeLineMetrics(word_span, style);
-			auto layout_line = layout::Line::fromInlineObjects(cs, style, word_span, metrics, available_space,
-			    is_first_line, is_last_line, line_adj);
+			auto layout_line = layout::Line::fromInlineObjects(cs, style, word_span, available_space, is_first_line,
+			    is_last_line, line_adj);
 
 			auto line_size = layout_line->layoutSize();
 

@@ -85,8 +85,7 @@ namespace sap::tree
 		{
 			auto span = std::span(&text_line, 1);
 
-			auto metrics = layout::computeLineMetrics(span, style);
-			auto line = layout::Line::fromInlineObjects(cs, style, span, metrics, available_space,
+			auto line = layout::Line::fromInlineObjects(cs, style, span, available_space,
 			    /* is_first: */ true, /* is_last: */ true);
 
 			size.x() = std::max(size.x(), line->layoutSize().width);
