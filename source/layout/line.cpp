@@ -121,7 +121,7 @@ namespace sap::layout
 		std::vector<WordChunk> word_chunks;
 		std::vector<Sep> separators;
 
-		std::vector<NestedSpan> nested_fixed_spans;
+		std::vector<NestedSpan> spans;
 	};
 
 	struct NestedSpan
@@ -138,8 +138,7 @@ namespace sap::layout
 	static LineMetrics process_line_objects( //
 	    std::span<const zst::SharedPtr<tree::InlineObject>> objs,
 	    const Style& parent_style,
-	    bool is_last_span,
-	    bool do_reverse)
+	    bool is_last_span)
 	{
 		WordChunk word_chunk {};
 		LineMetrics metrics {};
@@ -169,7 +168,8 @@ namespace sap::layout
 			metrics.cap_height = std::max(metrics.cap_height, word_size.cap_height);
 			metrics.ascent = std::max(metrics.ascent, word_size.ascent);
 			metrics.descent = std::max(metrics.descent, word_size.descent);
-			metrics.line_spacing = std::max(metrics.line_spacing, word_size.line_spacing);
+			metrics.line_spacing = std::max(metrics.line_spacing,
+			    word_size.line_spacing * word_chunk.style.line_spacing());
 
 			metrics.item_types.push_back(LineMetrics::ITEM_WORD_CHUNK);
 			metrics.word_chunks.push_back(std::move(word_chunk));
@@ -244,21 +244,20 @@ namespace sap::layout
 			else if(auto tree_span = obj->castToSpan())
 			{
 				bool has_fixed_width = tree_span->hasOverriddenWidth();
-
 				flush_word_chunk_if_necessary(obj_idx, style, /* force flush: */ has_fixed_width);
 
 				auto span_metrics = process_line_objects(tree_span->objects(), style,
-				    /* is last span: */ obj_idx + 1 == objs.size(), /* do reverse: */ true);
+				    /* is last span: */ obj_idx + 1 == objs.size());
 
 				metrics.cap_height = std::max(metrics.cap_height, span_metrics.cap_height);
 				metrics.ascent = std::max(metrics.ascent, span_metrics.ascent);
 				metrics.descent = std::max(metrics.descent, span_metrics.descent);
 				metrics.line_spacing = std::max(metrics.line_spacing, span_metrics.line_spacing);
 
-				if(tree_span->hasOverriddenWidth())
+				if(has_fixed_width)
 				{
 					metrics.item_types.push_back(LineMetrics::ITEM_SPAN);
-					metrics.nested_fixed_spans.push_back({
+					metrics.spans.push_back({
 					    .objs = tree_span->objects(),
 					    .width = *tree_span->getOverriddenWidth(),
 					    .style = std::move(style),
@@ -273,7 +272,7 @@ namespace sap::layout
 					metrics.total_space_width += span_metrics.total_space_width;
 
 					metrics.item_types.push_back(LineMetrics::ITEM_SPAN);
-					metrics.nested_fixed_spans.push_back({
+					metrics.spans.push_back({
 					    .objs = tree_span->objects(),
 					    .width = 0,
 					    .style = std::move(style),
@@ -290,14 +289,15 @@ namespace sap::layout
 
 		flush_word_chunk_if_necessary(objs.size() - 1, Style::empty(), /* force: */ true);
 
-		if(do_reverse)
-		{
-			std::reverse(metrics.item_types.begin(), metrics.item_types.end());
-			std::reverse(metrics.separators.begin(), metrics.separators.end());
-			std::reverse(metrics.word_chunks.begin(), metrics.word_chunks.end());
-			std::reverse(metrics.nested_fixed_spans.begin(), metrics.nested_fixed_spans.end());
-		}
+		assert(metrics.item_types.size()
+		       == metrics.separators.size() //
+		              + metrics.word_chunks.size() + metrics.spans.size());
 
+
+		std::reverse(metrics.item_types.begin(), metrics.item_types.end());
+		std::reverse(metrics.separators.begin(), metrics.separators.end());
+		std::reverse(metrics.word_chunks.begin(), metrics.word_chunks.end());
+		std::reverse(metrics.spans.begin(), metrics.spans.end());
 		return metrics;
 	}
 
@@ -407,7 +407,12 @@ namespace sap::layout
 		{
 			auto tree_obj = objs[obj_idx];
 
-			// zpr::println("obj={}, items left: {}", obj_idx, metrics.item_types.size());
+			/*
+			    if we're out of things, bail. this can happen if the line was empty (eg. it had a bunch
+			    of words that turned out to have no text) so it's not necessarily a bug.
+			*/
+			if(metrics.item_types.empty())
+				break;
 
 			auto item_type = metrics.item_types.back();
 			metrics.item_types.pop_back();
@@ -487,8 +492,8 @@ namespace sap::layout
 			}
 			else if(item_type == LineMetrics::ITEM_SPAN)
 			{
-				auto nested_span = std::move(metrics.nested_fixed_spans.back());
-				metrics.nested_fixed_spans.pop_back();
+				auto nested_span = std::move(metrics.spans.back());
+				metrics.spans.pop_back();
 
 				if(nested_span.fixed_width)
 				{
@@ -567,8 +572,7 @@ namespace sap::layout
 		std::vector<std::unique_ptr<LayoutObject>> layout_objects {};
 		Length current_offset = 0;
 
-		auto line_metrics = process_line_objects(objs, parent_style, /* is last line: */ is_last_line,
-		    /* do reverse: */ true);
+		auto line_metrics = process_line_objects(objs, parent_style, /* is last line: */ is_last_line);
 
 		auto actual_width = place_line_objects(line_metrics, //
 		    objs,                                            //
