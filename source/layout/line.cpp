@@ -159,7 +159,14 @@ namespace sap::layout
 			// if the word is empty, then there's also nothing to do.
 			if(word_chunk.text.empty())
 				return;
-
+#if 0
+			zpr::println("flush word '{}' because {}", word_chunk.text,
+			    force_flush                     ? "forced"
+			    : obj_style != word_chunk.style ? "styles"
+			    : objs[cur_obj_idx]->raiseHeight() != word_chunk.raise
+			        ? "raise"
+			        : "span");
+#endif
 			auto word_size = calculate_word_size(word_chunk.text, word_chunk.style);
 			word_chunk.width = word_size.width;
 
@@ -198,13 +205,14 @@ namespace sap::layout
 			{
 				// if this separator doesn't take up space, then we don't do anything with it.
 				bool is_end_of_line = is_last_span && obj_idx + 1 == objs.size();
-				if((is_end_of_line ? tree_sep->endOfLine() : tree_sep->middleOfLine()).empty())
+				auto sep_str = is_end_of_line ? tree_sep->endOfLine() : tree_sep->middleOfLine();
+				if(sep_str.empty())
 				{
 					word_chunk.num_objs += 1;
 					continue;
 				}
 
-				flush_word_chunk_if_necessary(obj_idx, style, /* force: */ true);
+				flush_word_chunk_if_necessary(obj_idx, style, /* force: */ is_end_of_line || tree_sep->hasWhitespace());
 
 				auto real_sep_width = calculateRealSeparatorWidth(tree_sep, style, is_end_of_line);
 
@@ -233,7 +241,7 @@ namespace sap::layout
 				    .real_width = real_sep_width,
 				    .preferred_width = preferred_sep_width,
 				    .style = std::move(style),
-				    .text = (is_end_of_line ? tree_sep->endOfLine() : tree_sep->middleOfLine()).str(),
+				    .text = sep_str.str(),
 				});
 
 				if(tree_sep->hasWhitespace())
@@ -244,6 +252,8 @@ namespace sap::layout
 			else if(auto tree_span = obj->castToSpan())
 			{
 				bool has_fixed_width = tree_span->hasOverriddenWidth();
+				zpr::println("got span: {}", has_fixed_width);
+
 				flush_word_chunk_if_necessary(obj_idx, style, /* force flush: */ has_fixed_width);
 
 				auto span_metrics = process_line_objects(tree_span->objects(), style,
@@ -292,7 +302,6 @@ namespace sap::layout
 		assert(metrics.item_types.size()
 		       == metrics.separators.size() //
 		              + metrics.word_chunks.size() + metrics.spans.size());
-
 
 		std::reverse(metrics.item_types.begin(), metrics.item_types.end());
 		std::reverse(metrics.separators.begin(), metrics.separators.end());
@@ -572,7 +581,7 @@ namespace sap::layout
 		std::vector<std::unique_ptr<LayoutObject>> layout_objects {};
 		Length current_offset = 0;
 
-		auto line_metrics = process_line_objects(objs, parent_style, /* is last line: */ is_last_line);
+		auto line_metrics = process_line_objects(objs, parent_style, /* is last span: */ true);
 
 		auto actual_width = place_line_objects(line_metrics, //
 		    objs,                                            //
