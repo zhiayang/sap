@@ -84,7 +84,7 @@ and the advanced, graduate-level CS5250.
 NUS currently has a gap in its operating systems courses, between the introductory CS2106
 and the advanced, graduate-level CS5250. In this project, we significantly overhaul an
 educational OS, Stanford's Pintos, to make it more suitable for use in NUS. We
-rewrite the OS in modern C++20 and greatly improve upon it in all aspects, including
+rewrite the OS in modern \cpp()20 and greatly improve upon it in all aspects, including
 functionality, design, and readability. We also propose and develop several lab projects
 and extension avenues for a future CS3xxx module that will sit between CS2106 and CS5250.
 

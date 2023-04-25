@@ -252,8 +252,6 @@ namespace sap::layout
 			else if(auto tree_span = obj->castToSpan())
 			{
 				bool has_fixed_width = tree_span->hasOverriddenWidth();
-				zpr::println("got span: {}", has_fixed_width);
-
 				flush_word_chunk_if_necessary(obj_idx, style, /* force flush: */ has_fixed_width);
 
 				auto span_metrics = process_line_objects(tree_span->objects(), style,
@@ -272,6 +270,7 @@ namespace sap::layout
 					    .width = *tree_span->getOverriddenWidth(),
 					    .style = std::move(style),
 					    .metrics = std::move(span_metrics),
+					    .fixed_width = true,
 					});
 
 					metrics.total_word_width += *tree_span->getOverriddenWidth();
