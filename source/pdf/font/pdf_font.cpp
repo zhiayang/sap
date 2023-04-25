@@ -351,14 +351,16 @@ namespace pdf
 
 	void PdfFont::addAdditionalGlyphPositioningAdjustment(std::vector<GlyphId> gids, GlyphPosAdjMap adjustments)
 	{
-		m_custom_glyph_pos_adjustments[std::move(gids)].push_back(std::move(adjustments));
+		// TODO: figure out what to do when there are conflicts.
+		// do we merge? replace? error?
+
+		auto first = gids[0];
+		m_custom_glyph_pos_adjustments[first].emplace_back(std::move(gids), std::move(adjustments));
 	}
 
 	std::vector<font::GlyphInfo>
 	PdfFont::getGlyphInfosForSubstitutedString(zst::span<GlyphId> glyphs, const font::FeatureSet& features) const
 	{
-		auto span = [](auto& foo) { return zst::span<GlyphId>(foo.data(), foo.size()); };
-
 		// next, get base metrics for each glyph.
 		std::vector<font::GlyphInfo> glyph_infos {};
 		for(auto g : glyphs)
@@ -370,7 +372,7 @@ namespace pdf
 		}
 
 		// finally, use GPOS
-		auto adjustment_map = m_source->getPositioningAdjustmentsForGlyphSequence(span(glyphs), features);
+		auto adjustment_map = m_source->getPositioningAdjustmentsForGlyphSequence(glyphs, features);
 		for(auto& [i, adj] : adjustment_map)
 		{
 			auto& info = glyph_infos[i];
@@ -380,18 +382,25 @@ namespace pdf
 			info.adjustments.vert_placement += adj.vert_placement;
 		}
 
-		if(auto it = m_custom_glyph_pos_adjustments.find(glyphs); it != m_custom_glyph_pos_adjustments.end())
+		for(size_t k = 0; k < glyphs.size(); k++)
 		{
-			for(auto& adjs : it->second)
+			if(auto it = m_custom_glyph_pos_adjustments.find(glyphs[k]); it != m_custom_glyph_pos_adjustments.end())
 			{
-				for(auto& [idx, adj] : adjs)
+				for(auto& [match, adjs] : it->second)
 				{
-					assert(idx < glyph_infos.size());
+					auto substr = glyphs.drop(k).take(match.size());
+					if(substr != match)
+						continue;
 
-					glyph_infos[idx].adjustments.horz_advance += adj.horz_advance;
-					glyph_infos[idx].adjustments.vert_advance += adj.vert_advance;
-					glyph_infos[idx].adjustments.horz_placement += adj.horz_placement;
-					glyph_infos[idx].adjustments.vert_placement += adj.vert_placement;
+					for(auto& [idx, adj] : adjs)
+					{
+						assert(k + idx < glyph_infos.size());
+
+						glyph_infos[k + idx].adjustments.horz_advance += adj.horz_advance;
+						glyph_infos[k + idx].adjustments.vert_advance += adj.vert_advance;
+						glyph_infos[k + idx].adjustments.horz_placement += adj.horz_placement;
+						glyph_infos[k + idx].adjustments.vert_placement += adj.vert_placement;
+					}
 				}
 			}
 		}

@@ -247,7 +247,7 @@ namespace zst
 			constexpr inline bool operator== (const str_view& other) const
 			{
 				return (this->len == other.len) &&
-					(this->ptr == other.ptr || (memcmp(this->ptr, other.ptr, detail::min(this->len, other.len)) == 0)
+					(this->ptr == other.ptr || (memcmp(this->ptr, other.ptr, this->len * sizeof(CharType)) == 0)
 				);
 			}
 
@@ -546,12 +546,12 @@ namespace zst
 			template <typename T, auto E>
 			inline bool operator!= (str_view<T,E> sv, const std::vector<T>& other)
 			{
-				return sv == str_view<T>(other.data(), other.size());
+				return sv != str_view<T>(other.data(), other.size());
 			}
 			template <typename T, auto E>
 			inline bool operator!= (const std::vector<T>& other, str_view<T,E> sv)
 			{
-				return sv == str_view<T>(other.data(), other.size());
+				return sv != str_view<T>(other.data(), other.size());
 			}
 
 		#endif // ZST_USE_STD

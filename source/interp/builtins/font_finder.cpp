@@ -132,7 +132,6 @@ namespace sap::interp::builtin
 			for(char32_t ch : match)
 				glyph_ids.push_back(font->getGlyphIdFromCodepoint(ch));
 
-			zpr::println("doing stuff to {}", (void*) font);
 			font->addAdditionalGlyphPositioningAdjustment(std::move(glyph_ids), glyph_adjustments);
 		}
 

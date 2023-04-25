@@ -110,7 +110,9 @@ namespace pdf
 
 		mutable bool m_did_serialise = false;
 
-		util::hashmap<std::vector<GlyphId>, std::vector<GlyphPosAdjMap>> m_custom_glyph_pos_adjustments {};
+		// map from the first character of the adjustment to the actual list of adjustments
+		util::hashmap<GlyphId, std::vector<std::pair<std::vector<GlyphId>, GlyphPosAdjMap>>>
+		    m_custom_glyph_pos_adjustments {};
 
 		std::unique_ptr<font::FontSource> m_source {};
 		Dictionary* m_font_dictionary = nullptr;
