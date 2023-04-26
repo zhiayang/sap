@@ -14,4 +14,19 @@ namespace sap::watch
 		return false;
 #endif
 	}
+
+#if !defined(SAP_HAVE_WATCH)
+	StrErrorOr<void> addFileToWatchList(zst::str_view path)
+	{
+		(void) path;
+		return;
+	}
+
+	void start(zst::str_view main_file, zst::str_view output_file)
+	{
+		(void) main_file;
+		(void) output_file;
+		abort();
+	}
+#endif
 }
