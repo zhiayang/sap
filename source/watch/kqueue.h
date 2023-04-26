@@ -1,9 +1,10 @@
-// kqueue.cpp
+// kqueue.h
 // Copyright (c) 2022, zhiayang
 // SPDX-License-Identifier: Apache-2.0
 
-#include <sys/param.h>
-#if defined(BSD)
+#if defined(__FreeBSD__) || defined(__NetBSD__) || defined(__OpenBSD__) || defined(__bsdi__) || defined(__DragonFly__) \
+    || defined(__APPLE__)
+#define SAP_HAVE_WATCH 1
 
 #include <fcntl.h>
 #include <errno.h>
@@ -106,7 +107,7 @@ namespace sap::watch
 			    // while we have the mutex, reset the compile thread (since we're going away)
 			    g_state.current_compile_thread.reset();
 			    zpr::println("-----------------------------");
-			    zpr::println("compilation took {.2f} seconds", static_cast<double>(ms_elapsed) / 1000.0);
+			    zpr::println("compilation took {.2f} seconds\n", static_cast<double>(ms_elapsed) / 1000.0);
 
 			    g_state.mutex.unlock();
 		    },

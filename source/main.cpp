@@ -5,18 +5,7 @@
 #define ZARG_IMPLEMENTATION
 #include <zarg.h>
 
-#include "pdf/font.h"
-#include "pdf/writer.h"
-
 #include "sap/paths.h"
-#include "sap/config.h"
-#include "sap/frontend.h"
-
-#include "tree/document.h"
-#include "tree/container.h"
-
-#include "layout/document.h"
-#include "interp/interp.h"
 
 #if !defined(SAP_PREFIX)
 #error SAP_PREFIX must be defined!
@@ -35,70 +24,11 @@ layout:
 
 #endif
 
+
 namespace sap
 {
-	bool compile(zst::str_view input_file, zst::str_view output_file)
-	{
-		auto interp = interp::Interpreter();
-		auto file = interp.loadFile(input_file);
-
-		// load microtype configs
-		for(auto& lib_path : paths::librarySearchPaths())
-		{
-			auto tmp = stdfs::path(lib_path) / "data" / "microtype";
-			if(not stdfs::exists(tmp))
-				continue;
-
-			for(auto& de : stdfs::directory_iterator(tmp))
-			{
-				if(not de.is_regular_file() || de.path().extension() != ".cfg")
-					continue;
-
-				util::log("loading microtype cfg '{}'", de.path().filename().string());
-
-				auto cfg = interp.loadFile(de.path().string()).chars();
-				while(not cfg.empty())
-				{
-					auto ret = config::parseMicrotypeConfig(cfg);
-					if(ret.is_err())
-					{
-						ErrorMessage(Location::builtin(),
-						    zpr::sprint("failed to load {}: {}", de.path().filename().string(), ret.error()))
-						    .display();
-						return false;
-					}
-
-					interp.addMicrotypeConfig(std::move(*ret));
-				}
-			}
-		}
-
-
-		auto document = frontend::parse(input_file, file.chars());
-		if(document.is_err())
-			return document.error().display(), false;
-
-		auto layout_doc = document.unwrap().layout(&interp);
-		if(layout_doc.is_err())
-			return layout_doc.error().display(), false;
-
-		interp.setCurrentPhase(ProcessingPhase::Render);
-
-		auto writer = pdf::Writer(output_file);
-		layout_doc.unwrap()->write(&writer);
-		writer.close();
-
-		return true;
-	}
-
-	static bool g_draft_mode = false;
-	bool isDraftMode()
-	{
-		return g_draft_mode;
-	}
+	extern void set_draft_mode(bool);
 }
-
-
 
 int main(int argc, char** argv)
 {
@@ -113,13 +43,18 @@ int main(int argc, char** argv)
 	        .parse(argc, argv)
 	        .set();
 
-	bool is_watching = args.options.contains("watch");
-	sap::g_draft_mode = args.options.contains("draft");
-
 	if(args.positional.size() != 1)
 	{
 		zpr::fprintln(stderr, "expected exactly one input file");
-		exit(1);
+		return 1;
+	}
+
+	sap::set_draft_mode(args.options.contains("draft"));
+	bool is_watching = args.options.contains("watch");
+	if(is_watching && not sap::watch::isSupportedPlatform())
+	{
+		zpr::fprintln(stderr, "--watch mode is not supported on this platform");
+		return 1;
 	}
 
 	// add the default search paths
