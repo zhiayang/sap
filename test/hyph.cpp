@@ -84,3 +84,8 @@ bool sap::compile(zst::str_view input_file, zst::str_view output_file)
 {
 	return false;
 }
+
+bool sap::isDraftMode()
+{
+	return false;
+}

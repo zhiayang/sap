@@ -110,6 +110,11 @@ int main()
 	zpr::println("{}", util::subrange(wow.begin() + 1, wow.end()));
 }
 
+bool sap::isDraftMode()
+{
+	return false;
+}
+
 bool sap::compile(zst::str_view input_file, zst::str_view output_file)
 {
 	return false;

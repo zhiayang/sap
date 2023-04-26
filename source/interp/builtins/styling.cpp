@@ -42,14 +42,17 @@ namespace sap::interp::builtin
 		else if(value.isTreeBlockObj())
 		{
 			auto& tbo = value.getTreeBlockObj();
-			const_cast<tree::BlockObject&>(tbo).setStyle(style);
+			const_cast<tree::BlockObject&>(tbo).setStyle(tbo.style().extendWith(style));
 
 			return EvalResult::ofValue(std::move(value));
 		}
 		else
 		{
 			auto word = TRY(ev->convertValueToText(std::move(value)));
-			word->setStyle(style);
+			assert(word->isSpan());
+
+			for(auto& w : word->castToSpan()->objects())
+				w->setStyle(style);
 
 			return EvalResult::ofValue(Value::treeInlineObject(std::move(word)));
 		}

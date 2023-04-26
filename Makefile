@@ -11,7 +11,7 @@ WARNINGS += -Wno-unused-but-set-variable
 WARNINGS += -Wshadow
 WARNINGS += -Wno-error=shadow
 
-OPT_FLAGS           := -march=native -O0 -fsanitize=address
+OPT_FLAGS           := -march=native -O0
 LINKER_OPT_FLAGS    :=
 COMMON_CFLAGS       := -g $(OPT_FLAGS)
 

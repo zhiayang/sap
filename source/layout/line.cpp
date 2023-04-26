@@ -296,7 +296,8 @@ namespace sap::layout
 			}
 		}
 
-		flush_word_chunk_if_necessary(objs.size() - 1, Style::empty(), /* force: */ true);
+		flush_word_chunk_if_necessary(objs.size() - 1, parent_style.extendWith(objs.back()->style()),
+		    /* force: */ true);
 
 		assert(metrics.item_types.size()
 		       == metrics.separators.size() //
