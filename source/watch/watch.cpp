@@ -19,7 +19,7 @@ namespace sap::watch
 	StrErrorOr<void> addFileToWatchList(zst::str_view path)
 	{
 		(void) path;
-		return;
+		return Ok();
 	}
 
 	void start(zst::str_view main_file, zst::str_view output_file)
