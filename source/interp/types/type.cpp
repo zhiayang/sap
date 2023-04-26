@@ -219,9 +219,9 @@ namespace sap::interp
 	}
 
 
-	const EnumType* Type::makeEnum(const std::string& name, const Type* element_type)
+	const EnumType* Type::makeEnum(QualifiedId name, const Type* element_type)
 	{
-		return get_or_add_type(new EnumType(name, element_type));
+		return get_or_add_type(new EnumType(std::move(name), element_type));
 	}
 
 	const PointerType* Type::makePointer(const Type* element_type, bool is_mutable)
@@ -244,14 +244,13 @@ namespace sap::interp
 		return get_or_add_type(new ArrayType(elem, is_variadic));
 	}
 
-	const StructType*
-	Type::makeStruct(const std::string& name, const std::vector<std::pair<std::string, const Type*>>& foo)
+	const StructType* Type::makeStruct(QualifiedId name, const std::vector<std::pair<std::string, const Type*>>& foo)
 	{
 		std::vector<StructType::Field> fields {};
 		for(auto& [n, t] : foo)
 			fields.push_back(StructType::Field { .name = n, .type = t });
 
-		return get_or_add_type(new StructType(name, std::move(fields)));
+		return get_or_add_type(new StructType(std::move(name), std::move(fields)));
 	}
 
 	const Type* Type::arrayElement() const

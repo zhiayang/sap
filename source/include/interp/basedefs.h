@@ -14,5 +14,7 @@ namespace sap::interp
 
 		bool operator==(const QualifiedId&) const = default;
 		bool operator!=(const QualifiedId&) const = default;
+
+		std::string str() const;
 	};
 }

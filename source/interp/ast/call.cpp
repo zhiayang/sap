@@ -132,7 +132,7 @@ namespace sap::interp
 				{
 					return true;
 				}
-				else if(auto enum_lit = dynamic_cast<const EnumLit*>(x); enum_lit)
+				else if(auto ctx_lit = dynamic_cast<const ContextIdent*>(x); ctx_lit)
 				{
 					return true;
 				}

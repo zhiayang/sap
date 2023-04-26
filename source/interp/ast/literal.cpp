@@ -10,6 +10,92 @@
 
 namespace sap::interp
 {
+	ErrorOr<TCResult> ContextIdent::typecheck_impl(Typechecker* ts, const Type* infer, bool keep_lvalue) const
+	{
+		// note: we allow this to resolve both a struct field and an enumerator, preferring the field.
+		// if both exist, we raise an error.
+		if(ts->haveStructFieldContext())
+		{
+			auto struct_ctx = ts->getStructFieldContext();
+			auto struct_defn = dynamic_cast<const StructDefn*>(TRY(ts->getDefinitionForType(struct_ctx)));
+			assert(struct_defn != nullptr);
+
+			if(struct_ctx->hasFieldNamed(this->name))
+			{
+				// check if the inferred type is an enum, and whether that enum has an enumerator with our name
+				if(infer && (infer->isEnum() || (infer->isOptional() && infer->optionalElement()->isEnum())))
+				{
+					auto enum_type = (infer->isEnum() ? infer->toEnum() : infer->optionalElement()->toEnum());
+					auto enum_defn = dynamic_cast<const EnumDefn*>(TRY(ts->getDefinitionForType(enum_type)));
+					assert(enum_defn != nullptr);
+
+					if(enum_defn->getEnumeratorNamed(this->name))
+					{
+						return ErrMsg(ts,
+						    "ambiguous use of '.{}': could be enumerator of '{}' or field of struct '{}'", //
+						    this->name, enum_defn->declaration->name, struct_defn->declaration->name);
+					}
+				}
+
+				// return the type of the field.
+				m_context = struct_ctx;
+				return TCResult::ofRValue(struct_ctx->getFieldNamed(this->name));
+			}
+		}
+
+		const EnumType* enum_type = nullptr;
+
+		if(infer == nullptr)
+			return ErrMsg(ts, "cannot infer type for context-sensitive identifier");
+
+		else if(infer->isEnum())
+			enum_type = infer->toEnum();
+
+		else if(infer->isOptional() && infer->optionalElement()->isEnum())
+			enum_type = infer->optionalElement()->toEnum();
+		else
+			return ErrMsg(ts, "inferred invalid type type '{}' for context-sensitive identifier", infer);
+
+		auto enum_defn = dynamic_cast<const EnumDefn*>(TRY(ts->getDefinitionForType(enum_type)));
+		assert(enum_defn != nullptr);
+
+		auto enumerator = enum_defn->getEnumeratorNamed(this->name);
+
+		if(enumerator == nullptr)
+		{
+			return ErrMsg(ts, "inferred enumeration '{}' for context-sensitive identifier '.{}' has no such enumerator",
+			    enum_defn->declaration->name, this->name);
+		}
+
+		m_context = enumerator;
+		return TCResult::ofLValue(enum_type, /* mutable: */ false);
+	}
+
+	ErrorOr<EvalResult> ContextIdent::evaluate_impl(Evaluator* ev) const
+	{
+		if(auto enumerator_def = std::get_if<const EnumDefn::EnumeratorDefn*>(&m_context))
+		{
+			return EvalResult::ofLValue(*ev->getGlobalValue(*enumerator_def));
+		}
+		else if(auto struct_type = std::get_if<const StructType*>(&m_context))
+		{
+			auto& struct_value = ev->getStructFieldContext();
+
+			assert((*struct_type)->hasFieldNamed(this->name));
+			assert(struct_value.type() == *struct_type);
+
+			return EvalResult::ofValue(struct_value.getStructField((*struct_type)->getFieldIndex(this->name)).clone());
+		}
+		else
+		{
+			sap::internal_error("aaa");
+		}
+	}
+
+
+
+
+
 	ErrorOr<TCResult> ArrayLit::typecheck_impl(Typechecker* ts, const Type* infer, bool keep_lvalue) const
 	{
 		if(elem_type.has_value())
@@ -56,59 +142,6 @@ namespace sap::interp
 
 		return EvalResult::ofValue(Value::array(this->get_type()->toArray()->elementType(), std::move(values)));
 	}
-
-
-
-
-
-
-	ErrorOr<TCResult> EnumLit::typecheck_impl(Typechecker* ts, const Type* infer, bool keep_lvalue) const
-	{
-		const EnumType* enum_type = nullptr;
-
-		if(infer == nullptr)
-		{
-			return ErrMsg(ts, "cannot infer type for enum literal");
-		}
-		else if(infer->isEnum())
-		{
-			enum_type = infer->toEnum();
-		}
-		else
-		{
-			if(infer->isOptional() && infer->optionalElement()->isEnum())
-				enum_type = infer->optionalElement()->toEnum();
-			else
-				return ErrMsg(ts, "inferred non-enum type '{}' for enum literal", infer);
-		}
-
-		auto enum_defn = dynamic_cast<const EnumDefn*>(TRY(ts->getDefinitionForType(enum_type)));
-		assert(enum_defn != nullptr);
-
-		auto enumerator = enum_defn->getEnumeratorNamed(this->name);
-
-		if(enumerator == nullptr)
-			return ErrMsg(ts, "enum '{}' has no enumerator named '{}'", (const Type*) enum_type, this->name);
-
-		m_enumerator_defn = enumerator;
-		return TCResult::ofLValue(enum_type, /* mutable: */ false);
-	}
-
-	ErrorOr<EvalResult> EnumLit::evaluate_impl(Evaluator* ev) const
-	{
-		assert(m_enumerator_defn != nullptr);
-		return EvalResult::ofLValue(*ev->getGlobalValue(m_enumerator_defn));
-	}
-
-
-
-
-
-
-
-
-
-
 
 
 

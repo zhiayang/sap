@@ -8,7 +8,7 @@ namespace sap::interp
 {
 	std::string EnumType::str() const
 	{
-		return zpr::sprint("enum({}:{})", m_name, m_element_type);
+		return zpr::sprint("enum({}: {})", m_name.name, m_element_type);
 	}
 
 	bool EnumType::sameAs(const Type* other) const

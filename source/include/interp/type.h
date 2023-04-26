@@ -7,6 +7,7 @@
 #include <vector>
 
 #include "util.h"
+#include "interp/basedefs.h"
 
 namespace sap::interp
 {
@@ -89,9 +90,9 @@ namespace sap::interp
 		static const FunctionType* makeFunction(std::vector<const Type*> param_types, const Type* return_type);
 		static const ArrayType* makeArray(const Type* element_type, bool is_variadic = false);
 		static const StructType*
-		makeStruct(const std::string& name, const std::vector<std::pair<std::string, const Type*>>& fields);
+		makeStruct(QualifiedId name, const std::vector<std::pair<std::string, const Type*>>& fields);
 
-		static const EnumType* makeEnum(const std::string& name, const Type* enumerator_type);
+		static const EnumType* makeEnum(QualifiedId name, const Type* enumerator_type);
 
 		virtual ~Type();
 
@@ -134,13 +135,13 @@ namespace sap::interp
 		virtual std::string str() const override;
 		virtual bool sameAs(const Type* other) const override;
 
-		const std::string& name() const { return m_name; }
+		const QualifiedId& name() const { return m_name; }
 		const Type* elementType() const { return m_element_type; }
 
 	private:
-		EnumType(std::string name, const Type* elm) : Type(KIND_ENUM), m_name(std::move(name)), m_element_type(elm) { }
+		EnumType(QualifiedId name, const Type* elm) : Type(KIND_ENUM), m_name(std::move(name)), m_element_type(elm) { }
 
-		std::string m_name;
+		QualifiedId m_name;
 		const Type* m_element_type;
 
 		friend struct Type;
@@ -226,7 +227,7 @@ namespace sap::interp
 		virtual std::string str() const override;
 		virtual bool sameAs(const Type* other) const override;
 
-		const std::string& name() const { return m_name; }
+		const QualifiedId& name() const { return m_name; }
 
 		bool hasFieldNamed(zst::str_view name) const;
 		size_t getFieldIndex(zst::str_view name) const;
@@ -239,9 +240,9 @@ namespace sap::interp
 		std::vector<const Type*> getFieldTypes() const;
 
 	private:
-		StructType(std::string name, std::vector<Field> fields);
+		StructType(QualifiedId name, std::vector<Field> fields);
 
-		std::string m_name;
+		QualifiedId m_name;
 		std::vector<Field> m_fields;
 		util::hashmap<std::string, std::pair<size_t, const Type*>> m_field_map;
 

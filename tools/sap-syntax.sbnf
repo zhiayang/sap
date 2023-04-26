@@ -168,6 +168,14 @@ struct-literal-field:
 
 struct-literal-field-list: (struct-literal-field (`,`{punctuation.comma})?)*;
 
+struct-literal: (`{`{punctuation.brace.struct-start} struct-literal-field-list `}`{punctuation.brace.struct-end})
+    | '(::)?(?!not)([A-Za-z_][[:word:]]*)(?:\s*(::)\s*([A-Za-z_][[:word:]]*))*'{
+        1: punctuation.scope,
+        2: variable.other,
+        3: punctuation.scope,
+        4: variable.other
+    };
+
 cast-expr: `cast`{keyword.cast} `(`{punctuation.paren} expr (`,`{punctuation.comma} expr)? `)`{punctuation.paren};
 
 type-expr: `$`{support.type} type;
@@ -182,16 +190,10 @@ primary-expr
     | enum-literal
     | text-literal
     | char-literal
+    | struct-literal
     | cast-expr
     | type-expr
     | `(`{punctuation.paren} expr `)`{punctuation.paren}
-    | (`{`{punctuation.brace.struct-start} struct-literal-field-list `}`{punctuation.brace.struct-end})
-    | '(::)?(?!not)([A-Za-z_][[:word:]]*)(?:\s*(::)\s*([A-Za-z_][[:word:]]*))*'{
-        1: punctuation.scope,
-        2: variable.other,
-        3: punctuation.scope,
-        4: variable.other
-    }
     ;
 
 postfix-expr2
@@ -222,7 +224,8 @@ unary-expr
 binop-expr: unary-expr binop-expr2?;
 
 binop-expr2
-    : `+=`{keyword.operator.binop.arith} unary-expr binop-expr2
+    : `//`{keyword.operator.binop.struct-update} struct-literal binop-expr2
+    | `+=`{keyword.operator.binop.arith} unary-expr binop-expr2
     | `-=`{keyword.operator.binop.arith} unary-expr binop-expr2
     | `*=`{keyword.operator.binop.arith} unary-expr binop-expr2
     | `/=`{keyword.operator.binop.arith} unary-expr binop-expr2

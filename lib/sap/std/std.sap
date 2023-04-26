@@ -241,9 +241,10 @@ namespace std
 
 		var page_num_offset = 0;
 
-		var page_num_pos = builtin::document()!.page_size;
-		page_num_pos.x -= 34mm;
-		page_num_pos.y -= 30mm;
+		var page_num_pos = builtin::document()!.page_size // {
+			x: .x - 40mm,
+			y: .y - 35mm,
+		};
 
 		for(var i = 0; i < builtin::document()!.page_count; i += 1)
 		{

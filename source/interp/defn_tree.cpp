@@ -9,9 +9,32 @@
 
 namespace sap::interp
 {
+	std::string QualifiedId::str() const
+	{
+		std::string ret {};
+		for(const auto& p : this->parents)
+			ret += (p + "::");
+
+		ret += this->name;
+		return ret;
+	}
+
 	DefnTree* DefnTree::declareAnonymousNamespace()
 	{
 		return this->lookupOrDeclareNamespace(zpr::sprint("__$anon{}", m_anon_namespace_count++));
+	}
+
+	QualifiedId DefnTree::scopeName(std::string name) const
+	{
+		QualifiedId ret {};
+		ret.top_level = true;
+		ret.name = std::move(name);
+
+		for(auto tree = this; tree && tree->parent() != nullptr; tree = tree->parent())
+			ret.parents.push_back(tree->m_name);
+
+		std::reverse(ret.parents.begin(), ret.parents.end());
+		return ret;
 	}
 
 	ErrorOr<void> DefnTree::useNamespace(const Location& loc, DefnTree* tree, const std::string& alias)

@@ -107,20 +107,22 @@ namespace sap::interp
 		[[nodiscard]] util::Defer<> pushLocation(const Location& loc);
 		void popLocation();
 
+		[[nodiscard]] util::Defer<> pushStructFieldContext(Value* struct_value);
+		[[nodiscard]] Value& getStructFieldContext() const;
+
 		bool isGlobalValue(const Definition* defn) const;
 		void setGlobalValue(const Definition* defn, Value val);
 		Value* getGlobalValue(const Definition* defn);
 
 		ErrorOr<zst::SharedPtr<tree::InlineSpan>> convertValueToText(Value&& value);
 
-		const Style& currentStyle() const;
+		[[nodiscard]] const Style& currentStyle() const;
 		void pushStyle(const Style& style);
 		Style popStyle();
 
-		const BlockContext& getBlockContext() const;
-		[[nodiscard]] util::Defer<> pushBlockContext(std::optional<const tree::BlockObject*> obj);
-
 		void popBlockContext();
+		[[nodiscard]] const BlockContext& getBlockContext() const;
+		[[nodiscard]] util::Defer<> pushBlockContext(std::optional<const tree::BlockObject*> obj);
 
 		void requestLayout();
 		bool layoutRequested() const;
@@ -146,9 +148,9 @@ namespace sap::interp
 		std::vector<std::unique_ptr<StackFrame>> m_stack_frames;
 
 		std::vector<Style> m_style_stack;
-		std::vector<BlockContext> m_block_context_stack;
-
 		std::vector<Location> m_location_stack;
+		std::vector<BlockContext> m_block_context_stack;
+		std::vector<Value*> m_struct_field_context_stack;
 
 		util::hashmap<const Definition*, Value> m_global_values;
 

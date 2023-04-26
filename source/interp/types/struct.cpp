@@ -6,10 +6,8 @@
 
 namespace sap::interp
 {
-	StructType::StructType(std::string name, std::vector<Field> fields)
-	    : Type(KIND_STRUCT)
-	    , m_name(std::move(name))
-	    , m_fields(std::move(fields))
+	StructType::StructType(QualifiedId name, std::vector<Field> fields)
+	    : Type(KIND_STRUCT), m_name(std::move(name)), m_fields(std::move(fields))
 	{
 		size_t i = 0;
 		for(auto& [n, t] : m_fields)
@@ -27,7 +25,7 @@ namespace sap::interp
 
 	std::string StructType::str() const
 	{
-		return zpr::sprint("struct({})", m_name);
+		return zpr::sprint("struct({})", m_name.name);
 	}
 
 	bool StructType::sameAs(const Type* other) const

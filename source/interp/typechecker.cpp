@@ -65,6 +65,24 @@ namespace sap::interp
 		m_tree_stack.pop_back();
 	}
 
+	[[nodiscard]] util::Defer<> Typechecker::pushStructFieldContext(const StructType* str)
+	{
+		m_struct_field_context_stack.push_back(str);
+		return util::Defer<>([this]() { m_struct_field_context_stack.pop_back(); });
+	}
+
+	const StructType* Typechecker::getStructFieldContext() const
+	{
+		assert(not m_struct_field_context_stack.empty());
+		return m_struct_field_context_stack.back();
+	}
+
+	bool Typechecker::haveStructFieldContext() const
+	{
+		return not m_struct_field_context_stack.empty();
+	}
+
+
 
 
 	bool Typechecker::canImplicitlyConvert(const Type* from, const Type* to) const

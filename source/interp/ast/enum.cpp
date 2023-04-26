@@ -7,8 +7,8 @@
 
 namespace sap::interp
 {
-	ErrorOr<TCResult> EnumDefn::EnumeratorDecl::typecheck_impl(Typechecker* ts, const Type* infer, bool keep_lvalue)
-		const
+	ErrorOr<TCResult>
+	EnumDefn::EnumeratorDecl::typecheck_impl(Typechecker* ts, const Type* infer, bool keep_lvalue) const
 	{
 		assert(infer != nullptr && infer->isEnum());
 
@@ -16,8 +16,8 @@ namespace sap::interp
 		return TCResult::ofRValue(infer);
 	}
 
-	ErrorOr<TCResult> EnumDefn::EnumeratorDefn::typecheck_impl(Typechecker* ts, const Type* infer, bool keep_lvalue)
-		const
+	ErrorOr<TCResult>
+	EnumDefn::EnumeratorDefn::typecheck_impl(Typechecker* ts, const Type* infer, bool keep_lvalue) const
 	{
 		assert(infer != nullptr && infer->isEnum());
 
@@ -30,7 +30,7 @@ namespace sap::interp
 			auto ty = TRY(m_value->typecheck(ts, elm_type)).type();
 			if(not ts->canImplicitlyConvert(ty, elm_type))
 				return ErrMsg(ts, "cannot use value of type '{}' as enumerator for enum type '{}'", ty,
-					(const Type*) enum_type);
+				    (const Type*) enum_type);
 		}
 		else if(not elm_type->isInteger())
 		{
@@ -46,8 +46,7 @@ namespace sap::interp
 	ErrorOr<TCResult> EnumDecl::typecheck_impl(Typechecker* ts, const Type* infer, bool keep_lvalue) const
 	{
 		assert(infer != nullptr);
-
-		auto enum_type = Type::makeEnum(this->name, infer);
+		auto enum_type = Type::makeEnum(m_declared_tree->scopeName(this->name), infer);
 
 		TRY(ts->current()->declare(this));
 		return TCResult::ofRValue(enum_type);

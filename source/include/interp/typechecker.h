@@ -34,6 +34,8 @@ namespace sap::interp
 
 		ErrorOr<void> declare(const Declaration* decl);
 
+		QualifiedId scopeName(std::string name) const;
+
 		void dump(int indent = 0) const;
 
 		ErrorOr<void> useNamespace(const Location& loc, DefnTree* other, const std::string& alias);
@@ -99,6 +101,10 @@ namespace sap::interp
 		[[nodiscard]] util::Defer<> enterLoopBody();
 		bool isCurrentlyInLoopBody() const;
 
+		[[nodiscard]] util::Defer<> pushStructFieldContext(const StructType* str);
+		const StructType* getStructFieldContext() const;
+		bool haveStructFieldContext() const;
+
 		bool canImplicitlyConvert(const Type* from, const Type* to) const;
 
 	private:
@@ -107,6 +113,7 @@ namespace sap::interp
 
 		std::vector<DefnTree*> m_tree_stack;
 		std::vector<const Type*> m_expected_return_types;
+		std::vector<const StructType*> m_struct_field_context_stack;
 
 		std::vector<std::unique_ptr<Definition>> m_builtin_defns;
 		util::hashmap<const Type*, const Definition*> m_type_definitions;

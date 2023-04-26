@@ -72,6 +72,7 @@ namespace sap::frontend
 		PercentEqual,
 		QuestionQuestion,
 		QuestionPeriod,
+		SlashSlash,
 
 		Ellipsis,
 

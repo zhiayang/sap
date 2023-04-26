@@ -258,6 +258,8 @@ namespace sap::frontend
 			case TT::KW_And: return 50;
 			case TT::KW_Or: return 40;
 
+			case TT::SlashSlash: return 10;
+
 			default: return -1;
 		}
 	}
@@ -620,6 +622,28 @@ namespace sap::frontend
 
 				lhs = std::move(tmp);
 			}
+			else if(op_tok == TT::SlashSlash)
+			{
+				if(not dynamic_cast<interp::StructLit*>(rhs.get()))
+					return ErrMsg(rhs->loc(), "right-hand operand of '//' must be a struct literal");
+
+				auto tmp = std::make_unique<interp::StructUpdateOp>(op_tok.loc);
+				tmp->structure = std::move(lhs);
+
+				auto lit = util::static_pointer_cast<interp::StructLit>(std::move(rhs));
+				if(not lit->is_anonymous)
+					return ErrMsg(lit->loc(), "right-hand operand of '//' cannot be named");
+
+				for(auto& field : lit->field_inits)
+				{
+					if(not field.name.has_value())
+						return ErrMsg(field.value->loc(), "update fields of '//' must all be named");
+
+					tmp->updates.emplace_back(std::move(*field.name), std::move(field.value));
+				}
+
+				lhs = std::move(tmp);
+			}
 			else
 			{
 				return ErrMsg(lexer.location(), "unknown operator token '{}'", lexer.peek().text);
@@ -884,7 +908,7 @@ namespace sap::frontend
 			if(not ident.has_value())
 				return ErrMsg(lexer.location(), "expected enumerator name (an identifier) after '.'");
 
-			auto ret = std::make_unique<interp::EnumLit>(ident->loc);
+			auto ret = std::make_unique<interp::ContextIdent>(ident->loc);
 			ret->name = ident->text.str();
 
 			return OkMove(ret);

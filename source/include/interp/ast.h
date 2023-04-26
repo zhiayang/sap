@@ -477,6 +477,21 @@ namespace sap::interp
 		std::vector<std::unique_ptr<Expr>> indices;
 	};
 
+	struct StructUpdateOp : Expr
+	{
+		explicit StructUpdateOp(Location loc) : Expr(std::move(loc)) { }
+
+		virtual ErrorOr<EvalResult> evaluate_impl(Evaluator* ev) const override;
+		virtual ErrorOr<TCResult> typecheck_impl(Typechecker* ts, //
+		    const Type* infer = nullptr,
+		    bool keep_lvalue = false) const override;
+
+		std::unique_ptr<Expr> structure;
+		std::vector<std::pair<std::string, std::unique_ptr<Expr>>> updates;
+	};
+
+
+
 	struct LengthExpr : Expr
 	{
 		explicit LengthExpr(Location loc) : Expr(std::move(loc)) { }
@@ -666,7 +681,7 @@ namespace sap::interp
 		const DefnTree* declaredTree() const { return m_declared_tree; }
 		void declareAt(const DefnTree* tree) { m_declared_tree = tree; }
 
-	private:
+	protected:
 		const Definition* m_resolved_defn = nullptr;
 		const DefnTree* m_declared_tree = nullptr;
 	};
@@ -901,9 +916,9 @@ namespace sap::interp
 	};
 
 
-	struct EnumLit : Expr
+	struct ContextIdent : Expr
 	{
-		explicit EnumLit(Location loc) : Expr(std::move(loc)) { }
+		explicit ContextIdent(Location loc) : Expr(std::move(loc)) { }
 
 		virtual ErrorOr<EvalResult> evaluate_impl(Evaluator* ev) const override;
 		virtual ErrorOr<TCResult> typecheck_impl(Typechecker* ts, //
@@ -913,7 +928,7 @@ namespace sap::interp
 		std::string name;
 
 	private:
-		mutable const EnumDefn::EnumeratorDefn* m_enumerator_defn = nullptr;
+		mutable std::variant<std::monostate, const EnumDefn::EnumeratorDefn*, const StructType*> m_context {};
 	};
 }
 

@@ -423,6 +423,11 @@ namespace sap::frontend
 			return advance_and_return(stream, loc, //
 			    Token { .loc = loc, .type = TT::ColonColon, .text = stream.take(2) }, 2);
 		}
+		else if(stream.starts_with("//"))
+		{
+			return advance_and_return(stream, loc, //
+			    Token { .loc = loc, .type = TT::SlashSlash, .text = stream.take(2) }, 2);
+		}
 		else if(stream.starts_with("&&"))
 		{
 			return advance_and_return(stream, loc, //

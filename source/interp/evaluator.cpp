@@ -157,7 +157,7 @@ namespace sap::interp
 	}
 
 
-	const Style& Evaluator::currentStyle() const
+	[[nodiscard]] const Style& Evaluator::currentStyle() const
 	{
 		if(m_style_stack.empty())
 			return Style::empty();
@@ -184,12 +184,25 @@ namespace sap::interp
 		return ret;
 	}
 
-	const BlockContext& Evaluator::getBlockContext() const
+	[[nodiscard]] Value& Evaluator::getStructFieldContext() const
+	{
+		assert(not m_struct_field_context_stack.empty());
+		return *m_struct_field_context_stack.back();
+	}
+
+	[[nodiscard]] util::Defer<> Evaluator::pushStructFieldContext(Value* struct_value)
+	{
+		m_struct_field_context_stack.push_back(struct_value);
+		return util::Defer([this]() { m_struct_field_context_stack.pop_back(); });
+	}
+
+
+	[[nodiscard]] const BlockContext& Evaluator::getBlockContext() const
 	{
 		return m_block_context_stack.back();
 	}
 
-	util::Defer<> Evaluator::pushBlockContext(std::optional<const tree::BlockObject*> obj)
+	[[nodiscard]] util::Defer<> Evaluator::pushBlockContext(std::optional<const tree::BlockObject*> obj)
 	{
 		m_block_context_stack.push_back(BlockContext { .obj = std::move(obj) });
 		return util::Defer([this]() { this->popBlockContext(); });
