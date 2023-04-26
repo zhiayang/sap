@@ -13,8 +13,8 @@ namespace sap::frontend
 
 	static Ok<Token> advance_and_return(zst::str_view& stream, Location& loc, Token tok, size_t n)
 	{
-		loc.column += n;
-		tok.loc.length = util::checked_cast<uint32_t>(n);
+		loc.column += checked_cast<uint32_t>(n);
+		tok.loc.length = checked_cast<uint32_t>(n);
 		tok.loc.byte_offset = checked_cast<size_t>(tok.text.data() - tok.loc.file_contents.data());
 
 		stream.remove_prefix(n);
@@ -46,7 +46,7 @@ namespace sap::frontend
 				}
 
 
-				loc.column += i;
+				loc.column += checked_cast<uint32_t>(i);
 				stream.remove_prefix(i);
 
 				assert(not stream.empty());
@@ -160,7 +160,7 @@ namespace sap::frontend
 			}
 
 			loc.column = 0;
-			loc.line += lines;
+			loc.line += checked_cast<uint32_t>(lines);
 
 			return advance_and_return2(stream, loc,
 			    Token { //
@@ -209,7 +209,7 @@ namespace sap::frontend
 			auto n = first_line.size() + 1 + i + end_pattern.size();
 			auto text = stream.take(n);
 
-			loc.line += std::count(text.begin(), text.end(), '\n');
+			loc.line += checked_cast<uint32_t>(std::count(text.begin(), text.end(), '\n'));
 			auto k = text.rfind('\n');
 			if(k == std::string::npos)
 				k = 0;
@@ -663,6 +663,8 @@ namespace sap::frontend
 			case Text: return consume_text_token(foo, bar).or_else(Token { .type = TT::Invalid });
 			case Script: return consume_script_token(foo, bar).or_else(Token { .type = TT::Invalid });
 		}
+
+		util::unreachable();
 	}
 
 	ErrorOr<Token> Lexer::nextWithMode(Mode mode)
@@ -675,6 +677,7 @@ namespace sap::frontend
 			case Text: return consume_text_token(m_stream, m_location);
 			case Script: return consume_script_token(m_stream, m_location);
 		}
+		util::unreachable();
 	}
 
 	Token Lexer::peek() const
@@ -702,6 +705,7 @@ namespace sap::frontend
 			case Text: return update_location(), consume_text_token(m_stream, m_location);
 			case Script: return update_location(), consume_script_token(m_stream, m_location);
 		}
+		util::unreachable();
 	}
 
 	Token Lexer::previous() const
@@ -714,6 +718,7 @@ namespace sap::frontend
 			case Text: return consume_text_token(tmp1, tmp2).unwrap();
 			case Script: return consume_script_token(tmp1, tmp2).unwrap();
 		}
+		util::unreachable();
 	}
 
 	bool Lexer::expect(TokenType type)

@@ -155,8 +155,8 @@ namespace sap::interp
 
 		util::hashset<const Declaration*> decls {};
 
-		auto decls_vec = [](util::hashset<const Declaration*>& decls) {
-			return std::vector(std::move_iterator(decls.begin()), std::move_iterator(decls.end()));
+		auto decls_vec = [](util::hashset<const Declaration*>& xs) {
+			return std::vector(std::move_iterator(xs.begin()), std::move_iterator(xs.end()));
 		};
 
 

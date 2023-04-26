@@ -319,7 +319,7 @@ namespace font::aat
 				ret.glyphs.push_back(glyphs[i]);
 		}
 
-		return std::move(ret);
+		return ret;
 	}
 
 
@@ -506,7 +506,7 @@ namespace font::aat
 
 		run_state_machine<EntrySize>(table.state_table, input, is_reverse, runner);
 
-		return std::move(ret);
+		return ret;
 	}
 
 	std::optional<SubstitutedGlyphString>
@@ -566,7 +566,7 @@ namespace font::aat
 				ret.glyphs.push_back(glyphs[i]);
 		}
 
-		return std::move(ret);
+		return ret;
 	}
 
 	std::optional<SubstitutedGlyphString> apply_table(const MorxNonContextualSubtable& table,
@@ -596,7 +596,7 @@ namespace font::aat
 				ret.glyphs.push_back(glyphs[i]);
 		}
 
-		return std::move(ret);
+		return ret;
 	}
 
 	std::optional<SubstitutedGlyphString>
@@ -657,7 +657,7 @@ namespace font::aat
 
 		run_state_machine<EntrySize>(table.state_table, glyphs, is_reverse, runner);
 
-		return std::move(ret);
+		return ret;
 	}
 
 
@@ -741,8 +741,8 @@ namespace font::aat
 				}
 
 				auto visitor = [&](auto& t) {
-					auto tmp = zst::span<GlyphId>(ret->glyphs.data(), ret->glyphs.size());
-					return apply_table(t, tmp, reverse_glyphs, morx.num_font_glyphs);
+					auto gs = zst::span<GlyphId>(ret->glyphs.data(), ret->glyphs.size());
+					return apply_table(t, gs, reverse_glyphs, morx.num_font_glyphs);
 				};
 
 				if(auto result = std::visit(visitor, subtable); result.has_value())

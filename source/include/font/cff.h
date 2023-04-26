@@ -44,7 +44,7 @@ namespace font::cff
 			double _decimal;
 		};
 
-		inline uint16_t string_id() const { return _integer & 0xFFFF; }
+		inline uint16_t string_id() const { return static_cast<uint32_t>(_integer) & 0xFFFF; }
 		inline int32_t integer() const { return _integer; }
 		inline double decimal() const { return _decimal; }
 		inline double fixed() const { return ((_integer >> 16) & 0xFFFF) + (_integer & 0xFFFF) / 65536.0; }

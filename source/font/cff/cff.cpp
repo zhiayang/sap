@@ -63,7 +63,7 @@ namespace font::cff
 
 		index.data = buf.take(index.offsets.back());
 
-		assert(index.count + 1 == index.offsets.size());
+		assert(index.count + 1u == index.offsets.size());
 		if(total_size)
 			*total_size = (start.size() - buf.size()) + index.data.size();
 

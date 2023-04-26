@@ -190,10 +190,10 @@ namespace sap::tree
 						return false;
 					const auto& obj = objs.back();
 
-					if(auto span = obj->castToSpan())
-						return last_span_obj_is_space(span->objects());
-					else if(auto sep = obj->castToSeparator())
-						return sep->hasWhitespace();
+					if(auto s = obj->castToSpan())
+						return last_span_obj_is_space(s->objects());
+					else if(auto ss = obj->castToSeparator())
+						return ss->hasWhitespace();
 					else
 						return false;
 				};

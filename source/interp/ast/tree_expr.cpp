@@ -202,10 +202,12 @@ namespace sap::interp
 		}
 		else if(auto raw = obj->castToRawBlock())
 		{
+			(void) raw;
 			return EvalResult::ofValue(Value::treeBlockObject(obj));
 		}
 		else if(auto sc = obj->castToScriptBlock())
 		{
+			(void) sc;
 			sap::internal_error("nani??");
 		}
 		else

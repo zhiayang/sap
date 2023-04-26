@@ -58,6 +58,7 @@ namespace sap::layout
 			case Vertical: //
 				return m_glued;
 		}
+		util::unreachable();
 	}
 
 
@@ -139,6 +140,7 @@ namespace sap::layout
 				}
 				break;
 			}
+			util::unreachable();
 		}
 
 		bool is_first_child = true;
@@ -283,6 +285,7 @@ namespace sap::layout
 			case Vertical: //
 				return cursor;
 		}
+		util::unreachable();
 	}
 
 	void Container::render_impl(const LayoutBase* layout, std::vector<pdf::Page*>& pages) const

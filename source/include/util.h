@@ -23,6 +23,15 @@
 
 namespace util
 {
+	[[noreturn]] inline void unreachable()
+	{
+	#if defined(__GNUC__)
+		__builtin_unreachable();
+	#elif defined(_MSC_VER)
+		__assume(false);
+	#endif
+	}
+
 	template <typename T>
 	using big_endian_span = zst::span<T, std::endian::big>;
 
@@ -291,9 +300,9 @@ namespace util
 		{
 			struct Derived : Base
 			{
-				Derived(Callback&& cb) : cb(std::move(cb)) { }
-				virtual void operator()() const override { cb(); }
-				Callback cb;
+				Derived(Callback&& cb) : m_cb(std::move(cb)) { }
+				virtual void operator()() const override { m_cb(); }
+				Callback m_cb;
 			};
 
 			static_assert(sizeof(Derived) <= STORAGE_SIZE);
@@ -327,9 +336,9 @@ namespace util
 		template <typename T>
 		DeferMemberFn(const T* self, void (T::*member_fn)()) : m_self(self), m_method(member_fn), m_cancel(false)
 		{
-			m_callback = [](const void* self, const void* fn_) {
+			m_callback = [](const void* self_, const void* fn_) {
 				auto fn = reinterpret_cast<void (T::*)()>(fn_);
-				(static_cast<const T*>(self)->*fn)();
+				(static_cast<const T*>(self_)->*fn)();
 			};
 		}
 

@@ -2052,8 +2052,10 @@ namespace sap::frontend
 				stmts.push_back(TRY(parse_function_call(lexer, std::move(ident))));
 				saw_doc_start = true;
 
+				// do nothing
 				if(lexer.expect(TT::Semicolon))
-					;
+				{
+				}
 
 				break;
 			}

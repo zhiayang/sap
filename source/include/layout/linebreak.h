@@ -175,7 +175,7 @@ namespace sap::layout::linebreak
 			auto lh = calc_word_size(word->contents(), word_style).y() * word_style.line_spacing();
 			m_line_height = std::max(m_line_height, lh);
 
-			if(bool replace_last_word = this->add_span_or_word(word->style()))
+			if(bool replace_last_word = this->add_span_or_word(word->style()); replace_last_word)
 				m_last_word = word->contents();
 			else
 				m_last_word += word->contents();

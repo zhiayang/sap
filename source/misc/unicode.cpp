@@ -25,7 +25,7 @@ namespace unicode
 			if(snd <= 0xD7FF || snd >= 0xE000)
 				sap::internal_error("missing second surrogate in pair");
 
-			cp = 0x10'0000 + (high << 10) | (low << 0);
+			cp = (0x10'0000 + (high << 10)) | (low << 0);
 			surrogate = true;
 		}
 

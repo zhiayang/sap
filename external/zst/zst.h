@@ -264,9 +264,10 @@ namespace zst
 			constexpr inline bool empty() const { return this->len == 0; }
 			constexpr inline const value_type* data() const { return this->ptr; }
 
-			inline str_view<uint8_t> bytes() const
+			constexpr inline str_view<uint8_t> bytes() const
 			{
-				return str_view<uint8_t>(reinterpret_cast<const uint8_t*>(this->ptr), this->len);
+				auto byte_ptr = static_cast<const void*>(this->ptr);
+				return str_view<uint8_t>(static_cast<const uint8_t*>(byte_ptr), this->len);
 			}
 
 			value_type front() const { return this->ptr[0]; }
@@ -986,10 +987,10 @@ namespace zst
 		}
 
 		template <typename T1 = T>
-		Result(Ok<T1>&& ok) : Result(tag_ok(), static_cast<T1&&>(ok.m_value)) { }
+		Result(Ok<T1>&& ok_) : Result(tag_ok(), static_cast<T1&&>(ok_.m_value)) { }
 
 		template <typename E1 = E>
-		Result(Err<E1>&& err) : Result(tag_err(), static_cast<E1&&>(err.m_error)) { }
+		Result(Err<E1>&& err_) : Result(tag_err(), static_cast<E1&&>(err_.m_error)) { }
 
 		Result(const Result& other)
 		{
@@ -1186,10 +1187,10 @@ namespace zst
 		Result(Ok<void>&& ok) : Result() { (void) ok; }
 
 		template <typename E1 = E>
-		Result(Err<E1>&& err) : state(STATE_ERR), err(static_cast<E1&&>(err.m_error)) { }
+		Result(Err<E1>&& err_) : state(STATE_ERR), err(static_cast<E1&&>(err_.m_error)) { }
 
 		Result([[maybe_unused]] tag_ok _) : state(STATE_VAL) { }
-		Result([[maybe_unused]] tag_err _, const E& err) : state(STATE_ERR), err(err) { }
+		Result([[maybe_unused]] tag_err _, const E& err_) : state(STATE_ERR), err(err_) { }
 
 
 		Result(const Result& other)
@@ -1574,7 +1575,7 @@ constexpr inline zst::byte_span operator""_bs(const char* s, size_t n)
 	Version History
 	===============
 
-	2.0.0 - 28/03/2023
+	2.0.0 - 26/04/2023
 	------------------
 	- switch to C++20, partial conversion to concepts
 	- add automatic derived -> base casting for Result<std::unique_ptr<T>>

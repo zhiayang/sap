@@ -46,16 +46,16 @@ namespace pdf
 
 		auto helper = IndirHelper(w, this);
 
-		auto write_the_thing = [](Writer* w, Dictionary* dict, zst::byte_span buf) {
-			dict->writeFull(w);
+		auto write_the_thing = [](Writer* wr, Dictionary* dict, zst::byte_span buf) {
+			dict->writeFull(wr);
 
-			w->writeln();
-			w->writeln("stream\r");
+			wr->writeln();
+			wr->writeln("stream\r");
 
-			w->writeBytes(buf.data(), buf.size());
+			wr->writeBytes(buf.data(), buf.size());
 
-			w->writeln("\r");
-			w->write("endstream");
+			wr->writeln("\r");
+			wr->write("endstream");
 		};
 
 

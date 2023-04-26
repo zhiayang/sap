@@ -21,6 +21,7 @@ namespace sap::interp
 			case Minus: return "-";
 			case LogicalNot: return "not";
 		}
+		util::unreachable();
 	}
 
 	ErrorOr<TCResult> UnaryOp::typecheck_impl(Typechecker* ts, const Type* infer, bool keep_lvalue) const
@@ -48,6 +49,7 @@ namespace sap::interp
 				return TCResult::ofRValue(Type::makeBool());
 			}
 		}
+		util::unreachable();
 	}
 
 	ErrorOr<EvalResult> UnaryOp::evaluate_impl(Evaluator* ev) const
@@ -74,5 +76,6 @@ namespace sap::interp
 				return EvalResult::ofValue(Value::boolean(not val.getBool()));
 			}
 		}
+		util::unreachable();
 	}
 }

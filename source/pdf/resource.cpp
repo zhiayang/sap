@@ -29,5 +29,6 @@ namespace pdf
 			case KIND_XOBJECT: return "XObject";
 			case KIND_EXTGSTATE: return "ExtGState";
 		}
+		util::unreachable();
 	}
 }

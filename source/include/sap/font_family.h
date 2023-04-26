@@ -38,6 +38,7 @@ namespace sap
 				case FontStyle::Bold: return m_bold_font;
 				case FontStyle::BoldItalic: return m_bold_italic_font;
 			}
+			util::unreachable();
 		}
 
 		pdf::PdfFont* regular() const { return m_regular_font; }

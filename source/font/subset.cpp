@@ -30,10 +30,10 @@ namespace font
 
 		// searchRange = "(Maximum power of 2 <= numTables) x 16"
 		size_t max_pow2 = 0;
-		while((1 << (max_pow2 - 1)) < num_tables)
+		while((1u << (max_pow2 - 1u)) < num_tables)
 			max_pow2++;
 
-		assert((1 << max_pow2) <= num_tables);
+		assert((1u << max_pow2) <= num_tables);
 
 		stream->append_bytes(util::convertBEU16(util::checked_cast<uint16_t>(1 << max_pow2) * 16));
 

@@ -59,7 +59,7 @@ namespace sap::interp
 				else if(val.isLoopBreak())
 					break;
 				else if(val.isLoopContinue())
-					; // do nothing
+					(void) false; // do nothing
 			}
 
 			if(this->update != nullptr)

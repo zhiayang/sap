@@ -20,7 +20,7 @@ namespace pdf
 		return ++s_next_resource_id;
 	}
 
-	IndirHelper::IndirHelper(Writer* w, const Object* obj) : w(w), indirect(obj->isIndirect())
+	IndirHelper::IndirHelper(Writer* w_, const Object* obj) : w(w_), indirect(obj->isIndirect())
 	{
 		if(indirect)
 		{

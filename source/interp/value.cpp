@@ -9,6 +9,8 @@
 #include "tree/container.h"
 #include "tree/paragraph.h"
 
+#include "layout/layout_object.h"
+
 #include "interp/value.h"
 
 namespace sap::interp
@@ -888,19 +890,19 @@ namespace sap::interp
 			return;
 
 		else if(m_type->isTreeInlineObj())
-			v_inline_obj.~decltype(v_inline_obj)();
+			std::destroy_at(&v_inline_obj);
 
 		else if(m_type->isTreeBlockObj())
-			v_block_obj.~decltype(v_block_obj)();
+			std::destroy_at(&v_block_obj);
 
 		else if(m_type->isPointer() && m_type->pointerElement()->isTreeInlineObj())
-			v_inline_obj_ref.~decltype(v_inline_obj_ref)();
+			std::destroy_at(&v_inline_obj_ref);
 
 		else if(m_type->isArray() || m_type->isStruct() || m_type->isOptional() || m_type->isEnum())
-			v_array.~decltype(v_array)();
+			std::destroy_at(&v_array);
 
 		else if(m_type->isLength())
-			v_length.~decltype(v_length)();
+			std::destroy_at(&v_length);
 	}
 
 	void Value::steal_from(Value&& val)

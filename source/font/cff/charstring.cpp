@@ -110,7 +110,7 @@ namespace font::cff
 		while(instrs.size() > 0)
 		{
 			auto x = instrs[0];
-			if(x == 28 || (32 <= x && x <= 255))
+			if(x == 28 || x >= 32)
 			{
 				interp.push(*readNumberFromCharString(instrs));
 				continue;
@@ -121,15 +121,15 @@ namespace font::cff
 			switch(x)
 			{
 				case CMD_HSTEM:
-				case CMD_HSTEMHM: interp.num_hstems += interp.stack.size() / 2; break;
+				case CMD_HSTEMHM: interp.num_hstems += checked_cast<int>(interp.stack.size()) / 2; break;
 
 				case CMD_VSTEM:
-				case CMD_VSTEMHM: interp.num_vstems += interp.stack.size() / 2; break;
+				case CMD_VSTEMHM: interp.num_vstems += checked_cast<int>(interp.stack.size()) / 2; break;
 
 				case CMD_HINTMASK:
 				case CMD_CNTRMASK: {
 					// for the first one, there is an implicit vstem, so add another hint:
-					interp.num_vstems += (interp.stack.size() / 2);
+					interp.num_vstems += checked_cast<int>(interp.stack.size()) / 2;
 
 					// calculate the required mask length.
 					auto num_hints = interp.num_hstems + interp.num_vstems;
@@ -329,6 +329,7 @@ namespace font::cff
 							interp.pop();
 							interp.pop();
 							clear_stack = false;
+							break;
 
 						default: sap::error("font/cff", "invalid opcode '0c {x}'", esc); break;
 					}

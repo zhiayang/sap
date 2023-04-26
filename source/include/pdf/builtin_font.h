@@ -9,7 +9,7 @@
 template <>
 struct std::hash<std::pair<GlyphId, GlyphId>>
 {
-	constexpr size_t operator()(std::pair<GlyphId, GlyphId> p) const
+	size_t operator()(std::pair<GlyphId, GlyphId> p) const
 	{
 		return std::hash<uint64_t>()((static_cast<uint64_t>(p.first) << 32) | (static_cast<uint64_t>(p.second)));
 	}

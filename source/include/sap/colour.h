@@ -80,6 +80,7 @@ namespace sap
 				case RGB: return m_rgb == other.m_rgb;
 				case CMYK: return m_cmyk == other.m_cmyk;
 			}
+			util::unreachable();
 		}
 
 

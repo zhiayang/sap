@@ -31,6 +31,7 @@ namespace sap
 			case PT: return inches(m_value) / 72;
 			case PC: return inches(m_value) / 6;
 		}
+		util::unreachable();
 	}
 
 	sap::Length DynLength::resolve(const Style& style) const
@@ -92,6 +93,7 @@ namespace sap
 			case PC: return "pc";
 			case REM: return "rem";
 		}
+		util::unreachable();
 	}
 
 

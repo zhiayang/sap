@@ -22,9 +22,9 @@ namespace util
 		{
 			Region(size_t capacity, Region* next)
 			{
-				this->next = next;
-				this->consumed = 0;
-				this->capacity = capacity;
+				m_next = next;
+				m_consumed = 0;
+				m_capacity = capacity;
 
 				auto alignment = alignof(T);
 				if(alignment < alignof(void*))
@@ -32,29 +32,29 @@ namespace util
 
 				// TODO: report a proper error
 				void* ptr = 0;
-				if(posix_memalign(&ptr, alignment, capacity) != 0)
+				if(posix_memalign(&ptr, alignment, m_capacity) != 0)
 					sap::internal_error("out of memory (trying to allocate {} bytes with {}-byte alignment)", capacity,
 					    alignment);
 
-				this->memory = reinterpret_cast<uint8_t*>(ptr);
-				assert(this->memory != nullptr);
+				m_memory = reinterpret_cast<uint8_t*>(ptr);
+				assert(m_memory != nullptr);
 			}
 
 			~Region()
 			{
-				free(this->memory);
-				if(this->next)
-					delete this->next;
+				free(m_memory);
+				if(m_next)
+					delete m_next;
 
-				this->next = nullptr;
-				this->memory = nullptr;
+				m_next = nullptr;
+				m_memory = nullptr;
 			}
 
-			Region* next = 0;
-			uint8_t* memory = 0;
+			Region* m_next = 0;
+			uint8_t* m_memory = 0;
 
-			size_t consumed = 0;
-			size_t capacity = 0;
+			size_t m_consumed = 0;
+			size_t m_capacity = 0;
 		};
 
 
@@ -67,15 +67,15 @@ namespace util
 			assert(this->region != nullptr);
 			auto head = this->region;
 
-			if(head->capacity - head->consumed < sizeof(T))
+			if(head->m_capacity - head->m_consumed < sizeof(T))
 			{
 				this->region = new Region(REGION_SIZE, head);
 				head = this->region;
 			}
 
-			assert(head->capacity - head->consumed >= sizeof(T));
-			auto mem = head->memory + head->consumed;
-			head->consumed += sizeof(T);
+			assert(head->m_capacity - head->m_consumed >= sizeof(T));
+			auto mem = head->m_memory + head->m_consumed;
+			head->m_consumed += sizeof(T);
 
 			return new(mem) T(static_cast<Args&&>(args)...);
 		}
@@ -88,15 +88,15 @@ namespace util
 			assert(this->region != nullptr);
 			auto head = this->region;
 
-			if(head->capacity - head->consumed < bytes)
+			if(head->m_capacity - head->m_consumed < bytes)
 			{
 				this->region = new Region(REGION_SIZE, head);
 				head = this->region;
 			}
 
-			assert(head->capacity - head->consumed >= bytes);
-			auto mem = head->memory + head->consumed;
-			head->consumed += bytes;
+			assert(head->m_capacity - head->m_consumed >= bytes);
+			auto mem = head->m_memory + head->m_consumed;
+			head->m_consumed += bytes;
 
 			return mem;
 		}

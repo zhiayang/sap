@@ -22,6 +22,7 @@ namespace sap::interp
 			case BinaryOp::Op::Divide: return "/";
 			case BinaryOp::Op::Modulo: return "%";
 		}
+		util::unreachable();
 	}
 
 	ErrorOr<TCResult> BinaryOp::typecheck_impl(Typechecker* ts, const Type* infer, bool keep_lvalue) const
@@ -84,8 +85,8 @@ namespace sap::interp
 		auto ltype = lval.type();
 		auto rtype = rval.type();
 
-		auto do_arith = [](Op op, auto a, auto b) {
-			switch(op)
+		auto do_arith = [](Op oper, auto a, auto b) {
+			switch(oper)
 			{
 				case Op::Add: return a + b;
 				case Op::Subtract: return a - b;
@@ -97,8 +98,8 @@ namespace sap::interp
 					else
 						return a % b;
 				}
-				default: assert(false && "unreachable!");
 			}
+			util::unreachable();
 		};
 
 

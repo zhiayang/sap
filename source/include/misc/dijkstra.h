@@ -12,10 +12,9 @@
 
 namespace util
 {
+	// clang-format off
 	template <typename Node>
-	concept DijkstraNode =
-	    // clang-format off
-	requires(Node node)
+	concept DijkstraNode = requires(Node node)
 	{
 		typename Node::Distance;
 
@@ -32,7 +31,7 @@ namespace util
 			// distances should be comparable
 			d <=> d;
 			// distances should be default constructible to get a 0
-			typename Node::Distance();
+			decltype(d) {};
 		};
 	};
 	// clang-format on

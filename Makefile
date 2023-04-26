@@ -2,6 +2,9 @@
 # Copyright (c) 2021, zhiayang
 # Licensed under the Apache License Version 2.0.
 
+CC                  := clang
+CXX                 := clang++
+
 WARNINGS        = -Wno-padded -Wno-cast-align -Wno-unreachable-code -Wno-packed -Wno-missing-noreturn -Wno-float-equal -Wno-unused-macros -Wextra -Wconversion -Wpedantic -Wall -Wno-unused-parameter -Wno-trigraphs
 WARNINGS += -Werror
 WARNINGS += -Wno-error=unused-parameter
@@ -11,15 +14,19 @@ WARNINGS += -Wno-unused-but-set-variable
 WARNINGS += -Wshadow
 WARNINGS += -Wno-error=shadow
 
+CXX_VERSION_STRING = $(shell $(CXX) --version | head -n1 | tr '[:upper:]' '[:lower:]')
+
+ifeq ("$(findstring gcc,$(CXX_VERSION_STRING))", "gcc")
+	WARNINGS += -Wno-missing-field-initializers
+else
+endif
+
 OPT_FLAGS           := -march=native -O0 -fsanitize=address
 LINKER_OPT_FLAGS    :=
 COMMON_CFLAGS       := -g $(OPT_FLAGS)
 
 OUTPUT_DIR          := build
 TEST_DIR            := $(OUTPUT_DIR)/test
-
-CC                  := clang
-CXX                 := clang++
 
 CFLAGS              = $(COMMON_CFLAGS) -std=c99 -fPIC -O3 -march=native
 CXXFLAGS            = $(COMMON_CFLAGS) -Wno-old-style-cast -std=c++20 -fno-exceptions
@@ -54,7 +61,7 @@ PRECOMP_GCH         := $(PRECOMP_HDR:%.h=$(OUTPUT_DIR)/%.h.gch)
 PRECOMP_INCLUDE     := $(PRECOMP_HDR:%.h=$(OUTPUT_DIR)/%.h)
 PRECOMP_OBJ         := $(PRECOMP_HDR:%.h=$(OUTPUT_DIR)/%.h.gch.o)
 
-ifeq ("$(findstring clang,$(CXX))", "clang")
+ifeq ("$(findstring clang,$(shell $(CXX) --version | head -n1))", "clang")
 	ifeq ("$(UNAME_IDENT)", "Darwin")
 		CLANG_PCH_FASTER    := -fpch-instantiate-templates -fpch-codegen
 		PCH_INCLUDE_FLAGS   := -include-pch $(PRECOMP_GCH)
@@ -63,6 +70,7 @@ ifeq ("$(findstring clang,$(CXX))", "clang")
 		PCH_INCLUDE_FLAGS   := -include $(PRECOMP_INCLUDE)
 	endif
 else
+	PRECOMP_OBJ         :=
 	CLANG_PCH_FASTER    :=
 	PCH_INCLUDE_FLAGS   := -include $(PRECOMP_INCLUDE)
 endif

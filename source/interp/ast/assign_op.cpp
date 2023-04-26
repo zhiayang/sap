@@ -18,6 +18,7 @@ namespace sap::interp
 			case AssignOp::Op::Divide: return "/=";
 			case AssignOp::Op::Modulo: return "%=";
 		}
+		util::unreachable();
 	}
 
 	ErrorOr<TCResult> AssignOp::typecheck_impl(Typechecker* ts, const Type* infer, bool keep_lvalue) const
@@ -108,6 +109,7 @@ namespace sap::interp
 					case Op::Modulo: return BinaryOp::Op::Modulo;
 					case Op::None: assert(false && "unreachable!");
 				}
+				util::unreachable();
 			}();
 
 			auto rval = TRY_VALUE(this->rhs->evaluate(ev));

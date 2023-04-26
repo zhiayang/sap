@@ -48,21 +48,21 @@ namespace sap::interp
 		{
 			auto& arg = args[arg_idx];
 
-			auto get_arg_pair = [](auto&& arg) -> ArgPair<T> {
+			auto get_arg_pair = [](auto&& argument) -> ArgPair<T> {
 				if constexpr(MoveValue)
 				{
 					return {
-						.value = std::move(arg.value),
-						.was_named = arg.name.has_value(),
-						.deferred_typecheck = arg.deferred_typecheck,
+						.value = std::move(argument.value),
+						.was_named = argument.name.has_value(),
+						.deferred_typecheck = argument.deferred_typecheck,
 					};
 				}
 				else
 				{
 					return {
-						.value = arg.value,
-						.was_named = arg.name.has_value(),
-						.deferred_typecheck = arg.deferred_typecheck,
+						.value = argument.value,
+						.was_named = argument.name.has_value(),
+						.deferred_typecheck = argument.deferred_typecheck,
 					};
 				}
 			};

@@ -198,9 +198,9 @@ namespace sap::tree
 		size_t layout_pass = 0;
 		while(true)
 		{
-			auto run_hooks_for_phase = [](interp::Interpreter* cs) -> ErrorOr<void> {
-				auto _ = cs->evaluator().pushBlockContext(std::nullopt);
-				return cs->runHooks();
+			auto run_hooks_for_phase = [](interp::Interpreter* interp) -> ErrorOr<void> {
+				auto _ = interp->evaluator().pushBlockContext(std::nullopt);
+				return interp->runHooks();
 			};
 
 			cs->evaluator().commenceLayoutPass(++layout_pass);

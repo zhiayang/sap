@@ -42,7 +42,7 @@ namespace font::cff
 				for(uint16_t k = 0; k < num_sids + 1; k++)
 					mapping[gid + k] = sid + k;
 
-				gid += num_sids + 1;
+				gid += checked_cast<uint16_t>(num_sids + 1);
 			}
 		}
 		else

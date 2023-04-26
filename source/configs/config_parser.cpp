@@ -106,11 +106,11 @@ namespace sap::config
 	{
 		assert(not sv.empty());
 
-		static auto parse_hex = [](zst::str_view sv, size_t num) -> StrErrorOr<uint32_t> {
+		static auto parse_hex = [](zst::str_view s, size_t num) -> StrErrorOr<uint32_t> {
 			uint32_t hex = 0;
 			for(size_t i = 0; i < num; i++)
 			{
-				char ch = sv[i];
+				char ch = s[i];
 				if(not(('0' <= ch && ch <= '9') || ('a' <= ch && ch <= 'f') || ('A' <= ch && ch <= 'F')))
 					return ErrFmt("invalid hex digit '{}'", ch);
 

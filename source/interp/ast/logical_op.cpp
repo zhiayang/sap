@@ -20,6 +20,7 @@ namespace sap::interp
 			case And: return "and";
 			case Or: return "or";
 		}
+		util::unreachable();
 	}
 
 	ErrorOr<TCResult> LogicalBinOp::typecheck_impl(Typechecker* ts, const Type* infer, bool keep_lvalue) const

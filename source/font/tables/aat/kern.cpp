@@ -49,11 +49,11 @@ namespace font::aat
 			auto first_glyph = consume_u16(table);
 			auto num_glyphs = consume_u16(table);
 
-			util::hashmap<GlyphId, uint16_t> ret {};
+			util::hashmap<GlyphId, uint16_t> glyphs {};
 			for(auto i = 0u; i < num_glyphs; i++)
-				ret[GlyphId(first_glyph + i)] = consume_u16(table);
+				glyphs[GlyphId(first_glyph + i)] = consume_u16(table);
 
-			return ret;
+			return glyphs;
 		};
 
 		ret.left_glyph_classes = parse_class_table(left_class_table);

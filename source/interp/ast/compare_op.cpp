@@ -25,6 +25,7 @@ namespace sap::interp
 			case ComparisonOp::Op::EQ: return "==";
 			case ComparisonOp::Op::NE: return "!=";
 		}
+		util::unreachable();
 	}
 
 	static bool can_compare(ComparisonOp::Op op, const Type* lhs, const Type* rhs)
@@ -74,6 +75,7 @@ namespace sap::interp
 				case EQ: return cmp_eq(a, b);
 				case NE: return not cmp_eq(a, b);
 			}
+			util::unreachable();
 		};
 
 		if(lhs.isArray())

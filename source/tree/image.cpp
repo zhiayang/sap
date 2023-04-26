@@ -55,8 +55,6 @@ namespace sap::tree
 				.pixel_width = checked_cast<size_t>(img_width_),
 				.pixel_height = checked_cast<size_t>(img_height_),
 				.bits_per_pixel = 8,
-				.rgb {},
-				.alpha {},
 			};
 
 			auto& tmp = g_cached_images[file_path.str()] = CachedImage {
@@ -84,7 +82,6 @@ namespace sap::tree
 			.pixel_height = img_height,
 			.bits_per_pixel = 8,
 			.rgb = std::move(image_rgb_data),
-			.alpha {},
 		};
 
 		if(num_actual_channels > 3)

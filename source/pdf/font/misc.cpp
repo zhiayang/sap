@@ -52,5 +52,6 @@ namespace pdf
 			case C14::Symbol: return split_array(AFM_SYMBOL);
 			case C14::ZapfDingbats: return split_array(AFM_ZAPF_DINGBATS);
 		}
+		util::unreachable();
 	}
 }

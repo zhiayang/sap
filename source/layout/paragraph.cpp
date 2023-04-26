@@ -153,10 +153,7 @@ namespace sap::tree
 		std::vector<std::pair<WordSpan, layout::LineAdjustment>> the_lines {};
 
 		using Iter = std::vector<zst::SharedPtr<InlineObject>>::const_iterator;
-		auto add_one_line =
-		    [&the_lines](layout::linebreak::BrokenLine& line, //
-		        Iter words_begin, Iter words_end, const Style& style) {
-
+		auto add_one_line = [&the_lines](auto& line, Iter words_begin, Iter words_end) {
 #if 0
 			zpr::print("line ({} parts): {", words_end - words_begin);
 
@@ -217,7 +214,7 @@ namespace sap::tree
 			auto words_begin = flat.begin() + (ssize_t) current_idx;
 			auto words_end = flat.begin() + (ssize_t) current_idx + (ssize_t) broken_line.numParts();
 
-			add_one_line(broken_line, words_begin, words_end, style);
+			add_one_line(broken_line, words_begin, words_end);
 
 			current_idx += broken_line.numParts();
 		}

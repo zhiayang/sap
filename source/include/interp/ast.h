@@ -97,7 +97,7 @@ namespace sap::interp
 	struct Ident : Expr
 	{
 		explicit Ident(Location loc) : Expr(std::move(loc)) { }
-		Ident(Location loc, QualifiedId name) : Expr(std::move(loc)), name(std::move(name)) { }
+		Ident(Location loc, QualifiedId name_) : Expr(std::move(loc)), name(std::move(name_)) { }
 
 		virtual ErrorOr<EvalResult> evaluate_impl(Evaluator* ev) const override;
 		virtual ErrorOr<TCResult> typecheck_impl(Typechecker* ts, //
@@ -150,7 +150,7 @@ namespace sap::interp
 
 	struct BooleanLit : Expr
 	{
-		explicit BooleanLit(Location loc, bool value) : Expr(std::move(loc)), value(value) { }
+		explicit BooleanLit(Location loc, bool value_) : Expr(std::move(loc)), value(value_) { }
 
 		virtual ErrorOr<EvalResult> evaluate_impl(Evaluator* ev) const override;
 		virtual ErrorOr<TCResult> typecheck_impl(Typechecker* ts, //
@@ -503,7 +503,7 @@ namespace sap::interp
 
 	struct ArraySpreadOp : Expr
 	{
-		explicit ArraySpreadOp(Location loc, std::unique_ptr<Expr> expr) : Expr(std::move(loc)), expr(std::move(expr))
+		explicit ArraySpreadOp(Location loc, std::unique_ptr<Expr> expr_) : Expr(std::move(loc)), expr(std::move(expr_))
 		{
 		}
 
@@ -656,7 +656,7 @@ namespace sap::interp
 
 	struct Declaration : Stmt
 	{
-		Declaration(Location loc, const std::string& name) : Stmt(std::move(loc)), name(name) { }
+		Declaration(Location loc, const std::string& name_) : Stmt(std::move(loc)), name(name_) { }
 
 		std::string name;
 
@@ -684,8 +684,8 @@ namespace sap::interp
 
 	struct VariableDecl : Declaration
 	{
-		VariableDecl(Location loc, const std::string& name, bool mut)
-		    : Declaration(std::move(loc), name), is_mutable(mut)
+		VariableDecl(Location loc, const std::string& name_, bool mut)
+		    : Declaration(std::move(loc), name_), is_mutable(mut)
 		{
 		}
 
@@ -704,10 +704,10 @@ namespace sap::interp
 		    bool is_mutable,
 		    bool is_global,
 		    std::unique_ptr<Expr> init,
-		    std::optional<frontend::PType> explicit_type)
+		    std::optional<frontend::PType> explicit_type_)
 		    : Definition(loc, new VariableDecl(loc, name, is_mutable))
 		    , initialiser(std::move(init))
-		    , explicit_type(explicit_type)
+		    , explicit_type(explicit_type_)
 		    , m_is_global(is_global)
 		{
 		}
@@ -734,8 +734,8 @@ namespace sap::interp
 			Location loc;
 		};
 
-		FunctionDecl(Location loc, const std::string& name, std::vector<Param>&& params, frontend::PType return_type)
-		    : Declaration(loc, name), m_params(std::move(params)), m_return_type(return_type)
+		FunctionDecl(Location loc, const std::string& name_, std::vector<Param>&& params, frontend::PType return_type)
+		    : Declaration(loc, name_), m_params(std::move(params)), m_return_type(return_type)
 		{
 		}
 
@@ -800,7 +800,7 @@ namespace sap::interp
 
 	struct StructDecl : Declaration
 	{
-		StructDecl(Location loc, const std::string& name) : Declaration(loc, name) { }
+		StructDecl(Location loc, const std::string& name_) : Declaration(loc, name_) { }
 
 		virtual ErrorOr<EvalResult> evaluate_impl(Evaluator* ev) const override;
 		virtual ErrorOr<TCResult> typecheck_impl(Typechecker* ts, //
@@ -839,7 +839,7 @@ namespace sap::interp
 
 	struct EnumDecl : Declaration
 	{
-		EnumDecl(Location loc, const std::string& name) : Declaration(loc, name) { }
+		EnumDecl(Location loc, const std::string& name_) : Declaration(loc, name_) { }
 
 		virtual ErrorOr<EvalResult> evaluate_impl(Evaluator* ev) const override;
 		virtual ErrorOr<TCResult> typecheck_impl(Typechecker* ts, //
@@ -851,7 +851,7 @@ namespace sap::interp
 	{
 		struct EnumeratorDecl : Declaration
 		{
-			EnumeratorDecl(Location loc, const std::string& name) : Declaration(loc, name) { }
+			EnumeratorDecl(Location loc, const std::string& name_) : Declaration(loc, name_) { }
 
 			virtual ErrorOr<EvalResult> evaluate_impl(Evaluator* ev) const override;
 			virtual ErrorOr<TCResult>

@@ -42,16 +42,18 @@ namespace sap
 	}
 }
 
-#define TRY(x)                                                       \
-	__extension__({                                                  \
-		auto&& r = x;                                                \
-		using R = std::decay_t<decltype(r)>;                         \
-		using V = typename R::value_type;                            \
-		using E = typename R::error_type;                            \
-		if(r.is_err())                                               \
-			return Err(std::move(r.error()));                        \
-		util::impl::extract_value_or_return_void<V, E>().extract(r); \
+#define __TRY(x, L) __extension__({                                       \
+		auto&& __r##L = x;                                                \
+		using R = std::decay_t<decltype(__r##L)>;                         \
+		using V = typename R::value_type;                                 \
+		using E = typename R::error_type;                                 \
+		if((__r##L).is_err())                                             \
+			return Err(std::move((__r##L).error()));                      \
+		util::impl::extract_value_or_return_void<V, E>().extract(__r##L); \
 	})
+
+#define _TRY(x, L) __TRY(x, L)
+#define TRY(x) _TRY(x, __COUNTER__)
 
 inline void zst::error_and_exit(const char* str, size_t len)
 {

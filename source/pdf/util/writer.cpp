@@ -11,9 +11,9 @@
 
 namespace pdf
 {
-	Writer::Writer(zst::str_view path)
+	Writer::Writer(zst::str_view path_)
 	{
-		this->path = std::move(path);
+		this->path = std::move(path_);
 		this->bytes_written = 0;
 		this->nesting = 0;
 

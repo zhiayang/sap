@@ -57,7 +57,7 @@ namespace font::cff
 		if(sid < NUM_STANDARD_STRINGS)
 			return g_StandardStrings[sid];
 
-		sid -= NUM_STANDARD_STRINGS;
+		sid -= checked_cast<uint16_t>(NUM_STANDARD_STRINGS);
 		if(sid >= this->string_ids.size())
 		{
 			sap::error("font/cff", "invalid string with index '{}' (max is {})", sid + NUM_STANDARD_STRINGS,

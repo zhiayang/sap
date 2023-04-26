@@ -213,7 +213,7 @@ namespace font::aat
 template <>
 struct std::hash<font::aat::Feature>
 {
-	constexpr size_t operator()(font::aat::Feature f) const
+	size_t operator()(font::aat::Feature f) const
 	{
 		return std::hash<uint32_t>()(((uint32_t) f.type << 16) | f.selector);
 	}

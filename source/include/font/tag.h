@@ -30,7 +30,7 @@ namespace font
 			});
 		}
 
-		inline constexpr size_t hash() const { return std::hash<uint32_t>()(value); }
+		inline size_t hash() const { return std::hash<uint32_t>()(value); }
 
 		constexpr bool operator<(const Tag& t) const { return this->value < t.value; }
 
@@ -41,5 +41,5 @@ namespace font
 template <>
 struct std::hash<font::Tag>
 {
-	constexpr size_t operator()(font::Tag t) const { return t.hash(); }
+	size_t operator()(font::Tag t) const { return t.hash(); }
 };

@@ -84,7 +84,7 @@ namespace font::cff
 				buf.remove_prefix(1);
 
 				auto process_nibble = [&](uint8_t nibble) -> bool {
-					if(0 <= nibble && nibble <= 9)
+					if(nibble <= 9)
 					{
 						if(exponentiating)
 						{
