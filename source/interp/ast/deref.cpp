@@ -31,9 +31,16 @@ namespace sap::interp
 		{
 			auto opt = inside.getOptional();
 			if(opt.has_value())
-				return EvalResult::ofValue((*opt)->clone());
+			{
+				if(expr_res.isLValue())
+					return EvalResult::ofValue((*opt)->clone());
+				else
+					return EvalResult::ofValue(std::move(**opt));
+			}
 			else
+			{
 				return ErrMsg(ev, "dereferencing empty optional");
+			}
 		}
 		else
 		{
@@ -70,7 +77,7 @@ namespace sap::interp
 
 		auto& inside = expr_res.get();
 		if(auto inside_ty = inside.type();
-			inside_ty->isTreeBlockObj() || inside_ty->isTreeInlineObj() || inside_ty->isLayoutObject())
+		    inside_ty->isTreeBlockObj() || inside_ty->isTreeInlineObj() || inside_ty->isLayoutObject())
 		{
 			return EvalResult::ofVoid();
 		}

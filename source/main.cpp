@@ -13,14 +13,40 @@
 
 #if 0
 TODO:
-scripting:
-- dereferencing optionals might need to clone them (which is weird)
+scripting
+---------
+[ ] decide whether we want positional struct field arguments or not
+	- i think the { x } --> { x: x } shorthand was added; this kinda conflicts
+		with positional fields
 
-layout:
-- dijkstra linebreaking might accidentally make an extra page;
+[ ] heckin generics plz
+
+[ ] GO BACK TO UNIQUE_PTR PLS
+
+
+layout
+------
+[ ] 'em' doesn't pass down properly in InlineSpans, apparently
+	fn foo() -> Inline { make_text("hi").apply_style({ font_size: 2em }); }
+	foo().apply_style({ font_size: 20pt });
+
+	this is most likely because we override the style, rather than doing the "correct"
+	thing of doing a relative computation when the unit is relative.
+
+[ ] dijkstra linebreaking might accidentally make an extra page;
 	- when rendering, use some mechanism (eg. proxy object) to only make the page if
 		someone tried to actually put stuff in it (or access it)
-- control comma spacing stretch as well (similar to sentence ending)
+
+[ ] control comma spacing stretch as well (similar to sentence ending)
+
+
+misc
+----
+[ ] XML metadata and/or declare PDF/A conformance
+
+[ ] url annotations
+
+[ ] actually use the `-I` and `-L` arguments
 
 #endif
 

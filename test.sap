@@ -44,11 +44,11 @@ sans!.regular.adjust_glyph_spacing({ match: ["2.1", "3.1", "4.1", "5.1", "6.1", 
 		});
 	}
 
-	fn cpp() -> Inline
+	fn cpp() -> ?Inline
 	{
 		let c = \{C}.set_width(0.56em);
-		var p1 = bold1(\{+}).apply_style({ font_size: 10.5pt, });
-		var p2 = bold1(\{+}).apply_style({ font_size: 10.5pt, });
+		var p1 = bold1(\{+}).apply_style({ font_size: 0.875em, });
+		var p2 = bold1(\{+}).apply_style({ font_size: 0.875em, });
 
 		p1.set_width(0.6em);
 		p1.raise(0.05em);
@@ -56,23 +56,12 @@ sans!.regular.adjust_glyph_spacing({ match: ["2.1", "3.1", "4.1", "5.1", "6.1", 
 
 		return make_span(glue: true, *c, *p1, *p2);
 	}
+
+	fn kekw() -> Inline
+	{
+		return cpp()!.apply_style({ font_size: 20pt });
+	}
 }
-
-/#
-pains/things to fix:
-
-[ ] numbered_lists can't be more than 9 things long, otherwise the numbers don't line up
-
-[ ] dereferencing optionals might need to clone them (which is weird)
-
-[ ] prettier std::qty
-
-[ ] no way to get value out of enum instance
-
-[ ] sap crash:
-	fn foo(f: builtin::Style) { builtin::apply_style(f, builtin::make_text("A")); }
-	foo({line_spacing:1em});
-#/
 
 \disable_page_numbering();
 
@@ -80,6 +69,7 @@ pains/things to fix:
 and the advanced, graduate-level CS5250.
  #/
 
+\kekw()
 
 NUS currently has a gap in its operating systems courses, between the introductory CS2106
 and the advanced, graduate-level CS5250. In this project, we significantly overhaul an
