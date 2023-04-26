@@ -40,7 +40,7 @@ namespace pdf
 		                Decimal::create((m_position.x() + m_size.x()).value()),  //
 		                Decimal::create((m_position.y() + m_size.y()).value())), //
 		        },
-		        { names::BS, Dictionary::create(names::Border, { { names::S, names::S.ptr() } }) },
+		        // { names::BS, Dictionary::create(names::Border, { { names::S, names::S.ptr() } }) },
 		        { names::F, Integer::create(1 << 2) }, // set the Print flag
 		        { names::C, Array::create(Decimal::create(1.0), Decimal::create(0), Decimal::create(0)) },
 		        {

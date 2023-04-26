@@ -51,12 +51,12 @@ namespace std
 	{
 		let section_num = 1 + g_sections.size();
 
-		var num_line = builtin::make_hbox(\line { \builtin::make_text(f"{section_num}") }, builtin::hspace(3mm))
+		var num_line = builtin::make_hbox(\line { \builtin::make_text(f"{section_num}") }, builtin::hspace(6mm))
 			.apply_style({
 				horz_alignment: .Right,
 				font_size: 13pt,
 			});
-		num_line.set_width(14mm);
+		num_line.set_width(20mm);
 
 		var name_line = builtin::make_line(builtin::make_text(name)).apply_style({
 			font_size: 24pt,
@@ -71,14 +71,14 @@ namespace std
 		};
 
 		var box = builtin::make_vbox(
-			builtin::vspace(0.5em),
+			builtin::vspace(0.6em),
 			builtin::make_hbox(*num_line, *name_line),
 			builtin::vspace(-builtin::current_style().paragraph_spacing! / 2),
 		).apply_style({
 			font_family: sans_font(),
 		});
 
-		box.offset_position({ x: -14mm, y: 0mm });
+		box.offset_position({ x: -20mm, y: 0mm });
 		g_sections += [the_section];
 
 		return box;
@@ -96,12 +96,12 @@ namespace std
 		var sec = &mut g_sections[g_sections.size() - 1];
 		let subnum = 1 + sec!.subsections.size();
 
-		var num_line = builtin::make_hbox(builtin::make_line(builtin::make_text(f"{sec!.num}.{subnum}")), builtin::hspace(3mm))
+		var num_line = builtin::make_hbox(builtin::make_line(builtin::make_text(f"{sec!.num}.{subnum}")), builtin::hspace(6mm))
 			.apply_style({
 				horz_alignment: .Right,
 				font_size: 13pt,
 			});
-		num_line.set_width(14mm);
+		num_line.set_width(20mm);
 
 		var name_line = builtin::make_line(builtin::make_text(name)).apply_style({
 			font_size: 19.5pt,
@@ -116,14 +116,14 @@ namespace std
 		};
 
 		var box = builtin::make_vbox(
-			builtin::vspace(0.5em),
+			builtin::vspace(0.6em),
 			builtin::make_hbox(*num_line, *name_line),
 			builtin::vspace(-builtin::current_style().paragraph_spacing! / 2),
 		).apply_style({
 			font_family: sans_font(),
 		});
 
-		box.offset_position({ x: -14mm, y: 0mm });
+		box.offset_position({ x: -20mm, y: 0mm });
 		sec!.subsections += [the_sub];
 		return box;
 	}
@@ -148,11 +148,11 @@ namespace std
 		var subsubnum = 1 + subsec!.subsubsections.size();
 
 		var num_line = builtin::make_hbox(builtin::make_line(builtin::make_text(f"{sec!.num}.{subsec!.num}.{subsubnum}")),
-			builtin::hspace(3mm)).apply_style({
+			builtin::hspace(6mm)).apply_style({
 				horz_alignment: .Right,
 				font_size: 13pt,
 			});
-		num_line.set_width(14mm);
+		num_line.set_width(20mm);
 
 		var name_line = builtin::make_line(builtin::make_text(name)).apply_style({
 			font_size: 17pt,
@@ -166,14 +166,14 @@ namespace std
 		};
 
 		var box = builtin::make_vbox(
-			builtin::vspace(0.5em),
+			builtin::vspace(0.6em),
 			builtin::make_hbox(*num_line, *name_line),
 			builtin::vspace(-builtin::current_style().paragraph_spacing! / 2)
 		).apply_style({
 			font_family: sans_font(),
 		});
 
-		box.offset_position({ x: -14mm, y: 0mm });
+		box.offset_position({ x: -20mm, y: 0mm });
 		subsec!.subsubsections += [the_subsub];
 		return box;
 	}
