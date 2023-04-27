@@ -58,18 +58,26 @@ namespace sap::interp::builtin
 
 	Value builtin::BS_Style::make(Evaluator* ev, const Style& style)
 	{
-		return StructMaker(BS_Style::type->toStruct()) //
-		    .set("font_family", BS_FontFamily::make(ev, style.font_family()))
-		    .set("font_size", Value::length(DynLength(style.font_size())))
-		    .set("line_spacing", Value::floating(style.line_spacing()))
-		    .set("sentence_space_stretch", Value::floating(style.sentence_space_stretch()))
-		    .set("paragraph_spacing", Value::length(DynLength(style.paragraph_spacing())))
-		    .set("horz_alignment",
-		        Value::enumerator(BE_Alignment::type->toEnum(),
-		            Value::integer(static_cast<int64_t>(style.horz_alignment()))))
-		    .set("colour", BS_Colour::make(ev, style.colour()))
-		    .set("enable_smart_quotes", Value::boolean(style.smart_quotes_enabled()))
-		    .make();
+		auto maker = StructMaker(BS_Style::type->toStruct());
+
+		if(style.have_font_family())
+			maker.set("font_family", BS_FontFamily::make(ev, style.font_family()));
+		if(style.have_font_size())
+			maker.set("font_size", Value::length(DynLength(style.font_size())));
+		if(style.have_line_spacing())
+			maker.set("line_spacing", Value::floating(style.line_spacing()));
+		if(style.have_sentence_space_stretch())
+			maker.set("sentence_space_stretch", Value::floating(style.sentence_space_stretch()));
+		if(style.have_paragraph_spacing())
+			maker.set("paragraph_spacing", Value::length(DynLength(style.paragraph_spacing())));
+		if(style.have_horz_alignment())
+			maker.set("horz_alignment", BE_Alignment::make(style.horz_alignment()));
+		if(style.have_colour())
+			maker.set("colour", BS_Colour::make(ev, style.colour()));
+		if(style.have_smart_quotes_enablement())
+			maker.set("enable_smart_quotes", Value::boolean(style.smart_quotes_enabled()));
+
+		return maker.make();
 	}
 
 

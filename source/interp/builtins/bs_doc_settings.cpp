@@ -21,26 +21,21 @@ namespace sap::interp::builtin
 	const Type* builtin::BS_DocumentSettings::type = nullptr;
 	std::vector<Field> builtin::BS_DocumentSettings::fields()
 	{
-		using QID = QualifiedId;
 		auto pt_len = PT::named(frontend::TYPE_LENGTH);
 		auto pt_float = PT::named(frontend::TYPE_FLOAT);
 
-		auto pt_font_family = PT::
-		    named(QID { .top_level = true, .parents = { "builtin" }, .name = BS_FontFamily::name });
-		auto pt_size2d = PT::named(QID { .top_level = true, .parents = { "builtin" }, .name = BS_Size2d::name });
-		auto pt_margins = PT::
-		    named(QID { .top_level = true, .parents = { "builtin" }, .name = BS_DocumentMargins::name });
+		auto pt_font_family = ptype_for_builtin<BS_FontFamily>();
+		auto pt_size2d = ptype_for_builtin<BS_Size2d>();
+		auto pt_margins = ptype_for_builtin<BS_DocumentMargins>();
+		auto pt_style = ptype_for_builtin<BS_Style>();
 
 		return util::vectorOf(                                                                                       //
 		    Field { .name = "serif_font_family", .type = PT::optional(pt_font_family), .initialiser = make_null() }, //
 		    Field { .name = "sans_font_family", .type = PT::optional(pt_font_family), .initialiser = make_null() },  //
 		    Field { .name = "mono_font_family", .type = PT::optional(pt_font_family), .initialiser = make_null() },  //
-		    Field { .name = "font_size", .type = PT::optional(pt_len), .initialiser = make_null() },                 //
 		    Field { .name = "paper_size", .type = PT::optional(pt_size2d), .initialiser = make_null() },             //
 		    Field { .name = "margins", .type = PT::optional(pt_margins), .initialiser = make_null() },               //
-		    Field { .name = "line_spacing", .type = PT::optional(pt_float), .initialiser = make_null() },            //
-		    Field { .name = "sentence_space_stretch", .type = PT::optional(pt_float), .initialiser = make_null() },  //
-		    Field { .name = "paragraph_spacing", .type = PT::optional(pt_len), .initialiser = make_null() }          //
+		    Field { .name = "default_style", .type = PT::optional(pt_style), .initialiser = make_null() }            //
 		);
 	}
 
@@ -52,10 +47,7 @@ namespace sap::interp::builtin
 		    .setOptional("sans_font_family", settings.sans_font_family, ev, &BS_FontFamily::make)
 		    .setOptional("mono_font_family", settings.mono_font_family, ev, &BS_FontFamily::make)
 		    .setOptional("paper_size", settings.paper_size, ev, &BS_Size2d::make)
-		    .setOptional("font_size", settings.font_size, &Value::length)
-		    .setOptional("line_spacing", settings.line_spacing, &Value::floating)
-		    .setOptional("sentence_space_stretch", settings.sentence_space_stretch, &Value::floating)
-		    .setOptional("paragraph_spacing", settings.paragraph_spacing, &Value::length)
+		    .setOptional("default_style", settings.default_style, ev, &BS_Style::make)
 		    .make();
 	}
 
@@ -78,11 +70,8 @@ namespace sap::interp::builtin
 		if(auto& x = value.getStructField("paper_size"); x.haveOptionalValue())
 			settings.paper_size = BS_Size2d::unmake(ev, **x.getOptional());
 
-		settings.font_size = get_optional_struct_field<DynLength>(value, "font_size", &Value::getLength);
-		settings.paragraph_spacing = get_optional_struct_field<DynLength>(value, "paragraph_spacing",
-		    &Value::getLength);
-		settings.line_spacing = get_optional_struct_field<double>(value, "line_spacing");
-		settings.sentence_space_stretch = get_optional_struct_field<double>(value, "sentence_space_stretch");
+		if(auto& x = value.getStructField("default_style"); x.haveOptionalValue())
+			settings.default_style = TRY(BS_Style::unmake(ev, **x.getOptional()));
 
 		return Ok(std::move(settings));
 	}

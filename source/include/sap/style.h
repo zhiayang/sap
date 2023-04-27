@@ -23,24 +23,28 @@ namespace sap
 
 	struct Style
 	{
-#define DEFINE_ACCESSOR(field_type, field_name, method_name)            \
+#define DEFINE_ACCESSOR(field_type, field_name, method_name, name2)     \
 	inline field_type method_name() const                               \
 	{                                                                   \
 		if(m_present_styles & (STY_##field_name))                       \
 			return *field_name;                                         \
 		sap::internal_error("accessed unset style field " #field_name); \
+	}                                                                   \
+	inline bool name2() const                                           \
+	{                                                                   \
+		return m_present_styles & STY_##field_name;                     \
 	}
 
-		DEFINE_ACCESSOR(FontFamily, m_font_family, font_family);
-		DEFINE_ACCESSOR(FontStyle, m_font_style, font_style);
-		DEFINE_ACCESSOR(Length, m_font_size, font_size);
-		DEFINE_ACCESSOR(Length, m_root_font_size, root_font_size);
-		DEFINE_ACCESSOR(double, m_line_spacing, line_spacing);
-		DEFINE_ACCESSOR(double, m_sentence_space_stretch, sentence_space_stretch);
-		DEFINE_ACCESSOR(Length, m_paragraph_spacing, paragraph_spacing);
-		DEFINE_ACCESSOR(Alignment, m_horz_alignment, horz_alignment);
-		DEFINE_ACCESSOR(Colour, m_colour, colour);
-		DEFINE_ACCESSOR(bool, m_enable_smart_quotes, smart_quotes_enabled);
+		DEFINE_ACCESSOR(FontFamily, m_font_family, font_family, have_font_family);
+		DEFINE_ACCESSOR(FontStyle, m_font_style, font_style, have_font_style);
+		DEFINE_ACCESSOR(Length, m_font_size, font_size, have_font_size);
+		DEFINE_ACCESSOR(Length, m_root_font_size, root_font_size, have_root_font_size);
+		DEFINE_ACCESSOR(double, m_line_spacing, line_spacing, have_line_spacing);
+		DEFINE_ACCESSOR(double, m_sentence_space_stretch, sentence_space_stretch, have_sentence_space_stretch);
+		DEFINE_ACCESSOR(Length, m_paragraph_spacing, paragraph_spacing, have_paragraph_spacing);
+		DEFINE_ACCESSOR(Alignment, m_horz_alignment, horz_alignment, have_horz_alignment);
+		DEFINE_ACCESSOR(Colour, m_colour, colour, have_colour);
+		DEFINE_ACCESSOR(bool, m_enable_smart_quotes, smart_quotes_enabled, have_smart_quotes_enablement);
 #undef DEFINE_ACCESSOR
 
 

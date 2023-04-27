@@ -36,10 +36,8 @@ namespace sap::layout
 
 	static Length resolve_len(const DocumentSettings& settings, DynLength len)
 	{
-		auto sz = sap::Length(25.4 * (DocumentSettings::DEFAULT_FONT_SIZE / 72.0));
-
-		auto font_size = settings.font_size->resolveWithoutFont(sz, sz);
-		return len.resolveWithoutFont(font_size, font_size);
+		auto sz = DocumentSettings::DEFAULT_FONT_SIZE;
+		return len.resolveWithoutFont(sz, sz);
 	}
 
 	static Size2d paper_size(const DocumentSettings& settings)
@@ -63,16 +61,10 @@ namespace sap::layout
 	Document::Document(interp::Interpreter* cs, const DocumentSettings& settings)
 	    : m_page_layout(this, paper_size(settings), make_margins(settings))
 	{
-		auto style = getDefaultStyle(cs);
-		style.set_font_family(*settings.serif_font_family)
-		    .set_font_size(resolve_len(settings, *settings.font_size))
-		    .set_root_font_size(resolve_len(settings, *settings.font_size))
-		    .set_line_spacing(*settings.line_spacing)
-		    .set_sentence_space_stretch(*settings.sentence_space_stretch)
-		    .set_paragraph_spacing(resolve_len(settings, *settings.paragraph_spacing))
-		    .set_horz_alignment(Alignment::Justified);
-
-		this->setStyle(style);
+		this->setStyle(
+		    getDefaultStyle(cs) //
+		        .with_font_family(*settings.serif_font_family)
+		        .extendWith(*settings.default_style));
 	}
 
 

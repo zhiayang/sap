@@ -57,11 +57,16 @@ namespace std
 		var g = 0.0;
 		var b = 0.0;
 
-		if(a.size() == 3)
+		# my god, we need slices / substrings / anything
+		var x = 0;
+		if(a[0] == '#')
+			x = 1;
+
+		if(a.size() == x + 3)
 		{
-			r = parse_hex_char(a[0]);
-			g = parse_hex_char(a[1]);
-			b = parse_hex_char(a[2]);
+			r = parse_hex_char(a[x + 0]);
+			g = parse_hex_char(a[x + 1]);
+			b = parse_hex_char(a[x + 2]);
 
 			# convert F to FF, etc.
 			r = 16.0 * r + r;
@@ -70,9 +75,9 @@ namespace std
 		}
 		else
 		{
-			r = 16 * parse_hex_char(a[0]) + parse_hex_char(a[1]);
-			g = 16 * parse_hex_char(a[2]) + parse_hex_char(a[3]);
-			b = 16 * parse_hex_char(a[4]) + parse_hex_char(a[5]);
+			r = 16 * parse_hex_char(a[x + 0]) + parse_hex_char(a[x + 1]);
+			g = 16 * parse_hex_char(a[x + 2]) + parse_hex_char(a[x + 3]);
+			b = 16 * parse_hex_char(a[x + 4]) + parse_hex_char(a[x + 5]);
 		}
 
 		return rgb(r / 255.0, g / 255.0, b / 255.0);

@@ -10,14 +10,16 @@ sans!.regular.adjust_glyph_spacing({ match: ["1.2", "1.3", "1.5", "1.6", "1.7", 
 sans!.regular.adjust_glyph_spacing({ match: ["2.1", "3.1", "4.1", "5.1", "6.1", "8.1", "9.1", "0.1"], adjust: [0.0, +0.05, 0.0] });
 
 \start_document({
-	font_size: 12pt,
 	serif_font_family: *serif,
 	sans_font_family: *sans,
 	paper_size: std::paper_size::A4,
-	line_spacing: 1.3,
-	sentence_space_stretch: 1.3,
-	paragraph_spacing: 1.5em,
 	margins: { left: 2cm, right: 2cm, top: 2cm, bottom: 2cm },
+	default_style: {
+		font_size: 20pt,
+		line_spacing: 2,
+		sentence_space_stretch: 1.3,
+		paragraph_spacing: 1.5em,
+	}
 });
 
 \script::{

@@ -495,7 +495,7 @@ namespace std
 			});
 
 			if(i != 0)
-				lines += [builtin::vspace(0.7em)];
+				lines += [builtin::vspace(1em)];
 
 			g_toc_lines += [item.ref()];
 			lines += [*item];
@@ -561,7 +561,7 @@ namespace std
 		}
 
 		var ret = builtin::make_vbox(...*lines).apply_style({
-			paragraph_spacing: 0em,
+			paragraph_spacing: 0.1em,
 		});
 
 		ret = builtin::make_vbox(

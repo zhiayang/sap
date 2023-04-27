@@ -18,20 +18,32 @@ namespace sap::interp::builtin
 
 	Value StructMaker::make()
 	{
-		// do some things...
+		std::vector<Value> fields {};
+
 		for(size_t i = 0; i < m_fields.size(); i++)
 		{
 			auto a = m_type->getFieldAtIndex(i);
-			auto b = m_fields[i].type();
+			if(not m_fields[i].has_value())
+			{
+				if(not a->isOptional())
+					sap::internal_error("unset field '{}'", m_type->getFields()[i].name);
 
-			if(a == b)
-				continue;
-
-			else if(a->isOptional() && a->optionalElement() == b)
-				m_fields[i] = Value::optional(a->optionalElement(), std::move(m_fields[i]));
+				// it's optional -- make it null.
+				fields.push_back(Value::optional(a->optionalElement(), std::nullopt));
+			}
+			else
+			{
+				auto b = m_fields[i]->type();
+				if(a == b)
+					fields.push_back(std::move(*m_fields[i]));
+				else if(a->isOptional() && a->optionalElement() == b)
+					fields.push_back(Value::optional(a->optionalElement(), std::move(*m_fields[i])));
+				else
+					sap::internal_error("mismatched field {} ({}, {})", m_type->getFields()[i].name, a, b);
+			}
 		}
 
-		return Value::structure(m_type, std::move(m_fields));
+		return Value::structure(m_type, std::move(fields));
 	}
 
 	StructMaker& StructMaker::set(zst::str_view name, Value value)

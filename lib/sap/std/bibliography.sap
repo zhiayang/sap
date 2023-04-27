@@ -1,6 +1,7 @@
 # std/bibliography.sap
 
 import "std/state.sap";
+import "std/colour.sap";
 
 namespace std
 {
@@ -51,7 +52,7 @@ namespace std
 		}
 
 		if(record == null)
-			return builtin::make_text(f"[??????]");
+			return builtin::make_text(f"[??????]").apply_style({ colour: rgb(1, 0, 0) });
 
 		if(not record!.refnum?)
 		{
@@ -66,7 +67,6 @@ namespace std
 		else        txt = f"[{record!.refnum!}]";
 
 		let tio = builtin::make_text(glue: true, txt);
-
 		g_references += [Reference {
 			num: record!.refnum!,
 			tio_ref: tio.ref(),

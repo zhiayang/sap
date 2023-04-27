@@ -16,16 +16,20 @@ TODO:
 scripting
 ---------
 [ ] decide whether we want positional struct field arguments or not
-	- i think the { x } --> { x: x } shorthand was added; this kinda conflicts
+	- i think the { x } --> { x: x } shorthand was added; this is kinda at odds
 		with positional fields
 
 [ ] heckin generics plz
 
 [ ] GO BACK TO UNIQUE_PTR PLS
 
+[x] add `default_style` field to document_settings instead of duplicating style fields
+
 
 layout
 ------
+[ ] high cost for single word at end of paragraph
+
 [ ] 'em' doesn't pass down properly in InlineSpans, apparently
 	fn foo() -> Inline { make_text("hi").apply_style({ font_size: 2em }); }
 	foo().apply_style({ font_size: 20pt });

@@ -5,6 +5,7 @@
 #pragma once
 
 #include "sap/units.h"
+#include "sap/style.h"
 #include "sap/font_family.h"
 
 namespace sap
@@ -25,12 +26,8 @@ namespace sap
 		std::optional<FontFamily> sans_font_family;
 		std::optional<FontFamily> mono_font_family;
 
-		std::optional<DynLength> font_size;
 		std::optional<DynLength2d> paper_size;
 		std::optional<Margins> margins;
-
-		std::optional<DynLength> paragraph_spacing;
-		std::optional<double> line_spacing;
-		std::optional<double> sentence_space_stretch;
+		std::optional<Style> default_style;
 	};
 }

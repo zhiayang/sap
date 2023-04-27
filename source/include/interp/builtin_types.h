@@ -294,11 +294,22 @@ namespace sap::interp::builtin
 				return this->set(field, Value::optional(field_type, std::nullopt));
 		}
 
+		template <typename T>
+		StructMaker&
+		setOptional(zst::str_view field, std::optional<T> value, Evaluator* ev, Value (*fn)(Evaluator*, const T&))
+		{
+			auto field_type = m_type->getFieldNamed(field)->optionalElement();
+			if(value.has_value())
+				return this->set(field, Value::optional(field_type, fn(ev, *value)));
+			else
+				return this->set(field, Value::optional(field_type, std::nullopt));
+		}
+
 
 
 	private:
 		const StructType* m_type;
-		std::vector<Value> m_fields;
+		std::vector<std::optional<Value>> m_fields;
 	};
 
 	template <typename BS>

@@ -73,11 +73,7 @@ namespace sap::layout
 	{
 		using Margins = DocumentSettings::Margins;
 
-		settings.font_size = settings.font_size.value_or(DynLength(DEFAULT_FONT_SIZE_PT));
 		settings.paper_size = settings.paper_size.value_or(DynLength2d { DynLength(210_mm), DynLength(297_mm) });
-		settings.line_spacing = settings.line_spacing.value_or(DEFAULT_LINE_SPACING);
-		settings.sentence_space_stretch = settings.sentence_space_stretch.value_or(DEFAULT_SENTENCE_SPACE_STRETCH);
-		settings.paragraph_spacing = settings.paragraph_spacing.value_or(DynLength(0, DynLength::MM));
 
 		constexpr auto FONT_SZ = DEFAULT_FONT_SIZE_PT;
 		auto paper_width = settings.paper_size->x.resolveWithoutFont(FONT_SZ, FONT_SZ);
