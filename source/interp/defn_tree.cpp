@@ -30,7 +30,7 @@ namespace sap::interp
 		ret.top_level = true;
 		ret.name = std::move(name);
 
-		for(auto tree = this; tree && tree->parent() != nullptr; tree = tree->parent())
+		for(auto tree = this; tree != nullptr; tree = tree->parent())
 			ret.parents.push_back(tree->m_name);
 
 		std::reverse(ret.parents.begin(), ret.parents.end());

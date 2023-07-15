@@ -46,9 +46,9 @@ namespace sap::interp
 	ErrorOr<TCResult> EnumDecl::typecheck_impl(Typechecker* ts, const Type* infer, bool keep_lvalue) const
 	{
 		assert(infer != nullptr);
-		auto enum_type = Type::makeEnum(m_declared_tree->scopeName(this->name), infer);
-
 		TRY(ts->current()->declare(this));
+
+		auto enum_type = Type::makeEnum(m_declared_tree->scopeName(this->name), infer);
 		return TCResult::ofRValue(enum_type);
 	}
 

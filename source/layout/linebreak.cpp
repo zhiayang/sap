@@ -98,8 +98,11 @@ namespace sap::layout::linebreak
 
 				if(neighbour_broken_until == m_end)
 				{
-					// last line cost calculation has 0 cost
-					Distance cost = 0;
+					// completely arbitrary. *BUT* the key goal is to have exponentially
+					// increasing costs for having a very very short last line.
+					auto ratio = neighbour_line.width() / m_preferred_line_length;
+
+					Distance cost = 2.0 / std::pow(ratio + 1, 1.3);
 					ret.emplace_back(this->make_neighbour(neighbour_broken_until, std::move(neighbour_line)), cost);
 
 					return ret;
@@ -116,8 +119,8 @@ namespace sap::layout::linebreak
 					ret.emplace_back(this->make_neighbour(neighbour_broken_until, neighbour_line), 10000);
 					return ret;
 				}
-				// don't allow shrinking more than 5%, otherwise it looks kinda bad
-				else if(neighbour_width / m_preferred_line_length > 1.05)
+				// don't allow shrinking more than 10%, otherwise it looks kinda bad
+				else if(neighbour_width / m_preferred_line_length > 1.03)
 				{
 					return ret;
 				}
@@ -145,7 +148,7 @@ namespace sap::layout::linebreak
 
 						double extra_space_size = space_diff.mm() / tmp;
 						cost += 3 * extra_space_size * extra_space_size;
-						cost += 0.25 * (1 + sep->hyphenationCost()) * (avg_space_width * avg_space_width);
+						cost += 0.2 * (1 + sep->hyphenationCost()) * (avg_space_width * avg_space_width);
 
 						// add a large cost for doing shit like e-ducational
 						auto last_it = neighbour_broken_until - 2;
@@ -157,7 +160,6 @@ namespace sap::layout::linebreak
 							cost += pow(2, 1.0 / static_cast<double>(frag.size()));
 						}
 
-						// TODO: adjust hyphenation protrusion here
 						if(sep->isHyphenationPoint())
 						{
 							assert(not sep->endOfLine().empty());
@@ -190,7 +192,7 @@ namespace sap::layout::linebreak
 					{
 						auto tmp = std::max((double) neighbour_line.numSpaces(), 0.5);
 						double extra_space_size = space_diff.mm() / tmp;
-						cost += 5 * extra_space_size * extra_space_size;
+						cost += std::pow(extra_space_size, 3);
 
 						// see if we can adjust the right side of the line.
 						// note that *neighbour_broken_until is now *TWO* guys

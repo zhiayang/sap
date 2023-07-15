@@ -23,8 +23,6 @@ scripting
 
 [ ] GO BACK TO UNIQUE_PTR PLS
 
-[x] add `default_style` field to document_settings instead of duplicating style fields
-
 
 layout
 ------

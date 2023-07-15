@@ -15,7 +15,7 @@ sans!.regular.adjust_glyph_spacing({ match: ["2.1", "3.1", "4.1", "5.1", "6.1", 
 	paper_size: std::paper_size::A4,
 	margins: { left: 2cm, right: 2cm, top: 2cm, bottom: 2cm },
 	default_style: {
-		font_size: 20pt,
+		font_size: 12pt,
 		line_spacing: 2,
 		sentence_space_stretch: 1.3,
 		paragraph_spacing: 1.5em,
@@ -67,18 +67,24 @@ sans!.regular.adjust_glyph_spacing({ match: ["2.1", "3.1", "4.1", "5.1", "6.1", 
 
 \disable_page_numbering();
 
+\std::bulleted_list(
+	"comparatively fewer online resources",
+	"high programmer friction (due to borrow checker and lifetimes)",
+	"inability to implement common data structures (eg. linked lists) without using unsafe code"
+)
+
 /# NUS currently has a gap in its operating systems courses, between the help help with introductory
 and the advanced, graduate-level CS5250.
  #/
 
-\kekw()
+# \kekw()
 
-NUS currently has a gap in its operating systems courses, between the introductory CS2106
-and the advanced, graduate-level CS5250. In this project, we significantly overhaul an
-educational OS, Stanford's Pintos, to make it more suitable for use in NUS. We
-rewrite the OS in modern \cpp()20 and greatly improve upon it in all aspects, including
-functionality, design, and readability. We also propose and develop several lab projects
-and extension avenues for a future CS3xxx module that will sit between CS2106 and CS5250.
+# NUS currently has a gap in its operating systems courses, between the introductory CS2106
+# and the advanced, graduate-level CS5250. In this project, we significantly overhaul an
+# educational OS, Stanford's Pintos, to make it more suitable for use in NUS. We
+# rewrite the OS in modern \cpp()20 and greatly improve upon it in all aspects, including
+# functionality, design, and readability. We also propose and develop several lab projects
+# and extension avenues for a future CS3xxx module that will sit between CS2106 and CS5250.
 
 
 # ff \cpp()

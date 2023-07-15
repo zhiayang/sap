@@ -24,16 +24,14 @@ namespace std
 	fn bulleted_list(items: [Inline...]) -> Block
 	{
 		var lines = [:Block];
-		var i = 0;
-		while(i < items.size())
+		for(var i = 0; i < items.size(); i += 1)
 		{
 			lines += [builtin::make_hbox(
 				builtin::hspace(0.8em),
-				builtin::make_line(builtin::make_text(f"•")).apply_style({ horz_alignment: .Right }),
+				builtin::make_line(builtin::make_text(f"•").raise(-0.15em)).apply_style({ horz_alignment: .Right }),
 				builtin::hspace(0.6em),
-				builtin::make_line(*items[i])
+				builtin::make_paragraph(*items[i]).apply_style({ line_spacing: 1.2 })
 			)];
-			i += 1;
 		}
 
 		return builtin::make_vbox(...*lines)
@@ -43,12 +41,8 @@ namespace std
 	fn bulleted_list(items: [string...]) -> Block
 	{
 		var inlines = [:Inline];
-		var i = 0;
-		while(i < items.size())
-		{
+		for(var i = 0; i < items.size(); i += 1)
 			inlines += [builtin::make_text(items[i])];
-			i += 1;
-		}
 
 		return bulleted_list(...*inlines);
 	}
