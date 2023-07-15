@@ -32,3 +32,5 @@ big.sap
 test2.sap
 ClangBuildAnalyzer.ini
 report.sap
+
+!tools/sap.sublime-syntax
