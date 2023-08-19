@@ -22,6 +22,9 @@
 
 namespace sap::frontend
 {
+	using sap::interp::QualifiedId;
+	namespace ast = sap::interp::ast;
+
 	constexpr auto KW_NULL = "null";
 	constexpr auto KW_CAST = "cast";
 
@@ -291,53 +294,53 @@ namespace sap::frontend
 		return util::is_one_of(tok, TT::KW_And, TT::KW_Or);
 	}
 
-	static interp::BinaryOp::Op convert_binop(TokenType tok)
+	static ast::BinaryOp::Op convert_binop(TokenType tok)
 	{
 		switch(tok)
 		{
-			case TT::Plus: return interp::BinaryOp::Add;
-			case TT::Minus: return interp::BinaryOp::Subtract;
-			case TT::Asterisk: return interp::BinaryOp::Multiply;
-			case TT::Slash: return interp::BinaryOp::Divide;
-			case TT::Percent: return interp::BinaryOp::Modulo;
+			case TT::Plus: return ast::BinaryOp::Add;
+			case TT::Minus: return ast::BinaryOp::Subtract;
+			case TT::Asterisk: return ast::BinaryOp::Multiply;
+			case TT::Slash: return ast::BinaryOp::Divide;
+			case TT::Percent: return ast::BinaryOp::Modulo;
 			default: assert(false && "unreachable!");
 		}
 	}
 
-	static interp::LogicalBinOp::Op convert_logical_binop(TokenType tok)
+	static ast::LogicalBinOp::Op convert_logical_binop(TokenType tok)
 	{
 		switch(tok)
 		{
-			case TT::KW_And: return interp::LogicalBinOp::Op::And;
-			case TT::KW_Or: return interp::LogicalBinOp::Op::Or;
+			case TT::KW_And: return ast::LogicalBinOp::Op::And;
+			case TT::KW_Or: return ast::LogicalBinOp::Op::Or;
 			default: assert(false && "unreachable!");
 		}
 	}
 
-	static interp::ComparisonOp::Op convert_comparison_op(TokenType tok)
+	static ast::ComparisonOp::Op convert_comparison_op(TokenType tok)
 	{
 		switch(tok)
 		{
-			case TT::LAngle: return interp::ComparisonOp::LT;
-			case TT::RAngle: return interp::ComparisonOp::GT;
-			case TT::LAngleEqual: return interp::ComparisonOp::LE;
-			case TT::RAngleEqual: return interp::ComparisonOp::GE;
-			case TT::EqualEqual: return interp::ComparisonOp::EQ;
-			case TT::ExclamationEqual: return interp::ComparisonOp::NE;
+			case TT::LAngle: return ast::ComparisonOp::LT;
+			case TT::RAngle: return ast::ComparisonOp::GT;
+			case TT::LAngleEqual: return ast::ComparisonOp::LE;
+			case TT::RAngleEqual: return ast::ComparisonOp::GE;
+			case TT::EqualEqual: return ast::ComparisonOp::EQ;
+			case TT::ExclamationEqual: return ast::ComparisonOp::NE;
 			default: assert(false && "unreachable!");
 		}
 	}
 
-	static interp::AssignOp::Op convert_assignment_op(TokenType tok)
+	static ast::AssignOp::Op convert_assignment_op(TokenType tok)
 	{
 		switch(tok)
 		{
-			case TT::Equal: return interp::AssignOp::None;
-			case TT::PlusEqual: return interp::AssignOp::Add;
-			case TT::MinusEqual: return interp::AssignOp::Subtract;
-			case TT::AsteriskEqual: return interp::AssignOp::Multiply;
-			case TT::SlashEqual: return interp::AssignOp::Divide;
-			case TT::PercentEqual: return interp::AssignOp::Modulo;
+			case TT::Equal: return ast::AssignOp::None;
+			case TT::PlusEqual: return ast::AssignOp::Add;
+			case TT::MinusEqual: return ast::AssignOp::Subtract;
+			case TT::AsteriskEqual: return ast::AssignOp::Multiply;
+			case TT::SlashEqual: return ast::AssignOp::Divide;
+			case TT::PercentEqual: return ast::AssignOp::Modulo;
 			default: assert(false && "unreachable!");
 		}
 	}
@@ -345,21 +348,21 @@ namespace sap::frontend
 	template <typename T>
 	using ErrorOrUniquePtr = ErrorOr<std::unique_ptr<T>>;
 
-	static ErrorOrUniquePtr<interp::Stmt> parse_stmt(Lexer& lexer, bool is_top_level, bool expect_semi = true);
-	static ErrorOrUniquePtr<interp::Expr> parse_expr(Lexer& lexer);
-	static ErrorOrUniquePtr<interp::Expr> parse_unary(Lexer& lexer);
-	static ErrorOrUniquePtr<interp::Expr> parse_primary(Lexer& lexer);
+	static ErrorOrUniquePtr<ast::Stmt> parse_stmt(Lexer& lexer, bool is_top_level, bool expect_semi = true);
+	static ErrorOrUniquePtr<ast::Expr> parse_expr(Lexer& lexer);
+	static ErrorOrUniquePtr<ast::Expr> parse_unary(Lexer& lexer);
+	static ErrorOrUniquePtr<ast::Expr> parse_primary(Lexer& lexer);
 
 	static ErrorOr<std::pair<zst::SharedPtr<InlineObject>, bool>> parse_inline_obj(Lexer& lexer);
 	static ErrorOr<std::vector<zst::SharedPtr<BlockObject>>> parse_top_level(Lexer& lexer);
 	static ErrorOr<std::optional<zst::SharedPtr<Paragraph>>> parse_paragraph(Lexer& lexer);
 
 
-	static ErrorOr<std::pair<interp::QualifiedId, uint32_t>> parse_qualified_id(Lexer& lexer)
+	static ErrorOr<std::pair<QualifiedId, uint32_t>> parse_qualified_id(Lexer& lexer)
 	{
 		uint32_t len = 0;
 
-		interp::QualifiedId qid {};
+		QualifiedId qid {};
 		while(not lexer.eof())
 		{
 			if(lexer.expect(TT::ColonColon))
@@ -385,16 +388,15 @@ namespace sap::frontend
 			}
 		}
 
-		return Ok<std::pair<interp::QualifiedId, uint32_t>>(std::move(qid), len);
+		return Ok<std::pair<QualifiedId, uint32_t>>(std::move(qid), len);
 	}
 
-	static ErrorOrUniquePtr<interp::FunctionCall>
-	parse_function_call(Lexer& lexer, std::unique_ptr<interp::Expr> callee)
+	static ErrorOrUniquePtr<ast::FunctionCall> parse_function_call(Lexer& lexer, std::unique_ptr<ast::Expr> callee)
 	{
 		if(not lexer.expect(TT::LParen))
 			return ErrMsg(lexer.location(), "expected '(' to begin function call");
 
-		auto call = std::make_unique<interp::FunctionCall>(callee->loc());
+		auto call = std::make_unique<ast::FunctionCall>(callee->loc());
 		call->callee = std::move(callee);
 
 		// parse arguments.
@@ -416,7 +418,7 @@ namespace sap::frontend
 
 			bool is_arg_named = false;
 
-			interp::FunctionCall::Arg arg {};
+			ast::FunctionCall::Arg arg {};
 			if(lexer.peek() == TT::Identifier)
 			{
 				auto save = lexer.save();
@@ -448,9 +450,9 @@ namespace sap::frontend
 		return OkMove(call);
 	}
 
-	static ErrorOrUniquePtr<interp::Expr> parse_subscript(Lexer& lexer, std::unique_ptr<interp::Expr> lhs)
+	static ErrorOrUniquePtr<ast::Expr> parse_subscript(Lexer& lexer, std::unique_ptr<ast::Expr> lhs)
 	{
-		auto ret = std::make_unique<interp::SubscriptOp>(lexer.peek().loc);
+		auto ret = std::make_unique<ast::SubscriptOp>(lexer.peek().loc);
 		ret->array = std::move(lhs);
 
 		must_expect(lexer, TT::LSquare);
@@ -469,10 +471,10 @@ namespace sap::frontend
 		return OkMove(ret);
 	}
 
-	static ErrorOrUniquePtr<interp::FunctionCall>
-	parse_ufcs(Lexer& lexer, std::unique_ptr<interp::Expr> first_arg, const std::string& method_name, bool is_optional)
+	static ErrorOrUniquePtr<ast::FunctionCall>
+	parse_ufcs(Lexer& lexer, std::unique_ptr<ast::Expr> first_arg, const std::string& method_name, bool is_optional)
 	{
-		auto method = std::make_unique<interp::Ident>(lexer.location());
+		auto method = std::make_unique<ast::Ident>(lexer.location());
 		method->name.top_level = false;
 		method->name.name = method_name;
 
@@ -482,7 +484,7 @@ namespace sap::frontend
 		call->is_optional_ufcs = is_optional;
 
 		call->arguments.insert(call->arguments.begin(),
-		    interp::FunctionCall::Arg {
+		    ast::FunctionCall::Arg {
 		        .name = std::nullopt,
 		        .value = std::move(first_arg),
 		    });
@@ -490,8 +492,7 @@ namespace sap::frontend
 		return OkMove(call);
 	}
 
-	static ErrorOrUniquePtr<interp::Expr>
-	parse_postfix_unary(Lexer& lexer, std::unique_ptr<interp::Expr> lhs, bool* success)
+	static ErrorOrUniquePtr<ast::Expr> parse_postfix_unary(Lexer& lexer, std::unique_ptr<ast::Expr> lhs, bool* success)
 	{
 		*success = true;
 
@@ -505,13 +506,13 @@ namespace sap::frontend
 		}
 		else if(auto t0 = lexer.match(TT::Question); t0.has_value())
 		{
-			auto ret = std::make_unique<interp::OptionalCheckOp>(t0->loc);
+			auto ret = std::make_unique<ast::OptionalCheckOp>(t0->loc);
 			ret->expr = std::move(lhs);
 			return OkMove(ret);
 		}
 		else if(auto t1 = lexer.match(TT::Exclamation); t1.has_value())
 		{
-			auto ret = std::make_unique<interp::DereferenceOp>(t1->loc);
+			auto ret = std::make_unique<ast::DereferenceOp>(t1->loc);
 			ret->expr = std::move(lhs);
 			return OkMove(ret);
 		}
@@ -524,7 +525,7 @@ namespace sap::frontend
 			if(not field_name.has_value())
 				return ErrMsg(lexer.location(), "expected field name after '.'");
 
-			auto newlhs = std::make_unique<interp::DotOp>(op_tok.loc);
+			auto newlhs = std::make_unique<ast::DotOp>(op_tok.loc);
 			newlhs->is_optional = (op_tok == TT::QuestionPeriod);
 			newlhs->rhs = field_name->text.str();
 			newlhs->lhs = std::move(lhs);
@@ -547,7 +548,7 @@ namespace sap::frontend
 		}
 	}
 
-	static ErrorOrUniquePtr<interp::Expr> parse_postfix_unary(Lexer& lexer)
+	static ErrorOrUniquePtr<ast::Expr> parse_postfix_unary(Lexer& lexer)
 	{
 		bool keep_going = true;
 
@@ -558,7 +559,7 @@ namespace sap::frontend
 		return OkMove(lhs);
 	}
 
-	static ErrorOrUniquePtr<interp::Expr> parse_rhs(Lexer& lexer, std::unique_ptr<interp::Expr> lhs, int prio)
+	static ErrorOrUniquePtr<ast::Expr> parse_rhs(Lexer& lexer, std::unique_ptr<ast::Expr> lhs, int prio)
 	{
 		if(lexer.eof())
 			return OkMove(lhs);
@@ -583,13 +584,13 @@ namespace sap::frontend
 
 			if(is_comparison_op(op_tok))
 			{
-				if(auto cmp = dynamic_cast<interp::ComparisonOp*>(lhs.get()))
+				if(auto cmp = dynamic_cast<ast::ComparisonOp*>(lhs.get()))
 				{
 					cmp->rest.push_back({ convert_comparison_op(op_tok), std::move(rhs) });
 				}
 				else
 				{
-					auto newlhs = std::make_unique<interp::ComparisonOp>(op_tok.loc);
+					auto newlhs = std::make_unique<ast::ComparisonOp>(op_tok.loc);
 					newlhs->first = std::move(lhs);
 					newlhs->rest.push_back({ convert_comparison_op(op_tok), std::move(rhs) });
 
@@ -598,7 +599,7 @@ namespace sap::frontend
 			}
 			else if(is_regular_binary_op(op_tok))
 			{
-				auto tmp = std::make_unique<interp::BinaryOp>(op_tok.loc);
+				auto tmp = std::make_unique<ast::BinaryOp>(op_tok.loc);
 				tmp->lhs = std::move(lhs);
 				tmp->rhs = std::move(rhs);
 				tmp->op = convert_binop(op_tok);
@@ -607,7 +608,7 @@ namespace sap::frontend
 			}
 			else if(is_logical_binary_op(op_tok))
 			{
-				auto tmp = std::make_unique<interp::LogicalBinOp>(op_tok.loc);
+				auto tmp = std::make_unique<ast::LogicalBinOp>(op_tok.loc);
 				tmp->lhs = std::move(lhs);
 				tmp->rhs = std::move(rhs);
 				tmp->op = convert_logical_binop(op_tok);
@@ -616,7 +617,7 @@ namespace sap::frontend
 			}
 			else if(op_tok == TT::QuestionQuestion)
 			{
-				auto tmp = std::make_unique<interp::NullCoalesceOp>(op_tok.loc);
+				auto tmp = std::make_unique<ast::NullCoalesceOp>(op_tok.loc);
 				tmp->lhs = std::move(lhs);
 				tmp->rhs = std::move(rhs);
 
@@ -624,13 +625,13 @@ namespace sap::frontend
 			}
 			else if(op_tok == TT::SlashSlash)
 			{
-				if(not dynamic_cast<interp::StructLit*>(rhs.get()))
+				if(not dynamic_cast<ast::StructLit*>(rhs.get()))
 					return ErrMsg(rhs->loc(), "right-hand operand of '//' must be a struct literal");
 
-				auto tmp = std::make_unique<interp::StructUpdateOp>(op_tok.loc);
+				auto tmp = std::make_unique<ast::StructUpdateOp>(op_tok.loc);
 				tmp->structure = std::move(lhs);
 
-				auto lit = util::static_pointer_cast<interp::StructLit>(std::move(rhs));
+				auto lit = util::static_pointer_cast<ast::StructLit>(std::move(rhs));
 				if(not lit->is_anonymous)
 					return ErrMsg(lit->loc(), "right-hand operand of '//' cannot be named");
 
@@ -651,12 +652,12 @@ namespace sap::frontend
 		}
 	}
 
-	static ErrorOrUniquePtr<interp::StructLit> parse_struct_literal(Lexer& lexer, interp::QualifiedId id)
+	static ErrorOrUniquePtr<ast::StructLit> parse_struct_literal(Lexer& lexer, QualifiedId id)
 	{
 		if(not lexer.expect(TT::LBrace))
 			return ErrMsg(lexer.location(), "expected '{' for struct literal");
 
-		auto ret = std::make_unique<interp::StructLit>(lexer.location());
+		auto ret = std::make_unique<ast::StructLit>(lexer.location());
 		ret->struct_name = std::move(id);
 
 		while(not lexer.expect(TT::RBrace))
@@ -673,7 +674,7 @@ namespace sap::frontend
 			    { name: name } can be shortened to just { name }
 			*/
 
-			std::unique_ptr<interp::Expr> value {};
+			std::unique_ptr<ast::Expr> value {};
 
 			if(lexer.expect(TT::Colon))
 			{
@@ -681,11 +682,10 @@ namespace sap::frontend
 			}
 			else
 			{
-				value = std::make_unique<interp::Ident>(field_name->loc,
-				    interp::QualifiedId { .name = field_name->str() });
+				value = std::make_unique<ast::Ident>(field_name->loc, QualifiedId { .name = field_name->str() });
 			}
 
-			ret->field_inits.push_back(interp::StructLit::Arg {
+			ret->field_inits.push_back(ast::StructLit::Arg {
 			    .name = field_name->text.str(),
 			    .value = std::move(value),
 			});
@@ -697,14 +697,14 @@ namespace sap::frontend
 		return OkMove(ret);
 	}
 
-	static ErrorOrUniquePtr<interp::FStringExpr> parse_fstring(Lexer& main_lexer, const Token& tok)
+	static ErrorOrUniquePtr<ast::FStringExpr> parse_fstring(Lexer& main_lexer, const Token& tok)
 	{
 		auto fstr = tok.text.bytes();
 
 		std::u32string string {};
 		string.reserve(fstr.size());
 
-		std::vector<std::variant<std::u32string, std::unique_ptr<interp::Expr>>> fstring_parts;
+		std::vector<std::variant<std::u32string, std::unique_ptr<ast::Expr>>> fstring_parts;
 
 		while(fstr.size() > 0)
 		{
@@ -753,13 +753,13 @@ namespace sap::frontend
 		if(not string.empty())
 			fstring_parts.push_back(std::move(string));
 
-		auto ret = std::make_unique<interp::FStringExpr>(tok.loc);
+		auto ret = std::make_unique<ast::FStringExpr>(tok.loc);
 		ret->parts = std::move(fstring_parts);
 
 		return OkMove(ret);
 	}
 
-	static ErrorOrUniquePtr<interp::CharLit> parse_char_literal(Lexer& lexer, Token ch_token)
+	static ErrorOrUniquePtr<ast::CharLit> parse_char_literal(Lexer& lexer, Token ch_token)
 	{
 		auto ch_text = ch_token.text;
 		auto bytes = ch_text.bytes();
@@ -775,29 +775,29 @@ namespace sap::frontend
 		if(not bytes.empty())
 			return ErrMsg(ch_token.loc, "extraneous characters in character literal");
 
-		return Ok(std::make_unique<interp::CharLit>(ch_token.loc, codepoint));
+		return Ok(std::make_unique<ast::CharLit>(ch_token.loc, codepoint));
 	}
 
 	static ErrorOr<PType> parse_type(Lexer& lexer);
 
-	static ErrorOrUniquePtr<interp::TypeExpr> parse_type_expr(Lexer& lexer)
+	static ErrorOrUniquePtr<ast::TypeExpr> parse_type_expr(Lexer& lexer)
 	{
 		auto loc = lexer.location();
 		must_expect(lexer, TT::Dollar);
 
 		auto type = TRY(parse_type(lexer));
-		return Ok(std::make_unique<interp::TypeExpr>(loc, std::move(type)));
+		return Ok(std::make_unique<ast::TypeExpr>(loc, std::move(type)));
 	}
 
 
-	static ErrorOrUniquePtr<interp::Expr> parse_primary(Lexer& lexer)
+	static ErrorOrUniquePtr<ast::Expr> parse_primary(Lexer& lexer)
 	{
 		auto lm = LexerModer(lexer, Lexer::Mode::Script);
 		if(auto t = lexer.peek(); t == TT::Identifier || t == TT::ColonColon)
 		{
 			if(t.text == KW_NULL)
 			{
-				return Ok(std::make_unique<interp::NullLit>(TRY(lexer.next()).loc));
+				return Ok(std::make_unique<ast::NullLit>(TRY(lexer.next()).loc));
 			}
 			else if(t.text == KW_CAST)
 			{
@@ -805,7 +805,7 @@ namespace sap::frontend
 				if(not lexer.expect(TT::LParen))
 					return ErrMsg(lexer.location(), "expected '(' after 'cast'");
 
-				auto cast_expr = std::make_unique<interp::CastExpr>(t.loc);
+				auto cast_expr = std::make_unique<ast::CastExpr>(t.loc);
 				cast_expr->expr = TRY(parse_expr(lexer));
 
 				// TODO: make the type optional for an auto-cast
@@ -824,7 +824,7 @@ namespace sap::frontend
 			auto [qid, len] = TRY(parse_qualified_id(lexer));
 
 			loc.length = len;
-			auto ident = std::make_unique<interp::Ident>(loc);
+			auto ident = std::make_unique<ast::Ident>(loc);
 			ident->name = std::move(qid);
 
 			// check for struct literal
@@ -858,14 +858,14 @@ namespace sap::frontend
 				if(not maybe_unit.has_value())
 					return ErrMsg(lexer.location(), "unknown unit '{}' following number literal", unit->text);
 
-				auto ret = std::make_unique<interp::LengthExpr>(num->loc);
+				auto ret = std::make_unique<ast::LengthExpr>(num->loc);
 				ret->length = DynLength(std::stod(num->text.str()), *maybe_unit);
 
 				return OkMove(ret);
 			}
 			else
 			{
-				auto ret = std::make_unique<interp::NumberLit>(num->loc);
+				auto ret = std::make_unique<ast::NumberLit>(num->loc);
 				if(num->text.find('.') != (size_t) -1)
 				{
 					ret->is_floating = true;
@@ -881,7 +881,7 @@ namespace sap::frontend
 		}
 		else if(auto str = lexer.match(TT::String); str)
 		{
-			auto ret = std::make_unique<interp::StringLit>(str->loc);
+			auto ret = std::make_unique<ast::StringLit>(str->loc);
 			ret->string = TRY(unescape_string(str->loc, str->text));
 
 			return OkMove(ret);
@@ -896,19 +896,19 @@ namespace sap::frontend
 		}
 		else if(auto bool_true = lexer.match(TT::KW_True); bool_true)
 		{
-			return Ok(std::make_unique<interp::BooleanLit>(bool_true->loc, true));
+			return Ok(std::make_unique<ast::BooleanLit>(bool_true->loc, true));
 		}
 		else if(auto bool_false = lexer.match(TT::KW_False); bool_false)
 		{
-			return Ok(std::make_unique<interp::BooleanLit>(bool_true->loc, false));
+			return Ok(std::make_unique<ast::BooleanLit>(bool_true->loc, false));
 		}
 		else if(lexer.expect(TT::Period))
 		{
 			auto ident = lexer.match(TT::Identifier);
 			if(not ident.has_value())
-				return ErrMsg(lexer.location(), "expected enumerator name (an identifier) after '.'");
+				return ErrMsg(lexer.location(), "expected an identifier after '.'");
 
-			auto ret = std::make_unique<interp::ContextIdent>(ident->loc);
+			auto ret = std::make_unique<ast::ContextIdent>(ident->loc);
 			ret->name = ident->text.str();
 
 			return OkMove(ret);
@@ -923,7 +923,7 @@ namespace sap::frontend
 		}
 		else if(lexer.expect(TT::LSquare))
 		{
-			auto array = std::make_unique<interp::ArrayLit>(lexer.location());
+			auto array = std::make_unique<ast::ArrayLit>(lexer.location());
 			if(lexer.expect(TT::Colon))
 				array->elem_type = TRY(parse_type(lexer));
 
@@ -959,7 +959,7 @@ namespace sap::frontend
 			*/
 			if(lexer.expect(TT::LBrace))
 			{
-				auto inlines = std::make_unique<interp::TreeInlineExpr>(lexer.location());
+				auto inlines = std::make_unique<ast::TreeInlineExpr>(lexer.location());
 				while(lexer.peek() != TT::RBrace)
 				{
 					auto [obj, end_para] = TRY(parse_inline_obj(lexer));
@@ -976,7 +976,7 @@ namespace sap::frontend
 			}
 			else if(lexer.expect(KW_LINE_BLOCK))
 			{
-				auto blk = std::make_unique<interp::TreeBlockExpr>(lexer.location());
+				auto blk = std::make_unique<ast::TreeBlockExpr>(lexer.location());
 
 				if(not lexer.expect(TT::LBrace))
 					return ErrMsg(lexer.location(), "expected '{' after '\\{}'", KW_LINE_BLOCK);
@@ -1001,7 +1001,7 @@ namespace sap::frontend
 			}
 			else if(lexer.expect(KW_BOX_BLOCK))
 			{
-				auto blk = std::make_unique<interp::TreeBlockExpr>(lexer.location());
+				auto blk = std::make_unique<ast::TreeBlockExpr>(lexer.location());
 
 				if(not lexer.expect(TT::LBrace))
 					return ErrMsg(lexer.location(), "expected '{' after '\\{}'", KW_BOX_BLOCK);
@@ -1022,7 +1022,7 @@ namespace sap::frontend
 			else if(lexer.peek() == TT::Identifier
 			        && util::is_one_of(lexer.peek().text, KW_VBOX_BLOCK, KW_HBOX_BLOCK, KW_ZBOX_BLOCK))
 			{
-				auto blk = std::make_unique<interp::TreeBlockExpr>(lexer.location());
+				auto blk = std::make_unique<ast::TreeBlockExpr>(lexer.location());
 				auto x = TRY(lexer.next());
 
 				if(not lexer.expect(TT::LBrace))
@@ -1054,53 +1054,53 @@ namespace sap::frontend
 		}
 	}
 
-	static ErrorOrUniquePtr<interp::Expr> parse_unary(Lexer& lexer)
+	static ErrorOrUniquePtr<ast::Expr> parse_unary(Lexer& lexer)
 	{
 		if(auto t0 = lexer.match(TT::Ampersand); t0.has_value())
 		{
 			bool is_mutable = lexer.expect(TT::KW_Mut);
 
-			auto ret = std::make_unique<interp::AddressOfOp>(t0->loc);
+			auto ret = std::make_unique<ast::AddressOfOp>(t0->loc);
 			ret->expr = TRY(parse_unary(lexer));
 			ret->is_mutable = is_mutable;
 			return OkMove(ret);
 		}
 		else if(auto t1 = lexer.match(TT::Asterisk); t1.has_value())
 		{
-			auto ret = std::make_unique<interp::MoveExpr>(t1->loc);
+			auto ret = std::make_unique<ast::MoveExpr>(t1->loc);
 			ret->expr = TRY(parse_unary(lexer));
 			return OkMove(ret);
 		}
 		else if(auto t2 = lexer.match(TT::Ellipsis); t2.has_value())
 		{
-			return Ok(std::make_unique<interp::ArraySpreadOp>(t2->loc, TRY(parse_unary(lexer))));
+			return Ok(std::make_unique<ast::ArraySpreadOp>(t2->loc, TRY(parse_unary(lexer))));
 		}
 		else if(auto t3 = lexer.match(TT::Minus); t3.has_value())
 		{
-			auto ret = std::make_unique<interp::UnaryOp>(t3->loc);
+			auto ret = std::make_unique<ast::UnaryOp>(t3->loc);
 			ret->expr = TRY(parse_unary(lexer));
-			ret->op = interp::UnaryOp::Op::Minus;
+			ret->op = ast::UnaryOp::Op::Minus;
 			return OkMove(ret);
 		}
 		else if(auto t4 = lexer.match(TT::Plus); t4.has_value())
 		{
-			auto ret = std::make_unique<interp::UnaryOp>(t4->loc);
+			auto ret = std::make_unique<ast::UnaryOp>(t4->loc);
 			ret->expr = TRY(parse_unary(lexer));
-			ret->op = interp::UnaryOp::Op::Plus;
+			ret->op = ast::UnaryOp::Op::Plus;
 			return OkMove(ret);
 		}
 		else if(auto t5 = lexer.match(TT::KW_Not); t5.has_value())
 		{
-			auto ret = std::make_unique<interp::UnaryOp>(t5->loc);
+			auto ret = std::make_unique<ast::UnaryOp>(t5->loc);
 			ret->expr = TRY(parse_unary(lexer));
-			ret->op = interp::UnaryOp::Op::LogicalNot;
+			ret->op = ast::UnaryOp::Op::LogicalNot;
 			return OkMove(ret);
 		}
 
 		return parse_postfix_unary(lexer);
 	}
 
-	static ErrorOrUniquePtr<interp::Expr> parse_expr(Lexer& lexer)
+	static ErrorOrUniquePtr<ast::Expr> parse_expr(Lexer& lexer)
 	{
 		auto lm = LexerModer(lexer, Lexer::Mode::Script);
 		auto lhs = TRY(parse_unary(lexer));
@@ -1108,12 +1108,12 @@ namespace sap::frontend
 		return parse_rhs(lexer, std::move(lhs), 0);
 	}
 
-	static ErrorOrUniquePtr<interp::AssignOp> parse_assignment(std::unique_ptr<interp::Expr> lhs, Lexer& lexer)
+	static ErrorOrUniquePtr<ast::AssignOp> parse_assignment(std::unique_ptr<ast::Expr> lhs, Lexer& lexer)
 	{
 		auto op = TRY(lexer.next());
 		assert(is_assignment_op(op));
 
-		auto ret = std::make_unique<interp::AssignOp>(op.loc);
+		auto ret = std::make_unique<ast::AssignOp>(op.loc);
 		ret->op = convert_assignment_op(op);
 		ret->lhs = std::move(lhs);
 		ret->rhs = TRY(parse_expr(lexer));
@@ -1194,7 +1194,7 @@ namespace sap::frontend
 		return ErrMsg(lexer.location(), "invalid start of type specifier '{}'", lexer.peek().text);
 	}
 
-	static ErrorOrUniquePtr<interp::VariableDefn> parse_var_defn(Lexer& lexer, bool is_top_level)
+	static ErrorOrUniquePtr<ast::VariableDefn> parse_var_defn(Lexer& lexer, bool is_top_level)
 	{
 		auto kw = TRY(lexer.next());
 		assert(kw == TT::KW_Global || kw == TT::KW_Let || kw == TT::KW_Var);
@@ -1216,7 +1216,7 @@ namespace sap::frontend
 		if(not maybe_name.has_value())
 			return ErrMsg(lexer.location(), "expected identifier after '{}'", kw.text);
 
-		std::unique_ptr<interp::Expr> initialiser {};
+		std::unique_ptr<ast::Expr> initialiser {};
 		std::optional<PType> explicit_type {};
 
 		if(lexer.match(TT::Colon))
@@ -1225,11 +1225,11 @@ namespace sap::frontend
 		if(lexer.match(TT::Equal))
 			initialiser = TRY(parse_expr(lexer));
 
-		return Ok(std::make_unique<interp::VariableDefn>(kw.loc, maybe_name->str(), /* is_mutable: */ kw == TT::KW_Var,
+		return Ok(std::make_unique<ast::VariableDefn>(kw.loc, maybe_name->str(), /* is_mutable: */ kw == TT::KW_Var,
 		    is_global, std::move(initialiser), std::move(explicit_type)));
 	}
 
-	static ErrorOr<interp::FunctionDecl::Param> parse_param(Lexer& lexer)
+	static ErrorOr<ast::FunctionDecl::Param> parse_param(Lexer& lexer)
 	{
 		auto name = lexer.match(TT::Identifier);
 		if(not name.has_value())
@@ -1239,12 +1239,12 @@ namespace sap::frontend
 			return ErrMsg(lexer.location(), "expected ':' after parameter name");
 
 		auto type = TRY(parse_type(lexer));
-		std::unique_ptr<interp::Expr> default_value = nullptr;
+		std::unique_ptr<ast::Expr> default_value = nullptr;
 
 		if(lexer.expect(TT::Equal))
 			default_value = TRY(parse_expr(lexer));
 
-		return Ok(interp::FunctionDecl::Param {
+		return Ok(ast::FunctionDecl::Param {
 		    .name = name->text.str(),
 		    .type = type,
 		    .default_value = std::move(default_value),
@@ -1252,9 +1252,9 @@ namespace sap::frontend
 		});
 	}
 
-	static ErrorOrUniquePtr<interp::Block> parse_block_or_stmt(Lexer& lexer, bool is_top_level, bool mandatory_braces)
+	static ErrorOrUniquePtr<ast::Block> parse_block_or_stmt(Lexer& lexer, bool is_top_level, bool mandatory_braces)
 	{
-		auto block = std::make_unique<interp::Block>(lexer.location());
+		auto block = std::make_unique<ast::Block>(lexer.location());
 		if(lexer.expect(TT::LBrace))
 		{
 			while(not lexer.expect(TT::RBrace))
@@ -1276,7 +1276,7 @@ namespace sap::frontend
 		return OkMove(block);
 	}
 
-	static ErrorOrUniquePtr<interp::FunctionDefn> parse_function_defn(Lexer& lexer)
+	static ErrorOrUniquePtr<ast::FunctionDefn> parse_function_defn(Lexer& lexer)
 	{
 		using namespace interp;
 		auto loc = lexer.location();
@@ -1311,7 +1311,7 @@ namespace sap::frontend
 		if(not lexer.expect(TT::LParen))
 			return ErrMsg(lexer.location(), "expected '(' in function definition");
 
-		std::vector<FunctionDecl::Param> params {};
+		std::vector<ast::FunctionDecl::Param> params {};
 		for(bool first = true; not lexer.expect(TT::RParen); first = false)
 		{
 			if(not first && not lexer.expect(TT::Comma))
@@ -1324,8 +1324,8 @@ namespace sap::frontend
 		if(lexer.expect(TT::RArrow))
 			return_type = TRY(parse_type(lexer));
 
-		auto defn = std::make_unique<interp::FunctionDefn>(loc, name, std::move(params), return_type);
-		defn->generic_params = std::move(generic_params);
+		auto defn = std::make_unique<ast::FunctionDefn>(loc, name, std::move(params), return_type,
+		    std::move(generic_params));
 
 		if(lexer.peek() != TT::LBrace)
 			return ErrMsg(lexer.location(), "expected '{' to begin function body");
@@ -1334,7 +1334,7 @@ namespace sap::frontend
 		return OkMove(defn);
 	}
 
-	static ErrorOrUniquePtr<interp::StructDefn> parse_struct_defn(Lexer& lexer)
+	static ErrorOrUniquePtr<ast::StructDefn> parse_struct_defn(Lexer& lexer)
 	{
 		auto loc = lexer.location();
 		must_expect(lexer, TT::KW_Struct);
@@ -1349,7 +1349,7 @@ namespace sap::frontend
 		if(not lexer.expect(TT::LBrace))
 			return ErrMsg(lexer.location(), "expected '{' in struct body");
 
-		std::vector<interp::StructDefn::Field> fields {};
+		std::vector<ast::StructDefn::Field> fields {};
 		while(not lexer.expect(TT::RBrace))
 		{
 			auto field_name = lexer.match(TT::Identifier);
@@ -1360,12 +1360,12 @@ namespace sap::frontend
 				return ErrMsg(lexer.location(), "expected ':' after field name");
 
 			auto field_type = TRY(parse_type(lexer));
-			std::unique_ptr<interp::Expr> field_initialiser {};
+			std::unique_ptr<ast::Expr> field_initialiser {};
 
 			if(lexer.expect(TT::Equal))
 				field_initialiser = TRY(parse_expr(lexer));
 
-			fields.push_back(interp::StructDefn::Field {
+			fields.push_back(ast::StructDefn::Field {
 			    .name = field_name->text.str(),
 			    .type = std::move(field_type),
 			    .initialiser = std::move(field_initialiser),
@@ -1375,10 +1375,10 @@ namespace sap::frontend
 				return ErrMsg(lexer.location(), "expected ';' or '}' in struct body");
 		}
 
-		return Ok(std::make_unique<interp::StructDefn>(loc, name, std::move(fields)));
+		return Ok(std::make_unique<ast::StructDefn>(loc, name, std::move(fields)));
 	}
 
-	static ErrorOrUniquePtr<interp::EnumDefn> parse_enum_defn(Lexer& lexer)
+	static ErrorOrUniquePtr<ast::EnumDefn> parse_enum_defn(Lexer& lexer)
 	{
 		auto loc = lexer.location();
 		must_expect(lexer, TT::KW_Enum);
@@ -1398,26 +1398,26 @@ namespace sap::frontend
 		if(not lexer.expect(TT::LBrace))
 			return ErrMsg(lexer.location(), "expected '{' for enum body");
 
-		std::vector<interp::EnumDefn::EnumeratorDefn> enumerators {};
+		std::vector<ast::EnumDefn::EnumeratorDefn> enumerators {};
 		while(not lexer.expect(TT::RBrace))
 		{
 			auto enum_name = lexer.match(TT::Identifier);
 			if(not enum_name.has_value())
 				return ErrMsg(lexer.location(), "expected enumerator name");
 
-			std::unique_ptr<interp::Expr> enum_value {};
+			std::unique_ptr<ast::Expr> enum_value {};
 
 			if(lexer.expect(TT::Equal))
 				enum_value = TRY(parse_expr(lexer));
 
-			enumerators.push_back(interp::EnumDefn::EnumeratorDefn(enum_name->loc, enum_name->text.str(),
+			enumerators.push_back(ast::EnumDefn::EnumeratorDefn(enum_name->loc, enum_name->text.str(),
 			    std::move(enum_value)));
 
 			if(not lexer.match(TT::Semicolon))
 				return ErrMsg(lexer.location(), "expected ';' after enumerator");
 		}
 
-		return Ok(std::make_unique<interp::EnumDefn>(std::move(loc), std::move(name), std::move(enum_type),
+		return Ok(std::make_unique<ast::EnumDefn>(std::move(loc), std::move(name), std::move(enum_type),
 		    std::move(enumerators)));
 	}
 
@@ -1425,7 +1425,7 @@ namespace sap::frontend
 
 
 
-	static ErrorOrUniquePtr<interp::IfStmt> parse_if_stmt(Lexer& lexer)
+	static ErrorOrUniquePtr<ast::IfStmt> parse_if_stmt(Lexer& lexer)
 	{
 		auto loc = lexer.location();
 		must_expect(lexer, TT::KW_If);
@@ -1433,7 +1433,7 @@ namespace sap::frontend
 		if(not lexer.expect(TT::LParen))
 			return ErrMsg(lexer.location(), "expected '(' after 'if'");
 
-		auto if_stmt = std::make_unique<interp::IfStmt>(loc);
+		auto if_stmt = std::make_unique<ast::IfStmt>(loc);
 
 		if_stmt->if_cond = TRY(parse_expr(lexer));
 		if(not lexer.expect(TT::RParen))
@@ -1447,7 +1447,7 @@ namespace sap::frontend
 		return OkMove(if_stmt);
 	}
 
-	static ErrorOrUniquePtr<interp::WhileLoop> parse_while_loop(Lexer& lexer)
+	static ErrorOrUniquePtr<ast::WhileLoop> parse_while_loop(Lexer& lexer)
 	{
 		auto loc = lexer.location();
 		must_expect(lexer, TT::KW_While);
@@ -1455,7 +1455,7 @@ namespace sap::frontend
 		if(not lexer.expect(TT::LParen))
 			return ErrMsg(lexer.location(), "expected '(' after 'while'");
 
-		auto loop = std::make_unique<interp::WhileLoop>(loc);
+		auto loop = std::make_unique<ast::WhileLoop>(loc);
 
 		loop->condition = TRY(parse_expr(lexer));
 		if(not lexer.expect(TT::RParen))
@@ -1465,7 +1465,7 @@ namespace sap::frontend
 		return OkMove(loop);
 	}
 
-	static ErrorOrUniquePtr<interp::Stmt> parse_for_loop(Lexer& lexer)
+	static ErrorOrUniquePtr<ast::Stmt> parse_for_loop(Lexer& lexer)
 	{
 		auto loc = lexer.location();
 		must_expect(lexer, TT::KW_For);
@@ -1473,7 +1473,7 @@ namespace sap::frontend
 		if(not lexer.expect(TT::LParen))
 			return ErrMsg(lexer.location(), "expected '(' after 'for'");
 
-		auto loop = std::make_unique<interp::ForLoop>(loc);
+		auto loop = std::make_unique<ast::ForLoop>(loc);
 
 		if(not lexer.expect(TT::Semicolon))
 		{
@@ -1501,12 +1501,12 @@ namespace sap::frontend
 	}
 
 
-	static ErrorOrUniquePtr<interp::ReturnStmt> parse_return_stmt(Lexer& lexer)
+	static ErrorOrUniquePtr<ast::ReturnStmt> parse_return_stmt(Lexer& lexer)
 	{
 		auto loc = lexer.location();
 		must_expect(lexer, TT::KW_Return);
 
-		auto ret = std::make_unique<interp::ReturnStmt>(loc);
+		auto ret = std::make_unique<ast::ReturnStmt>(loc);
 		if(lexer.peek() == TT::Semicolon)
 			return OkMove(ret);
 
@@ -1514,7 +1514,7 @@ namespace sap::frontend
 		return OkMove(ret);
 	}
 
-	static ErrorOrUniquePtr<interp::ImportStmt> parse_import_stmt(Lexer& lexer)
+	static ErrorOrUniquePtr<ast::ImportStmt> parse_import_stmt(Lexer& lexer)
 	{
 		auto loc = lexer.location();
 		must_expect(lexer, TT::KW_Import);
@@ -1526,18 +1526,18 @@ namespace sap::frontend
 
 		auto path = unicode::stringFromU32String(TRY(unescape_string(maybe_str->loc, maybe_str->text)));
 
-		auto ret = std::make_unique<interp::ImportStmt>(loc);
+		auto ret = std::make_unique<ast::ImportStmt>(loc);
 		ret->file_path = std::move(path);
 
 		return OkMove(ret);
 	}
 
-	static ErrorOrUniquePtr<interp::UsingStmt> parse_using_stmt(Lexer& lexer)
+	static ErrorOrUniquePtr<ast::UsingStmt> parse_using_stmt(Lexer& lexer)
 	{
 		auto loc = lexer.location();
 		must_expect(lexer, TT::KW_Using);
 
-		auto ret = std::make_unique<interp::UsingStmt>(loc);
+		auto ret = std::make_unique<ast::UsingStmt>(loc);
 
 		auto qid = TRY(parse_qualified_id(lexer)).first;
 		if(not qid.top_level && qid.parents.empty() && lexer.expect(TT::Equal))
@@ -1558,7 +1558,7 @@ namespace sap::frontend
 
 
 
-	static ErrorOrUniquePtr<interp::Block> parse_namespace(Lexer& lexer)
+	static ErrorOrUniquePtr<ast::Block> parse_namespace(Lexer& lexer)
 	{
 		must_expect(lexer, TT::KW_Namespace);
 
@@ -1576,10 +1576,10 @@ namespace sap::frontend
 		return OkMove(block);
 	}
 
-	static ErrorOrUniquePtr<interp::HookBlock> parse_hook_block(Lexer& lexer)
+	static ErrorOrUniquePtr<ast::HookBlock> parse_hook_block(Lexer& lexer)
 	{
 		must_expect(lexer, TT::At);
-		auto block = std::make_unique<interp::HookBlock>(lexer.location());
+		auto block = std::make_unique<ast::HookBlock>(lexer.location());
 		block->phase = TRY(parse_processing_phase(lexer));
 		block->body = TRY(parse_block_or_stmt(lexer, /* is_top_level: */ false, /* braces: */ false));
 		return OkMove(block);
@@ -1589,7 +1589,7 @@ namespace sap::frontend
 
 
 
-	static ErrorOrUniquePtr<interp::Stmt> parse_stmt(Lexer& lexer, bool is_top_level, bool expect_semi)
+	static ErrorOrUniquePtr<ast::Stmt> parse_stmt(Lexer& lexer, bool is_top_level, bool expect_semi)
 	{
 		auto lm = LexerModer(lexer, Lexer::Mode::Script);
 
@@ -1601,7 +1601,7 @@ namespace sap::frontend
 			;
 
 		auto tok = lexer.peek();
-		std::unique_ptr<interp::Stmt> stmt {};
+		std::unique_ptr<ast::Stmt> stmt {};
 
 		bool optional_semicolon = false;
 
@@ -1664,12 +1664,12 @@ namespace sap::frontend
 		else if(tok == TT::KW_Continue)
 		{
 			lexer.next();
-			stmt = std::make_unique<interp::ContinueStmt>(tok.loc);
+			stmt = std::make_unique<ast::ContinueStmt>(tok.loc);
 		}
 		else if(tok == TT::KW_Break)
 		{
 			lexer.next();
-			stmt = std::make_unique<interp::BreakStmt>(tok.loc);
+			stmt = std::make_unique<ast::BreakStmt>(tok.loc);
 		}
 		else
 		{
@@ -1682,8 +1682,8 @@ namespace sap::frontend
 		// check for assignment
 		if(is_assignment_op(lexer.peek()))
 		{
-			if(auto expr = dynamic_cast<const interp::Expr*>(stmt.get()); expr != nullptr)
-				stmt = TRY(parse_assignment(util::static_pointer_cast<interp::Expr>(std::move(stmt)), lexer));
+			if(auto expr = dynamic_cast<const ast::Expr*>(stmt.get()); expr != nullptr)
+				stmt = TRY(parse_assignment(util::static_pointer_cast<ast::Expr>(std::move(stmt)), lexer));
 		}
 
 		if(expect_semi && not lexer.expect(TT::Semicolon) && not optional_semicolon)
@@ -1703,11 +1703,11 @@ namespace sap::frontend
 
 		auto block = zst::make_shared<ScriptBlock>(phase);
 
-		std::optional<interp::QualifiedId> target_scope;
+		std::optional<QualifiedId> target_scope;
 		if(lexer.peek() == TT::ColonColon || lexer.peek() == TT::Identifier)
 		{
 			// parse the thing manually, because it's slightly different from normal.
-			interp::QualifiedId qid {};
+			QualifiedId qid {};
 			if(lexer.expect(TT::ColonColon))
 				qid.top_level = true;
 
@@ -1742,7 +1742,7 @@ namespace sap::frontend
 		auto [qid, len] = TRY(parse_qualified_id(lexer));
 		loc.length = len;
 
-		auto lhs = std::make_unique<interp::Ident>(loc);
+		auto lhs = std::make_unique<ast::Ident>(loc);
 		lhs->name = std::move(qid);
 
 		auto phase = ProcessingPhase::Layout;
@@ -1785,7 +1785,7 @@ namespace sap::frontend
 			auto brace_loc = lexer.location();
 			if(is_block)
 			{
-				auto obj = std::make_unique<interp::TreeBlockExpr>(brace_loc);
+				auto obj = std::make_unique<ast::TreeBlockExpr>(brace_loc);
 				auto container = tree::Container::makeVertBox();
 				auto inner = TRY(parse_top_level(lexer));
 
@@ -1797,14 +1797,14 @@ namespace sap::frontend
 				if(not lexer.expect(TT::RBrace))
 					return ErrMsg(lexer.location(), "expected closing '}', got '{}'", lexer.peek().text);
 
-				sc->call->arguments.push_back(interp::FunctionCall::Arg {
+				sc->call->arguments.push_back(ast::FunctionCall::Arg {
 				    .name = std::nullopt,
 				    .value = std::move(obj),
 				});
 			}
 			else
 			{
-				auto obj = std::make_unique<interp::TreeInlineExpr>(brace_loc);
+				auto obj = std::make_unique<ast::TreeInlineExpr>(brace_loc);
 
 				while(not lexer.expect(TT::RBrace))
 				{
@@ -1812,7 +1812,7 @@ namespace sap::frontend
 					obj->objects.push_back(std::move(tmp));
 				}
 
-				sc->call->arguments.push_back(interp::FunctionCall::Arg {
+				sc->call->arguments.push_back(ast::FunctionCall::Arg {
 				    .name = std::nullopt,
 				    .value = std::move(obj),
 				});
@@ -2050,12 +2050,12 @@ namespace sap::frontend
 	}
 
 
-	static ErrorOr<std::pair<std::vector<std::unique_ptr<interp::Stmt>>, bool>> parse_preamble(Lexer& lexer)
+	static ErrorOr<std::pair<std::vector<std::unique_ptr<ast::Stmt>>, bool>> parse_preamble(Lexer& lexer)
 	{
 		auto _ = LexerModer(lexer, Lexer::Mode::Script);
 
 		bool saw_doc_start = false;
-		std::vector<std::unique_ptr<interp::Stmt>> stmts {};
+		std::vector<std::unique_ptr<ast::Stmt>> stmts {};
 
 		while(not lexer.eof())
 		{
@@ -2064,13 +2064,13 @@ namespace sap::frontend
 				if(not lexer.expect(KW_START_DOCUMENT))
 					return ErrMsg(lexer.location(), "expected '\\{}' in preamble (saw '\\')", KW_START_DOCUMENT);
 
-				auto callee = interp::QualifiedId {
+				auto callee = QualifiedId {
 					.top_level = true,
 					.parents = { "builtin" },
 					.name = KW_START_DOCUMENT,
 				};
 
-				auto ident = std::make_unique<interp::Ident>(lexer.previous().loc);
+				auto ident = std::make_unique<ast::Ident>(lexer.previous().loc);
 				ident->name = std::move(callee);
 
 				stmts.push_back(TRY(parse_function_call(lexer, std::move(ident))));
@@ -2089,7 +2089,7 @@ namespace sap::frontend
 			}
 		}
 
-		using PP = std::pair<std::vector<std::unique_ptr<interp::Stmt>>, bool>;
+		using PP = std::pair<std::vector<std::unique_ptr<ast::Stmt>>, bool>;
 		return Ok<PP>(std::move(stmts), saw_doc_start);
 	}
 

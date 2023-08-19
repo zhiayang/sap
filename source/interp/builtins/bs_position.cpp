@@ -15,7 +15,7 @@
 namespace sap::interp::builtin
 {
 	using PT = frontend::PType;
-	using Field = StructDefn::Field;
+	using Field = ast::StructDefn::Field;
 
 	const Type* builtin::BS_Position::type = nullptr;
 	std::vector<Field> builtin::BS_Position::fields()

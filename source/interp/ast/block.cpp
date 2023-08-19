@@ -6,7 +6,7 @@
 #include "interp/interp.h"
 #include "interp/eval_result.h"
 
-namespace sap::interp
+namespace sap::interp::ast
 {
 	ErrorOr<TCResult> Block::typecheck_impl(Typechecker* ts, const Type* infer, bool keep_lvalue) const
 	{
@@ -56,7 +56,8 @@ namespace sap::interp
 			}
 			else if(auto if_stmt = dynamic_cast<IfStmt*>(stmt.get()); if_stmt != nullptr && if_stmt->else_body)
 			{
-				if(if_stmt->if_body->checkAllPathsReturn(return_type) && if_stmt->else_body->checkAllPathsReturn(return_type))
+				if(if_stmt->if_body->checkAllPathsReturn(return_type)
+				    && if_stmt->else_body->checkAllPathsReturn(return_type))
 					return true;
 			}
 		}

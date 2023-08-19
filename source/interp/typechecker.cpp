@@ -168,10 +168,10 @@ namespace sap::interp
 			if(decl.size() > 1)
 				return ErrMsg(this->loc(), "ambiguous type '{}'", name);
 
-			if(auto struct_decl = dynamic_cast<const StructDecl*>(decl[0]); struct_decl)
+			if(auto struct_decl = dynamic_cast<const ast::StructDecl*>(decl[0]); struct_decl)
 				return Ok(struct_decl->get_type());
 
-			else if(auto enum_decl = dynamic_cast<const EnumDecl*>(decl[0]); enum_decl)
+			else if(auto enum_decl = dynamic_cast<const ast::EnumDecl*>(decl[0]); enum_decl)
 				return Ok(enum_decl->get_type());
 		}
 		else if(ptype.isArray())
@@ -204,7 +204,7 @@ namespace sap::interp
 	}
 
 
-	ErrorOr<const Definition*> Typechecker::getDefinitionForType(const Type* type)
+	ErrorOr<const ast::Definition*> Typechecker::getDefinitionForType(const Type* type)
 	{
 		auto it = m_type_definitions.find(type);
 		if(it == m_type_definitions.end())
@@ -235,7 +235,7 @@ namespace sap::interp
 		}
 	}
 
-	ErrorOr<void> Typechecker::addTypeDefinition(const Type* type, const Definition* defn)
+	ErrorOr<void> Typechecker::addTypeDefinition(const Type* type, const ast::Definition* defn)
 	{
 		if(m_type_definitions.contains(type))
 			return ErrMsg(this->loc(), "type '{}' was already defined", type);
@@ -244,7 +244,7 @@ namespace sap::interp
 		return Ok();
 	}
 
-	Definition* Typechecker::addBuiltinDefinition(std::unique_ptr<Definition> defn)
+	ast::Definition* Typechecker::addBuiltinDefinition(std::unique_ptr<ast::Definition> defn)
 	{
 		m_builtin_defns.push_back(std::move(defn));
 		return m_builtin_defns.back().get();

@@ -11,11 +11,11 @@
 namespace sap::interp::builtin
 {
 	using PT = frontend::PType;
-	using Field = StructDefn::Field;
+	using Field = ast::StructDefn::Field;
 
-	static std::unique_ptr<NullLit> make_null()
+	static std::unique_ptr<ast::NullLit> make_null()
 	{
-		return std::make_unique<NullLit>(Location::builtin());
+		return std::make_unique<ast::NullLit>(Location::builtin());
 	}
 
 	const Type* builtin::BS_DocumentSettings::type = nullptr;

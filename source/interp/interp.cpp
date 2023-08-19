@@ -39,7 +39,7 @@ namespace sap::interp
 		return m_imported_files.contains(filename);
 	}
 
-	void Interpreter::addHookBlock(const HookBlock* block)
+	void Interpreter::addHookBlock(const ast::HookBlock* block)
 	{
 		m_hook_blocks[block->phase].push_back(block);
 	}
@@ -68,7 +68,7 @@ namespace sap::interp
 		return m_leaked_strings.emplace_back(str.str());
 	}
 
-	ErrorOr<EvalResult> Interpreter::run(const Stmt* stmt)
+	ErrorOr<EvalResult> Interpreter::run(const ast::Stmt* stmt)
 	{
 		TRY(stmt->typecheck(m_typechecker.get()));
 		return stmt->evaluate(m_evaluator.get());
@@ -136,13 +136,13 @@ namespace sap::interp
 
 
 
-	ErrorOr<EvalResult> Stmt::evaluate(Evaluator* ev) const
+	ErrorOr<EvalResult> ast::Stmt::evaluate(Evaluator* ev) const
 	{
 		auto _ = ev->pushLocation(m_location);
 		return this->evaluate_impl(ev);
 	}
 
-	ErrorOr<TCResult> Stmt::typecheck(Typechecker* ts, const Type* infer, bool keep_lvalue) const
+	ErrorOr<TCResult> ast::Stmt::typecheck(Typechecker* ts, const Type* infer, bool keep_lvalue) const
 	{
 		auto _ = ts->pushLocation(m_location);
 

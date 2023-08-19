@@ -9,7 +9,7 @@
 #include "interp/interp.h"
 #include "interp/overload_resolution.h"
 
-namespace sap::interp
+namespace sap::interp::ast
 {
 	using ExpectedParams = std::vector<std::tuple<std::string, const Type*, const Expr*>>;
 

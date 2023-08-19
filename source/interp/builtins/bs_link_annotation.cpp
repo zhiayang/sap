@@ -9,7 +9,7 @@
 namespace sap::interp::builtin
 {
 	using PT = frontend::PType;
-	using Field = StructDefn::Field;
+	using Field = ast::StructDefn::Field;
 
 	const Type* builtin::BS_LinkAnnotation::type = nullptr;
 	std::vector<Field> builtin::BS_LinkAnnotation::fields()
@@ -18,9 +18,9 @@ namespace sap::interp::builtin
 		auto pt_string = PT::named(frontend::TYPE_STRING);
 
 		return util::vectorOf(                                                           //
-			Field { .name = "position", .type = ptype_for_builtin<BS_AbsPosition>() },   //
-			Field { .name = "size", .type = ptype_for_builtin<BS_Size2d>() },            //
-			Field { .name = "destination", .type = ptype_for_builtin<BS_AbsPosition>() } //
+		    Field { .name = "position", .type = ptype_for_builtin<BS_AbsPosition>() },   //
+		    Field { .name = "size", .type = ptype_for_builtin<BS_Size2d>() },            //
+		    Field { .name = "destination", .type = ptype_for_builtin<BS_AbsPosition>() } //
 		);
 	}
 

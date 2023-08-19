@@ -5,7 +5,7 @@
 #include "interp/ast.h"
 #include "interp/interp.h"
 
-namespace sap::interp
+namespace sap::interp::ast
 {
 	ErrorOr<TCResult> ArraySpreadOp::typecheck_impl(Typechecker* ts, const Type* infer, bool keep_lvalue) const
 	{
@@ -17,7 +17,7 @@ namespace sap::interp
 		if(value.isLValue() && not ret_type->arrayElement()->isCloneable())
 		{
 			return ErrMsg(ts, "arrays of type '{}' cannot be spread with `...` without first moving; use `...*`",
-				ret_type->arrayElement());
+			    ret_type->arrayElement());
 		}
 
 		return TCResult::ofRValue(ret_type);
@@ -27,6 +27,6 @@ namespace sap::interp
 	{
 		auto arr = TRY_VALUE(this->expr->evaluate(ev)).takeArray();
 		return EvalResult::ofValue(Value::array(this->get_type()->arrayElement(), std::move(arr),
-			/* variadic: */ true));
+		    /* variadic: */ true));
 	}
 }

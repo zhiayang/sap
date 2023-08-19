@@ -10,7 +10,7 @@
 #include "interp/interp.h"      // for Interpreter
 #include "interp/eval_result.h" // for EvalResult, TRY_VALUE
 
-namespace sap::interp
+namespace sap::interp::ast
 {
 	static const char* op_to_string(BinaryOp::Op op)
 	{

@@ -10,7 +10,7 @@
 #include "interp/type.h"
 #include "interp/interp.h"
 
-namespace sap::interp
+namespace sap::interp::ast
 {
 	template <typename T>
 	struct ArrangeArg

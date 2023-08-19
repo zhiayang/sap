@@ -11,7 +11,7 @@
 namespace sap::interp::builtin
 {
 	using PT = frontend::PType;
-	using Field = StructDefn::Field;
+	using Field = ast::StructDefn::Field;
 
 	static auto pt_bool = PT::named(frontend::TYPE_BOOL);
 	static auto pt_float = PT::named(frontend::TYPE_FLOAT);
@@ -19,7 +19,7 @@ namespace sap::interp::builtin
 
 	static auto get_null()
 	{
-		return std::make_unique<NullLit>(Location::builtin());
+		return std::make_unique<ast::NullLit>(Location::builtin());
 	}
 
 	template <typename T>

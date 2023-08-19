@@ -49,9 +49,9 @@ namespace sap::interp
 	{
 		StackFrame* parent() const { return m_parent; }
 
-		Value* valueOf(const Definition* defn);
+		Value* valueOf(const ast::Definition* defn);
 
-		void setValue(const Definition* defn, Value value);
+		void setValue(const ast::Definition* defn, Value value);
 		Value* createTemporary(Value init);
 
 		void dropTemporaries();
@@ -70,7 +70,7 @@ namespace sap::interp
 		Evaluator* m_evaluator;
 		StackFrame* m_parent = nullptr;
 		size_t m_call_depth;
-		util::hashmap<const Definition*, Value> m_values;
+		util::hashmap<const ast::Definition*, Value> m_values;
 		std::deque<Value> m_temporaries;
 	};
 
@@ -110,9 +110,9 @@ namespace sap::interp
 		[[nodiscard]] util::Defer<> pushStructFieldContext(Value* struct_value);
 		[[nodiscard]] Value& getStructFieldContext() const;
 
-		bool isGlobalValue(const Definition* defn) const;
-		void setGlobalValue(const Definition* defn, Value val);
-		Value* getGlobalValue(const Definition* defn);
+		bool isGlobalValue(const ast::Definition* defn) const;
+		void setGlobalValue(const ast::Definition* defn, Value val);
+		Value* getGlobalValue(const ast::Definition* defn);
 
 		ErrorOr<zst::SharedPtr<tree::InlineSpan>> convertValueToText(Value&& value);
 
@@ -152,7 +152,7 @@ namespace sap::interp
 		std::vector<BlockContext> m_block_context_stack;
 		std::vector<Value*> m_struct_field_context_stack;
 
-		util::hashmap<const Definition*, Value> m_global_values;
+		util::hashmap<const ast::Definition*, Value> m_global_values;
 
 		std::deque<Value> m_value_heap;
 

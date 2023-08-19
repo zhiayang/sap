@@ -6,7 +6,7 @@
 #include "interp/interp.h"
 #include "interp/overload_resolution.h"
 
-namespace sap::interp
+namespace sap::interp::ast
 {
 	ErrorOr<TCResult> StructDecl::typecheck_impl(Typechecker* ts, const Type* infer, bool keep_lvalue) const
 	{

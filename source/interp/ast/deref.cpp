@@ -5,7 +5,7 @@
 #include "interp/ast.h"
 #include "interp/interp.h"
 
-namespace sap::interp
+namespace sap::interp::ast
 {
 	ErrorOr<TCResult> DereferenceOp::typecheck_impl(Typechecker* ts, const Type* infer, bool keep_lvalue) const
 	{

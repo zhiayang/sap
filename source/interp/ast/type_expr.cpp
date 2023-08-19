@@ -8,7 +8,7 @@
 #include "interp/interp.h"
 #include "interp/eval_result.h"
 
-namespace sap::interp
+namespace sap::interp::ast
 {
 	ErrorOr<EvalResult> TypeExpr::evaluate_impl(Evaluator* ev) const
 	{

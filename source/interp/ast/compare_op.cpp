@@ -12,7 +12,7 @@
 #include "interp/interp.h"      // for Interpreter
 #include "interp/eval_result.h" // for EvalResult, TRY_VALUE
 
-namespace sap::interp
+namespace sap::interp::ast
 {
 	static const char* op_to_string(ComparisonOp::Op op)
 	{
@@ -44,7 +44,7 @@ namespace sap::interp
 
 		// if we are doing ordering, make sure that the enum is integral (if it's an enum)
 		if((lhs->isEnum() && not lhs->toEnum()->elementType()->isInteger())
-			|| (rhs->isEnum() && not rhs->toEnum()->elementType()->isInteger()))
+		    || (rhs->isEnum() && not rhs->toEnum()->elementType()->isInteger()))
 			return false;
 
 		return lhs == rhs                      //
@@ -206,7 +206,7 @@ namespace sap::interp
 		{
 			if(not can_compare(op, lhs, rhs))
 				return ErrMsg(ts, "types '{}' and '{}' are not comparable with operator '{}'", lhs, rhs,
-					op_to_string(op));
+				    op_to_string(op));
 
 			if(i + 1 == this->rest.size())
 				break;

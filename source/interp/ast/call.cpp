@@ -11,7 +11,7 @@
 #include "interp/eval_result.h" // for EvalResult, TRY_VALUE
 #include "interp/overload_resolution.h"
 
-namespace sap::interp
+namespace sap::interp::ast
 {
 	template <typename TsEv>
 	static ErrorOr<std::vector<std::tuple<std::string, const Type*, const Expr*>>>

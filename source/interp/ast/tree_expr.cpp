@@ -13,7 +13,7 @@
 #include "interp/interp.h"      // for Interpreter
 #include "interp/eval_result.h" // for EvalResult
 
-namespace sap::interp
+namespace sap::interp::ast
 {
 	static ErrorOr<void> typecheck_list_of_tios(Typechecker* ts, //
 	    const std::vector<zst::SharedPtr<tree::InlineObject>>& tios)

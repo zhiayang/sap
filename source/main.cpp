@@ -26,7 +26,7 @@ scripting
 
 layout
 ------
-[ ] high cost for single word at end of paragraph
+[x] high cost for single word at end of paragraph
 
 [ ] 'em' doesn't pass down properly in InlineSpans, apparently
 	fn foo() -> Inline { make_text("hi").apply_style({ font_size: 2em }); }

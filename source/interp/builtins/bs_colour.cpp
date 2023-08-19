@@ -9,21 +9,21 @@
 namespace sap::interp::builtin
 {
 	using PT = frontend::PType;
-	using Field = StructDefn::Field;
+	using Field = ast::StructDefn::Field;
 
 	const Type* builtin::BS_Colour::type = nullptr;
 	std::vector<Field> builtin::BS_Colour::fields()
 	{
 		auto make_zero = []() {
-			auto ret = std::make_unique<NumberLit>(Location::builtin());
+			auto ret = std::make_unique<ast::NumberLit>(Location::builtin());
 			ret->is_floating = true;
 			ret->float_value = 0.0;
 			return ret;
 		};
 
-		using A = StructLit::Arg;
+		using A = ast::StructLit::Arg;
 
-		auto cmyk_init = std::make_unique<StructLit>(Location::builtin());
+		auto cmyk_init = std::make_unique<ast::StructLit>(Location::builtin());
 		cmyk_init->struct_name = ptype_for_builtin<BS_ColourCMYK>().name();
 		cmyk_init->field_inits = util::vectorOf( //
 		    A { "c", make_zero() },              //
@@ -31,7 +31,7 @@ namespace sap::interp::builtin
 		    A { "y", make_zero() },              //
 		    A { "k", make_zero() });
 
-		auto rgb_init = std::make_unique<StructLit>(Location::builtin());
+		auto rgb_init = std::make_unique<ast::StructLit>(Location::builtin());
 		rgb_init->struct_name = ptype_for_builtin<BS_ColourRGB>().name();
 		rgb_init->field_inits = util::vectorOf( //
 		    A { "r", make_zero() },             //
@@ -180,16 +180,16 @@ namespace sap::interp::builtin
 		return PT::named(frontend::TYPE_INT);
 	}
 
-	std::vector<EnumDefn::EnumeratorDefn> BE_ColourType::enumerators()
+	std::vector<ast::EnumDefn::EnumeratorDefn> BE_ColourType::enumerators()
 	{
 		auto make_int = [](int value) {
-			auto ret = std::make_unique<NumberLit>(Location::builtin());
+			auto ret = std::make_unique<ast::NumberLit>(Location::builtin());
 			ret->is_floating = false;
 			ret->int_value = value;
 			return ret;
 		};
 
-		using ED = EnumDefn::EnumeratorDefn;
+		using ED = ast::EnumDefn::EnumeratorDefn;
 		return util::vectorOf(                                                    //
 		    ED(Location::builtin(), "RGB", make_int((int) Colour::Type::RGB)),    //
 		    ED(Location::builtin(), "CMYK", make_int((int) Colour::Type::CMYK))); //

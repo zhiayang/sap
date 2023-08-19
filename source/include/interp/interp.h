@@ -38,7 +38,7 @@ namespace sap::interp
 
 		zst::byte_span loadFile(zst::str_view filename);
 
-		ErrorOr<EvalResult> run(const Stmt* stmt);
+		ErrorOr<EvalResult> run(const ast::Stmt* stmt);
 
 		Evaluator& evaluator() { return *m_evaluator; }
 		Typechecker& typechecker() { return *m_typechecker; }
@@ -53,7 +53,7 @@ namespace sap::interp
 		ProcessingPhase currentPhase() const { return m_current_phase; }
 		void setCurrentPhase(ProcessingPhase phase) { m_current_phase = phase; }
 
-		void addHookBlock(const HookBlock* block);
+		void addHookBlock(const ast::HookBlock* block);
 		ErrorOr<void> runHooks();
 
 		void addImportedFile(std::string filename);
@@ -69,7 +69,7 @@ namespace sap::interp
 		std::unique_ptr<Evaluator> m_evaluator;
 
 		ProcessingPhase m_current_phase;
-		util::hashmap<ProcessingPhase, std::vector<const HookBlock*>> m_hook_blocks;
+		util::hashmap<ProcessingPhase, std::vector<const ast::HookBlock*>> m_hook_blocks;
 
 		std::vector<zst::unique_span<uint8_t[]>> m_file_contents;
 

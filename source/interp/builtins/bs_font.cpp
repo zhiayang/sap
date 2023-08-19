@@ -15,7 +15,7 @@
 namespace sap::interp::builtin
 {
 	using PT = frontend::PType;
-	using Field = StructDefn::Field;
+	using Field = ast::StructDefn::Field;
 
 	static auto pt_int = PT::named(frontend::TYPE_INT);
 	static auto pt_str = PT::named(frontend::TYPE_STRING);

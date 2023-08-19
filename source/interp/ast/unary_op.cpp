@@ -10,7 +10,7 @@
 #include "interp/interp.h"      // for Interpreter
 #include "interp/eval_result.h" // for EvalResult, TRY_VALUE
 
-namespace sap::interp
+namespace sap::interp::ast
 {
 	static const char* op_to_string(UnaryOp::Op op)
 	{
@@ -34,7 +34,7 @@ namespace sap::interp
 				if(not(ty->isInteger() || ty->isFloating() || ty->isLength()))
 				{
 					return ErrMsg(this->expr->loc(), "invalid type '{}' for unary '{}' operator", ty,
-						op_to_string(this->op));
+					    op_to_string(this->op));
 				}
 
 				// same type as we got in

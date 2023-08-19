@@ -18,16 +18,16 @@ namespace sap::interp::builtin
 		return PT::named(frontend::TYPE_INT);
 	}
 
-	std::vector<EnumDefn::EnumeratorDefn> BE_Alignment::enumerators()
+	std::vector<ast::EnumDefn::EnumeratorDefn> BE_Alignment::enumerators()
 	{
 		auto make_int = [](int value) {
-			auto ret = std::make_unique<NumberLit>(Location::builtin());
+			auto ret = std::make_unique<ast::NumberLit>(Location::builtin());
 			ret->is_floating = false;
 			ret->int_value = value;
 			return ret;
 		};
 
-		using ED = EnumDefn::EnumeratorDefn;
+		using ED = ast::EnumDefn::EnumeratorDefn;
 		return util::vectorOf(                                                      //
 		    ED(Location::builtin(), "Left", make_int((int) Alignment::Left)),       //
 		    ED(Location::builtin(), "Right", make_int((int) Alignment::Right)),     //

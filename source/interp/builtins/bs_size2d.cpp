@@ -9,15 +9,15 @@
 namespace sap::interp::builtin
 {
 	using PT = frontend::PType;
-	using Field = StructDefn::Field;
+	using Field = ast::StructDefn::Field;
 
 	const Type* builtin::BS_Size2d::type = nullptr;
 	std::vector<Field> builtin::BS_Size2d::fields()
 	{
 		auto pt_len = PT::named(frontend::TYPE_LENGTH);
 		return util::vectorOf(                     //
-			Field { .name = "x", .type = pt_len }, //
-			Field { .name = "y", .type = pt_len }  //
+		    Field { .name = "x", .type = pt_len }, //
+		    Field { .name = "y", .type = pt_len }  //
 		);
 	}
 

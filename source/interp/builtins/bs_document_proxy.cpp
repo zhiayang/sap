@@ -11,7 +11,7 @@
 namespace sap::interp::builtin
 {
 	using PT = frontend::PType;
-	using Field = StructDefn::Field;
+	using Field = ast::StructDefn::Field;
 
 	const Type* builtin::BS_DocumentProxy::type = nullptr;
 	std::vector<Field> builtin::BS_DocumentProxy::fields()

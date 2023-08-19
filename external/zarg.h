@@ -17,7 +17,7 @@
 
 
 /*
-    Version 0.1.0
+    Version 0.1.1
     =============
 */
 
@@ -32,6 +32,7 @@
 #include <string>
 #include <optional>
 #include <string_view>
+#include <unordered_set>
 #include <unordered_map>
 
 namespace zarg
@@ -49,6 +50,9 @@ namespace zarg
 		std::unordered_map<std::string, Arg> options;
 
 		std::vector<std::string> positional;
+
+		bool has_option(const std::string& opt) const;
+		std::optional<std::string> get_option(const std::string& opt) const;
 	};
 
 	struct ArgumentList
@@ -65,13 +69,14 @@ namespace zarg
 	{
 		ArgumentList parse(int argc, char** argv);
 
-		Parser& add_flag(char flag, std::string description);
-		Parser& add_option(char short_opt, bool needs_value, std::string description);
+		Parser& add_flag(char flag, std::string description = "");
+		Parser& add_option(char short_opt, bool needs_value, std::string description = "");
 
-		Parser& add_option(std::string long_opt, bool needs_value, std::string description);
-		Parser& add_option(char short_opt, std::string long_opt, bool needs_value, std::string description);
+		Parser& add_option(std::string long_opt, bool needs_value, std::string description = "");
+		Parser& add_option(char short_opt, std::string long_opt, bool needs_value, std::string description = "");
 
 		Parser& allow_options_after_positionals(bool x = true);
+		Parser& ignore_unknown_flags(bool x = true);
 
 	private:
 		struct Option
@@ -92,6 +97,7 @@ namespace zarg
 		std::unordered_map<std::string, const Option*> m_long_options;
 
 		bool m_allow_options_after_positionals = false;
+		bool m_ignore_unknown_flags = false;
 
 		std::deque<Option> m_all_options;
 	};
@@ -116,6 +122,19 @@ namespace zarg
 		vfprintf(stderr, fmt, ap);
 		va_end(ap);
 		exit(1);
+	}
+
+	bool ArgumentSet::has_option(const std::string& opt) const
+	{
+		return this->options.find(opt) != this->options.end();
+	}
+
+	std::optional<std::string> ArgumentSet::get_option(const std::string& opt) const
+	{
+		if(auto it = this->options.find(opt); it != this->options.end())
+			return it->second.value;
+		else
+			return std::nullopt;
 	}
 
 	ArgumentSet ArgumentList::set() const&
@@ -241,7 +260,8 @@ namespace zarg
 					}
 					else
 					{
-						error_and_exit("unrecognised option '-%c'\n", arg[i]);
+						if(not m_ignore_unknown_flags)
+							error_and_exit("unrecognised option '-%c'\n", arg[i]);
 					}
 				}
 			}
@@ -317,7 +337,8 @@ namespace zarg
 				}
 				else
 				{
-					error_and_exit("unrecognised option '--%s'\n", option_name.c_str());
+					if(not m_ignore_unknown_flags)
+						error_and_exit("unrecognised option '--%s'\n", option_name.c_str());
 				}
 			}
 		}
@@ -328,6 +349,12 @@ namespace zarg
 	Parser& Parser::allow_options_after_positionals(bool x)
 	{
 		m_allow_options_after_positionals = x;
+		return *this;
+	}
+
+	Parser& Parser::ignore_unknown_flags(bool x)
+	{
+		m_ignore_unknown_flags = x;
 		return *this;
 	}
 

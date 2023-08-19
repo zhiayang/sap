@@ -18,9 +18,13 @@ namespace sap::layout
 
 namespace sap::interp
 {
-	struct Block;
 	struct Interpreter;
-	struct FunctionCall;
+
+	namespace ast
+	{
+		struct Block;
+		struct FunctionCall;
+	}
 }
 
 namespace sap::tree
@@ -251,7 +255,7 @@ namespace sap::tree
 
 		virtual ErrorOr<void> evaluateScripts(interp::Interpreter* cs) const override;
 
-		std::unique_ptr<interp::Block> body;
+		std::unique_ptr<interp::ast::Block> body;
 
 	private:
 		virtual ErrorOr<LayoutResult> create_layout_object_impl(interp::Interpreter* cs,
@@ -265,7 +269,7 @@ namespace sap::tree
 
 		ErrorOr<void> evaluateScripts(interp::Interpreter* cs) const;
 
-		std::unique_ptr<interp::FunctionCall> call;
+		std::unique_ptr<interp::ast::FunctionCall> call;
 
 	private:
 		using ScriptEvalResult = Either<zst::SharedPtr<InlineSpan>, std::unique_ptr<layout::LayoutObject>>;

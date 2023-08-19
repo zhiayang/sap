@@ -7,7 +7,7 @@
 #include "interp/interp.h"      // for Interpreter, DefnTree, StackFrame
 #include "interp/eval_result.h" // for EvalResult, TRY_VALUE
 
-namespace sap::interp
+namespace sap::interp::ast
 {
 	ErrorOr<TCResult> VariableDecl::typecheck_impl(Typechecker* ts, const Type* infer, bool keep_lvalue) const
 	{
@@ -52,7 +52,7 @@ namespace sap::interp
 					if(not ts->canImplicitlyConvert(initialiser_type, resolved_type))
 					{
 						return ErrMsg(ts, "cannot initialise variable of type '{}' with expression of type '{}'", //
-							resolved_type, initialiser_type);
+						    resolved_type, initialiser_type);
 					}
 				}
 

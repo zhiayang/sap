@@ -5,7 +5,7 @@
 #include "tree/base.h"
 #include "interp/ast.h" // for Stmt
 
-namespace sap::interp
+namespace sap::interp::ast
 {
 	Stmt::~Stmt()
 	{

@@ -8,10 +8,13 @@
 #include "interp/interp.h"      // for Interpreter, DefnTree, StackFrame
 #include "interp/eval_result.h" // for EvalResult
 
-namespace sap::interp
+namespace sap::interp::ast
 {
 	ErrorOr<TCResult> FunctionDecl::typecheck_impl(Typechecker* ts, const Type* infer, bool keep_lvalue) const
 	{
+		if(this->isGeneric())
+			return TCResult::ofGeneric(this, {});
+
 		bool saw_variadic = false;
 
 		std::vector<const Type*> param_types {};
@@ -44,15 +47,15 @@ namespace sap::interp
 
 	ErrorOr<TCResult> FunctionDefn::typecheck_impl(Typechecker* ts, const Type* infer, bool keep_lvalue) const
 	{
-		if(not this->generic_params.empty())
+		this->declaration->resolve(this);
+
+		if(this->declaration->isGeneric())
 		{
-			// declare the generic function
-
-
-			return TCResult::ofVoid();
+			// TODO: additional checking for validity of stuff
+			TRY(ts->current()->declareGeneric(this->declaration.get()));
+			return TCResult::ofGeneric(this->declaration.get(), {});
 		}
 
-		this->declaration->resolve(this);
 		auto decl_type = TRY(this->declaration->typecheck(ts)).type();
 
 		// TODO: maybe a less weird mangling solution? idk
@@ -103,6 +106,9 @@ namespace sap::interp
 
 	ErrorOr<EvalResult> FunctionDefn::call(Evaluator* ev, std::vector<Value>& args) const
 	{
+		if(this->declaration->isGeneric())
+			return ErrMsg(ev, "Cannot call non-monomorphised function! (how did you even get here)");
+
 		auto _ = ev->pushFrame();
 		auto& frame = ev->frame();
 
@@ -115,7 +121,10 @@ namespace sap::interp
 		return this->body->evaluate(ev);
 	}
 
-
+	ErrorOr<TCResult> FunctionDefn::monomorphise(Typechecker* ts, util::hashmap<std::string, Expr*> generic_args)
+	{
+		return ErrMsg(ts, "ono");
+	}
 
 
 

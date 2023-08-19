@@ -5,11 +5,29 @@
 #include "interp/ast.h"
 #include "interp/interp.h"
 
-namespace sap::interp
+namespace sap::interp::ast
 {
 	ErrorOr<TCResult> SubscriptOp::typecheck_impl(Typechecker* ts, const Type* infer, bool keep_lvalue) const
 	{
 		auto lhs = TRY(this->array->typecheck(ts));
+		if(lhs.isGeneric())
+		{
+			auto decl = lhs.genericDecl();
+			assert(decl->isGeneric());
+
+			// TODO: handle names and other stuff
+			if(this->indices.size() != decl->genericParams().size())
+			{
+				return ErrMsg(ts, "mismatched number of generic arguments (expected %zu, got %zu)",
+				    decl->genericParams().size(), this->indices.size());
+			}
+
+
+
+			return ErrMsg(ts, "ono");
+		}
+
+		// TODO: multiple subscript indices for overloaded operators
 		auto rhs = TRY(this->indices[0]->typecheck(ts));
 
 		auto ltype = lhs.type();

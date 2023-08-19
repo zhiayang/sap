@@ -17,7 +17,7 @@ namespace sap::interp
 	template <typename T>
 	void define_builtin_struct(Interpreter* cs)
 	{
-		auto s = std::make_unique<StructDefn>(Location::builtin(), T::name, T::fields());
+		auto s = std::make_unique<ast::StructDefn>(Location::builtin(), T::name, T::fields());
 		auto defn = s.get();
 
 		T::type = cs->typechecker().addBuiltinDefinition(std::move(s))->typecheck(&cs->typechecker()).unwrap().type();
@@ -27,7 +27,7 @@ namespace sap::interp
 	template <typename T>
 	void define_builtin_enum(Interpreter* cs)
 	{
-		auto e = std::make_unique<EnumDefn>(Location::builtin(), T::name, T::enumeratorType(), T::enumerators());
+		auto e = std::make_unique<ast::EnumDefn>(Location::builtin(), T::name, T::enumeratorType(), T::enumerators());
 		auto defn = e.get();
 
 		T::type = cs->typechecker().addBuiltinDefinition(std::move(e))->typecheck(&cs->typechecker()).unwrap().type();
@@ -69,10 +69,10 @@ namespace sap::interp
 
 
 
-	template <std::same_as<FunctionDecl::Param>... P>
-	static std::vector<FunctionDecl::Param> PL(P&&... params)
+	template <std::same_as<ast::FunctionDecl::Param>... P>
+	static std::vector<ast::FunctionDecl::Param> PL(P&&... params)
 	{
-		std::vector<FunctionDecl::Param> ret {};
+		std::vector<ast::FunctionDecl::Param> ret {};
 		(ret.push_back(std::move(params)), ...);
 
 		return ret;
@@ -84,8 +84,8 @@ namespace sap::interp
 
 		using namespace sap::frontend;
 
-		using BFD = BuiltinFunctionDefn;
-		using Param = FunctionDecl::Param;
+		using BFD = ast::BuiltinFunctionDefn;
+		using Param = ast::FunctionDecl::Param;
 
 		const auto t_any = PType::named(TYPE_ANY);
 		const auto t_int = PType::named(TYPE_INT);
@@ -112,8 +112,8 @@ namespace sap::interp
 			};
 		};
 
-		const auto make_null = []() { return std::make_unique<interp::NullLit>(Location::builtin()); };
-		const auto make_bool = [](bool x) { return std::make_unique<interp::BooleanLit>(Location::builtin(), x); };
+		const auto make_null = []() { return std::make_unique<interp::ast::NullLit>(Location::builtin()); };
+		const auto make_bool = [](bool x) { return std::make_unique<interp::ast::BooleanLit>(Location::builtin(), x); };
 
 		const auto T_P = [](const PType& t) { return PType::pointer(t, false); };
 		const auto T_MP = [](const PType& t) { return PType::pointer(t, true); };
@@ -138,7 +138,7 @@ namespace sap::interp
 			ts->addBuiltinDefinition(std::move(ret))->typecheck(ts).expect("builtin decl failed");
 		};
 
-		const auto P = [](const char* name, const PType& t, std::unique_ptr<Expr> default_val = nullptr) {
+		const auto P = [](const char* name, const PType& t, std::unique_ptr<ast::Expr> default_val = nullptr) {
 			return Param { .name = name, .type = t, .default_value = std::move(default_val) };
 		};
 

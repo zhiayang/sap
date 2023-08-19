@@ -6,7 +6,7 @@
 #include "interp/interp.h"
 #include "interp/overload_resolution.h"
 
-namespace sap::interp
+namespace sap::interp::ast
 {
 	static std::vector<std::tuple<std::string, const Type*, const Expr*>>
 	get_field_things(const StructDefn* struct_defn, const StructType* struct_type)

@@ -49,7 +49,7 @@ namespace sap::interp::builtin
 		static constexpr auto name = "State";
 
 		static const Type* type;
-		static std::vector<StructDefn::Field> fields();
+		static std::vector<ast::StructDefn::Field> fields();
 
 		static Value make(Evaluator* ev, const GlobalState& style);
 
@@ -62,7 +62,7 @@ namespace sap::interp::builtin
 		static constexpr auto name = "Style";
 
 		static const Type* type;
-		static std::vector<StructDefn::Field> fields();
+		static std::vector<ast::StructDefn::Field> fields();
 
 		static Value make(Evaluator* ev, const Style& style);
 		static ErrorOr<Style> unmake(Evaluator* ev, const Value& value);
@@ -73,7 +73,7 @@ namespace sap::interp::builtin
 		static constexpr auto name = "Font";
 
 		static const Type* type;
-		static std::vector<StructDefn::Field> fields();
+		static std::vector<ast::StructDefn::Field> fields();
 
 		static Value make(Evaluator* ev, pdf::PdfFont* font);
 		static ErrorOr<pdf::PdfFont*> unmake(Evaluator* ev, const Value& value);
@@ -84,7 +84,7 @@ namespace sap::interp::builtin
 		static constexpr auto name = "FontFamily";
 
 		static const Type* type;
-		static std::vector<StructDefn::Field> fields();
+		static std::vector<ast::StructDefn::Field> fields();
 
 		static Value make(Evaluator* ev, sap::FontFamily font);
 		static ErrorOr<sap::FontFamily> unmake(Evaluator* ev, const Value& value);
@@ -95,7 +95,7 @@ namespace sap::interp::builtin
 		static constexpr auto name = "Position";
 
 		static const Type* type;
-		static std::vector<StructDefn::Field> fields();
+		static std::vector<ast::StructDefn::Field> fields();
 
 		static Value make(Evaluator* ev, layout::RelativePos pos);
 		static layout::RelativePos unmake(Evaluator* ev, const Value& value);
@@ -106,7 +106,7 @@ namespace sap::interp::builtin
 		static constexpr auto name = "AbsPosition";
 
 		static const Type* type;
-		static std::vector<StructDefn::Field> fields();
+		static std::vector<ast::StructDefn::Field> fields();
 
 		static Value make(Evaluator* ev, layout::AbsolutePagePos pos);
 		static layout::AbsolutePagePos unmake(Evaluator* ev, const Value& value);
@@ -117,7 +117,7 @@ namespace sap::interp::builtin
 		static constexpr auto name = "Size2d";
 
 		static const Type* type;
-		static std::vector<StructDefn::Field> fields();
+		static std::vector<ast::StructDefn::Field> fields();
 
 		static Value make(Evaluator* ev, Size2d pos);
 		static Value make(Evaluator* ev, DynLength2d pos);
@@ -130,7 +130,7 @@ namespace sap::interp::builtin
 		static constexpr auto name = "DocumentSettings";
 
 		static const Type* type;
-		static std::vector<StructDefn::Field> fields();
+		static std::vector<ast::StructDefn::Field> fields();
 
 		static Value make(Evaluator* ev, DocumentSettings pos);
 		static ErrorOr<DocumentSettings> unmake(Evaluator* ev, const Value& value);
@@ -141,7 +141,7 @@ namespace sap::interp::builtin
 		static constexpr auto name = "DocumentMargins";
 
 		static const Type* type;
-		static std::vector<StructDefn::Field> fields();
+		static std::vector<ast::StructDefn::Field> fields();
 
 		static Value make(Evaluator* ev, DocumentSettings::Margins pos);
 		static DocumentSettings::Margins unmake(Evaluator* ev, const Value& value);
@@ -152,7 +152,7 @@ namespace sap::interp::builtin
 		static constexpr auto name = "DocumentProxy";
 
 		static const Type* type;
-		static std::vector<StructDefn::Field> fields();
+		static std::vector<ast::StructDefn::Field> fields();
 
 		static Value make(Evaluator* ev, layout::Document* doc);
 		static DocumentProxy unmake(Evaluator* ev, const Value& value);
@@ -163,7 +163,7 @@ namespace sap::interp::builtin
 		static constexpr auto name = "OutlineItem";
 
 		static const Type* type;
-		static std::vector<StructDefn::Field> fields();
+		static std::vector<ast::StructDefn::Field> fields();
 
 		static Value make(Evaluator* ev, OutlineItem pos);
 		static OutlineItem unmake(Evaluator* ev, const Value& value);
@@ -174,7 +174,7 @@ namespace sap::interp::builtin
 		static constexpr auto name = "LinkAnnotation";
 
 		static const Type* type;
-		static std::vector<StructDefn::Field> fields();
+		static std::vector<ast::StructDefn::Field> fields();
 
 		static Value make(Evaluator* ev, LinkAnnotation pos);
 		static LinkAnnotation unmake(Evaluator* ev, const Value& value);
@@ -185,7 +185,7 @@ namespace sap::interp::builtin
 		static constexpr auto name = "Colour";
 
 		static const Type* type;
-		static std::vector<StructDefn::Field> fields();
+		static std::vector<ast::StructDefn::Field> fields();
 
 		static Value make(Evaluator* ev, Colour colour);
 		static Colour unmake(Evaluator* ev, const Value& value);
@@ -196,7 +196,7 @@ namespace sap::interp::builtin
 		static constexpr auto name = "ColourRGB";
 
 		static const Type* type;
-		static std::vector<StructDefn::Field> fields();
+		static std::vector<ast::StructDefn::Field> fields();
 
 		static Value make(Evaluator* ev, Colour::RGB colour);
 		static Colour::RGB unmake(Evaluator* ev, const Value& value);
@@ -207,7 +207,7 @@ namespace sap::interp::builtin
 		static constexpr auto name = "ColourCMYK";
 
 		static const Type* type;
-		static std::vector<StructDefn::Field> fields();
+		static std::vector<ast::StructDefn::Field> fields();
 
 		static Value make(Evaluator* ev, Colour::CMYK colour);
 		static Colour::CMYK unmake(Evaluator* ev, const Value& value);
@@ -225,7 +225,7 @@ namespace sap::interp::builtin
 		static constexpr auto name = "GlyphSpacingAdjustment";
 
 		static const Type* type;
-		static std::vector<StructDefn::Field> fields();
+		static std::vector<ast::StructDefn::Field> fields();
 
 		static Value make(Evaluator* ev, const GlyphSpacingAdjustment& colour);
 		static GlyphSpacingAdjustment unmake(Evaluator* ev, const Value& value);
@@ -242,7 +242,7 @@ namespace sap::interp::builtin
 		static const Type* type;
 
 		static frontend::PType enumeratorType();
-		static std::vector<EnumDefn::EnumeratorDefn> enumerators();
+		static std::vector<ast::EnumDefn::EnumeratorDefn> enumerators();
 
 		static Value make(Alignment alignment);
 		static Alignment unmake(const Value& value);
@@ -255,7 +255,7 @@ namespace sap::interp::builtin
 		static const Type* type;
 
 		static frontend::PType enumeratorType();
-		static std::vector<EnumDefn::EnumeratorDefn> enumerators();
+		static std::vector<ast::EnumDefn::EnumeratorDefn> enumerators();
 
 		static Value make(Colour::Type alignment);
 		static Colour::Type unmake(const Value& value);

@@ -9,7 +9,7 @@
 namespace sap::interp::builtin
 {
 	using PT = frontend::PType;
-	using Field = StructDefn::Field;
+	using Field = ast::StructDefn::Field;
 
 	const Type* builtin::BS_OutlineItem::type = nullptr;
 	std::vector<Field> builtin::BS_OutlineItem::fields()
@@ -18,9 +18,9 @@ namespace sap::interp::builtin
 		auto pt_string = PT::named(frontend::TYPE_STRING);
 
 		return util::vectorOf(                                                                   //
-			Field { .name = "title", .type = pt_string },                                        //
-			Field { .name = "position", .type = ptype_for_builtin<BS_AbsPosition>() },           //
-			Field { .name = "children", .type = PT::array(ptype_for_builtin<BS_OutlineItem>()) } //
+		    Field { .name = "title", .type = pt_string },                                        //
+		    Field { .name = "position", .type = ptype_for_builtin<BS_AbsPosition>() },           //
+		    Field { .name = "children", .type = PT::array(ptype_for_builtin<BS_OutlineItem>()) } //
 		);
 	}
 
@@ -30,8 +30,8 @@ namespace sap::interp::builtin
 		    .set("title", Value::string(unicode::u32StringFromUtf8(pos.title)))
 		    .set("position", BS_AbsPosition::make(ev, pos.position))
 		    .set("children",
-				Value::array(BS_OutlineItem::type,
-					util::map(pos.children, [ev](const auto& x) { return BS_OutlineItem::make(ev, x); })))
+		        Value::array(BS_OutlineItem::type,
+		            util::map(pos.children, [ev](const auto& x) { return BS_OutlineItem::make(ev, x); })))
 		    .make();
 	}
 

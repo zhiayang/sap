@@ -10,7 +10,7 @@
 #include "interp/interp.h"      // for Interpreter
 #include "interp/eval_result.h" // for EvalResult, TRY_VALUE
 
-namespace sap::interp
+namespace sap::interp::ast
 {
 	static const char* op_to_string(LogicalBinOp::Op op)
 	{
@@ -31,12 +31,12 @@ namespace sap::interp
 		if(not ltype->isBool())
 		{
 			return ErrMsg(this->lhs->loc(), "invalid type for operand of '{}': expected bool, got '{}'",
-				op_to_string(this->op), ltype);
+			    op_to_string(this->op), ltype);
 		}
 		else if(not rtype->isBool())
 		{
 			return ErrMsg(this->rhs->loc(), "invalid type for operand of '{}': expected bool, got '{}'",
-				op_to_string(this->op), rtype);
+			    op_to_string(this->op), rtype);
 		}
 
 		return TCResult::ofRValue(Type::makeBool());

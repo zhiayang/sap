@@ -243,12 +243,12 @@ namespace sap::tree
 		return std::move(m_container);
 	}
 
-	std::vector<std::unique_ptr<interp::Stmt>> Document::takePreamble() &&
+	std::vector<std::unique_ptr<interp::ast::Stmt>> Document::takePreamble() &&
 	{
 		return std::move(m_preamble);
 	}
 
-	Document::Document(std::vector<std::unique_ptr<interp::Stmt>> preamble, bool have_doc_start)
+	Document::Document(std::vector<std::unique_ptr<interp::ast::Stmt>> preamble, bool have_doc_start)
 	    : m_container(tree::Container::makeVertBox())
 	    , m_preamble(std::move(preamble))
 	    , m_have_document_start(have_doc_start)

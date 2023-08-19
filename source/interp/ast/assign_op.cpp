@@ -5,7 +5,7 @@
 #include "interp/ast.h"
 #include "interp/interp.h"
 
-namespace sap::interp
+namespace sap::interp::ast
 {
 	static const char* op_to_string(AssignOp::Op op)
 	{
@@ -50,7 +50,7 @@ namespace sap::interp
 				if(not arr_type->isCloneable())
 				{
 					return ErrMsg(ts, "cannot copy array of type '{}' because array element type cannot be copied",
-						arr_type);
+					    arr_type);
 				}
 
 				return TCResult::ofVoid();
@@ -80,7 +80,7 @@ namespace sap::interp
 			return ErrMsg(ts, "cannot assign to '{}' from incompatible type '{}'", ltype, rtype);
 
 		return ErrMsg(ts, "unsupported operation '{}' between types '{}' and '{}'", op_to_string(this->op), ltype,
-			rtype);
+		    rtype);
 	}
 
 	// defined in binop.cpp
@@ -114,7 +114,7 @@ namespace sap::interp
 
 			auto rval = TRY_VALUE(this->rhs->evaluate(ev));
 			result_value = TRY(evaluateBinaryOperationOnValues(ev, bin_op, std::move(lval_result.get()),
-				std::move(rval)));
+			    std::move(rval)));
 		}
 		else
 		{

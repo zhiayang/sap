@@ -13,7 +13,11 @@
 
 namespace sap::interp
 {
-	struct Expr;
+	namespace ast
+	{
+		struct Expr;
+	}
+
 	struct Value;
 	struct DefnTree;
 	struct Evaluator;

@@ -31,7 +31,10 @@ namespace sap::interp
 	struct Evaluator;
 	struct EvalResult;
 	struct Typechecker;
+}
 
+namespace sap::interp::ast
+{
 	struct Stmt
 	{
 		explicit Stmt(Location loc) : m_location(std::move(loc)) { }
@@ -681,9 +684,14 @@ namespace sap::interp
 		const DefnTree* declaredTree() const { return m_declared_tree; }
 		void declareAt(const DefnTree* tree) { m_declared_tree = tree; }
 
+		bool isGeneric() const { return not m_generic_params.empty(); }
+		const std::vector<std::string>& genericParams() const { return m_generic_params; }
+
 	protected:
 		const Definition* m_resolved_defn = nullptr;
 		const DefnTree* m_declared_tree = nullptr;
+
+		std::vector<std::string> m_generic_params;
 	};
 
 	struct Definition : Stmt
@@ -749,9 +757,14 @@ namespace sap::interp
 			Location loc;
 		};
 
-		FunctionDecl(Location loc, const std::string& name_, std::vector<Param>&& params, frontend::PType return_type)
+		FunctionDecl(Location loc,
+		    const std::string& name_,
+		    std::vector<Param>&& params,
+		    frontend::PType return_type,
+		    std::vector<std::string> generic_params)
 		    : Declaration(loc, name_), m_params(std::move(params)), m_return_type(return_type)
 		{
+			m_generic_params = std::move(generic_params);
 		}
 
 		virtual ErrorOr<EvalResult> evaluate_impl(Evaluator* ev) const override;
@@ -771,8 +784,9 @@ namespace sap::interp
 		FunctionDefn(Location loc,
 		    const std::string& name,
 		    std::vector<FunctionDecl::Param> params,
-		    frontend::PType return_type)
-		    : Definition(loc, new FunctionDecl(loc, name, std::move(params), return_type))
+		    frontend::PType return_type,
+		    std::vector<std::string> generic_params)
+		    : Definition(loc, new FunctionDecl(loc, name, std::move(params), return_type, std::move(generic_params)))
 		{
 		}
 
@@ -782,9 +796,9 @@ namespace sap::interp
 		    bool keep_lvalue = false) const override;
 
 		ErrorOr<EvalResult> call(Evaluator* ev, std::vector<Value>& args) const;
+		ErrorOr<TCResult> monomorphise(Typechecker* ts, util::hashmap<std::string, Expr*> generic_args);
 
 		std::unique_ptr<Block> body;
-		std::vector<std::string> generic_params;
 
 	private:
 		mutable std::vector<std::unique_ptr<VariableDefn>> param_defns;
@@ -800,7 +814,7 @@ namespace sap::interp
 		    std::vector<FunctionDecl::Param>&& params,
 		    frontend::PType return_type,
 		    const FuncTy& fn)
-		    : Definition(loc, new FunctionDecl(loc, name, std::move(params), return_type)), function(fn)
+		    : Definition(loc, new FunctionDecl(loc, name, std::move(params), return_type, {})), function(fn)
 		{
 		}
 
