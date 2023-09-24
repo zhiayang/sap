@@ -71,6 +71,7 @@ namespace sap::interp::ast
 		return TCResult::ofLValue(enum_type, /* mutable: */ false);
 	}
 
+#if 0
 	ErrorOr<EvalResult> ContextIdent::evaluate_impl(Evaluator* ev) const
 	{
 		if(auto enumerator_def = std::get_if<const EnumDefn::EnumeratorDefn*>(&m_context))
@@ -91,7 +92,7 @@ namespace sap::interp::ast
 			sap::internal_error("aaa");
 		}
 	}
-
+#endif
 
 
 

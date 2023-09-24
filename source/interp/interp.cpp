@@ -44,6 +44,11 @@ namespace sap::interp
 		m_hook_blocks[block->phase].push_back(block);
 	}
 
+	void Interpreter::addHookBlock(ProcessingPhase phase, const cst::Block* block)
+	{
+		m_hook_blocks2[phase].push_back(block);
+	}
+
 	ErrorOr<void> Interpreter::runHooks()
 	{
 		for(auto* blk : m_hook_blocks[m_current_phase])
@@ -70,7 +75,9 @@ namespace sap::interp
 
 	ErrorOr<EvalResult> Interpreter::run(const ast::Stmt* stmt)
 	{
-		TRY(stmt->typecheck(m_typechecker.get()));
+		auto res = TRY(stmt->typecheck(m_typechecker.get()));
+		(void) res;
+
 		return stmt->evaluate(m_evaluator.get());
 	}
 

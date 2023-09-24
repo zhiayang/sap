@@ -10,7 +10,7 @@
 #include "sap/annotation.h"
 #include "sap/document_settings.h"
 
-#include "interp/ast.h"
+#include "interp/cst.h"
 #include "interp/value.h"
 
 #include "layout/cursor.h"
@@ -49,9 +49,9 @@ namespace sap::interp
 	{
 		StackFrame* parent() const { return m_parent; }
 
-		Value* valueOf(const ast::Definition* defn);
+		Value* valueOf(const cst::Definition* defn);
 
-		void setValue(const ast::Definition* defn, Value value);
+		void setValue(const cst::Definition* defn, Value value);
 		Value* createTemporary(Value init);
 
 		void dropTemporaries();
@@ -70,7 +70,7 @@ namespace sap::interp
 		Evaluator* m_evaluator;
 		StackFrame* m_parent = nullptr;
 		size_t m_call_depth;
-		util::hashmap<const ast::Definition*, Value> m_values;
+		util::hashmap<const cst::Definition*, Value> m_values;
 		std::deque<Value> m_temporaries;
 	};
 
@@ -110,9 +110,9 @@ namespace sap::interp
 		[[nodiscard]] util::Defer<> pushStructFieldContext(Value* struct_value);
 		[[nodiscard]] Value& getStructFieldContext() const;
 
-		bool isGlobalValue(const ast::Definition* defn) const;
-		void setGlobalValue(const ast::Definition* defn, Value val);
-		Value* getGlobalValue(const ast::Definition* defn);
+		bool isGlobalValue(const cst::Definition* defn) const;
+		void setGlobalValue(const cst::Definition* defn, Value val);
+		Value* getGlobalValue(const cst::Definition* defn);
 
 		ErrorOr<zst::SharedPtr<tree::InlineSpan>> convertValueToText(Value&& value);
 
@@ -152,7 +152,7 @@ namespace sap::interp
 		std::vector<BlockContext> m_block_context_stack;
 		std::vector<Value*> m_struct_field_context_stack;
 
-		util::hashmap<const ast::Definition*, Value> m_global_values;
+		util::hashmap<const cst::Definition*, Value> m_global_values;
 
 		std::deque<Value> m_value_heap;
 

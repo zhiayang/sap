@@ -16,7 +16,7 @@
 */
 
 /*
-    Version 2.0.0
+    Version 2.0.1
     =============
 
 
@@ -243,6 +243,12 @@ namespace zst
 			constexpr str_view(const str_view&) = default;
 			constexpr str_view& operator= (str_view&&) = default;
 			constexpr str_view& operator= (const str_view&) = default;
+
+			// whatever "equality_comparable" nonsense is broken
+			constexpr inline bool operator== (const value_type* other) const requires(std::same_as<value_type, char>) {
+				return *this == str_view(other);
+			}
+
 
 			constexpr inline bool operator== (const str_view& other) const
 			{
@@ -1438,6 +1444,9 @@ namespace zst
 
 		LT take_left() { this->assert_is_left(); m_state = STATE_NONE; return static_cast<LT&&>(m_left); }
 		RT take_right() { this->assert_is_right(); m_state = STATE_NONE; return static_cast<RT&&>(m_right); }
+
+		const LT* maybe_left() const { if(m_state == STATE_LEFT) return &m_left; return nullptr; }
+		const RT* maybe_right() const { if(m_state == STATE_RIGHT) return &m_right; return nullptr; }
 
 	private:
 		inline void assert_is_left() const

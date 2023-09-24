@@ -115,9 +115,7 @@ namespace sap::interp::ast
 		if(args.size() != this->param_defns.size())
 			return ErrMsg(ev, "function call arity mismatch");
 
-		for(size_t i = 0; i < args.size(); i++)
-		{
-		}
+		// for(size_t i = 0; i < args.size(); i++)
 		// frame.setValue(this->param_defns[i].get(), std::move(args[i]));
 
 		return this->body->evaluate(ev);

@@ -32,6 +32,8 @@ namespace sap::interp::ast
 
 	ErrorOr<TCResult> VariableDefn::typecheck_impl(Typechecker* ts, const Type* infer, bool keep_lvalue) const
 	{
+		(void) this->m_is_global;
+
 		this->declaration->resolve(this);
 
 		// if we have neither, it's an error
@@ -70,20 +72,6 @@ namespace sap::interp::ast
 
 	ErrorOr<EvalResult> VariableDefn::evaluate_impl(Evaluator* ev) const
 	{
-		if(this->initialiser != nullptr)
-		{
-			// if this is a global variable that was already initialised, don't re-initialise it
-			// the implication is that for layout passes > 1, we don't reset values (we need to persist some state!)
-			if(m_is_global && ev->getGlobalValue(this) != nullptr)
-				return EvalResult::ofVoid();
-
-			auto value = ev->castValue(TRY_VALUE(this->initialiser->evaluate(ev)), this->get_type());
-			if(m_is_global)
-				ev->setGlobalValue(this, std::move(value));
-			else
-				ev->frame().setValue(this, std::move(value));
-		}
-
 		return EvalResult::ofVoid();
 	}
 }

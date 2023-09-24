@@ -3,6 +3,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #include "interp/ast.h"
+#include "interp/cst.h"
 #include "interp/interp.h"
 
 namespace sap::interp::ast
@@ -18,6 +19,32 @@ namespace sap::interp::ast
 		else
 			return TCResult::ofLValue(inside->pointerElement(), inside->isMutablePointer());
 	}
+
+	ErrorOr<TCResult2> DereferenceOp::typecheck_impl2(Typechecker* ts, const Type* infer, bool keep_lvalue) const
+	{
+		auto inside = TRY(this->expr->typecheck2(ts, infer));
+		auto inside_type = inside.type();
+
+		if(not inside_type->isOptional() && not inside_type->isPointer())
+			return ErrMsg(ts, "invalid use of '!' on non-pointer, non-optional type '{}'", inside_type);
+
+		if(inside_type->isOptional())
+		{
+			return TCResult2::ofRValue<cst::DereferenceOp>(m_location, inside_type->optionalElement(),
+			    std::move(inside).take_expr());
+		}
+		else if(inside_type->isMutablePointer())
+		{
+			return TCResult2::ofMutableLValue<cst::DereferenceOp>(m_location, inside_type->pointerElement(),
+			    std::move(inside).take_expr());
+		}
+		else
+		{
+			return TCResult2::ofImmutableLValue<cst::DereferenceOp>(m_location, inside_type->pointerElement(),
+			    std::move(inside).take_expr());
+		}
+	}
+
 
 	ErrorOr<EvalResult> DereferenceOp::evaluate_impl(Evaluator* ev) const
 	{

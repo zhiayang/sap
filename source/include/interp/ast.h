@@ -33,6 +33,12 @@ namespace sap::interp
 	struct Typechecker;
 }
 
+namespace sap::interp::cst
+{
+	struct Stmt;
+	struct Expr;
+}
+
 namespace sap::interp::ast
 {
 	struct Stmt
@@ -44,10 +50,18 @@ namespace sap::interp::ast
 		    const Type* infer = nullptr, //
 		    bool keep_lvalue = false) const = 0;
 
+		virtual ErrorOr<TCResult2> typecheck_impl2(Typechecker* ts,
+		    const Type* infer = nullptr, //
+		    bool keep_lvalue = false) const = 0;
+
 		virtual ErrorOr<EvalResult> evaluate_impl(Evaluator* ev) const = 0;
 
 		[[nodiscard]] virtual ErrorOr<EvalResult> evaluate(Evaluator* ev) const;
 		[[nodiscard]] virtual ErrorOr<TCResult> typecheck(Typechecker* ts, //
+		    const Type* infer = nullptr,
+		    bool keep_lvalue = false) const;
+
+		[[nodiscard]] virtual ErrorOr<TCResult2> typecheck2(Typechecker* ts, //
 		    const Type* infer = nullptr,
 		    bool keep_lvalue = false) const;
 
@@ -78,6 +92,10 @@ namespace sap::interp::ast
 		    const Type* infer = nullptr,
 		    bool keep_lvalue = false) const override;
 
+		virtual ErrorOr<TCResult2> typecheck_impl2(Typechecker* ts,
+		    const Type* infer = nullptr, //
+		    bool keep_lvalue = false) const override;
+
 		mutable std::vector<zst::SharedPtr<tree::InlineObject>> objects;
 	};
 
@@ -88,6 +106,10 @@ namespace sap::interp::ast
 		virtual ErrorOr<EvalResult> evaluate_impl(Evaluator* ev) const override;
 		virtual ErrorOr<TCResult> typecheck_impl(Typechecker* ts, //
 		    const Type* infer = nullptr,
+		    bool keep_lvalue = false) const override;
+
+		virtual ErrorOr<TCResult2> typecheck_impl2(Typechecker* ts,
+		    const Type* infer = nullptr, //
 		    bool keep_lvalue = false) const override;
 
 		mutable zst::SharedPtr<tree::BlockObject> object;
@@ -107,6 +129,10 @@ namespace sap::interp::ast
 		    const Type* infer = nullptr,
 		    bool keep_lvalue = false) const override;
 
+		virtual ErrorOr<TCResult2> typecheck_impl2(Typechecker* ts,
+		    const Type* infer = nullptr, //
+		    bool keep_lvalue = false) const override;
+
 		QualifiedId name {};
 
 		void resolve(const Declaration* decl) { m_resolved_decl = decl; }
@@ -122,6 +148,10 @@ namespace sap::interp::ast
 		virtual ErrorOr<EvalResult> evaluate_impl(Evaluator* ev) const override;
 		virtual ErrorOr<TCResult> typecheck_impl(Typechecker* ts, //
 		    const Type* infer = nullptr,
+		    bool keep_lvalue = false) const override;
+
+		virtual ErrorOr<TCResult2> typecheck_impl2(Typechecker* ts,
+		    const Type* infer = nullptr, //
 		    bool keep_lvalue = false) const override;
 
 		struct Arg
@@ -149,6 +179,10 @@ namespace sap::interp::ast
 		virtual ErrorOr<TCResult> typecheck_impl(Typechecker* ts, //
 		    const Type* infer = nullptr,
 		    bool keep_lvalue = false) const override;
+
+		virtual ErrorOr<TCResult2> typecheck_impl2(Typechecker* ts,
+		    const Type* infer = nullptr, //
+		    bool keep_lvalue = false) const override;
 	};
 
 	struct BooleanLit : Expr
@@ -158,6 +192,10 @@ namespace sap::interp::ast
 		virtual ErrorOr<EvalResult> evaluate_impl(Evaluator* ev) const override;
 		virtual ErrorOr<TCResult> typecheck_impl(Typechecker* ts, //
 		    const Type* infer = nullptr,
+		    bool keep_lvalue = false) const override;
+
+		virtual ErrorOr<TCResult2> typecheck_impl2(Typechecker* ts,
+		    const Type* infer = nullptr, //
 		    bool keep_lvalue = false) const override;
 
 		bool value;
@@ -170,6 +208,10 @@ namespace sap::interp::ast
 		virtual ErrorOr<EvalResult> evaluate_impl(Evaluator* ev) const override;
 		virtual ErrorOr<TCResult> typecheck_impl(Typechecker* ts, //
 		    const Type* infer = nullptr,
+		    bool keep_lvalue = false) const override;
+
+		virtual ErrorOr<TCResult2> typecheck_impl2(Typechecker* ts,
+		    const Type* infer = nullptr, //
 		    bool keep_lvalue = false) const override;
 
 		bool is_floating = false;
@@ -187,6 +229,10 @@ namespace sap::interp::ast
 		    const Type* infer = nullptr,
 		    bool keep_lvalue = false) const override;
 
+		virtual ErrorOr<TCResult2> typecheck_impl2(Typechecker* ts,
+		    const Type* infer = nullptr, //
+		    bool keep_lvalue = false) const override;
+
 		std::u32string string;
 	};
 
@@ -199,6 +245,10 @@ namespace sap::interp::ast
 		    const Type* infer = nullptr,
 		    bool keep_lvalue = false) const override;
 
+		virtual ErrorOr<TCResult2> typecheck_impl2(Typechecker* ts,
+		    const Type* infer = nullptr, //
+		    bool keep_lvalue = false) const override;
+
 		char32_t character;
 	};
 
@@ -209,6 +259,10 @@ namespace sap::interp::ast
 		virtual ErrorOr<EvalResult> evaluate_impl(Evaluator* ev) const override;
 		virtual ErrorOr<TCResult> typecheck_impl(Typechecker* ts, //
 		    const Type* infer = nullptr,
+		    bool keep_lvalue = false) const override;
+
+		virtual ErrorOr<TCResult2> typecheck_impl2(Typechecker* ts,
+		    const Type* infer = nullptr, //
 		    bool keep_lvalue = false) const override;
 
 		std::optional<frontend::PType> elem_type;
@@ -224,6 +278,10 @@ namespace sap::interp::ast
 		    const Type* infer = nullptr,
 		    bool keep_lvalue = false) const override;
 
+		virtual ErrorOr<TCResult2> typecheck_impl2(Typechecker* ts,
+		    const Type* infer = nullptr, //
+		    bool keep_lvalue = false) const override;
+
 		using Part = std::variant<std::u32string, std::unique_ptr<Expr>>;
 		mutable std::vector<Part> parts;
 	};
@@ -237,6 +295,10 @@ namespace sap::interp::ast
 		    const Type* infer = nullptr,
 		    bool keep_lvalue = false) const override;
 
+		virtual ErrorOr<TCResult2> typecheck_impl2(Typechecker* ts,
+		    const Type* infer = nullptr, //
+		    bool keep_lvalue = false) const override;
+
 		frontend::PType ptype;
 	};
 
@@ -247,6 +309,10 @@ namespace sap::interp::ast
 		virtual ErrorOr<EvalResult> evaluate_impl(Evaluator* ev) const override;
 		virtual ErrorOr<TCResult> typecheck_impl(Typechecker* ts, //
 		    const Type* infer = nullptr,
+		    bool keep_lvalue = false) const override;
+
+		virtual ErrorOr<TCResult2> typecheck_impl2(Typechecker* ts,
+		    const Type* infer = nullptr, //
 		    bool keep_lvalue = false) const override;
 
 		std::unique_ptr<Expr> expr;
@@ -276,6 +342,10 @@ namespace sap::interp::ast
 		    const Type* infer = nullptr,
 		    bool keep_lvalue = false) const override;
 
+		virtual ErrorOr<TCResult2> typecheck_impl2(Typechecker* ts,
+		    const Type* infer = nullptr, //
+		    bool keep_lvalue = false) const override;
+
 		using Arg = FunctionCall::Arg;
 
 		QualifiedId struct_name;
@@ -293,6 +363,10 @@ namespace sap::interp::ast
 		virtual ErrorOr<EvalResult> evaluate_impl(Evaluator* ev) const override;
 		virtual ErrorOr<TCResult> typecheck_impl(Typechecker* ts, //
 		    const Type* infer = nullptr,
+		    bool keep_lvalue = false) const override;
+
+		virtual ErrorOr<TCResult2> typecheck_impl2(Typechecker* ts,
+		    const Type* infer = nullptr, //
 		    bool keep_lvalue = false) const override;
 
 		enum Op
@@ -313,6 +387,10 @@ namespace sap::interp::ast
 		virtual ErrorOr<EvalResult> evaluate_impl(Evaluator* ev) const override;
 		virtual ErrorOr<TCResult> typecheck_impl(Typechecker* ts, //
 		    const Type* infer = nullptr,
+		    bool keep_lvalue = false) const override;
+
+		virtual ErrorOr<TCResult2> typecheck_impl2(Typechecker* ts,
+		    const Type* infer = nullptr, //
 		    bool keep_lvalue = false) const override;
 
 		std::unique_ptr<Expr> lhs;
@@ -338,6 +416,10 @@ namespace sap::interp::ast
 		    const Type* infer = nullptr,
 		    bool keep_lvalue = false) const override;
 
+		virtual ErrorOr<TCResult2> typecheck_impl2(Typechecker* ts,
+		    const Type* infer = nullptr, //
+		    bool keep_lvalue = false) const override;
+
 		std::unique_ptr<Expr> lhs;
 		std::unique_ptr<Expr> rhs;
 
@@ -356,6 +438,10 @@ namespace sap::interp::ast
 		virtual ErrorOr<EvalResult> evaluate_impl(Evaluator* ev) const override;
 		virtual ErrorOr<TCResult> typecheck_impl(Typechecker* ts, //
 		    const Type* infer = nullptr,
+		    bool keep_lvalue = false) const override;
+
+		virtual ErrorOr<TCResult2> typecheck_impl2(Typechecker* ts,
+		    const Type* infer = nullptr, //
 		    bool keep_lvalue = false) const override;
 
 		std::unique_ptr<Expr> lhs;
@@ -382,6 +468,10 @@ namespace sap::interp::ast
 		    const Type* infer = nullptr,
 		    bool keep_lvalue = false) const override;
 
+		virtual ErrorOr<TCResult2> typecheck_impl2(Typechecker* ts,
+		    const Type* infer = nullptr, //
+		    bool keep_lvalue = false) const override;
+
 		enum Op
 		{
 			EQ,
@@ -405,6 +495,10 @@ namespace sap::interp::ast
 		    const Type* infer = nullptr,
 		    bool keep_lvalue = false) const override;
 
+		virtual ErrorOr<TCResult2> typecheck_impl2(Typechecker* ts,
+		    const Type* infer = nullptr, //
+		    bool keep_lvalue = false) const override;
+
 		std::unique_ptr<Expr> lhs;
 		std::string rhs;
 
@@ -423,6 +517,10 @@ namespace sap::interp::ast
 		    const Type* infer = nullptr,
 		    bool keep_lvalue = false) const override;
 
+		virtual ErrorOr<TCResult2> typecheck_impl2(Typechecker* ts,
+		    const Type* infer = nullptr, //
+		    bool keep_lvalue = false) const override;
+
 		std::unique_ptr<Expr> expr;
 	};
 
@@ -433,6 +531,10 @@ namespace sap::interp::ast
 		virtual ErrorOr<EvalResult> evaluate_impl(Evaluator* ev) const override;
 		virtual ErrorOr<TCResult> typecheck_impl(Typechecker* ts, //
 		    const Type* infer = nullptr,
+		    bool keep_lvalue = false) const override;
+
+		virtual ErrorOr<TCResult2> typecheck_impl2(Typechecker* ts,
+		    const Type* infer = nullptr, //
 		    bool keep_lvalue = false) const override;
 
 		std::unique_ptr<Expr> lhs;
@@ -451,6 +553,10 @@ namespace sap::interp::ast
 		    const Type* infer = nullptr,
 		    bool keep_lvalue = false) const override;
 
+		virtual ErrorOr<TCResult2> typecheck_impl2(Typechecker* ts,
+		    const Type* infer = nullptr, //
+		    bool keep_lvalue = false) const override;
+
 		std::unique_ptr<Expr> expr;
 	};
 
@@ -461,6 +567,10 @@ namespace sap::interp::ast
 		virtual ErrorOr<EvalResult> evaluate_impl(Evaluator* ev) const override;
 		virtual ErrorOr<TCResult> typecheck_impl(Typechecker* ts, //
 		    const Type* infer = nullptr,
+		    bool keep_lvalue = false) const override;
+
+		virtual ErrorOr<TCResult2> typecheck_impl2(Typechecker* ts,
+		    const Type* infer = nullptr, //
 		    bool keep_lvalue = false) const override;
 
 		std::unique_ptr<Expr> expr;
@@ -476,6 +586,10 @@ namespace sap::interp::ast
 		    const Type* infer = nullptr,
 		    bool keep_lvalue = false) const override;
 
+		virtual ErrorOr<TCResult2> typecheck_impl2(Typechecker* ts,
+		    const Type* infer = nullptr, //
+		    bool keep_lvalue = false) const override;
+
 		std::unique_ptr<Expr> array;
 		std::vector<std::unique_ptr<Expr>> indices;
 	};
@@ -487,6 +601,10 @@ namespace sap::interp::ast
 		virtual ErrorOr<EvalResult> evaluate_impl(Evaluator* ev) const override;
 		virtual ErrorOr<TCResult> typecheck_impl(Typechecker* ts, //
 		    const Type* infer = nullptr,
+		    bool keep_lvalue = false) const override;
+
+		virtual ErrorOr<TCResult2> typecheck_impl2(Typechecker* ts,
+		    const Type* infer = nullptr, //
 		    bool keep_lvalue = false) const override;
 
 		std::unique_ptr<Expr> structure;
@@ -504,6 +622,10 @@ namespace sap::interp::ast
 		    const Type* infer = nullptr,
 		    bool keep_lvalue = false) const override;
 
+		virtual ErrorOr<TCResult2> typecheck_impl2(Typechecker* ts,
+		    const Type* infer = nullptr, //
+		    bool keep_lvalue = false) const override;
+
 		DynLength length;
 	};
 
@@ -514,6 +636,10 @@ namespace sap::interp::ast
 		virtual ErrorOr<EvalResult> evaluate_impl(Evaluator* ev) const override;
 		virtual ErrorOr<TCResult> typecheck_impl(Typechecker* ts, //
 		    const Type* infer = nullptr,
+		    bool keep_lvalue = false) const override;
+
+		virtual ErrorOr<TCResult2> typecheck_impl2(Typechecker* ts,
+		    const Type* infer = nullptr, //
 		    bool keep_lvalue = false) const override;
 
 		std::unique_ptr<Expr> expr;
@@ -530,6 +656,10 @@ namespace sap::interp::ast
 		    const Type* infer = nullptr,
 		    bool keep_lvalue = false) const override;
 
+		virtual ErrorOr<TCResult2> typecheck_impl2(Typechecker* ts,
+		    const Type* infer = nullptr, //
+		    bool keep_lvalue = false) const override;
+
 		std::unique_ptr<Expr> expr;
 	};
 
@@ -542,6 +672,10 @@ namespace sap::interp::ast
 		virtual ErrorOr<EvalResult> evaluate_impl(Evaluator* ev) const override;
 		virtual ErrorOr<TCResult> typecheck_impl(Typechecker* ts, //
 		    const Type* infer = nullptr,
+		    bool keep_lvalue = false) const override;
+
+		virtual ErrorOr<TCResult2> typecheck_impl2(Typechecker* ts,
+		    const Type* infer = nullptr, //
 		    bool keep_lvalue = false) const override;
 
 		bool checkAllPathsReturn(const Type* return_type);
@@ -560,6 +694,10 @@ namespace sap::interp::ast
 		    const Type* infer = nullptr,
 		    bool keep_lvalue = false) const override;
 
+		virtual ErrorOr<TCResult2> typecheck_impl2(Typechecker* ts,
+		    const Type* infer = nullptr, //
+		    bool keep_lvalue = false) const override;
+
 		std::unique_ptr<Expr> if_cond;
 		std::unique_ptr<Block> if_body;
 		std::unique_ptr<Block> else_body;
@@ -574,6 +712,10 @@ namespace sap::interp::ast
 		    const Type* infer = nullptr,
 		    bool keep_lvalue = false) const override;
 
+		virtual ErrorOr<TCResult2> typecheck_impl2(Typechecker* ts,
+		    const Type* infer = nullptr, //
+		    bool keep_lvalue = false) const override;
+
 		std::unique_ptr<Expr> expr;
 		mutable const Type* return_value_type;
 	};
@@ -586,6 +728,10 @@ namespace sap::interp::ast
 		virtual ErrorOr<TCResult> typecheck_impl(Typechecker* ts, //
 		    const Type* infer = nullptr,
 		    bool keep_lvalue = false) const override;
+
+		virtual ErrorOr<TCResult2> typecheck_impl2(Typechecker* ts,
+		    const Type* infer = nullptr, //
+		    bool keep_lvalue = false) const override;
 	};
 
 	struct ContinueStmt : Stmt
@@ -596,6 +742,10 @@ namespace sap::interp::ast
 		virtual ErrorOr<TCResult> typecheck_impl(Typechecker* ts, //
 		    const Type* infer = nullptr,
 		    bool keep_lvalue = false) const override;
+
+		virtual ErrorOr<TCResult2> typecheck_impl2(Typechecker* ts,
+		    const Type* infer = nullptr, //
+		    bool keep_lvalue = false) const override;
 	};
 
 	struct WhileLoop : Stmt
@@ -605,6 +755,10 @@ namespace sap::interp::ast
 		virtual ErrorOr<EvalResult> evaluate_impl(Evaluator* ev) const override;
 		virtual ErrorOr<TCResult> typecheck_impl(Typechecker* ts, //
 		    const Type* infer = nullptr,
+		    bool keep_lvalue = false) const override;
+
+		virtual ErrorOr<TCResult2> typecheck_impl2(Typechecker* ts,
+		    const Type* infer = nullptr, //
 		    bool keep_lvalue = false) const override;
 
 		std::unique_ptr<Expr> condition;
@@ -618,6 +772,10 @@ namespace sap::interp::ast
 		virtual ErrorOr<EvalResult> evaluate_impl(Evaluator* ev) const override;
 		virtual ErrorOr<TCResult> typecheck_impl(Typechecker* ts, //
 		    const Type* infer = nullptr,
+		    bool keep_lvalue = false) const override;
+
+		virtual ErrorOr<TCResult2> typecheck_impl2(Typechecker* ts,
+		    const Type* infer = nullptr, //
 		    bool keep_lvalue = false) const override;
 
 		// all 3 of these are optional
@@ -638,6 +796,10 @@ namespace sap::interp::ast
 		    const Type* infer = nullptr,
 		    bool keep_lvalue = false) const override;
 
+		virtual ErrorOr<TCResult2> typecheck_impl2(Typechecker* ts,
+		    const Type* infer = nullptr, //
+		    bool keep_lvalue = false) const override;
+
 		std::string file_path;
 		mutable std::unique_ptr<Block> imported_block;
 	};
@@ -651,6 +813,10 @@ namespace sap::interp::ast
 		    const Type* infer = nullptr,
 		    bool keep_lvalue = false) const override;
 
+		virtual ErrorOr<TCResult2> typecheck_impl2(Typechecker* ts,
+		    const Type* infer = nullptr, //
+		    bool keep_lvalue = false) const override;
+
 		std::string alias;
 		QualifiedId module;
 	};
@@ -662,6 +828,10 @@ namespace sap::interp::ast
 		virtual ErrorOr<EvalResult> evaluate_impl(Evaluator* ev) const override;
 		virtual ErrorOr<TCResult> typecheck_impl(Typechecker* ts, //
 		    const Type* infer = nullptr,
+		    bool keep_lvalue = false) const override;
+
+		virtual ErrorOr<TCResult2> typecheck_impl2(Typechecker* ts,
+		    const Type* infer = nullptr, //
 		    bool keep_lvalue = false) const override;
 
 		ProcessingPhase phase;
@@ -717,6 +887,10 @@ namespace sap::interp::ast
 		    const Type* infer = nullptr,
 		    bool keep_lvalue = false) const override;
 
+		virtual ErrorOr<TCResult2> typecheck_impl2(Typechecker* ts,
+		    const Type* infer = nullptr, //
+		    bool keep_lvalue = false) const override;
+
 		bool is_mutable;
 	};
 
@@ -738,6 +912,10 @@ namespace sap::interp::ast
 		virtual ErrorOr<EvalResult> evaluate_impl(Evaluator* ev) const override;
 		virtual ErrorOr<TCResult> typecheck_impl(Typechecker* ts, //
 		    const Type* infer = nullptr,
+		    bool keep_lvalue = false) const override;
+
+		virtual ErrorOr<TCResult2> typecheck_impl2(Typechecker* ts,
+		    const Type* infer = nullptr, //
 		    bool keep_lvalue = false) const override;
 
 		std::unique_ptr<Expr> initialiser;
@@ -772,6 +950,10 @@ namespace sap::interp::ast
 		    const Type* infer = nullptr,
 		    bool keep_lvalue = false) const override;
 
+		virtual ErrorOr<TCResult2> typecheck_impl2(Typechecker* ts,
+		    const Type* infer = nullptr, //
+		    bool keep_lvalue = false) const override;
+
 		const std::vector<Param>& params() const { return m_params; }
 
 	private:
@@ -793,6 +975,10 @@ namespace sap::interp::ast
 		virtual ErrorOr<EvalResult> evaluate_impl(Evaluator* ev) const override;
 		virtual ErrorOr<TCResult> typecheck_impl(Typechecker* ts, //
 		    const Type* infer = nullptr,
+		    bool keep_lvalue = false) const override;
+
+		virtual ErrorOr<TCResult2> typecheck_impl2(Typechecker* ts,
+		    const Type* infer = nullptr, //
 		    bool keep_lvalue = false) const override;
 
 		ErrorOr<EvalResult> call(Evaluator* ev, std::vector<Value>& args) const;
@@ -823,6 +1009,10 @@ namespace sap::interp::ast
 		    const Type* infer = nullptr,
 		    bool keep_lvalue = false) const override;
 
+		virtual ErrorOr<TCResult2> typecheck_impl2(Typechecker* ts,
+		    const Type* infer = nullptr, //
+		    bool keep_lvalue = false) const override;
+
 		FuncTy function;
 	};
 
@@ -834,6 +1024,10 @@ namespace sap::interp::ast
 		virtual ErrorOr<EvalResult> evaluate_impl(Evaluator* ev) const override;
 		virtual ErrorOr<TCResult> typecheck_impl(Typechecker* ts, //
 		    const Type* infer = nullptr,
+		    bool keep_lvalue = false) const override;
+
+		virtual ErrorOr<TCResult2> typecheck_impl2(Typechecker* ts,
+		    const Type* infer = nullptr, //
 		    bool keep_lvalue = false) const override;
 	};
 
@@ -858,6 +1052,10 @@ namespace sap::interp::ast
 		    const Type* infer = nullptr,
 		    bool keep_lvalue = false) const override;
 
+		virtual ErrorOr<TCResult2> typecheck_impl2(Typechecker* ts,
+		    const Type* infer = nullptr, //
+		    bool keep_lvalue = false) const override;
+
 	private:
 		mutable std::vector<Field> m_fields;
 	};
@@ -874,6 +1072,10 @@ namespace sap::interp::ast
 		virtual ErrorOr<TCResult> typecheck_impl(Typechecker* ts, //
 		    const Type* infer = nullptr,
 		    bool keep_lvalue = false) const override;
+
+		virtual ErrorOr<TCResult2> typecheck_impl2(Typechecker* ts,
+		    const Type* infer = nullptr, //
+		    bool keep_lvalue = false) const override;
 	};
 
 	struct EnumDefn : Definition
@@ -885,6 +1087,10 @@ namespace sap::interp::ast
 			virtual ErrorOr<EvalResult> evaluate_impl(Evaluator* ev) const override;
 			virtual ErrorOr<TCResult>
 			typecheck_impl(Typechecker* ts, const Type* infer = nullptr, bool keep_lvalue = false) const override;
+
+			virtual ErrorOr<TCResult2> typecheck_impl2(Typechecker* ts,
+			    const Type* infer = nullptr, //
+			    bool keep_lvalue = false) const override;
 		};
 
 		struct EnumeratorDefn : Definition
@@ -899,6 +1105,10 @@ namespace sap::interp::ast
 			virtual ErrorOr<EvalResult> evaluate_impl(Evaluator* ev) const override;
 			virtual ErrorOr<TCResult>
 			typecheck_impl(Typechecker* ts, const Type* infer = nullptr, bool keep_lvalue = false) const override;
+
+			virtual ErrorOr<TCResult2> typecheck_impl2(Typechecker* ts,
+			    const Type* infer = nullptr, //
+			    bool keep_lvalue = false) const override;
 
 		private:
 			friend struct EnumDefn;
@@ -921,6 +1131,10 @@ namespace sap::interp::ast
 		    const Type* infer = nullptr,
 		    bool keep_lvalue = false) const override;
 
+		virtual ErrorOr<TCResult2> typecheck_impl2(Typechecker* ts,
+		    const Type* infer = nullptr, //
+		    bool keep_lvalue = false) const override;
+
 		const EnumeratorDefn* getEnumeratorNamed(const std::string& name) const;
 
 	private:
@@ -937,6 +1151,10 @@ namespace sap::interp::ast
 		virtual ErrorOr<EvalResult> evaluate_impl(Evaluator* ev) const override;
 		virtual ErrorOr<TCResult> typecheck_impl(Typechecker* ts, //
 		    const Type* infer = nullptr,
+		    bool keep_lvalue = false) const override;
+
+		virtual ErrorOr<TCResult2> typecheck_impl2(Typechecker* ts,
+		    const Type* infer = nullptr, //
 		    bool keep_lvalue = false) const override;
 
 		std::string name;

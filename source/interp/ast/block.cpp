@@ -3,6 +3,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #include "interp/ast.h"
+#include "interp/cst.h"
 #include "interp/interp.h"
 #include "interp/eval_result.h"
 
@@ -28,6 +29,30 @@ namespace sap::interp::ast
 
 		return TCResult::ofVoid();
 	}
+
+	ErrorOr<TCResult2> Block::typecheck_impl2(Typechecker* ts, const Type* infer, bool keep_lvalue) const
+	{
+		DefnTree* tree = nullptr;
+
+		if(this->target_scope.has_value())
+		{
+			// zpr::println("scope = '{}'", *this->target_scope);
+			tree = ts->current()->lookupOrDeclareScope(this->target_scope->parents, this->target_scope->top_level);
+		}
+		else
+		{
+			tree = ts->current()->declareAnonymousNamespace();
+		}
+
+		std::vector<std::unique_ptr<cst::Stmt>> stmts {};
+
+		auto _ = ts->pushTree(tree);
+		for(auto& stmt : this->body)
+			stmts.push_back(TRY(stmt->typecheck2(ts)).take_stmt());
+
+		return TCResult2::ofVoid<cst::Block>(m_location, std::move(stmts));
+	}
+
 
 	ErrorOr<EvalResult> Block::evaluate_impl(Evaluator* ev) const
 	{
@@ -58,7 +83,9 @@ namespace sap::interp::ast
 			{
 				if(if_stmt->if_body->checkAllPathsReturn(return_type)
 				    && if_stmt->else_body->checkAllPathsReturn(return_type))
+				{
 					return true;
+				}
 			}
 		}
 

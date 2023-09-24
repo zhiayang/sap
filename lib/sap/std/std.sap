@@ -325,6 +325,8 @@ namespace std
 				position: pos,
 				children: *children1,
 			}];
+
+			asdf[i] = 0;
 		}
 	}
 

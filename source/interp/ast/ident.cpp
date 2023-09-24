@@ -46,26 +46,4 @@ namespace sap::interp::ast
 			return ErrMsg(ts, "ambiguous reference to '{}'", this->name);
 		}
 	}
-
-	ErrorOr<EvalResult> Ident::evaluate_impl(Evaluator* ev) const
-	{
-		// this should have been set by typechecking!
-		assert(m_resolved_decl != nullptr);
-		assert(m_resolved_decl->definition());
-
-		auto* frame = &ev->frame();
-		while(frame != nullptr)
-		{
-			if(auto value = frame->valueOf(m_resolved_decl->definition()); value != nullptr)
-				return EvalResult::ofLValue(*value);
-
-			frame = frame->parent();
-		}
-
-		// we didn't find any locals -- check globals.
-		if(auto value = ev->getGlobalValue(m_resolved_decl->definition()); value != nullptr)
-			return EvalResult::ofLValue(*value);
-
-		return ErrMsg(ev, "use of uninitialised variable '{}'", this->name);
-	}
 }

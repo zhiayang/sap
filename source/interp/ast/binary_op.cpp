@@ -4,11 +4,12 @@
 
 #include "util.h" // for is_one_of
 
-#include "interp/ast.h"         // for BinaryOp::Op, BinaryOp, Expr, Binary...
-#include "interp/type.h"        // for Type, ArrayType
-#include "interp/value.h"       // for Value
-#include "interp/interp.h"      // for Interpreter
-#include "interp/eval_result.h" // for EvalResult, TRY_VALUE
+#include "interp/ast.h"
+#include "interp/cst.h"
+#include "interp/type.h"
+#include "interp/value.h"
+#include "interp/interp.h"
+#include "interp/eval_result.h"
 
 namespace sap::interp::ast
 {
@@ -24,6 +25,20 @@ namespace sap::interp::ast
 		}
 		util::unreachable();
 	}
+
+	static cst::BinaryOp::Op ast_op_to_cst_op(BinaryOp::Op op)
+	{
+		switch(op)
+		{
+			case BinaryOp::Op::Add: return cst::BinaryOp::Op::Add;
+			case BinaryOp::Op::Subtract: return cst::BinaryOp::Op::Subtract;
+			case BinaryOp::Op::Multiply: return cst::BinaryOp::Op::Multiply;
+			case BinaryOp::Op::Divide: return cst::BinaryOp::Op::Divide;
+			case BinaryOp::Op::Modulo: return cst::BinaryOp::Op::Modulo;
+		}
+		util::unreachable();
+	}
+
 
 	ErrorOr<TCResult> BinaryOp::typecheck_impl(Typechecker* ts, const Type* infer, bool keep_lvalue) const
 	{
@@ -75,137 +90,62 @@ namespace sap::interp::ast
 	}
 
 
-
-
-
-	ErrorOr<Value> evaluateBinaryOperationOnValues(Evaluator* ev, BinaryOp::Op op, Value lval, Value rval)
+	ErrorOr<TCResult2> BinaryOp::typecheck_impl2(Typechecker* ts, const Type* infer, bool keep_lvalue) const
 	{
-		using Op = BinaryOp::Op;
+		auto lres = TRY(this->lhs->typecheck2(ts));
+		auto rres = TRY(this->rhs->typecheck2(ts));
 
-		auto ltype = lval.type();
-		auto rtype = rval.type();
+		auto ltype = lres.type();
+		auto rtype = rres.type();
 
-		auto do_arith = [](Op oper, auto a, auto b) {
-			switch(oper)
-			{
-				case Op::Add: return a + b;
-				case Op::Subtract: return a - b;
-				case Op::Multiply: return a * b;
-				case Op::Divide: return a / b;
-				case Op::Modulo: {
-					if constexpr(std::is_floating_point_v<decltype(a)>)
-						return fmod(a, b);
-					else
-						return a % b;
-				}
-			}
-			util::unreachable();
+		auto make_result = [&](const Type* type) -> auto {
+			return TCResult2::ofRValue(std::make_unique<cst::BinaryOp>(m_location, type, //
+			    ast_op_to_cst_op(this->op),                                              //
+			    std::move(lres).take_expr(),                                             //
+			    std::move(rres).take_expr()));
 		};
-
 
 		if((ltype->isInteger() && rtype->isInteger()) || (ltype->isFloating() && rtype->isFloating()))
 		{
-			if(util::is_one_of(op, Op::Add, Op::Subtract, Op::Multiply, Op::Divide, Op::Modulo))
-			{
-				// TODO: this might be bad because implicit conversions
-				if(ltype->isInteger())
-					return Ok(Value::integer(do_arith(op, lval.getInteger(), rval.getInteger())));
-				else
-					return Ok(Value::floating(do_arith(op, lval.getFloating(), rval.getFloating())));
-			}
+			if(util::is_one_of(this->op, Op::Add, Op::Subtract, Op::Multiply, Op::Divide, Op::Modulo))
+				return make_result(ltype);
 		}
 		else if(ltype->isArray() && rtype->isArray() && ltype->arrayElement() == rtype->arrayElement())
 		{
-			if(op == Op::Add)
-			{
-				auto lhs = std::move(lval).takeArray();
-				auto rhs = std::move(rval).takeArray();
-
-				for(auto& x : rhs)
-					lhs.push_back(std::move(x));
-
-				return Ok(Value::array(ltype->arrayElement(), std::move(lhs)));
-			}
+			if(this->op == Op::Add)
+				return make_result(ltype);
 		}
 		else if((ltype->isArray() && rtype->isInteger()) || (ltype->isInteger() && rtype->isArray()))
 		{
-			if(op == Op::Multiply)
+			if(this->op == Op::Multiply)
 			{
-				auto elm = (ltype->isArray() ? ltype : rtype)->arrayElement();
-				auto arr = ltype->isArray() ? std::move(lval) : std::move(rval);
-				auto num = (ltype->isArray() ? std::move(rval) : std::move(lval)).getInteger();
-
-				if(num <= 0)
-					return Ok(Value::array(elm, {}));
-
-				std::vector<Value> ret = std::move(arr.clone()).takeArray();
-
-				for(int64_t i = 1; i < num; i++)
+				auto arr_type = ltype->isArray() ? ltype : rtype;
+				if(not arr_type->isCloneable())
 				{
-					auto copy = std::move(arr.clone()).takeArray();
-					for(auto& c : copy)
-						ret.push_back(std::move(c));
+					return ErrMsg(ts, "cannot copy array of type '{}' because array element type cannot be copied",
+					    arr_type);
 				}
 
-				return Ok(Value::array(elm, std::move(ret)));
+				return make_result(ltype->isArray() ? ltype : rtype);
 			}
 		}
 		else if(ltype->isLength() && rtype->isLength())
 		{
-			assert(op == Op::Add || op == Op::Subtract);
-
-			auto style = ev->currentStyle();
-
-			auto left = lval.getLength().resolve(style.font(), style.font_size(), style.root_font_size());
-			auto right = rval.getLength().resolve(style.font(), style.font_size(), style.root_font_size());
-
-			sap::Length result = 0;
-			if(op == Op::Add)
-				result = left + right;
-			else
-				result = left - right;
-
-			return Ok(Value::length(DynLength(result)));
+			if(this->op == Op::Add || this->op == Op::Subtract)
+				return make_result(Type::makeLength());
 		}
 		else if((ltype->isFloating() || ltype->isInteger()) && rtype->isLength())
 		{
-			assert(op == Op::Multiply);
-			auto len = lval.getLength();
-
-			double multiplier = 0;
-			if(lval.isFloating())
-				multiplier = lval.getFloating();
-			else
-				multiplier = static_cast<double>(lval.getInteger());
-
-			return Ok(Value::length(DynLength(len.value() * multiplier, len.unit())));
+			if(this->op == Op::Multiply)
+				return make_result(Type::makeLength());
 		}
 		else if(ltype->isLength() && (rtype->isFloating() || rtype->isInteger()))
 		{
-			assert(op == Op::Multiply || op == Op::Divide);
-			auto len = lval.getLength();
-
-			double multiplier = 0;
-			if(rval.isFloating())
-				multiplier = rval.getFloating();
-			else
-				multiplier = static_cast<double>(rval.getInteger());
-
-			if(op == Op::Divide)
-				multiplier = 1.0 / multiplier;
-
-			return Ok(Value::length(DynLength(len.value() * multiplier, len.unit())));
+			if(this->op == Op::Multiply || this->op == Op::Divide)
+				return make_result(Type::makeLength());
 		}
 
-		assert(false && "unreachable!");
-	}
-
-	ErrorOr<EvalResult> BinaryOp::evaluate_impl(Evaluator* ev) const
-	{
-		auto lval = TRY_VALUE(this->lhs->evaluate(ev));
-		auto rval = TRY_VALUE(this->rhs->evaluate(ev));
-
-		return EvalResult::ofValue(TRY(evaluateBinaryOperationOnValues(ev, //
-		    this->op, std::move(lval), std::move(rval))));
+		return ErrMsg(ts, "unsupported operation '{}' between types '{}' and '{}'", op_to_string(this->op), ltype,
+		    rtype);
 	}
 }

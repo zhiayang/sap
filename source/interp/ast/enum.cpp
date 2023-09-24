@@ -111,37 +111,6 @@ namespace sap::interp::ast
 		return EvalResult::ofVoid();
 	}
 
-	ErrorOr<EvalResult> EnumDefn::EnumeratorDefn::evaluate_impl(Evaluator* ev) const
-	{
-		assert(m_value != nullptr);
-
-		auto value = ev->castValue(TRY_VALUE(m_value->evaluate(ev)), this->get_type());
-		ev->setGlobalValue(this, std::move(value));
-
-		return EvalResult::ofVoid();
-	}
-
-	ErrorOr<EvalResult> EnumDefn::EnumeratorDefn::evaluate_impl(Evaluator* ev, int64_t* prev_value) const
-	{
-		auto et = this->get_type()->toEnum();
-		if(m_value == nullptr)
-		{
-			assert(et->elementType()->isInteger());
-			ev->setGlobalValue(this, Value::enumerator(et, Value::integer(++(*prev_value))));
-		}
-		else
-		{
-			auto tmp = TRY_VALUE(m_value->evaluate(ev));
-			if(tmp.isInteger())
-				(*prev_value) = tmp.getInteger();
-
-			auto value = Value::enumerator(et, ev->castValue(std::move(tmp), et->elementType()));
-			ev->setGlobalValue(this, std::move(value));
-		}
-
-		return EvalResult::ofVoid();
-	}
-
 	auto EnumDefn::getEnumeratorNamed(const std::string& name) const -> const EnumeratorDefn*
 	{
 		for(auto& e : m_enumerators)

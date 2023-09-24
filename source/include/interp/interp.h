@@ -54,6 +54,8 @@ namespace sap::interp
 		void setCurrentPhase(ProcessingPhase phase) { m_current_phase = phase; }
 
 		void addHookBlock(const ast::HookBlock* block);
+		void addHookBlock(ProcessingPhase phase, const cst::Block* block);
+
 		ErrorOr<void> runHooks();
 
 		void addImportedFile(std::string filename);
@@ -70,6 +72,7 @@ namespace sap::interp
 
 		ProcessingPhase m_current_phase;
 		util::hashmap<ProcessingPhase, std::vector<const ast::HookBlock*>> m_hook_blocks;
+		util::hashmap<ProcessingPhase, std::vector<const cst::Block*>> m_hook_blocks2;
 
 		std::vector<zst::unique_span<uint8_t[]>> m_file_contents;
 

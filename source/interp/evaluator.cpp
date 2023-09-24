@@ -249,17 +249,17 @@ namespace sap::interp
 
 
 
-	bool Evaluator::isGlobalValue(const ast::Definition* defn) const
+	bool Evaluator::isGlobalValue(const cst::Definition* defn) const
 	{
 		return m_global_values.contains(defn);
 	}
 
-	void Evaluator::setGlobalValue(const ast::Definition* defn, Value val)
+	void Evaluator::setGlobalValue(const cst::Definition* defn, Value val)
 	{
 		m_global_values[defn] = std::move(val);
 	}
 
-	Value* Evaluator::getGlobalValue(const ast::Definition* defn)
+	Value* Evaluator::getGlobalValue(const cst::Definition* defn)
 	{
 		if(auto it = m_global_values.find(defn); it != m_global_values.end())
 			return &it->second;
@@ -305,7 +305,7 @@ namespace sap::interp
 
 
 
-	Value* StackFrame::valueOf(const ast::Definition* defn)
+	Value* StackFrame::valueOf(const cst::Definition* defn)
 	{
 		if(auto it = m_values.find(defn); it == m_values.end())
 			return nullptr;
@@ -313,7 +313,7 @@ namespace sap::interp
 			return &it->second;
 	}
 
-	void StackFrame::setValue(const ast::Definition* defn, Value value)
+	void StackFrame::setValue(const cst::Definition* defn, Value value)
 	{
 		m_values[defn] = std::move(value);
 	}

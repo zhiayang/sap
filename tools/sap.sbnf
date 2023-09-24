@@ -201,9 +201,10 @@ postfix-expr2
         (function-call-arg (`,`{punctuation.comma})?)*
       `)`{punctuation.paren.call-end}
     | `[`{punctuation.bracket.subscript-start}
-        ((IDENTIFIER{variable.parameter} `:`{punctuation.colon})? expr)
-        ((`,`{punctuation.comma} (IDENTIFIER{variable.parameter} `:`{punctuation.colon})? expr)*
-         | (`:`{punctuation.colon.slice} expr)?)
+       expr (
+         (`:`{punctuation.colon.slice} expr)
+       | ((`,`{punctuation.comma} expr)*)
+       )?
       `]`{punctuation.bracket.subscript-end}
     | `{`{punctuation.brace.struct-start} struct-literal-field-list `}`{punctuation.brace.struct-end}
     | `!`{keyword.operator.deref}
