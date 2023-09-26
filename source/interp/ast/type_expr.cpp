@@ -21,4 +21,10 @@ namespace sap::interp::ast
 		auto t = TRY(ts->resolveType(this->ptype));
 		return TCResult::ofRValue(t);
 	}
+
+	ErrorOr<TCResult2> TypeExpr::typecheck_impl2(Typechecker* ts, const Type* infer, bool keep_lvalue) const
+	{
+		auto t = TRY(ts->resolveType(this->ptype));
+		return TCResult2::ofRValue<cst::TypeExpr>(m_location, t);
+	}
 }

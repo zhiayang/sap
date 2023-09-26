@@ -55,6 +55,46 @@ namespace sap::interp::ast
 		return TCResult::ofVoid();
 	}
 
+	ErrorOr<TCResult2> ImportStmt::typecheck_impl2(Typechecker* ts, const Type* infer, bool keep_lvalue) const
+	{
+		auto cs = ts->interpreter();
+
+		auto resolved = TRY(sap::paths::resolveLibrary(m_location, this->file_path));
+		if(auto dir = stdfs::path(resolved); stdfs::is_directory(dir))
+		{
+			auto name = dir.stem();
+			name.replace_extension(".sap");
+
+			auto lib_file = dir / name;
+			if(not stdfs::exists(lib_file))
+				return ErrMsg(ts, "imported folder '{}' does not contain a '{}' file", resolved, name.string());
+
+			resolved = lib_file.string();
+		}
+
+		if(cs->wasFileImported(resolved))
+			return TCResult2::ofVoid<cst::EmptyStmt>(m_location);
+
+		cs->addImportedFile(resolved);
+
+		if(auto e = watch::addFileToWatchList(resolved); e.is_err())
+			return ErrMsg(ts, "{}", e.error());
+
+		auto file = cs->loadFile(resolved);
+		auto doc = TRY(frontend::parse(cs->keepStringAlive(resolved), file.chars()));
+
+		if(doc.haveDocStart())
+			return ErrMsg(ts, "file '{}' contains a '\\start_document', which cannot be imported");
+
+		this->imported_block = std::make_unique<Block>(this->loc());
+		this->imported_block->body = std::move(doc).takePreamble();
+		this->imported_block->target_scope = QualifiedId { .top_level = true };
+
+		auto _ = ts->pushTree(ts->top());
+		return TCResult2::ofVoid<cst::ImportStmt>(m_location,
+		    TRY(this->imported_block->typecheck2(ts)).take<cst::Block>());
+	}
+
 	ErrorOr<EvalResult> ImportStmt::evaluate_impl(Evaluator* ev) const
 	{
 		if(this->imported_block != nullptr)

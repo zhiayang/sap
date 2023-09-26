@@ -7,17 +7,47 @@
 
 namespace sap::interp::ast
 {
-	ErrorOr<TCResult>
-	EnumDefn::EnumeratorDecl::typecheck_impl(Typechecker* ts, const Type* infer, bool keep_lvalue) const
+#if 0
+	ErrorOr<void> EnumeratorDefn::declare(Typechecker* ts) const
 	{
-		assert(infer != nullptr && infer->isEnum());
+		// if we have neither, it's an error
+		if(not this->explicit_type.has_value() && this->initialiser == nullptr)
+			return ErrMsg(ts, "variable without explicit type must have an initialiser");
 
-		TRY(ts->current()->declare(this));
-		return TCResult::ofRValue(infer);
+		auto the_type = TRY([&]() -> ErrorOr<TCResult> {
+			if(this->explicit_type.has_value())
+			{
+				auto resolved_type = TRY(ts->resolveType(*this->explicit_type));
+
+				if(resolved_type->isVoid())
+					return ErrMsg(ts, "cannot declare variable of type 'void'");
+
+				if(this->initialiser != nullptr)
+				{
+					auto initialiser_type = TRY(this->initialiser->typecheck(ts, /* infer: */ resolved_type)).type();
+					if(not ts->canImplicitlyConvert(initialiser_type, resolved_type))
+					{
+						return ErrMsg(ts, "cannot initialise variable of type '{}' with expression of type '{}'", //
+						    resolved_type, initialiser_type);
+					}
+				}
+
+				return TCResult::ofRValue(resolved_type);
+			}
+			else
+			{
+				assert(this->initialiser != nullptr);
+				return this->initialiser->typecheck(ts);
+			}
+		}());
+
+		auto decl = cst::Declaration(m_location, ts->current(), this->name, the_type.type(), this->is_mutable);
+		this->declaration = TRY(ts->current()->declare(std::move(decl)));
+
+		return Ok();
 	}
 
-	ErrorOr<TCResult>
-	EnumDefn::EnumeratorDefn::typecheck_impl(Typechecker* ts, const Type* infer, bool keep_lvalue) const
+	ErrorOr<TCResult2> EnumeratorDefn::typecheck_impl2(Typechecker* ts, const Type* infer, bool keep_lvalue) const
 	{
 		assert(infer != nullptr && infer->isEnum());
 
@@ -37,45 +67,49 @@ namespace sap::interp::ast
 			return ErrMsg(ts, "non-integral enumerators must explicitly specify a value");
 		}
 
-		return TCResult::ofRValue(enum_type);
+		return TCResult2::ofVoid<cst::EnumeratorDefn>(m_location, this->declaration->name, enum_type);
 	}
+#endif
 
 
-
-
-	ErrorOr<TCResult> EnumDecl::typecheck_impl(Typechecker* ts, const Type* infer, bool keep_lvalue) const
-	{
-		assert(infer != nullptr);
-		TRY(ts->current()->declare(this));
-
-		auto enum_type = Type::makeEnum(m_declared_tree->scopeName(this->name), infer);
-		return TCResult::ofRValue(enum_type);
-	}
-
-	ErrorOr<TCResult> EnumDefn::typecheck_impl(Typechecker* ts, const Type* infer, bool keep_lvalue) const
+	ErrorOr<void> EnumDefn::declare(Typechecker* ts) const
 	{
 		auto enum_elm_type = TRY(ts->resolveType(m_enumerator_type));
-		this->declaration->resolve(this);
+		auto enum_type = Type::makeEnum(ts->current()->scopedName(this->name), enum_elm_type);
 
-		auto enum_type = TRY(this->declaration->typecheck(ts, enum_elm_type)).type()->toEnum();
-		TRY(ts->addTypeDefinition(enum_type, this));
-
-		auto scope = ts->current()->lookupOrDeclareNamespace(this->declaration->name);
-		auto _ = ts->pushTree(scope);
-
-		util::hashset<std::string> enum_names {};
-
-		for(auto& enumerator : m_enumerators)
+		// move into the new scope to declare the enumerators
+		auto scope = ts->current()->lookupOrDeclareNamespace(this->name);
 		{
-			if(enum_names.contains(enumerator.declaration->name))
-				return ErrMsg(ts, "duplicate enumerator '{}'", enumerator.declaration->name);
+			auto _ = ts->pushTree(scope);
 
-			enum_names.insert(enumerator.declaration->name);
-			TRY(enumerator.typecheck(ts, enum_type));
+			util::hashset<std::string> enum_names {};
+
+
+			for(auto& enumerator : m_enumerators)
+			{
+				if(enum_names.contains(enumerator.name))
+					return ErrMsg(ts, "duplicate enumerator '{}'", enumerator.name);
+
+				enum_names.insert(enumerator.name);
+				enumerator.declaration = TRY(scope->declare(cst::Declaration(enumerator.location, ts->current(),
+				    enumerator.name, enum_type, /* mutable: */ false)));
+			}
 		}
 
-		m_resolved_enumerator_type = enum_type;
-		return TCResult::ofRValue(enum_type);
+		// declare the enum itself now
+		auto decl = cst::Declaration(m_location, ts->current(), this->name, enum_type,
+		    /* mutable: */ false);
+
+		this->declaration = TRY(ts->current()->declare(std::move(decl)));
+		return Ok();
+	}
+
+	ErrorOr<TCResult2> EnumDefn::typecheck_impl2(Typechecker* ts, const Type* infer, bool keep_lvalue) const
+	{
+		assert(this->declaration != nullptr);
+
+
+		return TCResult2::ofVoid<cst::EnumDefn>(m_location, this->declaration->name, enum_type, std::move(enums));
 	}
 
 

@@ -1229,7 +1229,7 @@ namespace sap::frontend
 		    is_global, std::move(initialiser), std::move(explicit_type)));
 	}
 
-	static ErrorOr<ast::FunctionDecl::Param> parse_param(Lexer& lexer)
+	static ErrorOr<ast::FunctionDefn::Param> parse_param(Lexer& lexer)
 	{
 		auto name = lexer.match(TT::Identifier);
 		if(not name.has_value())
@@ -1244,7 +1244,7 @@ namespace sap::frontend
 		if(lexer.expect(TT::Equal))
 			default_value = TRY(parse_expr(lexer));
 
-		return Ok(ast::FunctionDecl::Param {
+		return Ok(ast::FunctionDefn::Param {
 		    .name = name->text.str(),
 		    .type = type,
 		    .default_value = std::move(default_value),
@@ -1311,7 +1311,7 @@ namespace sap::frontend
 		if(not lexer.expect(TT::LParen))
 			return ErrMsg(lexer.location(), "expected '(' in function definition");
 
-		std::vector<ast::FunctionDecl::Param> params {};
+		std::vector<ast::FunctionDefn::Param> params {};
 		for(bool first = true; not lexer.expect(TT::RParen); first = false)
 		{
 			if(not first && not lexer.expect(TT::Comma))
@@ -1398,7 +1398,7 @@ namespace sap::frontend
 		if(not lexer.expect(TT::LBrace))
 			return ErrMsg(lexer.location(), "expected '{' for enum body");
 
-		std::vector<ast::EnumDefn::EnumeratorDefn> enumerators {};
+		std::vector<ast::EnumeratorDefn> enumerators {};
 		while(not lexer.expect(TT::RBrace))
 		{
 			auto enum_name = lexer.match(TT::Identifier);
@@ -1410,8 +1410,7 @@ namespace sap::frontend
 			if(lexer.expect(TT::Equal))
 				enum_value = TRY(parse_expr(lexer));
 
-			enumerators.push_back(ast::EnumDefn::EnumeratorDefn(enum_name->loc, enum_name->text.str(),
-			    std::move(enum_value)));
+			enumerators.push_back(ast::EnumeratorDefn(enum_name->loc, enum_name->text.str(), std::move(enum_value)));
 
 			if(not lexer.match(TT::Semicolon))
 				return ErrMsg(lexer.location(), "expected ';' after enumerator");

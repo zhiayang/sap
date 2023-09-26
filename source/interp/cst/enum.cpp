@@ -9,7 +9,7 @@ namespace sap::interp::cst
 {
 	ErrorOr<EvalResult> EnumeratorDefn::evaluate_impl(Evaluator* ev) const
 	{
-		auto et = this->type->toEnum();
+		auto et = this->declaration->type->toEnum();
 		if(this->value == nullptr)
 		{
 			assert(et->elementType()->isInteger());

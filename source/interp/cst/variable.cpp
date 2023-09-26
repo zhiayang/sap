@@ -18,7 +18,7 @@ namespace sap::interp::cst
 			if(this->is_global && ev->getGlobalValue(this) != nullptr)
 				return EvalResult::ofVoid();
 
-			auto value = ev->castValue(TRY_VALUE(this->initialiser->evaluate(ev)), this->type);
+			auto value = ev->castValue(TRY_VALUE(this->initialiser->evaluate(ev)), this->declaration->type);
 			if(this->is_global)
 				ev->setGlobalValue(this, std::move(value));
 			else

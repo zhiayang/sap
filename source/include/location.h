@@ -31,5 +31,8 @@ namespace sap
 				.is_builtin = true,
 			};
 		}
+
+		bool operator==(const Location&) const = default;
+		bool operator!=(const Location&) const = default;
 	};
 }

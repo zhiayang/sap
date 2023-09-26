@@ -24,7 +24,7 @@ namespace sap::interp
 		return this->lookupOrDeclareNamespace(zpr::sprint("__$anon{}", m_anon_namespace_count++));
 	}
 
-	QualifiedId DefnTree::scopeName(std::string name) const
+	QualifiedId DefnTree::scopedName(std::string name) const
 	{
 		QualifiedId ret {};
 		ret.top_level = true;
@@ -43,7 +43,10 @@ namespace sap::interp
 		{
 			// import all the decls in the guy into ourselves.
 			for(auto& [name, decls] : tree->m_decls)
-				m_imported_decls[name] = decls;
+			{
+				for(auto& d : decls)
+					m_imported_decls[name].push_back(&d);
+			}
 		}
 		else
 		{
@@ -56,7 +59,7 @@ namespace sap::interp
 		return Ok();
 	}
 
-	ErrorOr<void> DefnTree::useDeclaration(const Location& loc, const ast::Declaration* decl, const std::string& alias)
+	ErrorOr<void> DefnTree::useDeclaration(const Location& loc, const cst::Declaration* decl, const std::string& alias)
 	{
 		if(alias.empty())
 			m_imported_decls[decl->name].push_back(decl);
@@ -134,17 +137,17 @@ namespace sap::interp
 		return current;
 	}
 
-	ErrorOr<std::vector<const ast::Declaration*>> DefnTree::lookup(QualifiedId id) const
+	ErrorOr<std::vector<const cst::Declaration*>> DefnTree::lookup(QualifiedId id) const
 	{
 		return this->lookup(std::move(id), /* recursive: */ false);
 	}
 
-	ErrorOr<std::vector<const ast::Declaration*>> DefnTree::lookupRecursive(QualifiedId id) const
+	ErrorOr<std::vector<const cst::Declaration*>> DefnTree::lookupRecursive(QualifiedId id) const
 	{
 		return this->lookup(std::move(id), /* recursive: */ true);
 	}
 
-	ErrorOr<std::vector<const ast::Declaration*>> DefnTree::lookup(QualifiedId id, bool recursive) const
+	ErrorOr<std::vector<const cst::Declaration*>> DefnTree::lookup(QualifiedId id, bool recursive) const
 	{
 		auto current = this;
 
@@ -176,32 +179,31 @@ namespace sap::interp
 				return ErrMsg(m_typechecker->loc(), "undeclared namespace '{}'", t);
 		}
 
-		util::hashset<const ast::Declaration*> decls {};
+		util::hashset<const cst::Declaration*> decls {};
 
-		auto decls_vec = [](util::hashset<const ast::Declaration*>& xs) {
+		auto decls_vec = [](util::hashset<const cst::Declaration*>& xs) {
 			return std::vector(std::move_iterator(xs.begin()), std::move_iterator(xs.end()));
 		};
 
 
 		while(current != nullptr)
 		{
-#define CHECK_MAP(map)                                                     \
+#define CHECK_MAP(map, tok)                                                \
 	do                                                                     \
 	{                                                                      \
 		if(auto it = current->map.find(id.name); it != current->map.end()) \
 		{                                                                  \
 			for(auto& d : it->second)                                      \
-				decls.insert(d);                                           \
+				decls.insert(tok d);                                       \
+                                                                           \
 			if(not recursive)                                              \
 				return Ok(decls_vec(decls));                               \
 		}                                                                  \
 	} while(false)
 
 			// check imported decls first
-			CHECK_MAP(m_imported_decls);
-			CHECK_MAP(m_decls);
-			CHECK_MAP(m_generic_decls);
-
+			CHECK_MAP(m_imported_decls, );
+			CHECK_MAP(m_decls, &);
 #undef CHECK_MAP
 
 			// if the id was qualified, then we shouldn't search in parents.
@@ -217,44 +219,32 @@ namespace sap::interp
 		return ErrMsg(m_typechecker->loc(), "no declaration named '{}' (search started at '{}')", id.name, m_name);
 	}
 
-	static bool function_decls_conflict(const ast::FunctionDecl* a, const ast::FunctionDecl* b)
+	ErrorOr<cst::Declaration*> DefnTree::declare(cst::Declaration new_decl)
 	{
-		if(a->name != b->name || a->params().size() != b->params().size())
-			return false;
-
-		return a->get_type() == b->get_type();
-	}
-
-	ErrorOr<void> DefnTree::declareGeneric(const ast::Declaration* decl)
-	{
-		// TODO: check for conflicts
-		m_generic_decls[decl->name].push_back(decl);
-		return Ok();
-	}
-
-	ErrorOr<void> DefnTree::declare(const ast::Declaration* new_decl)
-	{
-		auto check_existing =
-		    [this, new_decl](const std::vector<const ast::Declaration*>& existing_decls) -> ErrorOr<void> {
-			for(auto& decl : existing_decls)
+		auto check_existing = [this, &new_decl](const auto& existing_decls) -> ErrorOr<void> {
+			for(auto& decl_ : existing_decls)
 			{
+				auto& decl = [&]() -> auto& {
+					if constexpr(std::is_pointer_v<std::remove_cvref_t<decltype(decl_)>>)
+						return *decl_;
+					else
+						return decl_;
+				}();
+
 				// no error for re-*declaration*, just return ok (and throw away the duplicate decl)
 				if(decl == new_decl)
 					return Ok();
 
-				auto af = dynamic_cast<const ast::FunctionDecl*>(decl);
-				auto bf = dynamic_cast<const ast::FunctionDecl*>(new_decl);
-
-				if(af == nullptr || bf == nullptr)
+				if(not decl.type->isFunction() || not new_decl.type->isFunction())
 				{
 					// otherwise, if at least one of them is not a function, they conflict
-					return ErrMsg(m_typechecker->loc(), "redeclaration of '{}'", new_decl->name);
+					return ErrMsg(m_typechecker->loc(), "redeclaration of '{}'", new_decl.name);
 				}
-				else if(function_decls_conflict(af, bf))
+				else if((decl.type == new_decl.type) && (decl.name == new_decl.name))
 				{
 					// otherwise, they are both functions, but we must make sure they are not redefinitions
 					// TODO: print the previous one
-					return ErrMsg(m_typechecker->loc(), "conflicting declarations of '{}'", new_decl->name);
+					return ErrMsg(m_typechecker->loc(), "conflicting declarations of '{}'", new_decl.name);
 				}
 
 				// otherwise, we're ok
@@ -263,17 +253,18 @@ namespace sap::interp
 			return Ok();
 		};
 
-		auto& name = new_decl->name;
+		auto& name = new_decl.name;
 		if(auto foo = m_decls.find(name); foo != m_decls.end())
 			TRY(check_existing(foo->second));
 
 		if(auto foo = m_imported_decls.find(name); foo != m_imported_decls.end())
 			TRY(check_existing(foo->second));
 
-		m_decls[name].push_back(new_decl);
-		const_cast<ast::Declaration*>(new_decl)->declareAt(this);
+		// avoid dangling ref to name after new_decl is moved
+		auto& v = m_decls[name];
+		auto ret = &v.emplace_back(std::move(new_decl));
 
-		return Ok();
+		return Ok(ret);
 	}
 
 	void DefnTree::dump(int indent) const

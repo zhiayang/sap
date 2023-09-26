@@ -9,8 +9,8 @@ namespace sap::interp::cst
 {
 	ErrorOr<EvalResult> ImportStmt::evaluate_impl(Evaluator* ev) const
 	{
-		if(this->imported_block != nullptr)
-			TRY(this->imported_block->evaluate(ev));
+		if(this->block != nullptr)
+			TRY(this->block->evaluate(ev));
 
 		return EvalResult::ofVoid();
 	}

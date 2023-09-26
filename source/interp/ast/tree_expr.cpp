@@ -93,6 +93,14 @@ namespace sap::interp::ast
 		return TCResult::ofRValue(Type::makeTreeInlineObj());
 	}
 
+	ErrorOr<TCResult2> TreeInlineExpr::typecheck_impl2(Typechecker* ts, const Type* infer, bool keep_lvalue) const
+	{
+		TRY(typecheck_list_of_tios(ts, this->objects));
+		util::unreachable();
+		// return TCResult2::ofRValue(Type::makeTreeInlineObj());
+	}
+
+
 	ErrorOr<EvalResult> TreeInlineExpr::evaluate_impl(Evaluator* ev) const
 	{
 		auto tios = TRY(evaluate_list_of_tios(ev, this->objects));

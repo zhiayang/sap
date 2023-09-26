@@ -115,10 +115,6 @@ namespace sap::interp::ast
 		mutable zst::SharedPtr<tree::BlockObject> object;
 	};
 
-
-	struct Declaration;
-	struct FunctionDecl;
-
 	struct Ident : Expr
 	{
 		explicit Ident(Location loc) : Expr(std::move(loc)) { }
@@ -840,74 +836,36 @@ namespace sap::interp::ast
 
 
 
-	struct Definition;
-
-	struct Declaration : Stmt
-	{
-		Declaration(Location loc, const std::string& name_) : Stmt(std::move(loc)), name(name_) { }
-
-		std::string name;
-
-		const Definition* definition() const { return m_resolved_defn; }
-		void resolve(const Definition* defn) { m_resolved_defn = defn; }
-
-		const DefnTree* declaredTree() const { return m_declared_tree; }
-		void declareAt(const DefnTree* tree) { m_declared_tree = tree; }
-
-		bool isGeneric() const { return not m_generic_params.empty(); }
-		const std::vector<std::string>& genericParams() const { return m_generic_params; }
-
-	protected:
-		const Definition* m_resolved_defn = nullptr;
-		const DefnTree* m_declared_tree = nullptr;
-
-		std::vector<std::string> m_generic_params;
-	};
 
 	struct Definition : Stmt
 	{
-		Definition(Location loc, Declaration* decl) : Stmt(std::move(loc)), declaration(decl)
-		{
-			declaration->resolve(this);
-		}
+		Definition(Location loc, std::string name) : Stmt(std::move(loc)), name(std::move(name)) { }
 
-		// the definition owns its declaration
-		std::unique_ptr<Declaration> declaration {};
-	};
+		virtual ErrorOr<void> declare(Typechecker* ts) const = 0;
 
-	struct VariableDecl : Declaration
-	{
-		VariableDecl(Location loc, const std::string& name_, bool mut)
-		    : Declaration(std::move(loc), name_), is_mutable(mut)
-		{
-		}
+		std::string name;
 
-		virtual ErrorOr<EvalResult> evaluate_impl(Evaluator* ev) const override;
-		virtual ErrorOr<TCResult> typecheck_impl(Typechecker* ts, //
-		    const Type* infer = nullptr,
-		    bool keep_lvalue = false) const override;
-
-		virtual ErrorOr<TCResult2> typecheck_impl2(Typechecker* ts,
-		    const Type* infer = nullptr, //
-		    bool keep_lvalue = false) const override;
-
-		bool is_mutable;
+	protected:
+		mutable cst::Declaration* declaration = nullptr;
 	};
 
 	struct VariableDefn : Definition
 	{
 		VariableDefn(Location loc,
-		    const std::string& name,
+		    std::string name,
 		    bool is_mutable,
 		    bool is_global,
 		    std::unique_ptr<Expr> init,
 		    std::optional<frontend::PType> explicit_type_)
-		    : Definition(loc, new VariableDecl(loc, name, is_mutable))
+		    : Definition(loc, std::move(name))
 		    , initialiser(std::move(init))
 		    , explicit_type(explicit_type_)
-		    , m_is_global(is_global)
+		    , is_global(is_global)
+		    , is_mutable(is_mutable)
 		{
 		}
+
+		virtual ErrorOr<void> declare(Typechecker* ts) const override;
 
 		virtual ErrorOr<EvalResult> evaluate_impl(Evaluator* ev) const override;
 		virtual ErrorOr<TCResult> typecheck_impl(Typechecker* ts, //
@@ -921,11 +879,11 @@ namespace sap::interp::ast
 		std::unique_ptr<Expr> initialiser;
 		std::optional<frontend::PType> explicit_type;
 
-	private:
-		mutable bool m_is_global = false;
+		bool is_global;
+		bool is_mutable;
 	};
 
-	struct FunctionDecl : Declaration
+	struct FunctionDefn : Definition
 	{
 		struct Param
 		{
@@ -935,42 +893,16 @@ namespace sap::interp::ast
 			Location loc;
 		};
 
-		FunctionDecl(Location loc,
-		    const std::string& name_,
-		    std::vector<Param>&& params,
-		    frontend::PType return_type,
-		    std::vector<std::string> generic_params)
-		    : Declaration(loc, name_), m_params(std::move(params)), m_return_type(return_type)
-		{
-			m_generic_params = std::move(generic_params);
-		}
-
-		virtual ErrorOr<EvalResult> evaluate_impl(Evaluator* ev) const override;
-		virtual ErrorOr<TCResult> typecheck_impl(Typechecker* ts, //
-		    const Type* infer = nullptr,
-		    bool keep_lvalue = false) const override;
-
-		virtual ErrorOr<TCResult2> typecheck_impl2(Typechecker* ts,
-		    const Type* infer = nullptr, //
-		    bool keep_lvalue = false) const override;
-
-		const std::vector<Param>& params() const { return m_params; }
-
-	private:
-		std::vector<Param> m_params;
-		frontend::PType m_return_type;
-	};
-
-	struct FunctionDefn : Definition
-	{
 		FunctionDefn(Location loc,
-		    const std::string& name,
-		    std::vector<FunctionDecl::Param> params,
+		    std::string name,
+		    std::vector<Param> params,
 		    frontend::PType return_type,
 		    std::vector<std::string> generic_params)
-		    : Definition(loc, new FunctionDecl(loc, name, std::move(params), return_type, std::move(generic_params)))
+		    : Definition(loc, std::move(name)), params(std::move(params)), return_type(std::move(return_type))
 		{
 		}
+
+		virtual ErrorOr<void> declare(Typechecker* ts) const override;
 
 		virtual ErrorOr<EvalResult> evaluate_impl(Evaluator* ev) const override;
 		virtual ErrorOr<TCResult> typecheck_impl(Typechecker* ts, //
@@ -981,28 +913,30 @@ namespace sap::interp::ast
 		    const Type* infer = nullptr, //
 		    bool keep_lvalue = false) const override;
 
-		ErrorOr<EvalResult> call(Evaluator* ev, std::vector<Value>& args) const;
-		ErrorOr<TCResult> monomorphise(Typechecker* ts, util::hashmap<std::string, Expr*> generic_args);
-
+		std::vector<Param> params;
+		frontend::PType return_type;
 		std::unique_ptr<Block> body;
-
-	private:
-		mutable std::vector<std::unique_ptr<VariableDefn>> param_defns;
 	};
 
 
 	struct BuiltinFunctionDefn : Definition
 	{
+		using Param = FunctionDefn::Param;
 		using FuncTy = ErrorOr<EvalResult> (*)(Evaluator*, std::vector<Value>&);
 
 		BuiltinFunctionDefn(Location loc,
-		    const std::string& name,
-		    std::vector<FunctionDecl::Param>&& params,
+		    std::string name,
+		    std::vector<Param>&& params,
 		    frontend::PType return_type,
 		    const FuncTy& fn)
-		    : Definition(loc, new FunctionDecl(loc, name, std::move(params), return_type, {})), function(fn)
+		    : Definition(loc, std::move(name))
+		    , function(fn)
+		    , params(std::move(params))
+		    , return_type(std::move(return_type))
 		{
 		}
+
+		virtual ErrorOr<void> declare(Typechecker* ts) const override;
 
 		virtual ErrorOr<EvalResult> evaluate_impl(Evaluator* ev) const override;
 		virtual ErrorOr<TCResult> typecheck_impl(Typechecker* ts, //
@@ -1014,21 +948,8 @@ namespace sap::interp::ast
 		    bool keep_lvalue = false) const override;
 
 		FuncTy function;
-	};
-
-
-	struct StructDecl : Declaration
-	{
-		StructDecl(Location loc, const std::string& name_) : Declaration(loc, name_) { }
-
-		virtual ErrorOr<EvalResult> evaluate_impl(Evaluator* ev) const override;
-		virtual ErrorOr<TCResult> typecheck_impl(Typechecker* ts, //
-		    const Type* infer = nullptr,
-		    bool keep_lvalue = false) const override;
-
-		virtual ErrorOr<TCResult2> typecheck_impl2(Typechecker* ts,
-		    const Type* infer = nullptr, //
-		    bool keep_lvalue = false) const override;
+		std::vector<Param> params;
+		frontend::PType return_type;
 	};
 
 	struct StructDefn : Definition
@@ -1040,12 +961,14 @@ namespace sap::interp::ast
 			std::unique_ptr<Expr> initialiser;
 		};
 
-		StructDefn(Location loc, const std::string& name, std::vector<Field> fields)
-		    : Definition(loc, new StructDecl(loc, name)), m_fields(std::move(fields))
+		StructDefn(Location loc, std::string name, std::vector<Field> fields)
+		    : Definition(loc, std::move(name)), m_fields(std::move(fields))
 		{
 		}
 
 		const std::vector<Field>& fields() const { return m_fields; }
+
+		virtual ErrorOr<void> declare(Typechecker* ts) const override;
 
 		virtual ErrorOr<EvalResult> evaluate_impl(Evaluator* ev) const override;
 		virtual ErrorOr<TCResult> typecheck_impl(Typechecker* ts, //
@@ -1060,72 +983,29 @@ namespace sap::interp::ast
 		mutable std::vector<Field> m_fields;
 	};
 
-
-
-
-
-	struct EnumDecl : Declaration
-	{
-		EnumDecl(Location loc, const std::string& name_) : Declaration(loc, name_) { }
-
-		virtual ErrorOr<EvalResult> evaluate_impl(Evaluator* ev) const override;
-		virtual ErrorOr<TCResult> typecheck_impl(Typechecker* ts, //
-		    const Type* infer = nullptr,
-		    bool keep_lvalue = false) const override;
-
-		virtual ErrorOr<TCResult2> typecheck_impl2(Typechecker* ts,
-		    const Type* infer = nullptr, //
-		    bool keep_lvalue = false) const override;
-	};
-
 	struct EnumDefn : Definition
 	{
-		struct EnumeratorDecl : Declaration
+		struct Enumerator
 		{
-			EnumeratorDecl(Location loc, const std::string& name_) : Declaration(loc, name_) { }
+			Location location;
+			std::string name;
+			std::unique_ptr<Expr> value;
 
-			virtual ErrorOr<EvalResult> evaluate_impl(Evaluator* ev) const override;
-			virtual ErrorOr<TCResult>
-			typecheck_impl(Typechecker* ts, const Type* infer = nullptr, bool keep_lvalue = false) const override;
-
-			virtual ErrorOr<TCResult2> typecheck_impl2(Typechecker* ts,
-			    const Type* infer = nullptr, //
-			    bool keep_lvalue = false) const override;
-		};
-
-		struct EnumeratorDefn : Definition
-		{
-			EnumeratorDefn(Location loc, const std::string& name, std::unique_ptr<Expr> value)
-			    : Definition(loc, new EnumeratorDecl(loc, name)), m_value(std::move(value))
-			{
-			}
-
-			ErrorOr<EvalResult> evaluate_impl(Evaluator* ev, int64_t* prev_value) const;
-
-			virtual ErrorOr<EvalResult> evaluate_impl(Evaluator* ev) const override;
-			virtual ErrorOr<TCResult>
-			typecheck_impl(Typechecker* ts, const Type* infer = nullptr, bool keep_lvalue = false) const override;
-
-			virtual ErrorOr<TCResult2> typecheck_impl2(Typechecker* ts,
-			    const Type* infer = nullptr, //
-			    bool keep_lvalue = false) const override;
-
-		private:
-			friend struct EnumDefn;
-
-			std::unique_ptr<Expr> m_value;
+			cst::Declaration* declaration;
 		};
 
 		EnumDefn(Location loc,
-		    const std::string& name,
+		    std::string name,
 		    frontend::PType type,
-		    std::vector<EnumeratorDefn> enumerators) //
-		    : Definition(loc, new EnumDecl(loc, name))
+		    std::vector<Enumerator> enumerators) //
+		    : Definition(loc, std::move(name))
 		    , m_enumerator_type(std::move(type))
 		    , m_enumerators(std::move(enumerators))
 		{
 		}
 
+		virtual ErrorOr<void> declare(Typechecker* ts) const override;
+
 		virtual ErrorOr<EvalResult> evaluate_impl(Evaluator* ev) const override;
 		virtual ErrorOr<TCResult> typecheck_impl(Typechecker* ts, //
 		    const Type* infer = nullptr,
@@ -1135,12 +1015,9 @@ namespace sap::interp::ast
 		    const Type* infer = nullptr, //
 		    bool keep_lvalue = false) const override;
 
-		const EnumeratorDefn* getEnumeratorNamed(const std::string& name) const;
-
 	private:
 		frontend::PType m_enumerator_type;
-		std::vector<EnumeratorDefn> m_enumerators;
-		mutable const EnumType* m_resolved_enumerator_type;
+		mutable std::vector<Enumerator> m_enumerators;
 	};
 
 
@@ -1160,7 +1037,7 @@ namespace sap::interp::ast
 		std::string name;
 
 	private:
-		mutable std::variant<std::monostate, const EnumDefn::EnumeratorDefn*, const StructType*> m_context {};
+		// mutable std::variant<std::monostate, const EnumeratorDefn*, const StructType*> m_context {};
 	};
 }
 

@@ -29,18 +29,16 @@ namespace sap::interp
 
 		DefnTree* declareAnonymousNamespace();
 
-		ErrorOr<std::vector<const ast::Declaration*>> lookup(QualifiedId id) const;
-		ErrorOr<std::vector<const ast::Declaration*>> lookupRecursive(QualifiedId id) const;
+		ErrorOr<std::vector<const cst::Declaration*>> lookup(QualifiedId id) const;
+		ErrorOr<std::vector<const cst::Declaration*>> lookupRecursive(QualifiedId id) const;
 
-		ErrorOr<void> declare(const ast::Declaration* decl);
-		ErrorOr<void> declareGeneric(const ast::Declaration* decl);
-
-		QualifiedId scopeName(std::string name) const;
+		ErrorOr<cst::Declaration*> declare(cst::Declaration decl);
+		QualifiedId scopedName(std::string name) const;
 
 		void dump(int indent = 0) const;
 
 		ErrorOr<void> useNamespace(const Location& loc, DefnTree* other, const std::string& alias);
-		ErrorOr<void> useDeclaration(const Location& loc, const ast::Declaration* other, const std::string& alias);
+		ErrorOr<void> useDeclaration(const Location& loc, const cst::Declaration* other, const std::string& alias);
 
 	private:
 		explicit DefnTree(const Typechecker* ts, std::string name, DefnTree* parent)
@@ -48,18 +46,17 @@ namespace sap::interp
 		{
 		}
 
-		ErrorOr<std::vector<const ast::Declaration*>> lookup(QualifiedId id, bool recursive) const;
+		ErrorOr<std::vector<const cst::Declaration*>> lookup(QualifiedId id, bool recursive) const;
 
 	private:
 		size_t m_anon_namespace_count = 0;
 
 		std::string m_name;
 		util::hashmap<std::string, std::unique_ptr<DefnTree>> m_children;
-		util::hashmap<std::string, std::vector<const ast::Declaration*>> m_decls;
+		util::hashmap<std::string, std::vector<cst::Declaration>> m_decls;
 
 		util::hashmap<std::string, DefnTree*> m_imported_trees;
-		util::hashmap<std::string, std::vector<const ast::Declaration*>> m_imported_decls;
-		util::hashmap<std::string, std::vector<const ast::Declaration*>> m_generic_decls;
+		util::hashmap<std::string, std::vector<const cst::Declaration*>> m_imported_decls;
 
 		DefnTree* m_parent = nullptr;
 
@@ -79,8 +76,8 @@ namespace sap::interp
 		const DefnTree* current() const;
 
 		ErrorOr<const Type*> resolveType(const frontend::PType& ptype);
-		ErrorOr<const ast::Definition*> getDefinitionForType(const Type* type);
-		ErrorOr<void> addTypeDefinition(const Type* type, const ast::Definition* defn);
+		ErrorOr<const cst::Definition*> getDefinitionForType(const Type* type);
+		ErrorOr<void> addTypeDefinition(const Type* type, const cst::Definition* defn);
 
 		ErrorOr<const DefnTree*> getDefnTreeForType(const Type* type) const;
 
@@ -93,7 +90,7 @@ namespace sap::interp
 
 		ErrorOr<EvalResult> run(const ast::Stmt* stmt);
 
-		ast::Definition* addBuiltinDefinition(std::unique_ptr<ast::Definition> defn);
+		cst::Definition* addBuiltinDefinition(std::unique_ptr<cst::Definition> defn);
 
 		[[nodiscard]] util::Defer<> enterFunctionWithReturnType(const Type* t);
 		void leaveFunctionWithReturnType();
@@ -117,8 +114,8 @@ namespace sap::interp
 		std::vector<const Type*> m_expected_return_types;
 		std::vector<const StructType*> m_struct_field_context_stack;
 
-		std::vector<std::unique_ptr<ast::Definition>> m_builtin_defns;
-		util::hashmap<const Type*, const ast::Definition*> m_type_definitions;
+		std::vector<std::unique_ptr<cst::Definition>> m_builtin_defns;
+		util::hashmap<const Type*, const cst::Definition*> m_type_definitions;
 
 		std::vector<Location> m_location_stack;
 		size_t m_loop_body_nesting;

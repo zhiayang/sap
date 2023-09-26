@@ -14,7 +14,7 @@ namespace sap::interp::ast
 
 		// when declaring a struct, we just make an empty field list.
 		// the fields will be set later on.
-		return TCResult::ofRValue(Type::makeStruct(m_declared_tree->scopeName(this->name), {}));
+		return TCResult::ofRValue(Type::makeStruct(m_declared_tree->scopedName(this->name), {}));
 	}
 
 	ErrorOr<TCResult> StructDefn::typecheck_impl(Typechecker* ts, const Type* infer, bool keep_lvalue) const

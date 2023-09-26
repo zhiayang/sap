@@ -12,19 +12,21 @@ namespace sap::interp::cst
 	ErrorOr<EvalResult> Ident::evaluate_impl(Evaluator* ev) const
 	{
 		// this should have been set by typechecking!
-		assert(resolved_defn != nullptr);
+		assert(this->resolved_decl != nullptr);
+
+		auto* defn = this->resolved_decl->definition();
 
 		auto* frame = &ev->frame();
 		while(frame != nullptr)
 		{
-			if(auto value = frame->valueOf(resolved_defn); value != nullptr)
+			if(auto value = frame->valueOf(defn); value != nullptr)
 				return EvalResult::ofLValue(*value);
 
 			frame = frame->parent();
 		}
 
 		// we didn't find any locals -- check globals.
-		if(auto value = ev->getGlobalValue(resolved_defn); value != nullptr)
+		if(auto value = ev->getGlobalValue(defn); value != nullptr)
 			return EvalResult::ofLValue(*value);
 
 		return ErrMsg(ev, "use of uninitialised variable '{}'", this->name);

@@ -42,14 +42,15 @@ namespace sap
 	}
 }
 
-#define __TRY(x, L) __extension__({                                       \
-		auto&& __r##L = x;                                                \
-		using R = std::decay_t<decltype(__r##L)>;                         \
-		using V = typename R::value_type;                                 \
-		using E = typename R::error_type;                                 \
-		if((__r##L).is_err())                                             \
-			return Err(std::move((__r##L).error()));                      \
-		util::impl::extract_value_or_return_void<V, E>().extract(__r##L); \
+#define __TRY(x, L)                                                             \
+	__extension__({                                                             \
+		auto&& __r##L = x;                                                      \
+		using R##L = std::decay_t<decltype(__r##L)>;                            \
+		using V##L = typename R##L::value_type;                                 \
+		using E##L = typename R##L::error_type;                                 \
+		if((__r##L).is_err())                                                   \
+			return Err(std::move((__r##L).error()));                            \
+		util::impl::extract_value_or_return_void<V##L, E##L>().extract(__r##L); \
 	})
 
 #define _TRY(x, L) __TRY(x, L)

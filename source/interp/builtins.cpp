@@ -20,7 +20,9 @@ namespace sap::interp
 		auto s = std::make_unique<ast::StructDefn>(Location::builtin(), T::name, T::fields());
 		auto defn = s.get();
 
-		T::type = cs->typechecker().addBuiltinDefinition(std::move(s))->typecheck(&cs->typechecker()).unwrap().type();
+		auto s2 = s->typecheck2(&cs->typechecker()).take_value().template take<cst::Definition>();
+
+		T::type = cs->typechecker().addBuiltinDefinition(std::move(s2))->declaration->type;
 		defn->evaluate(&cs->evaluator()).expect("builtin decl failed");
 	}
 
@@ -30,7 +32,9 @@ namespace sap::interp
 		auto e = std::make_unique<ast::EnumDefn>(Location::builtin(), T::name, T::enumeratorType(), T::enumerators());
 		auto defn = e.get();
 
-		T::type = cs->typechecker().addBuiltinDefinition(std::move(e))->typecheck(&cs->typechecker()).unwrap().type();
+		auto e2 = e->typecheck2(&cs->typechecker()).take_value().template take<cst::Definition>();
+
+		T::type = cs->typechecker().addBuiltinDefinition(std::move(e2))->declaration->type;
 		defn->evaluate(&cs->evaluator()).expect("builtin decl failed");
 	}
 
@@ -69,10 +73,10 @@ namespace sap::interp
 
 
 
-	template <std::same_as<ast::FunctionDecl::Param>... P>
-	static std::vector<ast::FunctionDecl::Param> PL(P&&... params)
+	template <std::same_as<ast::FunctionDefn::Param>... P>
+	static std::vector<ast::FunctionDefn::Param> PL(P&&... params)
 	{
-		std::vector<ast::FunctionDecl::Param> ret {};
+		std::vector<ast::FunctionDefn::Param> ret {};
 		(ret.push_back(std::move(params)), ...);
 
 		return ret;
@@ -85,7 +89,7 @@ namespace sap::interp
 		using namespace sap::frontend;
 
 		using BFD = ast::BuiltinFunctionDefn;
-		using Param = ast::FunctionDecl::Param;
+		using Param = ast::FunctionDefn::Param;
 
 		const auto t_any = PType::named(TYPE_ANY);
 		const auto t_int = PType::named(TYPE_INT);
@@ -135,7 +139,9 @@ namespace sap::interp
 
 		const auto DEF = [&](auto&&... xs) {
 			auto ret = std::make_unique<BFD>(Location::builtin(), std::forward<decltype(xs)>(xs)...);
-			ts->addBuiltinDefinition(std::move(ret))->typecheck(ts).expect("builtin decl failed");
+			auto def2 = ret->typecheck2(ts).take_value().template take<cst::Definition>();
+
+			ts->addBuiltinDefinition(std::move(def2));
 		};
 
 		const auto P = [](const char* name, const PType& t, std::unique_ptr<ast::Expr> default_val = nullptr) {

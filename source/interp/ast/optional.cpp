@@ -16,6 +16,15 @@ namespace sap::interp::ast
 		return TCResult::ofRValue(Type::makeBool());
 	}
 
+	ErrorOr<TCResult2> OptionalCheckOp::typecheck_impl2(Typechecker* ts, const Type* infer, bool keep_lvalue) const
+	{
+		auto inside = TRY(this->expr->typecheck2(ts, infer));
+		if(not inside.type()->isOptional())
+			return ErrMsg(ts, "invalid use of '?' on non-optional type '{}'", inside.type());
+
+		return TCResult2::ofRValue<cst::OptionalCheckOp>(m_location, std::move(inside).take_expr());
+	}
+
 	ErrorOr<EvalResult> OptionalCheckOp::evaluate_impl(Evaluator* ev) const
 	{
 		auto inside = TRY_VALUE(this->expr->evaluate(ev));
@@ -52,6 +61,32 @@ namespace sap::interp::ast
 		// return whatever the rhs type is -- be it optional or pointer.
 		return TCResult::ofRValue(rtype);
 	}
+
+
+	ErrorOr<TCResult2> NullCoalesceOp::typecheck_impl2(Typechecker* ts, const Type* infer, bool keep_lvalue) const
+	{
+		auto lres = TRY(this->lhs->typecheck2(ts));
+		auto rres = TRY(this->rhs->typecheck2(ts));
+
+		// this is a little annoying because while we don't want "?int + &int", "?&int and &int" should still work
+		if(not lres.type()->isOptional() && not lres.type()->isPointer())
+			return ErrMsg(ts, "invalid use of '??' with non-pointer, non-optional type '{}' on the left", lres.type());
+
+		// the rhs type is either the same as the lhs, or it's the element of the lhs optional/ptr
+		auto lelm_type = lres.type()->isOptional() ? lres.type()->optionalElement() : lres.type()->pointerElement();
+
+		bool is_flatmap = (lres.type() == rres.type() || ts->canImplicitlyConvert(lres.type(), rres.type()));
+		bool is_valueor = (lelm_type == rres.type() || ts->canImplicitlyConvert(lelm_type, rres.type()));
+
+		if(not(is_flatmap || is_valueor))
+			return ErrMsg(ts, "invalid use of '??' with mismatching types '{}' and '{}'", lres.type(), rres.type());
+
+		// return whatever the rhs type is -- be it optional or pointer.
+		return TCResult2::ofRValue<cst::NullCoalesceOp>(m_location, rres.type(),
+		    is_flatmap ? cst::NullCoalesceOp::Kind::Flatmap : cst::NullCoalesceOp::Kind::ValueOr,
+		    std::move(lres).take_expr(), std::move(rres).take_expr());
+	}
+
 
 	ErrorOr<EvalResult> NullCoalesceOp::evaluate_impl(Evaluator* ev) const
 	{

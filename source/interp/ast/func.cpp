@@ -10,15 +10,16 @@
 
 namespace sap::interp::ast
 {
-	ErrorOr<TCResult> FunctionDecl::typecheck_impl(Typechecker* ts, const Type* infer, bool keep_lvalue) const
+	static ErrorOr<cst::Declaration*> create_function_declaration(Typechecker* ts,
+	    Location loc,
+	    const std::string& name,
+	    const std::vector<FunctionDefn::Param>& params,
+	    frontend::PType return_type)
 	{
-		if(this->isGeneric())
-			return TCResult::ofGeneric(this, {});
-
 		bool saw_variadic = false;
 
 		std::vector<const Type*> param_types {};
-		for(auto& param : m_params)
+		for(auto& param : params)
 		{
 			auto type = TRY(ts->resolveType(param.type));
 			param_types.push_back(type);
@@ -32,50 +33,52 @@ namespace sap::interp::ast
 			}
 		}
 
-		auto fn_type = Type::makeFunction(std::move(param_types), TRY(ts->resolveType(m_return_type)));
-		m_tc_result = TCResult::ofRValue(fn_type).unwrap();
+		auto fn_type = Type::makeFunction(std::move(param_types), TRY(ts->resolveType(return_type)));
 
-		TRY(ts->current()->declare(this));
-		return Ok(*m_tc_result);
+		auto decl = cst::Declaration(loc, ts->current(), name, fn_type, /* mutable: */ false);
+		return ts->current()->declare(std::move(decl));
 	}
 
-	ErrorOr<TCResult> BuiltinFunctionDefn::typecheck_impl(Typechecker* ts, const Type* infer, bool keep_lvalue) const
+	ErrorOr<void> FunctionDefn::declare(Typechecker* ts) const
 	{
-		return this->declaration->typecheck(ts);
+		this->declaration = TRY(create_function_declaration(ts, m_location, this->name, this->params,
+		    this->return_type));
+		return Ok();
 	}
 
-
-	ErrorOr<TCResult> FunctionDefn::typecheck_impl(Typechecker* ts, const Type* infer, bool keep_lvalue) const
+	ErrorOr<TCResult2> BuiltinFunctionDefn::typecheck_impl2(Typechecker* ts, const Type* infer, bool keep_lvalue) const
 	{
-		this->declaration->resolve(this);
+		assert(this->declaration != nullptr);
+		return TCResult2::ofVoid<cst::BuiltinFunctionDefn>(m_location, this->declaration, this->function);
+	}
 
-		if(this->declaration->isGeneric())
-		{
-			// TODO: additional checking for validity of stuff
-			TRY(ts->current()->declareGeneric(this->declaration.get()));
-			return TCResult::ofGeneric(this->declaration.get(), {});
-		}
-
-		auto decl_type = TRY(this->declaration->typecheck(ts)).type();
+	ErrorOr<TCResult2> FunctionDefn::typecheck_impl2(Typechecker* ts, const Type* infer, bool keep_lvalue) const
+	{
+		assert(this->declaration != nullptr);
+		auto decl_type = this->declaration->type;
 
 		// TODO: maybe a less weird mangling solution? idk
 		auto tree = ts->current()->lookupOrDeclareNamespace(zpr::sprint("{}${}", this->declaration->name,
 		    decl_type->str()));
 		auto _ = ts->pushTree(tree);
 
+		std::vector<cst::FunctionDefn::Param> new_params {};
+
 		// make definitions for our parameters
-		for(auto& param : static_cast<FunctionDecl*>(this->declaration.get())->params())
+		for(auto& param : this->params)
 		{
 			auto resolved_type = TRY(ts->resolveType(param.type));
+			std::unique_ptr<cst::Expr> default_value {};
+
 			if(param.default_value != nullptr)
 			{
-				auto ty = TRY(param.default_value->typecheck(ts)).type();
-				if(not ts->canImplicitlyConvert(ty, resolved_type))
+				default_value = TRY(param.default_value->typecheck2(ts)).take_expr();
+				if(not ts->canImplicitlyConvert(default_value->type(), resolved_type))
 				{
 					return ErrMsg(ts,
 					    "default value for parameter '{}' has type '{}', "
 					    "which is incompatible with parameter type '{}'",
-					    param.name, resolved_type, ty);
+					    param.name, resolved_type, default_value->type());
 				}
 			}
 
@@ -84,48 +87,31 @@ namespace sap::interp::ast
 			if(param_type.isVariadicArray())
 				param_type = frontend::PType::array(param_type.getArrayElement());
 
-			this->param_defns.push_back(std::make_unique<VariableDefn>(param.loc, param.name, //
-			    /* mutable: */ false, /* is_global: */ false, /* init: */ nullptr, param_type));
+			auto vdef = VariableDefn(param.loc, param.name, /* mutable: */ false, /* global: */ false,
+			    /* init: */ nullptr, /* type: */ param_type);
 
-			TRY(this->param_defns.back()->typecheck(ts));
+			TRY(vdef.declare(ts));
+			auto cst_vdef = TRY(vdef.typecheck2(ts)).take<cst::VariableDefn>();
+
+			new_params.push_back({
+			    .defn = std::move(cst_vdef),
+			    .default_value = std::move(default_value),
+			});
 		}
 
-		auto return_type = decl_type->toFunction()->returnType();
-		auto __ = ts->enterFunctionWithReturnType(return_type);
+		auto rt = decl_type->toFunction()->returnType();
+		auto __ = ts->enterFunctionWithReturnType(rt);
 
-		TRY(this->body->typecheck(ts));
+		auto cst_body = TRY(this->body->typecheck2(ts)).take<cst::Block>();
 
-		if(not return_type->isVoid())
+		if(not rt->isVoid())
 		{
-			if(not this->body->checkAllPathsReturn(return_type))
+			if(not this->body->checkAllPathsReturn(rt))
 				return ErrMsg(ts, "not all control paths return a value");
 		}
 
-		return TCResult::ofRValue(decl_type);
-	}
-
-	ErrorOr<EvalResult> FunctionDefn::call(Evaluator* ev, std::vector<Value>& args) const
-	{
-		if(this->declaration->isGeneric())
-			return ErrMsg(ev, "Cannot call non-monomorphised function! (how did you even get here)");
-
-		auto _ = ev->pushFrame();
-		auto& frame = ev->frame();
-
-		if(args.size() != this->param_defns.size())
-			return ErrMsg(ev, "function call arity mismatch");
-
-		for(size_t i = 0; i < args.size(); i++)
-		{
-		}
-		// frame.setValue(this->param_defns[i].get(), std::move(args[i]));
-
-		return this->body->evaluate(ev);
-	}
-
-	ErrorOr<TCResult> FunctionDefn::monomorphise(Typechecker* ts, util::hashmap<std::string, Expr*> generic_args)
-	{
-		return ErrMsg(ts, "ono");
+		return TCResult2::ofVoid<cst::FunctionDefn>(m_location, this->declaration, std::move(new_params),
+		    std::move(cst_body));
 	}
 
 
@@ -134,11 +120,6 @@ namespace sap::interp::ast
 
 	// evaluating these don't do anything
 	ErrorOr<EvalResult> FunctionDefn::evaluate_impl(Evaluator* ev) const
-	{
-		return EvalResult::ofVoid();
-	}
-
-	ErrorOr<EvalResult> FunctionDecl::evaluate_impl(Evaluator* ev) const
 	{
 		return EvalResult::ofVoid();
 	}

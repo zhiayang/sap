@@ -5,9 +5,13 @@
 #include "tree/base.h"
 #include "interp/ast.h" // for Stmt
 
-namespace sap::interp::ast
+namespace sap::interp
 {
-	Stmt::~Stmt()
+	ast::Stmt::~Stmt()
+	{
+	}
+
+	cst::Stmt::~Stmt()
 	{
 	}
 }

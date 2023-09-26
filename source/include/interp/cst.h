@@ -6,6 +6,11 @@
 
 #include "interp/eval_result.h"
 
+namespace sap::interp
+{
+	struct DefnTree;
+}
+
 namespace sap::interp::cst
 {
 	struct Stmt
@@ -25,6 +30,12 @@ namespace sap::interp::cst
 		bool m_is_expr = false;
 	};
 
+	struct EmptyStmt : Stmt
+	{
+		explicit EmptyStmt(Location loc) : Stmt(std::move(loc)) { }
+		virtual ErrorOr<EvalResult> evaluate_impl(Evaluator* ev) const { return EvalResult::ofVoid(); }
+	};
+
 	struct Expr : Stmt
 	{
 		explicit Expr(Location loc, const Type* type) : Stmt(std::move(loc)), m_type(type) { m_is_expr = true; }
@@ -35,9 +46,19 @@ namespace sap::interp::cst
 		const Type* m_type;
 	};
 
+	struct TypeExpr : Expr
+	{
+		explicit TypeExpr(Location loc, const Type* type) : Expr(std::move(loc), type) { }
+
+		virtual ErrorOr<EvalResult> evaluate_impl(Evaluator* ev) const override;
+	};
+
 	struct TreeInlineExpr : Expr
 	{
-		explicit TreeInlineExpr(Location loc, const Type* type) : Expr(std::move(loc), type) { }
+		explicit TreeInlineExpr(Location loc, std::vector<zst::SharedPtr<tree::InlineObject>> objs)
+		    : Expr(std::move(loc), Type::makeTreeInlineObj()), objects(std::move(objs))
+		{
+		}
 
 		virtual ErrorOr<EvalResult> evaluate_impl(Evaluator* ev) const override;
 
@@ -46,7 +67,10 @@ namespace sap::interp::cst
 
 	struct TreeBlockExpr : Expr
 	{
-		explicit TreeBlockExpr(Location loc, const Type* type) : Expr(std::move(loc), type) { }
+		explicit TreeBlockExpr(Location loc, zst::SharedPtr<tree::BlockObject> obj)
+		    : Expr(std::move(loc), Type::makeTreeBlockObj()), object(std::move(obj))
+		{
+		}
 
 		virtual ErrorOr<EvalResult> evaluate_impl(Evaluator* ev) const override;
 
@@ -55,35 +79,50 @@ namespace sap::interp::cst
 
 
 	struct Definition;
+	struct Declaration;
 
 	struct Ident : Expr
 	{
-		Ident(Location loc, const Type* type, QualifiedId name, const Definition* defn)
-		    : Expr(std::move(loc), type), name(std::move(name)), resolved_defn(defn)
+		Ident(Location loc, const Type* type, QualifiedId name, const Declaration* decl)
+		    : Expr(std::move(loc), type), name(std::move(name)), resolved_decl(decl)
 		{
 		}
 
 		virtual ErrorOr<EvalResult> evaluate_impl(Evaluator* ev) const override;
 
 		QualifiedId name {};
-		const Definition* resolved_defn;
+		const Declaration* resolved_decl;
 	};
 
 	struct FunctionCall : Expr
 	{
-		explicit FunctionCall(Location loc, const Type* type, std::vector<std::unique_ptr<Expr>> args)
-		    : Expr(std::move(loc), type), arguments(std::move(args))
+		enum class UFCSKind
+		{
+			None,
+			ByValue,
+			ConstPointer,
+			MutablePointer,
+		};
+
+		explicit FunctionCall(Location loc,
+		    const Type* type,
+		    UFCSKind ufcs_kind,
+		    std::vector<std::unique_ptr<Expr>> args,
+		    const Definition* callee)
+		    : Expr(std::move(loc), type), ufcs_kind(ufcs_kind), arguments(std::move(args)), callee(callee)
 		{
 		}
 
 		virtual ErrorOr<EvalResult> evaluate_impl(Evaluator* ev) const override;
 
+		UFCSKind ufcs_kind;
 		std::vector<std::unique_ptr<Expr>> arguments;
+		const Definition* callee;
 	};
 
 	struct NullLit : Expr
 	{
-		explicit NullLit(Location loc, const Type* type) : Expr(std::move(loc), type) { }
+		explicit NullLit(Location loc) : Expr(std::move(loc), Type::makeNullPtr()) { }
 
 		virtual ErrorOr<EvalResult> evaluate_impl(Evaluator* ev) const override;
 	};
@@ -111,7 +150,10 @@ namespace sap::interp::cst
 
 	struct StringLit : Expr
 	{
-		explicit StringLit(Location loc) : Expr(std::move(loc), Type::makeString()) { }
+		explicit StringLit(Location loc, std::u32string str)
+		    : Expr(std::move(loc), Type::makeString()), string(std::move(str))
+		{
+		}
 
 		virtual ErrorOr<EvalResult> evaluate_impl(Evaluator* ev) const override;
 
@@ -129,7 +171,10 @@ namespace sap::interp::cst
 
 	struct ArrayLit : Expr
 	{
-		explicit ArrayLit(Location loc, const Type* array_type) : Expr(std::move(loc), array_type) { }
+		explicit ArrayLit(Location loc, const Type* array_type, std::vector<std::unique_ptr<Expr>> elements)
+		    : Expr(std::move(loc), array_type), elements(std::move(elements))
+		{
+		}
 
 		virtual ErrorOr<EvalResult> evaluate_impl(Evaluator* ev) const override;
 
@@ -191,10 +236,6 @@ namespace sap::interp::cst
 
 	struct UnaryOp : Expr
 	{
-		explicit UnaryOp(Location loc, const Type* type) : Expr(std::move(loc), type) { }
-
-		virtual ErrorOr<EvalResult> evaluate_impl(Evaluator* ev) const override;
-
 		enum Op
 		{
 			Plus,
@@ -202,8 +243,15 @@ namespace sap::interp::cst
 			LogicalNot,
 		};
 
-		Op op;
+		explicit UnaryOp(Location loc, const Type* type, Op op, std::unique_ptr<Expr> expr)
+		    : Expr(std::move(loc), type), expr(std::move(expr)), op(op)
+		{
+		}
+
+		virtual ErrorOr<EvalResult> evaluate_impl(Evaluator* ev) const override;
+
 		std::unique_ptr<Expr> expr;
+		Op op;
 	};
 
 	struct BinaryOp : Expr
@@ -232,18 +280,22 @@ namespace sap::interp::cst
 
 	struct LogicalBinOp : Expr
 	{
-		explicit LogicalBinOp(Location loc) : Expr(std::move(loc), Type::makeBool()) { }
+		enum Op
+		{
+			And,
+			Or,
+		};
+
+		explicit LogicalBinOp(Location loc, Op op, std::unique_ptr<Expr> lhs, std::unique_ptr<Expr> rhs)
+		    : Expr(std::move(loc), Type::makeBool()), lhs(std::move(lhs)), rhs(std::move(rhs)), op(op)
+		{
+		}
 
 		virtual ErrorOr<EvalResult> evaluate_impl(Evaluator* ev) const override;
 
 		std::unique_ptr<Expr> lhs;
 		std::unique_ptr<Expr> rhs;
 
-		enum Op
-		{
-			And,
-			Or,
-		};
 		Op op;
 	};
 
@@ -298,6 +350,18 @@ namespace sap::interp::cst
 		std::vector<std::pair<Op, std::unique_ptr<Expr>>> rest;
 	};
 
+	struct StructContextSelf : Expr
+	{
+		explicit StructContextSelf(Location loc, const StructType* type) : Expr(std::move(loc), type) { }
+		virtual ErrorOr<EvalResult> evaluate_impl(Evaluator* ev) const override;
+	};
+
+	struct EnumeratorExpr : Expr
+	{
+		explicit EnumeratorExpr(Location loc, const EnumType* enum_type) : Expr(std::move(loc), enum_type) { }
+		virtual ErrorOr<EvalResult> evaluate_impl(Evaluator* ev) const override;
+	};
+
 	struct DotOp : Expr
 	{
 		explicit DotOp(Location loc,
@@ -325,7 +389,10 @@ namespace sap::interp::cst
 
 	struct OptionalCheckOp : Expr
 	{
-		explicit OptionalCheckOp(Location loc) : Expr(std::move(loc), Type::makeBool()) { }
+		explicit OptionalCheckOp(Location loc, std::unique_ptr<Expr> expr)
+		    : Expr(std::move(loc), Type::makeBool()), expr(std::move(expr))
+		{
+		}
 
 		virtual ErrorOr<EvalResult> evaluate_impl(Evaluator* ev) const override;
 
@@ -340,7 +407,14 @@ namespace sap::interp::cst
 			ValueOr
 		};
 
-		explicit NullCoalesceOp(Location loc, const Type* type, Kind kind) : Expr(std::move(loc), type), kind(kind) { }
+		explicit NullCoalesceOp(Location loc,
+		    const Type* type,
+		    Kind kind,
+		    std::unique_ptr<Expr> lhs,
+		    std::unique_ptr<Expr> rhs)
+		    : Expr(std::move(loc), type), lhs(std::move(lhs)), rhs(std::move(rhs)), kind(kind)
+		{
+		}
 
 		virtual ErrorOr<EvalResult> evaluate_impl(Evaluator* ev) const override;
 
@@ -376,7 +450,13 @@ namespace sap::interp::cst
 
 	struct SubscriptOp : Expr
 	{
-		explicit SubscriptOp(Location loc, const Type* type) : Expr(std::move(loc), type) { }
+		explicit SubscriptOp(Location loc,
+		    const Type* type,
+		    std::unique_ptr<Expr> array,
+		    std::vector<std::unique_ptr<Expr>> indices)
+		    : Expr(std::move(loc), type), array(std::move(array)), indices(std::move(indices))
+		{
+		}
 
 		virtual ErrorOr<EvalResult> evaluate_impl(Evaluator* ev) const override;
 
@@ -398,7 +478,10 @@ namespace sap::interp::cst
 
 	struct LengthExpr : Expr
 	{
-		explicit LengthExpr(Location loc) : Expr(std::move(loc), Type::makeLength()) { }
+		explicit LengthExpr(Location loc, DynLength len)
+		    : Expr(std::move(loc), Type::makeLength()), length(std::move(len))
+		{
+		}
 
 		virtual ErrorOr<EvalResult> evaluate_impl(Evaluator* ev) const override;
 
@@ -407,7 +490,10 @@ namespace sap::interp::cst
 
 	struct MoveExpr : Expr
 	{
-		explicit MoveExpr(Location loc, const Type* type) : Expr(std::move(loc), type) { }
+		explicit MoveExpr(Location loc, std::unique_ptr<Expr> expr)
+		    : Expr(std::move(loc), expr->type()), expr(std::move(expr))
+		{
+		}
 
 		virtual ErrorOr<EvalResult> evaluate_impl(Evaluator* ev) const override;
 
@@ -416,8 +502,8 @@ namespace sap::interp::cst
 
 	struct ArraySpreadOp : Expr
 	{
-		explicit ArraySpreadOp(Location loc, const Type* type, std::unique_ptr<Expr> expr_)
-		    : Expr(std::move(loc), type), expr(std::move(expr_))
+		explicit ArraySpreadOp(Location loc, const Type* type, std::unique_ptr<Expr> expr)
+		    : Expr(std::move(loc), type), expr(std::move(expr))
 		{
 		}
 
@@ -454,12 +540,15 @@ namespace sap::interp::cst
 
 	struct ReturnStmt : Stmt
 	{
-		explicit ReturnStmt(Location loc) : Stmt(std::move(loc)) { }
+		explicit ReturnStmt(Location loc, const Type* type, std::unique_ptr<Expr> expr)
+		    : Stmt(std::move(loc)), expr(std::move(expr)), type(type)
+		{
+		}
 
 		virtual ErrorOr<EvalResult> evaluate_impl(Evaluator* ev) const override;
 
 		std::unique_ptr<Expr> expr;
-		const Type* return_value_type;
+		const Type* type;
 	};
 
 	struct BreakStmt : Stmt
@@ -478,7 +567,10 @@ namespace sap::interp::cst
 
 	struct WhileLoop : Stmt
 	{
-		explicit WhileLoop(Location loc) : Stmt(std::move(loc)) { }
+		explicit WhileLoop(Location loc, std::unique_ptr<Expr> condition, std::unique_ptr<Block> body)
+		    : Stmt(std::move(loc)), condition(std::move(condition)), body(std::move(body))
+		{
+		}
 
 		virtual ErrorOr<EvalResult> evaluate_impl(Evaluator* ev) const override;
 
@@ -503,12 +595,13 @@ namespace sap::interp::cst
 
 	struct ImportStmt : Stmt
 	{
-		explicit ImportStmt(Location loc) : Stmt(std::move(loc)) { }
+		explicit ImportStmt(Location loc, std::unique_ptr<Block> block) : Stmt(std::move(loc)), block(std::move(block))
+		{
+		}
 
 		virtual ErrorOr<EvalResult> evaluate_impl(Evaluator* ev) const override;
 
-		std::string file_path;
-		std::unique_ptr<Block> imported_block;
+		std::unique_ptr<Block> block;
 	};
 
 	struct HookBlock : Stmt
@@ -521,46 +614,73 @@ namespace sap::interp::cst
 		std::unique_ptr<Block> body;
 	};
 
-	struct Definition : Stmt
+
+
+
+	struct Declaration
 	{
-		Definition(Location loc, std::string name, const Type* type)
-		    : Stmt(std::move(loc)), name(std::move(name)), type(type)
+		Declaration(Location loc, DefnTree* tree, std::string name, const Type* type, bool is_mutable)
+		    : location(std::move(loc)), name(std::move(name)), type(type), is_mutable(is_mutable), m_declared_tree(tree)
 		{
 		}
 
+		bool operator==(const Declaration&) const = default;
+		bool operator!=(const Declaration&) const = default;
+
+		const DefnTree* declaredTree() const { return m_declared_tree; }
+		const Definition* definition() const
+		{
+			assert(m_definition);
+			return m_definition;
+		}
+
+		void define(const Definition* defn) { m_definition = defn; }
+
+		Location location;
 		std::string name;
 		const Type* type;
+		bool is_mutable;
+
+	private:
+		const Definition* m_definition = nullptr;
+		const DefnTree* m_declared_tree = nullptr;
+	};
+
+	struct Definition : Stmt
+	{
+		Definition(Location loc, const Declaration* decl) : Stmt(std::move(loc)), declaration(decl) { }
+
+		const Declaration* declaration;
 	};
 
 	struct VariableDefn : Definition
 	{
-		VariableDefn(Location loc, std::string name, bool is_global, std::unique_ptr<Expr> init, const Type* type)
-		    : Definition(std::move(loc), std::move(name), type), initialiser(std::move(init)), is_global(is_global)
+		VariableDefn(Location loc, const Declaration* decl, bool is_global, std::unique_ptr<Expr> init, bool is_mutable)
+		    : Definition(std::move(loc), decl)
+		    , initialiser(std::move(init))
+		    , is_global(is_global)
+		    , is_mutable(is_mutable)
 		{
 		}
 
 		virtual ErrorOr<EvalResult> evaluate_impl(Evaluator* ev) const override;
 
 		std::unique_ptr<Expr> initialiser;
-		const Type* type;
+
 		bool is_global;
+		bool is_mutable;
 	};
 
 	struct FunctionDefn : Definition
 	{
 		struct Param
 		{
-			Location loc;
 			std::unique_ptr<VariableDefn> defn;
 			std::unique_ptr<Expr> default_value;
 		};
 
-		FunctionDefn(Location loc,
-		    std::string name,
-		    std::vector<Param> params,
-		    const Type* signature,
-		    std::unique_ptr<Block> body)
-		    : Definition(std::move(loc), std::move(name), signature), body(std::move(body)), params(std::move(params))
+		FunctionDefn(Location loc, const Declaration* decl, std::vector<Param> params, std::unique_ptr<Block> body)
+		    : Definition(std::move(loc), decl)
 		{
 		}
 
@@ -577,8 +697,8 @@ namespace sap::interp::cst
 	{
 		using FuncTy = ErrorOr<EvalResult> (*)(Evaluator*, std::vector<Value>&);
 
-		BuiltinFunctionDefn(Location loc, std::string name, const Type* signature, FuncTy fn)
-		    : Definition(std::move(loc), std::move(name), signature), function(std::move(fn))
+		BuiltinFunctionDefn(Location loc, const Declaration* decl, FuncTy fn)
+		    : Definition(std::move(loc), decl), function(std::move(fn))
 		{
 		}
 
@@ -587,17 +707,30 @@ namespace sap::interp::cst
 		FuncTy function;
 	};
 
+
 	struct EnumeratorDefn : Definition
 	{
-		EnumeratorDefn(Location loc, std::string name, const Type* type)
-		    : Definition(std::move(loc), std::move(name), type)
+		EnumeratorDefn(Location loc, const Declaration* decl, EnumeratorDefn* prev_sibling)
+		    : Definition(std::move(loc), decl), prev_sibling(prev_sibling)
 		{
 		}
 
 		virtual ErrorOr<EvalResult> evaluate_impl(Evaluator* ev) const override;
 
-		std::unique_ptr<Expr> value;
 		EnumeratorDefn* prev_sibling = nullptr;
+		std::unique_ptr<Expr> value;
+	};
+
+	struct EnumDefn : Definition
+	{
+		EnumDefn(Location loc, const Declaration* decl, std::vector<std::unique_ptr<EnumeratorDefn>> enumerators)
+		    : Definition(std::move(loc), decl), enumerators(std::move(enumerators))
+		{
+		}
+
+		virtual ErrorOr<EvalResult> evaluate_impl(Evaluator* ev) const override;
+
+		std::vector<std::unique_ptr<EnumeratorDefn>> enumerators;
 	};
 
 
@@ -610,8 +743,8 @@ namespace sap::interp::cst
 			std::unique_ptr<Expr> initialiser;
 		};
 
-		StructDefn(Location loc, std::string name, const Type* type, std::vector<Field> fields)
-		    : Definition(std::move(loc), std::move(name), type), fields(std::move(fields))
+		StructDefn(Location loc, const Declaration* decl, std::vector<Field> fields)
+		    : Definition(std::move(loc), decl), fields(std::move(fields))
 		{
 		}
 

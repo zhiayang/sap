@@ -9,33 +9,8 @@
 
 namespace sap::interp::ast
 {
-	ErrorOr<TCResult> VariableDecl::typecheck_impl(Typechecker* ts, const Type* infer, bool keep_lvalue) const
+	ErrorOr<void> VariableDefn::declare(Typechecker* ts) const
 	{
-		assert(infer != nullptr);
-		if(infer->isVoid())
-			return ErrMsg(ts, "cannot declare variable of type 'void'");
-
-		auto ns = ts->current();
-		TRY(ns->declare(this));
-
-		return TCResult::ofLValue(infer, this->is_mutable);
-	}
-
-	ErrorOr<EvalResult> VariableDecl::evaluate_impl(Evaluator* ev) const
-	{
-		// this does nothing
-		return EvalResult::ofVoid();
-	}
-
-
-
-
-	ErrorOr<TCResult> VariableDefn::typecheck_impl(Typechecker* ts, const Type* infer, bool keep_lvalue) const
-	{
-		(void) this->m_is_global;
-
-		this->declaration->resolve(this);
-
 		// if we have neither, it's an error
 		if(not this->explicit_type.has_value() && this->initialiser == nullptr)
 			return ErrMsg(ts, "variable without explicit type must have an initialiser");
@@ -67,7 +42,30 @@ namespace sap::interp::ast
 			}
 		}());
 
-		return this->declaration->typecheck(ts, the_type.type());
+		auto decl = cst::Declaration(m_location, ts->current(), this->name, the_type.type(), this->is_mutable);
+		this->declaration = TRY(ts->current()->declare(std::move(decl)));
+
+		return Ok();
+	}
+
+	ErrorOr<TCResult> VariableDefn::typecheck_impl(Typechecker* ts, const Type* infer, bool keep_lvalue) const
+	{
+		return TCResult::ofVoid();
+	}
+
+	ErrorOr<TCResult2> VariableDefn::typecheck_impl2(Typechecker* ts, const Type* infer, bool keep_lvalue) const
+	{
+		assert(this->declaration != nullptr);
+
+		std::unique_ptr<cst::Expr> init {};
+		if(this->initialiser)
+			init = TRY(this->initialiser->typecheck2(ts)).take_expr();
+
+		auto defn = std::make_unique<cst::VariableDefn>(m_location, this->declaration, this->is_global, std::move(init),
+		    this->is_mutable);
+
+		this->declaration->define(defn.get());
+		return TCResult2::ofVoid(std::move(defn));
 	}
 
 	ErrorOr<EvalResult> VariableDefn::evaluate_impl(Evaluator* ev) const

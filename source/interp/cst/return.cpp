@@ -26,7 +26,7 @@ namespace sap::interp::cst
 			{
 				if(frame->containsValue(*value.lValuePointer()))
 				{
-					ret = ev->castValue(value.move(), this->return_value_type);
+					ret = ev->castValue(value.move(), this->type);
 					found = true;
 					break;
 				}
@@ -41,7 +41,7 @@ namespace sap::interp::cst
 		}
 		else
 		{
-			ret = ev->castValue(value.take(), this->return_value_type);
+			ret = ev->castValue(value.take(), this->type);
 		}
 
 		return EvalResult::ofReturnValue(std::move(ret));
