@@ -18,24 +18,20 @@ namespace sap::interp
 	void define_builtin_struct(Interpreter* cs)
 	{
 		auto s = std::make_unique<ast::StructDefn>(Location::builtin(), T::name, T::fields());
-		auto defn = s.get();
-
 		auto s2 = s->typecheck2(&cs->typechecker()).take_value().template take<cst::Definition>();
 
 		T::type = cs->typechecker().addBuiltinDefinition(std::move(s2))->declaration->type;
-		defn->evaluate(&cs->evaluator()).expect("builtin decl failed");
+		s2->evaluate(&cs->evaluator()).expect("builtin decl failed");
 	}
 
 	template <typename T>
 	void define_builtin_enum(Interpreter* cs)
 	{
 		auto e = std::make_unique<ast::EnumDefn>(Location::builtin(), T::name, T::enumeratorType(), T::enumerators());
-		auto defn = e.get();
-
 		auto e2 = e->typecheck2(&cs->typechecker()).take_value().template take<cst::Definition>();
 
 		T::type = cs->typechecker().addBuiltinDefinition(std::move(e2))->declaration->type;
-		defn->evaluate(&cs->evaluator()).expect("builtin decl failed");
+		e2->evaluate(&cs->evaluator()).expect("builtin decl failed");
 	}
 
 	static void define_builtin_types(Interpreter* cs, DefnTree* builtin_ns)

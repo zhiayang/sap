@@ -13,7 +13,7 @@
 #include "interp/interp.h"      // for Interpreter
 #include "interp/eval_result.h" // for EvalResult
 
-namespace sap::interp::ast
+namespace sap::interp::cst
 {
 	static ErrorOr<std::vector<zst::SharedPtr<tree::InlineObject>>>
 	evaluate_list_of_tios(Evaluator* ev, const std::vector<zst::SharedPtr<tree::InlineObject>>& tios)
@@ -46,7 +46,10 @@ namespace sap::interp::ast
 			}
 			else if(auto sc = obj->castToScriptCall())
 			{
-				auto tmp = TRY(ev->convertValueToText(TRY_VALUE(sc->call->evaluate(ev))));
+				auto call = sc->getTypecheckedFunctionCall();
+				assert(call != nullptr);
+
+				auto tmp = TRY(ev->convertValueToText(TRY_VALUE(call->evaluate(ev))));
 				ret.push_back(std::move(tmp));
 			}
 			else
@@ -85,7 +88,10 @@ namespace sap::interp::ast
 				auto& first = para->contents()[0];
 				if(auto sc = first->castToScriptCall())
 				{
-					auto tmp = TRY_VALUE(sc->call->evaluate(ev));
+					auto call = sc->getTypecheckedFunctionCall();
+					assert(call != nullptr);
+
+					auto tmp = TRY_VALUE(call->evaluate(ev));
 					auto ty = tmp.type();
 
 					if(not(ty->isTreeBlockObj() || (ty->isOptional() && ty->optionalElement()->isTreeBlockObj())))

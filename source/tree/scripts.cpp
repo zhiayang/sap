@@ -15,7 +15,7 @@ namespace sap::tree
 	{
 	}
 
-	ErrorOr<void> ScriptCall::typecheck_call(interp::Typechecker* ts) const
+	ErrorOr<void> ScriptCall::typecheckCall(interp::Typechecker* ts) const
 	{
 		m_typechecked_call = TRY(this->call->typecheck2(ts)).take<interp::cst::FunctionCall>();
 		return Ok();

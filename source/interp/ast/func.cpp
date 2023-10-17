@@ -113,19 +113,4 @@ namespace sap::interp::ast
 		return TCResult2::ofVoid<cst::FunctionDefn>(m_location, this->declaration, std::move(new_params),
 		    std::move(cst_body));
 	}
-
-
-
-
-
-	// evaluating these don't do anything
-	ErrorOr<EvalResult> FunctionDefn::evaluate_impl(Evaluator* ev) const
-	{
-		return EvalResult::ofVoid();
-	}
-
-	ErrorOr<EvalResult> BuiltinFunctionDefn::evaluate_impl(Evaluator* ev) const
-	{
-		return EvalResult::ofVoid();
-	}
 }

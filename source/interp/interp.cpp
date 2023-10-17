@@ -52,7 +52,10 @@ namespace sap::interp
 	ErrorOr<void> Interpreter::runHooks()
 	{
 		for(auto* blk : m_hook_blocks[m_current_phase])
-			TRY(blk->evaluate(&this->evaluator()));
+		{
+			auto tc_blk = TRY(blk->typecheck2(&this->typechecker())).take<cst::Block>();
+			TRY(tc_blk->evaluate(&this->evaluator()));
+		}
 
 		return Ok();
 	}
@@ -142,15 +145,15 @@ namespace sap::interp
 
 
 
-	ErrorOr<EvalResult> ast::Stmt::evaluate(Evaluator* ev) const
-	{
-		auto _ = ev->pushLocation(m_location);
-		return this->evaluate_impl(ev);
-	}
-
 	ErrorOr<TCResult2> ast::Stmt::typecheck2(Typechecker* ts, const Type* infer, bool keep_lvalue) const
 	{
 		auto _ = ts->pushLocation(m_location);
 		return this->typecheck_impl2(ts, infer, keep_lvalue);
+	}
+
+	ErrorOr<EvalResult> cst::Stmt::evaluate(Evaluator* ev) const
+	{
+		auto _ = ev->pushLocation(m_location);
+		return this->evaluate_impl(ev);
 	}
 }

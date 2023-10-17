@@ -273,10 +273,10 @@ namespace sap::tree
 		explicit ScriptCall(ProcessingPhase phase);
 
 		ErrorOr<void> evaluateScripts(interp::Interpreter* cs) const;
+		ErrorOr<void> typecheckCall(interp::Typechecker* ts) const;
+		interp::cst::FunctionCall* getTypecheckedFunctionCall() const { return m_typechecked_call.get(); }
 
 		std::unique_ptr<interp::ast::FunctionCall> call;
-
-		ErrorOr<void> typecheck_call(interp::Typechecker* ts) const;
 
 	private:
 		using ScriptEvalResult = Either<zst::SharedPtr<InlineSpan>, std::unique_ptr<layout::LayoutObject>>;
