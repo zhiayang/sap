@@ -18,22 +18,14 @@ namespace sap::interp::builtin
 		return PT::named(frontend::TYPE_INT);
 	}
 
-	std::vector<ast::EnumDefn::EnumeratorDefn> BE_Alignment::enumerators()
+	std::vector<ast::EnumDefn::Enumerator> BE_Alignment::enumerators()
 	{
-		auto make_int = [](int value) {
-			auto ret = std::make_unique<ast::NumberLit>(Location::builtin());
-			ret->is_floating = false;
-			ret->int_value = value;
-			return ret;
-		};
-
-		using ED = ast::EnumDefn::EnumeratorDefn;
-		return util::vectorOf(                                                      //
-		    ED(Location::builtin(), "Left", make_int((int) Alignment::Left)),       //
-		    ED(Location::builtin(), "Right", make_int((int) Alignment::Right)),     //
-		    ED(Location::builtin(), "Centred", make_int((int) Alignment::Centre)),  //
-		    ED(Location::builtin(), "Centered", make_int((int) Alignment::Centre)), //
-		    ED(Location::builtin(), "Justified", make_int((int) Alignment::Justified)));
+		return util::vectorOf(                                                          //
+			make_builtin_enumerator("Left", static_cast<int>(Alignment::Left)),         //
+			make_builtin_enumerator("Right", static_cast<int>(Alignment::Right)),       //
+			make_builtin_enumerator("Centred", static_cast<int>(Alignment::Centre)),    //
+			make_builtin_enumerator("Centered", static_cast<int>(Alignment::Centre)),   //
+			make_builtin_enumerator("Justified", static_cast<int>(Alignment::Justified)));
 	}
 
 	Value builtin::BE_Alignment::make(Alignment alignment)

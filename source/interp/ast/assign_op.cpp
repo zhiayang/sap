@@ -36,68 +36,6 @@ namespace sap::interp::ast
 		util::unreachable();
 	}
 
-	ErrorOr<TCResult> AssignOp::typecheck_impl(Typechecker* ts, const Type* infer, bool keep_lvalue) const
-	{
-		auto lres = TRY(this->lhs->typecheck(ts, /* infer: */ nullptr, /* keep_lvalue: */ true));
-		if(not lres.isLValue())
-			return ErrMsg(ts, "cannot assign to non-lvalue");
-		else if(not lres.isMutable())
-			return ErrMsg(ts, "cannot assign to immutable lvalue");
-
-		auto ltype = lres.type();
-		auto rtype = TRY(this->rhs->typecheck(ts)).type();
-
-		if((ltype->isInteger() && rtype->isInteger()) || (ltype->isFloating() && rtype->isFloating()))
-		{
-			if(util::is_one_of(this->op, Op::None, Op::Add, Op::Subtract, Op::Multiply, Op::Divide, Op::Modulo))
-				return TCResult::ofVoid();
-		}
-		else if(ltype->isArray() && rtype->isArray() && ltype->arrayElement() == rtype->arrayElement())
-		{
-			if(this->op == Op::Add || this->op == Op::None)
-				return TCResult::ofVoid();
-		}
-		else if((ltype->isArray() && rtype->isInteger()) || (ltype->isInteger() && rtype->isArray()))
-		{
-			if(this->op == Op::Multiply)
-			{
-				auto arr_type = ltype->isArray() ? ltype : rtype;
-				if(not arr_type->isCloneable())
-				{
-					return ErrMsg(ts, "cannot copy array of type '{}' because array element type cannot be copied",
-					    arr_type);
-				}
-
-				return TCResult::ofVoid();
-			}
-		}
-		else if(this->op == Op::None && ts->canImplicitlyConvert(rtype, ltype))
-		{
-			return TCResult::ofVoid();
-		}
-		else if(ltype->isLength() && rtype->isLength())
-		{
-			if(this->op == Op::Add || this->op == Op::Subtract)
-				return TCResult::ofRValue(Type::makeLength());
-		}
-		else if((ltype->isFloating() || ltype->isInteger()) && rtype->isLength())
-		{
-			if(this->op == Op::Multiply)
-				return TCResult::ofRValue(Type::makeLength());
-		}
-		else if(ltype->isLength() && (rtype->isFloating() || rtype->isInteger()))
-		{
-			if(this->op == Op::Multiply || this->op == Op::Divide)
-				return TCResult::ofRValue(Type::makeLength());
-		}
-
-		if(this->op == Op::None)
-			return ErrMsg(ts, "cannot assign to '{}' from incompatible type '{}'", ltype, rtype);
-
-		return ErrMsg(ts, "unsupported operation '{}' between types '{}' and '{}'", op_to_string(this->op), ltype,
-		    rtype);
-	}
-
 	// defined in binop.cpp
 	extern ErrorOr<Value> evaluateBinaryOperationOnValues(Evaluator* ev, BinaryOp::Op op, Value lval, Value rval);
 

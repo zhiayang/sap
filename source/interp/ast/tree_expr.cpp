@@ -30,7 +30,9 @@ namespace sap::interp::ast
 			}
 			else if(auto sc = obj->castToScriptCall())
 			{
-				TRY(sc->call->typecheck(ts));
+				// the only thing that needs typechecking in a TIO is a script call
+				// unfortunately, I don't know how to store the result of the typecheck
+				TRY(sc->typecheck_call(ts));
 			}
 			else
 			{
@@ -87,17 +89,16 @@ namespace sap::interp::ast
 
 
 
-	ErrorOr<TCResult> TreeInlineExpr::typecheck_impl(Typechecker* ts, const Type* infer, bool keep_lvalue) const
-	{
-		TRY(typecheck_list_of_tios(ts, this->objects));
-		return TCResult::ofRValue(Type::makeTreeInlineObj());
-	}
+	// ErrorOr<TCResult> TreeInlineExpr::typecheck_impl(Typechecker* ts, const Type* infer, bool keep_lvalue) const
+	// {
+	// 	TRY(typecheck_list_of_tios(ts, this->objects));
+	// 	return TCResult::ofRValue(Type::makeTreeInlineObj());
+	// }
 
 	ErrorOr<TCResult2> TreeInlineExpr::typecheck_impl2(Typechecker* ts, const Type* infer, bool keep_lvalue) const
 	{
 		TRY(typecheck_list_of_tios(ts, this->objects));
-		util::unreachable();
-		// return TCResult2::ofRValue(Type::makeTreeInlineObj());
+		return TCResult2::ofRValue<cst::TreeInlineExpr>(m_location, this->objects);
 	}
 
 
@@ -114,7 +115,8 @@ namespace sap::interp::ast
 
 
 
-	static ErrorOr<void> typecheck_block_obj(Typechecker* ts, tree::BlockObject* obj)
+	static ErrorOr<std::unique_ptr<cst::TreeBlockExpr>>
+	typecheck_block_obj(Typechecker* ts, Location location, const zst::SharedPtr<tree::BlockObject>& obj)
 	{
 		if(auto para = obj->castToParagraph())
 		{
@@ -122,12 +124,12 @@ namespace sap::interp::ast
 		}
 		else if(auto sb = obj->castToScriptBlock())
 		{
-			TRY(sb->body->typecheck(ts));
+			TRY(sb->body->typecheck2(ts));
 		}
 		else if(auto box = obj->castToContainer())
 		{
 			for(auto& inner : box->contents())
-				TRY(typecheck_block_obj(ts, inner.get()));
+				TRY(typecheck_block_obj(ts, location, inner));
 		}
 		else if(auto line = obj->castToWrappedLine())
 		{
@@ -143,7 +145,7 @@ namespace sap::interp::ast
 			sap::internal_error("unsupported block object: {}", typeid(x).name());
 		}
 
-		return Ok();
+		return Ok(std::make_unique<cst::TreeBlockExpr>(location, obj));
 	}
 
 	static ErrorOr<EvalResult> evaluate_block_obj(Evaluator* ev, const zst::SharedPtr<tree::BlockObject>& obj)
@@ -230,10 +232,9 @@ namespace sap::interp::ast
 
 
 
-	ErrorOr<TCResult> TreeBlockExpr::typecheck_impl(Typechecker* ts, const Type* infer, bool keep_lvalue) const
+	ErrorOr<TCResult2> TreeBlockExpr::typecheck_impl2(Typechecker* ts, const Type* infer, bool keep_lvalue) const
 	{
-		TRY(typecheck_block_obj(ts, this->object.get()));
-		return TCResult::ofRValue(Type::makeTreeBlockObj());
+		return TCResult2::ofRValue(TRY(typecheck_block_obj(ts, m_location, this->object)));
 	}
 
 	ErrorOr<EvalResult> TreeBlockExpr::evaluate_impl(Evaluator* ev) const

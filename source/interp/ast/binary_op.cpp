@@ -39,57 +39,6 @@ namespace sap::interp::ast
 		util::unreachable();
 	}
 
-
-	ErrorOr<TCResult> BinaryOp::typecheck_impl(Typechecker* ts, const Type* infer, bool keep_lvalue) const
-	{
-		auto ltype = TRY(this->lhs->typecheck(ts)).type();
-		auto rtype = TRY(this->rhs->typecheck(ts)).type();
-
-		if((ltype->isInteger() && rtype->isInteger()) || (ltype->isFloating() && rtype->isFloating()))
-		{
-			if(util::is_one_of(this->op, Op::Add, Op::Subtract, Op::Multiply, Op::Divide, Op::Modulo))
-				return TCResult::ofRValue(ltype);
-		}
-		else if(ltype->isArray() && rtype->isArray() && ltype->arrayElement() == rtype->arrayElement())
-		{
-			if(this->op == Op::Add)
-				return TCResult::ofRValue(ltype);
-		}
-		else if((ltype->isArray() && rtype->isInteger()) || (ltype->isInteger() && rtype->isArray()))
-		{
-			if(this->op == Op::Multiply)
-			{
-				auto arr_type = ltype->isArray() ? ltype : rtype;
-				if(not arr_type->isCloneable())
-				{
-					return ErrMsg(ts, "cannot copy array of type '{}' because array element type cannot be copied",
-					    arr_type);
-				}
-
-				return TCResult::ofRValue(ltype->isArray() ? ltype : rtype);
-			}
-		}
-		else if(ltype->isLength() && rtype->isLength())
-		{
-			if(this->op == Op::Add || this->op == Op::Subtract)
-				return TCResult::ofRValue(Type::makeLength());
-		}
-		else if((ltype->isFloating() || ltype->isInteger()) && rtype->isLength())
-		{
-			if(this->op == Op::Multiply)
-				return TCResult::ofRValue(Type::makeLength());
-		}
-		else if(ltype->isLength() && (rtype->isFloating() || rtype->isInteger()))
-		{
-			if(this->op == Op::Multiply || this->op == Op::Divide)
-				return TCResult::ofRValue(Type::makeLength());
-		}
-
-		return ErrMsg(ts, "unsupported operation '{}' between types '{}' and '{}'", op_to_string(this->op), ltype,
-		    rtype);
-	}
-
-
 	ErrorOr<TCResult2> BinaryOp::typecheck_impl2(Typechecker* ts, const Type* infer, bool keep_lvalue) const
 	{
 		auto lres = TRY(this->lhs->typecheck2(ts));

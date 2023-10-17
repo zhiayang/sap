@@ -437,8 +437,8 @@ namespace sap::interp::cst
 
 	struct AddressOfOp : Expr
 	{
-		explicit AddressOfOp(Location loc, const Type* type, bool is_mutable)
-		    : Expr(std::move(loc), type), is_mutable(is_mutable)
+		explicit AddressOfOp(Location loc, const Type* type, bool is_mutable, std::unique_ptr<Expr> expr)
+		    : Expr(std::move(loc), type), expr(std::move(expr)), is_mutable(is_mutable)
 		{
 		}
 
@@ -466,12 +466,19 @@ namespace sap::interp::cst
 
 	struct StructUpdateOp : Expr
 	{
-		explicit StructUpdateOp(Location loc, const Type* type) : Expr(std::move(loc), type) { }
+		struct Update
+		{
+			std::string field;
+			std::unique_ptr<Expr> expr;
+		};
+
+		explicit StructUpdateOp(Location loc, const Type* type, std::unique_ptr<Expr> structure, std::vector<Update> updates)
+			: Expr(std::move(loc), type), structure(std::move(structure)), updates(std::move(updates)) { }
 
 		virtual ErrorOr<EvalResult> evaluate_impl(Evaluator* ev) const override;
 
 		std::unique_ptr<Expr> structure;
-		std::vector<std::pair<std::string, std::unique_ptr<Expr>>> updates;
+		std::vector<Update> updates;
 	};
 
 
@@ -729,6 +736,17 @@ namespace sap::interp::cst
 		}
 
 		virtual ErrorOr<EvalResult> evaluate_impl(Evaluator* ev) const override;
+
+		const EnumeratorDefn* getEnumeratorNamed(const std::string& name) const
+		{
+			for(auto& e : this->enumerators)
+			{
+				if(e->declaration->name == name)
+					return e.get();
+			}
+			return nullptr;
+		}
+
 
 		std::vector<std::unique_ptr<EnumeratorDefn>> enumerators;
 	};

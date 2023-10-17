@@ -8,125 +8,104 @@
 
 namespace sap::interp::ast
 {
-	ErrorOr<TCResult> StructDecl::typecheck_impl(Typechecker* ts, const Type* infer, bool keep_lvalue) const
+	ErrorOr<void> StructDefn::declare(Typechecker* ts) const
 	{
-		TRY(ts->current()->declare(this));
-
 		// when declaring a struct, we just make an empty field list.
 		// the fields will be set later on.
-		return TCResult::ofRValue(Type::makeStruct(m_declared_tree->scopedName(this->name), {}));
+		auto struct_type = Type::makeStruct(ts->current()->scopedName(this->name), {});
+		auto decl = cst::Declaration(m_location, ts->current(), this->name, struct_type,
+		    /* mutable: */ false);
+
+		this->declaration = TRY(ts->current()->declare(std::move(decl)));
+		return Ok();
 	}
 
-	ErrorOr<TCResult> StructDefn::typecheck_impl(Typechecker* ts, const Type* infer, bool keep_lvalue) const
+	ErrorOr<TCResult2> StructDefn::typecheck_impl2(Typechecker* ts, const Type* infer, bool keep_lvalue) const
 	{
-		this->declaration->resolve(this);
-		auto struct_type = TRY(this->declaration->typecheck(ts)).type()->toStruct();
+		assert(this->declaration != nullptr);
+		auto struct_type = this->declaration->type->toStruct();
 
-		util::hashset<std::string> seen_names;
-		std::vector<StructType::Field> field_types {};
+		util::hashset<std::string> seen_names {};
+		std::vector<cst::StructDefn::Field> defn_fields {};
+		std::vector<StructType::Field> type_fields {};
 
-		for(auto& [name, type, init_value] : m_fields)
+		for(auto& field : m_fields)
 		{
-			if(seen_names.contains(name))
-				return ErrMsg(ts, "duplicate field '{}' in struct '{}'", name, struct_type->name());
+			if(seen_names.contains(field.name))
+				return ErrMsg(ts, "duplicate field '{}' in struct '{}'", field.name, this->name);
 
-			seen_names.insert(name);
-
-			auto field_type = TRY(ts->resolveType(type));
+			seen_names.insert(field.name);
+			auto field_type = TRY(ts->resolveType(field.type));
 			if(field_type == struct_type)
-				return ErrMsg(ts, "recursive struct not allowed");
+				return ErrMsg(ts, "field '{}' cannot have the same type as its containing struct", field.name);
 			else if(field_type->isVoid())
-				return ErrMsg(ts, "field cannot have type 'void'");
+				return ErrMsg(ts, "field '{}' cannot have 'void' type", field.name);
 
-			if(init_value != nullptr)
+			std::unique_ptr<cst::Expr> init_value;
+			if(field.initialiser != nullptr)
 			{
-				auto initialiser_type = TRY(init_value->typecheck(ts)).type();
-				if(not ts->canImplicitlyConvert(initialiser_type, field_type))
+				init_value = TRY(field.initialiser->typecheck2(ts, field_type)).take_expr();
+				if(not ts->canImplicitlyConvert(init_value->type(), field_type))
+				{
 					return ErrMsg(ts, "cannot initialise field of type '{}' with value of type '{}'", field_type,
-					    initialiser_type);
+					    init_value->type());
+				}
 			}
 
-			field_types.push_back(StructType::Field {
-			    .name = name,
-			    .type = field_type,
+			type_fields.push_back(StructType::Field {
+				.name = field.name,
+				.type = field_type,
+			});
+
+			defn_fields.push_back(cst::StructDefn::Field {
+				.name = field.name,
+				.type = field_type,
+				.initialiser = std::move(init_value),
 			});
 		}
 
-		const_cast<StructType*>(struct_type)->setFields(std::move(field_types));
-		TRY(ts->addTypeDefinition(struct_type, this));
-		return TCResult::ofRValue(struct_type);
+		const_cast<StructType*>(struct_type)->setFields(std::move(type_fields));
+
+		auto defn = std::make_unique<cst::StructDefn>(m_location, this->declaration, std::move(defn_fields));
+
+		this->declaration->define(defn.get());
+		TRY(ts->addTypeDefinition(struct_type, defn.get()));
+
+		return TCResult2::ofVoid(std::move(defn));
 	}
 
 
 
-
-	ErrorOr<EvalResult> StructDecl::evaluate_impl(Evaluator* ev) const
+	ErrorOr<TCResult2> StructUpdateOp::typecheck_impl2(Typechecker* ts, const Type* infer, bool keep_lvalue) const
 	{
-		// do nothing
-		return EvalResult::ofVoid();
-	}
+		auto lhs = TRY(this->structure->typecheck2(ts, infer)).take_expr();
+		if(not lhs->type()->isStruct())
+			return ErrMsg(ts, "left-hand side of '//' operator must be a struct; got '{}'", lhs->type());
 
-	ErrorOr<EvalResult> StructDefn::evaluate_impl(Evaluator* ev) const
-	{
-		// this also doesn't do anything
-		return EvalResult::ofVoid();
-	}
-
-
-
-
-
-
-	ErrorOr<TCResult> StructUpdateOp::typecheck_impl(Typechecker* ts, const Type* infer, bool keep_lvalue) const
-	{
-		auto lhs = TRY(this->structure->typecheck(ts, infer));
-		if(not lhs.type()->isStruct())
-			return ErrMsg(ts, "left-hand side of '//' operator must be a struct; got '{}'", lhs.type());
-
-		auto struct_type = lhs.type()->toStruct();
+		auto struct_type = lhs->type()->toStruct();
 		auto _ = ts->pushStructFieldContext(struct_type);
 
+		std::vector<cst::StructUpdateOp::Update> update_exprs;
 		for(auto& [name, expr] : this->updates)
 		{
 			if(not struct_type->hasFieldNamed(name))
 				return ErrMsg(expr->loc(), "struct '{}' has no field named '{}'", struct_type->name().name, name);
 
 			auto field_type = struct_type->getFieldNamed(name);
-			auto expr_type = TRY(expr->typecheck(ts, field_type)).type();
+			auto new_expr = TRY(expr->typecheck2(ts, field_type)).take_expr();
 
-			if(not ts->canImplicitlyConvert(expr_type, field_type))
+			if(not ts->canImplicitlyConvert(new_expr->type(), field_type))
 			{
 				return ErrMsg(expr->loc(), "cannot update struct field '{}' with type '{}' using a value of type '{}'",
-				    name, field_type, expr_type);
+				    name, field_type, new_expr->type());
 			}
+
+			update_exprs.push_back({
+				.field = name,
+				.expr = std::move(new_expr),
+			});
 		}
 
-		return TCResult::ofRValue(struct_type);
-	}
-
-	ErrorOr<EvalResult> StructUpdateOp::evaluate_impl(Evaluator* ev) const
-	{
-		auto struct_val = TRY_VALUE(this->structure->evaluate(ev));
-		auto struct_type = struct_val.type()->toStruct();
-
-		auto _ctx = ev->pushStructFieldContext(&struct_val);
-
-		util::hashmap<size_t, Value> new_values {};
-		for(auto& [name, expr] : this->updates)
-		{
-			auto field_idx = struct_type->getFieldIndex(name);
-			auto field_type = struct_type->getFieldAtIndex(field_idx);
-
-			auto value = TRY_VALUE(expr->evaluate(ev));
-			value = ev->castValue(std::move(value), field_type);
-
-			new_values.emplace(field_idx, std::move(value));
-		}
-
-		// update them all at once.
-		for(auto& [idx, val] : new_values)
-			struct_val.getStructField(idx) = std::move(val);
-
-		return EvalResult::ofValue(std::move(struct_val));
+		return TCResult2::ofRValue<cst::StructUpdateOp>(m_location, struct_type, std::move(lhs), std::move(update_exprs));
 	}
 }

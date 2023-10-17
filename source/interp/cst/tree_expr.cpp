@@ -15,32 +15,6 @@
 
 namespace sap::interp::ast
 {
-	static ErrorOr<void> typecheck_list_of_tios(Typechecker* ts, //
-	    const std::vector<zst::SharedPtr<tree::InlineObject>>& tios)
-	{
-		for(auto& obj : tios)
-		{
-			if(obj->isText() || obj->isSeparator())
-			{
-				; // do nothing
-			}
-			else if(auto sp = obj->castToSpan())
-			{
-				TRY(typecheck_list_of_tios(ts, sp->objects()));
-			}
-			else if(auto sc = obj->castToScriptCall())
-			{
-				TRY(sc->call->typecheck(ts));
-			}
-			else
-			{
-				sap::internal_error("unsupported thing A: {}", typeid(obj.get()).name());
-			}
-		}
-
-		return Ok();
-	}
-
 	static ErrorOr<std::vector<zst::SharedPtr<tree::InlineObject>>>
 	evaluate_list_of_tios(Evaluator* ev, const std::vector<zst::SharedPtr<tree::InlineObject>>& tios)
 	{
@@ -85,14 +59,6 @@ namespace sap::interp::ast
 	}
 
 
-
-
-	ErrorOr<TCResult> TreeInlineExpr::typecheck_impl(Typechecker* ts, const Type* infer, bool keep_lvalue) const
-	{
-		TRY(typecheck_list_of_tios(ts, this->objects));
-		return TCResult::ofRValue(Type::makeTreeInlineObj());
-	}
-
 	ErrorOr<EvalResult> TreeInlineExpr::evaluate_impl(Evaluator* ev) const
 	{
 		auto tios = TRY(evaluate_list_of_tios(ev, this->objects));
@@ -104,39 +70,6 @@ namespace sap::interp::ast
 	}
 
 
-
-
-	static ErrorOr<void> typecheck_block_obj(Typechecker* ts, tree::BlockObject* obj)
-	{
-		if(auto para = obj->castToParagraph())
-		{
-			TRY(typecheck_list_of_tios(ts, para->contents()));
-		}
-		else if(auto sb = obj->castToScriptBlock())
-		{
-			TRY(sb->body->typecheck(ts));
-		}
-		else if(auto box = obj->castToContainer())
-		{
-			for(auto& inner : box->contents())
-				TRY(typecheck_block_obj(ts, inner.get()));
-		}
-		else if(auto line = obj->castToWrappedLine())
-		{
-			TRY(typecheck_list_of_tios(ts, line->objects()));
-		}
-		else if(obj->isRawBlock())
-		{
-			// nothing
-		}
-		else
-		{
-			auto& x = *obj;
-			sap::internal_error("unsupported block object: {}", typeid(x).name());
-		}
-
-		return Ok();
-	}
 
 	static ErrorOr<EvalResult> evaluate_block_obj(Evaluator* ev, const zst::SharedPtr<tree::BlockObject>& obj)
 	{
@@ -215,17 +148,6 @@ namespace sap::interp::ast
 			auto& x = *obj;
 			sap::internal_error("unsupported block object: {}", typeid(x).name());
 		}
-	}
-
-
-
-
-
-
-	ErrorOr<TCResult> TreeBlockExpr::typecheck_impl(Typechecker* ts, const Type* infer, bool keep_lvalue) const
-	{
-		TRY(typecheck_block_obj(ts, this->object.get()));
-		return TCResult::ofRValue(Type::makeTreeBlockObj());
 	}
 
 	ErrorOr<EvalResult> TreeBlockExpr::evaluate_impl(Evaluator* ev) const

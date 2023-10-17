@@ -25,6 +25,11 @@ namespace sap::interp
 		struct Block;
 		struct FunctionCall;
 	}
+
+	namespace cst
+	{
+		struct FunctionCall;
+	}
 }
 
 namespace sap::tree
@@ -271,6 +276,8 @@ namespace sap::tree
 
 		std::unique_ptr<interp::ast::FunctionCall> call;
 
+		ErrorOr<void> typecheck_call(interp::Typechecker* ts) const;
+
 	private:
 		using ScriptEvalResult = Either<zst::SharedPtr<InlineSpan>, std::unique_ptr<layout::LayoutObject>>;
 		ErrorOr<std::optional<ScriptEvalResult>>
@@ -283,6 +290,7 @@ namespace sap::tree
 		friend struct Paragraph;
 
 	private:
+		mutable std::unique_ptr<interp::cst::FunctionCall> m_typechecked_call;
 		mutable std::vector<zst::SharedPtr<BlockObject>> m_created_tbos;
 	};
 

@@ -242,7 +242,7 @@ namespace sap::interp::builtin
 		static const Type* type;
 
 		static frontend::PType enumeratorType();
-		static std::vector<ast::EnumDefn::EnumeratorDefn> enumerators();
+		static std::vector<ast::EnumDefn::Enumerator> enumerators();
 
 		static Value make(Alignment alignment);
 		static Alignment unmake(const Value& value);
@@ -255,7 +255,7 @@ namespace sap::interp::builtin
 		static const Type* type;
 
 		static frontend::PType enumeratorType();
-		static std::vector<ast::EnumDefn::EnumeratorDefn> enumerators();
+		static std::vector<ast::EnumDefn::Enumerator> enumerators();
 
 		static Value make(Colour::Type alignment);
 		static Colour::Type unmake(const Value& value);
@@ -321,6 +321,23 @@ namespace sap::interp::builtin
 		    .name = BS::name,
 		});
 	}
+
+	inline ast::EnumDefn::Enumerator make_builtin_enumerator(std::string name, int enum_value)
+	{
+		auto val = std::make_unique<ast::NumberLit>(Location::builtin());
+		val->is_floating = false;
+		val->int_value = enum_value;
+		return ast::EnumDefn::Enumerator {
+			.location = Location::builtin(),
+			.name = std::move(name),
+			.value = std::move(val),
+			.declaration = nullptr,
+		};
+	}
+
+
+
+
 
 
 	template <typename T>

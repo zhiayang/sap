@@ -35,25 +35,6 @@ namespace sap::interp::ast
 		util::unreachable();
 	}
 
-	ErrorOr<TCResult> LogicalBinOp::typecheck_impl(Typechecker* ts, const Type* infer, bool keep_lvalue) const
-	{
-		auto ltype = TRY(this->lhs->typecheck(ts, /* infer: */ Type::makeBool())).type();
-		auto rtype = TRY(this->rhs->typecheck(ts, /* infer: */ Type::makeBool())).type();
-
-		if(not ltype->isBool())
-		{
-			return ErrMsg(this->lhs->loc(), "invalid type for operand of '{}': expected bool, got '{}'",
-			    op_to_string(this->op), ltype);
-		}
-		else if(not rtype->isBool())
-		{
-			return ErrMsg(this->rhs->loc(), "invalid type for operand of '{}': expected bool, got '{}'",
-			    op_to_string(this->op), rtype);
-		}
-
-		return TCResult::ofRValue(Type::makeBool());
-	}
-
 	ErrorOr<TCResult2> LogicalBinOp::typecheck_impl2(Typechecker* ts, const Type* infer, bool keep_lvalue) const
 	{
 		auto lres = TRY(this->lhs->typecheck2(ts, /* infer: */ Type::makeBool()));
@@ -72,24 +53,5 @@ namespace sap::interp::ast
 
 		return TCResult2::ofRValue<cst::LogicalBinOp>(m_location, ast_op_to_cst_op(this->op),
 		    std::move(lres).take_expr(), std::move(rres).take_expr());
-	}
-
-	ErrorOr<EvalResult> LogicalBinOp::evaluate_impl(Evaluator* ev) const
-	{
-		auto lval = TRY_VALUE(this->lhs->evaluate(ev));
-		if(not lval.isBool())
-			return ErrMsg(ev, "expected bool");
-
-		if(this->op == Op::And && lval.getBool() == false)
-			return EvalResult::ofValue(Value::boolean(false));
-
-		else if(this->op == Op::Or && lval.getBool() == true)
-			return EvalResult::ofValue(Value::boolean(true));
-
-		auto rval = TRY_VALUE(this->rhs->evaluate(ev));
-		if(not rval.isBool())
-			return ErrMsg(ev, "expected bool");
-
-		return EvalResult::ofValue(std::move(rval));
 	}
 }

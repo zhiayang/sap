@@ -26,8 +26,10 @@ namespace sap::interp::ast
 		return fields;
 	}
 
-	ErrorOr<TCResult> StructLit::typecheck_impl(Typechecker* ts, const Type* infer, bool keep_lvalue) const
+	ErrorOr<TCResult2> StructLit::typecheck_impl2(Typechecker* ts, const Type* infer, bool keep_lvalue) const
 	{
+		return ErrMsg(ts, "ono");
+#if 0
 		const StructType* struct_type = nullptr;
 		if(struct_name.name.empty())
 		{
@@ -91,51 +93,6 @@ namespace sap::interp::ast
 		TRY(getCallingCost(ts, fields, ordered.param_idx_to_args, "struct", "field", "field"));
 
 		return TCResult::ofRValue(struct_type);
-	}
-
-	ErrorOr<EvalResult> StructLit::evaluate_impl(Evaluator* ev) const
-	{
-		assert(this->get_type()->isStruct());
-		auto struct_type = this->get_type()->toStruct();
-
-		auto struct_defn = dynamic_cast<const StructDefn*>(m_struct_defn);
-		assert(struct_defn != nullptr);
-
-		std::vector<ArrangeArg<Value>> processed_fields {};
-		for(auto& f : this->field_inits)
-		{
-			processed_fields.push_back({
-			    .name = f.name,
-			    .value = TRY_VALUE(f.value->evaluate(ev)),
-			});
-		}
-
-		auto fields = get_field_things(m_struct_defn, struct_type);
-		auto ordered = TRY(arrangeArgumentValues(ev, fields, std::move(processed_fields), //
-		    "struct", "field", "field"));
-
-		std::vector<Value> field_values {};
-
-		auto& defn_fields = struct_defn->fields();
-		for(size_t i = 0; i < struct_type->getFields().size(); i++)
-		{
-			Value field {};
-			if(auto it = ordered.param_idx_to_args.find(i); it == ordered.param_idx_to_args.end())
-			{
-				if(defn_fields[i].initialiser == nullptr)
-					return ErrMsg(ev, "missing value for field '{}'", defn_fields[i].name);
-
-				field = TRY_VALUE(defn_fields[i].initialiser->evaluate(ev));
-			}
-			else
-			{
-				assert(it->second.size() == 1);
-				field = std::move(it->second[0].value);
-			}
-
-			field_values.push_back(ev->castValue(std::move(field), struct_type->getFieldAtIndex(i)));
-		}
-
-		return EvalResult::ofValue(Value::structure(struct_type, std::move(field_values)));
+#endif
 	}
 }

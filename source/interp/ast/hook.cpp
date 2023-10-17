@@ -8,17 +8,6 @@
 
 namespace sap::interp::ast
 {
-	ErrorOr<TCResult> HookBlock::typecheck_impl(Typechecker* ts, const Type* infer, bool keep_lvalue) const
-	{
-		if(ts->isCurrentlyInFunction())
-			return ErrMsg(ts, "hook blocks can only appear the top level");
-
-		auto ret = TRY(this->body->typecheck(ts, infer, keep_lvalue));
-		ts->interpreter()->addHookBlock(this);
-
-		return Ok(ret);
-	}
-
 	ErrorOr<TCResult2> HookBlock::typecheck_impl2(Typechecker* ts, const Type* infer, bool keep_lvalue) const
 	{
 		if(ts->isCurrentlyInFunction())
@@ -28,13 +17,5 @@ namespace sap::interp::ast
 		ts->interpreter()->addHookBlock(this->phase, block.get());
 
 		return TCResult2::ofVoid(std::move(block));
-	}
-
-	ErrorOr<EvalResult> HookBlock::evaluate_impl(Evaluator* ev) const
-	{
-		if(ev->interpreter()->currentPhase() != this->phase)
-			return EvalResult::ofVoid();
-
-		return this->body->evaluate(ev);
 	}
 }

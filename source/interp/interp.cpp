@@ -75,10 +75,9 @@ namespace sap::interp
 
 	ErrorOr<EvalResult> Interpreter::run(const ast::Stmt* stmt)
 	{
-		auto res = TRY(stmt->typecheck(m_typechecker.get()));
-		(void) res;
+		auto res = TRY(stmt->typecheck2(m_typechecker.get())).take_stmt();
 
-		return stmt->evaluate(m_evaluator.get());
+		return res->evaluate(m_evaluator.get());
 	}
 
 	pdf::PdfFont& Interpreter::addLoadedFont(std::unique_ptr<pdf::PdfFont> font)
@@ -149,13 +148,9 @@ namespace sap::interp
 		return this->evaluate_impl(ev);
 	}
 
-	ErrorOr<TCResult> ast::Stmt::typecheck(Typechecker* ts, const Type* infer, bool keep_lvalue) const
+	ErrorOr<TCResult2> ast::Stmt::typecheck2(Typechecker* ts, const Type* infer, bool keep_lvalue) const
 	{
 		auto _ = ts->pushLocation(m_location);
-
-		if(not m_tc_result.has_value())
-			m_tc_result = TRY(this->typecheck_impl(ts, infer, keep_lvalue));
-
-		return Ok(*m_tc_result);
+		return this->typecheck_impl2(ts, infer, keep_lvalue);
 	}
 }

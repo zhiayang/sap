@@ -175,7 +175,7 @@ namespace sap::interp::ast
 					}
 					else
 					{
-						auto t = TRY(default_value->typecheck(ts)).type();
+						auto t = TRY(default_value->typecheck2(ts, /* infer: */ std::get<1>(expected[k]))).type();
 						auto asdf = std::vector { ArgPair<const Type*> {
 							.value = t,
 							.was_named = false,

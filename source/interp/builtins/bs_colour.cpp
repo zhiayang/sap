@@ -180,19 +180,12 @@ namespace sap::interp::builtin
 		return PT::named(frontend::TYPE_INT);
 	}
 
-	std::vector<ast::EnumDefn::EnumeratorDefn> BE_ColourType::enumerators()
+	std::vector<ast::EnumDefn::Enumerator> BE_ColourType::enumerators()
 	{
-		auto make_int = [](int value) {
-			auto ret = std::make_unique<ast::NumberLit>(Location::builtin());
-			ret->is_floating = false;
-			ret->int_value = value;
-			return ret;
-		};
-
-		using ED = ast::EnumDefn::EnumeratorDefn;
-		return util::vectorOf(                                                    //
-		    ED(Location::builtin(), "RGB", make_int((int) Colour::Type::RGB)),    //
-		    ED(Location::builtin(), "CMYK", make_int((int) Colour::Type::CMYK))); //
+		return util::vectorOf(                                                      //
+			make_builtin_enumerator("RGB", static_cast<int>(Colour::Type::RGB)),    //
+			make_builtin_enumerator("CMYK", static_cast<int>(Colour::Type::CMYK))   //
+		);
 	}
 
 	Value builtin::BE_ColourType::make(Colour::Type ct)

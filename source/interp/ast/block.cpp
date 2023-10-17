@@ -9,27 +9,6 @@
 
 namespace sap::interp::ast
 {
-	ErrorOr<TCResult> Block::typecheck_impl(Typechecker* ts, const Type* infer, bool keep_lvalue) const
-	{
-		DefnTree* tree = nullptr;
-
-		if(this->target_scope.has_value())
-		{
-			// zpr::println("scope = '{}'", *this->target_scope);
-			tree = ts->current()->lookupOrDeclareScope(this->target_scope->parents, this->target_scope->top_level);
-		}
-		else
-		{
-			tree = ts->current()->declareAnonymousNamespace();
-		}
-
-		auto _ = ts->pushTree(tree);
-		for(auto& stmt : this->body)
-			TRY(stmt->typecheck(ts));
-
-		return TCResult::ofVoid();
-	}
-
 	ErrorOr<TCResult2> Block::typecheck_impl2(Typechecker* ts, const Type* infer, bool keep_lvalue) const
 	{
 		DefnTree* tree = nullptr;
@@ -51,23 +30,6 @@ namespace sap::interp::ast
 			stmts.push_back(TRY(stmt->typecheck2(ts)).take_stmt());
 
 		return TCResult2::ofVoid<cst::Block>(m_location, std::move(stmts));
-	}
-
-
-	ErrorOr<EvalResult> Block::evaluate_impl(Evaluator* ev) const
-	{
-		auto _ = ev->pushFrame();
-
-		for(auto& stmt : this->body)
-		{
-			auto result = TRY(stmt->evaluate(ev));
-			ev->frame().dropTemporaries();
-
-			if(not result.isNormal())
-				return Ok(std::move(result));
-		}
-
-		return EvalResult::ofVoid();
 	}
 
 	bool Block::checkAllPathsReturn(const Type* return_type)

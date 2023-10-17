@@ -13,6 +13,7 @@
 
 namespace sap::interp::ast
 {
+#if 0
 	template <typename TsEv>
 	static ErrorOr<std::vector<std::tuple<std::string, const Type*, const Expr*>>>
 	convert_params(const TsEv* ts_ev, const Declaration* decl)
@@ -115,9 +116,10 @@ namespace sap::interp::ast
 
 		return ErrMsg(ts, "ambiguous call: {} candidates", best_decls.size());
 	}
+#endif
 
 
-
+#if 0
 	ErrorOr<TCResult> FunctionCall::typecheck_impl(Typechecker* ts, const Type* infer, bool keep_lvalue) const
 	{
 		std::vector<ArrangeArg<const Type*>> processed_args {};
@@ -223,7 +225,7 @@ namespace sap::interp::ast
 				// overload first; now, try the self-by-pointer overload (if it exists).
 				processed_args[0].value = processed_args[0].value->mutablePointerTo();
 
-				return resolve_overload_set(ts, decls, processed_args);
+m				return resolve_overload_set(ts, decls, processed_args);
 			}()));
 
 			assert(best_decl != nullptr);
@@ -264,143 +266,5 @@ namespace sap::interp::ast
 
 		return TCResult::ofRValue(fn_type->toFunction()->returnType());
 	}
-
-
-	ErrorOr<EvalResult> FunctionCall::evaluate_impl(Evaluator* ev) const
-	{
-		// TODO: maybe do this only once (instead of twice, once while typechecking and one for eval)
-		// again, if this is an identifier, we do the separate thing.
-
-		std::vector<ArrangeArg<Value>> processed_args {};
-		for(size_t i = 0; i < this->arguments.size(); i++)
-		{
-			auto& arg = this->arguments[i];
-			auto val = TRY(arg.value->evaluate(ev));
-
-			if(i == 0 && this->rewritten_ufcs)
-			{
-				if(m_ufcs_self_by_value)
-				{
-					processed_args.push_back({
-					    .name = arg.name,
-					    .value = val.take(),
-					});
-				}
-				else
-				{
-					Value* ptr = nullptr;
-					if(val.isLValue())
-						ptr = &val.get();
-					else
-						ptr = ev->frame().createTemporary(std::move(val).take());
-
-					Value self {};
-					if(m_ufcs_self_is_mutable)
-						self = Value::mutablePointer(ptr->type(), ptr);
-					else
-						self = Value::pointer(ptr->type(), ptr);
-
-					processed_args.push_back({
-					    .name = arg.name,
-					    .value = std::move(self),
-					});
-				}
-			}
-			else
-			{
-				if(val.isLValue() && not val.get().type()->isCloneable())
-				{
-					return ErrMsg(arg.value->loc(),
-					    "cannot pass a non-cloneable value of type '{}' as an argument; move with `*`",
-					    val.get().type());
-				}
-
-				processed_args.push_back({
-				    .name = arg.name,
-				    .value = val.take(),
-				});
-			}
-		}
-
-		std::vector<Value> final_args {};
-		auto _ = ev->pushCallFrame();
-
-		if(auto ident = dynamic_cast<const Ident*>(this->callee.get()); ident != nullptr)
-		{
-			assert(m_resolved_func_decl != nullptr);
-
-			auto decl = m_resolved_func_decl;
-			auto params = TRY(convert_params(ev, decl));
-
-			auto arg_arrangement = TRY(arrangeArgumentValues(ev, params, std::move(processed_args), "function",
-			    "argument", "argument for parameter"));
-
-			auto& ordered_args = arg_arrangement.param_idx_to_args;
-
-			for(size_t i = 0; i < params.size(); i++)
-			{
-				auto param_type = std::get<1>(params[i]);
-				if(auto it = ordered_args.find(i); it != ordered_args.end())
-				{
-					auto arg_pairs = std::move(it->second);
-					if(param_type->isVariadicArray())
-					{
-						auto variadic_elm = param_type->arrayElement();
-						std::vector<Value> vararg_array {};
-
-						for(auto& ap : arg_pairs)
-						{
-							// if the value itself is variadic, it means it's a spread op
-							if(ap.value.type()->isVariadicArray())
-							{
-								auto arr = std::move(ap.value).takeArray();
-								for(auto& val : arr)
-									vararg_array.push_back(ev->castValue(std::move(val), variadic_elm));
-							}
-							else
-							{
-								vararg_array.push_back(ev->castValue(std::move(ap.value), variadic_elm));
-							}
-						}
-
-						final_args.push_back(Value::array(param_type->arrayElement(), std::move(vararg_array)));
-					}
-					else
-					{
-						assert(arg_pairs.size() == 1);
-						final_args.push_back(ev->castValue(std::move(arg_pairs[0].value), param_type));
-					}
-				}
-				else
-				{
-					if(std::get<2>(params[i]) == nullptr)
-						return ErrMsg(ev, "missing argument for parameter '{}'", std::get<0>(params[i]));
-
-					auto tmp = TRY_VALUE(std::get<2>(params[i])->evaluate(ev));
-					final_args.push_back(ev->castValue(std::move(tmp), param_type));
-				}
-			}
-
-			auto the_defn = m_resolved_func_decl->definition();
-
-			// check what kind of defn it is
-			if(auto builtin_defn = dynamic_cast<const BuiltinFunctionDefn*>(the_defn); builtin_defn != nullptr)
-			{
-				return builtin_defn->function(ev, final_args);
-			}
-			else if(auto func_defn = dynamic_cast<const FunctionDefn*>(the_defn); func_defn != nullptr)
-			{
-				return func_defn->call(ev, final_args);
-			}
-			else
-			{
-				return ErrMsg(ev, "not implemented");
-			}
-		}
-		else
-		{
-			// TODO:
-			return ErrMsg(ev, "not implemented");
-		}
-	}
+#endif
 }

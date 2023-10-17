@@ -15,14 +15,21 @@ namespace sap::tree
 	{
 	}
 
+	ErrorOr<void> ScriptCall::typecheck_call(interp::Typechecker* ts) const
+	{
+		m_typechecked_call = TRY(this->call->typecheck2(ts)).take<interp::cst::FunctionCall>();
+		return Ok();
+	}
+
 	auto ScriptCall::evaluate_script(interp::Interpreter* cs, const Style& style, Size2d available_space) const
 	    -> ErrorOr<std::optional<ScriptEvalResult>>
 	{
-		TRY(this->call->typecheck(&cs->typechecker()));
 		if(m_run_phase != cs->currentPhase())
 			return Ok(std::nullopt);
 
-		auto maybe_value = TRY(this->call->evaluate(&cs->evaluator()));
+		auto call_expr = TRY(this->call->typecheck2(&cs->typechecker())).take_expr();
+
+		auto maybe_value = TRY(call_expr->evaluate(&cs->evaluator()));
 		if(not maybe_value.hasValue())
 			return Ok(std::nullopt);
 
@@ -133,12 +140,11 @@ namespace sap::tree
 
 	ErrorOr<void> ScriptBlock::evaluateScripts(interp::Interpreter* cs) const
 	{
-		TRY(this->body->typecheck(&cs->typechecker()));
-
 		if(m_run_phase != cs->currentPhase())
 			return Ok();
 
-		return this->body->evaluate(&cs->evaluator()).remove_value();
+		auto body_stmt = TRY(this->body->typecheck2(&cs->typechecker())).take_stmt();
+		return body_stmt->evaluate(&cs->evaluator()).remove_value();
 	}
 
 	auto ScriptBlock::create_layout_object_impl(interp::Interpreter* cs,
