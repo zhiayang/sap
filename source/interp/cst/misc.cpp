@@ -13,4 +13,9 @@ namespace sap::interp::cst
 		return EvalResult::ofValue(Value::array(m_type->arrayElement(), std::move(arr),
 		    /* variadic: */ true));
 	}
+
+	ErrorOr<EvalResult> TypeExpr::evaluate_impl(Evaluator* ev) const
+	{
+		return ErrMsg(ev, "oh no");
+	}
 }

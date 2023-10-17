@@ -131,7 +131,8 @@ namespace sap::interp::ast
 			    enum_defn->declaration->name, this->name);
 		}
 
-		return TCResult2::ofLValue(std::make_unique<cst::EnumeratorExpr>(m_location, enum_type), /* mutable: */ false);
+		return TCResult2::ofLValue(std::make_unique<cst::EnumeratorExpr>(m_location, enum_type, enumerator),
+		    /* mutable: */ false);
 	}
 
 	ErrorOr<TCResult2> ArrayLit::typecheck_impl2(Typechecker* ts, const Type* infer, bool keep_lvalue) const

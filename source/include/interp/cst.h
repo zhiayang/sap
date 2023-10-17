@@ -356,12 +356,6 @@ namespace sap::interp::cst
 		virtual ErrorOr<EvalResult> evaluate_impl(Evaluator* ev) const override;
 	};
 
-	struct EnumeratorExpr : Expr
-	{
-		explicit EnumeratorExpr(Location loc, const EnumType* enum_type) : Expr(std::move(loc), enum_type) { }
-		virtual ErrorOr<EvalResult> evaluate_impl(Evaluator* ev) const override;
-	};
-
 	struct DotOp : Expr
 	{
 		explicit DotOp(Location loc,
@@ -472,8 +466,13 @@ namespace sap::interp::cst
 			std::unique_ptr<Expr> expr;
 		};
 
-		explicit StructUpdateOp(Location loc, const Type* type, std::unique_ptr<Expr> structure, std::vector<Update> updates)
-			: Expr(std::move(loc), type), structure(std::move(structure)), updates(std::move(updates)) { }
+		explicit StructUpdateOp(Location loc,
+		    const Type* type,
+		    std::unique_ptr<Expr> structure,
+		    std::vector<Update> updates)
+		    : Expr(std::move(loc), type), structure(std::move(structure)), updates(std::move(updates))
+		{
+		}
 
 		virtual ErrorOr<EvalResult> evaluate_impl(Evaluator* ev) const override;
 
@@ -747,7 +746,6 @@ namespace sap::interp::cst
 			return nullptr;
 		}
 
-
 		std::vector<std::unique_ptr<EnumeratorDefn>> enumerators;
 	};
 
@@ -769,5 +767,17 @@ namespace sap::interp::cst
 		virtual ErrorOr<EvalResult> evaluate_impl(Evaluator* ev) const override;
 
 		std::vector<Field> fields;
+	};
+
+	struct EnumeratorExpr : Expr
+	{
+		explicit EnumeratorExpr(Location loc, const EnumType* enum_type, const EnumeratorDefn* enumerator)
+		    : Expr(std::move(loc), enum_type), enumerator(enumerator)
+		{
+		}
+
+		virtual ErrorOr<EvalResult> evaluate_impl(Evaluator* ev) const override;
+
+		const EnumeratorDefn* enumerator;
 	};
 }

@@ -46,12 +46,6 @@ namespace sap::interp::ast
 		return Ok();
 	}
 
-	ErrorOr<TCResult2> BuiltinFunctionDefn::typecheck_impl2(Typechecker* ts, const Type* infer, bool keep_lvalue) const
-	{
-		assert(this->declaration != nullptr);
-		return TCResult2::ofVoid<cst::BuiltinFunctionDefn>(m_location, this->declaration, this->function);
-	}
-
 	ErrorOr<TCResult2> FunctionDefn::typecheck_impl2(Typechecker* ts, const Type* infer, bool keep_lvalue) const
 	{
 		assert(this->declaration != nullptr);
@@ -112,5 +106,22 @@ namespace sap::interp::ast
 
 		return TCResult2::ofVoid<cst::FunctionDefn>(m_location, this->declaration, std::move(new_params),
 		    std::move(cst_body));
+	}
+
+
+
+
+
+	ErrorOr<void> BuiltinFunctionDefn::declare(Typechecker* ts) const
+	{
+		this->declaration = TRY(create_function_declaration(ts, m_location, this->name, this->params,
+		    this->return_type));
+		return Ok();
+	}
+
+	ErrorOr<TCResult2> BuiltinFunctionDefn::typecheck_impl2(Typechecker* ts, const Type* infer, bool keep_lvalue) const
+	{
+		assert(this->declaration != nullptr);
+		return TCResult2::ofVoid<cst::BuiltinFunctionDefn>(m_location, this->declaration, this->function);
 	}
 }

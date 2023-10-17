@@ -28,4 +28,15 @@ namespace sap::interp::cst
 
 		return EvalResult::ofVoid();
 	}
+
+	ErrorOr<EvalResult> EnumDefn::evaluate_impl(Evaluator* ev) const
+	{
+		// this does nothing (all the work is done by the enumerators)
+		return EvalResult::ofVoid();
+	}
+
+	ErrorOr<EvalResult> EnumeratorExpr::evaluate_impl(Evaluator* ev) const
+	{
+		return EvalResult::ofLValue(*ev->getGlobalValue(this->enumerator));
+	}
 }

@@ -8,6 +8,12 @@
 
 namespace sap::interp::cst
 {
+	ErrorOr<EvalResult> StructDefn::evaluate_impl(Evaluator* ev) const
+	{
+		// do nothing
+		return EvalResult::ofVoid();
+	}
+
 	ErrorOr<EvalResult> StructLit::evaluate_impl(Evaluator* ev) const
 	{
 		assert(m_type->isStruct());
@@ -50,5 +56,12 @@ namespace sap::interp::cst
 			struct_val.getStructField(idx) = std::move(val);
 
 		return EvalResult::ofValue(std::move(struct_val));
+	}
+
+
+	ErrorOr<EvalResult> StructContextSelf::evaluate_impl(Evaluator* ev) const
+	{
+		auto& ctx = ev->getStructFieldContext();
+		return EvalResult::ofLValue(ctx);
 	}
 }
