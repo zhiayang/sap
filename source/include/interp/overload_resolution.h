@@ -14,14 +14,8 @@ namespace sap::interp::ast
 {
 	struct ArrangeArg
 	{
-		const Type* type;
+		std::optional<const Type*> type;
 		std::optional<std::string> name;
-	};
-
-	struct ArgPair
-	{
-		const Type* type;
-		const cst::Expr* default_value;
 	};
 
 	struct ExpectedParam
@@ -32,6 +26,40 @@ namespace sap::interp::ast
 	};
 
 	using ExpectedParams = std::vector<ExpectedParam>;
+
+	struct ArrangedArguments
+	{
+		using ArgList = std::vector<std::pair<const Type*, zst::Either<size_t, const cst::Expr*>>>;
+
+		ArgList arguments;
+		int coercion_cost;
+	};
+
+	ErrorOr<ArrangedArguments> arrangeCallArguments( //
+	    const Typechecker* ts,                       //
+	    const ExpectedParams& expected_params,       //
+	    const std::vector<ArrangeArg>& arguments,    //
+	    const char* fn_or_struct,                    //
+	    const char* thing_name,                      //
+	    const char* thing_name2);
+
+
+
+
+
+#if 0
+	struct ArrangeArg
+	{
+		const Type* type;
+		std::optional<std::string> name;
+	};
+
+	struct ArgPair
+	{
+		const Type* type;
+		const cst::Expr* default_value;
+	};
+
 
 
 	struct ArrangedArguments
@@ -53,4 +81,5 @@ namespace sap::interp::ast
 	    const char* fn_or_struct,                                        //
 	    const char* thing_name,                                          //
 	    const char* thing_name2);
+#endif
 }

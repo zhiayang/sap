@@ -17,7 +17,7 @@ namespace sap::interp::ast
 		if(ts->haveStructFieldContext())
 		{
 			auto struct_ctx = ts->getStructFieldContext();
-			auto struct_defn = dynamic_cast<const StructDefn*>(TRY(ts->getDefinitionForType(struct_ctx)));
+			auto struct_defn = dynamic_cast<const cst::StructDefn*>(TRY(ts->getDefinitionForType(struct_ctx)));
 			assert(struct_defn != nullptr);
 
 			if(struct_ctx->hasFieldNamed(this->name))
@@ -33,7 +33,7 @@ namespace sap::interp::ast
 					{
 						return ErrMsg(ts,
 						    "ambiguous use of '.{}': could be enumerator of '{}' or field of struct '{}'", //
-						    this->name, enum_defn->declaration->name, struct_defn->name);
+						    this->name, enum_defn->declaration->name, struct_defn->declaration->name);
 					}
 				}
 
@@ -128,7 +128,7 @@ namespace sap::interp::ast
 	ErrorOr<TCResult2> NumberLit::typecheck_impl2(Typechecker* ts, const Type* infer, bool keep_lvalue) const
 	{
 		auto ret = std::make_unique<cst::NumberLit>(m_location,
-		    this->is_floating ? Type::makeFloating() : Type::makeInteger());
+		    this->is_floating ? Type::makeFloating() : Type::makeInteger(), this->is_floating);
 
 		if(this->is_floating)
 			ret->float_value = this->float_value;

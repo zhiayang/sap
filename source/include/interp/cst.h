@@ -107,7 +107,7 @@ namespace sap::interp::cst
 		explicit FunctionCall(Location loc,
 		    const Type* type,
 		    UFCSKind ufcs_kind,
-		    std::vector<std::unique_ptr<Expr>> args,
+		    std::vector<Either<std::unique_ptr<Expr>, const Expr*>> args,
 		    const Declaration* callee)
 		    : Expr(std::move(loc), type), ufcs_kind(ufcs_kind), arguments(std::move(args)), callee(callee)
 		{
@@ -116,7 +116,7 @@ namespace sap::interp::cst
 		virtual ErrorOr<EvalResult> evaluate_impl(Evaluator* ev) const override;
 
 		UFCSKind ufcs_kind;
-		std::vector<std::unique_ptr<Expr>> arguments;
+		std::vector<Either<std::unique_ptr<Expr>, const Expr*>> arguments;
 		const Declaration* callee;
 	};
 
@@ -138,7 +138,10 @@ namespace sap::interp::cst
 
 	struct NumberLit : Expr
 	{
-		explicit NumberLit(Location loc, const Type* type) : Expr(std::move(loc), type) { }
+		explicit NumberLit(Location loc, const Type* type, bool is_floating)
+		    : Expr(std::move(loc), type), is_floating(is_floating)
+		{
+		}
 
 		virtual ErrorOr<EvalResult> evaluate_impl(Evaluator* ev) const override;
 
@@ -519,16 +522,6 @@ namespace sap::interp::cst
 		std::unique_ptr<Expr> expr;
 	};
 
-	struct ProxyExpr : Expr
-	{
-		explicit ProxyExpr(Location loc, const Expr* expr) : Expr(std::move(loc), expr->type()), expr(expr) { }
-		virtual ErrorOr<EvalResult> evaluate_impl(Evaluator* ev) const override;
-
-		const Expr* expr;
-	};
-
-
-
 	struct Block : Stmt
 	{
 		explicit Block(Location loc, std::vector<std::unique_ptr<Stmt>> body)
@@ -621,7 +614,7 @@ namespace sap::interp::cst
 
 	struct HookBlock : Stmt
 	{
-		explicit HookBlock(Location loc) : Stmt(std::move(loc)) { }
+		explicit HookBlock(Location loc, std::unique_ptr<Block> body) : Stmt(std::move(loc)), body(std::move(body)) { }
 
 		virtual ErrorOr<EvalResult> evaluate_impl(Evaluator* ev) const override;
 
@@ -675,7 +668,7 @@ namespace sap::interp::cst
 			std::vector<Param> params;
 		};
 
-		std::optional<FunctionDecl> function_decl;
+		std::optional<FunctionDecl> function_decl {};
 
 	private:
 		const Definition* m_definition = nullptr;

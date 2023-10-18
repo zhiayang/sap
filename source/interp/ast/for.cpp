@@ -17,7 +17,7 @@ namespace sap::interp::ast
 		auto ret = std::make_unique<cst::ForLoop>(m_location);
 
 		if(this->init != nullptr)
-			ret->init = TRY(this->init->typecheck2(ts)).take_expr();
+			ret->init = TRY(this->init->typecheck2(ts)).take_stmt();
 
 		if(this->cond != nullptr)
 		{
@@ -29,7 +29,7 @@ namespace sap::interp::ast
 		}
 
 		if(this->update != nullptr)
-			ret->update = TRY(this->update->typecheck2(ts)).take_expr();
+			ret->update = TRY(this->update->typecheck2(ts)).take_stmt();
 
 		{
 			auto t = ts->enterLoopBody();

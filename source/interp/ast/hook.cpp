@@ -16,6 +16,6 @@ namespace sap::interp::ast
 		auto block = TRY(this->body->typecheck2(ts, infer, keep_lvalue)).take<cst::Block>();
 		ts->interpreter()->addHookBlock(this->phase, block.get());
 
-		return TCResult2::ofVoid(std::move(block));
+		return TCResult2::ofVoid<cst::HookBlock>(m_location, std::move(block));
 	}
 }

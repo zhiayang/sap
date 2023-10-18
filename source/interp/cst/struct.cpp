@@ -20,12 +20,19 @@ namespace sap::interp::cst
 		auto struct_type = m_type->toStruct();
 
 		std::vector<Value> field_values {};
-		for(auto& f : this->field_inits)
+		for(size_t i = 0; i < this->field_inits.size(); i++)
 		{
+			auto& f = this->field_inits[i];
+			auto ft = struct_type->getFieldTypes()[i];
+
+			Value v {};
 			if(f.is_left())
-				field_values.push_back(TRY_VALUE(f.left()->evaluate(ev)));
+				v = TRY_VALUE(f.left()->evaluate(ev));
 			else
-				field_values.push_back(TRY_VALUE(f.right()->evaluate(ev)));
+				v = TRY_VALUE(f.right()->evaluate(ev));
+
+			zpr::println("{} => [{}] field: {} -> {}", m_type, i, v.type(), ft);
+			field_values.push_back(ev->castValue(std::move(v), ft));
 		}
 
 		return EvalResult::ofValue(Value::structure(struct_type, std::move(field_values)));

@@ -36,6 +36,8 @@ namespace sap::interp::cst
 			if(ptr == nullptr)
 				return ErrMsg(ev, "dereferencing null pointer");
 
+			zpr::println("deref-ing {} -> {}", inside.type(), ptr->type());
+
 			return EvalResult::ofLValue(const_cast<Value&>(*ptr));
 		}
 	}

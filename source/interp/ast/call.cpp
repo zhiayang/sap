@@ -40,18 +40,11 @@ namespace sap::interp::ast
 
 	using ResolvedOverloadSet = ErrorOr<std::pair<const cst::Declaration*, ArrangedArguments>>;
 
-	static ErrorOr<std::pair<int, ArrangedArguments>>
+	static ErrorOr<ArrangedArguments>
 	get_calling_cost(Typechecker* ts, const cst::Declaration* decl, const std::vector<ArrangeArg>& arguments)
 	{
-		auto params = TRY(convert_params(ts, decl));
-		auto ordered = TRY(arrangeArgumentTypes(ts, params, arguments, //
-		    "function", "argument", "argument for parameter"));
-
-		auto cost = TRY(getCallingCost(ts, params, ordered.param_idx_to_args, "function", "argument",
-		    "argument for parameter"));
-
-		using X = std::pair<int, ArrangedArguments>;
-		return Ok<X>(cost, std::move(ordered));
+		return arrangeCallArguments(ts, TRY(convert_params(ts, decl)), arguments, //
+		    "FunctionCall", "argument", "argument for parameter");
 	}
 
 	static ResolvedOverloadSet resolve_overload_set(Typechecker* ts,
@@ -62,30 +55,28 @@ namespace sap::interp::ast
 		std::vector<std::pair<const cst::Declaration*, ErrorMessage>> failed_decls {};
 
 		int best_cost = INT_MAX;
-
-		ArrangedArguments arg_arrangement {};
+		ArrangedArguments::ArgList arg_arrangement {};
 
 		for(auto decl : decls)
 		{
 			auto result = get_calling_cost(ts, decl, arguments);
-
 			if(result.is_err())
 			{
 				failed_decls.emplace_back(decl, result.take_error());
 				continue;
 			}
 
-			auto [cost, ord] = result.take_value();
+			auto arr = result.take_value();
 
-			if(cost == best_cost)
+			if(arr.coercion_cost == best_cost)
 			{
 				best_decls.push_back(decl);
 			}
-			else if(cost < best_cost)
+			else if(arr.coercion_cost < best_cost)
 			{
-				best_cost = cost;
+				best_cost = arr.coercion_cost;
 				best_decls = { decl };
-				arg_arrangement = std::move(ord);
+				arg_arrangement = std::move(arr.arguments);
 			}
 		}
 
@@ -102,8 +93,8 @@ namespace sap::interp::ast
 				if(i > 0)
 					arg_types_str += ", ";
 
-				if(arguments[i].type != nullptr)
-					arg_types_str += arguments[i].type->str();
+				if(arguments[i].type.has_value())
+					arg_types_str += (*arguments[i].type)->str();
 				else
 					arg_types_str += "<unknown>";
 			}
@@ -128,6 +119,7 @@ namespace sap::interp::ast
 		std::vector<std::unique_ptr<cst::Expr>> processed_args {};
 
 		bool ufcs_is_rvalue = false;
+		bool ufcs_is_mutable = false;
 		for(size_t i = 0; i < this->arguments.size(); i++)
 		{
 			auto& arg = this->arguments[i];
@@ -161,7 +153,7 @@ namespace sap::interp::ast
 			{
 				processed_args.push_back({});
 				processed_arg_types.push_back({
-				    .type = nullptr,
+				    .type = std::nullopt,
 				    .name = arg.name,
 				});
 				continue;
@@ -176,7 +168,7 @@ namespace sap::interp::ast
 			{
 				// we can yeet rvalues into mutability
 				if(tc_arg.isMutable())
-					ty = ty->mutablePointerTo();
+					ty = ty->mutablePointerTo(), ufcs_is_mutable = true;
 				else if(not tc_arg.isLValue())
 					ufcs_is_rvalue = true;
 				else
@@ -185,7 +177,7 @@ namespace sap::interp::ast
 
 			processed_args.push_back(std::move(tc_arg).take_expr());
 			processed_arg_types.push_back({
-			    .type = processed_args.back()->type(),
+			    .type = ty,
 			    .name = arg.name,
 			});
 		}
@@ -195,7 +187,7 @@ namespace sap::interp::ast
 		auto ufcs_kind = UFCSKind::None;
 		const FunctionType* fn_type = nullptr;
 		const cst::Declaration* final_callee = nullptr;
-		std::vector<std::unique_ptr<cst::Expr>> final_args {};
+		std::vector<Either<std::unique_ptr<cst::Expr>, const cst::Expr*>> final_args {};
 
 		// if the function expression is an identifier, we resolve it manually to handle overloading.
 		if(auto ident = dynamic_cast<const Ident*>(this->callee.get()); ident != nullptr)
@@ -212,24 +204,31 @@ namespace sap::interp::ast
 			assert(decls.size() > 0);
 
 			auto [maybe_best, _ufcs_kind] = ([&]() -> std::pair<ResolvedOverloadSet, UFCSKind> {
-				// first, try with the normal set.
+				// note that `processed_arg_types` already does the appropriate transformation
+				// for ufcs (in terms of making pointers when appropriate).
 				auto ret = resolve_overload_set(ts, decls, processed_arg_types);
-
 				if(ret.ok())
 				{
-					return {
-						Ok(std::move(ret.unwrap())),
-						(this->rewritten_ufcs && ufcs_is_rvalue) ? UFCSKind::ByValue : UFCSKind::None,
-					};
+					auto u = UFCSKind::None;
+					if(this->rewritten_ufcs)
+					{
+						if(ufcs_is_rvalue)
+							u = UFCSKind::ByValue;
+						else if(ufcs_is_mutable)
+							u = UFCSKind::MutablePointer;
+						else
+							u = UFCSKind::ConstPointer;
+					}
+
+					return { Ok(std::move(ret.unwrap())), u };
 				}
 
-				// we were not ok.
 				if(not ufcs_is_rvalue)
 					return { Err(std::move(ret.error())), UFCSKind::None };
 
 				// if the ufcs was an rvalue, then we would have tried the pass-self-by-value
 				// overload first; now, try the self-by-pointer overload (if it exists).
-				processed_arg_types[0].type = processed_arg_types[0].type->mutablePointerTo();
+				processed_arg_types[0].type = (*processed_arg_types[0].type)->mutablePointerTo();
 
 				ret = resolve_overload_set(ts, decls, processed_arg_types);
 				if(not ret.ok())
@@ -248,45 +247,29 @@ namespace sap::interp::ast
 			final_callee = best_decl;
 			ufcs_kind = _ufcs_kind;
 
-			// now that we have the best decl, typecheck any arguments that are deferred.
-			for(size_t i = 0; i < processed_args.size(); i++)
+			for(size_t i = 0; i < arg_arrangement.arguments.size(); i++)
 			{
-				if(processed_args[i] != nullptr)
-					continue;
+				auto& arg = arg_arrangement.arguments[i];
+				auto param_type = arg.first;
 
-				auto param_idx = arg_arrangement.arg_idx_to_param_idx[i];
-				auto param_type = fn_type->toFunction()->parameterTypes()[param_idx];
-
-				bool is_ufcs_self = this->rewritten_ufcs && i == 0;
-				if(is_ufcs_self && (ufcs_kind != UFCSKind::ByValue))
-					param_type = param_type->pointerElement();
-
-				auto expr = TRY(this->arguments[i].value->typecheck2(ts, /* infer: */ param_type, /* keep_lvalue: */
-				    is_ufcs_self));
-
-				processed_args[i] = std::move(expr).take_expr();
-			}
-
-			// now rearrange all the args according to the thing.
-			util::hashmap<size_t, std::vector<std::unique_ptr<cst::Expr>>> ordered_args {};
-			for(size_t i = 0; i < processed_args.size(); i++)
-			{
-				auto param_idx = arg_arrangement.arg_idx_to_param_idx[i];
-				ordered_args[param_idx].push_back(std::move(processed_args[i]));
-			}
-
-			for(size_t i = 0; i < fn_type->parameterTypes().size(); i++)
-			{
-				if(auto it = ordered_args.find(i); it != ordered_args.end())
+				if(arg.second.is_right())
 				{
-					auto tmp = std::move(it->second);
-					for(auto& t : tmp)
-						final_args.push_back(std::move(t));
+					final_args.push_back(Right(arg.second.right()));
+					continue;
+				}
+
+				auto arg_idx = arg.second.left();
+				if(processed_args[arg_idx] != nullptr)
+				{
+					final_args.push_back(Left(std::move(processed_args[arg_idx])));
 				}
 				else
 				{
-					for(auto& k : arg_arrangement.param_idx_to_args[i])
-						final_args.push_back(std::make_unique<cst::ProxyExpr>(m_location, k.default_value));
+					bool is_ufcs_self = this->rewritten_ufcs && i == 0;
+					auto expr = TRY(this->arguments[i].value->typecheck2(ts, /* infer: */ param_type,
+					    /* keep_lvalue: */ is_ufcs_self));
+
+					final_args.push_back(Left(std::move(expr).take_expr()));
 				}
 			}
 		}

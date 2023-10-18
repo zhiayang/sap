@@ -76,7 +76,11 @@ namespace sap::interp
 		else if(to->isOptional())
 		{
 			auto elm = to->optionalElement();
-			return Value::optional(elm, this->castValue(std::move(value), elm));
+			auto casted = this->castValue(std::move(value), elm);
+			if(casted.type() == elm)
+				return Value::optional(elm, std::move(casted));
+			else
+				return casted;
 		}
 		else if(from_type->isEnum() && from_type->toEnum()->elementType() == to)
 		{

@@ -13,6 +13,22 @@
 
 namespace sap::interp::cst
 {
+	static ErrorOr<EvalResult> eval_arg(Evaluator* ev, const Either<std::unique_ptr<Expr>, const Expr*>& arg)
+	{
+		if(arg.is_left())
+			return arg.left()->evaluate(ev);
+		else
+			return arg.right()->evaluate(ev);
+	}
+
+	static Location get_arg_loc(const Either<std::unique_ptr<Expr>, const Expr*>& arg)
+	{
+		if(arg.is_left())
+			return arg.left()->loc();
+		else
+			return arg.right()->loc();
+	}
+
 	ErrorOr<EvalResult> FunctionCall::evaluate_impl(Evaluator* ev) const
 	{
 		auto& param_types = this->callee->type->toFunction()->parameterTypes();
@@ -23,7 +39,7 @@ namespace sap::interp::cst
 		for(size_t i = 0; i < this->arguments.size(); i++)
 		{
 			auto& arg = this->arguments[i];
-			auto val = TRY(arg->evaluate(ev));
+			auto val = TRY(eval_arg(ev, arg));
 
 			if(i == 0 && this->ufcs_kind != UFCSKind::None)
 			{
@@ -52,7 +68,7 @@ namespace sap::interp::cst
 			{
 				if(val.isLValue() && not val.get().type()->isCloneable())
 				{
-					return ErrMsg(arg->loc(),
+					return ErrMsg(get_arg_loc(arg),
 					    "cannot pass a non-cloneable value of type '{}' as an argument; move with `*`",
 					    val.get().type());
 				}
@@ -75,10 +91,10 @@ namespace sap::interp::cst
 					{
 						for(size_t k = i; k < this->arguments.size(); k++)
 						{
-							auto vv = TRY(this->arguments[k]->evaluate(ev));
+							auto vv = TRY(eval_arg(ev, this->arguments[k]));
 							if(vv.isLValue() && not vv.get().type()->isCloneable())
 							{
-								return ErrMsg(this->arguments[k]->loc(),
+								return ErrMsg(get_arg_loc(this->arguments[k]),
 								    "cannot pass a non-cloneable value of type '{}' as an argument; move with `*`",
 								    vv.get().type());
 							}

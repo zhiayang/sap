@@ -60,7 +60,7 @@ namespace sap::interp::ast
 					    (const Type*) enum_type);
 				}
 			}
-			else if(enum_elm_type->isInteger())
+			else if(not enum_elm_type->isInteger())
 			{
 				return ErrMsg(ts, "non-integral enumerators must explicitly specify a value");
 			}
@@ -68,6 +68,10 @@ namespace sap::interp::ast
 			enums.push_back(std::move(ce));
 		}
 
-		return TCResult2::ofVoid<cst::EnumDefn>(m_location, this->declaration, std::move(enums));
+		auto defn = std::make_unique<cst::EnumDefn>(m_location, this->declaration, std::move(enums));
+		this->declaration->define(defn.get());
+
+		TRY(ts->addTypeDefinition(enum_type, defn.get()));
+		return TCResult2::ofVoid(std::move(defn));
 	}
 }

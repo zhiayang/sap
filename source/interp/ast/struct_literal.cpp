@@ -8,10 +8,6 @@
 
 namespace sap::interp::ast
 {
-	/*
-	    TODO: Unify this with function calls.
-	*/
-
 	static ExpectedParams get_field_things(const cst::StructDefn* struct_defn, const StructType* struct_type)
 	{
 		ExpectedParams fields {};
@@ -90,32 +86,25 @@ namespace sap::interp::ast
 			});
 		}
 
-		auto ordered = TRY(arrangeArgumentTypes(ts, fields, processed_field_types, "struct", "field", "field"));
-		TRY(getCallingCost(ts, fields, ordered.param_idx_to_args, "struct", "field", "field"));
+		auto arrangement = TRY(arrangeCallArguments(ts, fields, processed_field_types, "struct", "field", "field"));
+		std::vector<Either<std::unique_ptr<cst::Expr>, const cst::Expr*>> final_fields {};
 
-		std::vector<zst::Either<std::unique_ptr<cst::Expr>, const cst::Expr*>> final_fields {};
-
-		util::hashmap<size_t, std::vector<std::unique_ptr<cst::Expr>>> ordered_args {};
-		for(size_t i = 0; i < processed_field_exprs.size(); i++)
+		for(size_t i = 0; i < arrangement.arguments.size(); i++)
 		{
-			auto param_idx = ordered.arg_idx_to_param_idx[i];
-			ordered_args[param_idx].push_back(std::move(processed_field_exprs[i]));
+			auto& arg = arrangement.arguments[i];
+			if(arg.second.is_right())
+			{
+				final_fields.push_back(Right(arg.second.right()));
+				continue;
+			}
+
+			auto arg_idx = arg.second.left();
+			assert(processed_field_exprs[arg_idx] != nullptr);
+
+			final_fields.push_back(Left(std::move(processed_field_exprs[arg_idx])));
 		}
 
-		for(size_t i = 0; i < struct_type->getFields().size(); i++)
-		{
-			if(auto it = ordered_args.find(i); it != ordered_args.end())
-			{
-				auto tmp = std::move(it->second);
-				for(auto& t : tmp)
-					final_fields.push_back(Left(std::move(t)));
-			}
-			else
-			{
-				for(auto& k : ordered.param_idx_to_args[i])
-					final_fields.push_back(Right(k.default_value));
-			}
-		}
+		assert(final_fields.size() == struct_type->getFields().size());
 
 		return TCResult2::ofRValue<cst::StructLit>(m_location, struct_type, std::move(final_fields));
 	}

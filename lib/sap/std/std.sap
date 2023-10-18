@@ -325,8 +325,6 @@ namespace std
 				position: pos,
 				children: *children1,
 			}];
-
-			asdf[i] = 0;
 		}
 	}
 
@@ -618,7 +616,7 @@ namespace std
 	}
 
 
-	enum Prefix
+	enum Prefix: int
 	{
 		nano;
 		micro;
@@ -629,7 +627,7 @@ namespace std
 		giga;
 	}
 
-	enum Unit
+	enum Unit: int
 	{
 		byte;
 		second;

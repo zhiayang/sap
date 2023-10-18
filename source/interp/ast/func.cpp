@@ -68,6 +68,7 @@ namespace sap::interp::ast
 	{
 		this->declaration = TRY(create_function_declaration(ts, m_location, this->name, this->params,
 		    this->return_type));
+
 		return Ok();
 	}
 
@@ -116,8 +117,11 @@ namespace sap::interp::ast
 				return ErrMsg(ts, "not all control paths return a value");
 		}
 
-		return TCResult2::ofVoid<cst::FunctionDefn>(m_location, this->declaration, std::move(new_params),
+		auto defn = std::make_unique<cst::FunctionDefn>(m_location, this->declaration, std::move(new_params),
 		    std::move(cst_body));
+		this->declaration->define(defn.get());
+
+		return TCResult2::ofVoid(std::move(defn));
 	}
 
 
@@ -131,6 +135,10 @@ namespace sap::interp::ast
 	ErrorOr<TCResult2> BuiltinFunctionDefn::typecheck_impl2(Typechecker* ts, const Type* infer, bool keep_lvalue) const
 	{
 		assert(this->declaration != nullptr);
-		return TCResult2::ofVoid<cst::BuiltinFunctionDefn>(m_location, this->declaration, this->function);
+
+		auto defn = std::make_unique<cst::BuiltinFunctionDefn>(m_location, this->declaration, this->function);
+		this->declaration->define(defn.get());
+
+		return TCResult2::ofVoid(std::move(defn));
 	}
 }
