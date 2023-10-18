@@ -56,15 +56,15 @@ namespace sap::interp::ast
 
 		const Location& loc() const { return m_location; }
 
-		const Type* get_type() const
-		{
-			assert(m_tc_result.has_value());
-			return m_tc_result->type();
-		}
+		// const Type* get_type() const
+		// {
+		// 	assert(m_tc_result.has_value());
+		// 	return m_tc_result->type();
+		// }
 
 	protected:
 		Location m_location;
-		mutable std::optional<TCResult> m_tc_result {};
+		// mutable std::optional<TCResult> m_tc_result {};
 	};
 
 	struct Expr : Stmt
@@ -104,11 +104,6 @@ namespace sap::interp::ast
 		    bool keep_lvalue = false) const override;
 
 		QualifiedId name {};
-
-		void resolve(const Declaration* decl) { m_resolved_decl = decl; }
-
-	private:
-		mutable const Declaration* m_resolved_decl = nullptr;
 	};
 
 	struct FunctionCall : Expr
@@ -129,11 +124,6 @@ namespace sap::interp::ast
 		bool is_optional_ufcs = false;
 		std::unique_ptr<Expr> callee;
 		std::vector<Arg> arguments;
-
-	private:
-		mutable bool m_ufcs_self_is_mutable = false;
-		mutable bool m_ufcs_self_by_value = false;
-		mutable const Declaration* m_resolved_func_decl = nullptr;
 	};
 
 	struct NullLit : Expr

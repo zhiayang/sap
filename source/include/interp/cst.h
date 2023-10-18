@@ -108,7 +108,7 @@ namespace sap::interp::cst
 		    const Type* type,
 		    UFCSKind ufcs_kind,
 		    std::vector<std::unique_ptr<Expr>> args,
-		    const Definition* callee)
+		    const Declaration* callee)
 		    : Expr(std::move(loc), type), ufcs_kind(ufcs_kind), arguments(std::move(args)), callee(callee)
 		{
 		}
@@ -117,7 +117,7 @@ namespace sap::interp::cst
 
 		UFCSKind ufcs_kind;
 		std::vector<std::unique_ptr<Expr>> arguments;
-		const Definition* callee;
+		const Declaration* callee;
 	};
 
 	struct NullLit : Expr
@@ -518,6 +518,14 @@ namespace sap::interp::cst
 		std::unique_ptr<Expr> expr;
 	};
 
+	struct ProxyExpr : Expr
+	{
+		explicit ProxyExpr(Location loc, const Expr* expr) : Expr(std::move(loc), expr->type()), expr(expr) { }
+		virtual ErrorOr<EvalResult> evaluate_impl(Evaluator* ev) const override;
+
+		const Expr* expr;
+	};
+
 
 
 	struct Block : Stmt
@@ -647,6 +655,27 @@ namespace sap::interp::cst
 		const Type* type;
 		bool is_mutable;
 
+		// literally just for functions...
+		struct FunctionDecl
+		{
+			bool operator==(const FunctionDecl&) const = default;
+			bool operator!=(const FunctionDecl&) const = default;
+
+			struct Param
+			{
+				std::string name;
+				const Type* type;
+				std::unique_ptr<Expr> default_value;
+
+				bool operator==(const Param&) const = default;
+				bool operator!=(const Param&) const = default;
+			};
+
+			std::vector<Param> params;
+		};
+
+		std::optional<FunctionDecl> function_decl;
+
 	private:
 		const Definition* m_definition = nullptr;
 		const DefnTree* m_declared_tree = nullptr;
@@ -682,7 +711,7 @@ namespace sap::interp::cst
 		struct Param
 		{
 			std::unique_ptr<VariableDefn> defn;
-			std::unique_ptr<Expr> default_value;
+			const Expr* default_value;
 		};
 
 		FunctionDefn(Location loc, const Declaration* decl, std::vector<Param> params, std::unique_ptr<Block> body)

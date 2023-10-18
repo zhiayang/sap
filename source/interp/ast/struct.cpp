@@ -53,14 +53,14 @@ namespace sap::interp::ast
 			}
 
 			type_fields.push_back(StructType::Field {
-				.name = field.name,
-				.type = field_type,
+			    .name = field.name,
+			    .type = field_type,
 			});
 
 			defn_fields.push_back(cst::StructDefn::Field {
-				.name = field.name,
-				.type = field_type,
-				.initialiser = std::move(init_value),
+			    .name = field.name,
+			    .type = field_type,
+			    .initialiser = std::move(init_value),
 			});
 		}
 
@@ -101,11 +101,12 @@ namespace sap::interp::ast
 			}
 
 			update_exprs.push_back({
-				.field = name,
-				.expr = std::move(new_expr),
+			    .field = name,
+			    .expr = std::move(new_expr),
 			});
 		}
 
-		return TCResult2::ofRValue<cst::StructUpdateOp>(m_location, struct_type, std::move(lhs), std::move(update_exprs));
+		return TCResult2::ofRValue<cst::StructUpdateOp>(m_location, struct_type, std::move(lhs),
+		    std::move(update_exprs));
 	}
 }

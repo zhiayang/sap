@@ -12,7 +12,6 @@ namespace sap::interp
 	namespace ast
 	{
 		struct Expr;
-		struct Declaration;
 	}
 
 	struct TCResult2
@@ -113,6 +112,7 @@ namespace sap::interp
 		bool m_is_lvalue;
 	};
 
+#if 0
 	struct TCResult
 	{
 		const Type* type() const { return m_type; }
@@ -120,7 +120,7 @@ namespace sap::interp
 		bool isLValue() const { return m_is_lvalue; }
 
 		bool isGeneric() const { return m_generic_decl != nullptr; }
-		const ast::Declaration* genericDecl() const { return m_generic_decl; }
+		// const ast::Declaration* genericDecl() const { return m_generic_decl; }
 
 		TCResult replacingType(const Type* type) const { return TCResult(type, m_is_mutable, m_is_lvalue); }
 
@@ -131,11 +131,11 @@ namespace sap::interp
 			return Ok(TCResult(type, is_mutable, true));
 		}
 
-		static ErrorOr<TCResult> ofGeneric(const ast::Declaration* decl, util::hashmap<std::string, ast::Expr*> args)
-		{
-			assert(decl != nullptr);
-			return Ok(TCResult(Type::makeVoid(), false, false, decl, std::move(args)));
-		}
+		// static ErrorOr<TCResult> ofGeneric(const ast::Declaration* decl, util::hashmap<std::string, ast::Expr*> args)
+		// {
+		// 	assert(decl != nullptr);
+		// 	return Ok(TCResult(Type::makeVoid(), false, false, decl, std::move(args)));
+		// }
 
 	private:
 		explicit TCResult(const Type* type,
@@ -158,4 +158,5 @@ namespace sap::interp
 		const ast::Declaration* m_generic_decl;
 		util::hashmap<std::string, ast::Expr*> m_generic_args;
 	};
+#endif
 }

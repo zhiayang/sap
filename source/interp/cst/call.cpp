@@ -15,7 +15,7 @@ namespace sap::interp::cst
 {
 	ErrorOr<EvalResult> FunctionCall::evaluate_impl(Evaluator* ev) const
 	{
-		auto& param_types = this->callee->declaration->type->toFunction()->parameterTypes();
+		auto& param_types = this->callee->type->toFunction()->parameterTypes();
 		if(param_types.size() != this->arguments.size())
 			return ErrMsg(m_location, "function arity mismatch");
 
@@ -99,11 +99,12 @@ namespace sap::interp::cst
 		auto _ = ev->pushCallFrame();
 
 		// check what kind of defn it is
-		if(auto builtin_defn = dynamic_cast<const BuiltinFunctionDefn*>(this->callee); builtin_defn != nullptr)
+		auto callee_defn = this->callee->definition();
+		if(auto builtin_defn = dynamic_cast<const BuiltinFunctionDefn*>(callee_defn); builtin_defn != nullptr)
 		{
 			return builtin_defn->function(ev, processed_args);
 		}
-		else if(auto func_defn = dynamic_cast<const FunctionDefn*>(this->callee); func_defn != nullptr)
+		else if(auto func_defn = dynamic_cast<const FunctionDefn*>(callee_defn); func_defn != nullptr)
 		{
 			return func_defn->call(ev, processed_args);
 		}

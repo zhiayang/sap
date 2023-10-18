@@ -14,6 +14,11 @@ namespace sap::interp::cst
 		    /* variadic: */ true));
 	}
 
+	ErrorOr<EvalResult> ProxyExpr::evaluate_impl(Evaluator* ev) const
+	{
+		return this->expr->evaluate(ev);
+	}
+
 	ErrorOr<EvalResult> TypeExpr::evaluate_impl(Evaluator* ev) const
 	{
 		return ErrMsg(ev, "oh no");

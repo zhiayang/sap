@@ -13,23 +13,21 @@
 
 namespace sap::interp::ast
 {
-#if 0
-	template <typename TsEv>
-	static ErrorOr<std::vector<std::tuple<std::string, const Type*, const Expr*>>>
-	convert_params(const TsEv* ts_ev, const Declaration* decl)
+	static ErrorOr<std::vector<std::tuple<std::string, const Type*, const cst::Expr*>>>
+	convert_params(const Typechecker* ts, const cst::Declaration* decl)
 	{
-		if(auto fdecl = dynamic_cast<const FunctionDecl*>(decl); fdecl != nullptr)
+		if(decl->function_decl.has_value())
 		{
-			auto decl_type = fdecl->get_type()->toFunction();
-			auto& decl_params = fdecl->params();
+			auto& fdecl = *decl->function_decl;
+			auto decl_type = decl->type->toFunction();
 
-			std::vector<std::tuple<std::string, const Type*, const Expr*>> params {};
-			for(size_t i = 0; i < decl_params.size(); i++)
+			std::vector<std::tuple<std::string, const Type*, const cst::Expr*>> params {};
+			for(size_t i = 0; i < fdecl.params.size(); i++)
 			{
 				params.push_back({
-				    decl_params[i].name,
+				    fdecl.params[i].name,
 				    decl_type->parameterTypes()[i],
-				    decl_params[i].default_value.get(),
+				    fdecl.params[i].default_value.get(),
 				});
 			}
 
@@ -37,12 +35,15 @@ namespace sap::interp::ast
 		}
 		else
 		{
-			return ErrMsg(ts_ev, "?!");
+			return ErrMsg(ts, "?!");
 		}
 	}
 
-	static ErrorOr<std::pair<int, ArrangedArguments<const Type*>>>
-	get_calling_cost(Typechecker* ts, const Declaration* decl, const std::vector<ArrangeArg<const Type*>>& arguments)
+	using ResolvedOverloadSet = ErrorOr<std::pair<const cst::Declaration*, ArrangedArguments<const Type*>>>;
+
+	static ErrorOr<std::pair<int, ArrangedArguments<const Type*>>> get_calling_cost(Typechecker* ts,
+	    const cst::Declaration* decl,
+	    const std::vector<ArrangeArg<const Type*>>& arguments)
 	{
 		auto params = TRY(convert_params(ts, decl));
 		auto ordered = TRY(arrangeArgumentTypes(ts, params, arguments, //
@@ -55,14 +56,12 @@ namespace sap::interp::ast
 		return Ok<X>(cost, std::move(ordered));
 	}
 
-	using ResolvedOverloadSet = ErrorOr<std::pair<const Declaration*, ArrangedArguments<const Type*>>>;
-
 	static ResolvedOverloadSet resolve_overload_set(Typechecker* ts,
-	    const std::vector<const Declaration*>& decls,
+	    const std::vector<const cst::Declaration*>& decls,
 	    const std::vector<ArrangeArg<const Type*>>& arguments)
 	{
-		std::vector<const Declaration*> best_decls {};
-		std::vector<std::pair<const Declaration*, ErrorMessage>> failed_decls {};
+		std::vector<const cst::Declaration*> best_decls {};
+		std::vector<std::pair<const cst::Declaration*, ErrorMessage>> failed_decls {};
 
 		int best_cost = INT_MAX;
 
@@ -94,35 +93,42 @@ namespace sap::interp::ast
 
 		if(best_decls.size() == 1)
 		{
-			return Ok<std::pair<const Declaration*, ArrangedArguments<const Type*>>>(best_decls[0],
+			return Ok<std::pair<const cst::Declaration*, ArrangedArguments<const Type*>>>(best_decls[0],
 			    std::move(arg_arrangement));
 		}
 
 		if(best_decls.empty())
 		{
-			std::string arg_types {};
+			std::string arg_types_str {};
 			for(size_t i = 0; i < arguments.size(); i++)
-				arg_types += ((i == 0 ? "" : ", ") + arguments[i].value->str());
+			{
+				if(i > 0)
+					arg_types_str += ", ";
+
+				if(arguments[i].value != nullptr)
+					arg_types_str += arguments[i].value->str();
+				else
+					arg_types_str += "<unknown>";
+			}
 
 			auto err = ErrorMessage(ts,
-			    zpr::sprint("no matching function for call matching arguments ({}) among {} candidate{}", arg_types,
-			        failed_decls.size(), failed_decls.size() == 1 ? "" : "s"));
+			    zpr::sprint("no matching function for call matching arguments ({}) among {} candidate{}", //
+			        arg_types_str, failed_decls.size(), failed_decls.size() == 1 ? "" : "s"));
 
 			for(auto& [decl, msg] : failed_decls)
-				err.addInfo(decl->loc(), msg.string());
+				err.addInfo(decl->location, msg.string());
 
 			return Err(std::move(err));
 		}
 
 		return ErrMsg(ts, "ambiguous call: {} candidates", best_decls.size());
 	}
-#endif
 
 
-#if 0
-	ErrorOr<TCResult> FunctionCall::typecheck_impl(Typechecker* ts, const Type* infer, bool keep_lvalue) const
+	ErrorOr<TCResult2> FunctionCall::typecheck_impl2(Typechecker* ts, const Type* infer, bool keep_lvalue) const
 	{
-		std::vector<ArrangeArg<const Type*>> processed_args {};
+		std::vector<ArrangeArg<const Type*>> processed_arg_types {};
+		std::vector<ArrangeArg<std::unique_ptr<cst::Expr>>> processed_args {};
 
 		bool ufcs_is_rvalue = false;
 		for(size_t i = 0; i < this->arguments.size(); i++)
@@ -138,10 +144,15 @@ namespace sap::interp::ast
 				{
 					return true;
 				}
-				else if(auto arr = dynamic_cast<const ArrayLit*>(x);
-				        arr && not arr->elem_type.has_value() && not arr->elements.empty())
+				else if(auto arr = dynamic_cast<const ArrayLit*>(x); arr && not arr->elem_type.has_value())
 				{
-					return check_must_defer(arr->elements[0].get());
+					for(auto& e : arr->elements)
+					{
+						if(check_must_defer(e.get()))
+							return true;
+					}
+
+					return false;
 				}
 
 				return false;
@@ -152,119 +163,149 @@ namespace sap::interp::ast
 			if(must_defer)
 			{
 				processed_args.push_back({
+				    .value = nullptr,
 				    .name = arg.name,
-				    .value = Type::makeVoid(),
-				    .deferred_typecheck = true,
+				});
+
+				processed_arg_types.push_back({
+				    .value = nullptr,
+				    .name = arg.name,
 				});
 				continue;
 			}
 
 			bool is_ufcs_self = this->rewritten_ufcs && i == 0;
 
-			auto t = TRY(arg.value->typecheck(ts, /* infer: */ nullptr, /* keep_lvalue: */ is_ufcs_self));
-			const Type* ty = t.type();
+			auto tc_arg = TRY(arg.value->typecheck2(ts, /* infer: */ nullptr, /* keep_lvalue: */ is_ufcs_self));
+			const Type* ty = tc_arg.type();
 
 			if(is_ufcs_self)
 			{
 				// we can yeet rvalues into mutability
-				if(t.isMutable())
-				{
-					m_ufcs_self_is_mutable = true;
+				if(tc_arg.isMutable())
 					ty = ty->mutablePointerTo();
-				}
-				else if(not t.isLValue())
-				{
+				else if(not tc_arg.isLValue())
 					ufcs_is_rvalue = true;
-				}
 				else
-				{
-					m_ufcs_self_is_mutable = false;
 					ty = ty->pointerTo();
-				}
 			}
 
 			processed_args.push_back({
+			    .value = std::move(tc_arg).take_expr(),
 			    .name = arg.name,
-			    .value = ty,
+			});
+
+			processed_arg_types.push_back({
+			    .value = processed_args.back().value->type(),
+			    .name = arg.name,
 			});
 		}
 
-		const Type* fn_type = nullptr;
+		using UFCSKind = cst::FunctionCall::UFCSKind;
+
+		auto ufcs_kind = UFCSKind::None;
+		const FunctionType* fn_type = nullptr;
+		const cst::Declaration* final_callee = nullptr;
+		std::vector<std::unique_ptr<cst::Expr>> final_args {};
 
 		// if the function expression is an identifier, we resolve it manually to handle overloading.
 		if(auto ident = dynamic_cast<const Ident*>(this->callee.get()); ident != nullptr)
 		{
 			const DefnTree* lookup_in = ts->current();
 			if(this->rewritten_ufcs)
-				lookup_in = TRY(ts->getDefnTreeForType(processed_args[0].value));
+			{
+				// the first guy cannot be deferred, obviously.
+				assert(processed_args[0].value != nullptr);
+				lookup_in = TRY(ts->getDefnTreeForType(processed_args[0].value->type()));
+			}
 
 			auto decls = TRY(lookup_in->lookupRecursive(ident->name));
 			assert(decls.size() > 0);
 
-			auto [best_decl, arg_arrangement] = TRY(([&]() -> ResolvedOverloadSet {
+			auto [maybe_best, _ufcs_kind] = ([&]() -> std::pair<ResolvedOverloadSet, UFCSKind> {
 				// first, try with the normal set.
-				m_ufcs_self_by_value = ufcs_is_rvalue;
-				auto ret = resolve_overload_set(ts, decls, processed_args);
+				auto ret = resolve_overload_set(ts, decls, processed_arg_types);
+
 				if(ret.ok())
-					return Ok(std::move(ret.unwrap()));
+				{
+					return {
+						Ok(std::move(ret.unwrap())),
+						(this->rewritten_ufcs && ufcs_is_rvalue) ? UFCSKind::ByValue : UFCSKind::None,
+					};
+				}
 
 				// we were not ok.
 				if(not ufcs_is_rvalue)
-					return Err(std::move(ret.error()));
-
-				// if we didn't manage to resolve with the rvalue as a value,
-				// then we have to pass by pointer, so reset this.
-				m_ufcs_self_by_value = false;
-
-				// always pass rvalues by mutable pointer
-				if(ufcs_is_rvalue)
-					m_ufcs_self_is_mutable = true;
-
+					return { Err(std::move(ret.error())), UFCSKind::None };
 
 				// if the ufcs was an rvalue, then we would have tried the pass-self-by-value
 				// overload first; now, try the self-by-pointer overload (if it exists).
-				processed_args[0].value = processed_args[0].value->mutablePointerTo();
+				processed_arg_types[0].value = processed_arg_types[0].value->mutablePointerTo();
 
-m				return resolve_overload_set(ts, decls, processed_args);
-			}()));
+				ret = resolve_overload_set(ts, decls, processed_arg_types);
+				if(not ret.ok())
+					return { Err(ret.take_error()), UFCSKind::None };
 
+				return {
+					Ok(ret.take_value()),
+					ufcs_is_rvalue ? UFCSKind::MutablePointer : UFCSKind::ConstPointer,
+				};
+			}());
+
+			auto [best_decl, arg_arrangement] = TRY(std::move(maybe_best));
 			assert(best_decl != nullptr);
 
-			fn_type = TRY(best_decl->typecheck(ts)).type();
-			m_resolved_func_decl = best_decl;
+			fn_type = best_decl->type->toFunction();
+			final_callee = best_decl;
+			ufcs_kind = _ufcs_kind;
 
 			// now that we have the best decl, typecheck any arguments that are deferred.
 			for(size_t i = 0; i < processed_args.size(); i++)
 			{
-				if(not processed_args[i].deferred_typecheck)
+				if(processed_args[i].value != nullptr)
 					continue;
 
 				auto param_idx = arg_arrangement.arg_idx_to_param_idx[i];
 				auto param_type = fn_type->toFunction()->parameterTypes()[param_idx];
 
 				bool is_ufcs_self = this->rewritten_ufcs && i == 0;
-				if(is_ufcs_self)
-				{
-					if(not m_ufcs_self_by_value)
-						param_type = param_type->pointerElement();
-				}
+				if(is_ufcs_self && (ufcs_kind != UFCSKind::ByValue))
+					param_type = param_type->pointerElement();
 
-				TRY(this->arguments[i].value->typecheck(ts, /* infer: */ param_type, /* keep_lvalue: */
+				auto expr = TRY(this->arguments[i].value->typecheck2(ts, /* infer: */ param_type, /* keep_lvalue: */
 				    is_ufcs_self));
+
+				processed_args[i].value = std::move(expr).take_expr();
+			}
+
+			// now rearrange all the args according to the thing.
+			util::hashmap<size_t, std::unique_ptr<cst::Expr>> ordered_args {};
+			for(size_t i = 0; i < processed_args.size(); i++)
+			{
+				auto param_idx = arg_arrangement.arg_idx_to_param_idx[i];
+
+				assert(not ordered_args.contains(param_idx));
+				ordered_args[param_idx] = std::move(processed_args[i].value);
+			}
+
+			for(size_t i = 0; i < ordered_args.size(); i++)
+			{
+				assert(ordered_args.contains(i));
+				final_args.push_back(std::move(ordered_args[i]));
 			}
 		}
 		else
 		{
-			zpr::println("warning: expr call");
-
-			fn_type = TRY(this->callee->typecheck(ts)).type();
-			m_resolved_func_decl = nullptr;
+			return ErrMsg(ts, "expr call not supported yet");
 		}
 
 		if(not fn_type->isFunction())
-			return ErrMsg(ts, "callee of function call must be a function type, got '{}'", fn_type);
+			return ErrMsg(ts, "callee of function call must be a function type, got '{}'", fn_type->str());
 
-		return TCResult::ofRValue(fn_type->toFunction()->returnType());
+		return TCResult2::ofRValue<cst::FunctionCall>(m_location, //
+		    fn_type->returnType(),                                //
+		    ufcs_kind,                                            //
+		    std::move(final_args),                                //
+		    final_callee);
 	}
-#endif
 }
