@@ -31,7 +31,6 @@ namespace sap::interp::cst
 			else
 				v = TRY_VALUE(f.right()->evaluate(ev));
 
-			zpr::println("{} => [{}] field: {} -> {}", m_type, i, v.type(), ft);
 			field_values.push_back(ev->castValue(std::move(v), ft));
 		}
 

@@ -162,6 +162,8 @@ namespace sap::tree
 		cs->evaluator().pushStyle(layout::getDefaultStyle(cs));
 
 		DocumentSettings settings {};
+		std::vector<std::unique_ptr<interp::cst::Stmt>> generated_preamble {};
+
 		{
 			auto _ = cs->typechecker().pushTree(cs->typechecker().top());
 			for(size_t i = 0; i < m_preamble.size(); i++)
@@ -174,7 +176,8 @@ namespace sap::tree
 			for(size_t i = 0; i < m_preamble.size(); i++)
 			{
 				auto& stmt = m_preamble[i];
-				auto result = TRY(cs->run(stmt.get()));
+				auto& gen = generated_preamble.emplace_back(TRY(stmt->typecheck2(&cs->typechecker())).take_stmt());
+				auto result = TRY(gen->evaluate(&cs->evaluator()));
 
 				if(i + 1 == m_preamble.size())
 				{

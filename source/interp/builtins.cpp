@@ -21,6 +21,7 @@ namespace sap::interp
 		s->declare(&cs->typechecker()).expect("builtin decl failed");
 
 		auto s2 = s->typecheck2(&cs->typechecker()).take_value().template take<cst::Definition>();
+		s2->evaluate(&cs->evaluator()).expect("builtin decl failed");
 
 		T::type = cs->typechecker().addBuiltinDefinition(std::move(s2))->declaration->type;
 	}
@@ -32,6 +33,7 @@ namespace sap::interp
 		e->declare(&cs->typechecker()).expect("builtin decl failed");
 
 		auto e2 = e->typecheck2(&cs->typechecker()).take_value().template take<cst::Definition>();
+		e2->evaluate(&cs->evaluator()).expect("builtin decl failed");
 
 		T::type = cs->typechecker().addBuiltinDefinition(std::move(e2))->declaration->type;
 	}

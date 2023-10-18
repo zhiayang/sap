@@ -13,6 +13,9 @@ namespace sap::interp
 
 namespace sap::interp::cst
 {
+	struct Expr;
+	using ExprOrDefaultPtr = Either<std::unique_ptr<Expr>, const Expr*>;
+
 	struct Stmt
 	{
 		explicit Stmt(Location loc) : m_location(std::move(loc)) { }
@@ -107,7 +110,7 @@ namespace sap::interp::cst
 		explicit FunctionCall(Location loc,
 		    const Type* type,
 		    UFCSKind ufcs_kind,
-		    std::vector<Either<std::unique_ptr<Expr>, const Expr*>> args,
+		    std::vector<ExprOrDefaultPtr> args,
 		    const Declaration* callee)
 		    : Expr(std::move(loc), type), ufcs_kind(ufcs_kind), arguments(std::move(args)), callee(callee)
 		{
@@ -116,7 +119,7 @@ namespace sap::interp::cst
 		virtual ErrorOr<EvalResult> evaluate_impl(Evaluator* ev) const override;
 
 		UFCSKind ufcs_kind;
-		std::vector<Either<std::unique_ptr<Expr>, const Expr*>> arguments;
+		std::vector<ExprOrDefaultPtr> arguments;
 		const Declaration* callee;
 	};
 
@@ -224,9 +227,7 @@ namespace sap::interp::cst
 
 	struct StructLit : Expr
 	{
-		explicit StructLit(Location loc,
-		    const Type* struct_type,
-		    std::vector<zst::Either<std::unique_ptr<Expr>, const Expr*>> field_inits)
+		explicit StructLit(Location loc, const Type* struct_type, std::vector<ExprOrDefaultPtr> field_inits)
 		    : Expr(std::move(loc), struct_type), field_inits(std::move(field_inits))
 		{
 		}
@@ -235,7 +236,7 @@ namespace sap::interp::cst
 
 		// it's either an expression that's part of the literal, or an expression
 		// that's from the default initialiser of the struct.
-		std::vector<zst::Either<std::unique_ptr<Expr>, const Expr*>> field_inits;
+		std::vector<ExprOrDefaultPtr> field_inits;
 	};
 
 	struct UnaryOp : Expr
@@ -522,6 +523,19 @@ namespace sap::interp::cst
 		std::unique_ptr<Expr> expr;
 	};
 
+	struct VariadicPackExpr : Expr
+	{
+		explicit VariadicPackExpr(Location loc, const Type* type, std::vector<ExprOrDefaultPtr> exprs)
+		    : Expr(std::move(loc), type), exprs(std::move(exprs))
+		{
+		}
+
+		virtual ErrorOr<EvalResult> evaluate_impl(Evaluator* ev) const override;
+
+		std::vector<ExprOrDefaultPtr> exprs;
+	};
+
+
 	struct Block : Stmt
 	{
 		explicit Block(Location loc, std::vector<std::unique_ptr<Stmt>> body)
@@ -709,16 +723,22 @@ namespace sap::interp::cst
 		};
 
 		FunctionDefn(Location loc, const Declaration* decl, std::vector<Param> params, std::unique_ptr<Block> body)
-		    : Definition(std::move(loc), decl)
+		    : Definition(std::move(loc), decl), params(std::move(params)), body(std::move(body))
 		{
+		}
+
+		~FunctionDefn() override
+		{
+			zpr::println("{} is deceasing", this->declaration->name);
+			;
 		}
 
 		virtual ErrorOr<EvalResult> evaluate_impl(Evaluator* ev) const override;
 
 		ErrorOr<EvalResult> call(Evaluator* ev, std::vector<Value>& args) const;
 
-		std::unique_ptr<Block> body;
 		std::vector<Param> params;
+		std::unique_ptr<Block> body;
 	};
 
 

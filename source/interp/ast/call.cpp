@@ -41,7 +41,7 @@ namespace sap::interp::ast
 	using ResolvedOverloadSet = ErrorOr<std::pair<const cst::Declaration*, ArrangedArguments>>;
 
 	static ErrorOr<ArrangedArguments>
-	get_calling_cost(Typechecker* ts, const cst::Declaration* decl, const std::vector<ArrangeArg>& arguments)
+	get_calling_cost(Typechecker* ts, const cst::Declaration* decl, const std::vector<InputArg>& arguments)
 	{
 		return arrangeCallArguments(ts, TRY(convert_params(ts, decl)), arguments, //
 		    "FunctionCall", "argument", "argument for parameter");
@@ -49,7 +49,7 @@ namespace sap::interp::ast
 
 	static ResolvedOverloadSet resolve_overload_set(Typechecker* ts,
 	    const std::vector<const cst::Declaration*>& decls,
-	    const std::vector<ArrangeArg>& arguments)
+	    const std::vector<InputArg>& arguments)
 	{
 		std::vector<const cst::Declaration*> best_decls {};
 		std::vector<std::pair<const cst::Declaration*, ErrorMessage>> failed_decls {};
@@ -115,7 +115,7 @@ namespace sap::interp::ast
 
 	ErrorOr<TCResult2> FunctionCall::typecheck_impl2(Typechecker* ts, const Type* infer, bool keep_lvalue) const
 	{
-		std::vector<ArrangeArg> processed_arg_types {};
+		std::vector<InputArg> processed_arg_types {};
 		std::vector<std::unique_ptr<cst::Expr>> processed_args {};
 
 		bool ufcs_is_rvalue = false;
@@ -249,27 +249,43 @@ namespace sap::interp::ast
 
 			for(size_t i = 0; i < arg_arrangement.arguments.size(); i++)
 			{
+				auto do_one_arg = [&](const Type* param_type, FinalArg::ArgIdxOrDefault& arg) //
+				    -> ErrorOr<cst::ExprOrDefaultPtr>                                         //
+				{
+					if(arg.is_right())
+						return Ok(Right(arg.right()));
+
+					size_t arg_idx = arg.left();
+					if(processed_args[arg_idx] != nullptr)
+					{
+						return Ok(Left(std::move(processed_args[arg_idx])));
+					}
+					else
+					{
+						bool is_ufcs_self = this->rewritten_ufcs && i == 0;
+						auto expr = TRY(this->arguments[i].value->typecheck2(ts, /* infer: */ param_type,
+						    /* keep_lvalue: */ is_ufcs_self));
+
+						return Ok(Left(std::move(expr).take_expr()));
+					}
+				};
+
 				auto& arg = arg_arrangement.arguments[i];
-				auto param_type = arg.first;
 
-				if(arg.second.is_right())
+				if(arg.value.is_left())
 				{
-					final_args.push_back(Right(arg.second.right()));
-					continue;
-				}
-
-				auto arg_idx = arg.second.left();
-				if(processed_args[arg_idx] != nullptr)
-				{
-					final_args.push_back(Left(std::move(processed_args[arg_idx])));
+					final_args.push_back(TRY(do_one_arg(arg.param_type, arg.value.left())));
 				}
 				else
 				{
-					bool is_ufcs_self = this->rewritten_ufcs && i == 0;
-					auto expr = TRY(this->arguments[i].value->typecheck2(ts, /* infer: */ param_type,
-					    /* keep_lvalue: */ is_ufcs_self));
+					// variadic pack.
+					std::vector<cst::ExprOrDefaultPtr> pack {};
+					for(auto& e : arg.value.right())
+						pack.push_back(TRY(do_one_arg(arg.param_type, e)));
 
-					final_args.push_back(Left(std::move(expr).take_expr()));
+
+					final_args.push_back(Left(std::make_unique<cst::VariadicPackExpr>(m_location, arg.param_type,
+					    std::move(pack))));
 				}
 			}
 		}

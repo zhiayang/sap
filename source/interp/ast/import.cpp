@@ -44,12 +44,11 @@ namespace sap::interp::ast
 		if(doc.haveDocStart())
 			return ErrMsg(ts, "file '{}' contains a '\\start_document', which cannot be imported");
 
-		this->imported_block = std::make_unique<Block>(this->loc());
-		this->imported_block->body = std::move(doc).takePreamble();
-		this->imported_block->target_scope = QualifiedId { .top_level = true };
+		auto imported_block = std::make_unique<Block>(this->loc());
+		imported_block->body = std::move(doc).takePreamble();
+		imported_block->target_scope = QualifiedId { .top_level = true };
 
 		auto _ = ts->pushTree(ts->top());
-		return TCResult2::ofVoid<cst::ImportStmt>(m_location,
-		    TRY(this->imported_block->typecheck2(ts)).take<cst::Block>());
+		return TCResult2::ofVoid<cst::ImportStmt>(m_location, TRY(imported_block->typecheck2(ts)).take<cst::Block>());
 	}
 }

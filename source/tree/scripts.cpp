@@ -27,9 +27,15 @@ namespace sap::tree
 		if(m_run_phase != cs->currentPhase())
 			return Ok(std::nullopt);
 
-		auto call_expr = TRY(this->call->typecheck2(&cs->typechecker())).take_expr();
+		auto maybe_value = TRY([&]() -> ErrorOr<interp::EvalResult> {
+			if(m_typechecked_call != nullptr)
+				return m_typechecked_call->evaluate(&cs->evaluator());
 
-		auto maybe_value = TRY(call_expr->evaluate(&cs->evaluator()));
+
+			auto call_expr = TRY(this->call->typecheck2(&cs->typechecker())).take_expr();
+			return call_expr->evaluate(&cs->evaluator());
+		}());
+
 		if(not maybe_value.hasValue())
 			return Ok(std::nullopt);
 
@@ -143,8 +149,10 @@ namespace sap::tree
 		if(m_run_phase != cs->currentPhase())
 			return Ok();
 
-		auto body_stmt = TRY(this->body->typecheck2(&cs->typechecker())).take_stmt();
-		return body_stmt->evaluate(&cs->evaluator()).remove_value();
+		if(m_typechecked_stmt == nullptr)
+			m_typechecked_stmt = TRY(this->body->typecheck2(&cs->typechecker())).take_stmt();
+
+		return m_typechecked_stmt->evaluate(&cs->evaluator()).remove_value();
 	}
 
 	auto ScriptBlock::create_layout_object_impl(interp::Interpreter* cs,

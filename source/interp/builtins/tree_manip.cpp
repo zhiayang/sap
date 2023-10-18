@@ -49,6 +49,8 @@ namespace sap::interp::builtin
 	static ErrorOr<EvalResult>
 	make_box(Evaluator* ev, Value& arr, tree::Container::Direction direction, bool glued = false)
 	{
+		assert(arr.type()->isVariadicArray());
+
 		auto box = zst::make_shared<tree::Container>(direction, glued);
 
 		auto objs = std::move(arr).takeArray();
@@ -85,9 +87,11 @@ namespace sap::interp::builtin
 	ErrorOr<EvalResult> make_span(Evaluator* ev, std::vector<Value>& args)
 	{
 		assert(args.size() == 2);
+		assert(args[0].type()->isVariadicArray());
+		auto objs = std::move(args[0]).takeArray();
+
 		auto span = zst::make_shared<tree::InlineSpan>(/* glued: */ args[1].getBool());
 
-		auto objs = std::move(args[0]).takeArray();
 		for(size_t i = 0; i < objs.size(); i++)
 			span->addObject(std::move(objs[i]).takeTreeInlineObj());
 
@@ -97,9 +101,10 @@ namespace sap::interp::builtin
 	ErrorOr<EvalResult> make_text(Evaluator* ev, std::vector<Value>& args)
 	{
 		assert(args.size() == 2);
-		auto span = zst::make_shared<tree::InlineSpan>(/* glued: */ args[1].getBool());
-
+		assert(args[0].type()->isVariadicArray());
 		auto strings = std::move(args[0]).takeArray();
+
+		auto span = zst::make_shared<tree::InlineSpan>(/* glued: */ args[1].getBool());
 
 		std::vector<zst::SharedPtr<tree::InlineObject>> inlines {};
 		for(size_t i = 0; i < strings.size(); i++)
@@ -119,6 +124,7 @@ namespace sap::interp::builtin
 	ErrorOr<EvalResult> make_paragraph(Evaluator* ev, std::vector<Value>& args)
 	{
 		assert(args.size() == 1);
+		assert(args[0].type()->isVariadicArray());
 
 		auto objs = std::move(args[0]).takeArray();
 		std::vector<zst::SharedPtr<tree::InlineObject>> inlines {};

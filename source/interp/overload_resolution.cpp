@@ -13,7 +13,7 @@ namespace sap::interp::ast
 {
 	ErrorOr<ArrangedArguments> arrangeCallArguments(const Typechecker* ts,
 	    const ExpectedParams& expected,
-	    const std::vector<ArrangeArg>& arguments,
+	    const std::vector<InputArg>& arguments,
 	    const char* fn_or_struct,
 	    const char* thing_name,
 	    const char* thing_name2)
@@ -43,13 +43,18 @@ namespace sap::interp::ast
 		bool saw_named_arg = false;
 		for(size_t param_idx = 0; param_idx < expected.size(); param_idx++)
 		{
+			using ArgIdxOrDefault = FinalArg::ArgIdxOrDefault;
+
 			auto& param = expected[param_idx];
 
 			auto push_default_value_or_error = [ts, thing_name2, &arranged](const auto& param) -> ErrorOr<void> {
-				if(param.default_value != nullptr)
-					arranged.push_back({ param.type, Right(param.default_value) });
-				else
+				if(param.default_value == nullptr)
 					return ErrMsg(ts, "missing {} '{}'", thing_name2, param.name);
+
+				arranged.push_back({
+				    .param_type = param.type,
+				    .value = Left<ArgIdxOrDefault>(Right(param.default_value)),
+				});
 				return Ok();
 			};
 
@@ -76,14 +81,17 @@ namespace sap::interp::ast
 			}
 
 			// ok, we have at least one arg.
-			if(not saw_named_arg && not arguments[arg_idx].name.has_value())
+			if(param.type->isVariadicArray() || (not saw_named_arg && not arguments[arg_idx].name.has_value()))
 			{
 				// if this is the last param and it's variadic, then collect the rest of the args.
 				// else proceed normally.
-				if(param_idx + 1 < expected.size() || not param.type->isVariadicArray())
+				if(not param.type->isVariadicArray())
 				{
 					auto& arg = arguments[arg_idx];
-					arranged.push_back({ param.type, Left(arg_idx) });
+					arranged.push_back({
+					    .param_type = param.type,
+					    .value = Left<ArgIdxOrDefault>(Left(arg_idx)),
+					});
 
 					// doing a positional argument, so we advance the arg idx.
 					arg_idx += 1;
@@ -98,16 +106,24 @@ namespace sap::interp::ast
 				else
 				{
 					assert(param.type->isVariadicArray());
-					auto var_elm_type = param.type->arrayElement();
 
+					auto var_elm_type = param.type->arrayElement();
 					bool got_direct_var_array = false;
+
+					std::vector<ArgIdxOrDefault> pack {};
+
 					for(; arg_idx < arguments.size(); arg_idx++)
 					{
 						if(got_direct_var_array)
 							return ErrMsg(ts, "cannot pass additional arguments after spread array");
 
 						auto& arg = arguments[arg_idx];
-						arranged.push_back({ param.type, Left(arg_idx) });
+
+						// if the argument is named, it no longer belongs to the variadic param, so bail.
+						if(arg.name.has_value())
+							break;
+
+						pack.push_back(Left(arg_idx));
 
 						// skip deferred ones
 						if(not arg.type.has_value())
@@ -125,6 +141,8 @@ namespace sap::interp::ast
 							return ErrMsg(ts, "mismatched types in variadic argument; expected '{}', got '{}",
 							    var_elm_type, *arg.type);
 					}
+
+					arranged.push_back({ .param_type = param.type, .value = Right(std::move(pack)) });
 				}
 			}
 			else
@@ -143,7 +161,10 @@ namespace sap::interp::ast
 					if(not arg.type.has_value())
 						continue;
 
-					arranged.push_back({ param.type, Left(it->second) });
+					arranged.push_back({
+					    .param_type = param.type,
+					    .value = Left<ArgIdxOrDefault>(Left(it->second)),
+					});
 					coercion_cost += TRY(try_calculate_arg_cost(*arg.type, param.type));
 				}
 				else
@@ -166,7 +187,7 @@ namespace sap::interp::ast
 #if 0
 	ErrorOr<ArrangedArguments> arrangeArgumentTypes(const Typechecker* ts,
 	    const ExpectedParams& expected,      //
-	    const std::vector<ArrangeArg>& args, //
+	    const std::vector<InputArg>& args, //
 	    const char* fn_or_struct,            //
 	    const char* thing_name,              //
 	    const char* thing_name2)

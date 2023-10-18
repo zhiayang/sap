@@ -14,6 +14,7 @@ namespace sap::interp::ast
 			return ErrMsg(ts, "invalid use of '...' operator on non-array type '{}'", value.type());
 
 		auto ret_type = Type::makeArray(value.type()->arrayElement(), /* variadic: */ true);
+
 		if(value.isLValue() && not ret_type->arrayElement()->isCloneable())
 		{
 			return ErrMsg(ts, "arrays of type '{}' cannot be spread with `...` without first moving; use `...*`",

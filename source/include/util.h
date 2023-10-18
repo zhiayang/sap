@@ -25,11 +25,11 @@ namespace util
 {
 	[[noreturn]] inline void unreachable()
 	{
-	#if defined(__GNUC__)
+#if defined(__GNUC__)
 		__builtin_unreachable();
-	#elif defined(_MSC_VER)
+#elif defined(_MSC_VER)
 		__assume(false);
-	#endif
+#endif
 	}
 
 	template <typename T>
@@ -321,8 +321,8 @@ namespace util
 		Defer& operator=(const Defer&) = delete;
 
 	private:
+		alignas(STORAGE_SIZE) uint8_t m_storage[STORAGE_SIZE];
 		bool m_cancel;
-		uint8_t m_storage[STORAGE_SIZE];
 	};
 
 	template <typename Callback>

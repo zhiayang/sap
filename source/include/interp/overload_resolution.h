@@ -12,7 +12,7 @@
 
 namespace sap::interp::ast
 {
-	struct ArrangeArg
+	struct InputArg
 	{
 		std::optional<const Type*> type;
 		std::optional<std::string> name;
@@ -27,9 +27,18 @@ namespace sap::interp::ast
 
 	using ExpectedParams = std::vector<ExpectedParam>;
 
+	struct FinalArg
+	{
+		const Type* param_type;
+
+		using ArgIdxOrDefault = Either<size_t, const cst::Expr*>;
+		Either<ArgIdxOrDefault, std::vector<ArgIdxOrDefault>> value;
+	};
+
 	struct ArrangedArguments
 	{
-		using ArgList = std::vector<std::pair<const Type*, zst::Either<size_t, const cst::Expr*>>>;
+		// the vector implies a variadic
+		using ArgList = std::vector<FinalArg>;
 
 		ArgList arguments;
 		int coercion_cost;
@@ -38,48 +47,9 @@ namespace sap::interp::ast
 	ErrorOr<ArrangedArguments> arrangeCallArguments( //
 	    const Typechecker* ts,                       //
 	    const ExpectedParams& expected_params,       //
-	    const std::vector<ArrangeArg>& arguments,    //
+	    const std::vector<InputArg>& arguments,      //
 	    const char* fn_or_struct,                    //
 	    const char* thing_name,                      //
 	    const char* thing_name2);
 
-
-
-
-
-#if 0
-	struct ArrangeArg
-	{
-		const Type* type;
-		std::optional<std::string> name;
-	};
-
-	struct ArgPair
-	{
-		const Type* type;
-		const cst::Expr* default_value;
-	};
-
-
-
-	struct ArrangedArguments
-	{
-		util::hashmap<size_t, std::vector<ArgPair>> param_idx_to_args;
-		util::hashmap<size_t, size_t> arg_idx_to_param_idx;
-	};
-
-	ErrorOr<ArrangedArguments> arrangeArgumentTypes(const Typechecker* ts,
-	    const ExpectedParams& expected,      //
-	    const std::vector<ArrangeArg>& args, //
-	    const char* fn_or_struct,            //
-	    const char* thing_name,              //
-	    const char* thing_name2);
-
-	ErrorOr<int> getCallingCost(Typechecker* ts,                         //
-	    const ExpectedParams& expected,                                  //
-	    const util::hashmap<size_t, std::vector<ArgPair>>& ordered_args, //
-	    const char* fn_or_struct,                                        //
-	    const char* thing_name,                                          //
-	    const char* thing_name2);
-#endif
 }

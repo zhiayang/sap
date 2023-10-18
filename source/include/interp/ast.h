@@ -56,15 +56,8 @@ namespace sap::interp::ast
 
 		const Location& loc() const { return m_location; }
 
-		// const Type* get_type() const
-		// {
-		// 	assert(m_tc_result.has_value());
-		// 	return m_tc_result->type();
-		// }
-
 	protected:
 		Location m_location;
-		// mutable std::optional<TCResult> m_tc_result {};
 	};
 
 	struct Expr : Stmt
@@ -570,7 +563,6 @@ namespace sap::interp::ast
 		    bool keep_lvalue = false) const override;
 
 		std::string file_path;
-		mutable std::unique_ptr<Block> imported_block;
 	};
 
 	struct UsingStmt : Stmt

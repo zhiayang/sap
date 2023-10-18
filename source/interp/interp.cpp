@@ -76,13 +76,6 @@ namespace sap::interp
 		return m_leaked_strings.emplace_back(str.str());
 	}
 
-	ErrorOr<EvalResult> Interpreter::run(const ast::Stmt* stmt)
-	{
-		auto res = TRY(stmt->typecheck2(m_typechecker.get())).take_stmt();
-
-		return res->evaluate(m_evaluator.get());
-	}
-
 	pdf::PdfFont& Interpreter::addLoadedFont(std::unique_ptr<pdf::PdfFont> font)
 	{
 		if(auto it = m_loaded_fonts.find(font->fontId()); it != m_loaded_fonts.end())

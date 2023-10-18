@@ -43,8 +43,6 @@ namespace sap::interp::builtin
 			}
 		}
 
-		zpr::println("making {}: {}", m_type->name(), m_type->str());
-
 		return Value::structure(m_type, std::move(fields));
 	}
 

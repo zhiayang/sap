@@ -61,7 +61,7 @@ namespace sap::interp::ast
 		auto fields = get_field_things(struct_defn, struct_type);
 
 		// make sure the struct has all the things
-		std::vector<ArrangeArg> processed_field_types {};
+		std::vector<InputArg> processed_field_types {};
 		std::vector<std::unique_ptr<cst::Expr>> processed_field_exprs {};
 
 		bool saw_named = false;
@@ -92,13 +92,18 @@ namespace sap::interp::ast
 		for(size_t i = 0; i < arrangement.arguments.size(); i++)
 		{
 			auto& arg = arrangement.arguments[i];
-			if(arg.second.is_right())
+
+			if(arg.value.is_right())
+				return ErrMsg(ts, "Invalid use of variadic pack in struct initialiser");
+
+			auto& arg_val = arg.value.left();
+			if(arg_val.is_right())
 			{
-				final_fields.push_back(Right(arg.second.right()));
+				final_fields.push_back(Right(arg_val.right()));
 				continue;
 			}
 
-			auto arg_idx = arg.second.left();
+			auto arg_idx = arg_val.left();
 			assert(processed_field_exprs[arg_idx] != nullptr);
 
 			final_fields.push_back(Left(std::move(processed_field_exprs[arg_idx])));

@@ -101,7 +101,8 @@ namespace sap::interp
 	};
 
 
-#define __TRY_VALUE(x, L) __extension__({                                                   \
+#define __TRY_VALUE(x, L)                                                                   \
+	__extension__({                                                                         \
 		auto&& __r##L = x;                                                                  \
 		using R = std::decay_t<decltype(__r##L)>;                                           \
 		using V = typename R::value_type;                                                   \
@@ -109,8 +110,8 @@ namespace sap::interp
 		static_assert(not std::is_same_v<V, void>, "cannot use TRY_VALUE on Result<void>"); \
 		if((__r##L).is_err())                                                               \
 			return Err<E>((__r##L).take_error());                                           \
-		if(not (__r##L)->hasValue())                                                        \
-			return ErrMsg(ev, "unexpected void value");                                     \
+		if(not(__r##L)->hasValue())                                                         \
+			sap::internal_error("unexpected void value");                                   \
 		auto __ret = std::move(__r##L)->take();                                             \
 		__ret.hasGenerator() ? __ret.clone() : std::move(__ret);                            \
 	})

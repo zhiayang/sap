@@ -15,7 +15,7 @@ namespace sap::interp::cst
 
 		auto lhs_res = TRY(this->expr->evaluate(ev));
 		if(not lhs_res.hasValue())
-			return ErrMsg(ev, "unexpected void value");
+			sap::internal_error("unexpected void value");
 
 		auto& lhs_value = lhs_res.get();
 		auto ltype = lhs_value.type();

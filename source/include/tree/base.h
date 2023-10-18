@@ -28,6 +28,7 @@ namespace sap::interp
 
 	namespace cst
 	{
+		struct Stmt;
 		struct FunctionCall;
 	}
 }
@@ -263,6 +264,8 @@ namespace sap::tree
 		std::unique_ptr<interp::ast::Block> body;
 
 	private:
+		mutable std::unique_ptr<interp::cst::Stmt> m_typechecked_stmt;
+
 		virtual ErrorOr<LayoutResult> create_layout_object_impl(interp::Interpreter* cs,
 		    const Style& parent_style,
 		    Size2d available_space) const override;

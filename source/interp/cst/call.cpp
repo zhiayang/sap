@@ -76,6 +76,22 @@ namespace sap::interp::cst
 				if(param_types[i]->isVariadicArray())
 				{
 					auto variadic_elm = param_types[i]->arrayElement();
+
+					assert(val.get().type()->isVariadicArray());
+					zpr::println("var type: {}", val.get().type());
+
+					auto arr = val.take().takeArray();
+					for(auto& elm : arr)
+					{
+						elm = ev->castValue(std::move(elm), variadic_elm);
+						zpr::println("var elm: {} / {}", elm.type(), param_types[i]);
+						if(elm.type() == param_types[i])
+							abort();
+					}
+
+					processed_args.push_back(Value::array(variadic_elm, std::move(arr), /* variadic: */ true));
+#if 0
+					auto variadic_elm = param_types[i]->arrayElement();
 					std::vector<Value> vararg_array {};
 
 					// FIXME: currently we assume that if the argument is not a spread op,
@@ -104,6 +120,7 @@ namespace sap::interp::cst
 					}
 
 					processed_args.push_back(Value::array(variadic_elm, std::move(vararg_array)));
+#endif
 				}
 				else
 				{

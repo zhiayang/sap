@@ -13,9 +13,11 @@ namespace sap::interp::cst
 		if(this->value == nullptr)
 		{
 			assert(et->elementType()->isInteger());
-			assert(this->prev_sibling != nullptr);
 
-			auto prev_value = ev->getGlobalValue(this->prev_sibling)->getInteger();
+			int64_t prev_value = 0;
+			if(this->prev_sibling != nullptr)
+				prev_value = ev->getGlobalValue(this->prev_sibling)->getEnumerator().getInteger();
+
 			ev->setGlobalValue(this, Value::enumerator(et, Value::integer(prev_value)));
 		}
 		else
@@ -32,11 +34,17 @@ namespace sap::interp::cst
 	ErrorOr<EvalResult> EnumDefn::evaluate_impl(Evaluator* ev) const
 	{
 		// this does nothing (all the work is done by the enumerators)
+		for(auto& e : this->enumerators)
+			TRY(e->evaluate(ev));
+
 		return EvalResult::ofVoid();
 	}
 
 	ErrorOr<EvalResult> EnumeratorExpr::evaluate_impl(Evaluator* ev) const
 	{
-		return EvalResult::ofLValue(*ev->getGlobalValue(this->enumerator));
+		auto v = ev->getGlobalValue(this->enumerator);
+		assert(v != nullptr);
+
+		return EvalResult::ofLValue(*v);
 	}
 }

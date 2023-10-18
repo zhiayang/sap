@@ -38,8 +38,6 @@ namespace sap::interp
 
 		zst::byte_span loadFile(zst::str_view filename);
 
-		ErrorOr<EvalResult> run(const ast::Stmt* stmt);
-
 		Evaluator& evaluator() { return *m_evaluator; }
 		Typechecker& typechecker() { return *m_typechecker; }
 
