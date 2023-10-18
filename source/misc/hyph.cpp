@@ -70,6 +70,9 @@ namespace sap::hyph
 		};
 
 		auto on_line = [&](zst::wstr_view line) {
+			if(line.empty())
+				return;
+
 			auto pats_ptr = &ret.m_mid_pats;
 			if(line.front() == U'.')
 				pats_ptr = &ret.m_front_pats;

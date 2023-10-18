@@ -30,7 +30,7 @@ namespace font
 
 		// searchRange = "(Maximum power of 2 <= numTables) x 16"
 		size_t max_pow2 = 0;
-		while((1u << (max_pow2 - 1u)) < num_tables)
+		while((1u << (1u + max_pow2)) < num_tables)
 			max_pow2++;
 
 		assert((1u << max_pow2) <= num_tables);
