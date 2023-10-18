@@ -17,7 +17,6 @@ namespace sap::interp::cst
 	ErrorOr<EvalResult> StructLit::evaluate_impl(Evaluator* ev) const
 	{
 		assert(m_type->isStruct());
-		assert(this->struct_defn != nullptr);
 		auto struct_type = m_type->toStruct();
 
 		std::vector<Value> field_values {};

@@ -221,8 +221,10 @@ namespace sap::interp::cst
 
 	struct StructLit : Expr
 	{
-		explicit StructLit(Location loc, const Type* struct_type, const StructDefn* struct_defn)
-		    : Expr(std::move(loc), struct_type), struct_defn(struct_defn)
+		explicit StructLit(Location loc,
+		    const Type* struct_type,
+		    std::vector<zst::Either<std::unique_ptr<Expr>, const Expr*>> field_inits)
+		    : Expr(std::move(loc), struct_type), field_inits(std::move(field_inits))
 		{
 		}
 
@@ -231,7 +233,6 @@ namespace sap::interp::cst
 		// it's either an expression that's part of the literal, or an expression
 		// that's from the default initialiser of the struct.
 		std::vector<zst::Either<std::unique_ptr<Expr>, const Expr*>> field_inits;
-		const StructDefn* struct_defn;
 	};
 
 	struct UnaryOp : Expr

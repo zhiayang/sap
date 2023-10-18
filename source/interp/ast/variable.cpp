@@ -17,8 +17,6 @@ namespace sap::interp::ast
 
 	ErrorOr<TCResult2> VariableDefn::typecheck_impl2(Typechecker* ts, const Type* infer, bool keep_lvalue) const
 	{
-		assert(this->declaration != nullptr);
-
 		// if we have neither, it's an error
 		if(not this->explicit_type.has_value() && this->initialiser == nullptr)
 			return ErrMsg(ts, "variable without explicit type must have an initialiser");

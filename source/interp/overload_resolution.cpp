@@ -11,55 +11,43 @@
 
 namespace sap::interp::ast
 {
-	using ExpectedParams = std::vector<std::tuple<std::string, const Type*, const cst::Expr*>>;
-
-	template <typename T, bool Move>
-	ErrorOr<ArrangedArguments<T>> arrange_arguments(const Typechecker* ts,
-	    const ExpectedParams& expected,                                                                 //
-	    std::conditional_t<Move, std::vector<ArrangeArg<T>>&&, const std::vector<ArrangeArg<T>>&> args, //
-	    const char* fn_or_struct,                                                                       //
-	    const char* thing_name,                                                                         //
+	ErrorOr<ArrangedArguments> arrangeArgumentTypes(const Typechecker* ts,
+	    const ExpectedParams& expected,      //
+	    const std::vector<ArrangeArg>& args, //
+	    const char* fn_or_struct,            //
+	    const char* thing_name,              //
 	    const char* thing_name2)
 	{
 		// note: we can't really assume anything about the number of arguments, since we might have less
 		// than expected (due to optional args), but also more than expected (due to variadic arrays)
-		ArrangedArguments<T> ret {};
+		ArrangedArguments ret {};
 
 		util::hashmap<std::string, size_t> param_names {};
 		for(size_t i = 0; i < expected.size(); i++)
-			param_names[std::get<0>(expected[i])] = i;
+			param_names[expected[i].name] = i;
 
 		size_t variadic_param_idx = expected.size();
 		for(size_t i = 0; i < expected.size(); i++)
 		{
-			if(std::get<1>(expected[i])->isVariadicArray())
+			if(expected[i].type->isVariadicArray())
 			{
 				variadic_param_idx = i;
 				break;
 			}
 		}
 
-		size_t cur_idx = 0;
+		size_t param_idx = 0;
 		size_t have_named = false;
 		for(size_t arg_idx = 0; arg_idx < args.size(); arg_idx++)
 		{
 			auto& arg = args[arg_idx];
+			auto& exp_param = expected[param_idx];
 
-			auto get_arg_pair = [](auto&& argument) -> ArgPair<T> {
-				if constexpr(Move)
-				{
-					return {
-						.value = std::move(argument.value),
-						.was_named = argument.name.has_value(),
-					};
-				}
-				else
-				{
-					return {
-						.value = argument.value,
-						.was_named = argument.name.has_value(),
-					};
-				}
+			auto get_arg_pair = [&](auto&& argument) -> ArgPair {
+				return {
+					.type = argument.type,
+					.default_value = exp_param.default_value,
+				};
 			};
 
 			if(arg.name.has_value())
@@ -81,22 +69,22 @@ namespace sap::interp::ast
 			else
 			{
 				// variadics are never specified by name. here, check the index of the current argument
-				if(cur_idx >= variadic_param_idx)
+				if(param_idx >= variadic_param_idx)
 				{
-					auto param_type = std::get<1>(expected[variadic_param_idx]);
+					auto param_type = expected[variadic_param_idx].type;
 
 					if(param_type->isVariadicArray())
 					{
-						ret.param_idx_to_args[cur_idx].push_back(get_arg_pair(arg));
-						ret.arg_idx_to_param_idx[arg_idx] = cur_idx;
+						ret.param_idx_to_args[param_idx].push_back(get_arg_pair(arg));
+						ret.arg_idx_to_param_idx[arg_idx] = param_idx;
 
-						// note: don't increment cur_idx -- lump all the args for
+						// note: don't increment param_idx -- lump all the args for
 						// this variadic to the same index.
 					}
 					else
 					{
 						return ErrMsg(ts, "too many arguments specified; expected at most {}, got {}", expected.size(),
-						    cur_idx);
+						    param_idx);
 					}
 				}
 				else
@@ -104,9 +92,9 @@ namespace sap::interp::ast
 					if(have_named)
 						return ErrMsg(ts, "positional {} not allowed after named {}s", thing_name, thing_name);
 
-					ret.param_idx_to_args[cur_idx].push_back(get_arg_pair(arg));
-					ret.arg_idx_to_param_idx[arg_idx] = cur_idx;
-					cur_idx += 1;
+					ret.param_idx_to_args[param_idx].push_back(get_arg_pair(arg));
+					ret.arg_idx_to_param_idx[arg_idx] = param_idx;
+					param_idx += 1;
 				}
 			}
 		}
@@ -116,40 +104,14 @@ namespace sap::interp::ast
 
 
 
-	template ErrorOr<ArrangedArguments<const Type*>> //
-	arrange_arguments<const Type*, false>(           //
-	    const Typechecker*,
-	    const ExpectedParams&,
-	    const std::vector<ArrangeArg<const Type*>>&,
-	    const char*,
-	    const char*,
-	    const char*);
-
-	template ErrorOr<ArrangedArguments<std::unique_ptr<cst::Expr>>> //
-	arrange_arguments<std::unique_ptr<cst::Expr>, true>(            //
-	    const Typechecker*,
-	    const ExpectedParams&,
-	    std::vector<ArrangeArg<std::unique_ptr<cst::Expr>>>&&,
-	    const char*,
-	    const char*,
-	    const char*);
-
-
-
-
-
-
-
 
 	ErrorOr<int> getCallingCost(Typechecker* ts,
-	    const std::vector<std::tuple<std::string, const Type*, const cst::Expr*>>& expected,
-	    const util::hashmap<size_t, std::vector<ArgPair<const Type*>>>& param_idx_to_args,
+	    const ExpectedParams& expected,
+	    const util::hashmap<size_t, std::vector<ArgPair>>& param_idx_to_args,
 	    const char* fn_or_struct,
 	    const char* thing_name,
 	    const char* thing_name2)
 	{
-		using ArgPair = ArgPair<const Type*>;
-
 		int cost = 0;
 
 		size_t variadic_param_idx = expected.size();
@@ -157,7 +119,7 @@ namespace sap::interp::ast
 
 		for(size_t i = 0; i < expected.size(); i++)
 		{
-			if(auto t = std::get<1>(expected[i]); t->isVariadicArray())
+			if(auto t = expected[i].type; t->isVariadicArray())
 			{
 				variadic_param_idx = i;
 				variadic_element_type = t->arrayElement();
@@ -171,15 +133,15 @@ namespace sap::interp::ast
 			auto arg_pairs = TRY(([&](size_t k) -> ErrorOr<std::vector<ArgPair>> {
 				if(not param_idx_to_args.contains(k))
 				{
-					if(auto default_value = std::get<2>(expected[k]); default_value == nullptr)
+					if(expected[k].default_value == nullptr)
 					{
-						return ErrMsg(ts, "missing {} '{}'", thing_name2, std::get<0>(expected[k]));
+						return ErrMsg(ts, "missing {} '{}'", thing_name2, expected[k].name);
 					}
 					else
 					{
 						auto asdf = std::vector<ArgPair> { {
-							.value = default_value->type(),
-							.was_named = false,
+							.type = expected[k].default_value->type(),
+							.default_value = expected[k].default_value,
 						} };
 
 						return Ok(std::move(asdf));
@@ -193,8 +155,8 @@ namespace sap::interp::ast
 
 			for(auto& ap : arg_pairs)
 			{
-				auto arg_type = ap.value;
-				auto is_deferred = ap.value == nullptr;
+				auto arg_type = ap.type;
+				auto is_deferred = ap.type == nullptr;
 
 				if(param_idx == variadic_param_idx)
 				{
@@ -216,7 +178,7 @@ namespace sap::interp::ast
 					continue;
 				}
 
-				auto param_type = std::get<1>(expected[param_idx]);
+				auto param_type = expected[param_idx].type;
 
 				// no conversion = no cost
 				if(arg_type == param_type)

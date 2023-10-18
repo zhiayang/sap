@@ -12,18 +12,17 @@ namespace sap::interp::ast
 	    TODO: Unify this with function calls.
 	*/
 
-	static std::vector<std::tuple<std::string, const Type*, const cst::Expr*>>
-	get_field_things(const cst::StructDefn* struct_defn, const StructType* struct_type)
+	static ExpectedParams get_field_things(const cst::StructDefn* struct_defn, const StructType* struct_type)
 	{
-		std::vector<std::tuple<std::string, const Type*, const cst::Expr*>> fields {};
+		ExpectedParams fields {};
 
 		auto& struct_fields = struct_type->getFields();
 		for(size_t i = 0; i < struct_fields.size(); i++)
 		{
 			fields.push_back({
-			    struct_fields[i].name,
-			    struct_fields[i].type,
-			    struct_defn->fields[i].initialiser.get(),
+			    .name = struct_fields[i].name,
+			    .type = struct_fields[i].type,
+			    .default_value = struct_defn->fields[i].initialiser.get(),
 			});
 		}
 
@@ -66,8 +65,8 @@ namespace sap::interp::ast
 		auto fields = get_field_things(struct_defn, struct_type);
 
 		// make sure the struct has all the things
-		std::vector<ArrangeArg<const Type*>> processed_field_types {};
-		std::vector<ArrangeArg<std::unique_ptr<cst::Expr>>> processed_field_exprs {};
+		std::vector<ArrangeArg> processed_field_types {};
+		std::vector<std::unique_ptr<cst::Expr>> processed_field_exprs {};
 
 		bool saw_named = false;
 		for(size_t i = 0; i < this->field_inits.size(); i++)
@@ -84,13 +83,9 @@ namespace sap::interp::ast
 			else if(not f.name.has_value())
 				infer_type = struct_type->getFieldAtIndex(i);
 
-			processed_field_exprs.push_back({
-			    .value = TRY(f.value->typecheck2(ts, infer_type)).take_expr(),
-			    .name = f.name,
-			});
-
+			processed_field_exprs.push_back(TRY(f.value->typecheck2(ts, infer_type)).take_expr());
 			processed_field_types.push_back({
-			    .value = processed_field_exprs.back().value->type(),
+			    .type = processed_field_exprs.back()->type(),
 			    .name = f.name,
 			});
 		}
@@ -98,6 +93,30 @@ namespace sap::interp::ast
 		auto ordered = TRY(arrangeArgumentTypes(ts, fields, processed_field_types, "struct", "field", "field"));
 		TRY(getCallingCost(ts, fields, ordered.param_idx_to_args, "struct", "field", "field"));
 
-		return TCResult2::ofRValue<cst::StructLit>(m_location, struct_type, struct_defn);
+		std::vector<zst::Either<std::unique_ptr<cst::Expr>, const cst::Expr*>> final_fields {};
+
+		util::hashmap<size_t, std::vector<std::unique_ptr<cst::Expr>>> ordered_args {};
+		for(size_t i = 0; i < processed_field_exprs.size(); i++)
+		{
+			auto param_idx = ordered.arg_idx_to_param_idx[i];
+			ordered_args[param_idx].push_back(std::move(processed_field_exprs[i]));
+		}
+
+		for(size_t i = 0; i < struct_type->getFields().size(); i++)
+		{
+			if(auto it = ordered_args.find(i); it != ordered_args.end())
+			{
+				auto tmp = std::move(it->second);
+				for(auto& t : tmp)
+					final_fields.push_back(Left(std::move(t)));
+			}
+			else
+			{
+				for(auto& k : ordered.param_idx_to_args[i])
+					final_fields.push_back(Right(k.default_value));
+			}
+		}
+
+		return TCResult2::ofRValue<cst::StructLit>(m_location, struct_type, std::move(final_fields));
 	}
 }
