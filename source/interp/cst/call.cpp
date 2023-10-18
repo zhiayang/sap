@@ -76,51 +76,13 @@ namespace sap::interp::cst
 				if(param_types[i]->isVariadicArray())
 				{
 					auto variadic_elm = param_types[i]->arrayElement();
-
 					assert(val.get().type()->isVariadicArray());
-					zpr::println("var type: {}", val.get().type());
 
 					auto arr = val.take().takeArray();
 					for(auto& elm : arr)
-					{
 						elm = ev->castValue(std::move(elm), variadic_elm);
-						zpr::println("var elm: {} / {}", elm.type(), param_types[i]);
-						if(elm.type() == param_types[i])
-							abort();
-					}
 
 					processed_args.push_back(Value::array(variadic_elm, std::move(arr), /* variadic: */ true));
-#if 0
-					auto variadic_elm = param_types[i]->arrayElement();
-					std::vector<Value> vararg_array {};
-
-					// FIXME: currently we assume that if the argument is not a spread op,
-					// then this arg (and the following args) will be part of the variadic array.
-					if(val.get().type()->isVariadicArray())
-					{
-						// if the value itself is variadic, it means it's a spread op
-						auto arr = val.take().takeArray();
-						for(auto& v : arr)
-							vararg_array.push_back(ev->castValue(std::move(v), variadic_elm));
-					}
-					else
-					{
-						for(size_t k = i; k < this->arguments.size(); k++)
-						{
-							auto vv = TRY(eval_arg(ev, this->arguments[k]));
-							if(vv.isLValue() && not vv.get().type()->isCloneable())
-							{
-								return ErrMsg(get_arg_loc(this->arguments[k]),
-								    "cannot pass a non-cloneable value of type '{}' as an argument; move with `*`",
-								    vv.get().type());
-							}
-
-							vararg_array.push_back(ev->castValue(vv.take(), variadic_elm));
-						}
-					}
-
-					processed_args.push_back(Value::array(variadic_elm, std::move(vararg_array)));
-#endif
 				}
 				else
 				{

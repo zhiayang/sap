@@ -727,12 +727,6 @@ namespace sap::interp::cst
 		{
 		}
 
-		~FunctionDefn() override
-		{
-			zpr::println("{} is deceasing", this->declaration->name);
-			;
-		}
-
 		virtual ErrorOr<EvalResult> evaluate_impl(Evaluator* ev) const override;
 
 		ErrorOr<EvalResult> call(Evaluator* ev, std::vector<Value>& args) const;

@@ -69,7 +69,6 @@ namespace sap::interp::ast
 		this->declaration = TRY(create_function_declaration(ts, m_location, this->name, this->params,
 		    this->return_type));
 
-		zpr::println("declaring {} => {}", this->declaration->name, (void*) this->declaration);
 		return Ok();
 	}
 
@@ -122,9 +121,6 @@ namespace sap::interp::ast
 		    std::move(cst_body));
 
 		this->declaration->define(defn.get());
-		zpr::println("definining {} -> {} -> {}", this->declaration->name, (void*) this->declaration,
-		    (void*) defn.get());
-
 		return TCResult2::ofVoid(std::move(defn));
 	}
 
