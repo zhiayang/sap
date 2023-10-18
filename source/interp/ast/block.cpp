@@ -26,6 +26,14 @@ namespace sap::interp::ast
 		std::vector<std::unique_ptr<cst::Stmt>> stmts {};
 
 		auto _ = ts->pushTree(tree);
+
+		// declare all bois first
+		for(auto& stmt : this->body)
+		{
+			if(auto defn = dynamic_cast<const interp::ast::Definition*>(stmt.get()); defn)
+				TRY(defn->declare(ts));
+		}
+
 		for(auto& stmt : this->body)
 			stmts.push_back(TRY(stmt->typecheck2(ts)).take_stmt());
 

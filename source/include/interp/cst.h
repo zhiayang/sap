@@ -230,7 +230,7 @@ namespace sap::interp::cst
 
 		// it's either an expression that's part of the literal, or an expression
 		// that's from the default initialiser of the struct.
-		std::vector<zst::Either<std::unique_ptr<Expr>, Expr*>> field_inits;
+		std::vector<zst::Either<std::unique_ptr<Expr>, const Expr*>> field_inits;
 		const StructDefn* struct_defn;
 	};
 

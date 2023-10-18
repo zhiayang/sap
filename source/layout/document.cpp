@@ -164,6 +164,12 @@ namespace sap::tree
 		DocumentSettings settings {};
 		{
 			auto _ = cs->typechecker().pushTree(cs->typechecker().top());
+			for(size_t i = 0; i < m_preamble.size(); i++)
+			{
+				auto& stmt = m_preamble[i];
+				if(auto defn = dynamic_cast<const interp::ast::Definition*>(stmt.get()); defn)
+					TRY(defn->declare(&cs->typechecker()));
+			}
 
 			for(size_t i = 0; i < m_preamble.size(); i++)
 			{
