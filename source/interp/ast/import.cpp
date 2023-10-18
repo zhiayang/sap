@@ -13,7 +13,7 @@
 
 namespace sap::interp::ast
 {
-	ErrorOr<TCResult2> ImportStmt::typecheck_impl2(Typechecker* ts, const Type* infer, bool keep_lvalue) const
+	ErrorOr<TCResult> ImportStmt::typecheck_impl(Typechecker* ts, const Type* infer, bool keep_lvalue) const
 	{
 		auto cs = ts->interpreter();
 
@@ -31,7 +31,7 @@ namespace sap::interp::ast
 		}
 
 		if(cs->wasFileImported(resolved))
-			return TCResult2::ofVoid<cst::EmptyStmt>(m_location);
+			return TCResult::ofVoid<cst::EmptyStmt>(m_location);
 
 		cs->addImportedFile(resolved);
 
@@ -49,6 +49,6 @@ namespace sap::interp::ast
 		imported_block->target_scope = QualifiedId { .top_level = true };
 
 		auto _ = ts->pushTree(ts->top());
-		return TCResult2::ofVoid<cst::ImportStmt>(m_location, TRY(imported_block->typecheck2(ts)).take<cst::Block>());
+		return TCResult::ofVoid<cst::ImportStmt>(m_location, TRY(imported_block->typecheck(ts)).take<cst::Block>());
 	}
 }

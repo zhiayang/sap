@@ -7,19 +7,19 @@
 
 namespace sap::interp::ast
 {
-	ErrorOr<TCResult2> OptionalCheckOp::typecheck_impl2(Typechecker* ts, const Type* infer, bool keep_lvalue) const
+	ErrorOr<TCResult> OptionalCheckOp::typecheck_impl(Typechecker* ts, const Type* infer, bool keep_lvalue) const
 	{
-		auto inside = TRY(this->expr->typecheck2(ts, infer));
+		auto inside = TRY(this->expr->typecheck(ts, infer));
 		if(not inside.type()->isOptional())
 			return ErrMsg(ts, "invalid use of '?' on non-optional type '{}'", inside.type());
 
-		return TCResult2::ofRValue<cst::OptionalCheckOp>(m_location, std::move(inside).take_expr());
+		return TCResult::ofRValue<cst::OptionalCheckOp>(m_location, std::move(inside).take_expr());
 	}
 
-	ErrorOr<TCResult2> NullCoalesceOp::typecheck_impl2(Typechecker* ts, const Type* infer, bool keep_lvalue) const
+	ErrorOr<TCResult> NullCoalesceOp::typecheck_impl(Typechecker* ts, const Type* infer, bool keep_lvalue) const
 	{
-		auto lres = TRY(this->lhs->typecheck2(ts));
-		auto rres = TRY(this->rhs->typecheck2(ts));
+		auto lres = TRY(this->lhs->typecheck(ts));
+		auto rres = TRY(this->rhs->typecheck(ts));
 
 		// this is a little annoying because while we don't want "?int + &int", "?&int and &int" should still work
 		if(not lres.type()->isOptional() && not lres.type()->isPointer())
@@ -35,7 +35,7 @@ namespace sap::interp::ast
 			return ErrMsg(ts, "invalid use of '??' with mismatching types '{}' and '{}'", lres.type(), rres.type());
 
 		// return whatever the rhs type is -- be it optional or pointer.
-		return TCResult2::ofRValue<cst::NullCoalesceOp>(m_location, rres.type(),
+		return TCResult::ofRValue<cst::NullCoalesceOp>(m_location, rres.type(),
 		    is_flatmap ? cst::NullCoalesceOp::Kind::Flatmap : cst::NullCoalesceOp::Kind::ValueOr,
 		    std::move(lres).take_expr(), std::move(rres).take_expr());
 	}

@@ -13,7 +13,7 @@
 
 namespace sap::interp::ast
 {
-	ErrorOr<TCResult2> UsingStmt::typecheck_impl2(Typechecker* ts, const Type* infer, bool keep_lvalue) const
+	ErrorOr<TCResult> UsingStmt::typecheck_impl(Typechecker* ts, const Type* infer, bool keep_lvalue) const
 	{
 		auto self = ts->current();
 		if(auto maybe_decls = self->lookup(this->module); maybe_decls.ok())
@@ -21,7 +21,7 @@ namespace sap::interp::ast
 			for(auto& decl : *maybe_decls)
 				self->useDeclaration(m_location, decl, this->alias);
 
-			return TCResult2::ofVoid<cst::EmptyStmt>(m_location);
+			return TCResult::ofVoid<cst::EmptyStmt>(m_location);
 		}
 
 		auto tree = self->lookupScope(this->module.parents, this->module.top_level);
@@ -29,6 +29,6 @@ namespace sap::interp::ast
 			return ErrMsg(m_location, "no declaration named '{}'", this->module);
 
 		TRY(self->useNamespace(m_location, tree, this->alias));
-		return TCResult2::ofVoid<cst::EmptyStmt>(m_location);
+		return TCResult::ofVoid<cst::EmptyStmt>(m_location);
 	}
 }

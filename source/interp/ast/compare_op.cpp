@@ -72,14 +72,14 @@ namespace sap::interp::ast
 		    && (not lhs->isFunction());
 	}
 
-	ErrorOr<TCResult2> ComparisonOp::typecheck_impl2(Typechecker* ts, const Type* infer, bool keep_lvalue) const
+	ErrorOr<TCResult> ComparisonOp::typecheck_impl(Typechecker* ts, const Type* infer, bool keep_lvalue) const
 	{
 		assert(not this->rest.empty());
 
-		auto lhs = TRY(this->first->typecheck2(ts));
+		auto lhs = TRY(this->first->typecheck(ts));
 
 		auto op = this->rest[0].first;
-		auto rhs = TRY(this->rest[0].second->typecheck2(ts));
+		auto rhs = TRY(this->rest[0].second->typecheck(ts));
 
 		auto ltype = lhs.type();
 		auto rtype = rhs.type();
@@ -104,12 +104,12 @@ namespace sap::interp::ast
 			ltype = rtype;
 			op = this->rest[i].first;
 
-			auto tmp = TRY(this->rest[i].second->typecheck2(ts));
+			auto tmp = TRY(this->rest[i].second->typecheck(ts));
 			rtype = tmp.type();
 
 			new_rest.emplace_back(ast_op_to_cst_op(op), std::move(tmp).take_expr());
 		}
 
-		return TCResult2::ofRValue<cst::ComparisonOp>(m_location, std::move(new_first), std::move(new_rest));
+		return TCResult::ofRValue<cst::ComparisonOp>(m_location, std::move(new_first), std::move(new_rest));
 	}
 }

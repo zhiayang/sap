@@ -8,9 +8,9 @@
 
 namespace sap::interp::ast
 {
-	ErrorOr<TCResult2> DotOp::typecheck_impl2(Typechecker* ts, const Type* infer, bool keep_lvalue) const
+	ErrorOr<TCResult> DotOp::typecheck_impl(Typechecker* ts, const Type* infer, bool keep_lvalue) const
 	{
-		auto lhs_res = TRY(this->lhs->typecheck2(ts));
+		auto lhs_res = TRY(this->lhs->typecheck(ts));
 		auto ltype = lhs_res.type();
 
 		const StructType* struct_type = nullptr;
@@ -61,15 +61,15 @@ namespace sap::interp::ast
 		{
 			// if we're optional, make an rvalue always.
 			// this means we can't do a?.b = ... , but that's fine probably.
-			return TCResult2::ofRValue(std::move(dot_op));
+			return TCResult::ofRValue(std::move(dot_op));
 		}
 		else
 		{
 			// otherwise, we copy the lvalue-ness and mutability of the lhs.
 			if(is_lvalue)
-				return TCResult2::ofLValue(std::move(dot_op), is_mutable);
+				return TCResult::ofLValue(std::move(dot_op), is_mutable);
 			else
-				return TCResult2::ofRValue(std::move(dot_op));
+				return TCResult::ofRValue(std::move(dot_op));
 		}
 	}
 }

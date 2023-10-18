@@ -11,7 +11,7 @@
 
 namespace sap::interp::ast
 {
-	ErrorOr<TCResult2> Ident::typecheck_impl2(Typechecker* ts, const Type* infer, bool keep_lvalue) const
+	ErrorOr<TCResult> Ident::typecheck_impl(Typechecker* ts, const Type* infer, bool keep_lvalue) const
 	{
 		auto tree = ts->current();
 		auto decls = TRY(tree->lookup(this->name));
@@ -31,7 +31,7 @@ namespace sap::interp::ast
 				return ErrMsg(ts, "'{}' values cannot be copied; use '*' to move", dt);
 
 			auto ident = std::make_unique<cst::Ident>(m_location, dt, this->name, resolved_decl);
-			return TCResult2::ofLValue(std::move(ident), resolved_decl->is_mutable);
+			return TCResult::ofLValue(std::move(ident), resolved_decl->is_mutable);
 		}
 		else
 		{

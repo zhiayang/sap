@@ -20,7 +20,7 @@ namespace sap::interp
 		auto s = std::make_unique<ast::StructDefn>(Location::builtin(), T::name, T::fields());
 		s->declare(&cs->typechecker()).expect("builtin decl failed");
 
-		auto s2 = s->typecheck2(&cs->typechecker()).take_value().template take<cst::Definition>();
+		auto s2 = s->typecheck(&cs->typechecker()).take_value().template take<cst::Definition>();
 		s2->evaluate(&cs->evaluator()).expect("builtin decl failed");
 
 		T::type = cs->typechecker().addBuiltinDefinition(std::move(s2))->declaration->type;
@@ -32,7 +32,7 @@ namespace sap::interp
 		auto e = std::make_unique<ast::EnumDefn>(Location::builtin(), T::name, T::enumeratorType(), T::enumerators());
 		e->declare(&cs->typechecker()).expect("builtin decl failed");
 
-		auto e2 = e->typecheck2(&cs->typechecker()).take_value().template take<cst::Definition>();
+		auto e2 = e->typecheck(&cs->typechecker()).take_value().template take<cst::Definition>();
 		e2->evaluate(&cs->evaluator()).expect("builtin decl failed");
 
 		T::type = cs->typechecker().addBuiltinDefinition(std::move(e2))->declaration->type;
@@ -141,7 +141,7 @@ namespace sap::interp
 			auto ret = std::make_unique<BFD>(Location::builtin(), std::forward<decltype(xs)>(xs)...);
 			ret->declare(ts).expect("builtin defn failed");
 
-			auto def2 = ret->typecheck2(ts).take_value().template take<cst::Definition>();
+			auto def2 = ret->typecheck(ts).take_value().template take<cst::Definition>();
 
 			ts->addBuiltinDefinition(std::move(def2));
 		};

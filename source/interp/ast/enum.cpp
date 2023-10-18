@@ -39,7 +39,7 @@ namespace sap::interp::ast
 		return Ok();
 	}
 
-	ErrorOr<TCResult2> EnumDefn::typecheck_impl2(Typechecker* ts, const Type* infer, bool keep_lvalue) const
+	ErrorOr<TCResult> EnumDefn::typecheck_impl(Typechecker* ts, const Type* infer, bool keep_lvalue) const
 	{
 		assert(this->declaration != nullptr);
 		auto enum_type = this->declaration->type->toEnum();
@@ -53,7 +53,7 @@ namespace sap::interp::ast
 
 			if(e.value != nullptr)
 			{
-				auto ty = TRY(e.value->typecheck2(ts, enum_elm_type)).type();
+				auto ty = TRY(e.value->typecheck(ts, enum_elm_type)).type();
 				if(not ts->canImplicitlyConvert(ty, enum_elm_type))
 				{
 					return ErrMsg(ts, "cannot use value of type '{}' as enumerator for enum type '{}'", ty,
@@ -72,6 +72,6 @@ namespace sap::interp::ast
 		this->declaration->define(defn.get());
 
 		TRY(ts->addTypeDefinition(enum_type, defn.get()));
-		return TCResult2::ofVoid(std::move(defn));
+		return TCResult::ofVoid(std::move(defn));
 	}
 }

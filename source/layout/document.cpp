@@ -176,7 +176,7 @@ namespace sap::tree
 			for(size_t i = 0; i < m_preamble.size(); i++)
 			{
 				auto& stmt = m_preamble[i];
-				auto& gen = generated_preamble.emplace_back(TRY(stmt->typecheck2(&cs->typechecker())).take_stmt());
+				auto& gen = generated_preamble.emplace_back(TRY(stmt->typecheck(&cs->typechecker())).take_stmt());
 				auto result = TRY(gen->evaluate(&cs->evaluator()));
 
 				if(i + 1 == m_preamble.size())

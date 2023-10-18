@@ -113,7 +113,7 @@ namespace sap::interp::ast
 	}
 
 
-	ErrorOr<TCResult2> FunctionCall::typecheck_impl2(Typechecker* ts, const Type* infer, bool keep_lvalue) const
+	ErrorOr<TCResult> FunctionCall::typecheck_impl(Typechecker* ts, const Type* infer, bool keep_lvalue) const
 	{
 		std::vector<InputArg> processed_arg_types {};
 		std::vector<std::unique_ptr<cst::Expr>> processed_args {};
@@ -161,7 +161,7 @@ namespace sap::interp::ast
 
 			bool is_ufcs_self = this->rewritten_ufcs && i == 0;
 
-			auto tc_arg = TRY(arg.value->typecheck2(ts, /* infer: */ nullptr, /* keep_lvalue: */ is_ufcs_self));
+			auto tc_arg = TRY(arg.value->typecheck(ts, /* infer: */ nullptr, /* keep_lvalue: */ is_ufcs_self));
 			const Type* ty = tc_arg.type();
 
 			if(is_ufcs_self)
@@ -263,7 +263,7 @@ namespace sap::interp::ast
 					else
 					{
 						bool is_ufcs_self = this->rewritten_ufcs && i == 0;
-						auto expr = TRY(this->arguments[i].value->typecheck2(ts, /* infer: */ param_type,
+						auto expr = TRY(this->arguments[i].value->typecheck(ts, /* infer: */ param_type,
 						    /* keep_lvalue: */ is_ufcs_self));
 
 						return Ok(Left(std::move(expr).take_expr()));
@@ -297,10 +297,10 @@ namespace sap::interp::ast
 		if(not fn_type->isFunction())
 			return ErrMsg(ts, "callee of function call must be a function type, got '{}'", fn_type->str());
 
-		return TCResult2::ofRValue<cst::FunctionCall>(m_location, //
-		    fn_type->returnType(),                                //
-		    ufcs_kind,                                            //
-		    std::move(final_args),                                //
+		return TCResult::ofRValue<cst::FunctionCall>(m_location, //
+		    fn_type->returnType(),                               //
+		    ufcs_kind,                                           //
+		    std::move(final_args),                               //
 		    final_callee);
 	}
 }

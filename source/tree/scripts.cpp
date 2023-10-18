@@ -17,7 +17,7 @@ namespace sap::tree
 
 	ErrorOr<void> ScriptCall::typecheckCall(interp::Typechecker* ts) const
 	{
-		m_typechecked_call = TRY(this->call->typecheck2(ts)).take<interp::cst::FunctionCall>();
+		m_typechecked_call = TRY(this->call->typecheck(ts)).take<interp::cst::FunctionCall>();
 		return Ok();
 	}
 
@@ -32,7 +32,7 @@ namespace sap::tree
 				return m_typechecked_call->evaluate(&cs->evaluator());
 
 
-			auto call_expr = TRY(this->call->typecheck2(&cs->typechecker())).take_expr();
+			auto call_expr = TRY(this->call->typecheck(&cs->typechecker())).take_expr();
 			return call_expr->evaluate(&cs->evaluator());
 		}());
 
@@ -150,7 +150,7 @@ namespace sap::tree
 			return Ok();
 
 		if(m_typechecked_stmt == nullptr)
-			m_typechecked_stmt = TRY(this->body->typecheck2(&cs->typechecker())).take_stmt();
+			m_typechecked_stmt = TRY(this->body->typecheck(&cs->typechecker())).take_stmt();
 
 		return m_typechecked_stmt->evaluate(&cs->evaluator()).remove_value();
 	}

@@ -53,7 +53,7 @@ namespace sap::interp
 	{
 		for(auto* blk : m_hook_blocks[m_current_phase])
 		{
-			auto tc_blk = TRY(blk->typecheck2(&this->typechecker())).take<cst::Block>();
+			auto tc_blk = TRY(blk->typecheck(&this->typechecker())).take<cst::Block>();
 			TRY(tc_blk->evaluate(&this->evaluator()));
 		}
 
@@ -138,10 +138,10 @@ namespace sap::interp
 
 
 
-	ErrorOr<TCResult2> ast::Stmt::typecheck2(Typechecker* ts, const Type* infer, bool keep_lvalue) const
+	ErrorOr<TCResult> ast::Stmt::typecheck(Typechecker* ts, const Type* infer, bool keep_lvalue) const
 	{
 		auto _ = ts->pushLocation(m_location);
-		return this->typecheck_impl2(ts, infer, keep_lvalue);
+		return this->typecheck_impl(ts, infer, keep_lvalue);
 	}
 
 	ErrorOr<EvalResult> cst::Stmt::evaluate(Evaluator* ev) const

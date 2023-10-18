@@ -7,31 +7,31 @@
 
 namespace sap::interp::ast
 {
-	ErrorOr<TCResult2> WhileLoop::typecheck_impl2(Typechecker* ts, const Type* infer, bool keep_lvalue) const
+	ErrorOr<TCResult> WhileLoop::typecheck_impl(Typechecker* ts, const Type* infer, bool keep_lvalue) const
 	{
-		auto cond = TRY(this->condition->typecheck2(ts, Type::makeBool()));
+		auto cond = TRY(this->condition->typecheck(ts, Type::makeBool()));
 		if(not cond.type()->isBool())
 			return ErrMsg(ts, "cannot convert '{}' to boolean condition", cond.type());
 
 		auto _ = ts->enterLoopBody();
-		auto new_body = TRY(this->body->typecheck2(ts)).take<cst::Block>();
+		auto new_body = TRY(this->body->typecheck(ts)).take<cst::Block>();
 
-		return TCResult2::ofVoid<cst::WhileLoop>(m_location, std::move(cond).take_expr(), std::move(new_body));
+		return TCResult::ofVoid<cst::WhileLoop>(m_location, std::move(cond).take_expr(), std::move(new_body));
 	}
 
-	ErrorOr<TCResult2> BreakStmt::typecheck_impl2(Typechecker* ts, const Type* infer, bool keep_lvalue) const
+	ErrorOr<TCResult> BreakStmt::typecheck_impl(Typechecker* ts, const Type* infer, bool keep_lvalue) const
 	{
 		if(not ts->isCurrentlyInLoopBody())
 			return ErrMsg(ts, "invalid use of 'break' outside of a loop body");
 
-		return TCResult2::ofVoid<cst::BreakStmt>(m_location);
+		return TCResult::ofVoid<cst::BreakStmt>(m_location);
 	}
 
-	ErrorOr<TCResult2> ContinueStmt::typecheck_impl2(Typechecker* ts, const Type* infer, bool keep_lvalue) const
+	ErrorOr<TCResult> ContinueStmt::typecheck_impl(Typechecker* ts, const Type* infer, bool keep_lvalue) const
 	{
 		if(not ts->isCurrentlyInLoopBody())
 			return ErrMsg(ts, "invalid use of 'continue' outside of a loop body");
 
-		return TCResult2::ofVoid<cst::ContinueStmt>(m_location);
+		return TCResult::ofVoid<cst::ContinueStmt>(m_location);
 	}
 }

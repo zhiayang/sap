@@ -46,11 +46,11 @@ namespace sap::interp::ast
 		explicit Stmt(Location loc) : m_location(std::move(loc)) { }
 
 		virtual ~Stmt();
-		virtual ErrorOr<TCResult2> typecheck_impl2(Typechecker* ts,
+		virtual ErrorOr<TCResult> typecheck_impl(Typechecker* ts,
 		    const Type* infer = nullptr, //
 		    bool keep_lvalue = false) const = 0;
 
-		[[nodiscard]] virtual ErrorOr<TCResult2> typecheck2(Typechecker* ts, //
+		[[nodiscard]] virtual ErrorOr<TCResult> typecheck(Typechecker* ts, //
 		    const Type* infer = nullptr,
 		    bool keep_lvalue = false) const;
 
@@ -69,7 +69,7 @@ namespace sap::interp::ast
 	{
 		explicit TreeInlineExpr(Location loc) : Expr(std::move(loc)) { }
 
-		virtual ErrorOr<TCResult2> typecheck_impl2(Typechecker* ts,
+		virtual ErrorOr<TCResult> typecheck_impl(Typechecker* ts,
 		    const Type* infer = nullptr, //
 		    bool keep_lvalue = false) const override;
 
@@ -80,7 +80,7 @@ namespace sap::interp::ast
 	{
 		explicit TreeBlockExpr(Location loc) : Expr(std::move(loc)) { }
 
-		virtual ErrorOr<TCResult2> typecheck_impl2(Typechecker* ts,
+		virtual ErrorOr<TCResult> typecheck_impl(Typechecker* ts,
 		    const Type* infer = nullptr, //
 		    bool keep_lvalue = false) const override;
 
@@ -92,7 +92,7 @@ namespace sap::interp::ast
 		explicit Ident(Location loc) : Expr(std::move(loc)) { }
 		Ident(Location loc, QualifiedId name_) : Expr(std::move(loc)), name(std::move(name_)) { }
 
-		virtual ErrorOr<TCResult2> typecheck_impl2(Typechecker* ts,
+		virtual ErrorOr<TCResult> typecheck_impl(Typechecker* ts,
 		    const Type* infer = nullptr, //
 		    bool keep_lvalue = false) const override;
 
@@ -103,7 +103,7 @@ namespace sap::interp::ast
 	{
 		explicit FunctionCall(Location loc) : Expr(std::move(loc)) { }
 
-		virtual ErrorOr<TCResult2> typecheck_impl2(Typechecker* ts,
+		virtual ErrorOr<TCResult> typecheck_impl(Typechecker* ts,
 		    const Type* infer = nullptr, //
 		    bool keep_lvalue = false) const override;
 
@@ -123,7 +123,7 @@ namespace sap::interp::ast
 	{
 		explicit NullLit(Location loc) : Expr(std::move(loc)) { }
 
-		virtual ErrorOr<TCResult2> typecheck_impl2(Typechecker* ts,
+		virtual ErrorOr<TCResult> typecheck_impl(Typechecker* ts,
 		    const Type* infer = nullptr, //
 		    bool keep_lvalue = false) const override;
 	};
@@ -132,7 +132,7 @@ namespace sap::interp::ast
 	{
 		explicit BooleanLit(Location loc, bool value_) : Expr(std::move(loc)), value(value_) { }
 
-		virtual ErrorOr<TCResult2> typecheck_impl2(Typechecker* ts,
+		virtual ErrorOr<TCResult> typecheck_impl(Typechecker* ts,
 		    const Type* infer = nullptr, //
 		    bool keep_lvalue = false) const override;
 
@@ -143,7 +143,7 @@ namespace sap::interp::ast
 	{
 		explicit NumberLit(Location loc) : Expr(std::move(loc)) { }
 
-		virtual ErrorOr<TCResult2> typecheck_impl2(Typechecker* ts,
+		virtual ErrorOr<TCResult> typecheck_impl(Typechecker* ts,
 		    const Type* infer = nullptr, //
 		    bool keep_lvalue = false) const override;
 
@@ -157,7 +157,7 @@ namespace sap::interp::ast
 	{
 		explicit StringLit(Location loc) : Expr(std::move(loc)) { }
 
-		virtual ErrorOr<TCResult2> typecheck_impl2(Typechecker* ts,
+		virtual ErrorOr<TCResult> typecheck_impl(Typechecker* ts,
 		    const Type* infer = nullptr, //
 		    bool keep_lvalue = false) const override;
 
@@ -168,7 +168,7 @@ namespace sap::interp::ast
 	{
 		explicit CharLit(Location loc, char32_t ch) : Expr(std::move(loc)), character(ch) { }
 
-		virtual ErrorOr<TCResult2> typecheck_impl2(Typechecker* ts,
+		virtual ErrorOr<TCResult> typecheck_impl(Typechecker* ts,
 		    const Type* infer = nullptr, //
 		    bool keep_lvalue = false) const override;
 
@@ -179,7 +179,7 @@ namespace sap::interp::ast
 	{
 		explicit ArrayLit(Location loc) : Expr(std::move(loc)) { }
 
-		virtual ErrorOr<TCResult2> typecheck_impl2(Typechecker* ts,
+		virtual ErrorOr<TCResult> typecheck_impl(Typechecker* ts,
 		    const Type* infer = nullptr, //
 		    bool keep_lvalue = false) const override;
 
@@ -191,7 +191,7 @@ namespace sap::interp::ast
 	{
 		explicit FStringExpr(Location loc) : Expr(std::move(loc)) { }
 
-		virtual ErrorOr<TCResult2> typecheck_impl2(Typechecker* ts,
+		virtual ErrorOr<TCResult> typecheck_impl(Typechecker* ts,
 		    const Type* infer = nullptr, //
 		    bool keep_lvalue = false) const override;
 
@@ -203,7 +203,7 @@ namespace sap::interp::ast
 	{
 		explicit TypeExpr(Location loc, frontend::PType pt) : Expr(std::move(loc)), ptype(std::move(pt)) { }
 
-		virtual ErrorOr<TCResult2> typecheck_impl2(Typechecker* ts,
+		virtual ErrorOr<TCResult> typecheck_impl(Typechecker* ts,
 		    const Type* infer = nullptr, //
 		    bool keep_lvalue = false) const override;
 
@@ -214,7 +214,7 @@ namespace sap::interp::ast
 	{
 		explicit CastExpr(Location loc) : Expr(std::move(loc)) { }
 
-		virtual ErrorOr<TCResult2> typecheck_impl2(Typechecker* ts,
+		virtual ErrorOr<TCResult> typecheck_impl(Typechecker* ts,
 		    const Type* infer = nullptr, //
 		    bool keep_lvalue = false) const override;
 
@@ -228,7 +228,7 @@ namespace sap::interp::ast
 	{
 		explicit StructLit(Location loc) : Expr(std::move(loc)) { }
 
-		virtual ErrorOr<TCResult2> typecheck_impl2(Typechecker* ts,
+		virtual ErrorOr<TCResult> typecheck_impl(Typechecker* ts,
 		    const Type* infer = nullptr, //
 		    bool keep_lvalue = false) const override;
 
@@ -243,7 +243,7 @@ namespace sap::interp::ast
 	{
 		explicit UnaryOp(Location loc) : Expr(std::move(loc)) { }
 
-		virtual ErrorOr<TCResult2> typecheck_impl2(Typechecker* ts,
+		virtual ErrorOr<TCResult> typecheck_impl(Typechecker* ts,
 		    const Type* infer = nullptr, //
 		    bool keep_lvalue = false) const override;
 
@@ -262,7 +262,7 @@ namespace sap::interp::ast
 	{
 		explicit BinaryOp(Location loc) : Expr(std::move(loc)) { }
 
-		virtual ErrorOr<TCResult2> typecheck_impl2(Typechecker* ts,
+		virtual ErrorOr<TCResult> typecheck_impl(Typechecker* ts,
 		    const Type* infer = nullptr, //
 		    bool keep_lvalue = false) const override;
 
@@ -284,7 +284,7 @@ namespace sap::interp::ast
 	{
 		explicit LogicalBinOp(Location loc) : Expr(std::move(loc)) { }
 
-		virtual ErrorOr<TCResult2> typecheck_impl2(Typechecker* ts,
+		virtual ErrorOr<TCResult> typecheck_impl(Typechecker* ts,
 		    const Type* infer = nullptr, //
 		    bool keep_lvalue = false) const override;
 
@@ -303,7 +303,7 @@ namespace sap::interp::ast
 	{
 		explicit AssignOp(Location loc) : Stmt(std::move(loc)) { }
 
-		virtual ErrorOr<TCResult2> typecheck_impl2(Typechecker* ts,
+		virtual ErrorOr<TCResult> typecheck_impl(Typechecker* ts,
 		    const Type* infer = nullptr, //
 		    bool keep_lvalue = false) const override;
 
@@ -326,7 +326,7 @@ namespace sap::interp::ast
 	{
 		explicit ComparisonOp(Location loc) : Expr(std::move(loc)) { }
 
-		virtual ErrorOr<TCResult2> typecheck_impl2(Typechecker* ts,
+		virtual ErrorOr<TCResult> typecheck_impl(Typechecker* ts,
 		    const Type* infer = nullptr, //
 		    bool keep_lvalue = false) const override;
 
@@ -348,7 +348,7 @@ namespace sap::interp::ast
 	{
 		explicit DotOp(Location loc) : Expr(std::move(loc)) { }
 
-		virtual ErrorOr<TCResult2> typecheck_impl2(Typechecker* ts,
+		virtual ErrorOr<TCResult> typecheck_impl(Typechecker* ts,
 		    const Type* infer = nullptr, //
 		    bool keep_lvalue = false) const override;
 
@@ -362,7 +362,7 @@ namespace sap::interp::ast
 	{
 		explicit OptionalCheckOp(Location loc) : Expr(std::move(loc)) { }
 
-		virtual ErrorOr<TCResult2> typecheck_impl2(Typechecker* ts,
+		virtual ErrorOr<TCResult> typecheck_impl(Typechecker* ts,
 		    const Type* infer = nullptr, //
 		    bool keep_lvalue = false) const override;
 
@@ -373,7 +373,7 @@ namespace sap::interp::ast
 	{
 		explicit NullCoalesceOp(Location loc) : Expr(std::move(loc)) { }
 
-		virtual ErrorOr<TCResult2> typecheck_impl2(Typechecker* ts,
+		virtual ErrorOr<TCResult> typecheck_impl(Typechecker* ts,
 		    const Type* infer = nullptr, //
 		    bool keep_lvalue = false) const override;
 
@@ -385,7 +385,7 @@ namespace sap::interp::ast
 	{
 		explicit DereferenceOp(Location loc) : Expr(std::move(loc)) { }
 
-		virtual ErrorOr<TCResult2> typecheck_impl2(Typechecker* ts,
+		virtual ErrorOr<TCResult> typecheck_impl(Typechecker* ts,
 		    const Type* infer = nullptr, //
 		    bool keep_lvalue = false) const override;
 
@@ -396,7 +396,7 @@ namespace sap::interp::ast
 	{
 		explicit AddressOfOp(Location loc) : Expr(std::move(loc)) { }
 
-		virtual ErrorOr<TCResult2> typecheck_impl2(Typechecker* ts,
+		virtual ErrorOr<TCResult> typecheck_impl(Typechecker* ts,
 		    const Type* infer = nullptr, //
 		    bool keep_lvalue = false) const override;
 
@@ -408,7 +408,7 @@ namespace sap::interp::ast
 	{
 		explicit SubscriptOp(Location loc) : Expr(std::move(loc)) { }
 
-		virtual ErrorOr<TCResult2> typecheck_impl2(Typechecker* ts,
+		virtual ErrorOr<TCResult> typecheck_impl(Typechecker* ts,
 		    const Type* infer = nullptr, //
 		    bool keep_lvalue = false) const override;
 
@@ -420,7 +420,7 @@ namespace sap::interp::ast
 	{
 		explicit StructUpdateOp(Location loc) : Expr(std::move(loc)) { }
 
-		virtual ErrorOr<TCResult2> typecheck_impl2(Typechecker* ts,
+		virtual ErrorOr<TCResult> typecheck_impl(Typechecker* ts,
 		    const Type* infer = nullptr, //
 		    bool keep_lvalue = false) const override;
 
@@ -434,7 +434,7 @@ namespace sap::interp::ast
 	{
 		explicit LengthExpr(Location loc) : Expr(std::move(loc)) { }
 
-		virtual ErrorOr<TCResult2> typecheck_impl2(Typechecker* ts,
+		virtual ErrorOr<TCResult> typecheck_impl(Typechecker* ts,
 		    const Type* infer = nullptr, //
 		    bool keep_lvalue = false) const override;
 
@@ -445,7 +445,7 @@ namespace sap::interp::ast
 	{
 		explicit MoveExpr(Location loc) : Expr(std::move(loc)) { }
 
-		virtual ErrorOr<TCResult2> typecheck_impl2(Typechecker* ts,
+		virtual ErrorOr<TCResult> typecheck_impl(Typechecker* ts,
 		    const Type* infer = nullptr, //
 		    bool keep_lvalue = false) const override;
 
@@ -458,7 +458,7 @@ namespace sap::interp::ast
 		{
 		}
 
-		virtual ErrorOr<TCResult2> typecheck_impl2(Typechecker* ts,
+		virtual ErrorOr<TCResult> typecheck_impl(Typechecker* ts,
 		    const Type* infer = nullptr, //
 		    bool keep_lvalue = false) const override;
 
@@ -471,7 +471,7 @@ namespace sap::interp::ast
 	{
 		explicit Block(Location loc) : Stmt(std::move(loc)) { }
 
-		virtual ErrorOr<TCResult2> typecheck_impl2(Typechecker* ts,
+		virtual ErrorOr<TCResult> typecheck_impl(Typechecker* ts,
 		    const Type* infer = nullptr, //
 		    bool keep_lvalue = false) const override;
 
@@ -486,7 +486,7 @@ namespace sap::interp::ast
 	{
 		explicit IfStmt(Location loc) : Stmt(std::move(loc)) { }
 
-		virtual ErrorOr<TCResult2> typecheck_impl2(Typechecker* ts,
+		virtual ErrorOr<TCResult> typecheck_impl(Typechecker* ts,
 		    const Type* infer = nullptr, //
 		    bool keep_lvalue = false) const override;
 
@@ -499,7 +499,7 @@ namespace sap::interp::ast
 	{
 		explicit ReturnStmt(Location loc) : Stmt(std::move(loc)) { }
 
-		virtual ErrorOr<TCResult2> typecheck_impl2(Typechecker* ts,
+		virtual ErrorOr<TCResult> typecheck_impl(Typechecker* ts,
 		    const Type* infer = nullptr, //
 		    bool keep_lvalue = false) const override;
 
@@ -511,7 +511,7 @@ namespace sap::interp::ast
 	{
 		explicit BreakStmt(Location loc) : Stmt(std::move(loc)) { }
 
-		virtual ErrorOr<TCResult2> typecheck_impl2(Typechecker* ts,
+		virtual ErrorOr<TCResult> typecheck_impl(Typechecker* ts,
 		    const Type* infer = nullptr, //
 		    bool keep_lvalue = false) const override;
 	};
@@ -520,7 +520,7 @@ namespace sap::interp::ast
 	{
 		explicit ContinueStmt(Location loc) : Stmt(std::move(loc)) { }
 
-		virtual ErrorOr<TCResult2> typecheck_impl2(Typechecker* ts,
+		virtual ErrorOr<TCResult> typecheck_impl(Typechecker* ts,
 		    const Type* infer = nullptr, //
 		    bool keep_lvalue = false) const override;
 	};
@@ -529,7 +529,7 @@ namespace sap::interp::ast
 	{
 		explicit WhileLoop(Location loc) : Stmt(std::move(loc)) { }
 
-		virtual ErrorOr<TCResult2> typecheck_impl2(Typechecker* ts,
+		virtual ErrorOr<TCResult> typecheck_impl(Typechecker* ts,
 		    const Type* infer = nullptr, //
 		    bool keep_lvalue = false) const override;
 
@@ -541,7 +541,7 @@ namespace sap::interp::ast
 	{
 		explicit ForLoop(Location loc) : Stmt(std::move(loc)) { }
 
-		virtual ErrorOr<TCResult2> typecheck_impl2(Typechecker* ts,
+		virtual ErrorOr<TCResult> typecheck_impl(Typechecker* ts,
 		    const Type* infer = nullptr, //
 		    bool keep_lvalue = false) const override;
 
@@ -558,7 +558,7 @@ namespace sap::interp::ast
 	{
 		explicit ImportStmt(Location loc) : Stmt(std::move(loc)) { }
 
-		virtual ErrorOr<TCResult2> typecheck_impl2(Typechecker* ts,
+		virtual ErrorOr<TCResult> typecheck_impl(Typechecker* ts,
 		    const Type* infer = nullptr, //
 		    bool keep_lvalue = false) const override;
 
@@ -569,7 +569,7 @@ namespace sap::interp::ast
 	{
 		explicit UsingStmt(Location loc) : Stmt(std::move(loc)) { }
 
-		virtual ErrorOr<TCResult2> typecheck_impl2(Typechecker* ts,
+		virtual ErrorOr<TCResult> typecheck_impl(Typechecker* ts,
 		    const Type* infer = nullptr, //
 		    bool keep_lvalue = false) const override;
 
@@ -581,7 +581,7 @@ namespace sap::interp::ast
 	{
 		explicit HookBlock(Location loc) : Stmt(std::move(loc)) { }
 
-		virtual ErrorOr<TCResult2> typecheck_impl2(Typechecker* ts,
+		virtual ErrorOr<TCResult> typecheck_impl(Typechecker* ts,
 		    const Type* infer = nullptr, //
 		    bool keep_lvalue = false) const override;
 
@@ -622,7 +622,7 @@ namespace sap::interp::ast
 
 		virtual ErrorOr<void> declare(Typechecker* ts) const override;
 
-		virtual ErrorOr<TCResult2> typecheck_impl2(Typechecker* ts,
+		virtual ErrorOr<TCResult> typecheck_impl(Typechecker* ts,
 		    const Type* infer = nullptr, //
 		    bool keep_lvalue = false) const override;
 
@@ -654,7 +654,7 @@ namespace sap::interp::ast
 
 		virtual ErrorOr<void> declare(Typechecker* ts) const override;
 
-		virtual ErrorOr<TCResult2> typecheck_impl2(Typechecker* ts,
+		virtual ErrorOr<TCResult> typecheck_impl(Typechecker* ts,
 		    const Type* infer = nullptr, //
 		    bool keep_lvalue = false) const override;
 
@@ -683,7 +683,7 @@ namespace sap::interp::ast
 
 		virtual ErrorOr<void> declare(Typechecker* ts) const override;
 
-		virtual ErrorOr<TCResult2> typecheck_impl2(Typechecker* ts,
+		virtual ErrorOr<TCResult> typecheck_impl(Typechecker* ts,
 		    const Type* infer = nullptr, //
 		    bool keep_lvalue = false) const override;
 
@@ -710,7 +710,7 @@ namespace sap::interp::ast
 
 		virtual ErrorOr<void> declare(Typechecker* ts) const override;
 
-		virtual ErrorOr<TCResult2> typecheck_impl2(Typechecker* ts,
+		virtual ErrorOr<TCResult> typecheck_impl(Typechecker* ts,
 		    const Type* infer = nullptr, //
 		    bool keep_lvalue = false) const override;
 
@@ -741,7 +741,7 @@ namespace sap::interp::ast
 
 		virtual ErrorOr<void> declare(Typechecker* ts) const override;
 
-		virtual ErrorOr<TCResult2> typecheck_impl2(Typechecker* ts,
+		virtual ErrorOr<TCResult> typecheck_impl(Typechecker* ts,
 		    const Type* infer = nullptr, //
 		    bool keep_lvalue = false) const override;
 
@@ -755,7 +755,7 @@ namespace sap::interp::ast
 	{
 		explicit ContextIdent(Location loc) : Expr(std::move(loc)) { }
 
-		virtual ErrorOr<TCResult2> typecheck_impl2(Typechecker* ts,
+		virtual ErrorOr<TCResult> typecheck_impl(Typechecker* ts,
 		    const Type* infer = nullptr, //
 		    bool keep_lvalue = false) const override;
 

@@ -39,18 +39,18 @@ namespace sap::interp::ast
 		util::unreachable();
 	}
 
-	ErrorOr<TCResult2> BinaryOp::typecheck_impl2(Typechecker* ts, const Type* infer, bool keep_lvalue) const
+	ErrorOr<TCResult> BinaryOp::typecheck_impl(Typechecker* ts, const Type* infer, bool keep_lvalue) const
 	{
-		auto lres = TRY(this->lhs->typecheck2(ts));
-		auto rres = TRY(this->rhs->typecheck2(ts));
+		auto lres = TRY(this->lhs->typecheck(ts));
+		auto rres = TRY(this->rhs->typecheck(ts));
 
 		auto ltype = lres.type();
 		auto rtype = rres.type();
 
 		auto make_result = [&](const Type* type) -> auto {
-			return TCResult2::ofRValue(std::make_unique<cst::BinaryOp>(m_location, type, //
-			    ast_op_to_cst_op(this->op),                                              //
-			    std::move(lres).take_expr(),                                             //
+			return TCResult::ofRValue(std::make_unique<cst::BinaryOp>(m_location, type, //
+			    ast_op_to_cst_op(this->op),                                             //
+			    std::move(lres).take_expr(),                                            //
 			    std::move(rres).take_expr()));
 		};
 

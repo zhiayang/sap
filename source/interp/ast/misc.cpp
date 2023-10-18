@@ -7,9 +7,9 @@
 
 namespace sap::interp::ast
 {
-	ErrorOr<TCResult2> ArraySpreadOp::typecheck_impl2(Typechecker* ts, const Type* infer, bool keep_lvalue) const
+	ErrorOr<TCResult> ArraySpreadOp::typecheck_impl(Typechecker* ts, const Type* infer, bool keep_lvalue) const
 	{
-		auto value = TRY(this->expr->typecheck2(ts, infer));
+		auto value = TRY(this->expr->typecheck(ts, infer));
 		if(not value.type()->isArray())
 			return ErrMsg(ts, "invalid use of '...' operator on non-array type '{}'", value.type());
 
@@ -21,6 +21,6 @@ namespace sap::interp::ast
 			    ret_type->arrayElement());
 		}
 
-		return TCResult2::ofRValue<cst::ArraySpreadOp>(m_location, ret_type, std::move(value).take_expr());
+		return TCResult::ofRValue<cst::ArraySpreadOp>(m_location, ret_type, std::move(value).take_expr());
 	}
 }

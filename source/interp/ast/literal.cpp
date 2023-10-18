@@ -10,7 +10,7 @@
 
 namespace sap::interp::ast
 {
-	ErrorOr<TCResult2> ContextIdent::typecheck_impl2(Typechecker* ts, const Type* infer, bool keep_lvalue) const
+	ErrorOr<TCResult> ContextIdent::typecheck_impl(Typechecker* ts, const Type* infer, bool keep_lvalue) const
 	{
 		// note: we allow this to resolve both a struct field and an enumerator, preferring the field.
 		// if both exist, we raise an error.
@@ -38,7 +38,7 @@ namespace sap::interp::ast
 				}
 
 				auto field_type = struct_ctx->getFieldNamed(this->name);
-				return TCResult2::ofRValue<cst::DotOp>(m_location, field_type, /*is_optional: */ false, struct_ctx,
+				return TCResult::ofRValue<cst::DotOp>(m_location, field_type, /*is_optional: */ false, struct_ctx,
 				    std::make_unique<cst::StructContextSelf>(m_location, struct_ctx), this->name);
 			}
 		}
@@ -67,11 +67,11 @@ namespace sap::interp::ast
 			    enum_defn->declaration->name, this->name);
 		}
 
-		return TCResult2::ofLValue(std::make_unique<cst::EnumeratorExpr>(m_location, enum_type, enumerator),
+		return TCResult::ofLValue(std::make_unique<cst::EnumeratorExpr>(m_location, enum_type, enumerator),
 		    /* mutable: */ false);
 	}
 
-	ErrorOr<TCResult2> ArrayLit::typecheck_impl2(Typechecker* ts, const Type* infer, bool keep_lvalue) const
+	ErrorOr<TCResult> ArrayLit::typecheck_impl(Typechecker* ts, const Type* infer, bool keep_lvalue) const
 	{
 		if(elem_type.has_value())
 		{
@@ -82,12 +82,12 @@ namespace sap::interp::ast
 			std::vector<std::unique_ptr<cst::Expr>> elms;
 			for(auto& elm : this->elements)
 			{
-				auto et = elms.emplace_back(TRY(elm->typecheck2(ts, ty)).take_expr())->type();
+				auto et = elms.emplace_back(TRY(elm->typecheck(ts, ty)).take_expr())->type();
 				if(et != ty)
 					return ErrMsg(elm->loc(), "mismatched types in array literal: expected '{}', got '{}'", ty, et);
 			}
 
-			return TCResult2::ofRValue<cst::ArrayLit>(m_location, Type::makeArray(ty), std::move(elms));
+			return TCResult::ofRValue<cst::ArrayLit>(m_location, Type::makeArray(ty), std::move(elms));
 		}
 		else
 		{
@@ -95,15 +95,15 @@ namespace sap::interp::ast
 
 			// note: void array is a special case.
 			if(this->elements.empty())
-				return TCResult2::ofRValue<cst::ArrayLit>(m_location, Type::makeArray(Type::makeVoid()),
+				return TCResult::ofRValue<cst::ArrayLit>(m_location, Type::makeArray(Type::makeVoid()),
 				    std::move(elms));
 
 			auto et = infer ? infer->arrayElement() : nullptr;
-			et = elms.emplace_back(TRY(this->elements[0]->typecheck2(ts, et)).take_expr())->type();
+			et = elms.emplace_back(TRY(this->elements[0]->typecheck(ts, et)).take_expr())->type();
 
 			for(size_t i = 1; i < this->elements.size(); i++)
 			{
-				auto t2 = elms.emplace_back(TRY(this->elements[i]->typecheck2(ts, et)).take_expr())->type();
+				auto t2 = elms.emplace_back(TRY(this->elements[i]->typecheck(ts, et)).take_expr())->type();
 				if(t2 != et)
 				{
 					return ErrMsg(this->elements[i]->loc(),
@@ -111,21 +111,21 @@ namespace sap::interp::ast
 				}
 			}
 
-			return TCResult2::ofRValue<cst::ArrayLit>(m_location, Type::makeArray(et), std::move(elms));
+			return TCResult::ofRValue<cst::ArrayLit>(m_location, Type::makeArray(et), std::move(elms));
 		}
 	}
 
-	ErrorOr<TCResult2> LengthExpr::typecheck_impl2(Typechecker* ts, const Type* infer, bool keep_lvalue) const
+	ErrorOr<TCResult> LengthExpr::typecheck_impl(Typechecker* ts, const Type* infer, bool keep_lvalue) const
 	{
-		return TCResult2::ofRValue<cst::LengthExpr>(m_location, this->length);
+		return TCResult::ofRValue<cst::LengthExpr>(m_location, this->length);
 	}
 
-	ErrorOr<TCResult2> BooleanLit::typecheck_impl2(Typechecker* ts, const Type* infer, bool keep_lvalue) const
+	ErrorOr<TCResult> BooleanLit::typecheck_impl(Typechecker* ts, const Type* infer, bool keep_lvalue) const
 	{
-		return TCResult2::ofRValue<cst::BooleanLit>(m_location, this->value);
+		return TCResult::ofRValue<cst::BooleanLit>(m_location, this->value);
 	}
 
-	ErrorOr<TCResult2> NumberLit::typecheck_impl2(Typechecker* ts, const Type* infer, bool keep_lvalue) const
+	ErrorOr<TCResult> NumberLit::typecheck_impl(Typechecker* ts, const Type* infer, bool keep_lvalue) const
 	{
 		auto ret = std::make_unique<cst::NumberLit>(m_location,
 		    this->is_floating ? Type::makeFloating() : Type::makeInteger(), this->is_floating);
@@ -135,21 +135,21 @@ namespace sap::interp::ast
 		else
 			ret->int_value = this->int_value;
 
-		return TCResult2::ofRValue(std::move(ret));
+		return TCResult::ofRValue(std::move(ret));
 	}
 
-	ErrorOr<TCResult2> StringLit::typecheck_impl2(Typechecker* ts, const Type* infer, bool keep_lvalue) const
+	ErrorOr<TCResult> StringLit::typecheck_impl(Typechecker* ts, const Type* infer, bool keep_lvalue) const
 	{
-		return TCResult2::ofRValue<cst::StringLit>(m_location, this->string);
+		return TCResult::ofRValue<cst::StringLit>(m_location, this->string);
 	}
 
-	ErrorOr<TCResult2> CharLit::typecheck_impl2(Typechecker* ts, const Type* infer, bool keep_lvalue) const
+	ErrorOr<TCResult> CharLit::typecheck_impl(Typechecker* ts, const Type* infer, bool keep_lvalue) const
 	{
-		return TCResult2::ofRValue<cst::CharLit>(m_location, this->character);
+		return TCResult::ofRValue<cst::CharLit>(m_location, this->character);
 	}
 
-	ErrorOr<TCResult2> NullLit::typecheck_impl2(Typechecker* ts, const Type* infer, bool keep_lvalue) const
+	ErrorOr<TCResult> NullLit::typecheck_impl(Typechecker* ts, const Type* infer, bool keep_lvalue) const
 	{
-		return TCResult2::ofRValue<cst::NullLit>(m_location);
+		return TCResult::ofRValue<cst::NullLit>(m_location);
 	}
 }

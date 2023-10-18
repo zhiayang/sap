@@ -39,9 +39,9 @@ namespace sap::interp::ast
 	// defined in binop.cpp
 	extern ErrorOr<Value> evaluateBinaryOperationOnValues(Evaluator* ev, BinaryOp::Op op, Value lval, Value rval);
 
-	ErrorOr<TCResult2> AssignOp::typecheck_impl2(Typechecker* ts, const Type* infer, bool keep_lvalue) const
+	ErrorOr<TCResult> AssignOp::typecheck_impl(Typechecker* ts, const Type* infer, bool keep_lvalue) const
 	{
-		auto lres = TRY(this->lhs->typecheck2(ts, /* infer: */ nullptr, /* keep_lvalue: */ true));
+		auto lres = TRY(this->lhs->typecheck(ts, /* infer: */ nullptr, /* keep_lvalue: */ true));
 		if(not lres.isLValue())
 			return ErrMsg(ts, "cannot assign to non-lvalue");
 		else if(not lres.isMutable())
@@ -49,7 +49,7 @@ namespace sap::interp::ast
 
 		auto ltype = lres.type();
 
-		auto rres = TRY(this->rhs->typecheck2(ts));
+		auto rres = TRY(this->rhs->typecheck(ts));
 		auto rtype = rres.type();
 
 		auto cst_op = std::make_unique<cst::AssignOp>(m_location, ast_op_to_cst_op(this->op),
@@ -106,6 +106,6 @@ namespace sap::interp::ast
 		    rtype);
 
 	pass:
-		return TCResult2::ofVoid(std::move(cst_op));
+		return TCResult::ofVoid(std::move(cst_op));
 	}
 }

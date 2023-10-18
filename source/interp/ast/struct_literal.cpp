@@ -25,7 +25,7 @@ namespace sap::interp::ast
 		return fields;
 	}
 
-	ErrorOr<TCResult2> StructLit::typecheck_impl2(Typechecker* ts, const Type* infer, bool keep_lvalue) const
+	ErrorOr<TCResult> StructLit::typecheck_impl(Typechecker* ts, const Type* infer, bool keep_lvalue) const
 	{
 		const StructType* struct_type = nullptr;
 		if(struct_name.name.empty())
@@ -79,7 +79,7 @@ namespace sap::interp::ast
 			else if(not f.name.has_value())
 				infer_type = struct_type->getFieldAtIndex(i);
 
-			processed_field_exprs.push_back(TRY(f.value->typecheck2(ts, infer_type)).take_expr());
+			processed_field_exprs.push_back(TRY(f.value->typecheck(ts, infer_type)).take_expr());
 			processed_field_types.push_back({
 			    .type = processed_field_exprs.back()->type(),
 			    .name = f.name,
@@ -111,6 +111,6 @@ namespace sap::interp::ast
 
 		assert(final_fields.size() == struct_type->getFields().size());
 
-		return TCResult2::ofRValue<cst::StructLit>(m_location, struct_type, std::move(final_fields));
+		return TCResult::ofRValue<cst::StructLit>(m_location, struct_type, std::move(final_fields));
 	}
 }

@@ -8,7 +8,7 @@
 
 namespace sap::interp::ast
 {
-	ErrorOr<TCResult2> FStringExpr::typecheck_impl2(Typechecker* ts, const Type* infer, bool keep_lvalue) const
+	ErrorOr<TCResult> FStringExpr::typecheck_impl(Typechecker* ts, const Type* infer, bool keep_lvalue) const
 	{
 		std::vector<cst::FStringExpr::Part> new_parts {};
 
@@ -29,7 +29,7 @@ namespace sap::interp::ast
 				    .value = std::move(*const_cast<std::unique_ptr<Expr>*>(expr)),
 				});
 
-				auto cst_call = TRY(call->typecheck2(ts)).take_expr();
+				auto cst_call = TRY(call->typecheck(ts)).take_expr();
 				if(auto t = cst_call->type(); not t->isString())
 					return ErrMsg(loc, "`to_string` method returned non-string type '{}'", t);
 
@@ -41,6 +41,6 @@ namespace sap::interp::ast
 			}
 		}
 
-		return TCResult2::ofRValue<cst::FStringExpr>(m_location, std::move(new_parts));
+		return TCResult::ofRValue<cst::FStringExpr>(m_location, std::move(new_parts));
 	}
 }

@@ -7,12 +7,12 @@
 
 namespace sap::interp::ast
 {
-	ErrorOr<TCResult2> SubscriptOp::typecheck_impl2(Typechecker* ts, const Type* infer, bool keep_lvalue) const
+	ErrorOr<TCResult> SubscriptOp::typecheck_impl(Typechecker* ts, const Type* infer, bool keep_lvalue) const
 	{
-		auto lhs = TRY(this->array->typecheck2(ts));
+		auto lhs = TRY(this->array->typecheck(ts));
 
 		// TODO: multiple subscript indices for overloaded operators
-		auto rhs = TRY(this->indices[0]->typecheck2(ts));
+		auto rhs = TRY(this->indices[0]->typecheck(ts));
 
 		auto ltype = lhs.type();
 		auto rtype = rhs.type();
@@ -29,18 +29,18 @@ namespace sap::interp::ast
 		{
 			if(lhs.isMutable())
 			{
-				return TCResult2::ofMutableLValue<cst::SubscriptOp>(m_location, ltype->arrayElement(),
+				return TCResult::ofMutableLValue<cst::SubscriptOp>(m_location, ltype->arrayElement(),
 				    std::move(lhs).take_expr(), std::move(new_indices));
 			}
 			else
 			{
-				return TCResult2::ofImmutableLValue<cst::SubscriptOp>(m_location, ltype->arrayElement(),
+				return TCResult::ofImmutableLValue<cst::SubscriptOp>(m_location, ltype->arrayElement(),
 				    std::move(lhs).take_expr(), std::move(new_indices));
 			}
 		}
 		else
 		{
-			return TCResult2::ofRValue<cst::SubscriptOp>(m_location, ltype->arrayElement(), std::move(lhs).take_expr(),
+			return TCResult::ofRValue<cst::SubscriptOp>(m_location, ltype->arrayElement(), std::move(lhs).take_expr(),
 			    std::move(new_indices));
 		}
 	}

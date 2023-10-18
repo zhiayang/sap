@@ -44,10 +44,10 @@ namespace sap::interp::ast
 	}
 
 
-	ErrorOr<TCResult2> TreeInlineExpr::typecheck_impl2(Typechecker* ts, const Type* infer, bool keep_lvalue) const
+	ErrorOr<TCResult> TreeInlineExpr::typecheck_impl(Typechecker* ts, const Type* infer, bool keep_lvalue) const
 	{
 		TRY(typecheck_list_of_tios(ts, this->objects));
-		return TCResult2::ofRValue<cst::TreeInlineExpr>(m_location, this->objects);
+		return TCResult::ofRValue<cst::TreeInlineExpr>(m_location, this->objects);
 	}
 
 
@@ -61,7 +61,7 @@ namespace sap::interp::ast
 		}
 		else if(auto sb = obj->castToScriptBlock())
 		{
-			TRY(sb->body->typecheck2(ts));
+			TRY(sb->body->typecheck(ts));
 		}
 		else if(auto box = obj->castToContainer())
 		{
@@ -87,8 +87,8 @@ namespace sap::interp::ast
 
 
 
-	ErrorOr<TCResult2> TreeBlockExpr::typecheck_impl2(Typechecker* ts, const Type* infer, bool keep_lvalue) const
+	ErrorOr<TCResult> TreeBlockExpr::typecheck_impl(Typechecker* ts, const Type* infer, bool keep_lvalue) const
 	{
-		return TCResult2::ofRValue(TRY(typecheck_block_obj(ts, m_location, this->object)));
+		return TCResult::ofRValue(TRY(typecheck_block_obj(ts, m_location, this->object)));
 	}
 }

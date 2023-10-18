@@ -37,7 +37,7 @@ namespace sap::interp::ast
 			std::unique_ptr<cst::Expr> default_value;
 			if(param.default_value != nullptr)
 			{
-				default_value = TRY(param.default_value->typecheck2(ts)).take_expr();
+				default_value = TRY(param.default_value->typecheck(ts)).take_expr();
 				if(not ts->canImplicitlyConvert(default_value->type(), type))
 				{
 					return ErrMsg(ts,
@@ -72,7 +72,7 @@ namespace sap::interp::ast
 		return Ok();
 	}
 
-	ErrorOr<TCResult2> FunctionDefn::typecheck_impl2(Typechecker* ts, const Type* infer, bool keep_lvalue) const
+	ErrorOr<TCResult> FunctionDefn::typecheck_impl(Typechecker* ts, const Type* infer, bool keep_lvalue) const
 	{
 		assert(this->declaration != nullptr);
 		auto decl_type = this->declaration->type;
@@ -98,7 +98,7 @@ namespace sap::interp::ast
 			    /* init: */ nullptr, /* type: */ param_type);
 
 			TRY(vdef.declare(ts));
-			auto cst_vdef = TRY(vdef.typecheck2(ts)).take<cst::VariableDefn>();
+			auto cst_vdef = TRY(vdef.typecheck(ts)).take<cst::VariableDefn>();
 
 			new_params.push_back({
 			    .defn = std::move(cst_vdef),
@@ -109,7 +109,7 @@ namespace sap::interp::ast
 		auto rt = decl_type->toFunction()->returnType();
 		auto __ = ts->enterFunctionWithReturnType(rt);
 
-		auto cst_body = TRY(this->body->typecheck2(ts)).take<cst::Block>();
+		auto cst_body = TRY(this->body->typecheck(ts)).take<cst::Block>();
 
 		if(not rt->isVoid())
 		{
@@ -121,7 +121,7 @@ namespace sap::interp::ast
 		    std::move(cst_body));
 
 		this->declaration->define(defn.get());
-		return TCResult2::ofVoid(std::move(defn));
+		return TCResult::ofVoid(std::move(defn));
 	}
 
 
@@ -132,13 +132,13 @@ namespace sap::interp::ast
 		return Ok();
 	}
 
-	ErrorOr<TCResult2> BuiltinFunctionDefn::typecheck_impl2(Typechecker* ts, const Type* infer, bool keep_lvalue) const
+	ErrorOr<TCResult> BuiltinFunctionDefn::typecheck_impl(Typechecker* ts, const Type* infer, bool keep_lvalue) const
 	{
 		assert(this->declaration != nullptr);
 
 		auto defn = std::make_unique<cst::BuiltinFunctionDefn>(m_location, this->declaration, this->function);
 		this->declaration->define(defn.get());
 
-		return TCResult2::ofVoid(std::move(defn));
+		return TCResult::ofVoid(std::move(defn));
 	}
 }

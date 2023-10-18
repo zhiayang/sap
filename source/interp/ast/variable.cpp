@@ -15,7 +15,7 @@ namespace sap::interp::ast
 		return Ok();
 	}
 
-	ErrorOr<TCResult2> VariableDefn::typecheck_impl2(Typechecker* ts, const Type* infer, bool keep_lvalue) const
+	ErrorOr<TCResult> VariableDefn::typecheck_impl(Typechecker* ts, const Type* infer, bool keep_lvalue) const
 	{
 		// if we have neither, it's an error
 		if(not this->explicit_type.has_value() && this->initialiser == nullptr)
@@ -32,7 +32,7 @@ namespace sap::interp::ast
 
 			if(this->initialiser != nullptr)
 			{
-				init = TRY(this->initialiser->typecheck2(ts, /* infer: */ var_type)).take_expr();
+				init = TRY(this->initialiser->typecheck(ts, /* infer: */ var_type)).take_expr();
 				if(not ts->canImplicitlyConvert(init->type(), var_type))
 				{
 					return ErrMsg(ts, "cannot initialise variable of type '{}' with expression of type '{}'", //
@@ -43,7 +43,7 @@ namespace sap::interp::ast
 		else
 		{
 			assert(this->initialiser != nullptr);
-			init = TRY(this->initialiser->typecheck2(ts)).take_expr();
+			init = TRY(this->initialiser->typecheck(ts)).take_expr();
 			var_type = init->type();
 		}
 
@@ -54,6 +54,6 @@ namespace sap::interp::ast
 		    this->is_mutable);
 
 		this->declaration->define(defn.get());
-		return TCResult2::ofVoid(std::move(defn));
+		return TCResult::ofVoid(std::move(defn));
 	}
 }

@@ -35,10 +35,10 @@ namespace sap::interp::ast
 		util::unreachable();
 	}
 
-	ErrorOr<TCResult2> LogicalBinOp::typecheck_impl2(Typechecker* ts, const Type* infer, bool keep_lvalue) const
+	ErrorOr<TCResult> LogicalBinOp::typecheck_impl(Typechecker* ts, const Type* infer, bool keep_lvalue) const
 	{
-		auto lres = TRY(this->lhs->typecheck2(ts, /* infer: */ Type::makeBool()));
-		auto rres = TRY(this->rhs->typecheck2(ts, /* infer: */ Type::makeBool()));
+		auto lres = TRY(this->lhs->typecheck(ts, /* infer: */ Type::makeBool()));
+		auto rres = TRY(this->rhs->typecheck(ts, /* infer: */ Type::makeBool()));
 
 		if(not lres.type()->isBool())
 		{
@@ -51,7 +51,7 @@ namespace sap::interp::ast
 			    op_to_string(this->op), rres.type());
 		}
 
-		return TCResult2::ofRValue<cst::LogicalBinOp>(m_location, ast_op_to_cst_op(this->op),
+		return TCResult::ofRValue<cst::LogicalBinOp>(m_location, ast_op_to_cst_op(this->op),
 		    std::move(lres).take_expr(), std::move(rres).take_expr());
 	}
 }

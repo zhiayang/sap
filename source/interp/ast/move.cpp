@@ -7,12 +7,12 @@
 
 namespace sap::interp::ast
 {
-	ErrorOr<TCResult2> MoveExpr::typecheck_impl2(Typechecker* ts, const Type* infer, bool keep_lvalue) const
+	ErrorOr<TCResult> MoveExpr::typecheck_impl(Typechecker* ts, const Type* infer, bool keep_lvalue) const
 	{
-		auto ret = TRY(this->expr->typecheck2(ts, infer, /* keep_lvalue: */ true));
+		auto ret = TRY(this->expr->typecheck(ts, infer, /* keep_lvalue: */ true));
 		if(not ret.isLValue())
 			return ErrMsg(ts, "invalid use of move-expression on rvalue");
 
-		return TCResult2::ofRValue<cst::MoveExpr>(m_location, std::move(ret).take_expr());
+		return TCResult::ofRValue<cst::MoveExpr>(m_location, std::move(ret).take_expr());
 	}
 }

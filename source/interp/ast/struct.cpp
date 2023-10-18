@@ -20,7 +20,7 @@ namespace sap::interp::ast
 		return Ok();
 	}
 
-	ErrorOr<TCResult2> StructDefn::typecheck_impl2(Typechecker* ts, const Type* infer, bool keep_lvalue) const
+	ErrorOr<TCResult> StructDefn::typecheck_impl(Typechecker* ts, const Type* infer, bool keep_lvalue) const
 	{
 		assert(this->declaration != nullptr);
 		auto struct_type = this->declaration->type->toStruct();
@@ -44,7 +44,7 @@ namespace sap::interp::ast
 			std::unique_ptr<cst::Expr> init_value;
 			if(field.initialiser != nullptr)
 			{
-				init_value = TRY(field.initialiser->typecheck2(ts, field_type)).take_expr();
+				init_value = TRY(field.initialiser->typecheck(ts, field_type)).take_expr();
 				if(not ts->canImplicitlyConvert(init_value->type(), field_type))
 				{
 					return ErrMsg(ts, "cannot initialise field of type '{}' with value of type '{}'", field_type,
@@ -71,14 +71,14 @@ namespace sap::interp::ast
 		this->declaration->define(defn.get());
 		TRY(ts->addTypeDefinition(struct_type, defn.get()));
 
-		return TCResult2::ofVoid(std::move(defn));
+		return TCResult::ofVoid(std::move(defn));
 	}
 
 
 
-	ErrorOr<TCResult2> StructUpdateOp::typecheck_impl2(Typechecker* ts, const Type* infer, bool keep_lvalue) const
+	ErrorOr<TCResult> StructUpdateOp::typecheck_impl(Typechecker* ts, const Type* infer, bool keep_lvalue) const
 	{
-		auto lhs = TRY(this->structure->typecheck2(ts, infer)).take_expr();
+		auto lhs = TRY(this->structure->typecheck(ts, infer)).take_expr();
 		if(not lhs->type()->isStruct())
 			return ErrMsg(ts, "left-hand side of '//' operator must be a struct; got '{}'", lhs->type());
 
@@ -92,7 +92,7 @@ namespace sap::interp::ast
 				return ErrMsg(expr->loc(), "struct '{}' has no field named '{}'", struct_type->name().name, name);
 
 			auto field_type = struct_type->getFieldNamed(name);
-			auto new_expr = TRY(expr->typecheck2(ts, field_type)).take_expr();
+			auto new_expr = TRY(expr->typecheck(ts, field_type)).take_expr();
 
 			if(not ts->canImplicitlyConvert(new_expr->type(), field_type))
 			{
@@ -106,7 +106,7 @@ namespace sap::interp::ast
 			});
 		}
 
-		return TCResult2::ofRValue<cst::StructUpdateOp>(m_location, struct_type, std::move(lhs),
+		return TCResult::ofRValue<cst::StructUpdateOp>(m_location, struct_type, std::move(lhs),
 		    std::move(update_exprs));
 	}
 }

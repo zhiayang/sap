@@ -9,7 +9,7 @@
 
 namespace sap::interp::ast
 {
-	ErrorOr<TCResult2> Block::typecheck_impl2(Typechecker* ts, const Type* infer, bool keep_lvalue) const
+	ErrorOr<TCResult> Block::typecheck_impl(Typechecker* ts, const Type* infer, bool keep_lvalue) const
 	{
 		DefnTree* tree = nullptr;
 
@@ -35,9 +35,9 @@ namespace sap::interp::ast
 		}
 
 		for(auto& stmt : this->body)
-			stmts.push_back(TRY(stmt->typecheck2(ts)).take_stmt());
+			stmts.push_back(TRY(stmt->typecheck(ts)).take_stmt());
 
-		return TCResult2::ofVoid<cst::Block>(m_location, std::move(stmts));
+		return TCResult::ofVoid<cst::Block>(m_location, std::move(stmts));
 	}
 
 	bool Block::checkAllPathsReturn(const Type* return_type)
