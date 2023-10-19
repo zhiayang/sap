@@ -181,7 +181,6 @@ namespace sap::interp
 		});
 
 		DEF("document", PL(), T_MP(t_bdocproxy), [](auto* ev, auto& args) {
-			zpr::println("calling document(): {}", ev->documentProxy().type());
 			return EvalResult::ofValue(Value::mutablePointer(builtin::BS_DocumentProxy::type, &ev->documentProxy()));
 		});
 

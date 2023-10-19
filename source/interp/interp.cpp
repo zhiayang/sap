@@ -39,23 +39,15 @@ namespace sap::interp
 		return m_imported_files.contains(filename);
 	}
 
-	void Interpreter::addHookBlock(const ast::HookBlock* block)
-	{
-		m_hook_blocks[block->phase].push_back(block);
-	}
-
 	void Interpreter::addHookBlock(ProcessingPhase phase, const cst::Block* block)
 	{
-		m_hook_blocks2[phase].push_back(block);
+		m_hook_blocks[phase].push_back(block);
 	}
 
 	ErrorOr<void> Interpreter::runHooks()
 	{
 		for(auto* blk : m_hook_blocks[m_current_phase])
-		{
-			auto tc_blk = TRY(blk->typecheck(&this->typechecker())).take<cst::Block>();
-			TRY(tc_blk->evaluate(&this->evaluator()));
-		}
+			TRY(blk->evaluate(&this->evaluator()));
 
 		return Ok();
 	}

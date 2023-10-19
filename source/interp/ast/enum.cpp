@@ -65,6 +65,7 @@ namespace sap::interp::ast
 				return ErrMsg(ts, "non-integral enumerators must explicitly specify a value");
 			}
 
+			e.declaration->define(ce.get());
 			enums.push_back(std::move(ce));
 		}
 

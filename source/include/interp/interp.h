@@ -69,8 +69,7 @@ namespace sap::interp
 		std::unique_ptr<Evaluator> m_evaluator;
 
 		ProcessingPhase m_current_phase;
-		util::hashmap<ProcessingPhase, std::vector<const ast::HookBlock*>> m_hook_blocks;
-		util::hashmap<ProcessingPhase, std::vector<const cst::Block*>> m_hook_blocks2;
+		util::hashmap<ProcessingPhase, std::vector<const cst::Block*>> m_hook_blocks;
 
 		std::vector<zst::unique_span<uint8_t[]>> m_file_contents;
 

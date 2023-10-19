@@ -4,6 +4,9 @@
 
 #pragma once
 
+#include <string>
+#include <zst/zst.h>
+
 namespace pdf
 {
 	struct Name;
