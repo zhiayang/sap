@@ -53,12 +53,14 @@ namespace sap::interp::ast
 
 			if(e.value != nullptr)
 			{
-				auto ty = TRY(e.value->typecheck(ts, enum_elm_type)).type();
-				if(not ts->canImplicitlyConvert(ty, enum_elm_type))
+				auto val = TRY(e.value->typecheck(ts, enum_elm_type));
+				if(not ts->canImplicitlyConvert(val.type(), enum_elm_type))
 				{
-					return ErrMsg(ts, "cannot use value of type '{}' as enumerator for enum type '{}'", ty,
+					return ErrMsg(ts, "cannot use value of type '{}' as enumerator for enum type '{}'", val.type(),
 					    (const Type*) enum_type);
 				}
+
+				ce->value = std::move(val).take_expr();
 			}
 			else if(not enum_elm_type->isInteger())
 			{
