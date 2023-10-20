@@ -33,6 +33,8 @@ namespace pdf
 		{
 			// create the "soft mask"
 			m_alpha_channel = Stream::create();
+			m_alpha_channel->setCompressed(true);
+
 			m_alpha_channel->append(m_image.alpha);
 
 			auto tmp = m_alpha_channel->dictionary();
