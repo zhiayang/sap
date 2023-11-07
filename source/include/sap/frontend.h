@@ -96,6 +96,7 @@ namespace sap::frontend
 		KW_While,
 		KW_Break,
 		KW_Using,
+		KW_Union,
 		KW_Struct,
 		KW_Return,
 		KW_Import,

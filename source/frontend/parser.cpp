@@ -1411,10 +1411,10 @@ namespace sap::frontend
 				enum_value = TRY(parse_expr(lexer));
 
 			enumerators.push_back(ast::EnumDefn::Enumerator {
-				.location = enum_name->loc,
-				.name = enum_name->text.str(),
-				.value = std::move(enum_value),
-				.declaration = nullptr,
+			    .location = enum_name->loc,
+			    .name = enum_name->text.str(),
+			    .value = std::move(enum_value),
+			    .declaration = nullptr,
 			});
 
 			if(not lexer.match(TT::Semicolon))
@@ -1424,6 +1424,52 @@ namespace sap::frontend
 		return Ok(std::make_unique<ast::EnumDefn>(std::move(loc), std::move(name), std::move(enum_type),
 		    std::move(enumerators)));
 	}
+
+	static ErrorOrUniquePtr<ast::UnionDefn> parse_union_defn(Lexer& lexer)
+	{
+		auto loc = lexer.location();
+		must_expect(lexer, TT::KW_Union);
+
+		std::string name;
+		if(auto name_tok = lexer.match(TT::Identifier); not name_tok.has_value())
+			return ErrMsg(lexer.location(), "expected identifier after 'union'");
+		else
+			name = name_tok->text.str();
+
+		if(not lexer.expect(TT::LBrace))
+			return ErrMsg(lexer.location(), "expected '{' for union body");
+
+		std::vector<ast::UnionDefn::Case> cases {};
+		while(not lexer.expect(TT::RBrace))
+		{
+			auto case_name = lexer.match(TT::Identifier);
+			if(not case_name.has_value())
+				return ErrMsg(lexer.location(), "expected case name");
+
+			ast::UnionDefn::Case uc {};
+			uc.location = case_name->loc;
+			uc.name = case_name->text.str();
+
+			if(lexer.expect(TT::LParen))
+			{
+				for(bool first = true; not lexer.expect(TT::RParen); first = false)
+				{
+					if(not first && not lexer.expect(TT::Comma))
+						return ErrMsg(lexer.location(), "expected ',' or ')' in case parameter list");
+
+					uc.params.push_back(TRY(parse_param(lexer)));
+				}
+			}
+
+			cases.push_back(std::move(uc));
+
+			if(not lexer.match(TT::Semicolon))
+				return ErrMsg(lexer.location(), "expected ';' after case");
+		}
+
+		return Ok(std::make_unique<ast::UnionDefn>(std::move(loc), std::move(name), std::move(cases)));
+	}
+
 
 
 
@@ -1626,6 +1672,11 @@ namespace sap::frontend
 		else if(tok == TT::KW_Enum)
 		{
 			stmt = TRY(parse_enum_defn(lexer));
+			optional_semicolon = true;
+		}
+		else if(tok == TT::KW_Union)
+		{
+			stmt = TRY(parse_union_defn(lexer));
 			optional_semicolon = true;
 		}
 		else if(tok == TT::KW_If)

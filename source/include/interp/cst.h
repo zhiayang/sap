@@ -806,6 +806,26 @@ namespace sap::interp::cst
 		std::vector<Field> fields;
 	};
 
+	struct UnionDefn : Definition
+	{
+		struct Case
+		{
+			std::string name;
+			const StructType* type;
+			std::vector<std::unique_ptr<Expr>> default_values;
+		};
+
+		UnionDefn(Location loc, const Declaration* decl, std::vector<Case> cases)
+		    : Definition(std::move(loc), decl), cases(std::move(cases))
+		{
+		}
+
+		virtual ErrorOr<EvalResult> evaluate_impl(Evaluator* ev) const override;
+
+		std::vector<Case> cases;
+	};
+
+
 	struct EnumeratorExpr : Expr
 	{
 		explicit EnumeratorExpr(Location loc, const EnumType* enum_type, const EnumeratorDefn* enumerator)

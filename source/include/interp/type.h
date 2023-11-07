@@ -13,6 +13,7 @@ namespace sap::interp
 {
 	struct EnumType;
 	struct ArrayType;
+	struct UnionType;
 	struct StructType;
 	struct PointerType;
 	struct OptionalType;
@@ -26,6 +27,7 @@ namespace sap::interp
 		bool isChar() const { return m_kind == KIND_CHAR; }
 		bool isEnum() const { return m_kind == KIND_ENUM; }
 		bool isArray() const { return m_kind == KIND_ARRAY; }
+		bool isUnion() const { return m_kind == KIND_UNION; }
 		bool isStruct() const { return m_kind == KIND_STRUCT; }
 		bool isLength() const { return m_kind == KIND_LENGTH; }
 		bool isNullPtr() const { return m_kind == KIND_NULLPTR; }
@@ -47,6 +49,7 @@ namespace sap::interp
 		const OptionalType* toOptional() const;
 		const PointerType* toPointer() const;
 		const StructType* toStruct() const;
+		const UnionType* toUnion() const;
 		const ArrayType* toArray() const;
 		const EnumType* toEnum() const;
 
@@ -92,6 +95,9 @@ namespace sap::interp
 		static const StructType*
 		makeStruct(QualifiedId name, const std::vector<std::pair<std::string, const Type*>>& fields);
 
+		static const UnionType*
+		makeUnion(QualifiedId name, const std::vector<std::pair<std::string, const StructType*>>& cases);
+
 		static const EnumType* makeEnum(QualifiedId name, const Type* enumerator_type);
 
 		virtual ~Type();
@@ -110,6 +116,7 @@ namespace sap::interp
 
 			KIND_ENUM,
 			KIND_ARRAY,
+			KIND_UNION,
 			KIND_STRUCT,
 			KIND_POINTER,
 			KIND_NULLPTR,
@@ -212,6 +219,40 @@ namespace sap::interp
 
 		const Type* m_element_type;
 		bool m_is_variadic;
+
+		friend struct Type;
+	};
+
+	struct UnionType : Type
+	{
+		// each case is really just a struct type.
+		struct Case
+		{
+			std::string name;
+			const StructType* type;
+		};
+
+		virtual std::string str() const override;
+		virtual bool sameAs(const Type* other) const override;
+
+		const QualifiedId& name() const { return m_name; }
+
+		bool hasCaseNamed(zst::str_view name) const;
+		size_t getCaseIndex(zst::str_view name) const;
+		const StructType* getCaseNamed(zst::str_view name) const;
+		const StructType* getCaseAtIndex(size_t idx) const;
+
+		const std::vector<Case>& getCases() const;
+		std::vector<const StructType*> getCaseTypes() const;
+
+		void setCases(std::vector<Case> cases);
+
+	private:
+		UnionType(QualifiedId name, std::vector<Case> Cases);
+
+		QualifiedId m_name;
+		std::vector<Case> m_cases;
+		util::hashmap<std::string, std::pair<size_t, const StructType*>> m_case_map;
 
 		friend struct Type;
 	};

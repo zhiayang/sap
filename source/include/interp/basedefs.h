@@ -16,5 +16,7 @@ namespace sap::interp
 		bool operator!=(const QualifiedId&) const = default;
 
 		std::string str() const;
+
+		QualifiedId parentScopeFor(std::string name) const;
 	};
 }

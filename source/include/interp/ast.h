@@ -196,7 +196,7 @@ namespace sap::interp::ast
 		    bool keep_lvalue = false) const override;
 
 		using Part = std::variant<std::u32string, std::unique_ptr<Expr>>;
-		mutable std::vector<Part> parts;
+		std::vector<Part> parts;
 	};
 
 	struct TypeExpr : Expr
@@ -308,7 +308,7 @@ namespace sap::interp::ast
 		    bool keep_lvalue = false) const override;
 
 		std::unique_ptr<Expr> lhs;
-		mutable std::unique_ptr<Expr> rhs;
+		std::unique_ptr<Expr> rhs;
 
 		enum Op
 		{
@@ -504,7 +504,6 @@ namespace sap::interp::ast
 		    bool keep_lvalue = false) const override;
 
 		std::unique_ptr<Expr> expr;
-		mutable const Type* return_value_type;
 	};
 
 	struct BreakStmt : Stmt
@@ -715,7 +714,7 @@ namespace sap::interp::ast
 		    bool keep_lvalue = false) const override;
 
 	private:
-		mutable std::vector<Field> m_fields;
+		std::vector<Field> m_fields;
 	};
 
 	struct EnumDefn : Definition
@@ -750,6 +749,30 @@ namespace sap::interp::ast
 		mutable std::vector<Enumerator> m_enumerators;
 	};
 
+	struct UnionDefn : Definition
+	{
+		using Param = FunctionDefn::Param;
+		struct Case
+		{
+			Location location;
+			std::string name;
+			std::vector<Param> params;
+		};
+
+		UnionDefn(Location loc, std::string name, std::vector<Case> cases)
+		    : Definition(loc, std::move(name)), cases(std::move(cases))
+		{
+		}
+
+		virtual ErrorOr<void> declare(Typechecker* ts) const override;
+
+		virtual ErrorOr<TCResult> typecheck_impl(Typechecker* ts,
+		    const Type* infer = nullptr, //
+		    bool keep_lvalue = false) const override;
+
+		std::vector<Case> cases;
+	};
+
 
 	struct ContextIdent : Expr
 	{
@@ -760,9 +783,6 @@ namespace sap::interp::ast
 		    bool keep_lvalue = false) const override;
 
 		std::string name;
-
-	private:
-		// mutable std::variant<std::monostate, const EnumeratorDefn*, const StructType*> m_context {};
 	};
 }
 

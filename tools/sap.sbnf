@@ -23,7 +23,7 @@ block-comment {comment.block} :
 main: preamble paragraph*;
 
 preamble{meta.script.preamble}
-    : stmt stmt* document-start
+    : stmt* document-start
     ;
 
 document-start
@@ -102,6 +102,9 @@ var-defn:
     (`;`{punctuation.terminator})
     ;
 
+parameter-list:  (IDENTIFIER{variable.parameter} `:`{punctuation.colon} type (`=`{punctuation.equal} expr)?)?
+    (`,`{punctuation.comma} IDENTIFIER{variable.parameter} `:`{punctuation.colon} type (`=`{punctuation.equal} expr)?)*;
+
 func-defn:
     'fn'{storage.type}
     IDENTIFIER{entity.name.function}
@@ -113,10 +116,7 @@ func-defn:
         `]`{punctuation.paren.generic-params-end}
     )?
 
-    `(`{punctuation.paren.params-start}
-        (IDENTIFIER{variable.parameter} `:`{punctuation.colon} type (`=`{punctuation.equal} expr)?)?
-        (`,`{punctuation.comma} IDENTIFIER{variable.parameter} `:`{punctuation.colon} type (`=`{punctuation.equal} expr)?)*
-    `)`{punctuation.paren.params-end}
+    `(`{punctuation.paren.params-start} parameter-list `)`{punctuation.paren.params-end}
     (`->`{punctuation.arrow} type)?
     `{`{punctuation.brace}
         stmt*
@@ -134,15 +134,25 @@ struct-defn: 'struct'{storage.type} IDENTIFIER{entity.name.struct}
     ;
 
 
-enum-enumerator-defn: IDENTIFIER{entity.name.enum-enumerator}
-    (`=`{keyword.operator} expr)? `;`{punctuation.terminator}
-    ;
+enum-enumerator-defn: IDENTIFIER{entity.name.enum-enumerator} (`=`{keyword.operator} expr)? ;
 
 enum-defn: 'enum'{storage.type} IDENTIFIER{entity.name.enum} (`:`{punctuation.colon} type)?
     `{`{punctuation.brace}
-        enum-enumerator-defn*
+        (enum-enumerator-defn `;`{punctuation.terminator}?)*
     `}`{punctuation.brace}
     ;
+
+union-case-defn: IDENTIFIER{entity.name.union-case} (
+    `(`{punctuation.paren.union-case}
+        parameter-list
+    `)`{punctuation.paren.union-case}
+)?;
+
+union-defn: 'union'{storage.type} IDENTIFIER{entity.name.union} `{`{punctuation.brace}
+        (union-case-defn `;`{punctuation.terminator}?)*
+    `}`{punctuation.brace}
+    ;
+
 
 namespace-defn{meta.namespace-defn}: `namespace`{keyword} '([A-Za-z_][[:word:]]*)(?:\s*(::)\s*([A-Za-z_][[:word:]]*))?'{
         1: meta.name.scope-part,
@@ -323,6 +333,7 @@ stmt: block-comment
     | var-defn
     | struct-defn
     | enum-defn
+    | union-defn
     | return-stmt
     | if-stmt
     | else-stmt

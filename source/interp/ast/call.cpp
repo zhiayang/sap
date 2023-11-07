@@ -44,7 +44,7 @@ namespace sap::interp::ast
 	get_calling_cost(Typechecker* ts, const cst::Declaration* decl, const std::vector<InputArg>& arguments)
 	{
 		return arrangeCallArguments(ts, TRY(convert_params(ts, decl)), arguments, //
-		    "FunctionCall", "argument", "argument for parameter");
+		    "function", "argument", "argument for parameter");
 	}
 
 	static ResolvedOverloadSet resolve_overload_set(Typechecker* ts,
@@ -279,10 +279,11 @@ namespace sap::interp::ast
 				else
 				{
 					// variadic pack.
+					assert(arg.param_type->isVariadicArray());
+
 					std::vector<cst::ExprOrDefaultPtr> pack {};
 					for(auto& e : arg.value.right())
-						pack.push_back(TRY(do_one_arg(arg.param_type, e)));
-
+						pack.push_back(TRY(do_one_arg(arg.param_type->arrayElement(), e)));
 
 					final_args.push_back(Left(std::make_unique<cst::VariadicPackExpr>(m_location, arg.param_type,
 					    std::move(pack))));

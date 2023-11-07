@@ -49,7 +49,8 @@ namespace sap::interp::ast
 
 		auto ltype = lres.type();
 
-		auto rres = TRY(this->rhs->typecheck(ts));
+		// use the left type to infer the rhs.
+		auto rres = TRY(this->rhs->typecheck(ts, /* infer: */ ltype));
 		auto rtype = rres.type();
 
 		auto cst_op = std::make_unique<cst::AssignOp>(m_location, ast_op_to_cst_op(this->op),

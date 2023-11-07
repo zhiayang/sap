@@ -253,6 +253,16 @@ namespace sap::interp
 		return get_or_add_type(new StructType(std::move(name), std::move(fields)));
 	}
 
+	const UnionType* Type::makeUnion(QualifiedId name, //
+	    const std::vector<std::pair<std::string, const StructType*>>& foo)
+	{
+		std::vector<UnionType::Case> cases {};
+		for(auto& [n, t] : foo)
+			cases.push_back(UnionType::Case { .name = n, .type = t });
+
+		return get_or_add_type(new UnionType(std::move(name), std::move(cases)));
+	}
+
 	const Type* Type::arrayElement() const
 	{
 		assert(this->isArray());
@@ -304,6 +314,12 @@ namespace sap::interp
 	{
 		assert(this->isEnum());
 		return static_cast<const EnumType*>(this);
+	}
+
+	const UnionType* Type::toUnion() const
+	{
+		assert(this->isUnion());
+		return static_cast<const UnionType*>(this);
 	}
 
 	const StructType* Type::toStruct() const

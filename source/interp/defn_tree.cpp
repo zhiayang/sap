@@ -19,6 +19,17 @@ namespace sap::interp
 		return ret;
 	}
 
+	QualifiedId QualifiedId::parentScopeFor(std::string child_name) const
+	{
+		auto ret = QualifiedId();
+		ret.parents = this->parents;
+		ret.parents.push_back(this->name);
+		ret.top_level = this->top_level;
+		ret.name = child_name;
+
+		return ret;
+	}
+
 	DefnTree* DefnTree::declareAnonymousNamespace()
 	{
 		return this->lookupOrDeclareNamespace(zpr::sprint("__$anon{}", m_anon_namespace_count++));
