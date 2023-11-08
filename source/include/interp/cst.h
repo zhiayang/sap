@@ -837,4 +837,17 @@ namespace sap::interp::cst
 
 		const EnumeratorDefn* enumerator;
 	};
+
+	struct UnionExpr : Expr
+	{
+		explicit UnionExpr(Location loc, size_t case_index, const UnionType* union_type, const UnionDefn* union_defn)
+		    : Expr(std::move(loc), union_type), case_index(std::move(case_index)), union_defn(union_defn)
+		{
+		}
+
+		virtual ErrorOr<EvalResult> evaluate_impl(Evaluator* ev) const override;
+
+		size_t case_index;
+		const UnionDefn* union_defn;
+	};
 }

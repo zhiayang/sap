@@ -391,13 +391,12 @@ namespace sap::frontend
 		return Ok<std::pair<QualifiedId, uint32_t>>(std::move(qid), len);
 	}
 
-	static ErrorOrUniquePtr<ast::FunctionCall> parse_function_call(Lexer& lexer, std::unique_ptr<ast::Expr> callee)
+	static ErrorOr<std::vector<ast::FunctionCall::Arg>> parse_call_args(Lexer& lexer)
 	{
 		if(not lexer.expect(TT::LParen))
 			return ErrMsg(lexer.location(), "expected '(' to begin function call");
 
-		auto call = std::make_unique<ast::FunctionCall>(callee->loc());
-		call->callee = std::move(callee);
+		std::vector<ast::FunctionCall::Arg> args {};
 
 		// parse arguments.
 		for(bool first = true; not lexer.expect(TT::RParen); first = false)
@@ -443,8 +442,18 @@ namespace sap::frontend
 				arg.value = TRY(parse_expr(lexer));
 			}
 
-			call->arguments.push_back(std::move(arg));
+			args.push_back(std::move(arg));
 		}
+
+		// TODO: (potentially multiple) trailing blocks
+		return OkMove(args);
+	}
+
+	static ErrorOrUniquePtr<ast::FunctionCall> parse_function_call(Lexer& lexer, std::unique_ptr<ast::Expr> callee)
+	{
+		auto call = std::make_unique<ast::FunctionCall>(callee->loc());
+		call->callee = std::move(callee);
+		call->arguments = TRY(parse_call_args(lexer));
 
 		// TODO: (potentially multiple) trailing blocks
 		return OkMove(call);
@@ -910,6 +919,10 @@ namespace sap::frontend
 
 			auto ret = std::make_unique<ast::ContextIdent>(ident->loc);
 			ret->name = ident->text.str();
+
+			// parse call-like syntax after context idents to support union cases
+			if(lexer.peek() == TT::LParen)
+				ret->arguments = TRY(parse_call_args(lexer));
 
 			return OkMove(ret);
 		}

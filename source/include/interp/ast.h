@@ -776,6 +776,8 @@ namespace sap::interp::ast
 
 	struct ContextIdent : Expr
 	{
+		using Arg = FunctionCall::Arg;
+
 		explicit ContextIdent(Location loc) : Expr(std::move(loc)) { }
 
 		virtual ErrorOr<TCResult> typecheck_impl(Typechecker* ts,
@@ -783,6 +785,7 @@ namespace sap::interp::ast
 		    bool keep_lvalue = false) const override;
 
 		std::string name;
+		std::vector<Arg> arguments;
 	};
 }
 

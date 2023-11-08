@@ -13,4 +13,10 @@ namespace sap::interp::cst
 		// do nothing
 		return EvalResult::ofVoid();
 	}
+
+	ErrorOr<EvalResult> UnionExpr::evaluate_impl(Evaluator* ev) const
+	{
+		// do nothing
+		return EvalResult::ofVoid();
+	}
 }

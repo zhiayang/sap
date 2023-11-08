@@ -44,31 +44,50 @@ namespace sap::interp::ast
 		}
 
 		const EnumType* enum_type = nullptr;
+		const UnionType* union_type = nullptr;
 
 		if(infer == nullptr)
-			return ErrMsg(ts, "cannot infer type for context-sensitive identifier");
+			return ErrMsg(ts, "cannot infer type for context-identifier");
 
 		else if(infer->isEnum())
 			enum_type = infer->toEnum();
-
 		else if(infer->isOptional() && infer->optionalElement()->isEnum())
 			enum_type = infer->optionalElement()->toEnum();
+		else if(infer->isUnion())
+			union_type = infer->toUnion();
+		else if(infer->isOptional() && infer->optionalElement()->isUnion())
+			union_type = infer->optionalElement()->toUnion();
 		else
-			return ErrMsg(ts, "inferred invalid type type '{}' for context-sensitive identifier", infer);
+			return ErrMsg(ts, "inferred invalid type '{}' for context-identifier", infer);
 
-		auto enum_defn = dynamic_cast<const cst::EnumDefn*>(TRY(ts->getDefinitionForType(enum_type)));
-		assert(enum_defn != nullptr);
-
-		auto enumerator = enum_defn->getEnumeratorNamed(this->name);
-
-		if(enumerator == nullptr)
+		assert(enum_type || union_type);
+		if(enum_type != nullptr)
 		{
-			return ErrMsg(ts, "inferred enumeration '{}' for context-sensitive identifier '.{}' has no such enumerator",
-			    enum_defn->declaration->name, this->name);
-		}
+			auto enum_defn = static_cast<const cst::EnumDefn*>(TRY(ts->getDefinitionForType(enum_type)));
+			auto enumerator = enum_defn->getEnumeratorNamed(this->name);
 
-		return TCResult::ofLValue(std::make_unique<cst::EnumeratorExpr>(m_location, enum_type, enumerator),
-		    /* mutable: */ false);
+			if(enumerator == nullptr)
+			{
+				return ErrMsg(ts, "inferred enumeration '{}' for context-identifier '.{}' has no such enumerator",
+				    enum_defn->declaration->name, this->name);
+			}
+
+			return TCResult::ofLValue(std::make_unique<cst::EnumeratorExpr>(m_location, enum_type, enumerator),
+			    /* mutable: */ false);
+		}
+		else
+		{
+			assert(union_type != nullptr);
+			auto union_defn = static_cast<const cst::UnionDefn*>(TRY(ts->getDefinitionForType(union_type)));
+			if(not union_type->hasCaseNamed(this->name))
+			{
+				return ErrMsg(ts, "inferred union '{}' for context-identifier has no case named '{}'",
+				    union_defn->declaration->name, this->name);
+			}
+
+			auto case_idx = union_type->getCaseIndex(this->name);
+			return TCResult::ofRValue<cst::UnionExpr>(m_location, case_idx, union_type, union_defn);
+		}
 	}
 
 	ErrorOr<TCResult> ArrayLit::typecheck_impl(Typechecker* ts, const Type* infer, bool keep_lvalue) const
