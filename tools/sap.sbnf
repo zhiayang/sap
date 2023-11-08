@@ -186,7 +186,7 @@ struct-literal: (`{`{punctuation.brace.struct-start} struct-literal-field-list `
         4: variable.other
     };
 
-cast-expr: `cast`{keyword.cast} `(`{punctuation.paren} expr (`,`{punctuation.comma} expr)? `)`{punctuation.paren};
+cast-expr: `cast`{keyword.operator.cast} `(`{punctuation.paren} expr (`,`{punctuation.comma} expr)? `)`{punctuation.paren};
 
 type-expr: `$`{support.type} type;
 
@@ -200,8 +200,8 @@ primary-expr
     | enum-literal
     | text-literal
     | char-literal
-    | struct-literal
     | cast-expr
+    | struct-literal
     | type-expr
     | `(`{punctuation.paren} expr `)`{punctuation.paren}
     ;

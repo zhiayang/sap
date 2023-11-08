@@ -93,6 +93,7 @@ namespace sap::interp
 		bool isChar() const;
 		bool isEnum() const;
 		bool isArray() const;
+		bool isUnion() const;
 		bool isString() const;
 		bool isStruct() const;
 		bool isLength() const;
@@ -127,6 +128,7 @@ namespace sap::interp
 		static Value floating(double num);
 		static Value character(char32_t ch);
 		static Value enumerator(const EnumType* type, Value value);
+		static Value unionCase(const UnionType* type, size_t case_idx, Value case_value_as_struct);
 		static Value function(const FunctionType* fn_type, FnType fn);
 		static Value string(const std::string& str);
 		static Value string(const std::u32string& str);
@@ -158,8 +160,9 @@ namespace sap::interp
 
 		const Type* m_type;
 		bool m_moved_from = false;
-		mutable std::function<Value()> m_gen_func {};
+		mutable std::function<Value(void)> m_gen_func {};
 
+		mutable size_t m_union_case_idx = 0;
 		union
 		{
 			mutable bool v_bool;

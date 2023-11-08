@@ -18,7 +18,7 @@ namespace sap::interp::cst
 			ev->frame().dropTemporaries();
 
 			if(not result.isNormal())
-				return Ok(std::move(result));
+				return OkMove(result);
 		}
 
 		return EvalResult::ofVoid();

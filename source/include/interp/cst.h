@@ -840,14 +840,22 @@ namespace sap::interp::cst
 
 	struct UnionExpr : Expr
 	{
-		explicit UnionExpr(Location loc, size_t case_index, const UnionType* union_type, const UnionDefn* union_defn)
-		    : Expr(std::move(loc), union_type), case_index(std::move(case_index)), union_defn(union_defn)
+		explicit UnionExpr(Location loc,
+		    const UnionType* union_type,
+		    const UnionDefn* union_defn,
+		    size_t case_index,
+		    std::vector<ExprOrDefaultPtr> values)
+		    : Expr(std::move(loc), union_type)
+		    , union_defn(union_defn)
+		    , case_index(std::move(case_index))
+		    , values(std::move(values))
 		{
 		}
 
 		virtual ErrorOr<EvalResult> evaluate_impl(Evaluator* ev) const override;
 
-		size_t case_index;
 		const UnionDefn* union_defn;
+		size_t case_index;
+		std::vector<ExprOrDefaultPtr> values;
 	};
 }

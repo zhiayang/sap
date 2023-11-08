@@ -120,7 +120,7 @@ namespace sap::interp
 			auto ret = zst::make_shared<tree::InlineSpan>(/* glue: */ false);
 			ret->addObject(zst::make_shared<tree::Text>(value.toString()));
 
-			return Ok(std::move(ret));
+			return OkMove(ret);
 		}
 		else
 		{

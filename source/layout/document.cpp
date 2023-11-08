@@ -238,7 +238,7 @@ namespace sap::tree
 		layout_doc->outlineItems() = std::move(doc_proxy.outline_items);
 		layout_doc->annotations() = std::move(doc_proxy.link_annotations);
 
-		return Ok(std::move(layout_doc));
+		return OkMove(layout_doc);
 	}
 
 

@@ -88,7 +88,7 @@ namespace sap::interp
 			auto ret = EvalResult(Normal, {});
 			ret.m_lvalue = &lvalue;
 
-			return Ok(std::move(ret));
+			return OkMove(ret);
 		}
 
 	private:

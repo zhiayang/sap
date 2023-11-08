@@ -48,12 +48,6 @@ namespace sap::frontend
 	using namespace sap::tree;
 
 	template <typename T>
-	auto OkMove(T& x)
-	{
-		return Ok(std::move(x));
-	}
-
-	template <typename T>
 	static void must_expect(Lexer& lexer, T&& x)
 	{
 		if(not lexer.expect(static_cast<T&&>(x)))

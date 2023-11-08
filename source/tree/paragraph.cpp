@@ -36,10 +36,10 @@ namespace sap::tree
 
 		// if we allow blocks, we can just pass through the result.
 		if(allow_blocks)
-			return Ok(std::move(result));
+			return OkMove(result);
 
 		if(result->is_left())
-			return Ok(std::move(result));
+			return OkMove(result);
 		else
 			return ErrMsg(iscr->call->loc(), "cannot insert LayoutObject or Block objects in paragraphs");
 	}

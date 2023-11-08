@@ -47,7 +47,7 @@ namespace sap::tree
 				obj->setLinkDestination(m_link_destination);
 		}
 
-		return Ok(std::move(result));
+		return OkMove(result);
 	}
 
 	void* InlineObject::operator new(size_t count)

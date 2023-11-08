@@ -58,7 +58,7 @@ namespace sap::interp::cst
 			}
 		}
 
-		return Ok(std::move(ret));
+		return OkMove(ret);
 	}
 
 

@@ -16,12 +16,12 @@ namespace sap::interp::cst
 		if(cond.getBool())
 		{
 			if(auto ret = TRY(this->if_body->evaluate(ev)); not ret.isNormal())
-				return Ok(std::move(ret));
+				return OkMove(ret);
 		}
 		else if(this->else_body != nullptr)
 		{
 			if(auto ret = TRY(this->else_body->evaluate(ev)); not ret.isNormal())
-				return Ok(std::move(ret));
+				return OkMove(ret);
 		}
 
 		return EvalResult::ofVoid();

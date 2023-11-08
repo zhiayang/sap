@@ -33,6 +33,12 @@ namespace sap
 	bool isDraftMode();
 	bool compile(zst::str_view input_file, zst::str_view output_file);
 
+	template <typename T>
+	auto OkMove(T& x)
+	{
+		return Ok(std::move(x));
+	}
+
 	namespace watch
 	{
 		bool isSupportedPlatform();

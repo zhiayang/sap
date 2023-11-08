@@ -31,12 +31,14 @@ namespace sap::tree
 			if(m_typechecked_call != nullptr)
 				return m_typechecked_call->evaluate(&cs->evaluator());
 
+			auto call_expr = TRY(this->call->typecheck(&cs->typechecker()));
+			if(call_expr.type()->isVoid())
+				return ErrMsg(call_expr.stmt()->loc(), "invalid void return from script call");
 
-			auto call_expr = TRY(this->call->typecheck(&cs->typechecker())).take_expr();
-			return call_expr->evaluate(&cs->evaluator());
+			return call_expr.expr()->evaluate(&cs->evaluator());
 		}());
 
-		if(not maybe_value.hasValue())
+		if(not maybe_value.hasValue() || (maybe_value.get().isOptional() && not maybe_value.get().haveOptionalValue()))
 			return Ok(std::nullopt);
 
 		// it's a call, idk how you managed to return an lvalue from that

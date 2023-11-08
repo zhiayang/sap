@@ -274,6 +274,6 @@ namespace sap::config
 		// consume trailing whitespace to prepare for the next.
 		skip_whitespace_and_comments(sv);
 
-		return Ok(std::move(config));
+		return Ok(config);
 	}
 }

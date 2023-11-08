@@ -22,7 +22,7 @@ namespace sap::interp::cst
 			if(not val.isNormal())
 			{
 				if(val.isReturn())
-					return Ok(std::move(val));
+					return OkMove(val);
 				else if(val.isLoopBreak())
 					break;
 				else if(val.isLoopContinue())

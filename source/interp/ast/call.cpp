@@ -30,7 +30,7 @@ namespace sap::interp::ast
 				});
 			}
 
-			return Ok(std::move(params));
+			return OkMove(params);
 		}
 		else
 		{
@@ -220,7 +220,7 @@ namespace sap::interp::ast
 							u = UFCSKind::ConstPointer;
 					}
 
-					return { Ok(std::move(ret.unwrap())), u };
+					return { OkMove(ret.unwrap()), u };
 				}
 
 				if(not ufcs_is_rvalue)

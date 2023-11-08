@@ -18,7 +18,7 @@ namespace sap::frontend
 		tok.loc.byte_offset = checked_cast<size_t>(tok.text.data() - tok.loc.file_contents.data());
 
 		stream.remove_prefix(n);
-		return Ok(std::move(tok));
+		return OkMove(tok);
 	}
 
 	static Ok<Token> advance_and_return2(zst::str_view& stream, const Location& loc, Token tok, size_t n)
@@ -27,7 +27,7 @@ namespace sap::frontend
 		tok.loc.byte_offset = checked_cast<size_t>(tok.text.data() - tok.loc.file_contents.data());
 
 		stream.remove_prefix(n);
-		return Ok(std::move(tok));
+		return OkMove(tok);
 	}
 
 	static ErrorOr<bool> parse_comment(zst::str_view& stream, Location& loc)

@@ -73,7 +73,7 @@ namespace sap::interp::builtin
 		if(auto& x = value.getStructField("default_style"); x.haveOptionalValue())
 			settings.default_style = TRY(BS_Style::unmake(ev, **x.getOptional()));
 
-		return Ok(std::move(settings));
+		return OkMove(settings);
 	}
 
 

@@ -62,10 +62,19 @@ sans!.regular.adjust_glyph_spacing({ match: ["2.1", "3.1", "4.1", "5.1", "6.1", 
 
 	fn asdf()
 	{
-		let a: PathObject = .Line(10);
+		let p: PathObject = .Line(a: 10);
+		if(let .Line(a: a) = p)
+		{
+		}
+	}
+
+	fn bsdf() -> ?Inline
+	{
+		asdf();
+		return null;
 	}
 }
 
 # \disable_page_numbering();
 
-hello \cpp() there \kekw() \asdf()
+hello \cpp() there \kekw() \bsdf()

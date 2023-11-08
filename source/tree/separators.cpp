@@ -207,7 +207,7 @@ namespace sap::tree
 			}
 		}
 
-		return Ok(std::move(ret));
+		return OkMove(ret);
 	}
 
 
@@ -293,6 +293,6 @@ namespace sap::tree
 			first_obj = false;
 		}
 
-		return Ok(std::move(ret));
+		return OkMove(ret);
 	}
 }

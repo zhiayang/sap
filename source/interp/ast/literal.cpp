@@ -7,9 +7,81 @@
 #include "interp/value.h"
 #include "interp/interp.h"
 #include "interp/eval_result.h"
+#include "interp/overload_resolution.h"
 
 namespace sap::interp::ast
 {
+	ErrorOr<std::vector<cst::ExprOrDefaultPtr>> arrange_union_args(Typechecker* ts,
+	    const std::vector<ast::ContextIdent::Arg>& case_values,
+	    const cst::UnionDefn* union_defn,
+	    size_t case_idx,
+	    const StructType* case_type)
+	{
+		ExpectedParams fields {};
+
+		auto& case_fields = case_type->getFields();
+		for(size_t i = 0; i < case_fields.size(); i++)
+		{
+			fields.push_back({
+			    .name = case_fields[i].name,
+			    .type = case_fields[i].type,
+			    .default_value = union_defn->cases[case_idx].default_values[i].get(),
+			});
+		}
+
+		// TODO: huge code dupe with struct_literal.cpp
+		std::vector<InputArg> processed_field_types {};
+		std::vector<std::unique_ptr<cst::Expr>> processed_field_exprs {};
+
+		bool saw_named = false;
+		for(size_t i = 0; i < case_values.size(); i++)
+		{
+			auto& f = case_values[i];
+			if(f.name.has_value())
+				saw_named = true;
+			else if(saw_named)
+				return ErrMsg(ts, "positional field initialiser not allowed after named field initialiser");
+
+			const Type* infer_type = nullptr;
+			if(f.name.has_value() && case_type->hasFieldNamed(*f.name))
+				infer_type = case_type->getFieldNamed(*f.name);
+			else if(not f.name.has_value())
+				infer_type = case_type->getFieldAtIndex(i);
+
+			processed_field_exprs.push_back(TRY(f.value->typecheck(ts, infer_type)).take_expr());
+			processed_field_types.push_back({
+			    .type = processed_field_exprs.back()->type(),
+			    .name = f.name,
+			});
+		}
+
+		auto arrangement = TRY(arrangeCallArguments(ts, fields, processed_field_types, "case", "field", "field"));
+		std::vector<cst::ExprOrDefaultPtr> final_fields {};
+
+		for(size_t i = 0; i < arrangement.arguments.size(); i++)
+		{
+			auto& arg = arrangement.arguments[i];
+
+			if(arg.value.is_right())
+				return ErrMsg(ts, "Invalid use of variadic pack in struct initialiser");
+
+			auto& arg_val = arg.value.left();
+			if(arg_val.is_right())
+			{
+				final_fields.push_back(Right(arg_val.right()));
+				continue;
+			}
+
+			auto arg_idx = arg_val.left();
+			assert(processed_field_exprs[arg_idx] != nullptr);
+
+			final_fields.push_back(Left(std::move(processed_field_exprs[arg_idx])));
+		}
+
+		assert(final_fields.size() == case_type->getFields().size());
+		return OkMove(final_fields);
+	}
+
 	ErrorOr<TCResult> ContextIdent::typecheck_impl(Typechecker* ts, const Type* infer, bool keep_lvalue) const
 	{
 		// note: we allow this to resolve both a struct field and an enumerator, preferring the field.
@@ -86,7 +158,11 @@ namespace sap::interp::ast
 			}
 
 			auto case_idx = union_type->getCaseIndex(this->name);
-			return TCResult::ofRValue<cst::UnionExpr>(m_location, case_idx, union_type, union_defn);
+			auto case_values = TRY(arrange_union_args(ts, this->arguments, union_defn, case_idx,
+			    union_type->getCaseAtIndex(case_idx)));
+
+			return TCResult::ofRValue<cst::UnionExpr>(m_location, union_type, union_defn, case_idx,
+			    std::move(case_values));
 		}
 	}
 

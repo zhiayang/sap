@@ -429,6 +429,10 @@ namespace sap::interp
 			else
 				return v_array[0].toString();
 		}
+		else if(m_type->isUnion() || m_type->isStruct())
+		{
+			return unicode::u32StringFromUtf8(m_type->str());
+		}
 		else if(m_type->isArray())
 		{
 			if(m_type == Type::makeString())
@@ -470,6 +474,10 @@ namespace sap::interp
 	bool Value::isArray() const
 	{
 		return m_type->isArray();
+	}
+	bool Value::isUnion() const
+	{
+		return m_type->isUnion();
 	}
 	bool Value::isString() const
 	{
@@ -700,6 +708,25 @@ namespace sap::interp
 		return ret;
 	}
 
+	Value Value::unionCase(const UnionType* type, size_t case_idx, Value case_value_as_struct)
+	{
+		auto ret = Value(type);
+		ret.m_union_case_idx = case_idx;
+		new(&ret.v_array) decltype(ret.v_array)(std::move(case_value_as_struct.v_array));
+
+		auto case_type = type->getCaseAtIndex(case_idx);
+		for(size_t i = 0; i < ret.v_array.size(); i++)
+		{
+			if(ret.v_array[i].type() != case_type->getFieldAtIndex(i))
+			{
+				sap::internal_error("mismatched field types! expected '{}', got '{}'", case_type->getFieldAtIndex(i),
+				    ret.v_array[i].type());
+			}
+		}
+
+		return ret;
+	}
+
 	Value Value::nullPointer()
 	{
 		auto ret = Value(Type::makeNullPtr());
@@ -772,64 +799,68 @@ namespace sap::interp
 	{
 		this->ensure_not_moved_from();
 
-		auto val = Value(m_type);
+		auto ret = Value(m_type);
 		if(m_type->isBool())
 		{
 			REIFY_GEN_FUNC(v_bool);
-			val.v_bool = v_bool;
+			ret.v_bool = v_bool;
 		}
 		else if(m_type->isChar())
 		{
 			REIFY_GEN_FUNC(v_char);
-			val.v_char = v_char;
+			ret.v_char = v_char;
 		}
 		else if(m_type->isInteger())
 		{
 			REIFY_GEN_FUNC(v_integer);
-			val.v_integer = v_integer;
+			ret.v_integer = v_integer;
 		}
 		else if(m_type->isFloating())
 		{
 			REIFY_GEN_FUNC(v_floating);
-			val.v_floating = v_floating;
+			ret.v_floating = v_floating;
 		}
 		else if(m_type->isPointer() || m_type->isNullPtr())
 		{
 			REIFY_GEN_FUNC(v_pointer);
-			val.v_pointer = v_pointer;
+			ret.v_pointer = v_pointer;
 		}
 		else if(m_type->isFunction())
 		{
 			REIFY_GEN_FUNC(v_function);
-			val.v_function = v_function;
+			ret.v_function = v_function;
 		}
 		else if(m_type->isLength())
 		{
 			REIFY_GEN_FUNC(v_length);
-			new(&val.v_length) decltype(v_length)(v_length);
+			new(&ret.v_length) decltype(v_length)(v_length);
 		}
-		else if(m_type->isArray() || m_type->isStruct() || m_type->isOptional() || m_type->isEnum())
+		else if(m_type->isArray() || m_type->isStruct() || m_type->isOptional() //
+		        || m_type->isEnum() || m_type->isUnion())
 		{
 			REIFY_GEN_FUNC(v_array);
 
-			new(&val.v_array) decltype(v_array)();
+			new(&ret.v_array) decltype(v_array)();
 			for(auto& e : v_array)
-				val.v_array.push_back(e.clone());
+				ret.v_array.push_back(e.clone());
+
+			// just unconditionally set this, it doesn't matter
+			ret.m_union_case_idx = m_union_case_idx;
 		}
 		else if(m_type->isTreeBlockObjRef())
 		{
 			REIFY_GEN_FUNC(v_block_obj_ref);
-			val.v_block_obj_ref = v_block_obj_ref;
+			ret.v_block_obj_ref = v_block_obj_ref;
 		}
 		else if(m_type->isLayoutObjectRef())
 		{
 			REIFY_GEN_FUNC(v_layout_obj_ref);
-			val.v_layout_obj_ref = v_layout_obj_ref;
+			ret.v_layout_obj_ref = v_layout_obj_ref;
 		}
 		else if(m_type->isTreeInlineObjRef())
 		{
 			REIFY_GEN_FUNC(v_inline_obj_ref);
-			val.v_inline_obj_ref = v_inline_obj_ref;
+			ret.v_inline_obj_ref = v_inline_obj_ref;
 		}
 		else if(m_type->isTreeBlockObj())
 		{
@@ -852,7 +883,7 @@ namespace sap::interp
 		if(m_gen_func)
 			m_gen_func = nullptr;
 
-		return val;
+		return ret;
 	}
 
 
@@ -898,7 +929,8 @@ namespace sap::interp
 		else if(m_type->isPointer() && m_type->pointerElement()->isTreeInlineObj())
 			std::destroy_at(&v_inline_obj_ref);
 
-		else if(m_type->isArray() || m_type->isStruct() || m_type->isOptional() || m_type->isEnum())
+		else if(m_type->isArray() || m_type->isStruct() || m_type->isOptional() //
+		        || m_type->isEnum() || m_type->isUnion())
 			std::destroy_at(&v_array);
 
 		else if(m_type->isLength())
@@ -938,9 +970,12 @@ namespace sap::interp
 		else if(m_type->isLayoutObject())
 			new(&v_layout_obj) decltype(v_layout_obj)(std::move(val.v_layout_obj));
 
-		else if(m_type->isArray() || m_type->isStruct() || m_type->isOptional() || m_type->isEnum())
+		else if(m_type->isArray() || m_type->isStruct() || m_type->isOptional() //
+		        || m_type->isEnum() || m_type->isUnion())
+		{
 			new(&v_array) decltype(v_array)(std::move(val.v_array));
-
+			m_union_case_idx = val.m_union_case_idx;
+		}
 		else if(m_type->isLength())
 			new(&v_length) decltype(v_length)(std::move(val.v_length));
 

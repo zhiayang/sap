@@ -108,6 +108,6 @@ namespace sap::interp::builtin
 		if(auto& x = value.getStructField("colour"); x.haveOptionalValue())
 			style.set_colour(BS_Colour::unmake(ev, **x.getOptional()));
 
-		return Ok(std::move(style));
+		return OkMove(style);
 	}
 }
