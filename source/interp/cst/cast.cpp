@@ -40,4 +40,19 @@ namespace sap::interp::cst
 
 		return EvalResult::ofValue(std::move(result));
 	}
+
+	ErrorOr<EvalResult> UnionVariantCastExpr::evaluate_impl(Evaluator* ev) const
+	{
+		auto val = TRY(this->expr->evaluate(ev));
+		if(auto uvi = val.get().getUnionVariantIndex(); uvi != this->variant_idx)
+		{
+			return ErrMsg(ev, "value was variant '{}', cannot convert to '{}'", this->union_type->getCases()[uvi].name,
+			    this->union_type->getCases()[this->variant_idx].name);
+		}
+
+		if(val.isLValue())
+			return EvalResult::ofLValue(val.lValuePointer()->getUnionUnderlyingStruct());
+		else
+			return EvalResult::ofValue(val.take().takeUnionUnderlyingStruct());
+	}
 }

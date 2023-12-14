@@ -47,6 +47,10 @@ namespace std
 		g_sections = [];
 	}
 
+	global var g_section_font_size: Length = 24pt;
+	global var g_subsection_font_size: Length = 19.5pt;
+	global var g_subsubsection_font_size: Length = 17pt;
+
 	fn section(name: string) -> ?Block
 	{
 		let section_num = 1 + g_sections.size();
@@ -59,7 +63,7 @@ namespace std
 		num_line.set_width(20mm);
 
 		var name_line = builtin::make_line(builtin::make_text(name)).apply_style({
-			font_size: 24pt,
+			font_size: g_section_font_size,
 		});
 
 		let the_section = Section {
@@ -104,7 +108,7 @@ namespace std
 		num_line.set_width(20mm);
 
 		var name_line = builtin::make_line(builtin::make_text(name)).apply_style({
-			font_size: 19.5pt,
+			font_size: g_subsection_font_size,
 		});
 
 		let the_sub = SubSection {
@@ -155,7 +159,7 @@ namespace std
 		num_line.set_width(20mm);
 
 		var name_line = builtin::make_line(builtin::make_text(name)).apply_style({
-			font_size: 17pt,
+			font_size: g_subsubsection_font_size,
 		});
 
 		let the_subsub = SubSubSection {

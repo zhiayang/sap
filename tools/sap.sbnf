@@ -10,260 +10,262 @@ IDENTIFIER = '[A-Za-z_][[:word:]]*'
 prototype: (~(block-comment | line-comment))*;
 
 line-comment: '(#+).*\n?'{
-    comment.line,
-    1: punctuation.definition.comment
+	comment.line,
+	1: punctuation.definition.comment
 };
 
 block-comment {comment.block} :
-    '(/#)'{punctuation.definition.comment}
-     (block-comment | '(?!#/).')*
-    ~'(#/)'{punctuation.definition.comment}
-    ;
+	'(/#)'{punctuation.definition.comment}
+	 (block-comment | '(?!#/).')*
+	~'(#/)'{punctuation.definition.comment}
+	;
 
 main: preamble paragraph*;
 
 preamble{meta.script.preamble}
-    : stmt* document-start
-    ;
+	: stmt* document-start
+	;
 
 document-start
-    : `\start_document`{keyword} (`(`{punctuation.paren.call-start}
-        (function-call-arg (`,`{punctuation.comma} function-call-arg)* (`,`{punctuation.comma})?)?
-    `)`{punctuation.paren.call-end}) `;`{punctuation.terminator}?
-    ;
+	: `\start_document`{keyword} (`(`{punctuation.paren.call-start}
+		(function-call-arg (`,`{punctuation.comma} function-call-arg)* (`,`{punctuation.comma})?)?
+	`)`{punctuation.paren.call-end}) `;`{punctuation.terminator}?
+	;
 
 
 paragraph{meta.para}
-    : special-token-escape
-    | `{`{keyword.brace} paragraph* `}`{keyword.brace}
-    | ~(script-block | script-call | raw-block)
-    | '.*?'{meta.para.text}
-    ;
+	: special-token-escape
+	| `{`{keyword.brace} paragraph* `}`{keyword.brace}
+	| ~(script-block | script-call | raw-block)
+	| '.*?'{meta.para.text}
+	;
 
 special-token-escape
-    : '(\\)(\#)'{1: punctuation.escape}
-    | '(\\)(\\)'{1: punctuation.escape}
-    | '(\\)(\{)'{1: punctuation.escape}
-    | '(\\)(\})'{1: punctuation.escape}
-    | '(\\)(;)'{1: punctuation.escape}
-    ;
+	: '(\\)(\#)'{1: punctuation.escape}
+	| '(\\)(\\)'{1: punctuation.escape}
+	| '(\\)(\{)'{1: punctuation.escape}
+	| '(\\)(\})'{1: punctuation.escape}
+	| '(\\)(;)'{1: punctuation.escape}
+	;
 
 
 text-literal
-    : ('(\\(box|vbox|hbox|zbox|line|para))\s*(\{)'{1: keyword.block.text, 3: punctuation.brace}
-    | '(\\)\s*(\{)'{1: keyword.inline.text, 2: punctuation.brace})
-        (script-call | raw-block | '[^}]')*  ~(`}`{punctuation.brace})
-    ;
+	: ('(\\(box|vbox|hbox|zbox|line|para))\s*(\{)'{1: keyword.block.text, 3: punctuation.brace}
+	| '(\\)\s*(\{)'{1: keyword.inline.text, 2: punctuation.brace})
+		(script-call | raw-block | '[^}]')*  ~(`}`{punctuation.brace})
+	;
 
 raw-block-x[name, scope]
-    : '(`{3,})(#[name])?(?!(\s+)([^`]*))?$\n?'{1: punctuation.other, 2: constant.other}
-        %embed['(\1)']{scope:source.#[scope], 1: punctuation.other}
-    ;
+	: '(`{3,})(#[name])?(?!(\s+)([^`]*))?$\n?'{1: punctuation.other, 2: constant.other}
+		%embed['(\1)']{scope:source.#[scope], 1: punctuation.other}
+	;
 
 raw-block
-    : raw-block-x[`c`, 'c']
-    | raw-block-x[`cpp`, 'c++']
-    ;
+	: raw-block-x[`c`, 'c']
+	| raw-block-x[`cpp`, 'c++']
+	;
 
 
 
 
 script-call{meta.script.inline-call}:
-    `\`{punctuation.misc} (
-        (`::`{punctuation.scope})? (IDENTIFIER{support.function})
-        (`::`{punctuation.scope} IDENTIFIER{support.function})*
-    ) '(@\s*(layout|position|post|finalise|render))'{storage.modifier}? (`(`{punctuation.paren.call-start}
-            (function-call-arg (`,`{punctuation.comma})?)*
-    `)`{punctuation.paren.call-end})
-    script-call-tail?;
+	`\`{punctuation.misc} (
+		(`::`{punctuation.scope})? (IDENTIFIER{support.function})
+		(`::`{punctuation.scope} IDENTIFIER{support.function})*
+	) '(@\s*(layout|position|post|finalise|render))'{storage.modifier}? (`(`{punctuation.paren.call-start}
+			(function-call-arg (`,`{punctuation.comma})?)*
+	`)`{punctuation.paren.call-end})
+	script-call-tail?;
 
 script-call-tail
-    : `;`{punctuation.terminator}
-    # | '\s*(\\(?:p|t))?\s*(\{)'{1: keyword.script.trailing-block, 2: punctuation.brace.block-start}
-    #   paragraph*
-    #   `}`{punctuation.brace.block-end}
-    ;
+	: `;`{punctuation.terminator}
+	# | '\s*(\\(?:p|t))?\s*(\{)'{1: keyword.script.trailing-block, 2: punctuation.brace.block-start}
+	#   paragraph*
+	#   `}`{punctuation.brace.block-end}
+	;
 
 
 script-block{meta.script.block}:
-    ( '(\\script)\s*(@\s*(layout|position|post|finalise|render))?\s*(\{)'{1: keyword.block.script, 2: storage.modifier, 4: punctuation.brace}
-    | '(\\script)\s*(@\s*(layout|position|post|finalise|render))?\s*(::)?'{1: keyword.block.script, 2: storage.modifier, 4: punctuation.scope}
-      (IDENTIFIER{entity.name.namespace} '(::)'{punctuation.scope})*
-      '\s*(\{)'{1:punctuation.brace}
-    ) stmt* `}`{punctuation.brace}
-    ;
+	( '(\\script)\s*(@\s*(layout|position|post|finalise|render))?\s*(\{)'{1: keyword.block.script, 2: storage.modifier, 4: punctuation.brace}
+	| '(\\script)\s*(@\s*(layout|position|post|finalise|render))?\s*(::)?'{1: keyword.block.script, 2: storage.modifier, 4: punctuation.scope}
+	  (IDENTIFIER{entity.name.namespace} '(::)'{punctuation.scope})*
+	  '\s*(\{)'{1:punctuation.brace}
+	) stmt* `}`{punctuation.brace}
+	;
 
 
 var-defn:
-    '(global\s+)?(var|let)'{1: storage.modifier, 2: storage.type}
-    IDENTIFIER{meta.name.variable}
-    (':'{punctuation.colon} type)?
-    ('='{keyword.operator} expr)?
-    (`;`{punctuation.terminator})
-    ;
+	'(global\s+)?(var|let)'{1: storage.modifier, 2: storage.type}
+	IDENTIFIER{meta.name.variable}
+	(':'{punctuation.colon} type)?
+	('='{keyword.operator} expr)?
+	(`;`{punctuation.terminator})
+	;
 
 parameter-list:  (IDENTIFIER{variable.parameter} `:`{punctuation.colon} type (`=`{punctuation.equal} expr)?)?
-    (`,`{punctuation.comma} IDENTIFIER{variable.parameter} `:`{punctuation.colon} type (`=`{punctuation.equal} expr)?)*;
+	(`,`{punctuation.comma} IDENTIFIER{variable.parameter} `:`{punctuation.colon} type (`=`{punctuation.equal} expr)?)*;
 
 func-defn:
-    'fn'{storage.type}
-    IDENTIFIER{entity.name.function}
-    (
-        # note: if you have the first set of parens, you must have a generic guy inside.
-        `[`{punctuation.paren.generic-params-start}
-        IDENTIFIER{support.type.generic}
-        (`,`{punctuation.comma} IDENTIFIER{support.type.generic})*
-        `]`{punctuation.paren.generic-params-end}
-    )?
+	'fn'{storage.type}
+	IDENTIFIER{entity.name.function}
+	(
+		# note: if you have the first set of parens, you must have a generic guy inside.
+		`[`{punctuation.paren.generic-params-start}
+		IDENTIFIER{support.type.generic}
+		(`,`{punctuation.comma} IDENTIFIER{support.type.generic})*
+		`]`{punctuation.paren.generic-params-end}
+	)?
 
-    `(`{punctuation.paren.params-start} parameter-list `)`{punctuation.paren.params-end}
-    (`->`{punctuation.arrow} type)?
-    `{`{punctuation.brace}
-        stmt*
-    `}`{punctuation.brace}
-    ;
+	`(`{punctuation.paren.params-start} parameter-list `)`{punctuation.paren.params-end}
+	(`->`{punctuation.arrow} type)?
+	`{`{punctuation.brace}
+		stmt*
+	`}`{punctuation.brace}
+	;
 
 struct-field-defn: IDENTIFIER{entity.name.struct-field} `:`{punctuation.colon} type
-    (`=`{keyword.operator} expr)? `;`{punctuation.terminator}
-    ;
+	(`=`{keyword.operator} expr)? `;`{punctuation.terminator}
+	;
 
 struct-defn: 'struct'{storage.type} IDENTIFIER{entity.name.struct}
-    `{`{punctuation.brace}
-        struct-field-defn*
-    `}`{punctuation.brace}
-    ;
+	`{`{punctuation.brace}
+		struct-field-defn*
+	`}`{punctuation.brace}
+	;
 
 
 enum-enumerator-defn: IDENTIFIER{entity.name.enum-enumerator} (`=`{keyword.operator} expr)? ;
 
 enum-defn: 'enum'{storage.type} IDENTIFIER{entity.name.enum} (`:`{punctuation.colon} type)?
-    `{`{punctuation.brace}
-        (enum-enumerator-defn `;`{punctuation.terminator}?)*
-    `}`{punctuation.brace}
-    ;
+	`{`{punctuation.brace}
+		(enum-enumerator-defn `;`{punctuation.terminator}?)*
+	`}`{punctuation.brace}
+	;
 
 union-case-defn: IDENTIFIER{entity.name.union-case} (
-    `(`{punctuation.paren.union-case}
-        parameter-list
-    `)`{punctuation.paren.union-case}
+	`(`{punctuation.paren.union-case}
+		parameter-list
+	`)`{punctuation.paren.union-case}
 )?;
 
 union-defn: 'union'{storage.type} IDENTIFIER{entity.name.union} `{`{punctuation.brace}
-        (union-case-defn `;`{punctuation.terminator}?)*
-    `}`{punctuation.brace}
-    ;
+		(union-case-defn `;`{punctuation.terminator}?)*
+	`}`{punctuation.brace}
+	;
 
 
 namespace-defn{meta.namespace-defn}: `namespace`{keyword} '([A-Za-z_][[:word:]]*)(?:\s*(::)\s*([A-Za-z_][[:word:]]*))?'{
-        1: meta.name.scope-part,
-        2: punctuation.scope,
-        3: meta.name.scope-part
-    }(`{`{punctuation.brace}
-        stmt*
-    `}`{punctuation.brace}
-    );
+		1: meta.name.scope-part,
+		2: punctuation.scope,
+		3: meta.name.scope-part
+	}(`{`{punctuation.brace}
+		stmt*
+	`}`{punctuation.brace}
+	);
 
 
 
 
 function-call-arg: '([A-Za-z_][[:word:]]*)\s*(:)\s*(?!:)'{
-        1: variable.parameter,
-        2: punctuation.colon
-    }? expr;
+		1: variable.parameter,
+		2: punctuation.colon
+	}? expr;
 
 struct-literal-field:
-    ('[A-Za-z_][A-Za-z0-9_]*'{meta.name.struct.field})
-    (`:`{punctuation.colon} expr)?
-    ;
+	('[A-Za-z_][A-Za-z0-9_]*'{meta.name.struct.field})
+	(`:`{punctuation.colon} expr)?
+	;
 
 struct-literal-field-list: (struct-literal-field (`,`{punctuation.comma})?)*;
 
 struct-literal: (`{`{punctuation.brace.struct-start} struct-literal-field-list `}`{punctuation.brace.struct-end})
-    | '(::)?(?!not)([A-Za-z_][[:word:]]*)(?:\s*(::)\s*([A-Za-z_][[:word:]]*))*'{
-        1: punctuation.scope,
-        2: variable.other,
-        3: punctuation.scope,
-        4: variable.other
-    };
+	| '(::)?(?!not)([A-Za-z_][[:word:]]*)(?:\s*(::)\s*([A-Za-z_][[:word:]]*))*'{
+		1: punctuation.scope,
+		2: variable.other,
+		3: punctuation.scope,
+		4: variable.other
+	};
 
-cast-expr: `cast`{keyword.operator.cast} `(`{punctuation.paren} expr (`,`{punctuation.comma} expr)? `)`{punctuation.paren};
+cast-expr: `cast`{keyword.operator.cast} `(`{punctuation.paren} expr
+		(`,`{punctuation.comma} (type-expr | type | (`.`{punctuation.period} IDENTIFIER{meta.name.union-case})))?
+	`)`{punctuation.paren};
 
 type-expr: `$`{support.type} type;
 
 primary-expr
-    : length-literal
-    | number-literal
-    | constant-literal
-    | string-literal
-    | fstring-literal
-    | array-literal
-    | enum-literal
-    | text-literal
-    | char-literal
-    | cast-expr
-    | struct-literal
-    | type-expr
-    | `(`{punctuation.paren} expr `)`{punctuation.paren}
-    ;
+	: length-literal
+	| number-literal
+	| constant-literal
+	| string-literal
+	| fstring-literal
+	| array-literal
+	| enum-literal
+	| text-literal
+	| char-literal
+	| cast-expr
+	| struct-literal
+	| type-expr
+	| `(`{punctuation.paren} expr `)`{punctuation.paren}
+	;
 
 postfix-expr2
-    : `(`{punctuation.paren.call-start}
-        (function-call-arg (`,`{punctuation.comma})?)*
-      `)`{punctuation.paren.call-end}
-    | `[`{punctuation.bracket.subscript-start}
-       expr (
-         (`:`{punctuation.colon.slice} expr)
-       | ((`,`{punctuation.comma} expr)*)
-       )?
-      `]`{punctuation.bracket.subscript-end}
-    | `{`{punctuation.brace.struct-start} struct-literal-field-list `}`{punctuation.brace.struct-end}
-    | `!`{keyword.operator.deref}
-    | '\?(?!\?)'{keyword.operator.qn}
-    | `.`{punctuation.operator.dot} IDENTIFIER{meta.name.field}
-    ;
+	: `(`{punctuation.paren.call-start}
+		(function-call-arg (`,`{punctuation.comma})?)*
+	  `)`{punctuation.paren.call-end}
+	| `[`{punctuation.bracket.subscript-start}
+	   expr (
+		 (`:`{punctuation.colon.slice} expr)
+	   | ((`,`{punctuation.comma} expr)*)
+	   )?
+	  `]`{punctuation.bracket.subscript-end}
+	| `{`{punctuation.brace.struct-start} struct-literal-field-list `}`{punctuation.brace.struct-end}
+	| `!`{keyword.operator.deref}
+	| '\?(?!\?)'{keyword.operator.qn}
+	| `.`{punctuation.operator.dot} IDENTIFIER{meta.name.field}
+	;
 
 postfix-expr: primary-expr '\s*' postfix-expr2*;
 
 unary-expr
-    : postfix-expr
-    | `...`{keyword.operator.ellipsis} unary-expr
-    | `*`{keyword.operator.move} unary-expr
-    | `&`{keyword.operator.addr} `mut`{storage.modifier.mut}? unary-expr
-    | `+`{keyword.operator.plus} unary-expr
-    | `-`{keyword.operator.minus} unary-expr
-    | `not`{keyword.operator.not} unary-expr
-    ;
+	: postfix-expr
+	| `...`{keyword.operator.ellipsis} unary-expr
+	| `*`{keyword.operator.move} unary-expr
+	| `&`{keyword.operator.addr} `mut`{storage.modifier.mut}? unary-expr
+	| `+`{keyword.operator.plus} unary-expr
+	| `-`{keyword.operator.minus} unary-expr
+	| `not`{keyword.operator.not} unary-expr
+	;
 
 binop-expr: unary-expr binop-expr2?;
 
 binop-expr2
-    : `//`{keyword.operator.binop.struct-update} struct-literal binop-expr2
-    | `+=`{keyword.operator.binop.arith} unary-expr binop-expr2
-    | `-=`{keyword.operator.binop.arith} unary-expr binop-expr2
-    | `*=`{keyword.operator.binop.arith} unary-expr binop-expr2
-    | `/=`{keyword.operator.binop.arith} unary-expr binop-expr2
-    | `%=`{keyword.operator.binop.arith} unary-expr binop-expr2
-    | `<=`{keyword.operator.binop.compare} unary-expr binop-expr2
-    | `>=`{keyword.operator.binop.compare} unary-expr binop-expr2
-    | `==`{keyword.operator.binop.compare} unary-expr binop-expr2
-    | `!=`{keyword.operator.binop.compare} unary-expr binop-expr2
-    | `??`{keyword.operator.binop.arith} unary-expr binop-expr2
-    | `and`{keyword.operator.binop.logical} unary-expr binop-expr2
-    | `or`{keyword.operator.binop.logical} unary-expr binop-expr2
-    | `&&`{keyword.operator.binop.logical} unary-expr binop-expr2
-    | `||`{keyword.operator.binop.logical} unary-expr binop-expr2
-    | `+`{keyword.operator.binop.arith} unary-expr binop-expr2
-    | `-`{keyword.operator.binop.arith} unary-expr binop-expr2
-    | `*`{keyword.operator.binop.arith} unary-expr binop-expr2
-    | `/`{keyword.operator.binop.arith} unary-expr binop-expr2
-    | `%`{keyword.operator.binop.arith} unary-expr binop-expr2
-    | `<`{keyword.operator.binop.compare} unary-expr binop-expr2
-    | `>`{keyword.operator.binop.compare} unary-expr binop-expr2
-    | `≤`{keyword.operator.binop.compare} unary-expr binop-expr2
-    | `≥`{keyword.operator.binop.compare} unary-expr binop-expr2
-    | `=`{keyword.operator.binop.assign} unary-expr binop-expr2
-    | '(?=;)'?
-    ;
+	: `//`{keyword.operator.binop.struct-update} struct-literal binop-expr2
+	| `+=`{keyword.operator.binop.arith} unary-expr binop-expr2
+	| `-=`{keyword.operator.binop.arith} unary-expr binop-expr2
+	| `*=`{keyword.operator.binop.arith} unary-expr binop-expr2
+	| `/=`{keyword.operator.binop.arith} unary-expr binop-expr2
+	| `%=`{keyword.operator.binop.arith} unary-expr binop-expr2
+	| `<=`{keyword.operator.binop.compare} unary-expr binop-expr2
+	| `>=`{keyword.operator.binop.compare} unary-expr binop-expr2
+	| `==`{keyword.operator.binop.compare} unary-expr binop-expr2
+	| `!=`{keyword.operator.binop.compare} unary-expr binop-expr2
+	| `??`{keyword.operator.binop.arith} unary-expr binop-expr2
+	| `and`{keyword.operator.binop.logical} unary-expr binop-expr2
+	| `or`{keyword.operator.binop.logical} unary-expr binop-expr2
+	| `&&`{keyword.operator.binop.logical} unary-expr binop-expr2
+	| `||`{keyword.operator.binop.logical} unary-expr binop-expr2
+	| `+`{keyword.operator.binop.arith} unary-expr binop-expr2
+	| `-`{keyword.operator.binop.arith} unary-expr binop-expr2
+	| `*`{keyword.operator.binop.arith} unary-expr binop-expr2
+	| `/`{keyword.operator.binop.arith} unary-expr binop-expr2
+	| `%`{keyword.operator.binop.arith} unary-expr binop-expr2
+	| `<`{keyword.operator.binop.compare} unary-expr binop-expr2
+	| `>`{keyword.operator.binop.compare} unary-expr binop-expr2
+	| `≤`{keyword.operator.binop.compare} unary-expr binop-expr2
+	| `≥`{keyword.operator.binop.compare} unary-expr binop-expr2
+	| `=`{keyword.operator.binop.assign} unary-expr binop-expr2
+	| '(?=;)'?
+	;
 
 expr: binop-expr;
 
@@ -273,97 +275,97 @@ hook-exec-block: '(@\s*(?:layout|position|post|finalise|render))(?=\s+|\{)'{1: s
 return-stmt: `return`{keyword.return} expr? `;`{punctuation.terminator};
 
 block-stmt
-    : ('\s*\{'{punctuation.brace.block-start} stmt* '\}'{punctuation.brace.block-end})
-    | stmt
-    ;
+	: ('\s*\{'{punctuation.brace.block-start} stmt* '\}'{punctuation.brace.block-end})
+	| stmt
+	;
 
 else-stmt{meta.control-flow.else-stmt}:
-    `else`{keyword.else} block-stmt;
+	`else`{keyword.else} block-stmt;
 
 if-stmt{meta.control-flow.if-stmt}:
-    `if`{keyword.if} `(`{punctuation.paren.if-start} expr `)`{punctuation.paren.if-end}
-    block-stmt
-    ;
+	`if`{keyword.if} `(`{punctuation.paren.if-start} expr `)`{punctuation.paren.if-end}
+	block-stmt
+	;
 
 for-loop:
-    `for`{keyword.for} `(`{punctuation.paren.while-start}
-        (
-            (('var|let'{storage.type}
-                IDENTIFIER{meta.name.variable} (':'{punctuation.colon} type)? ('='{keyword.operator} expr)?)?
-            `;`{punctuation.semicolon} expr? `;`{punctuation.semicolon} expr?)
-            |
-            ((`&`{keyword.operator.type} `mut`{storage.modifier.mut}?)? IDENTIFIER{meta.name.variable} `in`{keyword.in} expr)
-        )
-    `)`{punctuation.paren.while-end}
-    block-stmt
-    ;
+	`for`{keyword.for} `(`{punctuation.paren.while-start}
+		(
+			(('var|let'{storage.type}
+				IDENTIFIER{meta.name.variable} (':'{punctuation.colon} type)? ('='{keyword.operator} expr)?)?
+			`;`{punctuation.semicolon} expr? `;`{punctuation.semicolon} expr?)
+			|
+			((`&`{keyword.operator.type} `mut`{storage.modifier.mut}?)? IDENTIFIER{meta.name.variable} `in`{keyword.in} expr)
+		)
+	`)`{punctuation.paren.while-end}
+	block-stmt
+	;
 
 
 while-loop:
-    `while`{keyword.while} `(`{punctuation.paren.while-start} expr `)`{punctuation.paren.while-end}
-    block-stmt
-    ;
+	`while`{keyword.while} `(`{punctuation.paren.while-start} expr `)`{punctuation.paren.while-end}
+	block-stmt
+	;
 
 import-stmt:
-    `import`{keyword.import} string-literal `;`{punctuation.terminator}
-    ;
+	`import`{keyword.import} string-literal `;`{punctuation.terminator}
+	;
 
 break-stmt:
-    `break`{keyword.break} `;`{punctuation.terminator}
-    ;
+	`break`{keyword.break} `;`{punctuation.terminator}
+	;
 
 continue-stmt:
-    `continue`{keyword.continue} `;`{punctuation.terminator}
-    ;
+	`continue`{keyword.continue} `;`{punctuation.terminator}
+	;
 
 using-stmt:
-    # note: strictly speaking this accepts a superset of what we actually accept;
-    # if we do `using foo = ...`, then `foo` must just be an identifier, and not a qualified id
-    `using`{keyword.using}
-        (`::`{punctuation.scope})? (IDENTIFIER{meta.name.namespace})
-        (`::`{punctuation.scope} IDENTIFIER{meta.name.namespace})*
-        (`=`{punctuation.equal} (`::`{punctuation.scope})? (IDENTIFIER{meta.name.namespace})
-        (`::`{punctuation.scope} IDENTIFIER{meta.name.namespace})*)?
-    `;`{punctuation.terminator}
-    ;
+	# note: strictly speaking this accepts a superset of what we actually accept;
+	# if we do `using foo = ...`, then `foo` must just be an identifier, and not a qualified id
+	`using`{keyword.using}
+		(`::`{punctuation.scope})? (IDENTIFIER{meta.name.namespace})
+		(`::`{punctuation.scope} IDENTIFIER{meta.name.namespace})*
+		(`=`{punctuation.equal} (`::`{punctuation.scope})? (IDENTIFIER{meta.name.namespace})
+		(`::`{punctuation.scope} IDENTIFIER{meta.name.namespace})*)?
+	`;`{punctuation.terminator}
+	;
 
 stmt: block-comment
-    | line-comment
-    | func-defn
-    | var-defn
-    | struct-defn
-    | enum-defn
-    | union-defn
-    | return-stmt
-    | if-stmt
-    | else-stmt
-    | break-stmt
-    | continue-stmt
-    | import-stmt
-    | using-stmt
-    | namespace-defn
-    | while-loop
-    | for-loop
-    | hook-exec-block
-    | expr `;`{punctuation.terminator}
-    | `;`{punctuation.terminator}
-    ;
+	| line-comment
+	| func-defn
+	| var-defn
+	| struct-defn
+	| enum-defn
+	| union-defn
+	| return-stmt
+	| if-stmt
+	| else-stmt
+	| break-stmt
+	| continue-stmt
+	| import-stmt
+	| using-stmt
+	| namespace-defn
+	| while-loop
+	| for-loop
+	| hook-exec-block
+	| expr `;`{punctuation.terminator}
+	| `;`{punctuation.terminator}
+	;
 
 type: '\b(any|int|bool|char|void|float|string|Inline(Ref)?|Block(Ref)?|LayoutObject(Ref)?|Length)\b'{support.type.builtin}
-    | '(builtin::)?Position|AbsPosition|Colour|ColourRGB|ColourCMYK'{support.type.builtin}
-    | `?`{keyword.operator.type} type
-    | `&`{keyword.operator.type} `mut`{storage.modifier.mut}? type
-    | '([A-Za-z_][[:word:]]*)(?:\s*(::)\s*([A-Za-z_][[:word:]]*))*'{
-        1: meta.name.scope-part,
-        2: punctuation.scope,
-        3: meta.name.scope-part
-    }
-    | ( `(`{punctuation.paren.fn-type-start}
-            (type? (`,`{punctuation.comma} type)*)
-        `)`{punctuation.paren.fn-type-start}
-    ) `->`{punctuation.arrow} type
-    | ( `[`{punctuation.bracket.array-type-start} type (`...`{keyword.operator.ellipsis})? `]`{punctuation.bracket.array-type-end} )
-    ;
+	| '(builtin::)?Position|AbsPosition|Colour|ColourRGB|ColourCMYK'{support.type.builtin}
+	| `?`{keyword.operator.type} type
+	| `&`{keyword.operator.type} `mut`{storage.modifier.mut}? type
+	| '([A-Za-z_][[:word:]]*)(?:\s*(::)\s*([A-Za-z_][[:word:]]*))*'{
+		1: meta.name.scope-part,
+		2: punctuation.scope,
+		3: meta.name.scope-part
+	}
+	| ( `(`{punctuation.paren.fn-type-start}
+			(type? (`,`{punctuation.comma} type)*)
+		`)`{punctuation.paren.fn-type-start}
+	) `->`{punctuation.arrow} type
+	| ( `[`{punctuation.bracket.array-type-start} type (`...`{keyword.operator.ellipsis})? `]`{punctuation.bracket.array-type-end} )
+	;
 
 
 char-literal: '\'.*?\''{string.quoted.single};
@@ -375,37 +377,37 @@ length-literal: '\b([[:digit:]]+(\.([[:digit:]]+))?)(\s*(ex|em|rem|mm|cm|in|pt|p
 constant-literal: '\b(true|false|null)\b'{constant.language};
 
 array-literal:
-    (`[`{punctuation.bracket})
-    (`:`{punctuation.colon} type)?
-        (expr (`,`{punctuation.comma})?)*
-    (`]`{punctuation.bracket})
-    ;
+	(`[`{punctuation.bracket})
+	(`:`{punctuation.colon} type)?
+		(expr (`,`{punctuation.comma})?)*
+	(`]`{punctuation.bracket})
+	;
 
 enum-literal:
-    ('\.(?!\.)'{punctuation.period})
-    IDENTIFIER{meta.name.enumerator}
-    ;
+	('\.(?!\.)'{punctuation.period})
+	IDENTIFIER{meta.name.enumerator}
+	;
 
 string-escapes
-    : '\\\{|\\\}|\\\\|\\n|\\t|\\b|\\"|\\\''{constant.character.escape}
-    | '\\x[[:xdigit:]]{2}'{constant.character.escape}
-    | '\\u[[:xdigit:]]{4}'{constant.character.escape}
-    | '\\U[[:xdigit:]]{8}'{constant.character.escape}
-    ;
+	: '\\\{|\\\}|\\\\|\\n|\\t|\\b|\\"|\\\''{constant.character.escape}
+	| '\\x[[:xdigit:]]{2}'{constant.character.escape}
+	| '\\u[[:xdigit:]]{4}'{constant.character.escape}
+	| '\\U[[:xdigit:]]{8}'{constant.character.escape}
+	;
 
 string-literal {string.quoted.double, include-prototype: false}:
-    '"'{punctuation.quote}
-        (string-escapes | '[^"]')*
-    '"'{punctuation.quote};
+	'"'{punctuation.quote}
+		(string-escapes | '[^"]')*
+	'"'{punctuation.quote};
 
 fstring-contents
-    : string-escapes
-    | `{`{punctuation.brace.fstring-expr-start} expr `}`{punctuation.brace.fstring-expr-end}
-    | '[^"]'{string.quoted.double}
-    ;
+	: string-escapes
+	| `{`{punctuation.brace.fstring-expr-start} expr `}`{punctuation.brace.fstring-expr-end}
+	| '[^"]'{string.quoted.double}
+	;
 
 fstring-literal {include-prototype: false}:
-    '(f)(")'{1: storage.type.string, 2: punctuation.quote.fstring-start}
-        fstring-contents*
-    '(")'{1: punctuation.quote.fstring-end}
-    ;
+	'(f)(")'{1: storage.type.string, 2: punctuation.quote.fstring-start}
+		fstring-contents*
+	'(")'{1: punctuation.quote.fstring-end}
+	;

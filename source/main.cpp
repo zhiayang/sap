@@ -23,6 +23,9 @@ scripting
 
 [ ] GO BACK TO UNIQUE_PTR PLS
 
+[ ] would be nice to have a `style` parameter for the builtin make_* functions
+	instead of needing apply_style every damn time
+
 
 layout
 ------

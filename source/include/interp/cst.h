@@ -223,6 +223,24 @@ namespace sap::interp::cst
 		CastKind cast_kind;
 	};
 
+	struct UnionVariantCastExpr : Expr
+	{
+		explicit UnionVariantCastExpr(Location loc,
+		    std::unique_ptr<Expr> expr,
+		    const Type* type,
+		    const UnionType* union_type,
+		    size_t variant_idx)
+		    : Expr(std::move(loc), type), expr(std::move(expr)), union_type(union_type), variant_idx(variant_idx)
+		{
+		}
+
+		virtual ErrorOr<EvalResult> evaluate_impl(Evaluator* ev) const override;
+
+		std::unique_ptr<Expr> expr;
+		const UnionType* union_type;
+		size_t variant_idx;
+	};
+
 	struct StructDefn;
 
 	struct StructLit : Expr

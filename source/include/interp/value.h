@@ -77,7 +77,9 @@ namespace sap::interp
 		tree::BlockObject* getTreeBlockObjectRef() const;
 		layout::LayoutObject* getLayoutObjectRef() const;
 
-
+		const Value& getUnionUnderlyingStruct() const;
+		Value& getUnionUnderlyingStruct();
+		Value takeUnionUnderlyingStruct() &&;
 
 
 		std::optional<const Value*> getOptional() const;
@@ -128,7 +130,7 @@ namespace sap::interp
 		static Value floating(double num);
 		static Value character(char32_t ch);
 		static Value enumerator(const EnumType* type, Value value);
-		static Value unionCase(const UnionType* type, size_t case_idx, Value case_value_as_struct);
+		static Value unionVariant(const UnionType* type, size_t case_idx, Value case_value_as_struct);
 		static Value function(const FunctionType* fn_type, FnType fn);
 		static Value string(const std::string& str);
 		static Value string(const std::u32string& str);
@@ -142,7 +144,6 @@ namespace sap::interp
 		static Value optional(const Type* type, std::optional<Value> value);
 
 		static Value fromGenerator(const Type* type, std::function<Value()> func);
-		Value clone() const;
 
 		static Value treeInlineObjectRef(tree::InlineSpan* obj);
 		static Value treeBlockObjectRef(tree::BlockObject* obj);
@@ -150,6 +151,10 @@ namespace sap::interp
 
 		template <typename T>
 		T get() const;
+
+		Value clone() const;
+
+		size_t getUnionVariantIndex() const;
 
 	private:
 		explicit Value(const Type* type) : m_type(type), m_moved_from(false) { }

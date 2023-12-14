@@ -2,7 +2,10 @@
 
 namespace std
 {
-	fn numbered_list(items: [string...]) -> ?Block
+	global var g_bulleted_list_item_spacing: Length = 0.5em;
+	global var g_numbered_list_item_spacing: Length = 0.5em;
+
+	fn numbered_list(items: [Inline...]) -> ?Block
 	{
 		var lines = [:Block];
 		var i = 0;
@@ -12,13 +15,22 @@ namespace std
 				builtin::hspace(0.8em),
 				builtin::make_line(builtin::make_text(f"{i + 1}.")).apply_style({ horz_alignment: .Right }),
 				builtin::hspace(0.6em),
-				builtin::make_line(builtin::make_text(items[i]))
+				builtin::make_paragraph(*items[i]).apply_style({ line_spacing: 1.2 })
 			)];
 			i += 1;
 		}
 
 		return builtin::make_vbox(...*lines)
-			.apply_style({ paragraph_spacing: 0.5em, });
+			.apply_style({ paragraph_spacing: g_numbered_list_item_spacing, });
+	}
+
+	fn numbered_list(items: [string...]) -> ?Block
+	{
+		var inlines = [:Inline];
+		for(var i = 0; i < items.size(); i += 1)
+			inlines += [builtin::make_text(items[i])];
+
+		return numbered_list(...*inlines);
 	}
 
 	fn bulleted_list(items: [Inline...]) -> Block
@@ -35,7 +47,7 @@ namespace std
 		}
 
 		return builtin::make_vbox(...*lines)
-			.apply_style({ paragraph_spacing: 0.5em, });
+			.apply_style({ paragraph_spacing: g_bulleted_list_item_spacing, });
 	}
 
 	fn bulleted_list(items: [string...]) -> Block

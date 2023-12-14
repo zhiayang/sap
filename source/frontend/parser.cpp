@@ -51,7 +51,7 @@ namespace sap::frontend
 	static void must_expect(Lexer& lexer, T&& x)
 	{
 		if(not lexer.expect(static_cast<T&&>(x)))
-			sap::internal_error("????");
+			sap::internal_error("must_expect failed");
 	}
 
 	static ErrorOr<std::u32string> escape_word_text(const Location& loc, zst::str_view text_)
@@ -786,7 +786,8 @@ namespace sap::frontend
 	static ErrorOrUniquePtr<ast::TypeExpr> parse_type_expr(Lexer& lexer)
 	{
 		auto loc = lexer.location();
-		must_expect(lexer, TT::Dollar);
+		if(not lexer.expect(TT::Dollar))
+			return ErrMsg(lexer.peek().loc, "expected '$' in type expression, got '{}'", lexer.peek().text);
 
 		auto type = TRY(parse_type(lexer));
 		return Ok(std::make_unique<ast::TypeExpr>(loc, std::move(type)));
@@ -808,14 +809,44 @@ namespace sap::frontend
 				if(not lexer.expect(TT::LParen))
 					return ErrMsg(lexer.location(), "expected '(' after 'cast'");
 
-				auto cast_expr = std::make_unique<ast::CastExpr>(t.loc);
-				cast_expr->expr = TRY(parse_expr(lexer));
+				auto expr = TRY(parse_expr(lexer));
 
 				// TODO: make the type optional for an auto-cast
 				if(not lexer.expect(TT::Comma))
 					return ErrMsg(lexer.location(), "expected ',' after expression");
 
-				cast_expr->target_type = TRY(parse_type_expr(lexer));
+				if(lexer.expect(TT::Period))
+				{
+					std::string variant_name;
+					if(auto n = TRY(lexer.next()); n != TT::Identifier)
+						return ErrMsg(n.loc, "expected identifier for variant name after '.'");
+					else
+						variant_name = n.str();
+
+					if(not lexer.expect(TT::RParen))
+						return ErrMsg(lexer.location(), "expected ')' after cast expression");
+
+					// parse a union variant name
+					return Ok(std::make_unique<ast::ImplicitUnionVariantCastExpr>(t.loc, std::move(expr),
+					    std::move(variant_name)));
+				}
+
+
+				std::unique_ptr<ast::TypeExpr> target {};
+				if(lexer.peek() == TT::Dollar)
+				{
+					// type expression
+					target = TRY(parse_type_expr(lexer));
+				}
+				else
+				{
+					// just a type
+					target = std::make_unique<ast::TypeExpr>(t.loc, TRY(parse_type(lexer)));
+				}
+
+				auto cast_expr = std::make_unique<ast::CastExpr>(t.loc);
+				cast_expr->expr = std::move(expr);
+				cast_expr->target_type = std::move(target);
 
 				if(not lexer.expect(TT::RParen))
 					return ErrMsg(lexer.location(), "expected ')' after cast expression");

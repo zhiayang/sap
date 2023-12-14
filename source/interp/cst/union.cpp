@@ -36,6 +36,6 @@ namespace sap::interp::cst
 		}
 
 		auto case_value = Value::structure(case_type, std::move(field_values));
-		return EvalResult::ofValue(Value::unionCase(union_type, this->case_index, std::move(case_value)));
+		return EvalResult::ofValue(Value::unionVariant(union_type, this->case_index, std::move(case_value)));
 	}
 }

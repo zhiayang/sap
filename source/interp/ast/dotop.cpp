@@ -10,7 +10,7 @@ namespace sap::interp::ast
 {
 	ErrorOr<TCResult> DotOp::typecheck_impl(Typechecker* ts, const Type* infer, bool keep_lvalue) const
 	{
-		auto lhs_res = TRY(this->lhs->typecheck(ts));
+		auto lhs_res = TRY(this->lhs->typecheck(ts, /* infer: */ nullptr, /* keep_lvalue: */ keep_lvalue));
 		auto ltype = lhs_res.type();
 
 		const StructType* struct_type = nullptr;

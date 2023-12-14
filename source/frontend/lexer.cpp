@@ -802,7 +802,7 @@ namespace sap::frontend
 
 	Location Lexer::location() const
 	{
-		return m_location;
+		return this->peek().loc;
 	}
 
 	void Lexer::pushMode(Lexer::Mode mode)

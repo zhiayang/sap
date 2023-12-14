@@ -34,6 +34,10 @@ namespace sap::interp
 		return m_gen_func != nullptr;
 	}
 
+	size_t Value::getUnionVariantIndex() const
+	{
+		return m_union_case_idx;
+	}
 
 	bool Value::getBool() const
 	{
@@ -162,6 +166,34 @@ namespace sap::interp
 			ret += v_array[i].getChar();
 
 		return ret;
+	}
+
+
+	const Value& Value::getUnionUnderlyingStruct() const
+	{
+		this->ensure_not_moved_from();
+		assert(m_type->isUnion());
+		REIFY_GEN_FUNC(v_array);
+
+		return v_array[0];
+	}
+
+	Value& Value::getUnionUnderlyingStruct()
+	{
+		this->ensure_not_moved_from();
+		assert(m_type->isUnion());
+		REIFY_GEN_FUNC(v_array);
+
+		return v_array[0];
+	}
+
+	Value Value::takeUnionUnderlyingStruct() &&
+	{
+		this->ensure_not_moved_from();
+		assert(m_type->isUnion());
+		REIFY_GEN_FUNC(v_array);
+
+		return std::move(v_array[0]);
 	}
 
 
@@ -708,22 +740,23 @@ namespace sap::interp
 		return ret;
 	}
 
-	Value Value::unionCase(const UnionType* type, size_t case_idx, Value case_value_as_struct)
+	Value Value::unionVariant(const UnionType* type, size_t case_idx, Value case_value_as_struct)
 	{
 		auto ret = Value(type);
 		ret.m_union_case_idx = case_idx;
-		new(&ret.v_array) decltype(ret.v_array)(std::move(case_value_as_struct.v_array));
+		new(&ret.v_array) decltype(ret.v_array)();
 
 		auto case_type = type->getCaseAtIndex(case_idx);
-		for(size_t i = 0; i < ret.v_array.size(); i++)
+		for(size_t i = 0; i < case_value_as_struct.v_array.size(); i++)
 		{
-			if(ret.v_array[i].type() != case_type->getFieldAtIndex(i))
+			if(case_value_as_struct.v_array[i].type() != case_type->getFieldAtIndex(i))
 			{
 				sap::internal_error("mismatched field types! expected '{}', got '{}'", case_type->getFieldAtIndex(i),
-				    ret.v_array[i].type());
+				    case_value_as_struct.v_array[i].type());
 			}
 		}
 
+		ret.v_array.push_back(std::move(case_value_as_struct));
 		return ret;
 	}
 

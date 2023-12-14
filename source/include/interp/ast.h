@@ -222,6 +222,21 @@ namespace sap::interp::ast
 		std::unique_ptr<TypeExpr> target_type;
 	};
 
+	struct ImplicitUnionVariantCastExpr : Expr
+	{
+		explicit ImplicitUnionVariantCastExpr(Location loc, std::unique_ptr<Expr> expr, std::string variant_name)
+		    : Expr(std::move(loc)), expr(std::move(expr)), variant_name(std::move(variant_name))
+		{
+		}
+
+		virtual ErrorOr<TCResult> typecheck_impl(Typechecker* ts,
+		    const Type* infer = nullptr, //
+		    bool keep_lvalue = false) const override;
+
+		std::unique_ptr<Expr> expr;
+		std::string variant_name;
+	};
+
 	struct StructDefn;
 
 	struct StructLit : Expr
