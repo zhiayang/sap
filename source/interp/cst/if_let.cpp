@@ -35,16 +35,21 @@ namespace sap::interp::cst
 	ErrorOr<EvalResult> IfLetUnionStmt::evaluate_impl(Evaluator* ev) const
 	{
 		auto f = ev->pushFrame();
+		auto value = TRY_VALUE(this->expr->evaluate(ev));
 
 		assert(not this->rhs_defn->is_global);
 		TRY(this->rhs_defn->evaluate(ev));
 
-		auto value = ev->frame().valueOf(this->rhs_defn.get());
-		assert(value != nullptr);
-
-		if(value->getUnionVariantIndex() == this->variant_index)
+		if(value.getUnionVariantIndex() == this->variant_index)
 		{
-			auto f_ = ev->pushFrame();
+			auto def = this->rhs_defn.get();
+
+			auto& variant = value.getUnionUnderlyingStruct();
+			if(def->is_mutable)
+				ev->frame().setValue(def, Value::mutablePointer(variant.type(), &variant));
+			else
+				ev->frame().setValue(def, Value::pointer(variant.type(), &variant));
+
 			for(auto& d : this->binding_defns)
 				TRY(d->evaluate(ev));
 

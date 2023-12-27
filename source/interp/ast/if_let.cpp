@@ -104,15 +104,10 @@ namespace sap::interp::ast
 				auto tmp_union_decl_ = cst::Declaration(m_location, ts->current(), ts->getTemporaryName(),
 				    variant_ptr_type, is_any_mutable);
 
-				auto cast_expr = std::make_unique<cst::UnionVariantCastExpr>(m_location, rhs.get(), variant_type,
-				    union_type, variant_idx);
-				auto addr_expr = std::make_unique<cst::AddressOfOp>(m_location, variant_ptr_type, is_any_mutable,
-				    std::move(cast_expr));
-
 				auto tmp_union_decl = TRY(ts->current()->declare(std::move(tmp_union_decl_)));
 
-				rhs_defn = std::make_unique<cst::VariableDefn>(m_location, tmp_union_decl, /* global: */ false,
-				    std::move(addr_expr), is_any_mutable);
+				rhs_defn = std::make_unique<cst::VariableDefn>(m_location, tmp_union_decl, /* global: */ false, nullptr,
+				    is_any_mutable);
 				tmp_union_decl->define(rhs_defn.get());
 			}
 
