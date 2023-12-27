@@ -21,11 +21,7 @@ namespace sap::interp::cst
 		std::vector<Value> values {};
 		for(auto& e : this->exprs)
 		{
-			Value val;
-			if(e.is_left())
-				val = TRY_VALUE(e.left()->evaluate(ev));
-			else
-				val = TRY_VALUE(e.right()->evaluate(ev));
+			auto val = TRY_VALUE(e->evaluate(ev));
 
 			// need to flatten, because otherwise ...[a] will end up as [[a]].
 			if(val.type()->isVariadicArray())

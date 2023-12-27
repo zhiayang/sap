@@ -9,7 +9,7 @@ namespace sap::interp::ast
 {
 	ErrorOr<TCResult> SubscriptOp::typecheck_impl(Typechecker* ts, const Type* infer, bool keep_lvalue) const
 	{
-		auto lhs = TRY(this->array->typecheck(ts));
+		auto lhs = TRY(this->array->typecheck(ts, /* infer: */ nullptr, keep_lvalue));
 
 		// TODO: multiple subscript indices for overloaded operators
 		auto rhs = TRY(this->indices[0]->typecheck(ts));

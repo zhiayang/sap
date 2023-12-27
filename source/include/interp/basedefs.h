@@ -18,5 +18,8 @@ namespace sap::interp
 		std::string str() const;
 
 		QualifiedId parentScopeFor(std::string name) const;
+		QualifiedId withoutLastComponent() const;
+
+		static QualifiedId named(std::string name);
 	};
 }

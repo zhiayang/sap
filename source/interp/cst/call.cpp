@@ -13,20 +13,14 @@
 
 namespace sap::interp::cst
 {
-	static ErrorOr<EvalResult> eval_arg(Evaluator* ev, const Either<std::unique_ptr<Expr>, const Expr*>& arg)
+	static ErrorOr<EvalResult> eval_arg(Evaluator* ev, const ExprOrDefaultPtr& arg)
 	{
-		if(arg.is_left())
-			return arg.left()->evaluate(ev);
-		else
-			return arg.right()->evaluate(ev);
+		return arg->evaluate(ev);
 	}
 
-	static Location get_arg_loc(const Either<std::unique_ptr<Expr>, const Expr*>& arg)
+	static Location get_arg_loc(const ExprOrDefaultPtr& arg)
 	{
-		if(arg.is_left())
-			return arg.left()->loc();
-		else
-			return arg.right()->loc();
+		return arg->loc();
 	}
 
 	ErrorOr<EvalResult> FunctionCall::evaluate_impl(Evaluator* ev) const

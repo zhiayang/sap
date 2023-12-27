@@ -25,9 +25,7 @@ namespace sap::interp::ast
 			auto resolved_decl = decls[0];
 			auto dt = resolved_decl->type;
 
-			bool cannot_be_copied = (dt->isTreeBlockObj() || dt->isTreeInlineObj() || dt->isLayoutObject());
-
-			if(not keep_lvalue && cannot_be_copied)
+			if(not keep_lvalue && not dt->isCloneable())
 				return ErrMsg(ts, "'{}' values cannot be copied; use '*' to move", dt);
 
 			auto ident = std::make_unique<cst::Ident>(m_location, dt, this->name, resolved_decl);

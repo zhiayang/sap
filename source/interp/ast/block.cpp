@@ -49,10 +49,10 @@ namespace sap::interp::ast
 			{
 				return true;
 			}
-			else if(auto if_stmt = dynamic_cast<IfStmt*>(stmt.get()); if_stmt != nullptr && if_stmt->else_body)
+			else if(auto if_stmt = dynamic_cast<IfStmtLike*>(stmt.get()); if_stmt != nullptr && if_stmt->else_case)
 			{
-				if(if_stmt->if_body->checkAllPathsReturn(return_type)
-				    && if_stmt->else_body->checkAllPathsReturn(return_type))
+				if(if_stmt->true_case->checkAllPathsReturn(return_type)
+				    && if_stmt->else_case->checkAllPathsReturn(return_type))
 				{
 					return true;
 				}

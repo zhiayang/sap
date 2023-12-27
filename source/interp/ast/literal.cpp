@@ -68,14 +68,14 @@ namespace sap::interp::ast
 			auto& arg_val = arg.value.left();
 			if(arg_val.is_right())
 			{
-				final_fields.push_back(Right(arg_val.right()));
+				final_fields.push_back(arg_val.right());
 				continue;
 			}
 
 			auto arg_idx = arg_val.left();
 			assert(processed_field_exprs[arg_idx] != nullptr);
 
-			final_fields.push_back(Left(std::move(processed_field_exprs[arg_idx])));
+			final_fields.push_back(std::move(processed_field_exprs[arg_idx]));
 		}
 
 		assert(final_fields.size() == case_type->getFields().size());

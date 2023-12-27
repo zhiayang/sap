@@ -11,7 +11,7 @@ namespace sap::interp::cst
 {
 	ErrorOr<EvalResult> VariableDefn::evaluate_impl(Evaluator* ev) const
 	{
-		if(this->initialiser != nullptr)
+		if(not this->initialiser.is_null())
 		{
 			// if this is a global variable that was already initialised, don't re-initialise it
 			// the implication is that for layout passes > 1, we don't reset values (we need to persist some state!)

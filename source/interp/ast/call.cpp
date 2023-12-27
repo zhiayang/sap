@@ -187,7 +187,7 @@ namespace sap::interp::ast
 		auto ufcs_kind = UFCSKind::None;
 		const FunctionType* fn_type = nullptr;
 		const cst::Declaration* final_callee = nullptr;
-		std::vector<Either<std::unique_ptr<cst::Expr>, const cst::Expr*>> final_args {};
+		std::vector<cst::ExprOrDefaultPtr> final_args {};
 
 		// if the function expression is an identifier, we resolve it manually to handle overloading.
 		if(auto ident = dynamic_cast<const Ident*>(this->callee.get()); ident != nullptr)
@@ -253,12 +253,12 @@ namespace sap::interp::ast
 				    -> ErrorOr<cst::ExprOrDefaultPtr>                                         //
 				{
 					if(arg.is_right())
-						return Ok(Right(arg.right()));
+						return Ok(arg.right());
 
 					size_t arg_idx = arg.left();
 					if(processed_args[arg_idx] != nullptr)
 					{
-						return Ok(Left(std::move(processed_args[arg_idx])));
+						return Ok(std::move(processed_args[arg_idx]));
 					}
 					else
 					{
@@ -266,7 +266,7 @@ namespace sap::interp::ast
 						auto expr = TRY(this->arguments[i].value->typecheck(ts, /* infer: */ param_type,
 						    /* keep_lvalue: */ is_ufcs_self));
 
-						return Ok(Left(std::move(expr).take_expr()));
+						return Ok(std::move(expr).take_expr());
 					}
 				};
 
@@ -285,8 +285,8 @@ namespace sap::interp::ast
 					for(auto& e : arg.value.right())
 						pack.push_back(TRY(do_one_arg(arg.param_type->arrayElement(), e)));
 
-					final_args.push_back(Left(std::make_unique<cst::VariadicPackExpr>(m_location, arg.param_type,
-					    std::move(pack))));
+					final_args.emplace_back(std::make_unique<cst::VariadicPackExpr>(m_location, arg.param_type,
+					    std::move(pack)));
 				}
 			}
 		}

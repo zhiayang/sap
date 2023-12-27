@@ -27,6 +27,7 @@ namespace sap::frontend
 
 	constexpr auto KW_NULL = "null";
 	constexpr auto KW_CAST = "cast";
+	constexpr auto KW_UNDERSCORE = "_";
 
 	constexpr auto KW_BOX_BLOCK = "box";
 	constexpr auto KW_PARA_BLOCK = "para";
@@ -793,6 +794,124 @@ namespace sap::frontend
 		return Ok(std::make_unique<ast::TypeExpr>(loc, std::move(type)));
 	}
 
+	static ErrorOrUniquePtr<ast::IfStmtLike> parse_if_let_stmt(Lexer& lexer)
+	{
+		assert(lexer.peek() == TT::KW_Var || lexer.peek() == TT::KW_Let);
+
+		auto let_loc = lexer.location();
+		bool all_mutable = (lexer.peek() == TT::KW_Var);
+		TRY(lexer.next());
+
+		// TODO: figure out if this is a union if-let or optional if-let
+		QualifiedId variant_name {};
+		if(lexer.expect(TT::Period))
+		{
+			if(auto id = TRY(lexer.next()); id == TT::Identifier)
+				variant_name.name = id.text.str();
+			else
+				return ErrMsg(id.loc, "expected identifier after '.'");
+		}
+		else
+		{
+			// parse a qualified id (ie. fully qualified union variant)
+			variant_name = TRY(parse_qualified_id(lexer)).first;
+		}
+
+		std::vector<ast::IfLetUnionStmt::Binding> bindings {};
+
+		if(not lexer.expect(TT::LParen))
+			return ErrMsg(lexer.location(), "expected '('");
+
+		for(bool first = true; not lexer.expect(TT::RParen); first = false)
+		{
+			if(not first && not lexer.expect(TT::Comma))
+				return ErrMsg(lexer.location(), "expected ',' or ')' in binding list, got '{}'", lexer.peek().text);
+
+			else if(first && lexer.peek() == TT::Comma)
+				return ErrMsg(lexer.location(), "unexpected ','");
+
+			// if we are not first, and we see a rparen (at this point), break
+			// we check again because it allows us to handle trailing commas (for >0 args)
+			if(lexer.expect(TT::RParen))
+				break;
+
+			using BindingKind = ast::IfLetUnionStmt::Binding::Kind;
+			if(auto id = TRY(lexer.next()); id == TT::Identifier || id == TT::KW_Mut || id == TT::Ampersand)
+			{
+				if(id.text == KW_UNDERSCORE)
+				{
+					bindings.push_back({ .loc = id.loc, .kind = BindingKind::Skip });
+				}
+				else
+				{
+					const bool is_reference = (id == TT::Ampersand);
+					if(is_reference)
+						id = TRY(lexer.next());
+
+					// TODO: make a warning if you used `var` but still keep putting `mut` manually
+					const bool is_mutable = (id == TT::KW_Mut) || all_mutable;
+					if(id == TT::KW_Mut)
+						id = TRY(lexer.next());
+
+					// if there is a colon, this is named. otherwise, assume field and binding have the same name
+					if(lexer.expect(TT::Colon))
+					{
+						// if you put a colon, then the first part should just be the name, without '&' or 'mut'
+						if(is_mutable || is_reference)
+							return ErrMsg(lexer.location(), "'&' and 'mut' should be placed after the ':'");
+
+						const bool is_ref = lexer.expect(TT::Ampersand);
+						const bool is_mut = lexer.expect(TT::KW_Mut);
+						if(auto b = TRY(lexer.next()); b == TT::Identifier)
+						{
+							bindings.push_back({
+							    .loc = id.loc,
+							    .kind = BindingKind::Named,
+							    .mut = is_mut,
+							    .reference = is_ref,
+							    .field_name = id.str(),
+							    .binding_name = b.str(),
+							});
+						}
+						else
+						{
+							return ErrMsg(b.loc, "expected identifier after ':'");
+						}
+					}
+					else
+					{
+						bindings.push_back({
+						    .loc = id.loc,
+						    .kind = BindingKind::Named,
+						    .mut = is_mutable,
+						    .reference = is_reference,
+						    .field_name = id.str(),
+						    .binding_name = id.str(),
+						});
+					}
+				}
+			}
+			else if(id == TT::Ellipsis)
+			{
+				bindings.push_back({ .kind = BindingKind::Ellipsis });
+			}
+			else
+			{
+				return ErrMsg(id.loc, "unexpected '{}' in binding list", id.text);
+			}
+		}
+
+		if(not lexer.expect(TT::Equal))
+			return ErrMsg(lexer.location(), "expected '=' after binding");
+
+		auto ret = std::make_unique<ast::IfLetUnionStmt>(let_loc, std::move(variant_name), std::move(bindings),
+		    TRY(parse_expr(lexer)));
+
+		if(not lexer.expect(TT::RParen))
+			return ErrMsg(lexer.location(), "expected ')' after condition");
+
+		return OkMove(ret);
+	}
 
 	static ErrorOrUniquePtr<ast::Expr> parse_primary(Lexer& lexer)
 	{
@@ -1513,7 +1632,7 @@ namespace sap::frontend
 
 
 
-	static ErrorOrUniquePtr<ast::IfStmt> parse_if_stmt(Lexer& lexer)
+	static ErrorOrUniquePtr<ast::Stmt> parse_if_stmt(Lexer& lexer)
 	{
 		auto loc = lexer.location();
 		must_expect(lexer, TT::KW_If);
@@ -1521,18 +1640,31 @@ namespace sap::frontend
 		if(not lexer.expect(TT::LParen))
 			return ErrMsg(lexer.location(), "expected '(' after 'if'");
 
-		auto if_stmt = std::make_unique<ast::IfStmt>(loc);
+		if(auto letvar = lexer.peek(); letvar == TT::KW_Let || letvar == TT::KW_Var)
+		{
+			auto if_stmt = TRY(parse_if_let_stmt(lexer));
+			if_stmt->true_case = TRY(parse_block_or_stmt(lexer, /* is_top_level: */ false, /* braces: */ false));
 
-		if_stmt->if_cond = TRY(parse_expr(lexer));
-		if(not lexer.expect(TT::RParen))
-			return ErrMsg(lexer.location(), "expected ')' after condition");
+			if(lexer.expect(TT::KW_Else))
+				if_stmt->else_case = TRY(parse_block_or_stmt(lexer, /* is_top_level: */ false, /* braces: */ false));
 
-		if_stmt->if_body = TRY(parse_block_or_stmt(lexer, /* is_top_level: */ false, /* braces: */ false));
+			return OkMove(if_stmt);
+		}
+		else
+		{
+			auto if_stmt = std::make_unique<ast::IfStmt>(loc);
 
-		if(lexer.expect(TT::KW_Else))
-			if_stmt->else_body = TRY(parse_block_or_stmt(lexer, /* is_top_level: */ false, /* braces: */ false));
+			if_stmt->if_cond = TRY(parse_expr(lexer));
+			if(not lexer.expect(TT::RParen))
+				return ErrMsg(lexer.location(), "expected ')' after condition");
 
-		return OkMove(if_stmt);
+			if_stmt->true_case = TRY(parse_block_or_stmt(lexer, /* is_top_level: */ false, /* braces: */ false));
+
+			if(lexer.expect(TT::KW_Else))
+				if_stmt->else_case = TRY(parse_block_or_stmt(lexer, /* is_top_level: */ false, /* braces: */ false));
+
+			return OkMove(if_stmt);
+		}
 	}
 
 	static ErrorOrUniquePtr<ast::WhileLoop> parse_while_loop(Lexer& lexer)

@@ -25,12 +25,7 @@ namespace sap::interp::cst
 			auto& f = this->field_inits[i];
 			auto ft = struct_type->getFieldTypes()[i];
 
-			Value v {};
-			if(f.is_left())
-				v = TRY_VALUE(f.left()->evaluate(ev));
-			else
-				v = TRY_VALUE(f.right()->evaluate(ev));
-
+			auto v = TRY_VALUE(f->evaluate(ev));
 			field_values.push_back(ev->castValue(std::move(v), ft));
 		}
 

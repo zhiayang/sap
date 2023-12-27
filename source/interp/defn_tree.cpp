@@ -19,6 +19,29 @@ namespace sap::interp
 		return ret;
 	}
 
+	QualifiedId QualifiedId::named(std::string name)
+	{
+		return QualifiedId {
+			.top_level = false,
+			.parents = {},
+			.name = std::move(name),
+		};
+	}
+
+	QualifiedId QualifiedId::withoutLastComponent() const
+	{
+		if(this->parents.empty())
+			sap::internal_error("cannot remove last component without parent scopes");
+
+		auto ret = QualifiedId();
+		ret.top_level = this->top_level;
+		ret.parents = this->parents;
+		ret.name = std::move(this->parents.back());
+		ret.parents.pop_back();
+
+		return ret;
+	}
+
 	QualifiedId QualifiedId::parentScopeFor(std::string child_name) const
 	{
 		auto ret = QualifiedId();

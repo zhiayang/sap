@@ -87,7 +87,7 @@ namespace sap::interp::ast
 		}
 
 		auto arrangement = TRY(arrangeCallArguments(ts, fields, processed_field_types, "struct", "field", "field"));
-		std::vector<Either<std::unique_ptr<cst::Expr>, const cst::Expr*>> final_fields {};
+		std::vector<cst::ExprOrDefaultPtr> final_fields {};
 
 		for(size_t i = 0; i < arrangement.arguments.size(); i++)
 		{
@@ -99,14 +99,14 @@ namespace sap::interp::ast
 			auto& arg_val = arg.value.left();
 			if(arg_val.is_right())
 			{
-				final_fields.push_back(Right(arg_val.right()));
+				final_fields.push_back(arg_val.right());
 				continue;
 			}
 
 			auto arg_idx = arg_val.left();
 			assert(processed_field_exprs[arg_idx] != nullptr);
 
-			final_fields.push_back(Left(std::move(processed_field_exprs[arg_idx])));
+			final_fields.push_back(std::move(processed_field_exprs[arg_idx]));
 		}
 
 		assert(final_fields.size() == struct_type->getFields().size());

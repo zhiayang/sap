@@ -58,18 +58,23 @@ sans!.regular.adjust_glyph_spacing({ match: ["2.1", "3.1", "4.1", "5.1", "6.1", 
 	union PathObject
 	{
 		Line(a: int);
+		Foo(a: int);
 	};
 
 	fn asdf()
 	{
 		# csdf(.Foo);
 		var p: PathObject = .Line(a: 10);
-		# cast(p, .Line).a = 0;
-		println(f"{cast(p, .Line).a}");
 
-		# if(true && let .Line(a: a) = p && false)
-		# {
-		# }
+		# cast(p, .Line).a = 69;
+		# println(f"{cast(p, .Line).a}");
+
+
+		if(let .Line(a: &mut x) = p)
+		{
+			x! = 30;
+			println(f"hello!: {cast(p, .Line).a}");
+		}
 	}
 
 	fn bsdf() -> ?Inline

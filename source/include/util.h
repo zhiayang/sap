@@ -265,7 +265,7 @@ namespace util
 	template <typename To, typename From>
 	inline std::unique_ptr<To> static_pointer_cast(std::unique_ptr<From>&& from) //
 	    noexcept
-	    requires std::derived_from<To, From>
+	    requires(std::derived_from<To, From> || std::derived_from<From, To>)
 	{
 		return std::unique_ptr<To>(static_cast<To*>(from.release()));
 	}

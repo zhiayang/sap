@@ -77,9 +77,9 @@ namespace sap::interp
 		DefnTree* current();
 		const DefnTree* current() const;
 
-		ErrorOr<const Type*> resolveType(const frontend::PType& ptype);
-		ErrorOr<const cst::Definition*> getDefinitionForType(const Type* type);
-		ErrorOr<void> addTypeDefinition(const Type* type, const cst::Definition* defn);
+		[[nodiscard]] ErrorOr<const Type*> resolveType(const frontend::PType& ptype);
+		[[nodiscard]] ErrorOr<const cst::Definition*> getDefinitionForType(const Type* type);
+		[[nodiscard]] ErrorOr<void> addTypeDefinition(const Type* type, const cst::Definition* defn);
 
 		ErrorOr<const DefnTree*> getDefnTreeForType(const Type* type) const;
 
@@ -108,6 +108,8 @@ namespace sap::interp
 
 		bool canImplicitlyConvert(const Type* from, const Type* to) const;
 
+		std::string getTemporaryName();
+
 	private:
 		Interpreter* m_interp;
 		std::unique_ptr<DefnTree> m_top;
@@ -121,5 +123,6 @@ namespace sap::interp
 
 		std::vector<Location> m_location_stack;
 		size_t m_loop_body_nesting;
+		size_t m_tmp_name_counter;
 	};
 }

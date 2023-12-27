@@ -10,11 +10,18 @@
 namespace sap::interp
 {
 	Typechecker::Typechecker(Interpreter* interp)
-	    : m_interp(interp), m_top(new DefnTree(this, "__top_level", /* parent: */ nullptr)), m_loop_body_nesting(0)
+	    : m_interp(interp)
+	    , m_top(new DefnTree(this, "__top_level", /* parent: */ nullptr))
+	    , m_loop_body_nesting(0)
+	    , m_tmp_name_counter(0)
 	{
 		this->pushTree(m_top.get()).cancel();
 	}
 
+	std::string Typechecker::getTemporaryName()
+	{
+		return zpr::sprint("__tmp_{}", ++m_tmp_name_counter);
+	}
 
 	[[nodiscard]] Location Typechecker::loc() const
 	{

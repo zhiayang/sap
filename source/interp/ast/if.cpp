@@ -17,10 +17,10 @@ namespace sap::interp::ast
 
 		auto new_if = std::make_unique<cst::IfStmt>(m_location);
 		new_if->if_cond = std::move(cond).take_expr();
-		new_if->if_body = TRY(this->if_body->typecheck(ts)).take<cst::Block>();
+		new_if->if_body = TRY(this->true_case->typecheck(ts)).take<cst::Block>();
 
-		if(this->else_body)
-			new_if->else_body = TRY(this->else_body->typecheck(ts)).take<cst::Block>();
+		if(this->else_case)
+			new_if->else_body = TRY(this->else_case->typecheck(ts)).take<cst::Block>();
 
 		return TCResult::ofVoid(std::move(new_if));
 	}

@@ -28,6 +28,11 @@ namespace sap::interp
 
 		std::unique_ptr<cst::Stmt> take_stmt() && { return std::unique_ptr<cst::Stmt>(m_stmt.release()); }
 
+		std::unique_ptr<cst::Block> take_block() &&
+		{
+			return std::unique_ptr<cst::Block>(static_cast<cst::Block*>(m_stmt.release()));
+		}
+
 		std::unique_ptr<cst::Expr> take_expr() &&
 		{
 			assert(m_stmt->isExpr());

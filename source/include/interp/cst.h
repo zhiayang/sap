@@ -14,7 +14,61 @@ namespace sap::interp
 namespace sap::interp::cst
 {
 	struct Expr;
-	using ExprOrDefaultPtr = Either<std::unique_ptr<Expr>, const Expr*>;
+
+	struct ExprOrDefaultPtr
+	{
+		/* implicit */
+		ExprOrDefaultPtr(std::unique_ptr<Expr> expr) : m_expr(std::move(expr)), m_default(nullptr), m_is_default(false)
+		{
+		}
+
+		/* implicit */
+		template <typename T>
+		ExprOrDefaultPtr(std::unique_ptr<T> expr)
+		    requires(std::derived_from<T, Expr>)
+		    : m_expr(std::move(expr)), m_default(nullptr), m_is_default(false)
+		{
+		}
+
+
+		/* implicit */ ExprOrDefaultPtr(const Expr* def) : m_expr(), m_default(def), m_is_default(true) { }
+
+		const Expr* operator->() const
+		{
+			if(m_is_default)
+				return m_default;
+			else
+				return m_expr.get();
+		}
+
+		std::unique_ptr<Expr> take_expr()
+		{
+			assert(not m_is_default);
+			return std::move(m_expr);
+		}
+
+		const Expr* default_expr() const
+		{
+			assert(m_is_default);
+			return m_default;
+		}
+
+		bool is_default() const { return m_is_default; }
+		bool is_null() const
+		{
+			if(m_is_default)
+				return m_default == nullptr;
+			else
+				return m_expr == nullptr;
+		}
+
+	private:
+		std::unique_ptr<Expr> m_expr;
+		const Expr* m_default;
+		bool m_is_default;
+	};
+
+	// using ExprOrDefaultPtr = Either<std::unique_ptr<Expr>, const Expr*>;
 
 	struct Stmt
 	{
@@ -226,7 +280,7 @@ namespace sap::interp::cst
 	struct UnionVariantCastExpr : Expr
 	{
 		explicit UnionVariantCastExpr(Location loc,
-		    std::unique_ptr<Expr> expr,
+		    ExprOrDefaultPtr expr,
 		    const Type* type,
 		    const UnionType* union_type,
 		    size_t variant_idx)
@@ -236,7 +290,7 @@ namespace sap::interp::cst
 
 		virtual ErrorOr<EvalResult> evaluate_impl(Evaluator* ev) const override;
 
-		std::unique_ptr<Expr> expr;
+		ExprOrDefaultPtr expr;
 		const UnionType* union_type;
 		size_t variant_idx;
 	};
@@ -503,8 +557,6 @@ namespace sap::interp::cst
 		std::vector<Update> updates;
 	};
 
-
-
 	struct LengthExpr : Expr
 	{
 		explicit LengthExpr(Location loc, DynLength len)
@@ -565,6 +617,9 @@ namespace sap::interp::cst
 
 		std::vector<std::unique_ptr<Stmt>> body;
 	};
+
+
+
 
 
 	struct IfStmt : Stmt
@@ -716,7 +771,7 @@ namespace sap::interp::cst
 
 	struct VariableDefn : Definition
 	{
-		VariableDefn(Location loc, const Declaration* decl, bool is_global, std::unique_ptr<Expr> init, bool is_mutable)
+		VariableDefn(Location loc, const Declaration* decl, bool is_global, ExprOrDefaultPtr init, bool is_mutable)
 		    : Definition(std::move(loc), decl)
 		    , initialiser(std::move(init))
 		    , is_global(is_global)
@@ -726,7 +781,7 @@ namespace sap::interp::cst
 
 		virtual ErrorOr<EvalResult> evaluate_impl(Evaluator* ev) const override;
 
-		std::unique_ptr<Expr> initialiser;
+		ExprOrDefaultPtr initialiser;
 
 		bool is_global;
 		bool is_mutable;
@@ -876,4 +931,69 @@ namespace sap::interp::cst
 		size_t case_index;
 		std::vector<ExprOrDefaultPtr> values;
 	};
+
+
+	struct IfLetUnionStmt : Stmt
+	{
+		struct Binding
+		{
+			enum class Kind
+			{
+				Named,
+				Skip,
+				Ellipsis,
+			};
+
+			Location loc;
+
+			Kind kind;
+			bool mut = false;
+			bool reference = false;
+			std::string field_name {};
+			std::string binding_name {};
+		};
+
+		explicit IfLetUnionStmt(Location loc,
+		    const UnionType* union_type,
+		    size_t variant_index,
+		    std::unique_ptr<VariableDefn> rhs_defn,
+		    std::vector<std::unique_ptr<VariableDefn>> binding_defns,
+		    std::unique_ptr<Expr> expr)
+		    : Stmt(std::move(loc))
+		    , union_type(std::move(union_type))
+		    , variant_index(variant_index)
+		    , rhs_defn(std::move(rhs_defn))
+		    , binding_defns(std::move(binding_defns))
+		    , expr(std::move(expr))
+		{
+		}
+
+		virtual ErrorOr<EvalResult> evaluate_impl(Evaluator* ev) const override;
+
+		const UnionType* union_type;
+		size_t variant_index;
+
+		std::unique_ptr<VariableDefn> rhs_defn;
+		std::vector<std::unique_ptr<VariableDefn>> binding_defns;
+
+		std::unique_ptr<Expr> expr;
+
+		std::unique_ptr<Block> true_case {};
+		std::unique_ptr<Block> else_case {};
+	};
+
+	struct IfLetOptionalStmt : Stmt
+	{
+		explicit IfLetOptionalStmt(Location loc, std::unique_ptr<VariableDefn> defn)
+		    : Stmt(std::move(loc)), defn(std::move(defn))
+		{
+		}
+
+		virtual ErrorOr<EvalResult> evaluate_impl(Evaluator* ev) const override;
+
+		std::unique_ptr<VariableDefn> defn;
+		std::unique_ptr<Block> true_case {};
+		std::unique_ptr<Block> else_case {};
+	};
+
 }

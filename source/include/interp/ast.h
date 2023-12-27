@@ -237,6 +237,7 @@ namespace sap::interp::ast
 		std::string variant_name;
 	};
 
+
 	struct StructDefn;
 
 	struct StructLit : Expr
@@ -496,19 +497,68 @@ namespace sap::interp::ast
 		std::optional<QualifiedId> target_scope;
 	};
 
-
-	struct IfStmt : Stmt
+	struct IfStmtLike : Stmt
 	{
-		explicit IfStmt(Location loc) : Stmt(std::move(loc)) { }
+		IfStmtLike(Location loc) : Stmt(std::move(loc)) { }
+
+		std::unique_ptr<Block> true_case;
+		std::unique_ptr<Block> else_case;
+	};
+
+
+	struct IfStmt : IfStmtLike
+	{
+		explicit IfStmt(Location loc) : IfStmtLike(std::move(loc)) { }
 
 		virtual ErrorOr<TCResult> typecheck_impl(Typechecker* ts,
 		    const Type* infer = nullptr, //
 		    bool keep_lvalue = false) const override;
 
 		std::unique_ptr<Expr> if_cond;
-		std::unique_ptr<Block> if_body;
-		std::unique_ptr<Block> else_body;
 	};
+
+	struct IfLetUnionStmt : IfStmtLike
+	{
+		using Binding = cst::IfLetUnionStmt::Binding;
+
+		explicit IfLetUnionStmt(Location loc,
+		    QualifiedId variant_name,
+		    std::vector<Binding> bindings,
+		    std::unique_ptr<Expr> expr)
+		    : IfStmtLike(std::move(loc))
+		    , variant_name(std::move(variant_name))
+		    , bindings(std::move(bindings))
+		    , expr(std::move(expr))
+		{
+		}
+
+		virtual ErrorOr<TCResult> typecheck_impl(Typechecker* ts,
+		    const Type* infer = nullptr, //
+		    bool keep_lvalue = false) const override;
+
+		QualifiedId variant_name;
+
+		std::vector<Binding> bindings;
+
+		std::unique_ptr<Expr> expr;
+	};
+
+	struct IfLetOptionalStmt : IfStmtLike
+	{
+		explicit IfLetOptionalStmt(Location loc, bool is_mutable, std::string name, std::unique_ptr<Expr> expr)
+		    : IfStmtLike(std::move(loc)), is_mutable(is_mutable), name(std::move(name)), expr(std::move(expr))
+		{
+		}
+
+		virtual ErrorOr<TCResult> typecheck_impl(Typechecker* ts,
+		    const Type* infer = nullptr, //
+		    bool keep_lvalue = false) const override;
+
+		bool is_mutable;
+		std::string name;
+		std::unique_ptr<Expr> expr;
+	};
+
 
 	struct ReturnStmt : Stmt
 	{
