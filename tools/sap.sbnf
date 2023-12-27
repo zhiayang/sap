@@ -282,8 +282,28 @@ block-stmt
 else-stmt{meta.control-flow.else-stmt}:
 	`else`{keyword.else} block-stmt;
 
+# this is a bit more lenient than the actual parser in what it'll accept, but that's prolly fine.
+if-let-binding:
+	(`var`{storage.type} | `let`{storage.type})
+	((`.`{punctuation.period} IDENTIFIER{meta.name.variant-name})
+		| ('(::)?(?!not)([A-Za-z_][[:word:]]*)(?:\s*(::)\s*([A-Za-z_][[:word:]]*))*'{
+			1: punctuation.scope,
+			2: variable.other,
+			3: punctuation.scope,
+			4: variable.other
+		}))  (`(`{punctuation.lparen}
+			(
+				(`&`{keyword.operator}? `mut`{storage.modifier.mut}? IDENTIFIER{meta.name.variable})
+					(`:`{punctuation.colon} IDENTIFIER{meta.name.variable})?
+				`,`{punctuation.comma}?
+			)*
+		`)`{punctuation.rparen})? `=`{keyword.operator} expr
+	;
+
 if-stmt{meta.control-flow.if-stmt}:
-	`if`{keyword.if} `(`{punctuation.paren.if-start} expr `)`{punctuation.paren.if-end}
+	`if`{keyword.if} `(`{punctuation.paren.if-start}
+		(if-let-binding | expr)
+	`)`{punctuation.paren.if-end}
 	block-stmt
 	;
 
@@ -355,10 +375,11 @@ type: '\b(any|int|bool|char|void|float|string|Inline(Ref)?|Block(Ref)?|LayoutObj
 	| '(builtin::)?Position|AbsPosition|Colour|ColourRGB|ColourCMYK'{support.type.builtin}
 	| `?`{keyword.operator.type} type
 	| `&`{keyword.operator.type} `mut`{storage.modifier.mut}? type
-	| '([A-Za-z_][[:word:]]*)(?:\s*(::)\s*([A-Za-z_][[:word:]]*))*'{
-		1: meta.name.scope-part,
-		2: punctuation.scope,
-		3: meta.name.scope-part
+	| '(::)?(?!not)([A-Za-z_][[:word:]]*)(?:\s*(::)\s*([A-Za-z_][[:word:]]*))*'{
+		1: punctuation.scope,
+		2: variable.other,
+		3: punctuation.scope,
+		4: variable.other
 	}
 	| ( `(`{punctuation.paren.fn-type-start}
 			(type? (`,`{punctuation.comma} type)*)

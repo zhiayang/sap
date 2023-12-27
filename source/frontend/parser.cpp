@@ -836,19 +836,13 @@ namespace sap::frontend
 					// if there is a colon, this is named. otherwise, assume field and binding have the same name
 					if(lexer.expect(TT::Colon))
 					{
-						// if you put a colon, then the first part should just be the name, without '&' or 'mut'
-						if(is_mutable || is_reference)
-							return ErrMsg(lexer.location(), "'&' and 'mut' should be placed after the ':'");
-
-						const bool is_ref = lexer.expect(TT::Ampersand);
-						const bool is_mut = lexer.expect(TT::KW_Mut);
 						if(auto b = TRY(lexer.next()); b == TT::Identifier)
 						{
 							bindings.push_back({
 							    .loc = id.loc,
 							    .kind = BindingKind::Named,
-							    .mut = is_mut,
-							    .reference = is_ref,
+							    .mut = is_mutable,
+							    .reference = is_reference,
 							    .field_name = id.str(),
 							    .binding_name = b.str(),
 							});
