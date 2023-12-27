@@ -984,13 +984,14 @@ namespace sap::interp::cst
 
 	struct IfLetOptionalStmt : Stmt
 	{
-		explicit IfLetOptionalStmt(Location loc, std::unique_ptr<VariableDefn> defn)
-		    : Stmt(std::move(loc)), defn(std::move(defn))
+		explicit IfLetOptionalStmt(Location loc, std::unique_ptr<Expr> expr, std::unique_ptr<VariableDefn> defn)
+		    : Stmt(std::move(loc)), expr(std::move(expr)), defn(std::move(defn))
 		{
 		}
 
 		virtual ErrorOr<EvalResult> evaluate_impl(Evaluator* ev) const override;
 
+		std::unique_ptr<Expr> expr;
 		std::unique_ptr<VariableDefn> defn;
 		std::unique_ptr<Block> true_case {};
 		std::unique_ptr<Block> else_case {};

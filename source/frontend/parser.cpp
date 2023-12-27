@@ -794,29 +794,9 @@ namespace sap::frontend
 		return Ok(std::make_unique<ast::TypeExpr>(loc, std::move(type)));
 	}
 
-	static ErrorOrUniquePtr<ast::IfStmtLike> parse_if_let_stmt(Lexer& lexer)
+	static ErrorOrUniquePtr<ast::IfLetUnionStmt>
+	parse_if_let_union_stmt(Lexer& lexer, Location let_loc, bool all_mutable, QualifiedId variant_name)
 	{
-		assert(lexer.peek() == TT::KW_Var || lexer.peek() == TT::KW_Let);
-
-		auto let_loc = lexer.location();
-		bool all_mutable = (lexer.peek() == TT::KW_Var);
-		TRY(lexer.next());
-
-		// TODO: figure out if this is a union if-let or optional if-let
-		QualifiedId variant_name {};
-		if(lexer.expect(TT::Period))
-		{
-			if(auto id = TRY(lexer.next()); id == TT::Identifier)
-				variant_name.name = id.text.str();
-			else
-				return ErrMsg(id.loc, "expected identifier after '.'");
-		}
-		else
-		{
-			// parse a qualified id (ie. fully qualified union variant)
-			variant_name = TRY(parse_qualified_id(lexer)).first;
-		}
-
 		std::vector<ast::IfLetUnionStmt::Binding> bindings {};
 
 		if(not lexer.expect(TT::LParen))
@@ -911,6 +891,69 @@ namespace sap::frontend
 			return ErrMsg(lexer.location(), "expected ')' after condition");
 
 		return OkMove(ret);
+	}
+
+	static ErrorOrUniquePtr<ast::IfLetOptionalStmt>
+	parse_if_let_optional_stmt(Lexer& lexer, Location let_loc, bool all_mutable, std::string binding_name)
+	{
+		if(not lexer.expect(TT::Equal))
+			return ErrMsg(lexer.location(), "expected '=' after binding name");
+
+		auto ret = std::make_unique<ast::IfLetOptionalStmt>(std::move(let_loc), all_mutable, std::move(binding_name),
+		    TRY(parse_expr(lexer)));
+
+		if(not lexer.expect(TT::RParen))
+			return ErrMsg(lexer.location(), "expected ')' after condition");
+
+		return OkMove(ret);
+	}
+
+
+
+
+	static ErrorOrUniquePtr<ast::IfStmtLike> parse_if_let_stmt(Lexer& lexer)
+	{
+		assert(lexer.peek() == TT::KW_Var || lexer.peek() == TT::KW_Let);
+
+		auto let_loc = lexer.location();
+		bool all_mutable = (lexer.peek() == TT::KW_Var);
+		TRY(lexer.next());
+
+		bool saw_period = false;
+
+		// TODO: figure out if this is a union if-let or optional if-let
+		QualifiedId variant_name {};
+		if(lexer.expect(TT::Period))
+		{
+			// for the dot syntax, it's definitely a union
+			saw_period = true;
+			if(auto id = TRY(lexer.next()); id == TT::Identifier)
+				variant_name.name = id.text.str();
+			else
+				return ErrMsg(id.loc, "expected identifier after '.'");
+		}
+		else
+		{
+			// parse a qualified id (ie. fully qualified union variant)
+			variant_name = TRY(parse_qualified_id(lexer)).first;
+		}
+
+		// if we see a `(` now, then it's a variant binding.
+		if(lexer.peek() == TT::LParen)
+		{
+			return parse_if_let_union_stmt(lexer, std::move(let_loc), all_mutable, std::move(variant_name));
+		}
+		else
+		{
+			// if saw_period is true, it *must* be a union, so it's an error here
+			if(saw_period)
+				return ErrMsg(lexer.location(), "expected '(' after variant name starting with '.'");
+
+			if(not variant_name.parents.empty() or variant_name.top_level)
+				return ErrMsg(lexer.location(), "expected identifier for binding name, not qualified id");
+
+			return parse_if_let_optional_stmt(lexer, std::move(let_loc), all_mutable, std::move(variant_name.name));
+		}
 	}
 
 	static ErrorOrUniquePtr<ast::Expr> parse_primary(Lexer& lexer)
@@ -1646,7 +1689,8 @@ namespace sap::frontend
 			if_stmt->true_case = TRY(parse_block_or_stmt(lexer, /* is_top_level: */ false, /* braces: */ false));
 
 			if(lexer.expect(TT::KW_Else))
-				if_stmt->else_case = TRY(parse_block_or_stmt(lexer, /* is_top_level: */ false, /* braces: */ false));
+				if_stmt->else_case = TRY(parse_block_or_stmt(lexer, /* is_top_level: */ false,
+				    /* braces: */ false));
 
 			return OkMove(if_stmt);
 		}
@@ -1661,7 +1705,8 @@ namespace sap::frontend
 			if_stmt->true_case = TRY(parse_block_or_stmt(lexer, /* is_top_level: */ false, /* braces: */ false));
 
 			if(lexer.expect(TT::KW_Else))
-				if_stmt->else_case = TRY(parse_block_or_stmt(lexer, /* is_top_level: */ false, /* braces: */ false));
+				if_stmt->else_case = TRY(parse_block_or_stmt(lexer, /* is_top_level: */ false,
+				    /* braces: */ false));
 
 			return OkMove(if_stmt);
 		}

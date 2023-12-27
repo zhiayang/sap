@@ -11,16 +11,14 @@ namespace sap::interp::cst
 	ErrorOr<EvalResult> IfLetOptionalStmt::evaluate_impl(Evaluator* ev) const
 	{
 		auto f = ev->pushFrame();
+		auto value = TRY_VALUE(this->expr->evaluate(ev));
+		assert(value.type()->isOptional());
 
-		assert(not this->defn->is_global);
-		TRY(this->defn->evaluate(ev));
-
-		auto value = ev->frame().valueOf(this->defn.get());
-		assert(value != nullptr);
-		assert(value->type()->isOptional());
-
-		if(value->haveOptionalValue())
+		if(value.haveOptionalValue())
 		{
+			TRY(this->defn->evaluate_impl(ev));
+			ev->frame().setValue(this->defn.get(), std::move(value).takeOptional().value());
+
 			if(auto ret = TRY(this->true_case->evaluate(ev)); not ret.isNormal())
 				return OkMove(ret);
 		}

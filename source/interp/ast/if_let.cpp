@@ -27,12 +27,11 @@ namespace sap::interp::ast
 			auto decl_ = cst::Declaration(m_location, ts->current(), this->name, var_type, this->is_mutable);
 			auto decl = TRY(ts->current()->declare(std::move(decl_)));
 
-			auto deref_op = std::make_unique<cst::DereferenceOp>(m_location, var_type, std::move(rhs));
-			auto var_defn = std::make_unique<cst::VariableDefn>(m_location, decl, /* global: */ false,
-			    std::move(deref_op), this->is_mutable);
+			auto var_defn = std::make_unique<cst::VariableDefn>(m_location, decl, /* global: */ false, nullptr,
+			    this->is_mutable);
 
 			decl->define(var_defn.get());
-			if_stmt = std::make_unique<cst::IfLetOptionalStmt>(m_location, std::move(var_defn));
+			if_stmt = std::make_unique<cst::IfLetOptionalStmt>(m_location, std::move(rhs), std::move(var_defn));
 			if_stmt->true_case = TRY(this->true_case->typecheck(ts)).take_block();
 
 			// the new scope is popped here

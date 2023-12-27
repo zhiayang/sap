@@ -75,10 +75,23 @@ sans!.regular.adjust_glyph_spacing({ match: ["2.1", "3.1", "4.1", "5.1", "6.1", 
 			x! = 30;
 			println(f"hello!: {cast(p, .Line).a}");
 		}
+		else
+		{
+			println("oh no");
+		}
 	}
 
 	fn bsdf() -> ?Inline
 	{
+		let a: ?int = 500;
+		let b: ?int = null;
+
+		if(let aa = a)  println(f"a has a value: {a}");
+		else            println(f"a has no value");
+
+		if(let bb = b)  println(f"b has a value: {b}");
+		else            println(f"b has no value");
+
 		asdf();
 		return null;
 	}
