@@ -64,6 +64,8 @@ namespace sap::interp
 		ErrorOr<EvalResult> make_line(Evaluator* ev, std::vector<Value>& args);
 		ErrorOr<EvalResult> make_paragraph(Evaluator* ev, std::vector<Value>& args);
 
+		ErrorOr<EvalResult> make_path(Evaluator* ev, std::vector<Value>& args);
+
 		ErrorOr<EvalResult> ref_object(Evaluator* ev, std::vector<Value>& args);
 		ErrorOr<EvalResult> get_layout_object(Evaluator* ev, std::vector<Value>& args);
 		ErrorOr<EvalResult> get_layout_object_size(Evaluator* ev, std::vector<Value>& args);

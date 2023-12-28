@@ -6,6 +6,7 @@
 #include "sap/font_family.h" // for FontStyle, FontStyle::Bold, FontStyl...
 
 #include "tree/base.h"
+#include "tree/path.h"
 #include "tree/image.h"
 #include "tree/wrappers.h"
 #include "tree/paragraph.h"
@@ -41,9 +42,6 @@ namespace sap::interp::builtin
 		auto img_obj = TRY(tree::Image::fromImageFile(ev->loc(), img_path, img_width, img_height));
 		return EvalResult::ofValue(Value::treeBlockObject(std::move(img_obj)));
 	}
-
-
-
 
 
 	static ErrorOr<EvalResult>
@@ -187,6 +185,18 @@ namespace sap::interp::builtin
 		return EvalResult::ofValue(Value::optional(ref_type, std::move(tmp)));
 	}
 
+
+	ErrorOr<EvalResult> make_path(Evaluator* ev, std::vector<Value>& args)
+	{
+		assert(args.size() == 1);
+		assert(args[0].type()->isVariadicArray());
+
+		std::vector<PathSegment> segments {};
+		for(auto& v : args[0].getArray())
+			segments.push_back(BU_PathSegment::unmake(ev, v));
+
+		return EvalResult::ofValue(Value::treeBlockObject(zst::make_shared<tree::Path>(std::move(segments))));
+	}
 
 
 

@@ -1,4 +1,4 @@
-// bu_pathobject.cpp
+// bu_path_segment.cpp
 // Copyright (c) 2023, zhiayang
 // SPDX-License-Identifier: Apache-2.0
 
@@ -10,9 +10,9 @@ namespace sap::interp::builtin
 {
 	using PT = frontend::PType;
 
-	const Type* builtin::BU_PathObject::type = nullptr;
+	const Type* builtin::BU_PathSegment::type = nullptr;
 
-	std::vector<ast::UnionDefn::Case> BU_PathObject::variants()
+	std::vector<ast::UnionDefn::Case> BU_PathSegment::variants()
 	{
 		using P = std::pair<std::string, PT>;
 
@@ -21,7 +21,7 @@ namespace sap::interp::builtin
 
 		auto ret = std::vector<ast::UnionDefn::Case>();
 
-		// keep these in the same order as the Kind defn in PathObject
+		// keep these in the same order as the Kind defn in PathSegment
 		ret.push_back(make_builtin_union_variant("Move", P("pos", posT)));
 		ret.push_back(make_builtin_union_variant("Line", P("pos", posT)));
 		ret.push_back(make_builtin_union_variant("CubicBezier", P("c1", posT), P("c2", posT), P("end", posT)));
@@ -33,9 +33,9 @@ namespace sap::interp::builtin
 		return ret;
 	}
 
-	Value builtin::BU_PathObject::make(Evaluator* ev, PathObject obj)
+	Value builtin::BU_PathSegment::make(Evaluator* ev, PathSegment obj)
 	{
-		using K = PathObject::Kind;
+		using K = PathSegment::Kind;
 
 		auto union_type = type->toUnion();
 		auto [variant_idx, variant_value] = [&obj, ev, union_type]() -> std::pair<size_t, Value> {
@@ -102,12 +102,12 @@ namespace sap::interp::builtin
 		return Value::unionVariant(union_type, variant_idx, std::move(variant_value));
 	}
 
-	PathObject builtin::BU_PathObject::unmake(Evaluator* ev, const Value& value)
+	PathSegment builtin::BU_PathSegment::unmake(Evaluator* ev, const Value& value)
 	{
 		if(not value.isUnion())
-			sap::internal_error("expected type '{}', got '{}'", BU_PathObject::type, value.type());
+			sap::internal_error("expected type '{}', got '{}'", BU_PathSegment::type, value.type());
 
-		auto ut = BU_PathObject::type->toUnion();
+		auto ut = BU_PathSegment::type->toUnion();
 
 		auto variant_idx = value.getUnionVariantIndex();
 		auto& variant_struct = value.getUnionUnderlyingStruct();
@@ -119,16 +119,16 @@ namespace sap::interp::builtin
 			return BS_Pos2d::unmake(ev, variant_struct.getStructField(field));
 		};
 
-		using K = PathObject::Kind;
-		switch(static_cast<PathObject::Kind>(variant_idx))
+		using K = PathSegment::Kind;
+		switch(static_cast<PathSegment::Kind>(variant_idx))
 		{
-			case K::Move: return PathObject::move(pp("pos"));
-			case K::Line: return PathObject::line(pp("pos"));
-			case K::CubicBezier: return PathObject::cubicBezier(pp("c1"), pp("c2"), pp("end"));
-			case K::CubicBezierIC1: return PathObject::cubicBezierIC1(pp("c2"), pp("end"));
-			case K::CubicBezierIC2: return PathObject::cubicBezierIC2(pp("c1"), pp("end"));
-			case K::Rectangle: return PathObject::rectangle(pp("pos"), pp("size"));
-			case K::Close: return PathObject::close();
+			case K::Move: return PathSegment::move(pp("pos"));
+			case K::Line: return PathSegment::line(pp("pos"));
+			case K::CubicBezier: return PathSegment::cubicBezier(pp("c1"), pp("c2"), pp("end"));
+			case K::CubicBezierIC1: return PathSegment::cubicBezierIC1(pp("c2"), pp("end"));
+			case K::CubicBezierIC2: return PathSegment::cubicBezierIC2(pp("c1"), pp("end"));
+			case K::Rectangle: return PathSegment::rectangle(pp("pos"), pp("size"));
+			case K::Close: return PathSegment::close();
 		}
 	}
 }

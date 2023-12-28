@@ -6,7 +6,7 @@
 
 namespace sap::layout
 {
-	Path::Path(const Style& style, LayoutSize size, std::shared_ptr<PathObjects> segments)
+	Path::Path(const Style& style, LayoutSize size, std::shared_ptr<PathSegments> segments)
 	    : LayoutObject(style, size), m_segments(std::move(segments))
 	{
 	}

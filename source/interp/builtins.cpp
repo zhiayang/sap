@@ -72,7 +72,7 @@ namespace sap::interp
 		define_builtin_struct<BS_FontFamily>(cs);
 		define_builtin_struct<BS_Style>(cs);
 
-		define_builtin_union<BU_PathObject>(cs);
+		define_builtin_union<BU_PathSegment>(cs);
 
 		define_builtin_struct<BS_DocumentMargins>(cs);
 		define_builtin_struct<BS_DocumentSettings>(cs);
@@ -123,14 +123,6 @@ namespace sap::interp
 		const auto t_tio_ref = PType::named(TYPE_TREE_INLINE_REF);
 		const auto t_lo_ref = PType::named(TYPE_LAYOUT_OBJECT_REF);
 
-		const auto make_builtin_name = [](const char* name) -> QualifiedId {
-			return QualifiedId {
-				.top_level = true,
-				.parents = { "builtin" },
-				.name = name,
-			};
-		};
-
 		const auto make_null = []() { return std::make_unique<interp::ast::NullLit>(Location::builtin()); };
 		const auto make_bool = [](bool x) { return std::make_unique<interp::ast::BooleanLit>(Location::builtin(), x); };
 
@@ -140,16 +132,18 @@ namespace sap::interp
 		const auto T_O = [](const PType& t) { return PType::optional(t); };
 		const auto T_VARR = [](const PType& t) { return PType::variadicArray(t); };
 
-		const auto t_bfont = PType::named(make_builtin_name(builtin::BS_Font::name));
-		const auto t_bstate = PType::named(make_builtin_name(builtin::BS_State::name));
-		const auto t_bstyle = PType::named(make_builtin_name(builtin::BS_Style::name));
-		const auto t_bsize2d = PType::named(make_builtin_name(builtin::BS_Size2d::name));
-		const auto t_bfontfamily = PType::named(make_builtin_name(builtin::BS_FontFamily::name));
-		const auto t_relpos = PType::named(make_builtin_name(builtin::BS_PagePosition::name));
-		const auto t_abspos = PType::named(make_builtin_name(builtin::BS_AbsPosition::name));
-		const auto t_bdocsettings = PType::named(make_builtin_name(builtin::BS_DocumentSettings::name));
-		const auto t_bdocproxy = PType::named(make_builtin_name(builtin::BS_DocumentProxy::name));
-		const auto t_blinkannot = PType::named(make_builtin_name(builtin::BS_LinkAnnotation::name));
+		using builtin::ptype_for_builtin;
+		const auto t_bfont = ptype_for_builtin<builtin::BS_Font>();
+		const auto t_bstate = ptype_for_builtin<builtin::BS_State>();
+		const auto t_bstyle = ptype_for_builtin<builtin::BS_Style>();
+		const auto t_bsize2d = ptype_for_builtin<builtin::BS_Size2d>();
+		const auto t_bfontfamily = ptype_for_builtin<builtin::BS_FontFamily>();
+		const auto t_relpos = ptype_for_builtin<builtin::BS_PagePosition>();
+		const auto t_abspos = ptype_for_builtin<builtin::BS_AbsPosition>();
+		const auto t_pathseg = ptype_for_builtin<builtin::BU_PathSegment>();
+		const auto t_bdocsettings = ptype_for_builtin<builtin::BS_DocumentSettings>();
+		const auto t_bdocproxy = ptype_for_builtin<builtin::BS_DocumentProxy>();
+		const auto t_blinkannot = ptype_for_builtin<builtin::BS_LinkAnnotation>();
 
 		const auto DEF = [&](auto&&... xs) {
 			auto ret = std::make_unique<BFD>(Location::builtin(), std::forward<decltype(xs)>(xs)...);
@@ -233,6 +227,8 @@ namespace sap::interp
 		DEF("make_hbox", PL(P("1", T_VARR(t_tbo))), t_tbo, &B::make_hbox);
 		DEF("make_zbox", PL(P("1", T_VARR(t_tbo))), t_tbo, &B::make_zbox);
 		DEF("make_vbox", PL(P("1", T_VARR(t_tbo)), P("glue", t_bool, make_bool(false))), t_tbo, &B::make_vbox);
+
+		DEF("make_path", PL(P("_", T_VARR(t_pathseg))), t_tbo, &B::make_path);
 
 		DEF("make_span", PL(P("1", T_VARR(t_tio)), P("glue", t_bool, make_bool(false))), t_tio, &B::make_span);
 		DEF("make_text", PL(P("1", T_VARR(t_str)), P("glue", t_bool, make_bool(false))), t_tio, &B::make_text);

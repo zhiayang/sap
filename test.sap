@@ -97,15 +97,19 @@ sans!.regular.adjust_glyph_spacing({ match: ["2.1", "3.1", "4.1", "5.1", "6.1", 
 	}
 
 
-	fn haha() -> ?Inline
+	fn haha() -> ?Block
 	{
-		let pp: PathObject = .Line(pos: Pos2d { x: 10mm, y: 20mm });
+		let pp: PathSegment = .Line(pos: { x: 1cm, y: 1cm });
+		let path = make_path(*pp);
 
-
-		return null;
+		return path;
 	}
 }
 
 # \disable_page_numbering();
 
-hello \cpp() there \kekw() \bsdf() \haha()
+hello \cpp() there \kekw() \bsdf()
+
+\haha()
+
+hello

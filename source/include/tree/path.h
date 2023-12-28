@@ -5,13 +5,13 @@
 #pragma once
 
 #include "tree/base.h"
-#include "sap/path_object.h"
+#include "sap/path_segment.h"
 
 namespace sap::tree
 {
 	struct Path : BlockObject
 	{
-		explicit Path(std::vector<PathObject> segments);
+		explicit Path(std::vector<PathSegment> segments);
 
 		virtual ErrorOr<void> evaluateScripts(interp::Interpreter* cs) const override;
 
@@ -21,6 +21,6 @@ namespace sap::tree
 		    Size2d available_space) const override;
 
 	private:
-		std::shared_ptr<PathObjects> m_segments;
+		std::shared_ptr<PathSegments> m_segments;
 	};
 }

@@ -7,7 +7,7 @@
 #include "util.h"
 
 #include "sap/annotation.h"
-#include "sap/path_object.h"
+#include "sap/path_segment.h"
 #include "sap/document_settings.h"
 
 #include "layout/cursor.h"
@@ -274,16 +274,16 @@ namespace sap::interp::builtin
 		static Colour::Type unmake(const Value& value);
 	};
 
-	struct BU_PathObject
+	struct BU_PathSegment
 	{
-		static constexpr auto name = "PathObject";
+		static constexpr auto name = "PathSegment";
 
 		static const Type* type;
 
 		static std::vector<ast::UnionDefn::Case> variants();
 
-		static Value make(Evaluator* ev, PathObject alignment);
-		static PathObject unmake(Evaluator* ev, const Value& value);
+		static Value make(Evaluator* ev, PathSegment alignment);
+		static PathSegment unmake(Evaluator* ev, const Value& value);
 	};
 
 
