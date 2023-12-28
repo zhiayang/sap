@@ -17,8 +17,8 @@ namespace sap::interp::builtin
 	using PT = frontend::PType;
 	using Field = ast::StructDefn::Field;
 
-	const Type* builtin::BS_Position::type = nullptr;
-	std::vector<Field> builtin::BS_Position::fields()
+	const Type* builtin::BS_PagePosition::type = nullptr;
+	std::vector<Field> builtin::BS_PagePosition::fields()
 	{
 		auto pt_int = PT::named(frontend::TYPE_INT);
 		auto pt_len = PT::named(frontend::TYPE_LENGTH);
@@ -29,16 +29,16 @@ namespace sap::interp::builtin
 		);
 	}
 
-	Value builtin::BS_Position::make(Evaluator* ev, layout::RelativePos pos)
+	Value builtin::BS_PagePosition::make(Evaluator* ev, layout::RelativePos pos)
 	{
-		return StructMaker(BS_Position::type->toStruct()) //
+		return StructMaker(BS_PagePosition::type->toStruct()) //
 		    .set("x", Value::length(DynLength(pos.pos.x())))
 		    .set("y", Value::length(DynLength(pos.pos.y())))
 		    .set("page", Value::integer(checked_cast<int64_t>(pos.page_num)))
 		    .make();
 	}
 
-	layout::RelativePos builtin::BS_Position::unmake(Evaluator* ev, const Value& value)
+	layout::RelativePos builtin::BS_PagePosition::unmake(Evaluator* ev, const Value& value)
 	{
 		auto sty = ev->currentStyle();
 

@@ -119,7 +119,7 @@ namespace sap::tree
 		InlineObject(Kind kind) : m_kind(kind) { }
 
 		Kind m_kind;
-		mutable std::optional<layout::LayoutObject*> m_generated_layout_object = nullptr;
+		mutable std::optional<layout::LayoutObject*> m_generated_layout_object {};
 
 	private:
 		Length m_raise_height = 0;
@@ -185,6 +185,7 @@ namespace sap::tree
 		LinkDestination linkDestination() const;
 		void setLinkDestination(LinkDestination dest);
 
+		bool isPath() const { return m_kind == Kind::Path; }
 		bool isImage() const { return m_kind == Kind::Image; }
 		bool isSpacer() const { return m_kind == Kind::Spacer; }
 		bool isRawBlock() const { return m_kind == Kind::RawBlock; }
@@ -214,6 +215,7 @@ namespace sap::tree
 	protected:
 		enum class Kind
 		{
+			Path,
 			Image,
 			Spacer,
 			RawBlock,

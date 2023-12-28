@@ -38,6 +38,18 @@ namespace sap::interp
 		T::type = cs->typechecker().addBuiltinDefinition(std::move(e2))->declaration->type;
 	}
 
+	template <typename T>
+	void define_builtin_union(Interpreter* cs)
+	{
+		auto s = std::make_unique<ast::UnionDefn>(Location::builtin(), T::name, T::variants());
+		s->declare(&cs->typechecker()).expect("builtin decl failed");
+
+		auto s2 = s->typecheck(&cs->typechecker()).take_value().template take<cst::Definition>();
+		s2->evaluate(&cs->evaluator()).expect("builtin decl failed");
+
+		T::type = cs->typechecker().addBuiltinDefinition(std::move(s2))->declaration->type;
+	}
+
 	static void define_builtin_types(Interpreter* cs, DefnTree* builtin_ns)
 	{
 		using namespace builtin;
@@ -52,12 +64,15 @@ namespace sap::interp
 		define_builtin_struct<BS_Colour>(cs);
 
 		// this needs a careful ordering
+		define_builtin_struct<BS_Pos2d>(cs);
 		define_builtin_struct<BS_Size2d>(cs);
-		define_builtin_struct<BS_Position>(cs);
+		define_builtin_struct<BS_PagePosition>(cs);
 		define_builtin_struct<BS_AbsPosition>(cs);
 		define_builtin_struct<BS_Font>(cs);
 		define_builtin_struct<BS_FontFamily>(cs);
 		define_builtin_struct<BS_Style>(cs);
+
+		define_builtin_union<BU_PathObject>(cs);
 
 		define_builtin_struct<BS_DocumentMargins>(cs);
 		define_builtin_struct<BS_DocumentSettings>(cs);
@@ -129,9 +144,8 @@ namespace sap::interp
 		const auto t_bstate = PType::named(make_builtin_name(builtin::BS_State::name));
 		const auto t_bstyle = PType::named(make_builtin_name(builtin::BS_Style::name));
 		const auto t_bsize2d = PType::named(make_builtin_name(builtin::BS_Size2d::name));
-		const auto t_bposition = PType::named(make_builtin_name(builtin::BS_Position::name));
 		const auto t_bfontfamily = PType::named(make_builtin_name(builtin::BS_FontFamily::name));
-		const auto t_relpos = PType::named(make_builtin_name(builtin::BS_Position::name));
+		const auto t_relpos = PType::named(make_builtin_name(builtin::BS_PagePosition::name));
 		const auto t_abspos = PType::named(make_builtin_name(builtin::BS_AbsPosition::name));
 		const auto t_bdocsettings = PType::named(make_builtin_name(builtin::BS_DocumentSettings::name));
 		const auto t_bdocproxy = PType::named(make_builtin_name(builtin::BS_DocumentProxy::name));
@@ -198,7 +212,7 @@ namespace sap::interp
 		});
 
 		DEF("to_string", PL(P("_", T_P(t_relpos))), t_str, [](auto* ev, auto& args) {
-			auto pos = builtin::BS_Position::unmake(ev, args[0]);
+			auto pos = builtin::BS_PagePosition::unmake(ev, args[0]);
 			return EvalResult::ofValue(Value::string(zpr::sprint("{{xy: ({}, {}), page: {}}}", pos.pos.x(), pos.pos.y(),
 			    pos.page_num)));
 		});

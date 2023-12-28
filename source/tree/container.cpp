@@ -176,8 +176,6 @@ namespace sap::tree
 		}
 
 		auto container = std::make_unique<layout::Container>(cur_style, final_size, dir, m_glued, std::move(objects));
-
-		m_generated_layout_object = container.get();
 		return Ok(LayoutResult::make(std::move(container)));
 	}
 }

@@ -45,6 +45,9 @@ namespace sap::tree
 
 			if(not std::holds_alternative<std::monostate>(m_link_destination))
 				obj->setLinkDestination(m_link_destination);
+
+			if(not m_generated_layout_object.has_value())
+				m_generated_layout_object = result.object->get();
 		}
 
 		return OkMove(result);

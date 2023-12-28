@@ -45,25 +45,3 @@ namespace sap::layout
 		}
 	}
 }
-
-
-namespace sap::tree
-{
-	ErrorOr<void> Image::evaluateScripts(interp::Interpreter* cs) const
-	{
-		return Ok();
-	}
-
-	auto Image::create_layout_object_impl(interp::Interpreter* cs, const Style& parent_style, Size2d available_space)
-	    const -> ErrorOr<LayoutResult>
-	{
-		// images are always fixed size, and don't care about the available space.
-		// (for now, at least...)
-
-		auto layout_size = LayoutSize { .width = m_size.x(), .ascent = 0, .descent = m_size.y() };
-		auto img = std::unique_ptr<layout::Image>(new layout::Image(parent_style, layout_size, this->image()));
-
-		m_generated_layout_object = img.get();
-		return Ok(LayoutResult::make(std::move(img)));
-	}
-}

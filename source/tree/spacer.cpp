@@ -33,8 +33,6 @@ namespace sap::tree
 		};
 
 		auto ret = std::make_unique<layout::Spacer>(cur_style, layout_size);
-		m_generated_layout_object = ret.get();
-
 		return Ok(LayoutResult::make(std::move(ret)));
 	}
 }

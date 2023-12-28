@@ -23,7 +23,7 @@ block-comment {comment.block} :
 main: preamble paragraph*;
 
 preamble{meta.script.preamble}
-	: stmt* document-start
+	: (stmt stmt*)? document-start
 	;
 
 document-start
@@ -176,7 +176,7 @@ struct-literal-field:
 	(`:`{punctuation.colon} expr)?
 	;
 
-struct-literal-field-list: (struct-literal-field (`,`{punctuation.comma})?)*;
+struct-literal-field-list: ((struct-literal-field (`,`{punctuation.comma})?) (struct-literal-field (`,`{punctuation.comma})?)*)?;
 
 struct-literal: (`{`{punctuation.brace.struct-start} struct-literal-field-list `}`{punctuation.brace.struct-end})
 	| '(::)?(?!not)([A-Za-z_][[:word:]]*)(?:\s*(::)\s*([A-Za-z_][[:word:]]*))*'{
@@ -349,7 +349,8 @@ using-stmt:
 	`;`{punctuation.terminator}
 	;
 
-stmt: block-comment
+stmt
+	: block-comment
 	| line-comment
 	| func-defn
 	| var-defn
@@ -372,7 +373,7 @@ stmt: block-comment
 	;
 
 type: '\b(any|int|bool|char|void|float|string|Inline(Ref)?|Block(Ref)?|LayoutObject(Ref)?|Length)\b'{support.type.builtin}
-	| '(builtin::)?Position|AbsPosition|Colour|ColourRGB|ColourCMYK'{support.type.builtin}
+	| '(builtin::)?PagePosition|AbsPosition|Colour|ColourRGB|ColourCMYK|Size2d|Pos2d'{support.type.builtin}
 	| `?`{keyword.operator.type} type
 	| `&`{keyword.operator.type} `mut`{storage.modifier.mut}? type
 	| '(::)?(?!not)([A-Za-z_][[:word:]]*)(?:\s*(::)\s*([A-Za-z_][[:word:]]*))*'{

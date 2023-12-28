@@ -235,9 +235,9 @@ namespace sap::interp
 		}                                                                  \
 	} while(false)
 
-			// check imported decls first
-			CHECK_MAP(m_imported_decls, );
+			// check non-imported decls first
 			CHECK_MAP(m_decls, &);
+			CHECK_MAP(m_imported_decls, );
 #undef CHECK_MAP
 
 			// if the id was qualified, then we shouldn't search in parents.

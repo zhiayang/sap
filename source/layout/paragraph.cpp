@@ -176,29 +176,29 @@ namespace sap::tree
 
 			zpr::println("}");
 #endif
-			    if((*words_begin)->isSeparator())
-			    {
-				    sap::internal_error(
-				        "line starting with non-Word found, "
-				        "either line breaking algo is broken "
-				        "or we had multiple separators in a row");
-			    }
+			if((*words_begin)->isSeparator())
+			{
+				sap::internal_error(
+				    "line starting with non-Word found, "
+				    "either line breaking algo is broken "
+				    "or we had multiple separators in a row");
+			}
 
-			    // Ignore space at end of line
-			    const auto& last_word = *(words_end - 1);
-			    if(auto sep = last_word->castToSeparator(); sep && (sep->hasWhitespace()))
-				    --words_end;
+			// Ignore space at end of line
+			const auto& last_word = *(words_end - 1);
+			if(auto sep = last_word->castToSeparator(); sep && (sep->hasWhitespace()))
+				--words_end;
 
-			    auto words_span = std::span(&*words_begin, &*words_end);
-			    the_lines.push_back({
-			        words_span,
-			        layout::LineAdjustment {
-			            .left_protrusion = line.leftProtrusion(),
-			            .right_protrusion = line.rightProtrusion(),
-			            .piece_adjustments = line.pieceAdjustments(),
-			        },
-			    });
-		    };
+			auto words_span = std::span(&*words_begin, &*words_end);
+			the_lines.push_back({
+			    words_span,
+			    layout::LineAdjustment {
+			        .left_protrusion = line.leftProtrusion(),
+			        .right_protrusion = line.rightProtrusion(),
+			        .piece_adjustments = line.pieceAdjustments(),
+			    },
+			});
+		};
 
 		// break after flattening.
 		std::vector<zst::SharedPtr<InlineObject>> flat {};
@@ -248,7 +248,6 @@ namespace sap::tree
 		auto layout_para = std::unique_ptr<layout::Paragraph>(new layout::Paragraph(style, para_size,
 		    std::move(layout_lines), std::move(para_objects)));
 
-		m_generated_layout_object = layout_para.get();
 		return Ok(LayoutResult::make(std::move(layout_para)));
 	}
 }

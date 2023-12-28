@@ -39,7 +39,6 @@ namespace sap::tree
 		auto line = layout::Line::fromInlineObjects(cs, cur_style, m_objects, available_space,
 		    /* is_first: */ true, /* is_last: */ true);
 
-		m_generated_layout_object = line.get();
 		return Ok(LayoutResult::make(std::move(line)));
 	}
 }

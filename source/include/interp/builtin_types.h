@@ -7,6 +7,7 @@
 #include "util.h"
 
 #include "sap/annotation.h"
+#include "sap/path_object.h"
 #include "sap/document_settings.h"
 
 #include "layout/cursor.h"
@@ -90,9 +91,9 @@ namespace sap::interp::builtin
 		static ErrorOr<sap::FontFamily> unmake(Evaluator* ev, const Value& value);
 	};
 
-	struct BS_Position
+	struct BS_PagePosition
 	{
-		static constexpr auto name = "Position";
+		static constexpr auto name = "PagePosition";
 
 		static const Type* type;
 		static std::vector<ast::StructDefn::Field> fields();
@@ -123,6 +124,18 @@ namespace sap::interp::builtin
 		static Value make(Evaluator* ev, DynLength2d pos);
 
 		static DynLength2d unmake(Evaluator* ev, const Value& value);
+	};
+
+	struct BS_Pos2d
+	{
+		static constexpr auto name = "Pos2d";
+
+		static const Type* type;
+		static std::vector<ast::StructDefn::Field> fields();
+
+		static Value make(Evaluator* ev, Position pos);
+		static Value make(Evaluator* ev, DynLength2d pos);
+		static Position unmake(Evaluator* ev, const Value& value);
 	};
 
 	struct BS_DocumentSettings
@@ -261,6 +274,17 @@ namespace sap::interp::builtin
 		static Colour::Type unmake(const Value& value);
 	};
 
+	struct BU_PathObject
+	{
+		static constexpr auto name = "PathObject";
+
+		static const Type* type;
+
+		static std::vector<ast::UnionDefn::Case> variants();
+
+		static Value make(Evaluator* ev, PathObject alignment);
+		static PathObject unmake(Evaluator* ev, const Value& value);
+	};
 
 
 
@@ -335,7 +359,24 @@ namespace sap::interp::builtin
 		};
 	}
 
+	template <typename... Args>
+	    requires(std::same_as<Args, std::pair<std::string, frontend::PType>> && ...)
+	inline ast::UnionDefn::Case make_builtin_union_variant(std::string name, Args&&... params)
+	{
+		auto ret = ast::UnionDefn::Case {
+			.location = Location::builtin(),
+			.name = std::move(name),
+		};
 
+		(ret.params.push_back({
+		     .name = std::move(params.first),
+		     .type = std::move(params.second),
+		     .loc = Location::builtin(),
+		 }),
+		    ...);
+
+		return ret;
+	}
 
 
 

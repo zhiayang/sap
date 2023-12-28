@@ -60,7 +60,7 @@ This also acts as a sort of TODO; as time goes on completed features may be remo
 - [ ] More advanced typography support (`BASE`, `MATH`, `JSTF`, AAT `kerx`)
 - [ ] Further size optimisation for embedded fonts
 - [ ] Optimising bytecode compiler for the scripting language
-- [ ] PDF Links (annotations)
+- [x] PDF Links (annotations)
 - [x] Rudimentary and crude bibliography support
 - [x] Slightly more advanced layout capabilities (hbox, vbox, zbox)
 - [x] Layout integration with scripting language
