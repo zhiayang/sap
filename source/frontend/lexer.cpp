@@ -136,7 +136,7 @@ namespace sap::frontend
 			    .text = stream.take_last(1),
 			});
 		}
-		else if(stream.starts_with("#"))
+		else if(stream.starts_with("#") || stream.starts_with("/#"))
 		{
 			(void) TRY(parse_comment(stream, loc));
 			return consume_text_token(stream, loc);
@@ -408,7 +408,7 @@ namespace sap::frontend
 			return Ok(Token { .loc = loc, .type = TT::EndOfFile, .text = stream.take_last(1) });
 		}
 
-		else if(stream.starts_with("#"))
+		else if(stream.starts_with("#") || stream.starts_with("/#"))
 		{
 			(void) TRY(parse_comment(stream, loc));
 			return consume_script_token(stream, loc);

@@ -1,6 +1,6 @@
 # test.sap
 
-# import "std";
+import "std";
 
 # let serif = builtin::find_font_family(["XCharter", "Times New Roman", "serif"]);
 # let sans = builtin::find_font_family(["Myriad Pro", "Helvetica", "sans-serif"]);
