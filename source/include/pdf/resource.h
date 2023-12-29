@@ -11,6 +11,7 @@ namespace pdf
 {
 	struct Name;
 	struct Object;
+	struct Dictionary;
 
 	struct Resource
 	{
@@ -34,5 +35,15 @@ namespace pdf
 	private:
 		Kind m_kind;
 		std::string m_name;
+	};
+
+	struct ExtGraphicsState : Resource
+	{
+		ExtGraphicsState();
+		virtual void serialise() const override;
+		virtual Object* resourceObject() const override;
+
+	private:
+		Dictionary* m_dict;
 	};
 }

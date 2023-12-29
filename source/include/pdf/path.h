@@ -19,17 +19,14 @@ namespace pdf
 
 	struct Path : PageObject
 	{
-		virtual void addResources(const Page* page) const override;
-		virtual void writePdfCommands(Stream* stream) const override;
-
-		struct Move
+		struct MoveTo
 		{
-			Position2d position;
+			Position2d pos;
 		};
 
 		struct LineTo
 		{
-			Position2d position;
+			Position2d pos;
 		};
 
 		struct CubicBezier
@@ -39,13 +36,39 @@ namespace pdf
 			Position2d end;
 		};
 
+		struct CubicBezierIC1
+		{
+			Position2d cp2;
+			Position2d end;
+		};
+
+		struct CubicBezierIC2
+		{
+			Position2d cp1;
+			Position2d end;
+		};
+
+		struct Rectangle
+		{
+			Position2d start;
+			Size2d size;
+		};
+
 		struct ClosePath
 		{
 		};
 
-		using Segment = std::variant<Move, LineTo, CubicBezier, ClosePath>;
+		using Segment = std::variant<MoveTo, LineTo, CubicBezier, CubicBezierIC1, CubicBezierIC2, Rectangle, ClosePath>;
+
+		Path(Position2d display_position, Size2d display_size);
+		void addSegment(Segment segment);
+
+		virtual void addResources(const Page* page) const override;
+		virtual void writePdfCommands(Stream* stream) const override;
 
 	private:
+		Position2d m_display_position;
+		Size2d m_display_size;
 		std::vector<Segment> m_segments;
 	};
 }

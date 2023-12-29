@@ -1,114 +1,113 @@
 # test.sap
 
-import "std";
+# import "std";
 
-let serif = builtin::find_font_family(["XCharter", "Times New Roman", "serif"]);
-let sans = builtin::find_font_family(["Myriad Pro", "Helvetica", "sans-serif"]);
+# let serif = builtin::find_font_family(["XCharter", "Times New Roman", "serif"]);
+# let sans = builtin::find_font_family(["Myriad Pro", "Helvetica", "sans-serif"]);
 
-sans!.regular.adjust_glyph_spacing({ match: ["1.4"], adjust: [0.0, -0.04, 0.0] });
-sans!.regular.adjust_glyph_spacing({ match: ["1.2", "1.3", "1.5", "1.6", "1.7", "1.8", "1.9"], adjust: [0.0, -0.07, 0.0] });
-sans!.regular.adjust_glyph_spacing({ match: ["2.1", "3.1", "4.1", "5.1", "6.1", "8.1", "9.1", "0.1"], adjust: [0.0, +0.05, 0.0] });
+# sans!.regular.adjust_glyph_spacing({ match: ["1.4"], adjust: [0.0, -0.04, 0.0] });
+# sans!.regular.adjust_glyph_spacing({ match: ["1.2", "1.3", "1.5", "1.6", "1.7", "1.8", "1.9"], adjust: [0.0, -0.07, 0.0] });
+# sans!.regular.adjust_glyph_spacing({ match: ["2.1", "3.1", "4.1", "5.1", "6.1", "8.1", "9.1", "0.1"], adjust: [0.0, +0.05, 0.0] });
 
 \start_document({
-	serif_font_family: *serif,
-	sans_font_family: *sans,
-	paper_size: std::paper_size::A4,
+	# serif_font_family: *serif,
+	# sans_font_family: *sans,
+	# paper_size: std::paper_size::A4,
 	margins: { left: 2cm, right: 2cm, top: 2cm, bottom: 2cm },
-	default_style: {
-		font_size: 12pt,
-		line_spacing: 2,
-		sentence_space_stretch: 1.3,
-		paragraph_spacing: 1.5em,
-	},
+	# default_style: {
+	# 	font_size: 12pt,
+	# 	line_spacing: 2,
+	# 	sentence_space_stretch: 1.3,
+	# 	paragraph_spacing: 1.5em,
+	# },
 });
 
 \script::{
 	# using std;
 	using builtin;
 
-	enum Hello
-	{
-		a;
-		b;
-		c;
-	};
+	# enum Hello
+	# {
+	# 	a;
+	# 	b;
+	# 	c;
+	# };
 
-	fn cpp() -> Inline
-	{
-		let c = \{C}.set_width(0.56em);
-		var p1 = bold1(\{+}).apply_style({ font_size: 0.875em, });
-		var p2 = bold1(\{+}).apply_style({ font_size: 0.875em, });
+	# fn cpp() -> Inline
+	# {
+	# 	let c = \{C}.set_width(0.56em);
+	# 	var p1 = bold1(\{+}).apply_style({ font_size: 0.875em, });
+	# 	var p2 = bold1(\{+}).apply_style({ font_size: 0.875em, });
 
-		p1.set_width(0.6em);
-		p1.raise(0.05em);
-		p2.raise(0.05em);
+	# 	p1.set_width(0.6em);
+	# 	p1.raise(0.05em);
+	# 	p2.raise(0.05em);
 
-		return make_span(glue: true, *c, *p1, *p2);
-	}
+	# 	return make_span(glue: true, *c, *p1, *p2);
+	# }
 
-	fn kekw() -> Inline
-	{
-		var k: Hello = .a;
-		k = .b;
-		k = Hello::c;
+	# fn kekw() -> Inline
+	# {
+	# 	var k: Hello = .a;
+	# 	k = .b;
+	# 	k = Hello::c;
 
-		return italic1(make_span(\{asdf}, cpp()));
-	}
+	# 	return italic1(make_span(\{asdf}, cpp()));
+	# }
 
-	union AAA
-	{
-		Line(a: int);
-		Foo(a: int);
-	};
+	# union AAA
+	# {
+	# 	Bar(a: int);
+	# 	Foo(a: int);
+	# };
 
-	fn asdf()
-	{
-		# csdf(.Foo);
-		var p: AAA = .Line(a: 10);
+	# fn asdf()
+	# {
+	# 	# csdf(.Foo);
+	# 	var p: AAA = .Bar(a: 10);
 
-		# cast(p, .Line).a = 69;
-		# println(f"{cast(p, .Line).a}");
+	# 	# cast(p, .Line).a = 69;
+	# 	# println(f"{cast(p, .Line).a}");
 
 
-		if(let .Foo(&mut a: x) = p)
-		{
-			x! = 30;
-			println(f"hello!: {cast(p, .Line).a}");
-		}
-		else
-		{
-			println("oh no");
-		}
-	}
+	# 	if(let .Foo(&mut a: x) = p)
+	# 	{
+	# 		x! = 30;
+	# 		println(f"hello!: {cast(p, .Bar).a}");
+	# 	}
+	# 	else
+	# 	{
+	# 		println("oh no");
+	# 	}
+	# }
 
-	fn bsdf() -> ?Inline
-	{
-		let a: ?int = 500;
-		let b: ?int = null;
+	# fn bsdf() -> ?Inline
+	# {
+	# 	let a: ?int = 500;
+	# 	let b: ?int = null;
 
-		if(let aa = a)  println(f"a has a value: {a}");
-		else            println(f"a has no value");
+	# 	if(let aa = a)  println(f"a has a value: {a}");
+	# 	else            println(f"a has no value");
 
-		if(let bb = b)  println(f"b has a value: {b}");
-		else            println(f"b has no value");
+	# 	if(let bb = b)  println(f"b has a value: {b}");
+	# 	else            println(f"b has no value");
 
-		asdf();
-		return null;
-	}
+	# 	asdf();
+	# 	return null;
+	# }
 
 
 	fn haha() -> ?Block
 	{
-		let pp: PathSegment = .Line(pos: { x: 1cm, y: 1cm });
-		let path = make_path(*pp);
-
-		return path;
+		return make_path(.Move(pos: {x:5cm, y:5cm}), .Line(pos: {x:16cm, y:24.7cm }));
 	}
 }
 
-# \disable_page_numbering();
+# \std::disable_page_numbering();
 
-hello \cpp() there \kekw() \bsdf()
+# hello \cpp() there \kekw() \bsdf()
+
+aaaaa
 
 \haha()
 

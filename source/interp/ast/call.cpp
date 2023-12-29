@@ -249,8 +249,9 @@ namespace sap::interp::ast
 
 			for(size_t i = 0; i < arg_arrangement.arguments.size(); i++)
 			{
-				auto do_one_arg = [&](const Type* param_type, FinalArg::ArgIdxOrDefault& arg) //
-				    -> ErrorOr<cst::ExprOrDefaultPtr>                                         //
+				auto do_one_arg =
+				    [this, ts, cur_arg = i, &processed_args](const Type* param_type, FinalArg::ArgIdxOrDefault& arg) //
+				    -> ErrorOr<cst::ExprOrDefaultPtr>                                                                //
 				{
 					if(arg.is_right())
 						return Ok(arg.right());
@@ -262,8 +263,8 @@ namespace sap::interp::ast
 					}
 					else
 					{
-						bool is_ufcs_self = this->rewritten_ufcs && i == 0;
-						auto expr = TRY(this->arguments[i].value->typecheck(ts, /* infer: */ param_type,
+						bool is_ufcs_self = this->rewritten_ufcs && cur_arg == 0;
+						auto expr = TRY(this->arguments[arg_idx].value->typecheck(ts, /* infer: */ param_type,
 						    /* keep_lvalue: */ is_ufcs_self));
 
 						return Ok(std::move(expr).take_expr());

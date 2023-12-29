@@ -157,6 +157,7 @@ namespace sap::interp::ast
 				    union_defn->declaration->name, this->name);
 			}
 
+
 			auto case_idx = union_type->getCaseIndex(this->name);
 			auto case_values = TRY(arrange_union_args(ts, this->arguments, union_defn, case_idx,
 			    union_type->getCaseAtIndex(case_idx)));

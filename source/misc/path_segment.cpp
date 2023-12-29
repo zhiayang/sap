@@ -53,7 +53,7 @@ namespace sap
 
 	PathSegment PathSegment::line(Position to)
 	{
-		return PathSegment(Move, std::move(to));
+		return PathSegment(Line, std::move(to));
 	}
 
 	PathSegment PathSegment::cubicBezier(Position cp1, Position cp2, Position final)

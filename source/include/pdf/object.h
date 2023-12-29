@@ -24,7 +24,7 @@ namespace pdf
 	struct File;
 	struct Dictionary;
 
-	size_t getNewResourceId();
+	size_t getNewResourceId(zst::str_view key = "");
 
 	struct Object
 	{
@@ -300,6 +300,8 @@ namespace pdf
 		static const auto N = pdf::Name("N");
 		static const auto S = pdf::Name("S");
 		static const auto W = pdf::Name("W");
+		static const auto ca = pdf::Name("ca");
+		static const auto CA = pdf::Name("CA");
 		static const auto BS = pdf::Name("BS");
 		static const auto DW = pdf::Name("DW");
 		static const auto ID = pdf::Name("ID");
@@ -377,6 +379,7 @@ namespace pdf
 		static const auto FontFile3 = pdf::Name("FontFile3");
 		static const auto GTS_PDFA1 = pdf::Name("GTS_PDFA1");
 		static const auto Resources = pdf::Name("Resources");
+		static const auto ExtGState = pdf::Name("ExtGState");
 		static const auto ToUnicode = pdf::Name("ToUnicode");
 		static const auto ColorSpace = pdf::Name("ColorSpace");
 		static const auto DeviceCMYK = pdf::Name("DeviceCMYK");

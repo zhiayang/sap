@@ -239,49 +239,49 @@ namespace std
 	}
 
 	# actually put the page numbers onto the page
-	@finalise {
-		var rst_idx = 0;
-		var enabled = true;
+	# @finalise {
+	# 	var rst_idx = 0;
+	# 	var enabled = true;
 
-		var page_num_offset = 0;
+	# 	var page_num_offset = 0;
 
-		var page_num_pos = builtin::document()!.page_size // {
-			x: .x - 35mm,
-			y: .y - 30mm,
-		};
+	# 	var page_num_pos = builtin::document()!.page_size // {
+	# 		x: .x - 35mm,
+	# 		y: .y - 30mm,
+	# 	};
 
-		for(var i = 0; i < builtin::document()!.page_count; i += 1)
-		{
-			if(rst_idx < g_page_numbering_resets.size())
-			{
-				let rst = g_page_numbering_resets[rst_idx];
-				let tmp = rst.ref.layout_object()!.position().page;
-				if(tmp == i)
-				{
-					rst_idx += 1;
+	# 	for(var i = 0; i < builtin::document()!.page_count; i += 1)
+	# 	{
+	# 		if(rst_idx < g_page_numbering_resets.size())
+	# 		{
+	# 			let rst = g_page_numbering_resets[rst_idx];
+	# 			let tmp = rst.ref.layout_object()!.position().page;
+	# 			if(tmp == i)
+	# 			{
+	# 				rst_idx += 1;
 
-					enabled = rst.enable;
-					if(rst.reset)
-						page_num_offset = tmp;
-				}
-			}
+	# 				enabled = rst.enable;
+	# 				if(rst.reset)
+	# 					page_num_offset = tmp;
+	# 			}
+	# 		}
 
-			let page_num = i + 1 - page_num_offset;
-			if(enabled)
-			{
-				let item = builtin::make_line(builtin::make_text(f"{page_num}")).apply_style({
-					horz_alignment: .Right,
-					font_size: 11pt,
-				});
+	# 		let page_num = i + 1 - page_num_offset;
+	# 		if(enabled)
+	# 		{
+	# 			let item = builtin::make_line(builtin::make_text(f"{page_num}")).apply_style({
+	# 				horz_alignment: .Right,
+	# 				font_size: 11pt,
+	# 			});
 
-				builtin::output_at_absolute({
-					page: i,
-					x: page_num_pos.x,
-					y: page_num_pos.y,
-				}, *item);
-			}
-		}
-	}
+	# 			builtin::output_at_absolute({
+	# 				page: i,
+	# 				x: page_num_pos.x,
+	# 				y: page_num_pos.y,
+	# 			}, *item);
+	# 		}
+	# 	}
+	# }
 
 	# generate outline items
 	@finalise {

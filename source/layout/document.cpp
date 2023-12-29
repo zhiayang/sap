@@ -61,10 +61,13 @@ namespace sap::layout
 	Document::Document(interp::Interpreter* cs, const DocumentSettings& settings)
 	    : m_page_layout(this, paper_size(settings), make_margins(settings))
 	{
-		this->setStyle(
-		    getDefaultStyle(cs) //
-		        .with_font_family(*settings.serif_font_family)
-		        .extendWith(*settings.default_style));
+		auto s = getDefaultStyle(cs);
+		if(settings.serif_font_family.has_value())
+			s = s.with_font_family(*settings.serif_font_family);
+		if(settings.default_style)
+			s = s.extendWith(*settings.default_style);
+
+		this->setStyle(std::move(s));
 	}
 
 

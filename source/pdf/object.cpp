@@ -12,12 +12,12 @@
 
 namespace pdf
 {
-	static constexpr bool PRETTY_PRINT = false;
+	static constexpr bool PRETTY_PRINT = true;
 
-	size_t getNewResourceId()
+	size_t getNewResourceId(zst::str_view key)
 	{
-		static size_t s_next_resource_id = 0;
-		return ++s_next_resource_id;
+		static util::hashmap<std::string, size_t> s_next_resource_ids {};
+		return ++s_next_resource_ids[key.sv()];
 	}
 
 	IndirHelper::IndirHelper(Writer* w_, const Object* obj) : w(w_), indirect(obj->isIndirect())

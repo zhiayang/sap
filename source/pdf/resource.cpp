@@ -13,7 +13,16 @@ namespace pdf
 
 	Resource::Resource(Kind kind) : m_kind(kind)
 	{
-		m_name = zpr::sprint("{}{}", this->resourceKindString(), pdf::getNewResourceId());
+		auto ks = this->resourceKindString();
+		const char* prefix = "U";
+		switch(m_kind)
+		{
+			case KIND_FONT: prefix = "F"; break;
+			case KIND_XOBJECT: prefix = "x"; break;
+			case KIND_EXTGSTATE: prefix = "g"; break;
+		}
+
+		m_name = zpr::sprint("{}{}", prefix, pdf::getNewResourceId(/* key: */ ks));
 	}
 
 	zst::str_view Resource::resourceName() const
