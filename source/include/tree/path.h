@@ -4,8 +4,8 @@
 
 #pragma once
 
+#include "sap/path.h"
 #include "tree/base.h"
-#include "sap/path_segment.h"
 
 namespace sap::tree
 {

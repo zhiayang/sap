@@ -2,7 +2,7 @@
 // Copyright (c) 2022, zhiayang
 // SPDX-License-Identifier: Apache-2.0
 
-#include "sap/paths.h"
+#include "sap/config.h"
 #include "sap/frontend.h"
 
 #include "tree/document.h"

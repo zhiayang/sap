@@ -5,7 +5,7 @@
 #define ZARG_IMPLEMENTATION
 #include <zarg.h>
 
-#include "sap/paths.h"
+#include "sap/config.h"
 
 #if !defined(SAP_PREFIX)
 #error SAP_PREFIX must be defined!

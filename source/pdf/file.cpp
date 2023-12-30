@@ -2,15 +2,15 @@
 // Copyright (c) 2021, zhiayang
 // SPDX-License-Identifier: Apache-2.0
 
-#include "util.h" // for checked_cast
-#include "sap/paths.h"
+#include "util.h"
+#include "sap/config.h"
 
-#include "pdf/file.h"   // for File
-#include "pdf/font.h"   // for Font
-#include "pdf/misc.h"   // for error
-#include "pdf/page.h"   // for Page
-#include "pdf/object.h" // for Object, Dictionary, Name, IndirectRef, Int...
-#include "pdf/writer.h" // for Writer
+#include "pdf/file.h"
+#include "pdf/font.h"
+#include "pdf/misc.h"
+#include "pdf/page.h"
+#include "pdf/object.h"
+#include "pdf/writer.h"
 
 #if !defined(GIT_REVISION)
 #define GIT_REVISION "unknown"

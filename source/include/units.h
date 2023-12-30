@@ -172,8 +172,8 @@ namespace dim
 
 		template <typename _Scalar>
 		constexpr auto into() const
-			requires((impl::is_scalar<_Scalar>::value)
-					 && (impl::can_convert_units<unit_tag_type, typename _Scalar::unit_tag_type>::value))
+		    requires((impl::is_scalar<_Scalar>::value)
+		             && (impl::can_convert_units<unit_tag_type, typename _Scalar::unit_tag_type>::value))
 		{
 			using Ret = Scalar<typename _Scalar::unit_system, typename _Scalar::value_type>;
 			return Ret((this->_x * scale_factor) / _Scalar::unit_system::scale_factor);
@@ -181,7 +181,7 @@ namespace dim
 
 		template <typename _Target>
 		constexpr Scalar<_Target> into() const
-			requires(impl::can_convert_units<unit_tag_type, typename _Target::Tag>::value)
+		    requires(impl::can_convert_units<unit_tag_type, typename _Target::Tag>::value)
 		{
 			return Scalar<_Target>((this->_x * scale_factor) / _Target::scale_factor);
 		}
@@ -192,7 +192,7 @@ namespace dim
 
 		template <typename _FromSys, typename _FromType>
 		constexpr Scalar(impl::ScalarConverter<_FromSys, _FromType> conv)
-			requires(impl::can_convert_units<typename _FromSys::Tag, unit_tag_type>::value)
+		    requires(impl::can_convert_units<typename _FromSys::Tag, unit_tag_type>::value)
 		{
 			this->_x = (conv.value * _FromSys::scale_factor) / scale_factor;
 		}
@@ -260,26 +260,26 @@ namespace dim
 
 		template <typename _Vector>
 		constexpr _Vector into() const
-			requires(                                                                                   //
-				(impl::is_vector2<_Vector>::value)                                                      //
-				&& impl::can_convert_coord_systems<coord_system, typename _Vector::coord_system>::value //
-				&& impl::can_convert_units<unit_tag_type, typename _Vector::unit_tag_type>::value       //
-			)
+		    requires(                                                                                   //
+		        (impl::is_vector2<_Vector>::value)                                                      //
+		        && impl::can_convert_coord_systems<coord_system, typename _Vector::coord_system>::value //
+		        && impl::can_convert_units<unit_tag_type, typename _Vector::unit_tag_type>::value       //
+		    )
 		{
 			using _S = typename _Vector::unit_system;
 			using _C = typename _Vector::coord_system;
 			using _T = typename _Vector::value_type;
 
 			return Vector2<_S, _C, _T>(((this->_x * scale_factor) / _S::scale_factor)._x,
-				((this->_y * scale_factor) / _S::scale_factor)._x);
+			    ((this->_y * scale_factor) / _S::scale_factor)._x);
 		}
 
 		template <typename _Target>
 		constexpr Vector2<_Target, coord_system> into() const
-			requires(impl::can_convert_units<unit_tag_type, typename _Target::Tag>::value)
+		    requires(impl::can_convert_units<unit_tag_type, typename _Target::Tag>::value)
 		{
 			return Vector2<_Target, coord_system>((this->_x * scale_factor) / _Target::scale_factor,
-				(this->_y * scale_factor) / _Target::scale_factor);
+			    (this->_y * scale_factor) / _Target::scale_factor);
 		}
 
 
@@ -288,9 +288,9 @@ namespace dim
 
 		template <typename _FromSys, typename _FromCoordSystem, typename _FromType>
 		constexpr Vector2(impl::Vector2Converter<_FromSys, _FromCoordSystem, _FromType> conv)
-			requires( //
-				(impl::can_convert_units<typename _FromSys::Tag, unit_tag_type>::value)
-				&& (impl::can_convert_coord_systems<_FromCoordSystem, coord_system>::value))
+		    requires( //
+		        (impl::can_convert_units<typename _FromSys::Tag, unit_tag_type>::value)
+		        && (impl::can_convert_coord_systems<_FromCoordSystem, coord_system>::value))
 		{
 			this->_x = scalar_type(conv.value1 * _FromSys::scale_factor) / scale_factor;
 			this->_y = scalar_type(conv.value2 * _FromSys::scale_factor) / scale_factor;
@@ -348,6 +348,9 @@ namespace dim
 struct BASE_COORD_SYSTEM;
 DEFINE_UNIT(millimetre, 1.0, void);
 DEFINE_UNIT(centimetre, 10.0, void);
+
+// 72 pdf user units == 1 inch == 25.4 mm
+DEFINE_UNIT(pdf_user_unit, (25.4 / 72.0), void);
 
 namespace dim::units
 {

@@ -41,7 +41,6 @@ namespace pdf
 
 		for(auto& seg : m_segments)
 		{
-			// MoveTo, LineTo, CubicBezier, CubicBezierIC1, CubicBezierIC2, Rectangle, ClosePath
 			if(auto m = std::get_if<MoveTo>(&seg); m)
 			{
 				zpr::cprint(appender, " {} {} m", m->pos.x(), m->pos.y());
@@ -78,10 +77,9 @@ namespace pdf
 		}
 
 		// stroke that shit
-		zpr::cprint(appender, " S\n");
-
-		zpr::cprint(appender, "Q\n");
-		zpr::println("{}", str_buf.span().sv());
+		zpr::cprint(appender,
+		    " 1 0 0 RG S\n"
+		    "Q\n");
 
 		stream->append(str_buf.bytes());
 	}

@@ -22,21 +22,6 @@ namespace sap::interp::builtin
 		return std::make_unique<ast::NullLit>(Location::builtin());
 	}
 
-	template <typename T>
-	static std::optional<T> get_optional_enumerator_field(const Value& val, zst::str_view field)
-	{
-		auto& fields = val.getStructFields();
-		auto idx = val.type()->toStruct()->getFieldIndex(field);
-
-		auto& f = fields[idx];
-		if(not f.haveOptionalValue())
-			return std::nullopt;
-
-		return static_cast<T>((*f.getOptional())->getEnumerator().getInteger());
-	};
-
-
-
 	const Type* builtin::BS_Style::type = nullptr;
 	std::vector<Field> builtin::BS_Style::fields()
 	{

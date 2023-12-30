@@ -4,7 +4,7 @@
 
 #include <utf8proc/utf8proc.h>
 
-#include "sap/paths.h"
+#include "sap/config.h"
 #include "tree/base.h"
 #include "tree/paragraph.h"
 #include "misc/hyphenator.h"

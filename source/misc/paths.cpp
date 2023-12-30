@@ -4,7 +4,7 @@
 
 #include <unordered_set>
 
-#include "sap/paths.h"
+#include "sap/config.h"
 
 namespace sap::paths
 {

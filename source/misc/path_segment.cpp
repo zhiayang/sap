@@ -2,7 +2,7 @@
 // Copyright (c) 2023, zhiayang
 // SPDX-License-Identifier: Apache-2.0
 
-#include "sap/path_segment.h"
+#include "sap/path.h"
 
 namespace sap
 {

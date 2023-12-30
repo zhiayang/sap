@@ -58,6 +58,8 @@ namespace sap::interp
 
 		define_builtin_enum<BE_Alignment>(cs);
 		define_builtin_enum<BE_ColourType>(cs);
+		define_builtin_enum<BE_LineCapStyle>(cs);
+		define_builtin_enum<BE_LineJoinStyle>(cs);
 
 		define_builtin_struct<BS_ColourRGB>(cs);
 		define_builtin_struct<BS_ColourCMYK>(cs);
@@ -71,6 +73,7 @@ namespace sap::interp
 		define_builtin_struct<BS_Font>(cs);
 		define_builtin_struct<BS_FontFamily>(cs);
 		define_builtin_struct<BS_Style>(cs);
+		define_builtin_struct<BS_PathStyle>(cs);
 
 		define_builtin_union<BU_PathSegment>(cs);
 

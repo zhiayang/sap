@@ -6,8 +6,8 @@
 
 #include "util.h"
 
+#include "sap/path.h"
 #include "sap/annotation.h"
-#include "sap/path_segment.h"
 #include "sap/document_settings.h"
 
 #include "layout/cursor.h"
@@ -244,6 +244,43 @@ namespace sap::interp::builtin
 		static GlyphSpacingAdjustment unmake(Evaluator* ev, const Value& value);
 	};
 
+	struct BE_LineJoinStyle
+	{
+		static constexpr auto name = "LineJoinStyle";
+
+		static const Type* type;
+
+		static frontend::PType enumeratorType();
+		static std::vector<ast::EnumDefn::Enumerator> enumerators();
+
+		static Value make(PathStyle::JoinStyle alignment);
+		static PathStyle::JoinStyle unmake(const Value& value);
+	};
+
+	struct BE_LineCapStyle
+	{
+		static constexpr auto name = "LineCapStyle";
+
+		static const Type* type;
+
+		static frontend::PType enumeratorType();
+		static std::vector<ast::EnumDefn::Enumerator> enumerators();
+
+		static Value make(PathStyle::CapStyle alignment);
+		static PathStyle::CapStyle unmake(const Value& value);
+	};
+
+	struct BS_PathStyle
+	{
+		static constexpr auto name = "PathStyle";
+
+		static const Type* type;
+		static std::vector<ast::StructDefn::Field> fields();
+
+		static Value make(Evaluator* ev, const PathStyle& style);
+		static ErrorOr<PathStyle> unmake(Evaluator* ev, const Value& value);
+	};
+
 
 
 
@@ -417,6 +454,22 @@ namespace sap::interp::builtin
 
 		return ((*f.getOptional())->*getter_method)();
 	}
+
+	template <typename T>
+	static std::optional<T> get_optional_enumerator_field(const Value& val, zst::str_view field)
+	{
+		auto& fields = val.getStructFields();
+		auto idx = val.type()->toStruct()->getFieldIndex(field);
+
+		auto& f = fields[idx];
+		if(not f.haveOptionalValue())
+			return std::nullopt;
+
+		return static_cast<T>((*f.getOptional())->getEnumerator().getInteger());
+	};
+
+
+
 
 	template <typename T>
 	T unwrap_optional(const Value& val, const T& default_value)

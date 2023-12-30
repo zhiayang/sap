@@ -21,3 +21,14 @@ namespace sap::config
 
 	StrErrorOr<MicrotypeConfig> parseMicrotypeConfig(zst::str_view& contents);
 }
+
+namespace sap::paths
+{
+	void addIncludeSearchPath(std::string path);
+	void addLibrarySearchPath(std::string path);
+
+	const std::vector<std::string>& librarySearchPaths();
+
+	ErrorOr<std::string> resolveInclude(const Location& loc, zst::str_view path);
+	ErrorOr<std::string> resolveLibrary(const Location& loc, zst::str_view path);
+}

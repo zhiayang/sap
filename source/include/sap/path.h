@@ -1,5 +1,5 @@
-// path_segment.h
-// Copyright (c) 2023, zhiayang
+// path.h
+// Copyright (c) 2022, zhiayang
 // SPDX-License-Identifier: Apache-2.0
 
 #pragma once
@@ -8,6 +8,7 @@
 #include <array>
 
 #include "sap/units.h"
+#include "sap/colour.h"
 
 namespace sap
 {
@@ -48,4 +49,32 @@ namespace sap
 	};
 
 	using PathSegments = std::vector<PathSegment>;
+
+
+
+	struct PathStyle
+	{
+		enum class CapStyle
+		{
+			Butt,
+			Round,
+			Projecting
+		};
+
+		enum class JoinStyle
+		{
+			Miter,
+			Round,
+			Bevel
+		};
+
+		// these are the defaults as specified in PDF
+		Length line_width = dim::Scalar<dim::units::pdf_user_unit>(1.0).into();
+		CapStyle cap_style = CapStyle::Butt;
+		JoinStyle join_style = JoinStyle::Miter;
+		double miter_limit = 10;
+
+		Colour stroke_colour = Colour::black();
+		Colour fill_colour = Colour::black();
+	};
 }

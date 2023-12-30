@@ -42,41 +42,41 @@ namespace sap::layout
 			{
 				case K::Move:
 					page_obj->addSegment(pdf::Path::MoveTo {
-					    page->convertVector2((seg.points()[0] + origin).into<pdf::Position2d_YDown>()),
+					    page->convertVector2((seg.points()[0] + origin).into()),
 					});
 					break;
 
 				case K::Line:
 					page_obj->addSegment(pdf::Path::LineTo {
-					    page->convertVector2((seg.points()[0] + origin).into<pdf::Position2d_YDown>()),
+					    page->convertVector2((seg.points()[0] + origin).into()),
 					});
 					break;
 
 				case K::CubicBezier:
 					page_obj->addSegment(pdf::Path::CubicBezier {
-					    page->convertVector2((seg.points()[0] + origin).into<pdf::Position2d_YDown>()),
-					    page->convertVector2((seg.points()[1] + origin).into<pdf::Position2d_YDown>()),
-					    page->convertVector2((seg.points()[2] + origin).into<pdf::Position2d_YDown>()),
+					    page->convertVector2((seg.points()[0] + origin).into()),
+					    page->convertVector2((seg.points()[1] + origin).into()),
+					    page->convertVector2((seg.points()[2] + origin).into()),
 					});
 					break;
 
 				case K::CubicBezierIC1:
 					page_obj->addSegment(pdf::Path::CubicBezierIC1 {
-					    page->convertVector2((seg.points()[0] + origin).into<pdf::Position2d_YDown>()),
-					    page->convertVector2((seg.points()[1] + origin).into<pdf::Position2d_YDown>()),
+					    page->convertVector2((seg.points()[0] + origin).into()),
+					    page->convertVector2((seg.points()[1] + origin).into()),
 					});
 					break;
 
 				case K::CubicBezierIC2:
 					page_obj->addSegment(pdf::Path::CubicBezierIC2 {
-					    page->convertVector2((seg.points()[0] + origin).into<pdf::Position2d_YDown>()),
-					    page->convertVector2((seg.points()[1] + origin).into<pdf::Position2d_YDown>()),
+					    page->convertVector2((seg.points()[0] + origin).into()),
+					    page->convertVector2((seg.points()[1] + origin).into()),
 					});
 					break;
 
 				case K::Rectangle:
 					page_obj->addSegment(pdf::Path::Rectangle {
-					    page->convertVector2((seg.points()[0] + origin).into<pdf::Position2d_YDown>()),
+					    page->convertVector2((seg.points()[0] + origin).into()),
 					    seg.points()[2].into(),
 					});
 					break;
