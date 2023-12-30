@@ -101,9 +101,10 @@
 	{
 		return make_path(style: {
 			stroke_colour: Colour {type: .RGB, rgb: {r: 1, g: 0, b: 0}},
-			line_width: 1cm,
-			cap_style: .Projecting,
-		}, .Move(pos: {x:0cm, y:0cm}), .Line(pos: {x:10cm, y:10cm}));
+			line_width: 0.5cm,
+			cap_style: .Round,
+			join_style: .Miter,
+		}, .Move(pos: {x:0cm, y:5cm}), .Line(pos: {x:0cm, y:0cm}), .Line(pos: {x:5cm, y:0cm}));
 		# }, .Move(pos: {x:0cm, y:0cm}), .CubicBezier(c1: {x:6cm, y:3cm}, c2: {x:6cm, y:6cm}, end: {x:0cm, y:9cm}));
 	}
 }
@@ -112,7 +113,7 @@
 
 # hello \cpp() there \kekw() \bsdf()
 
-aaaaa
+aaaaaaaaaaaaaaaaaaaaaaa aaaaaaaaaaaaaaaaaaaaaaa aaaaaaaaaaaaaaaaaaaaaaa
 
 \haha()
 

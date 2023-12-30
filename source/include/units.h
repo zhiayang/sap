@@ -231,6 +231,18 @@ namespace dim
 			return *this / l;
 		}
 
+		const self_type perpendicular() const { return self_type(-_y, _x); }
+
+		constexpr scalar_type magnitude() const
+		{
+			return scalar_type { std::sqrt((_x.value() * _x.value()) + (_y.value() * _y.value())) };
+		}
+
+		constexpr scalar_type dot(const self_type& other) const
+		{
+			return (_x * other._x.value()) + (_y * other._y.value());
+		}
+
 		constexpr self_type operator-() const { return self_type(-this->_x, -this->_y); }
 
 		constexpr self_type& operator+=(self_type ofs)
@@ -245,6 +257,7 @@ namespace dim
 			this->_y -= ofs._y;
 			return *this;
 		}
+
 		constexpr self_type& operator*=(value_type scale)
 		{
 			this->_x *= scale;
@@ -252,6 +265,19 @@ namespace dim
 			return *this;
 		}
 		constexpr self_type& operator/=(value_type scale)
+		{
+			this->_x /= scale;
+			this->_y /= scale;
+			return *this;
+		}
+
+		constexpr self_type& operator*=(scalar_type scale)
+		{
+			this->_x *= scale;
+			this->_y *= scale;
+			return *this;
+		}
+		constexpr self_type& operator/=(scalar_type scale)
 		{
 			this->_x /= scale;
 			this->_y /= scale;
@@ -414,6 +440,9 @@ namespace dim
 
 namespace dim
 {
+	template <typename Val, typename _S, typename _T>
+	concept ScalarOrValue = std::is_fundamental_v<Val> || std::is_same_v<Val, Scalar<_S, _T>>;
+
 	template <typename _S, typename _T>
 	constexpr inline Scalar<_S, _T> operator+(Scalar<_S, _T> a, Scalar<_S, _T> b)
 	{
@@ -426,14 +455,16 @@ namespace dim
 		return Scalar<_S, _T>(a._x - b._x);
 	}
 
-	template <typename _S, typename _T, typename _ScaleT, typename = std::enable_if_t<std::is_fundamental_v<_ScaleT>>>
+	template <typename _S, typename _T, typename _ScaleT>
 	constexpr inline Scalar<_S, _T> operator*(Scalar<_S, _T> value, _ScaleT scale)
+	    requires ScalarOrValue<_ScaleT, _S, _T>
 	{
 		return Scalar<_S, _T>(value._x * scale);
 	}
 
-	template <typename _S, typename _T, typename _ScaleT, typename = std::enable_if_t<std::is_fundamental_v<_ScaleT>>>
+	template <typename _S, typename _T, typename _ScaleT>
 	constexpr inline Scalar<_S, _T> operator*(_ScaleT scale, Scalar<_S, _T> value)
+	    requires std::is_fundamental_v<_ScaleT>
 	{
 		return Scalar<_S, _T>(value._x * scale);
 	}
@@ -445,9 +476,9 @@ namespace dim
 	}
 
 	template <typename _S, typename _T>
-	constexpr inline _T operator/(Scalar<_S, _T> a, Scalar<_S, _T> b)
+	constexpr inline _T operator/(Scalar<_S, _T> value, Scalar<_S, _T> scale)
 	{
-		return a._x / b._x;
+		return value._x / scale._x;
 	}
 
 
@@ -466,21 +497,26 @@ namespace dim
 
 	template <typename _S, typename _C, typename _T, typename _ScaleT>
 	constexpr inline Vector2<_S, _C, _T> operator*(Vector2<_S, _C, _T> value, _ScaleT scale)
-	{
-		return Vector2<_S, _C, _T>(value._x * scale, value._y * scale);
-	}
-
-	template <typename _S, typename _C, typename _T>
-	constexpr inline Vector2<_S, _C, _T> operator*(_T scale, Vector2<_S, _C, _T> value)
+	    requires ScalarOrValue<_ScaleT, _S, _T>
 	{
 		return Vector2<_S, _C, _T>(value._x * scale, value._y * scale);
 	}
 
 	template <typename _S, typename _C, typename _T, typename _ScaleT>
+	constexpr inline Vector2<_S, _C, _T> operator*(_ScaleT scale, Vector2<_S, _C, _T> value)
+	    requires std::is_fundamental_v<_ScaleT>
+	{
+		return Vector2<_S, _C, _T>(value._x * scale, value._y * scale);
+	}
+
+
+	template <typename _S, typename _C, typename _T, typename _ScaleT>
 	constexpr inline Vector2<_S, _C, _T> operator/(Vector2<_S, _C, _T> value, _ScaleT scale)
+	    requires ScalarOrValue<_ScaleT, _S, _T>
 	{
 		return Vector2<_S, _C, _T>(value._x / scale, value._y / scale);
 	}
+
 }
 
 

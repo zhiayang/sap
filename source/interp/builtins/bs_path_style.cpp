@@ -48,9 +48,9 @@ namespace sap::interp::builtin
 	std::vector<ast::EnumDefn::Enumerator> BE_LineJoinStyle::enumerators()
 	{
 		return util::vectorOf(                                                               //
-		    make_builtin_enumerator("Butt", static_cast<int>(PathStyle::JoinStyle::Miter)),  //
+		    make_builtin_enumerator("Miter", static_cast<int>(PathStyle::JoinStyle::Miter)), //
 		    make_builtin_enumerator("Round", static_cast<int>(PathStyle::JoinStyle::Round)), //
-		    make_builtin_enumerator("Projecting", static_cast<int>(PathStyle::JoinStyle::Bevel)));
+		    make_builtin_enumerator("Bevel", static_cast<int>(PathStyle::JoinStyle::Bevel)));
 	}
 
 	Value builtin::BE_LineJoinStyle::make(PathStyle::JoinStyle cap)
