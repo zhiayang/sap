@@ -225,6 +225,12 @@ namespace dim
 		constexpr bool iszero() const { return this->_x == 0 && this->_y == 0; }
 		constexpr bool nonzero() const { return not this->iszero(); }
 
+		constexpr self_type norm() const
+		{
+			const auto l = std::sqrt(_x.value() * _x.value() + _y.value() * _y.value());
+			return *this / l;
+		}
+
 		constexpr self_type operator-() const { return self_type(-this->_x, -this->_y); }
 
 		constexpr self_type& operator+=(self_type ofs)

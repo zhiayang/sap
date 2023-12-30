@@ -20,8 +20,12 @@ namespace sap::tree
 		return Ok();
 	}
 
+	using CapStyle = PathStyle::CapStyle;
+	using JoinStyle = PathStyle::JoinStyle;
+
+
 	static std::pair<Position, Position>
-	get_bezier_bounding_box(Position p1, Position p2, Position p3, Position p4, Length thickness)
+	bezier_bb(Position p1, Position p2, Position p3, Position p4, Length thickness, CapStyle cs)
 	{
 		// https://pomax.github.io/bezierinfo/#extremities
 		auto va = 3.0 * (-p1 + (3.0 * p2) - (3.0 * p3) + p4);
@@ -75,20 +79,63 @@ namespace sap::tree
 		auto min_bounds = Position(+INFINITY, +INFINITY);
 		auto max_bounds = Position(-INFINITY, -INFINITY);
 
+		const auto update_bounds = [&](auto&&... xs) {
+			(((min_bounds.x() = std::min(min_bounds.x(), xs.x())),    //
+			     (min_bounds.y() = std::min(min_bounds.y(), xs.y())), //
+			     (max_bounds.x() = std::max(max_bounds.x(), xs.x())), //
+			     (max_bounds.y() = std::max(max_bounds.y(), xs.y()))),
+			    ...);
+		};
+
+
 		for(auto t : t_values)
 		{
-			auto p = calc_bezier(t);
-			min_bounds.x() = std::min(min_bounds.x(), p.x());
-			min_bounds.y() = std::min(min_bounds.y(), p.y());
-			max_bounds.x() = std::max(max_bounds.x(), p.x());
-			max_bounds.y() = std::max(max_bounds.y(), p.y());
+			const auto tangent = (va * t * t + vb * t + vc).norm();
+			const auto normal = Vector2(-tangent.y(), tangent.x()); // already normalised
+			const auto half = (thickness / 2).value();
+
+			const auto pt = calc_bezier(t);
+			const auto x1 = pt + (normal * half);
+			const auto x2 = pt + (-normal * half);
+
+			update_bounds(pt, x1, x2);
+
+			// if this is an endpoint, account for the cap.
+			if((t == 0.0 || t == 1.0))
+			{
+				switch(cs)
+				{
+					// butt -- nothing
+					case CapStyle::Butt: break;
+
+					// it's a circle, so we can just use ±half on x and y.
+					case CapStyle::Round: {
+						const auto hx = Vector2(half, 0);
+						const auto hy = Vector2(0, half);
+						update_bounds(p1 - hx, p1 + hx, p1 - hy, p1 + hy, //
+						    p4 - hx, p4 + hx, p4 - hy, p4 + hy);
+						break;
+					}
+
+					// same as round, but we need to account for the square corners too
+					case CapStyle::Projecting: {
+						auto e1 = p1 - (tangent * half);
+						auto e2 = p4 + (tangent * half);
+						update_bounds(e1, e2);
+
+						auto c1 = p1 + (-tangent * half) + (normal * half);
+						auto c2 = p1 + (-tangent * half) - (normal * half);
+						auto c3 = p4 + (tangent * half) + (normal * half);
+						auto c4 = p4 + (tangent * half) - (normal * half);
+						update_bounds(c1, c2, c3, c4);
+						break;
+					}
+				}
+			}
 		}
 
 		return { min_bounds, max_bounds };
 	}
-
-	using CapStyle = PathStyle::CapStyle;
-	using JoinStyle = PathStyle::JoinStyle;
 
 	// also returns the min bounds so we can compute the offset properly.
 	static std::pair<Size2d, Position>
@@ -126,7 +173,7 @@ namespace sap::tree
 				case K::Line: {
 					const auto lp1 = cursor;
 					const auto lp2 = seg.points()[0];
-					const auto half = thickness / 2;
+					const auto half = (thickness / 2).value();
 
 					// first, calculate the angle of the line.
 					const auto diff = lp2 - lp1;
@@ -134,19 +181,42 @@ namespace sap::tree
 
 					// we need 3 extra points per end of the line (so 6 total) --
 					// along the vector of the line (extending out), and orthogonal to it in both directions.
-					auto p1 = lp1 - Position(half * cos(angle), half * sin(angle));
 					auto p2 = lp1 - Position(half * cos(angle - M_PI / 2), half * sin(angle - M_PI / 2));
 					auto p3 = lp1 - Position(half * cos(angle + M_PI / 2), half * sin(angle + M_PI / 2));
 
-					auto p4 = lp2 + Position(half * cos(angle), half * sin(angle));
 					auto p5 = lp2 + Position(half * cos(angle - M_PI / 2), half * sin(angle - M_PI / 2));
 					auto p6 = lp2 + Position(half * cos(angle + M_PI / 2), half * sin(angle + M_PI / 2));
 
 					update_bounds(p2, p3, p5, p6);
 
 					// if we are using butt caps, then ignore p1 and p4 (we are not projecting out).
-					if(cs != CapStyle::Butt)
-						update_bounds(p1, p4);
+					switch(cs)
+					{
+						// butt: nothing
+						case CapStyle::Butt: break;
+
+						// circle: see bezier above
+						case CapStyle::Round: {
+							const auto hx = Vector2(half, 0);
+							const auto hy = Vector2(0, half);
+							update_bounds(lp1 - hx, lp1 + hx, lp1 - hy, lp1 + hy, //
+							    lp2 - hx, lp2 + hx, lp2 - hy, lp2 + hy);
+							break;
+						}
+
+						// need to account for the corners.
+						case CapStyle::Projecting: {
+							const auto tangent = Vector2(cos(angle), sin(angle)).norm();
+							const auto normal = Vector2(-tangent.y(), tangent.x());
+
+							auto c1 = lp1 + (-tangent * half) + (normal * half);
+							auto c2 = lp1 + (-tangent * half) - (normal * half);
+							auto c3 = lp2 + (tangent * half) + (normal * half);
+							auto c4 = lp2 + (tangent * half) - (normal * half);
+							update_bounds(c1, c2, c3, c4);
+							break;
+						}
+					}
 
 					move_cursor(seg.points()[0]);
 					break;
@@ -165,20 +235,19 @@ namespace sap::tree
 				}
 
 				case K::CubicBezier: {
-					auto [a, b] = get_bezier_bounding_box(cursor, seg.points()[0], seg.points()[1], seg.points()[2],
-					    thickness);
+					auto [a, b] = bezier_bb(cursor, seg.points()[0], seg.points()[1], seg.points()[2], thickness, cs);
 					update_bounds(a, b);
 					break;
 				}
 
 				case K::CubicBezierIC1: {
-					auto [a, b] = get_bezier_bounding_box(cursor, cursor, seg.points()[1], seg.points()[2], thickness);
+					auto [a, b] = bezier_bb(cursor, cursor, seg.points()[1], seg.points()[2], thickness, cs);
 					update_bounds(a, b);
 					break;
 				}
 
 				case K::CubicBezierIC2: {
-					auto [a, b] = get_bezier_bounding_box(cursor, seg.points()[0], cursor, seg.points()[1], thickness);
+					auto [a, b] = bezier_bb(cursor, seg.points()[0], cursor, seg.points()[1], thickness, cs);
 					update_bounds(a, b);
 					break;
 				}
