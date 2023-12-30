@@ -25,6 +25,34 @@ namespace pdf
 		m_segments.push_back(std::move(segment));
 	}
 
+	static void style_to_pdf_commands(auto& a, const Path::PaintStyle& style)
+	{
+		auto add_colour = [&](const sap::Colour& colour, bool stroking) {
+			if(colour.isRGB())
+			{
+				auto rgb = colour.rgb();
+				zpr::cprint(a, " {} {} {} {}", rgb.r, rgb.g, rgb.b, stroking ? "RG" : "rg");
+			}
+			else if(colour.isCMYK())
+			{
+				auto cmyk = colour.cmyk();
+				zpr::cprint(a, " {} {} {} {} {}", cmyk.c, cmyk.m, cmyk.y, cmyk.k, stroking ? "K" : "k");
+			}
+			else
+			{
+				sap::internal_error("invalid colour type");
+			}
+		};
+
+		zpr::cprint(a, " {} w", style.line_width.value());
+		zpr::cprint(a, " {} J", static_cast<int>(style.cap_style));
+		zpr::cprint(a, " {} j", static_cast<int>(style.join_style));
+		zpr::cprint(a, " {} M", style.miter_limit);
+
+		add_colour(style.stroke_colour, /* stroking: */ true);
+		add_colour(style.fill_colour, /* stroking: */ false);
+	}
+
 	void Path::writePdfCommands(Stream* stream) const
 	{
 		auto str_buf = zst::buffer<char>();
@@ -32,16 +60,17 @@ namespace pdf
 
 		zpr::cprint(appender,   //
 		    "q\n"               //
-		    "0 0 0 RG\n"        //
 		    "/ExtGState13 gs\n" //
-		    "1 w  0 J  0 j\n"   //
-		    "4 M [] 0.0 d\n"    //
 		    "1 0 0 1 0 0 cm\n"  //
 		);
 
 		for(auto& seg : m_segments)
 		{
-			if(auto m = std::get_if<MoveTo>(&seg); m)
+			if(auto ps = std::get_if<PaintStyle>(&seg); ps)
+			{
+				style_to_pdf_commands(appender, *ps);
+			}
+			else if(auto m = std::get_if<MoveTo>(&seg); m)
 			{
 				zpr::cprint(appender, " {} {} m", m->pos.x(), m->pos.y());
 			}
@@ -78,7 +107,7 @@ namespace pdf
 
 		// stroke that shit
 		zpr::cprint(appender,
-		    " 1 0 0 RG S\n"
+		    " S\n"
 		    "Q\n");
 
 		stream->append(str_buf.bytes());

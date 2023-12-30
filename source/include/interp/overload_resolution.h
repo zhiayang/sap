@@ -31,13 +31,13 @@ namespace sap::interp::ast
 	{
 		const Type* param_type;
 
+		// the vector implies a variadic
 		using ArgIdxOrDefault = Either<size_t, const cst::Expr*>;
 		Either<ArgIdxOrDefault, std::vector<ArgIdxOrDefault>> value;
 	};
 
 	struct ArrangedArguments
 	{
-		// the vector implies a variadic
 		using ArgList = std::vector<FinalArg>;
 
 		ArgList arguments;

@@ -144,6 +144,7 @@ namespace sap::interp
 		const auto t_relpos = ptype_for_builtin<builtin::BS_PagePosition>();
 		const auto t_abspos = ptype_for_builtin<builtin::BS_AbsPosition>();
 		const auto t_pathseg = ptype_for_builtin<builtin::BU_PathSegment>();
+		const auto t_pathstyle = ptype_for_builtin<builtin::BS_PathStyle>();
 		const auto t_bdocsettings = ptype_for_builtin<builtin::BS_DocumentSettings>();
 		const auto t_bdocproxy = ptype_for_builtin<builtin::BS_DocumentProxy>();
 		const auto t_blinkannot = ptype_for_builtin<builtin::BS_LinkAnnotation>();
@@ -231,7 +232,8 @@ namespace sap::interp
 		DEF("make_zbox", PL(P("1", T_VARR(t_tbo))), t_tbo, &B::make_zbox);
 		DEF("make_vbox", PL(P("1", T_VARR(t_tbo)), P("glue", t_bool, make_bool(false))), t_tbo, &B::make_vbox);
 
-		DEF("make_path", PL(P("_", T_VARR(t_pathseg))), t_tbo, &B::make_path);
+		DEF("make_path", PL(P("_", T_VARR(t_pathseg)), P("style", T_O(t_pathstyle), make_null())), t_tbo,
+		    &B::make_path);
 
 		DEF("make_span", PL(P("1", T_VARR(t_tio)), P("glue", t_bool, make_bool(false))), t_tio, &B::make_span);
 		DEF("make_text", PL(P("1", T_VARR(t_str)), P("glue", t_bool, make_bool(false))), t_tio, &B::make_text);

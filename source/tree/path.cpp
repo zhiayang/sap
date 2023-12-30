@@ -8,7 +8,8 @@
 
 namespace sap::tree
 {
-	Path::Path(std::vector<PathSegment> segments) : BlockObject(Kind::Path), m_segments()
+	Path::Path(PathStyle path_style, std::vector<PathSegment> segments)
+	    : BlockObject(Kind::Path), m_path_style(std::move(path_style)), m_segments()
 	{
 		m_segments = std::make_shared<PathSegments>(std::move(segments));
 	}
@@ -154,6 +155,6 @@ namespace sap::tree
 		        .ascent = 0,
 		        .descent = path_size.y(),
 		    },
-		    m_segments)));
+		    m_path_style, m_segments)));
 	}
 }

@@ -11,7 +11,7 @@ namespace sap::tree
 {
 	struct Path : BlockObject
 	{
-		explicit Path(std::vector<PathSegment> segments);
+		explicit Path(PathStyle path_style, std::vector<PathSegment> segments);
 
 		virtual ErrorOr<void> evaluateScripts(interp::Interpreter* cs) const override;
 
@@ -21,6 +21,7 @@ namespace sap::tree
 		    Size2d available_space) const override;
 
 	private:
+		PathStyle m_path_style;
 		std::shared_ptr<PathSegments> m_segments;
 	};
 }

@@ -55,7 +55,7 @@ namespace sap::interp::ast
 			});
 		}
 
-		auto arrangement = TRY(arrangeCallArguments(ts, fields, processed_field_types, "case", "field", "field"));
+		auto arrangement = TRY(arrangeCallArguments(ts, fields, processed_field_types, "variant", "value", "field"));
 		std::vector<cst::ExprOrDefaultPtr> final_fields {};
 
 		for(size_t i = 0; i < arrangement.arguments.size(); i++)

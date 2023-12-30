@@ -9,8 +9,8 @@
 
 namespace sap::layout
 {
-	Path::Path(const Style& style, LayoutSize size, std::shared_ptr<PathSegments> segments)
-	    : LayoutObject(style, size), m_segments(std::move(segments))
+	Path::Path(const Style& style, LayoutSize size, PathStyle path_style, std::shared_ptr<PathSegments> segments)
+	    : LayoutObject(style, size), m_path_style(std::move(path_style)), m_segments(std::move(segments))
 	{
 	}
 
@@ -32,6 +32,18 @@ namespace sap::layout
 
 		auto pdf_size = pdf::Size2d(m_layout_size.width.into(), m_layout_size.total_height().into());
 		auto page_obj = util::make<pdf::Path>(page->convertVector2(pos.pos.into()), pdf_size);
+
+		// convert our path style into a pdf paintstyle
+		auto paint_style = pdf::Path::PaintStyle {
+			.line_width = m_path_style.line_width.into(),
+			.cap_style = m_path_style.cap_style,
+			.join_style = m_path_style.join_style,
+			.miter_limit = m_path_style.miter_limit,
+			.stroke_colour = m_path_style.stroke_colour,
+			.fill_colour = m_path_style.fill_colour,
+		};
+
+		page_obj->addSegment(std::move(paint_style));
 
 		auto origin = pos.pos;
 

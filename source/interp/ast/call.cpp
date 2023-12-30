@@ -44,7 +44,7 @@ namespace sap::interp::ast
 	get_calling_cost(Typechecker* ts, const cst::Declaration* decl, const std::vector<InputArg>& arguments)
 	{
 		return arrangeCallArguments(ts, TRY(convert_params(ts, decl)), arguments, //
-		    "function", "argument", "argument for parameter");
+		    "function", "argument", "parameter");
 	}
 
 	static ResolvedOverloadSet resolve_overload_set(Typechecker* ts,
@@ -272,7 +272,6 @@ namespace sap::interp::ast
 				};
 
 				auto& arg = arg_arrangement.arguments[i];
-
 				if(arg.value.is_left())
 				{
 					final_args.push_back(TRY(do_one_arg(arg.param_type, arg.value.left())));

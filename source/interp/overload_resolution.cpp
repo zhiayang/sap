@@ -15,189 +15,193 @@ namespace sap::interp::ast
 	    const ExpectedParams& expected,
 	    const std::vector<InputArg>& arguments,
 	    const char* fn_or_struct,
-	    const char* thing_name,
-	    const char* thing_name2)
+	    const char* argument_str,
+	    const char* parameter_str)
 	{
-		util::hashmap<zst::str_view, size_t> arg_name_to_idx {};
+		using ArgIdxOrDefault = FinalArg::ArgIdxOrDefault;
 		util::hashmap<zst::str_view, size_t> param_name_to_idx {};
-
-		// size_t variadic_param_idx = expected.size();
 
 		for(size_t i = 0; i < expected.size(); i++)
 			param_name_to_idx[expected[i].name] = i;
 
-		for(size_t i = 0; i < arguments.size(); i++)
-		{
-			if(arguments[i].name.has_value())
-			{
-				arg_name_to_idx[*arguments[i].name] = i;
-				if(not param_name_to_idx.contains(*arguments[i].name))
-					return ErrMsg(ts, "{} has no {} named '{}'", fn_or_struct, thing_name, *arguments[i].name);
-			}
-		}
-
 		int coercion_cost = 0;
-		ArrangedArguments::ArgList arranged {};
+		std::unordered_map<size_t, FinalArg> parameter_values {};
 
-		size_t arg_idx = 0;
+		auto try_calculate_arg_cost =
+		    [&](size_t param_idx, const Type* arg_type, const Type* param_type) -> ErrorOr<int> {
+			if(arg_type == param_type)
+				return Ok(0);
+			else if(param_type->isAny())
+				return Ok(5);
+			else if(ts->canImplicitlyConvert(arg_type, param_type))
+				return Ok(1);
+			else if(param_type->isVariadicArray() && ts->canImplicitlyConvert(arg_type, param_type->arrayElement()))
+				return Ok(1);
+
+			return ErrMsg(ts, "mismatched types for {} {}: expected '{}', got '{}'", //
+			    parameter_str, 1 + param_idx, param_type, arg_type);
+		};
+
+		/*
+		    strategy: loop through all arguments, and match them to parameters.
+		*/
 		bool saw_named_arg = false;
-		for(size_t param_idx = 0; param_idx < expected.size(); param_idx++)
+		bool got_direct_var_array = false;
+		size_t positional_param_idx = 0;
+		for(size_t arg_idx = 0; arg_idx < arguments.size(); arg_idx++)
 		{
-			using ArgIdxOrDefault = FinalArg::ArgIdxOrDefault;
-
-			auto& param = expected[param_idx];
-
-			auto push_default_value_or_error = [ts, thing_name2, &arranged](const auto& param) -> ErrorOr<void> {
-				if(param.default_value == nullptr)
-					return ErrMsg(ts, "missing {} '{}'", thing_name2, param.name);
-
-				arranged.push_back({
-				    .param_type = param.type,
-				    .value = Left<ArgIdxOrDefault>(Right(param.default_value)),
-				});
-				return Ok();
-			};
-
-			auto try_calculate_arg_cost = [&](const Type* arg_type, const Type* param_type) -> ErrorOr<int> {
-				if(arg_type == param_type)
-					return Ok(0);
-				else if(param_type->isAny())
-					return Ok(5);
-				else if(ts->canImplicitlyConvert(arg_type, param_type))
-					return Ok(1);
-				else if(param_type->isVariadicArray() && ts->canImplicitlyConvert(arg_type, param_type->arrayElement()))
-					return Ok(1);
-
-				return ErrMsg(ts, "mismatched types for {} {}: expected '{}', got '{}'", //
-				    thing_name, 1 + param_idx, param_type, arg_type);
-			};
-
-			// if we're out of args, then it's just the default value.
-			// if there's no default value, then it's an error.
-			if(arg_idx >= arguments.size())
+			auto& arg = arguments[arg_idx];
+			if(arg.name.has_value())
 			{
-				TRY(push_default_value_or_error(param));
-				continue;
-			}
-
-			// ok, we have at least one arg.
-			if(param.type->isVariadicArray() || (not saw_named_arg && not arguments[arg_idx].name.has_value()))
-			{
-				// if this is the last param and it's variadic, then collect the rest of the args.
-				// else proceed normally.
-				if(not param.type->isVariadicArray())
+				saw_named_arg = true;
+				if(auto it = param_name_to_idx.find(*arg.name); it != param_name_to_idx.end())
 				{
-					auto& arg = arguments[arg_idx];
-					arranged.push_back({
-					    .param_type = param.type,
-					    .value = Left<ArgIdxOrDefault>(Left(arg_idx)),
-					});
+					auto param_idx = it->second;
+					if(auto it2 = parameter_values.find(param_idx); it2 != parameter_values.end())
+					{
+						std::string extra {};
+						if(auto& val = it2->second.value; val.is_left() && val.left().is_left())
+						{
+							extra = zpr::sprint(" (previously given by positional {} {})", argument_str,
+							    1 + val.left().left());
+						}
+						return ErrMsg(ts, "duplicate {} '{}'{}", argument_str, *arg.name, extra);
+					}
 
-					// doing a positional argument, so we advance the arg idx.
-					arg_idx += 1;
-
-					// if we are forced to defer typechecking (ie. we don't have a type for this argument),
-					// then skip it -- it's free for now.
+					// deferred args are 'free'
 					if(arg.type.has_value())
-						coercion_cost += TRY(try_calculate_arg_cost(*arg.type, param.type));
+						coercion_cost += TRY(try_calculate_arg_cost(param_idx, *arg.type, expected[param_idx].type));
+
+					parameter_values.emplace(param_idx,
+					    FinalArg {
+					        .param_type = expected[param_idx].type,
+					        .value = Left<ArgIdxOrDefault>(Left(arg_idx)),
+					    });
 				}
 				else
 				{
-					/*
-					    AAAAAA FIXME AAAAAAA
-
-					    problem:
-
-					    decl: make_text(texts: [Inline...], glue: bool)
-					    call: make_text(glue: true, ...)
-
-					    when we encounter `glue: true`, we are trying to solve for param_idx=0, which is the
-					    variadic array. we then immediately terminate because we see a named argument, and
-					    the pack becomes empty.
-
-					    if we see a named arg while doing variadic, we probably want to just skip it
-					    and come back to it later?
-
-					    a side effect of this is that you can do cursed stuff like this now:
-					    cursed(x: 1, a, b, y: 2, c, z: 0, d)
-
-					    which will throw [a, b, c, d] into the pack and solve x, y, z correctly. is that a bad
-					    thing? idk man. it does seem ultra cursed.
-
-					    ALSO, we need to check for extraneous args at the end of this outer loop if
-					    arg_idx < arguments.size() -- these are bogus args that don't correspond to any params.
-					*/
-
-					assert(param.type->isVariadicArray());
-
-					auto var_elm_type = param.type->arrayElement();
-					bool got_direct_var_array = false;
-
-					std::vector<ArgIdxOrDefault> pack {};
-
-					for(; arg_idx < arguments.size(); arg_idx++)
-					{
-						if(got_direct_var_array)
-							return ErrMsg(ts, "cannot pass additional arguments after spread array");
-
-						auto& arg = arguments[arg_idx];
-
-						// if the argument is named, it no longer belongs to the variadic param, so bail.
-						if(arg.name.has_value())
-							/* FIXME: see above */ continue;
-
-						pack.push_back(Left(arg_idx));
-
-						// skip deferred ones
-						if(not arg.type.has_value())
-							continue;
-
-						if(*arg.type == Type::makeArray(var_elm_type, /* variadic: */ true))
-							coercion_cost += 0, got_direct_var_array = true;
-						else if(*arg.type == var_elm_type)
-							coercion_cost += 1;
-						else if(var_elm_type->isAny())
-							coercion_cost += 5;
-						else if(ts->canImplicitlyConvert(*arg.type, var_elm_type))
-							coercion_cost += 2;
-						else
-							return ErrMsg(ts, "mismatched types in variadic argument; expected '{}', got '{}",
-							    var_elm_type, *arg.type);
-					}
-
-					arranged.push_back({
-					    .param_type = param.type,
-					    .value = Right(std::move(pack)),
-					});
+					return ErrMsg(ts, "{} has no {} named '{}'", fn_or_struct, parameter_str, *arg.name);
 				}
 			}
 			else
 			{
-				// all further arguments must be named.
-				if(saw_named_arg && not arguments[arg_idx].name.has_value())
-					return ErrMsg(ts, "positional {} not allowed after named {}s", thing_name, thing_name);
-
-				saw_named_arg = true;
-				if(auto it = arg_name_to_idx.find(param.name); it != arg_name_to_idx.end())
+				if(positional_param_idx >= expected.size())
 				{
-					auto& arg = arguments[it->second];
+					return ErrMsg(ts, "too many {}s provided for {}; expected at most {}", argument_str, fn_or_struct,
+					    expected.size());
+				}
 
-					if(arg.type.has_value())
-						coercion_cost += TRY(try_calculate_arg_cost(*arg.type, param.type));
+				auto handle_variadic_arg =
+				    [ts, parameter_str, &parameter_values, &expected, &arguments,
+				        &try_calculate_arg_cost](size_t param_idx, size_t arg_idx) -> ErrorOr<int> {
+					auto& param = expected[param_idx];
+					auto& arg = arguments[arg_idx];
 
-					arranged.push_back({
-					    .param_type = param.type,
-					    .value = Left<ArgIdxOrDefault>(Left(it->second)),
-					});
+					auto [it, _] = parameter_values.try_emplace(param_idx,
+					    FinalArg {
+					        .param_type = param.type,
+					        .value = Right<std::vector<ArgIdxOrDefault>>(),
+					    });
+
+					it->second.value.right().push_back(Left(arg_idx));
+
+					if(not arg.type.has_value())
+						return Ok(0);
+
+					auto var_elm_type = param.type->arrayElement();
+
+					// note: we want to customise the error message here, so explicitly check for error.
+					auto maybe_cost = try_calculate_arg_cost(param_idx, *arg.type, var_elm_type);
+					if(maybe_cost.is_err())
+					{
+						return ErrMsg(ts, "mismatched types for variadic {}; expected '{}', got '{}", parameter_str,
+						    var_elm_type, *arg.type);
+					}
+
+					return Ok(maybe_cost.unwrap());
+				};
+
+				// if we saw a named arg before, then the only acceptable case
+				// is that our positional_param_idx is a variadic -- then all the unnamed args
+				// just get swallowed by that variadic.
+				if(saw_named_arg)
+				{
+					auto& param = expected[positional_param_idx];
+					if(not param.type->isVariadicArray())
+						return ErrMsg(ts, "positional {}s are not allowed after named ones", argument_str);
+
+					if(got_direct_var_array)
+						return ErrMsg(ts, "cannot provide more {}s after spread array", argument_str);
+
+					coercion_cost += TRY(handle_variadic_arg(positional_param_idx, arg_idx));
 				}
 				else
 				{
-					TRY(push_default_value_or_error(param));
+					// if the current parameter index corresponds to a variadic param,
+					// then we should not advance the positional index; the rest of the args
+					// should get consumed by the variadic param.
+					auto param_idx = positional_param_idx;
+					auto& param = expected[param_idx];
+
+					if(not param.type->isVariadicArray())
+					{
+						positional_param_idx += 1;
+
+						// deferred args are 'free'
+						if(arg.type.has_value())
+							coercion_cost += TRY(try_calculate_arg_cost(param_idx, *arg.type, param.type));
+
+						parameter_values.emplace(param_idx,
+						    FinalArg {
+						        .param_type = expected[param_idx].type,
+						        .value = Left<ArgIdxOrDefault>(Left(arg_idx)),
+						    });
+					}
+					else
+					{
+						coercion_cost += TRY(handle_variadic_arg(positional_param_idx, arg_idx));
+					}
 				}
 			}
 		}
 
-		return Ok<ArrangedArguments>({
+
+		ArrangedArguments::ArgList arranged {};
+
+		// now convert our map into the right format.
+		for(size_t i = 0; i < expected.size(); i++)
+		{
+			auto it = parameter_values.find(i);
+			if(it == parameter_values.end())
+			{
+				// check whether there is a default; if not, fail.
+				if(expected[i].type->isVariadicArray())
+				{
+					// default value is an empty array
+					arranged.push_back(FinalArg {
+					    .param_type = expected[i].type,
+					    .value = Right<std::vector<ArgIdxOrDefault>>(),
+					});
+				}
+				else if(expected[i].default_value != nullptr)
+				{
+					arranged.push_back(FinalArg {
+					    .param_type = expected[i].type,
+					    .value = Left<ArgIdxOrDefault>(Right(expected[i].default_value)),
+					});
+				}
+				else
+				{
+					return ErrMsg(ts, "missing {} for {} '{}'", argument_str, parameter_str, expected[i].name);
+				}
+			}
+			else
+			{
+				arranged.push_back(std::move(it->second));
+			}
+		}
+
+		return Ok(ArrangedArguments {
 		    .arguments = std::move(arranged),
 		    .coercion_cost = coercion_cost,
 		});

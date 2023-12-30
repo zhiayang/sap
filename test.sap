@@ -1,6 +1,6 @@
 # test.sap
 
-import "std";
+# import "std";
 
 # let serif = builtin::find_font_family(["XCharter", "Times New Roman", "serif"]);
 # let sans = builtin::find_font_family(["Myriad Pro", "Helvetica", "sans-serif"]);
@@ -99,11 +99,13 @@ import "std";
 
 	fn haha() -> ?Block
 	{
-		return make_path(.Move(pos: {x:0cm, y:0cm}), .Line(pos: {x:10cm, y:0cm }));
+		return make_path(style: {
+			stroke_colour: Colour {type: .RGB, rgb: {r: 0, g: 0, b: 1}},
+		}, .Move(pos: {x:0cm, y:0cm}), .Line(pos: {x:10cm, y:0cm}));
 	}
 }
 
-\std::disable_page_numbering();
+# \std::disable_page_numbering();
 
 # hello \cpp() there \kekw() \bsdf()
 

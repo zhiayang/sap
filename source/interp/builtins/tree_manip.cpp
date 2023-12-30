@@ -188,14 +188,22 @@ namespace sap::interp::builtin
 
 	ErrorOr<EvalResult> make_path(Evaluator* ev, std::vector<Value>& args)
 	{
-		assert(args.size() == 1);
+		assert(args.size() == 2);
 		assert(args[0].type()->isVariadicArray());
 
 		std::vector<PathSegment> segments {};
 		for(auto& v : args[0].getArray())
 			segments.push_back(BU_PathSegment::unmake(ev, v));
 
-		return EvalResult::ofValue(Value::treeBlockObject(zst::make_shared<tree::Path>(std::move(segments))));
+		auto path_style = TRY(([ev, &args]() -> ErrorOr<PathStyle> {
+			if(args[1].haveOptionalValue())
+				return BS_PathStyle::unmake(ev, **args[1].getOptional());
+			else
+				return Ok(PathStyle {});
+		}()));
+
+		return EvalResult::ofValue(Value::treeBlockObject(zst::make_shared<tree::Path>(std::move(path_style),
+		    std::move(segments))));
 	}
 
 

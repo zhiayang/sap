@@ -6,6 +6,7 @@
 
 #include <variant>
 
+#include "sap/path.h"
 #include "sap/colour.h"
 
 #include "pdf/units.h"
@@ -58,7 +59,21 @@ namespace pdf
 		{
 		};
 
-		using Segment = std::variant<MoveTo, LineTo, CubicBezier, CubicBezierIC1, CubicBezierIC2, Rectangle, ClosePath>;
+		struct PaintStyle
+		{
+			using CapStyle = sap::PathStyle::CapStyle;
+			using JoinStyle = sap::PathStyle::JoinStyle;
+
+			PdfScalar line_width;
+			CapStyle cap_style;
+			JoinStyle join_style;
+			double miter_limit;
+			sap::Colour stroke_colour;
+			sap::Colour fill_colour;
+		};
+
+		using Segment = std::
+		    variant<MoveTo, LineTo, CubicBezier, CubicBezierIC1, CubicBezierIC2, Rectangle, ClosePath, PaintStyle>;
 
 		Path(Position2d display_position, Size2d display_size);
 		void addSegment(Segment segment);

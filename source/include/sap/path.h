@@ -56,14 +56,14 @@ namespace sap
 	{
 		enum class CapStyle
 		{
-			Butt,
+			Butt = 0,
 			Round,
 			Projecting
 		};
 
 		enum class JoinStyle
 		{
-			Miter,
+			Miter = 0,
 			Round,
 			Bevel
 		};
