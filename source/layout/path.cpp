@@ -93,12 +93,14 @@ namespace sap::layout
 					});
 					break;
 
-				case K::Rectangle:
+				case K::Rectangle: {
+					// note: height of rectangle must be negated because y-up/y-down conversion
 					page_obj->addSegment(pdf::Path::Rectangle {
 					    page->convertVector2((seg.points()[0] + origin).into()),
-					    seg.points()[2].into(),
+					    Size2d(seg.points()[1].x().into(), -seg.points()[1].y().into()).into(),
 					});
 					break;
+				}
 
 				case K::Close: page_obj->addSegment(pdf::Path::ClosePath {}); break;
 			}

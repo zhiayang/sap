@@ -153,9 +153,14 @@ namespace sap::tree
 				}
 
 				case K::Rectangle: {
-					// note: not move_cursor because the cursor does not move (it returns to the same place)
-					update_bounds(seg.points()[0], //
-					    seg.points()[0] + seg.points()[1]);
+					const auto half = thickness / 2;
+
+					// rectangle is actually easy because no angles
+					const auto corner = seg.points()[0] + seg.points()[1];
+					update_bounds(seg.points()[0] - Position(half, half));
+					update_bounds(corner + Position(half, half));
+
+					// note: no move_cursor because the cursor does not move (it returns to the same place)
 					break;
 				}
 

@@ -103,7 +103,7 @@
 			stroke_colour: Colour {type: .RGB, rgb: {r: 1, g: 0, b: 0}},
 			line_width: 1cm,
 			# cap_style: .Round,
-		}, .Move(pos: {x:0cm, y:0cm}), .Line(pos: {x:10cm, y:0cm}));
+		}, .Move(pos: {x:0cm, y:0cm}), .Rectangle(pos: {x:0cm, y:0cm}, size: {x: 10cm, y:10cm}));
 	}
 }
 
