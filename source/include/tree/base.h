@@ -228,7 +228,7 @@ namespace sap::tree
 		BlockObject(Kind kind) : m_kind(kind) { }
 
 		Kind m_kind;
-		mutable std::optional<layout::LayoutObject*> m_generated_layout_object = nullptr;
+		mutable std::optional<layout::LayoutObject*> m_generated_layout_object {};
 
 	private:
 		virtual ErrorOr<LayoutResult>

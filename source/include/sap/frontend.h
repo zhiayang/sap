@@ -32,8 +32,12 @@ namespace sap::frontend
 		Identifier,
 		Number,
 		String,
-		FString,
 		CharLiteral,
+
+		// stolen ƒrom PEP701
+		FStringStart,
+		FStringMiddle,
+		FStringEnd,
 
 		LParen,
 		RParen,
@@ -125,26 +129,28 @@ namespace sap::frontend
 	*/
 	struct Lexer
 	{
-	private:
-		struct SaveState
-		{
-			zst::str_view stream {};
-			Location location {};
-		};
-
 	public:
 		enum class Mode
 		{
 			Text,
 			Script,
+			FString,
 		};
 
+	private:
+		struct SaveState
+		{
+			std::vector<Mode> mode_stack {};
+			zst::str_view stream {};
+			Location location {};
+		};
+
+	public:
 		Lexer(zst::str_view filename, zst::str_view contents);
 
-		Token previous() const;
+		bool eof() const;
 		Token peek() const;
 		ErrorOr<Token> next();
-		bool eof() const;
 
 		void skipWhitespaceAndComments();
 

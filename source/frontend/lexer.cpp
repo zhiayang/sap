@@ -289,8 +289,12 @@ namespace sap::frontend
 		}
 	}
 
-	static ErrorOr<Token>
-	consume_string(zst::str_view& stream, Location& loc, size_t start, TokenType tt, char terminating_char)
+	static ErrorOr<Token> consume_string(zst::str_view& stream,
+	    Location& loc,
+	    size_t start,
+	    TokenType tt,
+	    char terminating_char,
+	    bool is_fstring)
 	{
 		size_t n = start;
 		while(true)
@@ -357,6 +361,14 @@ namespace sap::frontend
 			}
 			else if(stream[n] == terminating_char)
 			{
+				if(is_fstring)
+					tt = TT::FStringEnd;
+
+				n++;
+				break;
+			}
+			else if(is_fstring && stream[n] == '{')
+			{
 				n++;
 				break;
 			}
@@ -373,7 +385,30 @@ namespace sap::frontend
 	}
 
 
-	static ErrorOr<Token> consume_script_token(zst::str_view& stream, Location& loc)
+	static ErrorOr<Token>
+	consume_fstring_token(zst::str_view& stream, Location& location, std::vector<Lexer::Mode>& mode_stack)
+	{
+		auto tok = TRY(consume_string(stream, location, 0, TT::FStringMiddle, '"',
+		    /* fstring: */ true));
+
+		if(tok == TT::FStringEnd)
+		{
+			assert(mode_stack.back() == Lexer::Mode::FString);
+			mode_stack.pop_back();
+
+			return OkMove(tok);
+		}
+
+		// ok, it should be fstringmiddle, which means we are at a '{'
+		assert(tok == TT::FStringMiddle);
+
+		// now, start parsing exprs.
+		mode_stack.push_back(Lexer::Mode::Script);
+		return OkMove(tok);
+	}
+
+	static ErrorOr<Token>
+	consume_script_token(zst::str_view& stream, Location& loc, std::vector<Lexer::Mode>& mode_stack)
 	{
 		// skip whitespace
 		while(stream.size() > 0)
@@ -411,7 +446,7 @@ namespace sap::frontend
 		else if(stream.starts_with("#") || stream.starts_with("/#"))
 		{
 			(void) TRY(parse_comment(stream, loc));
-			return consume_script_token(stream, loc);
+			return consume_script_token(stream, loc, mode_stack);
 		}
 		else if(stream.starts_with("#/"))
 		{
@@ -505,15 +540,18 @@ namespace sap::frontend
 		}
 		else if(stream.starts_with("f\""))
 		{
-			return consume_string(stream, loc, /* start: */ 2, TT::FString, '"');
+			// go into the fstring mode
+			mode_stack.push_back(Lexer::Mode::FString);
+			return advance_and_return(stream, loc, //
+			    Token { .loc = loc, .type = TT::FStringStart, .text = stream.take(2) }, 2);
 		}
 		else if(stream[0] == '"')
 		{
-			return consume_string(stream, loc, /* start: */ 1, TT::String, '"');
+			return consume_string(stream, loc, /* start: */ 1, TT::String, '"', /* is_fstring: */ false);
 		}
 		else if(stream[0] == '\'')
 		{
-			return consume_string(stream, loc, /* start: */ 1, TT::CharLiteral, '\'');
+			return consume_string(stream, loc, /* start: */ 1, TT::CharLiteral, '\'', /* is_fstring: */ false);
 		}
 		// TODO: unicode identifiers
 		else if(isascii(stream[0]) && (isalpha(stream[0]) || stream[0] == '_'))
@@ -644,8 +682,6 @@ namespace sap::frontend
 
 
 
-
-
 	Lexer::Lexer(zst::str_view filename, zst::str_view contents) : m_file_contents(contents), m_stream(contents)
 	{
 		m_mode_stack.push_back(Mode::Text);
@@ -663,15 +699,21 @@ namespace sap::frontend
 		// copy them
 		auto foo = m_stream;
 		auto bar = m_location;
+		auto mode_stack = m_mode_stack;
 
-		switch(mode)
-		{
-			using enum Mode;
-			case Text: return consume_text_token(foo, bar).or_else(Token { .type = TT::Invalid });
-			case Script: return consume_script_token(foo, bar).or_else(Token { .type = TT::Invalid });
-		}
+		auto ret = [&]() {
+			switch(mode)
+			{
+				using enum Mode;
+				case Text: return consume_text_token(foo, bar);
+				case Script: return consume_script_token(foo, bar, mode_stack);
+				case FString: return consume_fstring_token(foo, bar, mode_stack);
+			}
 
-		util::unreachable();
+			util::unreachable();
+		}();
+
+		return ret.or_else(Token { .type = TT::Invalid });
 	}
 
 	ErrorOr<Token> Lexer::nextWithMode(Mode mode)
@@ -682,7 +724,8 @@ namespace sap::frontend
 		{
 			using enum Mode;
 			case Text: return consume_text_token(m_stream, m_location);
-			case Script: return consume_script_token(m_stream, m_location);
+			case Script: return consume_script_token(m_stream, m_location, m_mode_stack);
+			case FString: return consume_fstring_token(m_stream, m_location, m_mode_stack);
 		}
 		util::unreachable();
 	}
@@ -706,24 +749,14 @@ namespace sap::frontend
 	ErrorOr<Token> Lexer::next()
 	{
 		m_previous_token = this->save();
-		switch(this->mode())
-		{
-			using enum Mode;
-			case Text: return update_location(), consume_text_token(m_stream, m_location);
-			case Script: return update_location(), consume_script_token(m_stream, m_location);
-		}
-		util::unreachable();
-	}
+		update_location();
 
-	Token Lexer::previous() const
-	{
-		auto tmp1 = m_previous_token.stream;
-		auto tmp2 = m_previous_token.location;
 		switch(this->mode())
 		{
 			using enum Mode;
-			case Text: return consume_text_token(tmp1, tmp2).unwrap();
-			case Script: return consume_script_token(tmp1, tmp2).unwrap();
+			case Text: return consume_text_token(m_stream, m_location);
+			case Script: return consume_script_token(m_stream, m_location, m_mode_stack);
+			case FString: return consume_fstring_token(m_stream, m_location, m_mode_stack);
 		}
 		util::unreachable();
 	}
@@ -812,22 +845,26 @@ namespace sap::frontend
 
 	void Lexer::popMode(Lexer::Mode mode)
 	{
+		// if we have an unbalanced mode stack, we trust the parser to handle the error.
 		if(m_mode_stack.empty() || m_mode_stack.back() != mode)
-		{
-			sap::internal_error("unbalanced mode stack: {} / {}", m_mode_stack.back(), mode);
-		}
+			return;
 
 		m_mode_stack.pop_back();
 	}
 
 	Lexer::SaveState Lexer::save()
 	{
-		return SaveState { .stream = m_stream, .location = m_location };
+		return SaveState {
+			.mode_stack = m_mode_stack,
+			.stream = m_stream,
+			.location = m_location,
+		};
 	}
 
 	void Lexer::rewind(SaveState st)
 	{
-		m_stream = st.stream;
-		m_location = st.location;
+		m_stream = std::move(st.stream);
+		m_location = std::move(st.location);
+		m_mode_stack = std::move(st.mode_stack);
 	}
 }

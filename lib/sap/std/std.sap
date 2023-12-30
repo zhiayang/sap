@@ -240,7 +240,6 @@ namespace std
 
 	# actually put the page numbers onto the page
 	@finalise {
-	/#
 		var rst_idx = 0;
 		var enabled = true;
 
@@ -257,6 +256,7 @@ namespace std
 			{
 				let rst = g_page_numbering_resets[rst_idx];
 				let tmp = rst.ref.layout_object()!.position().page;
+
 				if(tmp == i)
 				{
 					rst_idx += 1;
@@ -282,7 +282,6 @@ namespace std
 				}, *item);
 			}
 		}
-	#/
 	}
 
 	# generate outline items

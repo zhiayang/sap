@@ -701,67 +701,46 @@ namespace sap::frontend
 		return OkMove(ret);
 	}
 
-	static ErrorOrUniquePtr<ast::FStringExpr> parse_fstring(Lexer& main_lexer, const Token& tok)
+	static ErrorOrUniquePtr<ast::FStringExpr> parse_fstring(Lexer& lexer, Location start_loc)
 	{
-		auto fstr = tok.text.bytes();
-
-		std::u32string string {};
-		string.reserve(fstr.size());
+		// stolen from https://peps.python.org/pep-0701/
+		// basically the idea is that instead of doing some weird shit where we spawn a
+		// new lexer to parse the string, we just have the lexer support fstrings directly
+		// and output script tokens.
 
 		std::vector<std::variant<std::u32string, std::unique_ptr<ast::Expr>>> fstring_parts;
 
-		while(fstr.size() > 0)
+		while(true)
 		{
-			if(fstr.starts_with("\\{"_bs))
+			if(auto str = lexer.match(TT::FStringMiddle); str)
 			{
-				fstr.remove_prefix(2);
-				string += U"{";
+				fstring_parts.push_back(unicode::u32StringFromUtf8(str->text.bytes()));
 			}
-			else if(fstr.starts_with("{"_bs))
+			else if(auto end = lexer.match(TT::FStringEnd); end)
 			{
-				fstr.remove_prefix(1);
+				// we're done.
+				auto ret = std::make_unique<ast::FStringExpr>(start_loc);
 
-				fstring_parts.push_back(std::move(string));
-				string.clear();
+				// note: drop the '}' from the fstringend part.
+				fstring_parts.push_back(unicode::u32StringFromUtf8(end->text.drop(1).bytes()));
+				ret->parts = std::move(fstring_parts);
 
-				auto tmp_lexer = Lexer(tok.loc.filename, fstr.chars());
-				tmp_lexer.setLocation(tok.loc);
-				tmp_lexer.pushMode(Lexer::Mode::Script);
-
-				fstring_parts.push_back(TRY(parse_expr(tmp_lexer)));
-
-				fstr.remove_prefix((size_t) (tmp_lexer.stream().bytes().data() - fstr.data()));
-				if(not fstr.starts_with('}'))
-				{
-					return ErrMsg(tmp_lexer.location(), "expected '}' to end f-string expression, found '{}'",
-					    fstr.front());
-				}
-
-				fstr.remove_prefix(1);
+				return OkMove(ret);
 			}
 			else
 			{
-				auto [e, n] = TRY(unescape_string_part(tok.loc, fstr));
-				if(n > 0)
-				{
-					fstr.remove_prefix(n);
-					string += e;
-				}
-				else
-				{
-					string += unicode::consumeCodepointFromUtf8(fstr);
-				}
+				if(lexer.peek() == TT::RBrace)
+					return ErrMsg(lexer.location(), "f-string expression cannot be empty");
+
+				// ok, the lexer will start producing expressions now.
+				fstring_parts.push_back(TRY(parse_expr(lexer)));
+
+				if(lexer.peek() == TT::RBrace)
+					lexer.popMode(Lexer::Mode::Script);
 			}
 		}
-
-		if(not string.empty())
-			fstring_parts.push_back(std::move(string));
-
-		auto ret = std::make_unique<ast::FStringExpr>(tok.loc);
-		ret->parts = std::move(fstring_parts);
-
-		return OkMove(ret);
 	}
+
 
 	static ErrorOrUniquePtr<ast::CharLit> parse_char_literal(Lexer& lexer, Token ch_token)
 	{
@@ -953,13 +932,13 @@ namespace sap::frontend
 	static ErrorOrUniquePtr<ast::Expr> parse_primary(Lexer& lexer)
 	{
 		auto lm = LexerModer(lexer, Lexer::Mode::Script);
-		if(auto t = lexer.peek(); t == TT::Identifier || t == TT::ColonColon)
+		if(auto peek = lexer.peek(); peek == TT::Identifier || peek == TT::ColonColon)
 		{
-			if(t.text == KW_NULL)
+			if(peek.text == KW_NULL)
 			{
 				return Ok(std::make_unique<ast::NullLit>(TRY(lexer.next()).loc));
 			}
-			else if(t.text == KW_CAST)
+			else if(peek.text == KW_CAST)
 			{
 				lexer.next();
 				if(not lexer.expect(TT::LParen))
@@ -983,7 +962,7 @@ namespace sap::frontend
 						return ErrMsg(lexer.location(), "expected ')' after cast expression");
 
 					// parse a union variant name
-					return Ok(std::make_unique<ast::ImplicitUnionVariantCastExpr>(t.loc, std::move(expr),
+					return Ok(std::make_unique<ast::ImplicitUnionVariantCastExpr>(peek.loc, std::move(expr),
 					    std::move(variant_name)));
 				}
 
@@ -997,10 +976,10 @@ namespace sap::frontend
 				else
 				{
 					// just a type
-					target = std::make_unique<ast::TypeExpr>(t.loc, TRY(parse_type(lexer)));
+					target = std::make_unique<ast::TypeExpr>(peek.loc, TRY(parse_type(lexer)));
 				}
 
-				auto cast_expr = std::make_unique<ast::CastExpr>(t.loc);
+				auto cast_expr = std::make_unique<ast::CastExpr>(peek.loc);
 				cast_expr->expr = std::move(expr);
 				cast_expr->target_type = std::move(target);
 
@@ -1010,7 +989,7 @@ namespace sap::frontend
 				return OkMove(cast_expr);
 			}
 
-			auto loc = t.loc;
+			auto loc = peek.loc;
 			auto [qid, len] = TRY(parse_qualified_id(lexer));
 
 			loc.length = len;
@@ -1027,7 +1006,7 @@ namespace sap::frontend
 				return OkMove(ident);
 			}
 		}
-		else if(lexer.peek() == TT::LBrace)
+		else if(peek == TT::LBrace)
 		{
 			// '{' starts a struct literal with no name
 			auto ret = TRY(parse_struct_literal(lexer, {}));
@@ -1035,7 +1014,7 @@ namespace sap::frontend
 
 			return OkMove(ret);
 		}
-		else if(lexer.peek() == TT::Dollar)
+		else if(peek == TT::Dollar)
 		{
 			return parse_type_expr(lexer);
 		}
@@ -1076,9 +1055,9 @@ namespace sap::frontend
 
 			return OkMove(ret);
 		}
-		else if(auto fstr = lexer.match(TT::FString); fstr)
+		else if(auto fstr = lexer.match(TT::FStringStart); fstr)
 		{
-			return parse_fstring(lexer, *fstr);
+			return parse_fstring(lexer, fstr->loc);
 		}
 		else if(auto chr = lexer.match(TT::CharLiteral); chr)
 		{
@@ -1951,7 +1930,7 @@ namespace sap::frontend
 		}
 
 		if(expect_semi && not lexer.expect(TT::Semicolon) && not optional_semicolon)
-			return ErrMsg(lexer.previous().loc, "expected ';' after statement, found '{}'", lexer.peek().text);
+			return ErrMsg(lexer.location(), "expected ';' after statement, found '{}'", lexer.peek().text);
 
 		return OkMove(stmt);
 	}
@@ -2325,6 +2304,7 @@ namespace sap::frontend
 		{
 			if(lexer.expect(TT::Backslash))
 			{
+				auto asdf = lexer.location();
 				if(not lexer.expect(KW_START_DOCUMENT))
 					return ErrMsg(lexer.location(), "expected '\\{}' in preamble (saw '\\')", KW_START_DOCUMENT);
 
@@ -2334,7 +2314,7 @@ namespace sap::frontend
 					.name = KW_START_DOCUMENT,
 				};
 
-				auto ident = std::make_unique<ast::Ident>(lexer.previous().loc);
+				auto ident = std::make_unique<ast::Ident>(asdf);
 				ident->name = std::move(callee);
 
 				stmts.push_back(TRY(parse_function_call(lexer, std::move(ident))));

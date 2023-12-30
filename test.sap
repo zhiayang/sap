@@ -1,6 +1,6 @@
 # test.sap
 
-import "std";
+# import "std";
 
 # let serif = builtin::find_font_family(["XCharter", "Times New Roman", "serif"]);
 # let sans = builtin::find_font_family(["Myriad Pro", "Helvetica", "sans-serif"]);
@@ -99,6 +99,7 @@ import "std";
 
 	fn haha() -> ?Block
 	{
+		println(f"hello {"hi"}");
 		return make_path(.Move(pos: {x:5cm, y:5cm}), .Line(pos: {x:16cm, y:24.7cm }));
 	}
 }
