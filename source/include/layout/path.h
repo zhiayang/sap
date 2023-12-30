@@ -19,7 +19,11 @@ namespace sap::layout
 {
 	struct Path : LayoutObject
 	{
-		Path(const Style& style, LayoutSize size, PathStyle path_style, std::shared_ptr<PathSegments> segments);
+		Path(const Style& style,
+		    LayoutSize size,
+		    PathStyle path_style,
+		    std::shared_ptr<PathSegments> segments,
+		    Position origin);
 
 		virtual bool requires_space_reservation() const override;
 		virtual layout::PageCursor compute_position_impl(layout::PageCursor cursor) override;
@@ -30,5 +34,6 @@ namespace sap::layout
 	private:
 		PathStyle m_path_style;
 		std::shared_ptr<PathSegments> m_segments;
+		Position m_origin;
 	};
 }

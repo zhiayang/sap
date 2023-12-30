@@ -9,8 +9,15 @@
 
 namespace sap::layout
 {
-	Path::Path(const Style& style, LayoutSize size, PathStyle path_style, std::shared_ptr<PathSegments> segments)
-	    : LayoutObject(style, size), m_path_style(std::move(path_style)), m_segments(std::move(segments))
+	Path::Path(const Style& style,
+	    LayoutSize size,
+	    PathStyle path_style,
+	    std::shared_ptr<PathSegments> segments,
+	    Position origin)
+	    : LayoutObject(style, size)
+	    , m_path_style(std::move(path_style))
+	    , m_segments(std::move(segments))
+	    , m_origin(origin)
 	{
 	}
 
@@ -45,7 +52,7 @@ namespace sap::layout
 
 		page_obj->addSegment(std::move(paint_style));
 
-		auto origin = pos.pos;
+		auto origin = pos.pos - m_origin;
 
 		for(auto& seg : *m_segments)
 		{

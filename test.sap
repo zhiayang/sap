@@ -100,7 +100,9 @@
 	fn haha() -> ?Block
 	{
 		return make_path(style: {
-			stroke_colour: Colour {type: .RGB, rgb: {r: 0, g: 0, b: 1}},
+			stroke_colour: Colour {type: .RGB, rgb: {r: 1, g: 0, b: 0}},
+			line_width: 1cm,
+			# cap_style: .Round,
 		}, .Move(pos: {x:0cm, y:0cm}), .Line(pos: {x:10cm, y:0cm}));
 	}
 }
@@ -113,4 +115,4 @@ aaaaa
 
 \haha()
 
-hello
+hellohellohellohellohellohellohellohellohellohellohellohellohellohello

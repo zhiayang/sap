@@ -20,7 +20,8 @@ namespace sap::tree
 		return Ok();
 	}
 
-	static std::pair<Position, Position> get_bezier_bounding_box(Position p1, Position p2, Position p3, Position p4)
+	static std::pair<Position, Position>
+	get_bezier_bounding_box(Position p1, Position p2, Position p3, Position p4, Length thickness)
 	{
 		// https://pomax.github.io/bezierinfo/#extremities
 		auto va = 3.0 * (-p1 + (3.0 * p2) - (3.0 * p3) + p4);
@@ -86,17 +87,24 @@ namespace sap::tree
 		return { min_bounds, max_bounds };
 	}
 
-	static Size2d calculate_path_size(const std::vector<PathSegment>& segments)
+	using CapStyle = PathStyle::CapStyle;
+	using JoinStyle = PathStyle::JoinStyle;
+
+	// also returns the min bounds so we can compute the offset properly.
+	static std::pair<Size2d, Position>
+	calculate_path_size(const std::vector<PathSegment>& segments, Length thickness, CapStyle cs, JoinStyle js)
 	{
 		auto cursor = Position(0, 0);
 		auto min_bounds = Position(+INFINITY, +INFINITY);
 		auto max_bounds = Position(-INFINITY, -INFINITY);
 
-		const auto update_bounds = [&](Position pos) {
-			min_bounds.x() = std::min(min_bounds.x(), pos.x());
-			min_bounds.y() = std::min(min_bounds.y(), pos.y());
-			max_bounds.x() = std::max(max_bounds.x(), pos.x());
-			max_bounds.y() = std::max(max_bounds.y(), pos.y());
+		// absolutely cursed, but i love it.
+		const auto update_bounds = [&](auto&&... xs) {
+			(((min_bounds.x() = std::min(min_bounds.x(), xs.x())),    //
+			     (min_bounds.y() = std::min(min_bounds.y(), xs.y())), //
+			     (max_bounds.x() = std::max(max_bounds.x(), xs.x())), //
+			     (max_bounds.y() = std::max(max_bounds.y(), xs.y()))),
+			    ...);
 		};
 
 		const auto move_cursor = [&](Position to) {
@@ -104,40 +112,75 @@ namespace sap::tree
 			update_bounds(to);
 		};
 
+		using std::sin;
+		using std::cos;
+
 		for(auto& seg : segments)
 		{
 			using K = PathSegment::Kind;
 			switch(seg.kind())
 			{
-				case K::Move: move_cursor(seg.points()[0]); break;
-				case K::Line: move_cursor(seg.points()[0]); break;
-				case K::Rectangle: update_bounds(seg.points()[0] + seg.points()[1]); break;
 				case K::Close: break;
+				case K::Move: move_cursor(seg.points()[0]); break;
+
+				case K::Line: {
+					const auto lp1 = cursor;
+					const auto lp2 = seg.points()[0];
+					const auto half = thickness / 2;
+
+					// first, calculate the angle of the line.
+					const auto diff = lp2 - lp1;
+					const auto angle = std::atan2(diff.y().value(), diff.x().value());
+
+					// we need 3 extra points per end of the line (so 6 total) --
+					// along the vector of the line (extending out), and orthogonal to it in both directions.
+					auto p1 = lp1 - Position(half * cos(angle), half * sin(angle));
+					auto p2 = lp1 - Position(half * cos(angle - M_PI / 2), half * sin(angle - M_PI / 2));
+					auto p3 = lp1 - Position(half * cos(angle + M_PI / 2), half * sin(angle + M_PI / 2));
+
+					auto p4 = lp2 + Position(half * cos(angle), half * sin(angle));
+					auto p5 = lp2 + Position(half * cos(angle - M_PI / 2), half * sin(angle - M_PI / 2));
+					auto p6 = lp2 + Position(half * cos(angle + M_PI / 2), half * sin(angle + M_PI / 2));
+
+					update_bounds(p2, p3, p5, p6);
+
+					// if we are using butt caps, then ignore p1 and p4 (we are not projecting out).
+					if(cs != CapStyle::Butt)
+						update_bounds(p1, p4);
+
+					move_cursor(seg.points()[0]);
+					break;
+				}
+
+				case K::Rectangle: {
+					// note: not move_cursor because the cursor does not move (it returns to the same place)
+					update_bounds(seg.points()[0], //
+					    seg.points()[0] + seg.points()[1]);
+					break;
+				}
 
 				case K::CubicBezier: {
-					auto [a, b] = get_bezier_bounding_box(cursor, seg.points()[0], seg.points()[1], seg.points()[2]);
-					update_bounds(a);
-					update_bounds(b);
+					auto [a, b] = get_bezier_bounding_box(cursor, seg.points()[0], seg.points()[1], seg.points()[2],
+					    thickness);
+					update_bounds(a, b);
 					break;
 				}
 
 				case K::CubicBezierIC1: {
-					auto [a, b] = get_bezier_bounding_box(cursor, cursor, seg.points()[1], seg.points()[2]);
-					update_bounds(a);
-					update_bounds(b);
+					auto [a, b] = get_bezier_bounding_box(cursor, cursor, seg.points()[1], seg.points()[2], thickness);
+					update_bounds(a, b);
 					break;
 				}
 
 				case K::CubicBezierIC2: {
-					auto [a, b] = get_bezier_bounding_box(cursor, seg.points()[0], cursor, seg.points()[1]);
-					update_bounds(a);
-					update_bounds(b);
+					auto [a, b] = get_bezier_bounding_box(cursor, seg.points()[0], cursor, seg.points()[1], thickness);
+					update_bounds(a, b);
 					break;
 				}
 			}
 		}
 
-		return max_bounds - min_bounds;
+		return { max_bounds - min_bounds, min_bounds };
 	}
 
 
@@ -147,7 +190,8 @@ namespace sap::tree
 	Path::create_layout_object_impl(interp::Interpreter* cs, const Style& parent_style, Size2d available_space) const
 	{
 		auto style = m_style.useDefaultsFrom(parent_style).useDefaultsFrom(cs->evaluator().currentStyle());
-		auto path_size = calculate_path_size(*m_segments);
+		auto [path_size, min_bounds] = calculate_path_size(*m_segments, m_path_style.line_width, m_path_style.cap_style,
+		    m_path_style.join_style);
 
 		return Ok(LayoutResult::make(std::make_unique<layout::Path>(style,
 		    LayoutSize {
@@ -155,6 +199,6 @@ namespace sap::tree
 		        .ascent = 0,
 		        .descent = path_size.y(),
 		    },
-		    m_path_style, m_segments)));
+		    m_path_style, m_segments, min_bounds)));
 	}
 }
