@@ -30,13 +30,13 @@ namespace pdf
 		auto str_buf = zst::buffer<char>();
 		auto appender = [&str_buf](const char* c, size_t n) { str_buf.append(c, n); };
 
-		zpr::cprint(appender, //
-		    "q\n"             //
-		    // "0 0 0 RG\n"      //
-		    //"/ExtGState13 gs\n" //
-		    // "1 w  0 J  0 j\n"  //
-		    // "4 M [] 0.0 d\n"   //
-		    // "1 0 0 1 0 0 cm\n" //
+		zpr::cprint(appender,   //
+		    "q\n"               //
+		    "0 0 0 RG\n"        //
+		    "/ExtGState13 gs\n" //
+		    "1 w  0 J  0 j\n"   //
+		    "4 M [] 0.0 d\n"    //
+		    "1 0 0 1 0 0 cm\n"  //
 		);
 
 		for(auto& seg : m_segments)
