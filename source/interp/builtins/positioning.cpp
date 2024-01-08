@@ -21,11 +21,11 @@ namespace sap::interp::builtin
 		assert(args[0].isLength());
 
 		auto spacer = zst::make_shared<tree::Spacer>(
-			DynLength2d {
-				.x = DynLength(),
-				.y = args[0].getLength(),
-			},
-			/* page break: */ false);
+		    DynLength2d {
+		        .x = DynLength(),
+		        .y = args[0].getLength(),
+		    },
+		    /* page break: */ false);
 
 		return EvalResult::ofValue(Value::treeBlockObject(std::move(spacer)));
 	}
@@ -36,11 +36,11 @@ namespace sap::interp::builtin
 		assert(args[0].isLength());
 
 		auto spacer = zst::make_shared<tree::Spacer>(
-			DynLength2d {
-				.x = args[0].getLength(),
-				.y = DynLength(),
-			},
-			/* page break: */ false);
+		    DynLength2d {
+		        .x = args[0].getLength(),
+		        .y = DynLength(),
+		    },
+		    /* page break: */ false);
 
 		return EvalResult::ofValue(Value::treeBlockObject(std::move(spacer)));
 	}
@@ -49,7 +49,7 @@ namespace sap::interp::builtin
 	{
 		assert(args.size() == 0);
 		return EvalResult::ofValue(Value::treeBlockObject(zst::make_shared<tree::Spacer>(DynLength2d {},
-			/* page break: */ true)));
+		    /* page break: */ true)));
 	}
 
 
@@ -89,8 +89,8 @@ namespace sap::interp::builtin
 	static ErrorOr<tree::BlockObject*> get_tbo_ref(Evaluator* ev, Value& value)
 	{
 		assert(value.type()->isPointer()
-			   && (value.type()->pointerElement()->isTreeBlockObj()
-				   || value.type()->pointerElement()->isTreeBlockObjRef()));
+		       && (value.type()->pointerElement()->isTreeBlockObj()
+		           || value.type()->pointerElement()->isTreeBlockObjRef()));
 
 		auto ptr = value.getPointer();
 		if(ptr == nullptr)
@@ -116,10 +116,10 @@ namespace sap::interp::builtin
 
 		auto obj = TRY(get_layout_object_ref(ev, args[0]));
 		return EvalResult::ofValue(BS_Size2d::make(ev,
-			DynLength2d {
-				.x = DynLength(obj->layoutSize().width),
-				.y = DynLength(obj->layoutSize().total_height()),
-			}));
+		    DynLength2d {
+		        .x = DynLength(obj->layoutSize().width),
+		        .y = DynLength(obj->layoutSize().total_height()),
+		    }));
 	}
 
 	ErrorOr<EvalResult> get_layout_object_position(Evaluator* ev, std::vector<Value>& args)
@@ -143,8 +143,8 @@ namespace sap::interp::builtin
 	{
 		assert(args.size() == 2);
 
-		if(ev->interpreter()->currentPhase() >= ProcessingPhase::Position)
-			return ErrMsg(ev, "offset_position() can only be called before `@position`");
+		if(ev->interpreter()->currentPhase() > ProcessingPhase::Position)
+			return ErrMsg(ev, "offset_position() can only be called before or during `@position`");
 
 		auto offset = BS_Size2d::unmake(ev, args[1]).resolve(ev->currentStyle());
 		if(args[0].isLayoutObjectRef())
@@ -164,8 +164,8 @@ namespace sap::interp::builtin
 	{
 		assert(args.size() == 2);
 
-		if(ev->interpreter()->currentPhase() >= ProcessingPhase::Position)
-			return ErrMsg(ev, "override_position() can only be called before `@position`");
+		if(ev->interpreter()->currentPhase() > ProcessingPhase::Position)
+			return ErrMsg(ev, "override_position() can only be called before or during `@position`");
 
 		auto pos = BS_AbsPosition::unmake(ev, args[1]);
 		if(args[0].isLayoutObjectRef())

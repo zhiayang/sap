@@ -199,18 +199,18 @@ namespace sap::interp
 		DEF("to_string", PL(P("_", t_any)), t_str, &B::to_string);
 
 		DEF("to_string", PL(P("_", T_P(t_bsize2d))), t_str, [](auto* ev, auto& args) {
-			auto pos = builtin::BS_Size2d::unmake(ev, args[0]);
+			auto pos = builtin::BS_Size2d::unmake(ev, *args[0].getPointer());
 			return EvalResult::ofValue(Value::string(zpr::sprint("(x: {}, y: {})", pos.x.str(), pos.y.str())));
 		});
 
 		DEF("to_string", PL(P("_", T_P(t_abspos))), t_str, [](auto* ev, auto& args) {
-			auto pos = builtin::BS_AbsPosition::unmake(ev, args[0]);
+			auto pos = builtin::BS_AbsPosition::unmake(ev, *args[0].getPointer());
 			return EvalResult::ofValue(Value::string(zpr::sprint("{{xy: ({}, {}), page: {}}}", pos.pos.x(), pos.pos.y(),
 			    pos.page_num)));
 		});
 
 		DEF("to_string", PL(P("_", T_P(t_relpos))), t_str, [](auto* ev, auto& args) {
-			auto pos = builtin::BS_PagePosition::unmake(ev, args[0]);
+			auto pos = builtin::BS_PagePosition::unmake(ev, *args[0].getPointer());
 			return EvalResult::ofValue(Value::string(zpr::sprint("{{xy: ({}, {}), page: {}}}", pos.pos.x(), pos.pos.y(),
 			    pos.page_num)));
 		});

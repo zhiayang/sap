@@ -10,8 +10,10 @@ namespace sap::interp::cst
 	ErrorOr<EvalResult> OptionalCheckOp::evaluate_impl(Evaluator* ev) const
 	{
 		auto inside = TRY_VALUE(this->expr->evaluate(ev));
-		assert(inside.isOptional());
+		if(inside.isNull())
+			return EvalResult::ofValue(Value::boolean(false));
 
+		assert(inside.isOptional());
 		auto tmp = std::move(inside).takeOptional();
 		return EvalResult::ofValue(Value::boolean(tmp.has_value()));
 	}
@@ -22,9 +24,11 @@ namespace sap::interp::cst
 		auto lval = TRY_VALUE(this->lhs->evaluate(ev));
 		auto ltype = lval.type();
 
-		assert(lval.isOptional() || lval.type()->isPointer());
-		bool left_has_value = (lval.isOptional() && lval.haveOptionalValue())
-		                   || (lval.isPointer() && lval.getPointer() != nullptr);
+		assert(lval.isOptional() || lval.isNull() || lval.type()->isPointer());
+		bool left_has_value =
+		    not lval.isNull()
+		    && ((lval.isOptional() && lval.haveOptionalValue()) //
+		        || (lval.isPointer() && lval.getPointer() != nullptr));
 
 		if(left_has_value)
 		{

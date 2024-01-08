@@ -104,7 +104,7 @@ namespace sap::interp::cst
 		else if((ltype->isFloating() || ltype->isInteger()) && rtype->isLength())
 		{
 			assert(op == Op::Multiply);
-			auto len = lval.getLength();
+			auto len = rval.getLength();
 
 			double multiplier = 0;
 			if(lval.isFloating())

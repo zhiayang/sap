@@ -119,7 +119,16 @@ namespace sap::interp::ast
 		const UnionType* union_type = nullptr;
 
 		if(infer == nullptr)
-			return ErrMsg(ts, "cannot infer type for context-identifier");
+		{
+			auto msg = ErrorMessage(ts, "cannot infer type for context-identifier");
+			if(ts->haveStructFieldContext())
+			{
+				msg.addInfo(ts,
+				    zpr::sprint("current struct {} has no field '{}'", ts->getStructFieldContext()->str(), this->name));
+			}
+
+			return Err(std::move(msg));
+		}
 
 		else if(infer->isEnum())
 			enum_type = infer->toEnum();
@@ -179,7 +188,7 @@ namespace sap::interp::ast
 			for(auto& elm : this->elements)
 			{
 				auto et = elms.emplace_back(TRY(elm->typecheck(ts, ty)).take_expr())->type();
-				if(et != ty)
+				if(not ts->canImplicitlyConvert(et, ty))
 					return ErrMsg(elm->loc(), "mismatched types in array literal: expected '{}', got '{}'", ty, et);
 			}
 

@@ -92,7 +92,7 @@ namespace sap::interp::ast
 				}
 
 				auto handle_variadic_arg =
-				    [ts, parameter_str, &parameter_values, &expected, &arguments,
+				    [ts, parameter_str, &parameter_values, &expected, &arguments, &got_direct_var_array,
 				        &try_calculate_arg_cost](size_t param_idx, size_t arg_idx) -> ErrorOr<int> {
 					auto& param = expected[param_idx];
 					auto& arg = arguments[arg_idx];
@@ -110,12 +110,19 @@ namespace sap::interp::ast
 
 					auto var_elm_type = param.type->arrayElement();
 
+					auto arg_type = *arg.type;
+					if(arg_type->isVariadicArray())
+					{
+						arg_type = arg_type->arrayElement();
+						got_direct_var_array = true;
+					}
+
 					// note: we want to customise the error message here, so explicitly check for error.
-					auto maybe_cost = try_calculate_arg_cost(param_idx, *arg.type, var_elm_type);
+					auto maybe_cost = try_calculate_arg_cost(param_idx, arg_type, var_elm_type);
 					if(maybe_cost.is_err())
 					{
 						return ErrMsg(ts, "mismatched types for variadic {}; expected '{}', got '{}", parameter_str,
-						    var_elm_type, *arg.type);
+						    var_elm_type, arg_type);
 					}
 
 					return Ok(maybe_cost.unwrap());

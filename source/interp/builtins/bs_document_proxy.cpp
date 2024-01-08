@@ -24,6 +24,7 @@ namespace sap::interp::builtin
 		return util::vectorOf(                                                     //
 		    Field { .name = "page_count", .type = pt_int },                        //
 		    Field { .name = "page_size", .type = pt_size2d },                      //
+		    Field { .name = "content_size", .type = pt_size2d },                   //
 		    Field { .name = "outline_items", .type = PT::array(pt_outline_item) }, //
 		    Field { .name = "link_annotations", .type = PT::array(pt_link_annotation) });
 	}
@@ -37,6 +38,9 @@ namespace sap::interp::builtin
 		    .set("page_size",
 		        Value::fromGenerator(BS_Size2d::type,
 		            [ev, doc]() { return BS_Size2d::make(ev, doc->pageLayout().pageSize()); }))
+		    .set("content_size",
+		        Value::fromGenerator(BS_Size2d::type,
+		            [ev, doc]() { return BS_Size2d::make(ev, doc->pageLayout().contentSize()); }))
 		    .set("outline_items",
 		        Value::array(BS_OutlineItem::type,
 		            util::map(doc->outlineItems(), [ev](auto&& item) { return BS_OutlineItem::make(ev, item); })))

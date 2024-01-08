@@ -495,6 +495,10 @@ namespace sap::interp
 	{
 		return m_type->isBool();
 	}
+	bool Value::isNull() const
+	{
+		return m_type->isNullPtr();
+	}
 	bool Value::isChar() const
 	{
 		return m_type->isChar();

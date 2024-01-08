@@ -1,0 +1,106 @@
+# table.sap
+# Copyright (c) 2024, zhiayang
+# SPDX-License-Identifier: Apache-2.0
+
+namespace std
+{
+	using Margins = builtin::DocumentMargins;
+
+	struct TableConfig
+	{
+		cols: int;
+		column_widths: ?[?Length] = null;
+
+		rows: ?int = null;
+		width: ?Length = null;
+
+		cell_padding: ?Margins = null;
+	}
+
+	namespace impl
+	{
+		fn hline() -> [builtin::PathSegment]
+		{
+			return [
+				.Move(pos: {x: 0mm, y: 0mm}),
+				.Line(pos: {x: builtin::document()!.content_size.x, y: 0mm})
+			];
+		}
+	}
+
+	# TODO: doesn't support multi page tables
+	fn table(config: TableConfig, items: [Block...]) -> ?Block
+	{
+		using builtin::println;
+		using builtin::make_path;
+		using builtin::PathStyle;
+
+		let doc = builtin::document();
+		println(f"doc: {doc!.content_size}");
+
+		if(items.size() % config.cols != 0)
+			println(f"warning: number of items is not a multiple of number of rows");
+
+		# round up the number of rows
+		let cfg = config // {
+			rows: .rows ?? (items.size() + .cols - 1) / .cols,
+			width: .width ?? doc!.content_size.x,
+			cell_padding: (config.cell_padding ?? Margins{}) // {
+				top: .top ?? 0.5em,
+				left: .left ?? 0.5em,
+				right: .right ?? 0.5em,
+				bottom: .bottom ?? 0.5em,
+			}
+		};
+
+		var given_col_widths = cfg.column_widths ?? (cfg.cols * [:?Length null]);
+		if(given_col_widths.size() < cfg.cols)
+		{
+			println(f"warning: insufficient given column widths");
+			given_col_widths += (cfg.cols - given_col_widths.size()) * [:?Length null];
+		}
+
+		let line_width = 0.25mm;
+		let line_style = PathStyle {
+			stroke_colour: builtin::Colour {type: .RGB, rgb: {r: 1, g: 0, b: 0}},
+			line_width,
+		};
+
+		var total_fixed_width = 0mm;
+		var num_unspecified_cols = 0;
+		for(var i = 0; i < given_col_widths.size(); i += 1)
+		{
+			total_fixed_width += given_col_widths[i] ?? 0mm;
+			if(not given_col_widths[i]?)
+				num_unspecified_cols += 1;
+		}
+
+		var default_width = (cfg.width!
+				- total_fixed_width - line_width
+				- (cfg.cols * (cfg.cell_padding!.left! + cfg.cell_padding!.right!))
+			) / num_unspecified_cols;
+
+		# TODO: this algorithm sucks
+		var vlines: [Block] = [];
+		for(var i = 0; i < cfg.cols; i += 1)
+		{
+			vlines += [
+				make_path(style: line_style, .Move(pos:{x:0mm,y:0mm}), .Line(pos:{x:0mm,y:100mm})),
+				builtin::hspace(cfg.cell_padding!.left! - line_width/2),
+				builtin::hspace(given_col_widths[i] ?? default_width),
+				builtin::hspace(cfg.cell_padding!.right! - line_width/2),
+			];
+		}
+
+		vlines += [make_path(style: line_style, .Move(pos:{x:0mm,y:0mm}), .Line(pos:{x:0mm,y:100mm}))];
+
+
+		# return null;
+		return builtin::make_zbox(
+			make_path(style: line_style, ...impl::hline()),
+			builtin::make_hbox(
+				...*vlines,
+			),
+		);
+	}
+}

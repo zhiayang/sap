@@ -1,6 +1,7 @@
 # test.sap
 
 # import "std";
+import "std/table.sap";
 
 # let serif = builtin::find_font_family(["XCharter", "Times New Roman", "serif"]);
 # let sans = builtin::find_font_family(["Myriad Pro", "Helvetica", "sans-serif"]);
@@ -14,12 +15,12 @@
 	# sans_font_family: *sans,
 	# paper_size: std::paper_size::A4,
 	margins: { left: 2cm, right: 2cm, top: 2cm, bottom: 2cm },
-	# default_style: {
-	# 	font_size: 12pt,
-	# 	line_spacing: 2,
-	# 	sentence_space_stretch: 1.3,
-	# 	paragraph_spacing: 1.5em,
-	# },
+	default_style: {
+		# font_size: 12pt,
+		line_spacing: 0.5,
+		# sentence_space_stretch: 1.3,
+		# paragraph_spacing: 1.5em,
+	},
 });
 
 \script::{
@@ -101,11 +102,10 @@
 	{
 		return make_path(style: {
 			stroke_colour: Colour {type: .RGB, rgb: {r: 1, g: 0, b: 0}},
-			line_width: 0.5cm,
-			cap_style: .Round,
-			join_style: .Miter,
-		}, .Move(pos: {x:0cm, y:5cm}), .Line(pos: {x:0cm, y:0cm}), .Line(pos: {x:5cm, y:0cm}));
-		# }, .Move(pos: {x:0cm, y:0cm}), .CubicBezier(c1: {x:6cm, y:3cm}, c2: {x:6cm, y:6cm}, end: {x:0cm, y:9cm}));
+			line_width: 0.2cm,
+		# }, .Move(pos: {x:0cm, y:5cm}), .Line(pos: {x:0cm, y:0cm}), .Line(pos: {x:5cm, y:0cm}));
+		}, .Move(pos: {x:0cm, y:0cm}), .CubicBezier(c1: {x:6cm, y:3cm}, c2: {x:6cm, y:6cm}, end: {x:0cm, y:9cm}),
+		.CubicBezier(c1: {x:-6cm, y:12cm}, c2: {x:-6cm, y:15cm}, end: {x:0cm, y:18cm}));
 	}
 }
 
@@ -115,6 +115,20 @@
 
 aaaaaaaaaaaaaaaaaaaaaaa aaaaaaaaaaaaaaaaaaaaaaa aaaaaaaaaaaaaaaaaaaaaaa
 
-\haha()
+Clearly, there is a missing middle ground, which is where our proposed CS3xxx
+course will fit in. By using a simpler OS implementation that is designed for
+teaching OS concepts, students will be able to grasp these fundamentals in a
+more digestible manner. Furthermore, by giving students a fully-working kernel
+as the basis for their lab assignments, we are free to assign more open-ended
+problems that allow students flexibility in their designs.
+
+\vspace(-1em);
+
+\std::table({cols: 4});
+
+# \haha()
 
 hellohellohellohellohellohellohellohellohellohellohellohellohellohello
+
+
+

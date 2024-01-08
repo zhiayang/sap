@@ -26,9 +26,6 @@ scripting
 [ ] would be nice to have a `style` parameter for the builtin make_* functions
 	instead of needing apply_style every damn time
 
-[ ] having optional params in front of variadic params does not work. is that
-	a necessary feature though?
-
 
 layout
 ------

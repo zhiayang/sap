@@ -91,6 +91,7 @@ namespace sap::interp
 
 		std::u32string toString() const;
 
+		bool isNull() const;
 		bool isBool() const;
 		bool isChar() const;
 		bool isEnum() const;

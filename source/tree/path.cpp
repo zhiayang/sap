@@ -394,6 +394,8 @@ namespace sap::tree
 		auto [path_size, min_bounds] = calculate_path_size(*m_segments, m_path_style.line_width, m_path_style.cap_style,
 		    m_path_style.join_style, m_path_style.miter_limit);
 
+		// zpr::println("size: {}, bounds: {}", path_size, min_bounds);
+
 		return Ok(LayoutResult::make(std::make_unique<layout::Path>(style,
 		    LayoutSize {
 		        .width = path_size.x(),
