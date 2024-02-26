@@ -292,8 +292,18 @@ namespace pdf
 
 		// see the comment in font/loader.cpp about this 1.2x
 		m_metrics.units_per_em = 1000;
-		m_metrics.default_line_spacing = std::max(FontScalar(m_metrics.units_per_em * 12) / 10,
-		    m_metrics.typo_ascent - m_metrics.typo_descent);
+		m_metrics.typo_linegap = 0;
+
+		// i don't know how the heck this works
+		m_metrics.default_line_spacing = m_metrics.typo_ascent - m_metrics.typo_descent;
+
+		// m_metrics.default_line_spacing = std::max(FontScalar(m_metrics.units_per_em * 12) / 10,
+		//     m_metrics.typo_ascent - m_metrics.typo_descent);
+
+		// zpr::println("font = {}", m_name);
+		// zpr::println("asc = {}", m_metrics.typo_ascent);
+		// zpr::println("dsc = {}", m_metrics.typo_descent);
+		// zpr::println("spacing = {}", m_metrics.default_line_spacing);
 	}
 
 

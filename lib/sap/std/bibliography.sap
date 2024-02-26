@@ -54,7 +54,7 @@ namespace std
 		if(record == null)
 			return builtin::make_text(f"[??????]").apply_style({ colour: rgb(1, 0, 0) });
 
-		if(not record!.refnum?)
+		if(record!.refnum == null)
 		{
 			record!.refnum = 1 + g_citation_num;
 			g_citation_num += 1;
@@ -63,8 +63,8 @@ namespace std
 		record!.used = true;
 
 		var txt = "";
-		if(page?)   txt = f"[{record!.refnum!}, p. {page!}]";
-		else        txt = f"[{record!.refnum!}]";
+		if(page != null)    txt = f"[{record!.refnum!}, p. {page!}]";
+		else                txt = f"[{record!.refnum!}]";
 
 		let tio = builtin::make_text(glue: true, txt);
 		g_references += [Reference {
@@ -85,7 +85,7 @@ namespace std
 		{
 			var ref = g_references[i];
 			let record = ref.record!;
-			if(record.refnum?)
+			if(record.refnum != null)
 			{
 				let refnum = record.refnum! - 1;
 				let refblk = g_list_of_refs[refnum];
@@ -110,7 +110,7 @@ namespace std
 			var i = 0;
 			while(i < g_ref_records.size())
 			{
-				if(not g_ref_records[i].used || not g_ref_records[i].refnum?)
+				if(not g_ref_records[i].used || g_ref_records[i].refnum == null)
 				{
 					i += 1;
 					continue;

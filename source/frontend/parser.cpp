@@ -508,12 +508,6 @@ namespace sap::frontend
 		{
 			return parse_subscript(lexer, std::move(lhs));
 		}
-		else if(auto t0 = lexer.match(TT::Question); t0.has_value())
-		{
-			auto ret = std::make_unique<ast::OptionalCheckOp>(t0->loc);
-			ret->expr = std::move(lhs);
-			return OkMove(ret);
-		}
 		else if(auto t1 = lexer.match(TT::Exclamation); t1.has_value())
 		{
 			auto ret = std::make_unique<ast::DereferenceOp>(t1->loc);
@@ -1147,12 +1141,13 @@ namespace sap::frontend
 
 				return OkMove(inlines);
 			}
-			else if(lexer.expect(KW_LINE_BLOCK))
+			else if(lexer.peek() == TT::Identifier && util::is_one_of(lexer.peek().text, KW_LINE_BLOCK, KW_PARA_BLOCK))
 			{
+				auto kind = TRY(lexer.next()).text;
 				auto blk = std::make_unique<ast::TreeBlockExpr>(lexer.location());
 
 				if(not lexer.expect(TT::LBrace))
-					return ErrMsg(lexer.location(), "expected '{' after '\\{}'", KW_LINE_BLOCK);
+					return ErrMsg(lexer.location(), "expected '{' after '\\{}'", kind);
 
 				std::vector<zst::SharedPtr<tree::InlineObject>> inlines {};
 				while(lexer.peek() != TT::RBrace)
@@ -1167,10 +1162,18 @@ namespace sap::frontend
 				if(not lexer.expect(TT::RBrace))
 					return ErrMsg(lexer.location(), "unterminated inline text expression");
 
-				auto line = zst::make_shared<tree::WrappedLine>(std::move(inlines));
-
-				blk->object = std::move(line);
-				return OkMove(blk);
+				if(kind == KW_PARA_BLOCK)
+				{
+					auto para = zst::make_shared<tree::Paragraph>(std::move(inlines));
+					blk->object = std::move(para);
+					return OkMove(blk);
+				}
+				else
+				{
+					auto line = zst::make_shared<tree::WrappedLine>(std::move(inlines));
+					blk->object = std::move(line);
+					return OkMove(blk);
+				}
 			}
 			else if(lexer.expect(KW_BOX_BLOCK))
 			{

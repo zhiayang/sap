@@ -5,6 +5,8 @@
 #pragma once
 
 #include <span>
+
+#include "sap/path.h"
 #include "layout/layout_object.h"
 
 namespace sap::layout
@@ -38,6 +40,7 @@ namespace sap::layout
 	private:
 		bool m_glued;
 		Direction m_direction;
+		BorderStyle m_border_style;
 		std::vector<std::unique_ptr<LayoutObject>> m_objects;
 		std::optional<Length> m_override_obj_spacing {};
 	};

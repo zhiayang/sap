@@ -156,6 +156,38 @@ namespace sap::interp::builtin
 		return EvalResult::ofValue(Value::treeBlockObject(std::move(line)));
 	}
 
+	ErrorOr<EvalResult> make_deferred_block(Evaluator* ev, std::vector<Value>& args)
+	{
+		assert(args.size() == 2);
+
+		auto blk = zst::make_shared<tree::DeferredBlock>(std::move(args[0]), std::move(args[1]),
+		    [](Evaluator* ev, const Value& ctx, const Value& user_fn) {
+			    std::vector<Value> args {};
+
+			    // the context should be a pointer type; make sure of that.
+			    if(not ctx.isPointer() || not ctx.type()->pointerElement()->isVoid())
+				    sap::internal_error("invalid type of context");
+
+			    // since it's a pointer we can now clone it
+			    args.push_back(ctx.clone());
+
+			    auto ret = user_fn.getFunction()(ev->interpreter(), args);
+			    if(not ret.has_value())
+				    sap::internal_error("callback function did not return a value");
+
+			    if(not ret->isTreeBlockObj())
+				    sap::internal_error("callback function did not return a block object");
+
+			    return std::move(*ret).takeTreeBlockObj();
+		    });
+
+		return EvalResult::ofValue(Value::treeBlockObject(std::move(blk)));
+	}
+
+
+
+
+
 	ErrorOr<EvalResult> get_layout_object(Evaluator* ev, std::vector<Value>& args)
 	{
 		assert(args.size() == 1);

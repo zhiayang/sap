@@ -64,6 +64,7 @@ namespace sap::layout
 		auto s = getDefaultStyle(cs);
 		if(settings.serif_font_family.has_value())
 			s = s.with_font_family(*settings.serif_font_family);
+
 		if(settings.default_style)
 			s = s.extendWith(*settings.default_style);
 

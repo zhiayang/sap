@@ -7,17 +7,6 @@
 
 namespace sap::interp::cst
 {
-	ErrorOr<EvalResult> OptionalCheckOp::evaluate_impl(Evaluator* ev) const
-	{
-		auto inside = TRY_VALUE(this->expr->evaluate(ev));
-		if(inside.isNull())
-			return EvalResult::ofValue(Value::boolean(false));
-
-		assert(inside.isOptional());
-		auto tmp = std::move(inside).takeOptional();
-		return EvalResult::ofValue(Value::boolean(tmp.has_value()));
-	}
-
 	ErrorOr<EvalResult> NullCoalesceOp::evaluate_impl(Evaluator* ev) const
 	{
 		// short circuit -- don't evaluate rhs eagerly

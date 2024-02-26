@@ -32,7 +32,7 @@ namespace sap::interp
 
 	struct Value
 	{
-		using FnType = std::optional<Value> (*)(Interpreter*, const std::vector<Value>&);
+		using FnType = std::function<std::optional<Value>(Interpreter*, std::vector<Value>&)>;
 
 		const Type* type() const;
 

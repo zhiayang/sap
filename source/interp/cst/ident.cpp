@@ -15,6 +15,20 @@ namespace sap::interp::cst
 		assert(this->resolved_decl != nullptr);
 
 		auto* defn = this->resolved_decl->definition();
+		if(defn->declaration->function_decl.has_value())
+		{
+			if(not defn->declaration->type->isFunction())
+				return ErrMsg(ev, "expected function type, found '{}'", defn->declaration->type);
+
+			return EvalResult::ofValue(Value::function(defn->declaration->type->toFunction(),
+			    [defn](Interpreter* cs, std::vector<Value>& args) -> std::optional<Value> { //
+				    auto ret = cs->evaluator().call(defn, args);
+				    if(ret.is_err())
+					    sap::internal_error("failed to evaluate function");
+
+				    return ret.unwrap().take();
+			    }));
+		}
 
 		auto* frame = &ev->frame();
 		while(frame != nullptr)

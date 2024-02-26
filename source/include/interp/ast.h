@@ -374,17 +374,6 @@ namespace sap::interp::ast
 		bool is_optional = false;
 	};
 
-	struct OptionalCheckOp : Expr
-	{
-		explicit OptionalCheckOp(Location loc) : Expr(std::move(loc)) { }
-
-		virtual ErrorOr<TCResult> typecheck_impl(Typechecker* ts,
-		    const Type* infer = nullptr, //
-		    bool keep_lvalue = false) const override;
-
-		std::unique_ptr<Expr> expr;
-	};
-
 	struct NullCoalesceOp : Expr
 	{
 		explicit NullCoalesceOp(Location loc) : Expr(std::move(loc)) { }

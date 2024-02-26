@@ -4,6 +4,7 @@
 
 #pragma once
 
+#include "sap/path.h"
 #include "tree/base.h"
 
 namespace sap::tree
@@ -25,6 +26,9 @@ namespace sap::tree
 		std::vector<zst::SharedPtr<BlockObject>>& contents() { return m_objects; }
 		const std::vector<zst::SharedPtr<BlockObject>>& contents() const { return m_objects; }
 
+		BorderStyle borderStyle() const { return m_border_style; }
+		void setBorderStyle(BorderStyle bs) { m_border_style = std::move(bs); }
+
 		static zst::SharedPtr<Container> makeVertBox();
 		static zst::SharedPtr<Container> makeHorzBox();
 		static zst::SharedPtr<Container> makeStackBox();
@@ -37,6 +41,7 @@ namespace sap::tree
 	private:
 		bool m_glued;
 		Direction m_direction;
+		BorderStyle m_border_style {};
 		std::vector<zst::SharedPtr<BlockObject>> m_objects;
 	};
 }

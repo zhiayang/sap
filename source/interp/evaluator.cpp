@@ -277,7 +277,7 @@ namespace sap::interp
 		if(m_document == nullptr)
 			return ErrMsg(this, "cannot output objects in this context");
 
-		auto tbo = m_interp->addAbsolutelyPositionedBlockObject(std::move(tbo_));
+		auto tbo = m_interp->retainBlockObject(std::move(tbo_));
 
 		// TODO: calculate the available space properly.
 		auto avail_space = Size2d(Length(INFINITY), Length(INFINITY));
@@ -305,7 +305,23 @@ namespace sap::interp
 		return Value::mutablePointer(ptr->type(), ptr);
 	}
 
+	ErrorOr<EvalResult> Evaluator::call(const cst::Definition* defn, std::vector<Value>& args)
+	{
+		auto _ = this->pushCallFrame();
 
+		if(auto builtin_defn = dynamic_cast<const cst::BuiltinFunctionDefn*>(defn); builtin_defn != nullptr)
+		{
+			return builtin_defn->function(this, args);
+		}
+		else if(auto func_defn = dynamic_cast<const cst::FunctionDefn*>(defn); func_defn != nullptr)
+		{
+			return func_defn->call(this, args);
+		}
+		else
+		{
+			return ErrMsg(this, "not implemented");
+		}
+	}
 
 
 

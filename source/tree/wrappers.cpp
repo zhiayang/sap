@@ -1,4 +1,4 @@
-// wrapped_line.cpp
+// wrappers.cpp
 // Copyright (c) 2022, zhiayang
 // SPDX-License-Identifier: Apache-2.0
 
@@ -41,4 +41,30 @@ namespace sap::tree
 
 		return Ok(LayoutResult::make(std::move(line)));
 	}
+
+
+
+	ErrorOr<void> DeferredBlock::evaluateScripts(interp::Interpreter* cs) const
+	{
+		return Ok();
+	}
+
+	auto DeferredBlock::create_layout_object_impl(interp::Interpreter* cs, //
+	    const Style& parent_style,
+	    Size2d available_space) const -> ErrorOr<LayoutResult>
+	{
+		auto _ = cs->evaluator().pushBlockContext(this);
+		auto cur_style = m_style.useDefaultsFrom(parent_style).useDefaultsFrom(cs->evaluator().currentStyle());
+
+		// call the callback and pass in the things.
+		auto tbo = m_callback(&cs->evaluator(), m_context, m_function);
+		auto tbo_ptr = cs->retainBlockObject(std::move(tbo));
+
+		auto lo = TRY(tbo_ptr->createLayoutObject(cs, cur_style, available_space)).object;
+		if(not lo.has_value())
+			return ErrMsg(&cs->evaluator(), "could not make a layout object");
+
+		return Ok(LayoutResult::make(std::move(*lo)));
+	}
+
 }

@@ -28,13 +28,12 @@ namespace sap::interp::ast
 		{
 			if(from.type()->isFloating() && to->isInteger())
 				cast_kind = cst::CastExpr::CastKind::FloatToInteger;
-
 			else if(from.type()->isChar() && to->isInteger())
 				cast_kind = cst::CastExpr::CastKind::CharToInteger;
-
 			else if(from.type()->isInteger() && to->isChar())
 				cast_kind = cst::CastExpr::CastKind::IntegerToChar;
-
+			else if(from.type()->isPointer() && to->isPointer())
+				cast_kind = cst::CastExpr::CastKind::Pointer;
 			else
 				return ErrMsg(ts, "cannot cast from expression with type '{}' to type '{}'", from.type(), to);
 		}

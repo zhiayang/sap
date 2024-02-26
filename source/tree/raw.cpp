@@ -79,19 +79,24 @@ namespace sap::tree
 		std::vector<std::unique_ptr<layout::LayoutObject>> lines {};
 
 		Size2d size { 0, 0 };
+		Length line_separation = 0;
 
-		bool is_first = true;
-		for(auto& text_line : m_lines)
+		for(size_t i = 0; i < m_lines.size(); i++)
 		{
+			auto& text_line = m_lines[i];
 			auto span = std::span(&text_line, 1);
 
 			auto line = layout::Line::fromInlineObjects(cs, style, span, available_space,
-			    /* is_first: */ true, /* is_last: */ true);
+			    /* is_first: */ (i == 0), /* is_last: */ (i + 1 == m_lines.size()));
 
 			size.x() = std::max(size.x(), line->layoutSize().width);
-			size.y() += line->layoutSize().total_height();
 
-			is_first = false;
+			const auto h = line->layoutSize().total_height();
+			size.y() += h * style.line_spacing();
+
+			line_separation = (style.line_spacing() - 1.0) * h;
+
+			// line_spacing = std::max(line_spacing, line->lineSpacing());
 			lines.push_back(std::move(line));
 		}
 
@@ -104,7 +109,7 @@ namespace sap::tree
 		    layout::Container::Direction::Vertical, //
 		    /* glue: */ false,                      //
 		    std::move(lines),                       //
-		    /* override obj spacing: */ Length(0));
+		    /* override obj spacing: */ line_separation);
 
 		return Ok(LayoutResult::make(std::move(vbox)));
 	}

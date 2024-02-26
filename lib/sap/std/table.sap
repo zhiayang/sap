@@ -26,9 +26,21 @@ namespace std
 				.Line(pos: {x: builtin::document()!.content_size.x, y: 0mm})
 			];
 		}
+
+		struct CallbackState
+		{
+			remaining: [Block];
+			column_widths: [Length];
+		};
+
+		fn table_row_callback(context: &void) -> Block
+		{
+			let ctx = cast(context, &CallbackState)!;
+			return \para {Hello};
+		}
 	}
 
-	# TODO: doesn't support multi page tables
+
 	fn table(config: TableConfig, items: [Block...]) -> ?Block
 	{
 		using builtin::println;
@@ -71,7 +83,7 @@ namespace std
 		for(var i = 0; i < given_col_widths.size(); i += 1)
 		{
 			total_fixed_width += given_col_widths[i] ?? 0mm;
-			if(not given_col_widths[i]?)
+			if(given_col_widths[i] != null)
 				num_unspecified_cols += 1;
 		}
 
@@ -80,7 +92,21 @@ namespace std
 				- (cfg.cols * (cfg.cell_padding!.left! + cfg.cell_padding!.right!))
 			) / num_unspecified_cols;
 
-		# TODO: this algorithm sucks
+		# make one row at a time
+		# i guess this is some kind of tail call closure whatever shit
+		var remaining: [Block] = [];
+		for(var i = cfg.cols; i < items.size(); i += 1)
+			remaining += [*items[i]];
+
+		var col_widths: [Length] = [];
+		for(var i = 0; i < cfg.cols; i += 1)
+			col_widths += [given_col_widths[i] ?? default_width];
+
+		var ctx = impl::CallbackState {
+			remaining: *remaining,
+			column_widths: *col_widths,
+		};
+
 		var vlines: [Block] = [];
 		for(var i = 0; i < cfg.cols; i += 1)
 		{
@@ -94,8 +120,6 @@ namespace std
 
 		vlines += [make_path(style: line_style, .Move(pos:{x:0mm,y:0mm}), .Line(pos:{x:0mm,y:100mm}))];
 
-
-		# return null;
 		return builtin::make_zbox(
 			make_path(style: line_style, ...impl::hline()),
 			builtin::make_hbox(

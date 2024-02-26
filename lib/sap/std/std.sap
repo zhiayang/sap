@@ -641,7 +641,7 @@ namespace std
 	fn _get_prefix_and_units(prefix: ?Prefix = null, unit: ?Unit = null,
 		p: &mut string, u: &mut string)
 	{
-		if(prefix?)
+		if(prefix != null)
 		{
 			if(prefix! == Prefix::nano)         p! = "n";
 			else if(prefix! == Prefix::micro)   p! = "µ";
@@ -651,7 +651,7 @@ namespace std
 			else if(prefix! == Prefix::giga)    p! = "G";
 		}
 
-		if(unit?)
+		if(unit != null)
 		{
 			if(unit! == Unit::byte)         u! = "B";
 			else if(unit! == Unit::second)  u! = "s";

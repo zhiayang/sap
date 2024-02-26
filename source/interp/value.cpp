@@ -656,7 +656,7 @@ namespace sap::interp
 	Value Value::function(const FunctionType* fn_type, FnType fn)
 	{
 		auto ret = Value(fn_type);
-		ret.v_function = fn;
+		ret.v_function = std::move(fn);
 		return ret;
 	}
 
@@ -972,6 +972,9 @@ namespace sap::interp
 
 		else if(m_type->isLength())
 			std::destroy_at(&v_length);
+
+		else if(m_type->isFunction())
+			std::destroy_at(&v_function);
 	}
 
 	void Value::steal_from(Value&& val)
@@ -993,7 +996,7 @@ namespace sap::interp
 			v_floating = std::move(val.v_floating);
 
 		else if(m_type->isFunction())
-			v_function = std::move(val.v_function);
+			new(&v_function) decltype(v_function)(std::move(val.v_function));
 
 		else if(m_type->isPointer() || m_type->isNullPtr())
 			v_pointer = std::move(val.v_pointer);

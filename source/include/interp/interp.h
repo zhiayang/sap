@@ -59,7 +59,7 @@ namespace sap::interp
 		void addImportedFile(std::string filename);
 		bool wasFileImported(const std::string& filename) const;
 
-		tree::BlockObject* addAbsolutelyPositionedBlockObject(zst::SharedPtr<tree::BlockObject> tbo);
+		tree::BlockObject* retainBlockObject(zst::SharedPtr<tree::BlockObject> tbo);
 
 		void addMicrotypeConfig(config::MicrotypeConfig config);
 		std::optional<CharacterProtrusion> getMicrotypeProtrusionFor(char32_t ch, const Style& style) const;
@@ -75,7 +75,7 @@ namespace sap::interp
 
 		util::hashmap<int64_t, std::unique_ptr<pdf::PdfFont>> m_loaded_fonts;
 
-		std::vector<zst::SharedPtr<tree::BlockObject>> m_abs_tbos;
+		std::vector<zst::SharedPtr<tree::BlockObject>> m_retained_tbos;
 
 		util::hashset<std::string> m_imported_files;
 

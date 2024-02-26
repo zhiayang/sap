@@ -261,6 +261,7 @@ namespace sap::interp::cst
 		{
 			None,
 			Implicit,
+			Pointer,
 			FloatToInteger,
 			CharToInteger,
 			IntegerToChar,
@@ -456,18 +457,6 @@ namespace sap::interp::cst
 
 		const StructType* struct_type;
 		bool is_optional;
-	};
-
-	struct OptionalCheckOp : Expr
-	{
-		explicit OptionalCheckOp(Location loc, std::unique_ptr<Expr> expr)
-		    : Expr(std::move(loc), Type::makeBool()), expr(std::move(expr))
-		{
-		}
-
-		virtual ErrorOr<EvalResult> evaluate_impl(Evaluator* ev) const override;
-
-		std::unique_ptr<Expr> expr;
 	};
 
 	struct NullCoalesceOp : Expr

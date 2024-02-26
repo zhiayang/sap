@@ -12,6 +12,12 @@
 #endif
 
 #if 0
+BUGS!!!!
+1. f-strings seem to gobble up the first byte of a unicode CP
+	repro: f"•"
+
+
+
 TODO:
 scripting
 ---------

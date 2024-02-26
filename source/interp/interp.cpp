@@ -85,9 +85,9 @@ namespace sap::interp
 		return ErrMsg(m_evaluator.get(), "font with id {} was not loaded", font_id);
 	}
 
-	tree::BlockObject* Interpreter::addAbsolutelyPositionedBlockObject(zst::SharedPtr<tree::BlockObject> tbo)
+	tree::BlockObject* Interpreter::retainBlockObject(zst::SharedPtr<tree::BlockObject> tbo)
 	{
-		return m_abs_tbos.emplace_back(std::move(tbo)).get();
+		return m_retained_tbos.emplace_back(std::move(tbo)).get();
 	}
 
 

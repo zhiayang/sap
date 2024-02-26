@@ -59,12 +59,12 @@ namespace sap::interp
 		ErrorOr<EvalResult> page_break(Evaluator* ev, std::vector<Value>& args);
 
 
+		ErrorOr<EvalResult> make_path(Evaluator* ev, std::vector<Value>& args);
 		ErrorOr<EvalResult> make_span(Evaluator* ev, std::vector<Value>& args);
 		ErrorOr<EvalResult> make_text(Evaluator* ev, std::vector<Value>& args);
 		ErrorOr<EvalResult> make_line(Evaluator* ev, std::vector<Value>& args);
 		ErrorOr<EvalResult> make_paragraph(Evaluator* ev, std::vector<Value>& args);
-
-		ErrorOr<EvalResult> make_path(Evaluator* ev, std::vector<Value>& args);
+		ErrorOr<EvalResult> make_deferred_block(Evaluator* ev, std::vector<Value>& args);
 
 		ErrorOr<EvalResult> ref_object(Evaluator* ev, std::vector<Value>& args);
 		ErrorOr<EvalResult> get_layout_object(Evaluator* ev, std::vector<Value>& args);

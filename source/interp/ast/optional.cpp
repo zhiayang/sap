@@ -7,15 +7,6 @@
 
 namespace sap::interp::ast
 {
-	ErrorOr<TCResult> OptionalCheckOp::typecheck_impl(Typechecker* ts, const Type* infer, bool keep_lvalue) const
-	{
-		auto inside = TRY(this->expr->typecheck(ts, infer));
-		if(not inside.type()->isOptional())
-			return ErrMsg(ts, "invalid use of '?' on non-optional type '{}'", inside.type());
-
-		return TCResult::ofRValue<cst::OptionalCheckOp>(m_location, std::move(inside).take_expr());
-	}
-
 	ErrorOr<TCResult> NullCoalesceOp::typecheck_impl(Typechecker* ts, const Type* infer, bool keep_lvalue) const
 	{
 		auto lres = TRY(this->lhs->typecheck(ts));

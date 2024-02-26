@@ -85,21 +85,6 @@ namespace sap::interp::cst
 			}
 		}
 
-		auto _ = ev->pushCallFrame();
-
-		// check what kind of defn it is
-		auto callee_defn = this->callee->definition();
-		if(auto builtin_defn = dynamic_cast<const BuiltinFunctionDefn*>(callee_defn); builtin_defn != nullptr)
-		{
-			return builtin_defn->function(ev, processed_args);
-		}
-		else if(auto func_defn = dynamic_cast<const FunctionDefn*>(callee_defn); func_defn != nullptr)
-		{
-			return func_defn->call(ev, processed_args);
-		}
-		else
-		{
-			return ErrMsg(ev, "not implemented");
-		}
+		return ev->call(this->callee->definition(), processed_args);
 	}
 }

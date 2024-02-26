@@ -60,6 +60,15 @@ This also acts as a sort of TODO; as time goes on completed features may be remo
 - [ ] More advanced typography support (`BASE`, `MATH`, `JSTF`, AAT `kerx`)
 - [ ] Further size optimisation for embedded fonts
 - [ ] Optimising bytecode compiler for the scripting language
+- [ ] Tables
+- [ ] SVG embedding
+- [ ] PDF embedding
+- [ ] Some manipulation of embedded images (eg. rotation)
+- [ ] Reflection over document contents (not just adding new stuff)
+- [ ] Various (advanced) scripting language features
+- [ ] Coloured text (separate from coloured lines...)
+- [x] (partial) colour support
+- [x] PDF paths (curves and lines)
 - [x] PDF Links (annotations)
 - [x] Rudimentary and crude bibliography support
 - [x] Slightly more advanced layout capabilities (hbox, vbox, zbox)

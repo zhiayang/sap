@@ -131,6 +131,9 @@ namespace sap::interp
 
 		const auto T_P = [](const PType& t) { return PType::pointer(t, false); };
 		const auto T_MP = [](const PType& t) { return PType::pointer(t, true); };
+		const auto T_FN = [](const PType& ret, auto&&... args) {
+			return PType::function({ static_cast<PType&&>(args)... }, std::move(ret));
+		};
 
 		const auto T_O = [](const PType& t) { return PType::optional(t); };
 		const auto T_VARR = [](const PType& t) { return PType::variadicArray(t); };
@@ -239,6 +242,9 @@ namespace sap::interp
 		DEF("make_text", PL(P("1", T_VARR(t_str)), P("glue", t_bool, make_bool(false))), t_tio, &B::make_text);
 		DEF("make_line", PL(P("1", T_VARR(t_tio))), t_tbo, &B::make_line);
 		DEF("make_paragraph", PL(P("1", T_VARR(t_tio))), t_tbo, &B::make_paragraph);
+
+		DEF("make_deferred_block", PL(P("ctx", T_P(t_void)), P("callback", T_FN(t_tbo, T_P(t_void)))), t_tbo,
+		    &B::make_deferred_block);
 
 		DEF("apply_style", PL(P("obj", t_tio), P("style", t_bstyle)), t_tio, &B::apply_style_tio);
 		DEF("apply_style", PL(P("obj", t_tbo), P("style", t_bstyle)), t_tbo, &B::apply_style_tbo);

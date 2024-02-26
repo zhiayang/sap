@@ -25,6 +25,13 @@ namespace sap::interp::cst
 				result = ev->castValue(std::move(val), m_type);
 				break;
 
+			case Pointer: //
+				if(m_type->isMutablePointer())
+					result = Value::mutablePointer(m_type->pointerElement(), val.getMutablePointer());
+				else
+					result = Value::pointer(m_type->pointerElement(), val.getPointer());
+				break;
+
 			case FloatToInteger: //
 				result = Value::integer(static_cast<int64_t>(val.getFloating()));
 				break;

@@ -223,6 +223,7 @@ namespace sap::tree
 			Paragraph,
 			ScriptBlock,
 			WrappedLine,
+			DeferredBlock,
 		};
 
 		BlockObject(Kind kind) : m_kind(kind) { }

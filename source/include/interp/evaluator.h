@@ -127,6 +127,8 @@ namespace sap::interp
 		void requestLayout();
 		bool layoutRequested() const;
 
+		ErrorOr<EvalResult> call(const cst::Definition* defn, std::vector<Value>& args);
+
 		void commenceLayoutPass(size_t pass_num);
 		const GlobalState& state() const;
 		GlobalState& state();

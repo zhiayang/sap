@@ -93,12 +93,6 @@ namespace sap::interp::cst
 				auto eq = (lhs.getBool() == rhs.getBool());
 				return op == EQ ? eq : not eq;
 			}
-			else if(lhs.isFunction())
-			{
-				assert(op == EQ || op == NE);
-				auto eq = (lhs.getFunction() == rhs.getFunction());
-				return op == EQ ? eq : not eq;
-			}
 			else if(lhs.isChar())
 			{
 				return do_cmp(lhs.getChar(), rhs.getChar());
@@ -117,6 +111,11 @@ namespace sap::interp::cst
 				assert(lhs.type() == rhs.type());
 
 				return do_compare(op, lhs.getEnumerator(), rhs.getEnumerator());
+			}
+			else if(lhs.type()->isNullPtr())
+			{
+				assert(op == EQ || op == NE);
+				return true;
 			}
 		}
 		else if(lhs.type()->isOptional() && rhs.type()->isNullPtr())

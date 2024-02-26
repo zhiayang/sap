@@ -77,4 +77,13 @@ namespace sap
 		Colour stroke_colour = Colour::black();
 		Colour fill_colour = Colour::black();
 	};
+
+	// TODO: support rounded corners maybe?
+	struct BorderStyle
+	{
+		std::optional<PathStyle> left {};
+		std::optional<PathStyle> right {};
+		std::optional<PathStyle> top {};
+		std::optional<PathStyle> bottom {};
+	};
 }

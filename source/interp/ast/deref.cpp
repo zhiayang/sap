@@ -16,6 +16,9 @@ namespace sap::interp::ast
 		if(not inside_type->isOptional() && not inside_type->isPointer())
 			return ErrMsg(ts, "invalid use of '!' on non-pointer, non-optional type '{}'", inside_type);
 
+		if(inside_type->isPointer() && inside_type->pointerElement()->isVoid())
+			return ErrMsg(ts, "cannot dereference a pointer-to-void");
+
 		if(inside_type->isOptional())
 		{
 			return TCResult::ofRValue<cst::DereferenceOp>(m_location, inside_type->optionalElement(),
