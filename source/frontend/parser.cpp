@@ -475,8 +475,10 @@ namespace sap::frontend
 		return OkMove(ret);
 	}
 
-	static ErrorOrUniquePtr<ast::FunctionCall>
-	parse_ufcs(Lexer& lexer, std::unique_ptr<ast::Expr> first_arg, const std::string& method_name, bool is_optional)
+	static ErrorOrUniquePtr<ast::FunctionCall> parse_ufcs(Lexer& lexer,
+	    std::unique_ptr<ast::Expr> first_arg,
+	    const std::string& method_name,
+	    bool is_optional)
 	{
 		auto method = std::make_unique<ast::Ident>(lexer.location());
 		method->name.top_level = false;
@@ -708,15 +710,16 @@ namespace sap::frontend
 		{
 			if(auto str = lexer.match(TT::FStringMiddle); str)
 			{
-				fstring_parts.push_back(unicode::u32StringFromUtf8(str->text.bytes()));
+				if(not str->text.empty())
+					fstring_parts.push_back(TRY(unescape_string(str->loc, str->text)));
 			}
 			else if(auto end = lexer.match(TT::FStringEnd); end)
 			{
+				if(not end->text.empty())
+					fstring_parts.push_back(TRY(unescape_string(end->loc, end->text)));
+
 				// we're done.
 				auto ret = std::make_unique<ast::FStringExpr>(start_loc);
-
-				// note: drop the '}' from the fstringend part.
-				fstring_parts.push_back(unicode::u32StringFromUtf8(end->text.drop(1).bytes()));
 				ret->parts = std::move(fstring_parts);
 
 				return OkMove(ret);
@@ -731,6 +734,9 @@ namespace sap::frontend
 
 				if(lexer.peek() == TT::RBrace)
 					lexer.popMode(Lexer::Mode::Script);
+
+				// we just saw a '}', so it must be
+				must_expect(lexer, TT::FStringDummy);
 			}
 		}
 	}
@@ -767,8 +773,10 @@ namespace sap::frontend
 		return Ok(std::make_unique<ast::TypeExpr>(loc, std::move(type)));
 	}
 
-	static ErrorOrUniquePtr<ast::IfLetUnionStmt>
-	parse_if_let_union_stmt(Lexer& lexer, Location let_loc, bool all_mutable, QualifiedId variant_name)
+	static ErrorOrUniquePtr<ast::IfLetUnionStmt> parse_if_let_union_stmt(Lexer& lexer,
+	    Location let_loc,
+	    bool all_mutable,
+	    QualifiedId variant_name)
 	{
 		std::vector<ast::IfLetUnionStmt::Binding> bindings {};
 
@@ -860,8 +868,10 @@ namespace sap::frontend
 		return OkMove(ret);
 	}
 
-	static ErrorOrUniquePtr<ast::IfLetOptionalStmt>
-	parse_if_let_optional_stmt(Lexer& lexer, Location let_loc, bool all_mutable, std::string binding_name)
+	static ErrorOrUniquePtr<ast::IfLetOptionalStmt> parse_if_let_optional_stmt(Lexer& lexer,
+	    Location let_loc,
+	    bool all_mutable,
+	    std::string binding_name)
 	{
 		if(not lexer.expect(TT::Equal))
 			return ErrMsg(lexer.location(), "expected '=' after binding name");
@@ -1209,11 +1219,10 @@ namespace sap::frontend
 					return ErrMsg(lexer.location(), "unterminated block expression");
 
 				using enum tree::Container::Direction;
-				auto container = zst::make_shared<tree::Container>(
-				    x.text == KW_HBOX_BLOCK ? Horizontal
-				    : x.text == KW_VBOX_BLOCK
-				        ? Vertical
-				        : None);
+				auto container = zst::make_shared<
+				    tree::Container>(x.text == KW_HBOX_BLOCK   ? Horizontal
+				                     : x.text == KW_VBOX_BLOCK ? Vertical
+				                                               : None);
 
 				container->contents() = std::move(objs);
 				blk->object = std::move(container);

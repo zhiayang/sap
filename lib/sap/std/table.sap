@@ -107,6 +107,12 @@ namespace std
 			column_widths: *col_widths,
 		};
 
+		# idk what tf was going on previously, but new idea:
+		# keep outputting rows (and just draw the horizontal rules) until we reach the next page (or the table ends)
+		# *then* draw the vertical rules? will that work or am i missing some edge case...?
+		#
+		# i assume we have a way to restrict the width of a container/block via the api right
+
 		var vlines: [Block] = [];
 		for(var i = 0; i < cfg.cols; i += 1)
 		{

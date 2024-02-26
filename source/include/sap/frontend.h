@@ -38,6 +38,7 @@ namespace sap::frontend
 		FStringStart,
 		FStringMiddle,
 		FStringEnd,
+		FStringDummy,
 
 		LParen,
 		RParen,

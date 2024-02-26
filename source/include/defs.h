@@ -41,6 +41,7 @@ namespace sap
 
 	namespace watch
 	{
+		bool isWatching();
 		bool isSupportedPlatform();
 
 		void start(zst::str_view main_file, zst::str_view output_file);

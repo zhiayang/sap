@@ -95,6 +95,12 @@ namespace sap::watch
 		this->event_contexts.clear();
 	}
 
+	bool isWatching()
+	{
+		// decent proxy.
+		return not g_state.main_file.empty();
+	}
+
 	static void* compile_runner(void*)
 	{
 		pthread_detach(pthread_self());
@@ -135,6 +141,9 @@ namespace sap::watch
 
 		g_state.main_file = main_file.str();
 		g_state.output_file = output_file.str();
+
+		// compile once
+		(void) sap::compile(main_file, output_file);
 
 		constexpr static size_t NUM_EVENTS = 16;
 		auto new_events = new struct kevent[NUM_EVENTS];

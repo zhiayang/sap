@@ -30,8 +30,10 @@ namespace sap
 	inline constexpr const char* COLOUR_WHITE_BOLD = "\033[1m\033[37m";
 	inline constexpr const char* COLOUR_GREY_BOLD = "\033[30;1m";
 
-	static void
-	show_message(const char* error_text, const char* _error_colour, const Location& loc, const std::string& message)
+	static void show_message(const char* error_text,
+	    const char* _error_colour,
+	    const Location& loc,
+	    const std::string& message)
 	{
 		bool coloured = isatty(STDERR_FILENO);
 
@@ -125,7 +127,9 @@ namespace sap
 		for(auto& [loc, info] : m_infos)
 			show_message("note", COLOUR_GREY_BOLD, loc, info);
 
-		abort();
+		// for debugging purposes, if we are not in --watch mode, abort.
+		if(not sap::watch::isWatching())
+			abort();
 	}
 
 	[[noreturn]] void ErrorMessage::showAndExit() const

@@ -13,8 +13,8 @@
 
 #if 0
 BUGS!!!!
-1. f-strings seem to gobble up the first byte of a unicode CP
-	repro: f"•"
+2. fix that stupid font-related crash when --watch runs a second time
+	edit: now i can't repro it. wtf?
 
 
 
@@ -24,6 +24,17 @@ scripting
 [ ] decide whether we want positional struct field arguments or not
 	- i think the { x } --> { x: x } shorthand was added; this is kinda at odds
 		with positional fields
+
+[ ] we already have '//' struct update operator; something like '//?' would be nice to
+	be a 'set values for ?T fields that are null', rather than the current way which
+	is like foo // { x: .x ?? 0, y: .y ?? 0 } etc, we can have: foo //? { x: 0, y: 0 },
+	and they'll only replace if the respective field is null.
+
+	also obviously check that the named fields are actually optional.
+
+[ ] percentage DynLengths; something like `50%pw` for 50% of page-width; we can have
+	%pw/ph for page w/h, %lw/lh for line, %w/h for the size of the parent container
+	would need a bunch of changes in DynLength but hopefully not too much?
 
 [ ] heckin generics plz
 
@@ -35,7 +46,8 @@ scripting
 
 layout
 ------
-[x] high cost for single word at end of paragraph
+[ ] we should have a small table of missing glyph substitutions,
+	eg. left/right ("smart") quotes to normal '/" quotes, if the font doesn't have it (eg. 14 builtin ones)
 
 [ ] 'em' doesn't pass down properly in InlineSpans, apparently
 	fn foo() -> Inline { make_text("hi").apply_style({ font_size: 2em }); }
@@ -69,16 +81,15 @@ namespace sap
 
 int main(int argc, char** argv)
 {
-	auto args =
-	    zarg::Parser()
-	        .add_option('o', true, "output filename")
-	        .add_option('I', true, "additional include search path")
-	        .add_option('L', true, "additional library search path")
-	        .add_option("watch", false, "watch mode: automatically recompile when files change")
-	        .add_option("draft", false, "draft mode")
-	        .allow_options_after_positionals(true)
-	        .parse(argc, argv)
-	        .set();
+	auto args = zarg::Parser()
+	                .add_option('o', true, "output filename")
+	                .add_option('I', true, "additional include search path")
+	                .add_option('L', true, "additional library search path")
+	                .add_option("watch", false, "watch mode: automatically recompile when files change")
+	                .add_option("draft", false, "draft mode")
+	                .allow_options_after_positionals(true)
+	                .parse(argc, argv)
+	                .set();
 
 	if(args.positional.size() != 1)
 	{
@@ -112,8 +123,6 @@ int main(int argc, char** argv)
 
 	if(is_watching)
 	{
-		(void) sap::compile(input_file, output_file);
-
 		sap::watch::addFileToWatchList(input_file);
 		sap::watch::start(input_file, output_file);
 	}

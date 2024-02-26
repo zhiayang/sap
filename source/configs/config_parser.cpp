@@ -115,12 +115,11 @@ namespace sap::config
 					return ErrFmt("invalid hex digit '{}'", ch);
 
 				hex = (0x10 * hex)
-				    + uint32_t(
-				        '0' <= ch && ch <= '9'
-				            ? ch - '0'
-				            : ('a' <= ch && ch <= 'f' //
-				                    ? 10 + ch - 'a'
-				                    : 10 + ch - 'A'));
+				    + uint32_t('0' <= ch && ch <= '9'
+				                   ? ch - '0'
+				                   : ('a' <= ch && ch <= 'f' //
+				                           ? 10 + ch - 'a'
+				                           : 10 + ch - 'A'));
 			}
 
 			return Ok(hex);
@@ -194,8 +193,8 @@ namespace sap::config
 
 
 
-	static StrErrorOr<void>
-	parse_protrusion(zst::str_view& sv, util::hashmap<char32_t, CharacterProtrusion>& protrusions)
+	static StrErrorOr<void> parse_protrusion(zst::str_view& sv,
+	    util::hashmap<char32_t, CharacterProtrusion>& protrusions)
 	{
 		auto line = consume_line(sv);
 		auto parts = split_by_whitespace(line);

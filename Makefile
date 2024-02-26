@@ -21,7 +21,7 @@ ifeq ("$(findstring gcc,$(CXX_VERSION_STRING))", "gcc")
 else
 endif
 
-OPT_FLAGS           := -march=native -Og -fsanitize=undefined,address
+OPT_FLAGS           := -march=native -fsanitize=undefined,address # -Og
 LINKER_OPT_FLAGS    :=
 COMMON_CFLAGS       := -g $(OPT_FLAGS)
 

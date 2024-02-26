@@ -128,6 +128,7 @@ namespace sap::frontend
 
 	static ErrorOr<Token> consume_text_token(zst::str_view& stream, Location& loc)
 	{
+	again:
 		if(stream.empty())
 		{
 			return Ok(Token {
@@ -139,7 +140,7 @@ namespace sap::frontend
 		else if(stream.starts_with("#") || stream.starts_with("/#"))
 		{
 			(void) TRY(parse_comment(stream, loc));
-			return consume_text_token(stream, loc);
+			goto again;
 		}
 		else if(stream.starts_with("#/"))
 		{
@@ -376,6 +377,7 @@ namespace sap::frontend
 			n++;
 		}
 
+		// note the '-1' here to exclude the '{' part of the fstring expression
 		return advance_and_return(stream, loc,
 		    Token { //
 		        .loc = loc,
@@ -385,9 +387,22 @@ namespace sap::frontend
 	}
 
 
-	static ErrorOr<Token>
-	consume_fstring_token(zst::str_view& stream, Location& location, std::vector<Lexer::Mode>& mode_stack)
+	static ErrorOr<Token> consume_fstring_token(zst::str_view& stream,
+	    Location& location,
+	    std::vector<Lexer::Mode>& mode_stack)
 	{
+		// if we see a single '}', return a dummy.
+		if(stream.starts_with('}'))
+		{
+			return advance_and_return(stream, location, //
+			    Token {
+			        .loc = location,
+			        .type = TT::FStringDummy,
+			        .text = stream.take(1),
+			    },
+			    1);
+		}
+
 		auto tok = TRY(consume_string(stream, location, 0, TT::FStringMiddle, '"',
 		    /* fstring: */ true));
 
@@ -407,9 +422,11 @@ namespace sap::frontend
 		return OkMove(tok);
 	}
 
-	static ErrorOr<Token>
-	consume_script_token(zst::str_view& stream, Location& loc, std::vector<Lexer::Mode>& mode_stack)
+	static ErrorOr<Token> consume_script_token(zst::str_view& stream,
+	    Location& loc,
+	    std::vector<Lexer::Mode>& mode_stack)
 	{
+	again:
 		// skip whitespace
 		while(stream.size() > 0)
 		{
@@ -446,7 +463,7 @@ namespace sap::frontend
 		else if(stream.starts_with("#") || stream.starts_with("/#"))
 		{
 			(void) TRY(parse_comment(stream, loc));
-			return consume_script_token(stream, loc, mode_stack);
+			goto again;
 		}
 		else if(stream.starts_with("#/"))
 		{

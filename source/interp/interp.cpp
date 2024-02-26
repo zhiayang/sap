@@ -114,6 +114,8 @@ namespace sap::interp
 				continue;
 
 			// ok, it should match. TODO: check features.
+			// TODO: maybe decompose the unicode, because i think we only
+			// declare protrusions for the 'base' character
 			if(auto it = config.protrusions.find(ch); it != config.protrusions.end())
 				return CharacterProtrusion { it->second.left, it->second.right };
 		}
