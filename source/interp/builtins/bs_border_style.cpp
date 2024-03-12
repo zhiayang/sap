@@ -18,16 +18,28 @@ namespace sap::interp::builtin
 		return std::make_unique<ast::NullLit>(Location::builtin());
 	}
 
+	static auto get_zero_length()
+	{
+		auto ret = std::make_unique<ast::LengthExpr>(Location::builtin());
+		ret->length = DynLength(0);
+		return ret;
+	}
+
 	const Type* builtin::BS_BorderStyle::type = nullptr;
 	std::vector<Field> builtin::BS_BorderStyle::fields()
 	{
+		auto pt_length = PT::named(frontend::TYPE_LENGTH);
 		auto pt_path_style = ptype_for_builtin<BS_PathStyle>();
 
-		return util::vectorOf(                                                                         //
-		    Field { .name = "top", .type = PT::optional(pt_path_style), .initialiser = get_null() },   //
-		    Field { .name = "left", .type = PT::optional(pt_path_style), .initialiser = get_null() },  //
-		    Field { .name = "right", .type = PT::optional(pt_path_style), .initialiser = get_null() }, //
-		    Field { .name = "bottom", .type = PT::optional(pt_path_style), .initialiser = get_null() } //
+		return util::vectorOf(                                                                          //
+		    Field { .name = "top", .type = PT::optional(pt_path_style), .initialiser = get_null() },    //
+		    Field { .name = "left", .type = PT::optional(pt_path_style), .initialiser = get_null() },   //
+		    Field { .name = "right", .type = PT::optional(pt_path_style), .initialiser = get_null() },  //
+		    Field { .name = "bottom", .type = PT::optional(pt_path_style), .initialiser = get_null() }, //
+		    Field { .name = "top_padding", .type = pt_length, .initialiser = get_zero_length() },       //
+		    Field { .name = "left_padding", .type = pt_length, .initialiser = get_zero_length() },      //
+		    Field { .name = "right_padding", .type = pt_length, .initialiser = get_zero_length() },     //
+		    Field { .name = "bottom_padding", .type = pt_length, .initialiser = get_zero_length() }     //
 		);
 	}
 
@@ -42,6 +54,11 @@ namespace sap::interp::builtin
 			maker.set("right", BS_PathStyle::make(ev, *style.right));
 		if(style.bottom)
 			maker.set("bottom", BS_PathStyle::make(ev, *style.bottom));
+
+		maker.set("top_padding", Value::length(style.top_padding));
+		maker.set("left_padding", Value::length(style.left_padding));
+		maker.set("right_padding", Value::length(style.right_padding));
+		maker.set("bottom_padding", Value::length(style.bottom_padding));
 
 		return maker.make();
 	}
@@ -69,6 +86,10 @@ namespace sap::interp::builtin
 		if(s_bottom.haveOptionalValue())
 			style.bottom = BS_PathStyle::unmake(ev, **s_bottom.getOptional());
 
+		style.top_padding = value.getStructField("top_padding").getLength();
+		style.left_padding = value.getStructField("left_padding").getLength();
+		style.right_padding = value.getStructField("right_padding").getLength();
+		style.bottom_padding = value.getStructField("bottom_padding").getLength();
 		return style;
 	}
 }

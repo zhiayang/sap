@@ -23,6 +23,8 @@ BUGS!!!!
     broken somehow, and <header> starts higher up on the page than it should (vs. if we
     had a manual \page_break() at the '|' point)
 
+    tldr paragraph spacing across pages is possibly fucked
+
 TODO:
 scripting
 ---------
@@ -57,16 +59,23 @@ layout
 [ ] we should have a small table of missing glyph substitutions,
 	eg. left/right ("smart") quotes to normal '/" quotes, if the font doesn't have it (eg. 14 builtin ones)
 
+
 [ ] 'em' doesn't pass down properly in InlineSpans, apparently
 	fn foo() -> Inline { make_text("hi").apply_style({ font_size: 2em }); }
 	foo().apply_style({ font_size: 20pt });
 
 	this is most likely because we override the style, rather than doing the "correct"
-	thing of doing a relative computation when the unit is relative.
+	thing of doing a relative computation when the unit is relative. though this would be a pain if
+	you actually wanted to override the font size to absolute 20pt, not 2em * 20pt
+
 
 [ ] borders will probably break if they need to span more than one page
 	we can have something to choose whether or not the top/bottom is drawn at the split, but the issue
-	is that those lines will take up space --- which is not accounted for in the LayoutSize...
+	is that those lines will take up space --- which is not (and cannot be) accounted for in the LayoutSize...
+
+	latex's mdframed seems to handle this situation, but that's prolly because latex doesn't layout like us. an
+	easy hack for now would just be to eat into the margin to draw the in-between-page top/bottom borders.
+
 
 [ ] dijkstra linebreaking might accidentally make an extra page;
 	- when rendering, use some mechanism (eg. proxy object) to only make the page if

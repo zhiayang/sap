@@ -85,5 +85,10 @@ namespace sap
 		std::optional<PathStyle> right {};
 		std::optional<PathStyle> top {};
 		std::optional<PathStyle> bottom {};
+
+		DynLength left_padding {};
+		DynLength right_padding {};
+		DynLength top_padding {};
+		DynLength bottom_padding {};
 	};
 }
