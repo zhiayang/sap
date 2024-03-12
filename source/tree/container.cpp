@@ -217,15 +217,21 @@ namespace sap::tree
 		layout::BorderObjects border_objs {};
 
 		auto make_hborder = [&](const PathStyle& ps) -> ErrorOr<std::unique_ptr<layout::LayoutObject>> {
-			auto path = tree::Path(ps,
-			    { PathSegment::move(Position(0, 0)), PathSegment::line(Position(final_size.width, 0)) });
+			auto w = final_size.width;
+			if(ps.cap_style != PathStyle::CapStyle::Butt)
+				w -= ps.line_width;
+
+			auto path = tree::Path(ps, { PathSegment::move(Position(0, 0)), PathSegment::line(Position(w, 0)) });
 
 			return Ok(*TRY(path.createLayoutObject(cs, cur_style, Size2d(INFINITY, INFINITY))).object);
 		};
 
 		auto make_vborder = [&](const PathStyle& ps) -> ErrorOr<std::unique_ptr<layout::LayoutObject>> {
-			auto path = tree::Path(ps,
-			    { PathSegment::move(Position(0, 0)), PathSegment::line(Position(0, final_size.total_height())) });
+			auto h = final_size.total_height();
+			if(ps.cap_style != PathStyle::CapStyle::Butt)
+				h -= ps.line_width;
+
+			auto path = tree::Path(ps, { PathSegment::move(Position(0, 0)), PathSegment::line(Position(0, h)) });
 			return Ok(*TRY(path.createLayoutObject(cs, cur_style, Size2d(INFINITY, INFINITY))).object);
 		};
 
