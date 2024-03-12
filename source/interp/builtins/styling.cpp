@@ -2,8 +2,7 @@
 // Copyright (c) 2022, zhiayang
 // SPDX-License-Identifier: Apache-2.0
 
-#include "tree/wrappers.h"
-#include "tree/paragraph.h"
+#include "tree/container.h"
 
 #include "interp/interp.h"
 #include "interp/builtin_fns.h"
@@ -119,5 +118,26 @@ namespace sap::interp::builtin
 	{
 		assert(args.size() == 0);
 		return EvalResult::ofValue(BS_Style::make(ev, ev->popStyle()));
+	}
+
+	ErrorOr<EvalResult> set_border_style(Evaluator* ev, std::vector<Value>& args)
+	{
+		assert(args.size() == 2);
+
+		BorderStyle bs {};
+		Value* obj;
+
+		if(args[0].type() == BS_BorderStyle::type)
+			(bs = BS_BorderStyle::unmake(ev, args[0])), (obj = &args[1]);
+		else
+			(bs = BS_BorderStyle::unmake(ev, args[1])), (obj = &args[0]);
+
+		auto tbo = std::move(*obj).takeTreeBlockObj();
+		auto* container = tbo->castToContainer();
+		if(not container)
+			return ErrMsg(ev, "border styles can only be set on containers (for now?)");
+
+		container->setBorderStyle(std::move(bs));
+		return EvalResult::ofValue(Value::treeBlockObject(std::move(tbo)));
 	}
 }

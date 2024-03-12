@@ -358,8 +358,8 @@ namespace pdf
 		m_custom_glyph_pos_adjustments[first].emplace_back(std::move(gids), std::move(adjustments));
 	}
 
-	std::vector<font::GlyphInfo>
-	PdfFont::getGlyphInfosForSubstitutedString(zst::span<GlyphId> glyphs, const font::FeatureSet& features) const
+	std::vector<font::GlyphInfo> PdfFont::getGlyphInfosForSubstitutedString(zst::span<GlyphId> glyphs,
+	    const font::FeatureSet& features) const
 	{
 		// next, get base metrics for each glyph.
 		std::vector<font::GlyphInfo> glyph_infos {};
@@ -409,8 +409,8 @@ namespace pdf
 	}
 
 
-	std::optional<std::vector<GlyphId>>
-	PdfFont::performSubstitutionsForGlyphSequence(zst::span<GlyphId> glyphs, const font::FeatureSet& features) const
+	std::optional<std::vector<GlyphId>> PdfFont::performSubstitutionsForGlyphSequence(zst::span<GlyphId> glyphs,
+	    const font::FeatureSet& features) const
 	{
 		auto subst = m_source->performSubstitutionsForGlyphSequence(glyphs, features);
 		if(not subst.has_value())

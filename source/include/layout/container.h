@@ -4,14 +4,20 @@
 
 #pragma once
 
-#include <span>
-
 #include "sap/path.h"
 #include "layout/layout_object.h"
 
 namespace sap::layout
 {
 	struct LayoutBase;
+
+	struct BorderObjects
+	{
+		std::unique_ptr<LayoutObject> top;
+		std::unique_ptr<LayoutObject> left;
+		std::unique_ptr<LayoutObject> right;
+		std::unique_ptr<LayoutObject> bottom;
+	};
 
 	struct Container : LayoutObject
 	{
@@ -26,7 +32,9 @@ namespace sap::layout
 		    LayoutSize size,
 		    Direction direction,
 		    bool glue_objects,
+		    BorderStyle border_style,
 		    std::vector<std::unique_ptr<LayoutObject>> objs,
+		    std::optional<BorderObjects> border_objs = std::nullopt,
 		    std::optional<Length> override_obj_spacing = std::nullopt);
 
 		void addObject(std::unique_ptr<LayoutObject> obj);
@@ -42,6 +50,8 @@ namespace sap::layout
 		Direction m_direction;
 		BorderStyle m_border_style;
 		std::vector<std::unique_ptr<LayoutObject>> m_objects;
+		std::optional<BorderObjects> m_border_objects {};
+
 		std::optional<Length> m_override_obj_spacing {};
 	};
 }

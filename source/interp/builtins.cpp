@@ -2,9 +2,6 @@
 // Copyright (c) 2022, zhiayang
 // SPDX-License-Identifier: Apache-2.0
 
-#include "sap/style.h"
-#include "sap/frontend.h"
-
 #include "layout/base.h"
 
 #include "interp/ast.h"
@@ -74,6 +71,7 @@ namespace sap::interp
 		define_builtin_struct<BS_FontFamily>(cs);
 		define_builtin_struct<BS_Style>(cs);
 		define_builtin_struct<BS_PathStyle>(cs);
+		define_builtin_struct<BS_BorderStyle>(cs);
 
 		define_builtin_union<BU_PathSegment>(cs);
 
@@ -151,6 +149,7 @@ namespace sap::interp
 		const auto t_bdocsettings = ptype_for_builtin<builtin::BS_DocumentSettings>();
 		const auto t_bdocproxy = ptype_for_builtin<builtin::BS_DocumentProxy>();
 		const auto t_blinkannot = ptype_for_builtin<builtin::BS_LinkAnnotation>();
+		const auto t_bborderstyle = ptype_for_builtin<builtin::BS_BorderStyle>();
 
 		const auto DEF = [&](auto&&... xs) {
 			auto ret = std::make_unique<BFD>(Location::builtin(), std::forward<decltype(xs)>(xs)...);
@@ -252,6 +251,9 @@ namespace sap::interp
 		DEF("apply_style", PL(P("style", t_bstyle), P("obj", t_tio)), t_tio, &B::apply_style_tio);
 		DEF("apply_style", PL(P("style", t_bstyle), P("obj", t_tbo)), t_tbo, &B::apply_style_tbo);
 
+		DEF("set_border_style", PL(P("style", t_bborderstyle), P("obj", t_tbo)), t_tbo, &B::set_border_style);
+		DEF("set_border_style", PL(P("obj", t_tbo), P("style", t_bborderstyle)), t_tbo, &B::set_border_style);
+
 		DEF("load_image", PL(P("1", t_str), P("2", t_length), P("3", T_O(t_length), make_null())), t_tbo,
 		    &B::load_image);
 
@@ -276,7 +278,6 @@ namespace sap::interp
 
 		DEF("set_width", PL(P("_", t_tio), P("width", t_length)), t_tio, &B::set_tio_width);
 		DEF("raise", PL(P("_", t_tio), P("width", t_length)), t_tio, &B::raise_tio);
-
 
 		DEF("link_to", PL(P("_", T_MP(t_tbo)), P("pos", t_abspos)), t_void, &B::set_tbo_link_annotation);
 		DEF("link_to", PL(P("_", T_MP(t_tbo)), P("obj", t_tbo_ref)), t_void, &B::set_tbo_link_annotation);

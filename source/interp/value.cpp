@@ -4,14 +4,8 @@
 
 #include <utf8proc/utf8proc.h>
 
-#include "tree/image.h"
-#include "tree/wrappers.h"
-#include "tree/container.h"
-#include "tree/paragraph.h"
-
-#include "layout/layout_object.h"
-
 #include "interp/value.h"
+#include "layout/layout_object.h"
 
 namespace sap::interp
 {

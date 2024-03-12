@@ -2,6 +2,7 @@
 // Copyright (c) 2022, zhiayang
 // SPDX-License-Identifier: Apache-2.0
 
+#include "tree/path.h"
 #include "tree/container.h"
 
 #include "interp/interp.h"
@@ -11,8 +12,6 @@
 #include "layout/line.h"
 #include "layout/container.h"
 #include "layout/paragraph.h"
-
-#include "pdf/font.h"
 
 namespace sap::tree
 {
@@ -55,11 +54,39 @@ namespace sap::tree
 		auto cur_style = m_style.useDefaultsFrom(parent_style).useDefaultsFrom(cs->evaluator().currentStyle());
 		std::vector<std::unique_ptr<layout::LayoutObject>> objects;
 
-		LayoutSize total_size {};
-		LayoutSize max_size {};
+		bool have_top_border = false;
+		bool have_left_border = false;
+		bool have_right_border = false;
+		bool have_bottom_border = false;
 
 		bool prev_child_was_phantom = false;
+		LayoutSize total_size {};
 
+		Length extra_border_width = 0;
+		Length extra_border_height = 0;
+
+		if(m_border_style.top.has_value() && m_border_style.top->line_width > 0)
+		{
+			extra_border_height += m_border_style.top->line_width;
+			have_top_border = true;
+		}
+
+		if(m_border_style.left.has_value() && m_border_style.left->line_width > 0)
+		{
+			extra_border_width += m_border_style.left->line_width;
+			have_left_border = true;
+		}
+
+		if(m_border_style.right.has_value() && m_border_style.right->line_width > 0)
+		{
+			extra_border_width += m_border_style.right->line_width;
+			have_right_border = true;
+		}
+
+		available_space.x() -= extra_border_width;
+		available_space.y() -= extra_border_height;
+
+		auto max_size = total_size;
 		for(size_t i = 0, obj_idx = 0; i < m_objects.size(); i++)
 		{
 			auto obj = TRY(m_objects[i].get()->createLayoutObject(cs, cur_style, available_space));
@@ -115,7 +142,9 @@ namespace sap::tree
 			}
 
 			total_size.width += obj_size.width;
-			if(obj_idx == 0)
+
+			// if we had a top border, our ascent should be 0.
+			if(obj_idx == 0 && not have_top_border)
 			{
 				total_size.ascent += obj_size.ascent;
 				total_size.descent += obj_size.descent;
@@ -132,9 +161,16 @@ namespace sap::tree
 			obj_idx++;
 		}
 
-
+		// FIXME: we might want to handle the case where we set a fixed size? we should probably still
+		// lay *something* out. especially if we have borders, we should draw those.
 		if(objects.empty())
 			return Ok(LayoutResult::empty());
+
+		if(m_border_style.bottom.has_value() && m_border_style.bottom->line_width > 0)
+		{
+			extra_border_height += m_border_style.bottom->line_width;
+			have_bottom_border = true;
+		}
 
 		LayoutSize final_size {};
 		layout::Container::Direction dir {};
@@ -175,7 +211,41 @@ namespace sap::tree
 			}
 		}
 
-		auto container = std::make_unique<layout::Container>(cur_style, final_size, dir, m_glued, std::move(objects));
+		final_size.width += extra_border_width;
+		final_size.descent += extra_border_height;
+
+		layout::BorderObjects border_objs {};
+
+		auto make_hborder = [&](const PathStyle& ps) -> ErrorOr<std::unique_ptr<layout::LayoutObject>> {
+			auto path = tree::Path(ps,
+			    { PathSegment::move(Position(0, 0)), PathSegment::line(Position(final_size.width, 0)) });
+
+			return Ok(*TRY(path.createLayoutObject(cs, cur_style, Size2d(INFINITY, INFINITY))).object);
+		};
+
+		auto make_vborder = [&](const PathStyle& ps) -> ErrorOr<std::unique_ptr<layout::LayoutObject>> {
+			auto path = tree::Path(ps,
+			    { PathSegment::move(Position(0, 0)), PathSegment::line(Position(0, final_size.total_height())) });
+			return Ok(*TRY(path.createLayoutObject(cs, cur_style, Size2d(INFINITY, INFINITY))).object);
+		};
+
+
+		if(have_top_border)
+			border_objs.top = TRY(make_hborder(*m_border_style.top));
+
+		if(have_left_border)
+			border_objs.left = TRY(make_vborder(*m_border_style.left));
+
+		if(have_right_border)
+			border_objs.right = TRY(make_vborder(*m_border_style.right));
+
+		if(have_bottom_border)
+			border_objs.bottom = TRY(make_hborder(*m_border_style.bottom));
+
+
+		auto container = std::make_unique<layout::Container>(cur_style, final_size, dir, m_glued, m_border_style,
+		    std::move(objects), std::move(border_objs));
+
 		return Ok(LayoutResult::make(std::move(container)));
 	}
 }

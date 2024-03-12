@@ -4,8 +4,6 @@
 
 #pragma once
 
-#include "util.h"
-
 #include "sap/path.h"
 #include "sap/annotation.h"
 #include "sap/document_settings.h"
@@ -244,6 +242,22 @@ namespace sap::interp::builtin
 		static GlyphSpacingAdjustment unmake(Evaluator* ev, const Value& value);
 	};
 
+	struct BS_BorderStyle
+	{
+		static constexpr auto name = "BorderStyle";
+
+		static const Type* type;
+		static std::vector<ast::StructDefn::Field> fields();
+
+		static Value make(Evaluator* ev, const BorderStyle& colour);
+		static BorderStyle unmake(Evaluator* ev, const Value& value);
+	};
+
+
+
+
+
+
 	struct BE_LineJoinStyle
 	{
 		static constexpr auto name = "LineJoinStyle";
@@ -278,7 +292,7 @@ namespace sap::interp::builtin
 		static std::vector<ast::StructDefn::Field> fields();
 
 		static Value make(Evaluator* ev, const PathStyle& style);
-		static ErrorOr<PathStyle> unmake(Evaluator* ev, const Value& value);
+		static PathStyle unmake(Evaluator* ev, const Value& value);
 	};
 
 
@@ -345,6 +359,19 @@ namespace sap::interp::builtin
 				return this->set(field, Value::optional(field_type, std::nullopt));
 		}
 
+		StructMaker& setOptional(zst::str_view field,
+		    std::optional<DynLength> value,
+		    Value (*value_factory)(DynLength value))
+		{
+			auto field_type = m_type->getFieldNamed(field)->optionalElement();
+
+			if(value.has_value())
+				return this->set(field, Value::optional(field_type, value_factory(std::move(*value))));
+			else
+				return this->set(field, Value::optional(field_type, std::nullopt));
+		}
+
+
 		template <typename T>
 		StructMaker& setOptional(zst::str_view field, std::optional<T> value, Evaluator* ev, Value (*fn)(Evaluator*, T))
 		{
@@ -356,8 +383,10 @@ namespace sap::interp::builtin
 		}
 
 		template <typename T>
-		StructMaker&
-		setOptional(zst::str_view field, std::optional<T> value, Evaluator* ev, Value (*fn)(Evaluator*, const T&))
+		StructMaker& setOptional(zst::str_view field,
+		    std::optional<T> value,
+		    Evaluator* ev,
+		    Value (*fn)(Evaluator*, const T&))
 		{
 			auto field_type = m_type->getFieldNamed(field)->optionalElement();
 			if(value.has_value())

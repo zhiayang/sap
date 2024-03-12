@@ -13,35 +13,29 @@ namespace sap::layout
 {
 	static FontFamily default_serif_font_family(interp::Interpreter* cs)
 	{
-		static auto ret = sap::FontFamily(                                                //
+		return sap::FontFamily(                                                           //
 		    &cs->addLoadedFont(pdf::PdfFont::fromBuiltin(pdf::BuiltinFont::TimesRoman)),  //
 		    &cs->addLoadedFont(pdf::PdfFont::fromBuiltin(pdf::BuiltinFont::TimesItalic)), //
 		    &cs->addLoadedFont(pdf::PdfFont::fromBuiltin(pdf::BuiltinFont::TimesBold)),   //
 		    &cs->addLoadedFont(pdf::PdfFont::fromBuiltin(pdf::BuiltinFont::TimesBoldItalic)));
-
-		return ret;
 	}
 
 	static FontFamily default_sans_font_family(interp::Interpreter* cs)
 	{
-		static auto ret = sap::FontFamily(                                                     //
+		return sap::FontFamily(                                                                //
 		    &cs->addLoadedFont(pdf::PdfFont::fromBuiltin(pdf::BuiltinFont::Helvetica)),        //
 		    &cs->addLoadedFont(pdf::PdfFont::fromBuiltin(pdf::BuiltinFont::HelveticaOblique)), //
 		    &cs->addLoadedFont(pdf::PdfFont::fromBuiltin(pdf::BuiltinFont::HelveticaBold)),    //
 		    &cs->addLoadedFont(pdf::PdfFont::fromBuiltin(pdf::BuiltinFont::HelveticaBoldOblique)));
-
-		return ret;
 	}
 
 	static FontFamily default_mono_font_family(interp::Interpreter* cs)
 	{
-		static auto ret = sap::FontFamily(                                                   //
+		return sap::FontFamily(                                                              //
 		    &cs->addLoadedFont(pdf::PdfFont::fromBuiltin(pdf::BuiltinFont::Courier)),        //
 		    &cs->addLoadedFont(pdf::PdfFont::fromBuiltin(pdf::BuiltinFont::CourierOblique)), //
 		    &cs->addLoadedFont(pdf::PdfFont::fromBuiltin(pdf::BuiltinFont::CourierBold)),    //
 		    &cs->addLoadedFont(pdf::PdfFont::fromBuiltin(pdf::BuiltinFont::CourierBoldOblique)));
-
-		return ret;
 	}
 
 

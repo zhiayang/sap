@@ -3,7 +3,6 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #include "sap/style.h"
-#include "tree/base.h"
 #include "interp/value.h"
 #include "interp/evaluator.h"
 #include "interp/builtin_types.h"
@@ -112,7 +111,7 @@ namespace sap::interp::builtin
 
 
 
-	ErrorOr<PathStyle> builtin::BS_PathStyle::unmake(Evaluator* ev, const Value& value)
+	PathStyle builtin::BS_PathStyle::unmake(Evaluator* ev, const Value& value)
 	{
 		auto cur_style = ev->currentStyle();
 
@@ -147,6 +146,6 @@ namespace sap::interp::builtin
 		if(auto& x = value.getStructField("fill_colour"); x.haveOptionalValue())
 			path_style.fill_colour = BS_Colour::unmake(ev, **x.getOptional());
 
-		return OkMove(path_style);
+		return path_style;
 	}
 }

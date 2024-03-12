@@ -4,14 +4,10 @@
 
 #pragma once
 
-#include <numeric>
-#include <sstream> // for operator<<, stringstream, basic_ostream
+#include <functional>
 
-#include "type.h" // for Type, FunctionType, ArrayType
-#include "util.h" // for u32StringFromUtf8
-
+#include "type.h"
 #include "sap/units.h"
-#include "interp/basedefs.h" // for InlineObject
 
 namespace sap::tree
 {

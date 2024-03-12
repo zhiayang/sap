@@ -13,10 +13,15 @@
 
 #if 0
 BUGS!!!!
-2. fix that stupid font-related crash when --watch runs a second time
-	edit: now i can't repro it. wtf?
 
-
+[ ] line spacing doesn't seem to carry properly into lists
+[ ] list items are not justified (and manually setting alignment does nothing)
+[ ] disabling page number inside script block does not work
+[ ] vbox items do not properly start on a new page; eg.
+    <para> <para> | <header>
+    if the | is a pagebreak, then the inter-item spacing in the vbox appears to be
+    broken somehow, and <header> starts higher up on the page than it should (vs. if we
+    had a manual \page_break() at the '|' point)
 
 TODO:
 scripting
@@ -25,10 +30,13 @@ scripting
 	- i think the { x } --> { x: x } shorthand was added; this is kinda at odds
 		with positional fields
 
-[ ] we already have '//' struct update operator; something like '//?' would be nice to
+[ ] we already have '//' struct update operator; something like '?//' would be nice to
 	be a 'set values for ?T fields that are null', rather than the current way which
-	is like foo // { x: .x ?? 0, y: .y ?? 0 } etc, we can have: foo //? { x: 0, y: 0 },
+	is like foo // { x: .x ?? 0, y: .y ?? 0 } etc, we can have: foo ?// { x: 0, y: 0 },
 	and they'll only replace if the respective field is null.
+
+	anyway `?//` looks nicer but is ambiguous with x?//{ ... } even though that would
+	be semantically wrong (since ? returns a bool).
 
 	also obviously check that the named fields are actually optional.
 
@@ -55,6 +63,10 @@ layout
 
 	this is most likely because we override the style, rather than doing the "correct"
 	thing of doing a relative computation when the unit is relative.
+
+[ ] borders will probably break if they need to span more than one page
+	we can have something to choose whether or not the top/bottom is drawn at the split, but the issue
+	is that those lines will take up space --- which is not accounted for in the LayoutSize...
 
 [ ] dijkstra linebreaking might accidentally make an extra page;
 	- when rendering, use some mechanism (eg. proxy object) to only make the page if

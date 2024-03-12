@@ -141,14 +141,20 @@ namespace sap
 
 namespace util::impl
 {
-	void log_impl(const std::string& msg)
+	void log_impl(const char* prefix, int level, const std::string& msg, const char* who)
 	{
-		using namespace sap;
-		bool coloured = isatty(STDOUT_FILENO);
+		const bool coloured = isatty(STDOUT_FILENO);
 
-		const char* colour_grey_bold = coloured ? COLOUR_GREY_BOLD : "";
-		const char* colour_reset = coloured ? COLOUR_RESET : "";
+		const char* grey_bold = coloured ? sap::COLOUR_GREY_BOLD : "";
+		const char* yellow_bold = coloured ? sap::COLOUR_YELLOW_BOLD : "";
+		const char* red_bold = coloured ? sap::COLOUR_RED_BOLD : "";
+		const char* blue_bold = coloured ? sap::COLOUR_BLUE_BOLD : "";
 
-		zpr::fprintln(stderr, "{}[log]:{} {}", colour_grey_bold, colour_reset, msg);
+		const char* prefix_colour = level == 1 ? grey_bold : level == 2 ? yellow_bold : red_bold;
+
+		const char* colour_reset = coloured ? sap::COLOUR_RESET : "";
+
+		zpr::fprintln(stderr, "{}[{}]{}{}{}{}{}{} {}", prefix_colour, prefix, colour_reset, who ? blue_bold : "",
+		    who ? " " : "", who ? who : "", who ? colour_reset : "", who ? ":" : "", msg);
 	}
 }

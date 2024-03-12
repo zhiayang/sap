@@ -32,6 +32,8 @@ namespace std
 	global var g_references: [Reference] = [];
 	global var g_citation_num = 0;
 
+	global var g_references_header_font_size = 20pt;
+
 	@layout {
 		g_references = [];
 		g_citation_num = 0;
@@ -162,7 +164,8 @@ namespace std
 
 		return builtin::make_vbox(builtin::make_hbox(
 				builtin::make_line(builtin::make_text("References"))
-			).apply_style({horz_alignment: .Left, font_size: 20pt, font_family: builtin::state().sans_font_family}),
+			).apply_style({horz_alignment: .Left, font_size: g_references_header_font_size,
+				font_family: builtin::state().sans_font_family}),
 			...*lines
 		);
 	}

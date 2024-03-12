@@ -113,7 +113,18 @@ let serif = builtin::find_font_family(["XCharter", "Times New Roman", "serif"]);
 		return make_paragraph(make_text("aaaaaaa"));
 	}
 
-	println(f"\{1\}aa");
+	fn help() -> Block
+	{
+		return set_border_style(make_vbox(
+			\line { Hello World },
+			\line { Goodbye World }
+		), BorderStyle {
+			top:    { line_width: 0.2cm, stroke_colour: std::rgb(1, 0, 0), cap_style: .Butt },
+			left:   { line_width: 0.2cm, stroke_colour: std::rgb(0, 1, 0), cap_style: .Butt },
+			right:  { line_width: 0.2cm, stroke_colour: std::rgb(0, 0, 1), cap_style: .Butt },
+			bottom: { line_width: 0.2cm, stroke_colour: std::rgb(1, 0, 1), cap_style: .Butt },
+		});
+	}
 }
 
 # \std::disable_page_numbering();
@@ -131,15 +142,17 @@ by accident, sometimes on purpose (injected humour and the like).
 
 # \vspace(-1em);
 
-\std::table({cols: 4},
-	\para{AA1}, \para{BB1}, \para{CC1}, \para{DD1},
-	\para{AA2}, \para{BB2}, \para{CC2}, \para{DD2},
-	\para{AA3}, \para{BB3}, \para{CC3}, \para{DD3},
-	\para{AA4}, \para{BB4}, \para{CC4}, \para{DD4});
+# \std::table({cols: 4},
+# 	\para{AA1}, \para{BB1}, \para{CC1}, \para{DD1},
+# 	\para{AA2}, \para{BB2}, \para{CC2}, \para{DD2},
+# 	\para{AA3}, \para{BB3}, \para{CC3}, \para{DD3},
+# 	\para{AA4}, \para{BB4}, \para{CC4}, \para{DD4});
 
 # \builtin::make_deferred_block(null, omegalul);
 
 # \haha()
+
+\help()
 
 hellohellohellohellohellohellohellohellohellohellohellohellohellohello
 

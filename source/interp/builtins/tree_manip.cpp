@@ -44,8 +44,10 @@ namespace sap::interp::builtin
 	}
 
 
-	static ErrorOr<EvalResult>
-	make_box(Evaluator* ev, Value& arr, tree::Container::Direction direction, bool glued = false)
+	static ErrorOr<EvalResult> make_box(Evaluator* ev,
+	    Value& arr,
+	    tree::Container::Direction direction,
+	    bool glued = false)
 	{
 		assert(arr.type()->isVariadicArray());
 
@@ -203,10 +205,9 @@ namespace sap::interp::builtin
 		if(ev->interpreter()->currentPhase() <= ProcessingPhase::Layout)
 			return ErrMsg(ev, "`layout_object()` can only be called after the layout phase");
 
-		auto layout_obj =
-		    value.isTreeBlockObj()
-		        ? value.getTreeBlockObj().getGeneratedLayoutObject()
-		        : value.getTreeBlockObjectRef()->getGeneratedLayoutObject();
+		auto layout_obj = value.isTreeBlockObj()
+		                    ? value.getTreeBlockObj().getGeneratedLayoutObject()
+		                    : value.getTreeBlockObjectRef()->getGeneratedLayoutObject();
 
 		auto ref_type = Type::makeLayoutObjectRef();
 
@@ -227,12 +228,12 @@ namespace sap::interp::builtin
 		for(auto& v : args[0].getArray())
 			segments.push_back(BU_PathSegment::unmake(ev, v));
 
-		auto path_style = TRY(([ev, &args]() -> ErrorOr<PathStyle> {
+		auto path_style = [ev, &args]() -> PathStyle {
 			if(args[1].haveOptionalValue())
 				return BS_PathStyle::unmake(ev, **args[1].getOptional());
 			else
-				return Ok(PathStyle {});
-		}()));
+				return PathStyle {};
+		}();
 
 		return EvalResult::ofValue(Value::treeBlockObject(zst::make_shared<tree::Path>(std::move(path_style),
 		    std::move(segments))));
@@ -401,10 +402,10 @@ namespace sap::interp::builtin
 		auto& value = *args[0].getPointer();
 		assert(value.isLayoutObject() || value.isLayoutObjectRef());
 
-		auto obj = const_cast<layout::LayoutObject*>(
-		    args[0].isLayoutObject() //
-		        ? &value.getLayoutObject()
-		        : value.getLayoutObjectRef());
+		auto obj = const_cast<
+		    layout::LayoutObject*>(args[0].isLayoutObject() //
+		                               ? &value.getLayoutObject()
+		                               : value.getLayoutObjectRef());
 
 		return set_link_annotation(ev, obj, args[1]);
 	}
@@ -414,10 +415,10 @@ namespace sap::interp::builtin
 		auto& value = *args[0].getPointer();
 		assert(value.type()->isTreeBlockObj() || value.type()->isTreeBlockObjRef());
 
-		auto tbo = const_cast<tree::BlockObject*>(
-		    value.isTreeBlockObj() //
-		        ? &value.getTreeBlockObj()
-		        : value.getTreeBlockObjectRef());
+		auto tbo = const_cast<
+		    tree::BlockObject*>(value.isTreeBlockObj() //
+		                            ? &value.getTreeBlockObj()
+		                            : value.getTreeBlockObjectRef());
 
 		return set_link_annotation(ev, tbo, args[1]);
 	}
@@ -428,10 +429,10 @@ namespace sap::interp::builtin
 		auto& value = *args[0].getPointer();
 		assert(value.type()->isTreeInlineObj() || value.type()->isTreeInlineObjRef());
 
-		auto tio = const_cast<tree::InlineSpan*>(
-		    value.isTreeInlineObj() //
-		        ? &value.getTreeInlineObj()
-		        : value.getTreeInlineObjectRef());
+		auto tio = const_cast<
+		    tree::InlineSpan*>(value.isTreeInlineObj() //
+		                           ? &value.getTreeInlineObj()
+		                           : value.getTreeInlineObjectRef());
 
 		TRY(set_link_annotation(ev, tio, args[1]));
 

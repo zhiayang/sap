@@ -108,7 +108,9 @@ namespace sap::tree
 		    },
 		    layout::Container::Direction::Vertical, //
 		    /* glue: */ false,                      //
-		    std::move(lines),                       //
+		    /* border_style: */ BorderStyle {},
+		    /* objects: */ std::move(lines),
+		    /* border objs: */ std::nullopt,
 		    /* override obj spacing: */ line_separation);
 
 		return Ok(LayoutResult::make(std::move(vbox)));

@@ -92,6 +92,10 @@ namespace std
 				- (cfg.cols * (cfg.cell_padding!.left! + cfg.cell_padding!.right!))
 			) / num_unspecified_cols;
 
+		# basic idea: draw one row at a time with the correct horizontal borders.
+		# if there is space for the current row,
+
+
 		# make one row at a time
 		# i guess this is some kind of tail call closure whatever shit
 		var remaining: [Block] = [];

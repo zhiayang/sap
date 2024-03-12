@@ -3,7 +3,6 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #include "sap/style.h"
-#include "tree/base.h"
 #include "interp/value.h"
 #include "interp/evaluator.h"
 #include "interp/builtin_types.h"

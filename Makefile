@@ -21,14 +21,14 @@ ifeq ("$(findstring gcc,$(CXX_VERSION_STRING))", "gcc")
 else
 endif
 
-OPT_FLAGS           := -march=native -fsanitize=undefined,address # -Og
+OPT_FLAGS           := -g -O0 -march=native -fsanitize=address # -Og
 LINKER_OPT_FLAGS    :=
-COMMON_CFLAGS       := -g $(OPT_FLAGS)
+COMMON_CFLAGS       := $(OPT_FLAGS)
 
 OUTPUT_DIR          := build
 TEST_DIR            := $(OUTPUT_DIR)/test
 
-CFLAGS              = $(COMMON_CFLAGS) -std=c99 -fPIC -O3 -march=native
+CFLAGS              = $(COMMON_CFLAGS) -std=c99 -O3 -march=native
 CXXFLAGS            = $(COMMON_CFLAGS) -Wno-old-style-cast -std=c++20 -fno-exceptions
 
 CXXSRC              := $(shell find source -iname "*.cpp" -print)
@@ -57,9 +57,11 @@ EXTERNAL_OBJS       := $(EXTERNAL_SRCS:%.c=$(OUTPUT_DIR)/%.c.o)
 
 
 PRECOMP_HDR         := source/include/precompile.h
-PRECOMP_GCH         := $(PRECOMP_HDR:%.h=$(OUTPUT_DIR)/%.h.gch)
+PRECOMP_GCH         := $(PRECOMP_HDR:%.h=$(OUTPUT_DIR)/%.h.pch)
 PRECOMP_INCLUDE     := $(PRECOMP_HDR:%.h=$(OUTPUT_DIR)/%.h)
-PRECOMP_OBJ         := $(PRECOMP_HDR:%.h=$(OUTPUT_DIR)/%.h.gch.o)
+PRECOMP_OBJ         := $(PRECOMP_HDR:%.h=$(OUTPUT_DIR)/%.h.pch.o)
+
+UNAME_IDENT := $(shell uname)
 
 ifeq ("$(findstring clang,$(shell $(CXX) --version | head -n1))", "clang")
 	ifeq ("$(UNAME_IDENT)", "Darwin")
@@ -79,7 +81,6 @@ GIT_REVISION        := $(shell git describe --always --dirty)
 DEFINES             := -DGIT_REVISION=\"$(GIT_REVISION)\"
 INCLUDES            := -Isource/include -Iexternal
 
-UNAME_IDENT := $(shell uname)
 ifeq ("$(UNAME_IDENT)", "Linux")
 	USE_FONTCONFIG := 1
 endif
@@ -136,6 +137,8 @@ $(OUTPUT_BIN): $(PRECOMP_OBJ) $(CXXOBJ) $(EXTERNAL_OBJS)
 	@echo "  $(notdir $@)"
 	@mkdir -p $(shell dirname $@)
 	@$(CXX) $(CXXFLAGS) $(WARNINGS) $(DEFINES) $(LDFLAGS) $(LINKER_OPT_FLAGS) -Iexternal -o $@ $^
+	@case "$(CXXFLAGS)" in "-g "* | *" -g" | *" -g "*) \
+		echo "  debuginfo"; dsymutil $@ 2>/dev/null ;; *) ;; esac
 
 $(TEST_DIR)/%: $(OUTPUT_DIR)/test/%.cpp.o $(CXXLIBOBJ) $(EXTERNAL_OBJS) $(PRECOMP_OBJ)
 	@echo "  $(notdir $@)"
@@ -156,7 +159,7 @@ $(PRECOMP_GCH): $(PRECOMP_HDR)
 	@printf "# precompiling header $<\n"
 	@mkdir -p $(shell dirname $@)
 	@$(CXX) $(CXXFLAGS) $(NONGCH_CXXFLAGS) $(WARNINGS) $(INCLUDES) $(CLANG_PCH_FASTER) -MMD -MP -x c++-header -o $@ $<
-	@cp $< $(@:%.gch=%)
+	@cp $< $(@:%.pch=%)
 
 $(PRECOMP_OBJ): $(PRECOMP_GCH)
 	@printf "# compiling pch\n"
@@ -164,13 +167,13 @@ $(PRECOMP_OBJ): $(PRECOMP_GCH)
 	@$(CXX) $(CXXFLAGS) $(WARNINGS) -c -o $@ $<
 
 %.h.compile_db: %.h
-	@$(CXX) $(CXXFLAGS) $(WARNINGS) $(INCLUDES) -include $(PRECOMP_HDR) -x c++-header -o /dev/null $<
+	@$(CXX) $(CXXFLAGS) $(WARNINGS) $(INCLUDES) $(DEFINES) -include $(PRECOMP_HDR) -x c++-header -o /dev/null $<
 
 %.h.special_compile_db: %.h
-	@$(CXX) $(CXXFLAGS) $(WARNINGS) $(INCLUDES) -x c++-header -o /dev/null $<
+	@$(CXX) $(CXXFLAGS) $(WARNINGS) $(INCLUDES) $(DEFINES) -x c++-header -o /dev/null $<
 
 %.cpp.compile_db: %.cpp
-	@$(CXX) $(CXXFLAGS) $(WARNINGS) $(INCLUDES) -include $(PRECOMP_HDR) -o /dev/null $<
+	@$(CXX) $(CXXFLAGS) $(WARNINGS) $(INCLUDES) $(DEFINES) -include $(PRECOMP_HDR) -o /dev/null $<
 
 
 
@@ -194,15 +197,10 @@ format:
 	find source -iname '*.cpp' -or -iname '*.h' | xargs -I{} -- ./tools/sort_includes.py -i {}
 	clang-format -i $(shell find source -iname "*.cpp" -or -iname "*.h")
 
-iwyu:
-	iwyu-tool -j 8 -p . source -- -Xiwyu --update_comments -Xiwyu --no_fwd_decls -Xiwyu --prefix_header_includes=keep | iwyu-fix-includes --comments --update_comments
-	find source -iname '*.cpp' -or -iname '*.h' | xargs -I{} -- ./tools/sort_includes.py -i {}
-	clang-format -i $(shell find source -iname "*.cpp" -or -iname "*.h")
-
 -include $(CXXDEPS)
 -include $(TESTDEPS)
 -include $(CDEPS)
--include $(PRECOMP_GCH:%.gch=%.d)
+-include $(PRECOMP_GCH:%.pch=%.d)
 
 
 

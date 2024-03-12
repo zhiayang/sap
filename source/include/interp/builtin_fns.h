@@ -4,10 +4,6 @@
 
 #pragma once
 
-#include <memory>
-
-#include "util.h"
-
 #include "interp/value.h"       // for Interpreter, Value
 #include "interp/eval_result.h" // for EvalResult
 
@@ -87,6 +83,7 @@ namespace sap::interp
 
 		ErrorOr<EvalResult> output_at_absolute_pos_tbo(Evaluator* ev, std::vector<Value>& args);
 
+		ErrorOr<EvalResult> set_border_style(Evaluator* ev, std::vector<Value>& args);
 
 		ErrorOr<EvalResult> adjust_glyph_spacing(Evaluator* ev, std::vector<Value>& args);
 	}

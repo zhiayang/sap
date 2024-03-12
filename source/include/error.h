@@ -16,6 +16,11 @@
 
 #include "location.h"
 
+namespace util::impl
+{
+	void log_impl(const char* prefix, int level, const std::string& msg, const char* who = nullptr);
+}
+
 namespace sap
 {
 	namespace interp
@@ -75,27 +80,25 @@ namespace sap
 	[[noreturn]] inline void internal_error(const char* fmt, Args&&... args)
 	{
 		zpr::fprintln(stderr, "error: {}", zpr::fwd(fmt, static_cast<Args&&>(args)...));
-		// exit(1);
 		abort();
 	}
 
 	template <typename... Args>
 	inline void log(const char* who, const char* fmt, Args&&... args)
 	{
-		zpr::println("[log] {}: {}", who, zpr::fwd(fmt, static_cast<Args&&>(args)...));
+		util::impl::log_impl("log", 1, zpr::sprint(fmt, static_cast<Args&&>(args)...), who);
 	}
 
 	template <typename... Args>
 	inline void warn(const char* who, const char* fmt, Args&&... args)
 	{
-		zpr::println("[wrn] {}: {}", who, zpr::fwd(fmt, static_cast<Args&&>(args)...));
+		util::impl::log_impl("wrn", 2, zpr::sprint(fmt, static_cast<Args&&>(args)...), who);
 	}
 
 	template <typename... Args>
 	[[noreturn]] inline void error(const char* who, const char* fmt, Args&&... args)
 	{
-		zpr::println("[err] {}: {}", who, zpr::fwd(fmt, static_cast<Args&&>(args)...));
-		// exit(1);
+		util::impl::log_impl("err", 3, zpr::sprint(fmt, static_cast<Args&&>(args)...), who);
 		abort();
 	}
 }

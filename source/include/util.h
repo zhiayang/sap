@@ -20,6 +20,7 @@
 #include <ankerl/unordered_dense.h>
 
 #include "types.h"
+#include "error.h"
 
 namespace util
 {
@@ -420,15 +421,22 @@ namespace util
 			return zst::byteswap(x);
 	}
 
-	namespace impl
-	{
-		void log_impl(const std::string& msg);
-	}
-
 	template <typename... Args>
 	void log(const char* fmt, Args&&... args)
 	{
-		impl::log_impl(zpr::sprint(fmt, static_cast<Args&&>(args)...));
+		impl::log_impl("log", 1, zpr::sprint(fmt, static_cast<Args&&>(args)...));
+	}
+
+	template <typename... Args>
+	void warn(const char* fmt, Args&&... args)
+	{
+		impl::log_impl("wrn", 2, zpr::sprint(fmt, static_cast<Args&&>(args)...));
+	}
+
+	template <typename... Args>
+	void error(const char* fmt, Args&&... args)
+	{
+		impl::log_impl("err", 3, zpr::sprint(fmt, static_cast<Args&&>(args)...));
 	}
 }
 

@@ -169,7 +169,6 @@ namespace dim
 		constexpr bool operator<(const self_type& other) const { return this->_x < other._x; }
 		constexpr bool operator>(const self_type& other) const { return this->_x > other._x; }
 
-
 		template <typename _Scalar>
 		constexpr auto into() const
 		    requires((impl::is_scalar<_Scalar>::value)
@@ -337,6 +336,18 @@ namespace dim
 		scalar_type _x;
 		scalar_type _y;
 	};
+
+	template <typename _S, typename _T>
+	constexpr Scalar<_S, _T> min(Scalar<_S, _T> a, Scalar<_S, _T> b)
+	{
+		return a < b ? a : b;
+	}
+
+	template <typename _S, typename _T>
+	constexpr Scalar<_S, _T> max(Scalar<_S, _T> a, Scalar<_S, _T> b)
+	{
+		return a >= b ? a : b;
+	}
 
 	namespace units
 	{

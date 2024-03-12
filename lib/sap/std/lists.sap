@@ -40,7 +40,7 @@ namespace std
 		{
 			lines += [builtin::make_hbox(
 				builtin::hspace(0.8em),
-				builtin::make_line(builtin::make_text("•").raise(-0.15em)).apply_style({ horz_alignment: .Right }),
+				builtin::make_line(builtin::make_text(f"•").raise(-0.15em)).apply_style({ horz_alignment: .Right }),
 				builtin::hspace(0.6em),
 				builtin::make_paragraph(*items[i]).apply_style({ line_spacing: 1.2 })
 			)];

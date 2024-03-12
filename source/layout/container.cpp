@@ -2,9 +2,6 @@
 // Copyright (c) 2022, zhiayang
 // SPDX-License-Identifier: Apache-2.0
 
-#include <span>
-
-#include "layout/line.h"
 #include "layout/container.h"
 
 namespace sap::layout
@@ -13,12 +10,16 @@ namespace sap::layout
 	    LayoutSize size,
 	    Direction direction,
 	    bool glued,
+	    BorderStyle border_style,
 	    std::vector<std::unique_ptr<LayoutObject>> objs,
+	    std::optional<BorderObjects> border_objs,
 	    std::optional<Length> override_obj_spacing)
 	    : LayoutObject(style, std::move(size))
 	    , m_glued(glued)
 	    , m_direction(direction)
+	    , m_border_style(std::move(border_style))
 	    , m_objects(std::move(objs))
+	    , m_border_objects(std::move(border_objs))
 	    , m_override_obj_spacing(std::move(override_obj_spacing))
 	{
 	}
@@ -140,7 +141,6 @@ namespace sap::layout
 				}
 				break;
 			}
-			util::unreachable();
 		}
 
 		bool is_first_child = true;
@@ -229,8 +229,8 @@ namespace sap::layout
 					    first=1 shiftF=1 shiftR=0   -> 1
 					    first=1 shiftF=1 shiftR=1   -> 1
 					*/
-					bool to_shift =
-					    (is_first_child ? shift_by_ascent_of_first_child : shift_by_ascent_of_remaining_children);
+					bool to_shift = (is_first_child ? shift_by_ascent_of_first_child
+					                                : shift_by_ascent_of_remaining_children);
 
 					if(to_shift)
 						cursor = cursor.newLine(child->layoutSize().ascent);
@@ -264,6 +264,36 @@ namespace sap::layout
 		if(m_objects.empty())
 			return cursor;
 
+		auto initial_cursor = cursor;
+
+		LayoutSize content_size {};
+		content_size.width = m_layout_size.width;
+		content_size.ascent = 0;
+		content_size.descent = m_layout_size.total_height();
+
+		auto get_line_width = [](const std::optional<PathStyle>& s) -> Length {
+			return s.has_value() ? s->line_width : 0;
+		};
+
+		content_size.descent -= get_line_width(m_border_style.top);
+		content_size.descent -= get_line_width(m_border_style.bottom);
+
+		content_size.width -= get_line_width(m_border_style.left);
+		content_size.width -= get_line_width(m_border_style.right);
+
+
+		if(m_border_objects.has_value() && m_border_objects->top)
+		{
+			m_border_objects->top->computePosition(initial_cursor);
+			cursor = cursor.moveDown(m_border_objects->top->layoutSize().total_height());
+		}
+
+		if(m_border_objects.has_value() && m_border_objects->left)
+		{
+			m_border_objects->left->computePosition(initial_cursor);
+			cursor = cursor.moveRight(m_border_objects->left->layoutSize().width);
+		}
+
 		auto spacing = m_override_obj_spacing.value_or(m_style.paragraph_spacing());
 
 		cursor = position_children_in_container(cursor,       //
@@ -279,18 +309,48 @@ namespace sap::layout
 		{
 			case None:
 			case Horizontal: { //
-				return cursor.moveDown(m_layout_size.descent);
+				cursor = cursor.moveDown(m_layout_size.descent);
+				break;
 			}
 
 			case Vertical: //
-				return cursor;
+				break;
 		}
-		util::unreachable();
+
+		if(m_border_objects.has_value() && m_border_objects->right)
+		{
+			m_border_objects->right
+			    ->computePosition(initial_cursor.moveRight(get_line_width(m_border_style.left) + content_size.width));
+			cursor = cursor.moveRight(m_border_objects->right->layoutSize().width);
+		}
+
+		if(m_border_objects.has_value() && m_border_objects->bottom)
+		{
+			m_border_objects->bottom
+			    ->computePosition(initial_cursor
+			                          .moveDown(get_line_width(m_border_style.top) + content_size.total_height()));
+
+			cursor = cursor.moveDown(m_border_objects->bottom->layoutSize().total_height());
+		}
+
+		return cursor;
 	}
 
 	void Container::render_impl(const LayoutBase* layout, std::vector<pdf::Page*>& pages) const
 	{
 		for(auto& obj : m_objects)
 			obj->render(layout, pages);
+
+		if(m_border_objects.has_value())
+		{
+			if(m_border_objects->top)
+				m_border_objects->top->render(layout, pages);
+			if(m_border_objects->left)
+				m_border_objects->left->render(layout, pages);
+			if(m_border_objects->right)
+				m_border_objects->right->render(layout, pages);
+			if(m_border_objects->bottom)
+				m_border_objects->bottom->render(layout, pages);
+		}
 	}
 }
