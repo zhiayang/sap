@@ -46,6 +46,15 @@ scripting
 	%pw/ph for page w/h, %lw/lh for line, %w/h for the size of the parent container
 	would need a bunch of changes in DynLength but hopefully not too much?
 
+[ ] DynLengths are generally broken; they are not consistently resolved at the usage
+	site, due to the use of ev->currentStyle() and certain structs (eg. PathStyle) storing
+	Lengths rather than DynLengths. We don't want to leak Styles into the pdf layer, so
+	that shouldn't change, but then we need a way to consistently resolve the DynLengths at
+	the correct place.
+
+	eg. `2em` should always be relative to whatever object that it is applied to, regardless
+	of the call/instantiation site.
+
 [ ] heckin generics plz
 
 [ ] GO BACK TO UNIQUE_PTR PLS

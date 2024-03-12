@@ -83,6 +83,13 @@ namespace sap::tree
 			have_right_border = true;
 		}
 
+		extra_border_width += m_border_style.left_padding.resolve(cur_style);
+		extra_border_width += m_border_style.right_padding.resolve(cur_style);
+
+		extra_border_height += m_border_style.top_padding.resolve(cur_style);
+		extra_border_height += m_border_style.bottom_padding.resolve(cur_style);
+
+
 		available_space.x() -= extra_border_width;
 		available_space.y() -= extra_border_height;
 
@@ -215,6 +222,22 @@ namespace sap::tree
 		final_size.descent += extra_border_height;
 
 		layout::BorderObjects border_objs {};
+
+		// TODO: this should move to layout/container.cpp, when we are placing the children. if the
+		// children overflow a page, then we need 6-8 lines (for 2 pages), so obviously storing the
+		// border objects a-priori is not a good idea. that does mean we need mutable state in the
+		// layout::Container (to store the objects there between computePosition() and render()), which sucks
+
+		// TODO: borders are generally fucked; consider horz/vert alignment; we want the borders to
+		// fit around the content (eg. centre alignment -- the border is a box in the middle of the page).
+		//
+		// also, i suppose if the alignment style is Justified, then the border should take up the whole
+		// page width; if left/right/centre it should be tight around the content and move with it.
+
+		// note: due to the slightly weird way that we handle positioning path objects, the top-left corner
+		// of the entire path object is always the leftmost filled point in the tight bounding box, no matter
+		// where the actual coordinates are. eg. `moveto(1000, 1000); lineto(1010, 1010)` is equivalent to
+		// `lineto(10, 10)`. kinda cursed but whatever.
 
 		auto make_hborder = [&](const PathStyle& ps) -> ErrorOr<std::unique_ptr<layout::LayoutObject>> {
 			auto w = final_size.width;

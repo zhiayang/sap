@@ -115,7 +115,7 @@ let serif = builtin::find_font_family(["XCharter", "Times New Roman", "serif"]);
 
 	fn help() -> Block
 	{
-		return set_border_style(make_vbox(
+		return set_border_style(apply_style({horz_alignment: .Centred}, make_vbox(
 			\line { Hello World },
 			\line { Goodbye World },
 			\line { Goodbye World },
@@ -124,11 +124,15 @@ let serif = builtin::find_font_family(["XCharter", "Times New Roman", "serif"]);
 			\line { Goodbye World },
 			\line { Goodbye World },
 			\line { Goodbye World },
-		), BorderStyle {
+		)), BorderStyle {
 			top:    { line_width: 0.2cm, stroke_colour: std::rgb(1, 0, 0), cap_style: .Round },
 			left:   { line_width: 0.2cm, stroke_colour: std::rgb(0, 1, 0), cap_style: .Round },
 			right:  { line_width: 0.2cm, stroke_colour: std::rgb(0, 0, 1), cap_style: .Round },
 			bottom: { line_width: 0.2cm, stroke_colour: std::rgb(1, 0, 1), cap_style: .Round },
+			top_padding: 2mm,
+			left_padding: 10mm,
+			right_padding: 5mm,
+			bottom_padding: 20mm,
 		});
 	}
 }

@@ -264,7 +264,7 @@ namespace sap::layout
 		if(m_objects.empty())
 			return cursor;
 
-		auto initial_cursor = cursor;
+		const auto initial_cursor = cursor;
 
 		LayoutSize content_size {};
 		content_size.width = m_layout_size.width;
@@ -281,7 +281,6 @@ namespace sap::layout
 		content_size.width -= get_line_width(m_border_style.left);
 		content_size.width -= get_line_width(m_border_style.right);
 
-
 		if(m_border_objects.has_value() && m_border_objects->top)
 		{
 			m_border_objects->top->computePosition(initial_cursor);
@@ -294,7 +293,14 @@ namespace sap::layout
 			cursor = cursor.moveRight(m_border_objects->left->layoutSize().width);
 		}
 
+		cursor = cursor.moveRight(m_border_style.left_padding.resolve(m_style))
+		             .moveDown(m_border_style.top_padding.resolve(m_style));
+
 		auto spacing = m_override_obj_spacing.value_or(m_style.paragraph_spacing());
+
+		// FIXME: no idea if `m_layout_size.width` below is correct, or it should be content_size?
+		// we use it as the content size to determine how much to move in the x-axis to align centre/right
+		// now we need to account for borders and space changes. pain.
 
 		cursor = position_children_in_container(cursor,       //
 		    m_layout_size.width,                              //
@@ -317,19 +323,21 @@ namespace sap::layout
 				break;
 		}
 
+		cursor = cursor.moveRight(m_border_style.right_padding.resolve(m_style));
 		if(m_border_objects.has_value() && m_border_objects->right)
 		{
-			m_border_objects->right
-			    ->computePosition(initial_cursor.moveRight(get_line_width(m_border_style.left) + content_size.width));
+			auto at = initial_cursor.moveRight(get_line_width(m_border_style.left)).moveRight(content_size.width);
+
+			m_border_objects->right->computePosition(at);
 			cursor = cursor.moveRight(m_border_objects->right->layoutSize().width);
 		}
 
+		cursor = cursor.moveDown(m_border_style.bottom_padding.resolve(m_style));
 		if(m_border_objects.has_value() && m_border_objects->bottom)
 		{
-			m_border_objects->bottom
-			    ->computePosition(initial_cursor
-			                          .moveDown(get_line_width(m_border_style.top) + content_size.total_height()));
+			auto at = initial_cursor.moveDown(get_line_width(m_border_style.top)).moveDown(content_size.total_height());
 
+			m_border_objects->bottom->computePosition(at);
 			cursor = cursor.moveDown(m_border_objects->bottom->layoutSize().total_height());
 		}
 
