@@ -2,6 +2,7 @@
 // Copyright (c) 2022, zhiayang
 // SPDX-License-Identifier: Apache-2.0
 
+#include "tree/path.h"
 #include "layout/container.h"
 
 namespace sap::layout
@@ -12,14 +13,12 @@ namespace sap::layout
 	    bool glued,
 	    BorderStyle border_style,
 	    std::vector<std::unique_ptr<LayoutObject>> objs,
-	    std::optional<BorderObjects> border_objs,
 	    std::optional<Length> override_obj_spacing)
 	    : LayoutObject(style, std::move(size))
 	    , m_glued(glued)
 	    , m_direction(direction)
 	    , m_border_style(std::move(border_style))
 	    , m_objects(std::move(objs))
-	    , m_border_objects(std::move(border_objs))
 	    , m_override_obj_spacing(std::move(override_obj_spacing))
 	{
 	}
@@ -62,6 +61,10 @@ namespace sap::layout
 		util::unreachable();
 	}
 
+	static Length get_line_width(const std::optional<PathStyle>& s)
+	{
+		return s.has_value() ? s->line_width : 0;
+	}
 
 	static layout::PageCursor position_children_in_container(layout::PageCursor cursor,
 	    Length self_width,
@@ -70,16 +73,30 @@ namespace sap::layout
 	    Length vert_obj_spacing,
 	    bool shift_by_ascent_of_first_child,
 	    bool shift_by_ascent_of_remaining_children,
-	    const std::vector<std::unique_ptr<LayoutObject>>& objects)
+	    const std::vector<std::unique_ptr<LayoutObject>>& objects,
+	    const Style& cur_style,
+	    const BorderStyle& border_style,
+	    std::vector<layout::Path>& border_objs)
 	{
 		using enum Alignment;
 		using enum Container::Direction;
+
+		// yeet any cached border objects from the last thing
+		border_objs.clear();
 
 		if(objects.empty())
 			return cursor;
 
 		auto initial_pos = cursor.position().pos;
 		Length obj_spacing = 0;
+
+		/*
+		    border stuff:
+		    - `self_width` includes the space required for the left/right borders + padding
+		*/
+
+		const auto auxiliary_space = get_line_width(border_style.left) + border_style.left_padding.resolve(cur_style)
+		                           + get_line_width(border_style.right) + border_style.right_padding.resolve(cur_style);
 
 		switch(direction)
 		{
@@ -132,8 +149,10 @@ namespace sap::layout
 						}
 						else
 						{
-							obj_spacing = std::max(Length(0),
-							    (horz_space - self_width) / static_cast<double>(objects.size() - 1));
+							// for jusitified, we always take the max space; however, obj-spacing
+							// should exclude the space taken by the borders.
+							const auto total_space = horz_space - self_width - auxiliary_space;
+							obj_spacing = std::max(Length(0), total_space / static_cast<double>(objects.size() - 1));
 						}
 
 						break;
@@ -142,6 +161,73 @@ namespace sap::layout
 				break;
 			}
 		}
+
+		// add the border objects now. size computation should have already figured out
+		// the height of the total container and included the top/bottom border+padding.
+		const auto make_hborder = [&](const PathStyle& ps) -> ErrorOr<layout::Path> {
+			auto w = self_width;
+			if(ps.cap_style != PathStyle::CapStyle::Butt)
+				w -= ps.line_width;
+
+			auto path = tree::Path(ps, { PathSegment::move(Position(0, 0)), PathSegment::line(Position(w, 0)) });
+
+			return Ok(TRY(path.createLayoutObjectWithoutInterp(cur_style)));
+		};
+
+		// auto make_vborder = [&](const PathStyle& ps) -> ErrorOr<std::unique_ptr<layout::LayoutObject>> {
+		// 	auto h = final_size.total_height();
+		// 	if(ps.cap_style != PathStyle::CapStyle::Butt)
+		// 		h -= ps.line_width;
+
+		// 	auto path = tree::Path(ps, { PathSegment::move(Position(0, 0)), PathSegment::line(Position(0, h)) });
+		// 	return Ok(*TRY(path.createLayoutObject(cs, cur_style, Size2d(INFINITY, INFINITY))).object);
+		// };
+
+		if(border_style.top)
+		{
+			auto& b = border_objs.emplace_back(make_hborder(*border_style.top).unwrap());
+
+			// move the cursor to the right place. if we are vertically stacked, the border
+			// should start at the leftmost content position eg:
+			// =========
+			//    foo
+			// hahahahah
+			//    bar
+
+			switch(direction)
+			{
+				case None:
+				case Vertical: {
+					cursor = cursor.carriageReturn();
+					cursor = cursor.moveRight(initial_pos.x() - cursor.position().pos.x());
+					const auto horz_space = cursor.widthAtCursor() - auxiliary_space;
+
+					switch(horz_alignment)
+					{
+						case Left:
+						case Justified: break;
+
+						case Right: {
+							cursor = cursor.moveRight(horz_space - self_width);
+							cursor = cursor.moveRight(self_width);
+							break;
+						}
+
+						case Centre: {
+							cursor = cursor.moveRight((horz_space - self_width) / 2);
+							break;
+						}
+					}
+					break;
+				}
+
+				case Horizontal: break;
+			}
+
+			cursor = b.computePosition(cursor);
+		}
+
+		cursor = cursor.moveDown(border_style.top_padding.resolve(cur_style));
 
 		bool is_first_child = true;
 
@@ -157,8 +243,8 @@ namespace sap::layout
 				cursor = cursor.carriageReturn();
 				cursor = cursor.moveRight(initial_pos.x() - cursor.position().pos.x());
 
-				auto horz_space = cursor.widthAtCursor();
-				auto space_width = std::max(Length(0), self_width - child->layoutSize().width);
+				const auto horz_space = cursor.widthAtCursor() - auxiliary_space;
+				const auto space_width = std::max(Length(0), self_width - child->layoutSize().width);
 
 				switch(horz_alignment)
 				{
@@ -183,7 +269,6 @@ namespace sap::layout
 				// if we're horizontally stacked, then we need to preserve vertical
 				// alignment. right now, we're always aligned to the baseline.
 			}
-
 
 			switch(direction)
 			{
@@ -271,30 +356,27 @@ namespace sap::layout
 		content_size.ascent = 0;
 		content_size.descent = m_layout_size.total_height();
 
-		auto get_line_width = [](const std::optional<PathStyle>& s) -> Length {
-			return s.has_value() ? s->line_width : 0;
-		};
 
-		content_size.descent -= get_line_width(m_border_style.top);
-		content_size.descent -= get_line_width(m_border_style.bottom);
+		// content_size.descent -= get_line_width(m_border_style.top);
+		// content_size.descent -= get_line_width(m_border_style.bottom);
 
-		content_size.width -= get_line_width(m_border_style.left);
-		content_size.width -= get_line_width(m_border_style.right);
+		// content_size.width -= get_line_width(m_border_style.left);
+		// content_size.width -= get_line_width(m_border_style.right);
 
-		if(m_border_objects.has_value() && m_border_objects->top)
-		{
-			m_border_objects->top->computePosition(initial_cursor);
-			cursor = cursor.moveDown(m_border_objects->top->layoutSize().total_height());
-		}
+		// if(m_border_objects.has_value() && m_border_objects->top)
+		// {
+		// 	m_border_objects->top->computePosition(initial_cursor);
+		// 	cursor = cursor.moveDown(m_border_objects->top->layoutSize().total_height());
+		// }
 
-		if(m_border_objects.has_value() && m_border_objects->left)
-		{
-			m_border_objects->left->computePosition(initial_cursor);
-			cursor = cursor.moveRight(m_border_objects->left->layoutSize().width);
-		}
+		// if(m_border_objects.has_value() && m_border_objects->left)
+		// {
+		// 	m_border_objects->left->computePosition(initial_cursor);
+		// 	cursor = cursor.moveRight(m_border_objects->left->layoutSize().width);
+		// }
 
-		cursor = cursor.moveRight(m_border_style.left_padding.resolve(m_style))
-		             .moveDown(m_border_style.top_padding.resolve(m_style));
+		// cursor = cursor.moveRight(m_border_style.left_padding.resolve(m_style))
+		//              .moveDown(m_border_style.top_padding.resolve(m_style));
 
 		auto spacing = m_override_obj_spacing.value_or(m_style.paragraph_spacing());
 
@@ -309,7 +391,11 @@ namespace sap::layout
 		    spacing,                                          //
 		    /* shift_by_ascent_of_first_child */ true,        //
 		    /* shift_by_ascent_of_remaining_children */ true, //
-		    m_objects);
+		    m_objects,                                        //
+		    m_style,                                          //
+		    m_border_style,                                   //
+		    m_border_objects                                  //
+		);
 
 		switch(m_direction)
 		{
@@ -323,23 +409,23 @@ namespace sap::layout
 				break;
 		}
 
-		cursor = cursor.moveRight(m_border_style.right_padding.resolve(m_style));
-		if(m_border_objects.has_value() && m_border_objects->right)
-		{
-			auto at = initial_cursor.moveRight(get_line_width(m_border_style.left)).moveRight(content_size.width);
+		// cursor = cursor.moveRight(m_border_style.right_padding.resolve(m_style));
+		// if(m_border_objects.has_value() && m_border_objects->right)
+		// {
+		// 	auto at = initial_cursor.moveRight(get_line_width(m_border_style.left)).moveRight(content_size.width);
 
-			m_border_objects->right->computePosition(at);
-			cursor = cursor.moveRight(m_border_objects->right->layoutSize().width);
-		}
+		// 	m_border_objects->right->computePosition(at);
+		// 	cursor = cursor.moveRight(m_border_objects->right->layoutSize().width);
+		// }
 
-		cursor = cursor.moveDown(m_border_style.bottom_padding.resolve(m_style));
-		if(m_border_objects.has_value() && m_border_objects->bottom)
-		{
-			auto at = initial_cursor.moveDown(get_line_width(m_border_style.top)).moveDown(content_size.total_height());
+		// cursor = cursor.moveDown(m_border_style.bottom_padding.resolve(m_style));
+		// if(m_border_objects.has_value() && m_border_objects->bottom)
+		// {
+		// 	auto at = initial_cursor.moveDown(get_line_width(m_border_style.top)).moveDown(content_size.total_height());
 
-			m_border_objects->bottom->computePosition(at);
-			cursor = cursor.moveDown(m_border_objects->bottom->layoutSize().total_height());
-		}
+		// 	m_border_objects->bottom->computePosition(at);
+		// 	cursor = cursor.moveDown(m_border_objects->bottom->layoutSize().total_height());
+		// }
 
 		return cursor;
 	}
@@ -349,16 +435,7 @@ namespace sap::layout
 		for(auto& obj : m_objects)
 			obj->render(layout, pages);
 
-		if(m_border_objects.has_value())
-		{
-			if(m_border_objects->top)
-				m_border_objects->top->render(layout, pages);
-			if(m_border_objects->left)
-				m_border_objects->left->render(layout, pages);
-			if(m_border_objects->right)
-				m_border_objects->right->render(layout, pages);
-			if(m_border_objects->bottom)
-				m_border_objects->bottom->render(layout, pages);
-		}
+		for(auto& p : m_border_objects)
+			p.render(layout, pages);
 	}
 }

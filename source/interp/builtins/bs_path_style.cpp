@@ -117,8 +117,6 @@ namespace sap::interp::builtin
 
 		// this sets the default values already.
 		auto path_style = PathStyle();
-		// stroke_colour
-		// fill_colour
 
 		auto resolve_length_field = [&cur_style](const Value& str, zst::str_view field_name) -> std::optional<Length> {
 			if(auto x = get_optional_struct_field<DynLength>(str, field_name, &Value::getLength); x.has_value())

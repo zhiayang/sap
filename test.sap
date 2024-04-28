@@ -126,13 +126,13 @@ let serif = builtin::find_font_family(["XCharter", "Times New Roman", "serif"]);
 			\line { Goodbye World },
 		)), BorderStyle {
 			top:    { line_width: 0.2cm, stroke_colour: std::rgb(1, 0, 0), cap_style: .Round },
-			left:   { line_width: 0.2cm, stroke_colour: std::rgb(0, 1, 0), cap_style: .Round },
-			right:  { line_width: 0.2cm, stroke_colour: std::rgb(0, 0, 1), cap_style: .Round },
-			bottom: { line_width: 0.2cm, stroke_colour: std::rgb(1, 0, 1), cap_style: .Round },
-			top_padding: 2mm,
-			left_padding: 10mm,
-			right_padding: 5mm,
-			bottom_padding: 20mm,
+			# left:   { line_width: 0mm, stroke_colour: std::rgb(0, 1, 0), cap_style: .Round },
+			# right:  { line_width: 0.2cm, stroke_colour: std::rgb(0, 0, 1), cap_style: .Round },
+			# bottom: { line_width: 0.2cm, stroke_colour: std::rgb(1, 0, 1), cap_style: .Round },
+			# top_padding: 2mm,
+			left_padding: 0mm,
+			# right_padding: 5mm,
+			# bottom_padding: 20mm,
 		});
 	}
 }

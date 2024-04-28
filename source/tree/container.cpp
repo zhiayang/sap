@@ -2,7 +2,7 @@
 // Copyright (c) 2022, zhiayang
 // SPDX-License-Identifier: Apache-2.0
 
-#include "tree/path.h"
+
 #include "tree/container.h"
 
 #include "interp/interp.h"
@@ -221,8 +221,6 @@ namespace sap::tree
 		final_size.width += extra_border_width;
 		final_size.descent += extra_border_height;
 
-		layout::BorderObjects border_objs {};
-
 		// TODO: this should move to layout/container.cpp, when we are placing the children. if the
 		// children overflow a page, then we need 6-8 lines (for 2 pages), so obviously storing the
 		// border objects a-priori is not a good idea. that does mean we need mutable state in the
@@ -239,6 +237,7 @@ namespace sap::tree
 		// where the actual coordinates are. eg. `moveto(1000, 1000); lineto(1010, 1010)` is equivalent to
 		// `lineto(10, 10)`. kinda cursed but whatever.
 
+#if 0
 		auto make_hborder = [&](const PathStyle& ps) -> ErrorOr<std::unique_ptr<layout::LayoutObject>> {
 			auto w = final_size.width;
 			if(ps.cap_style != PathStyle::CapStyle::Butt)
@@ -270,10 +269,10 @@ namespace sap::tree
 
 		if(have_bottom_border)
 			border_objs.bottom = TRY(make_hborder(*m_border_style.bottom));
-
+#endif
 
 		auto container = std::make_unique<layout::Container>(cur_style, final_size, dir, m_glued, m_border_style,
-		    std::move(objects), std::move(border_objs));
+		    std::move(objects));
 
 		return Ok(LayoutResult::make(std::move(container)));
 	}

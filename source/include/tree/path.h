@@ -7,6 +7,11 @@
 #include "sap/path.h"
 #include "tree/base.h"
 
+namespace sap::layout
+{
+	struct Path;
+}
+
 namespace sap::tree
 {
 	struct Path : BlockObject
@@ -14,6 +19,7 @@ namespace sap::tree
 		explicit Path(PathStyle path_style, std::vector<PathSegment> segments);
 
 		virtual ErrorOr<void> evaluateScripts(interp::Interpreter* cs) const override;
+		ErrorOr<layout::Path> createLayoutObjectWithoutInterp(const Style& final_style) const;
 
 	private:
 		virtual ErrorOr<LayoutResult> create_layout_object_impl(interp::Interpreter* cs,

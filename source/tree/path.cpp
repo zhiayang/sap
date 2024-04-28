@@ -159,8 +159,12 @@ namespace sap::tree
 	}
 
 
-	static std::tuple<Position, Position, Vector2, Vector2>
-	get_line_bounding_box(Position lp1, Position lp2, bool start_cap, bool end_cap, Length thickness, CapStyle cs)
+	static std::tuple<Position, Position, Vector2, Vector2> get_line_bounding_box(Position lp1,
+	    Position lp2,
+	    bool start_cap,
+	    bool end_cap,
+	    Length thickness,
+	    CapStyle cs)
 	{
 		auto min_bounds = Position(+INFINITY, +INFINITY);
 		auto max_bounds = Position(-INFINITY, -INFINITY);
@@ -387,21 +391,27 @@ namespace sap::tree
 
 
 
-	ErrorOr<LayoutResult>
-	Path::create_layout_object_impl(interp::Interpreter* cs, const Style& parent_style, Size2d available_space) const
+	ErrorOr<LayoutResult> Path::create_layout_object_impl(interp::Interpreter* cs,
+	    const Style& parent_style,
+	    Size2d available_space) const
 	{
 		auto style = m_style.useDefaultsFrom(parent_style).useDefaultsFrom(cs->evaluator().currentStyle());
+		return Ok(LayoutResult::make(std::make_unique<
+		    layout::Path>(TRY(this->createLayoutObjectWithoutInterp(style)))));
+	}
+
+	ErrorOr<layout::Path> Path::createLayoutObjectWithoutInterp(const Style& final_style) const
+	{
 		auto [path_size, min_bounds] = calculate_path_size(*m_segments, m_path_style.line_width, m_path_style.cap_style,
 		    m_path_style.join_style, m_path_style.miter_limit);
 
 		// zpr::println("size: {}, bounds: {}", path_size, min_bounds);
-
-		return Ok(LayoutResult::make(std::make_unique<layout::Path>(style,
+		return Ok<layout::Path>(final_style,
 		    LayoutSize {
 		        .width = path_size.x(),
 		        .ascent = 0,
 		        .descent = path_size.y(),
 		    },
-		    m_path_style, m_segments, min_bounds)));
+		    m_path_style, m_segments, min_bounds);
 	}
 }
