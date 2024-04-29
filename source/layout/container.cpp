@@ -170,22 +170,7 @@ namespace sap::layout
 				w -= ps.line_width;
 
 			auto path = tree::Path(ps, { PathSegment::move(Position(0, 0)), PathSegment::line(Position(w, 0)) });
-
-			return Ok(TRY(path.createLayoutObjectWithoutInterp(cur_style)));
-		};
-
-		// auto make_vborder = [&](const PathStyle& ps) -> ErrorOr<std::unique_ptr<layout::LayoutObject>> {
-		// 	auto h = final_size.total_height();
-		// 	if(ps.cap_style != PathStyle::CapStyle::Butt)
-		// 		h -= ps.line_width;
-
-		// 	auto path = tree::Path(ps, { PathSegment::move(Position(0, 0)), PathSegment::line(Position(0, h)) });
-		// 	return Ok(*TRY(path.createLayoutObject(cs, cur_style, Size2d(INFINITY, INFINITY))).object);
-		// };
-
-		if(border_style.top)
-		{
-			auto& b = border_objs.emplace_back(make_hborder(*border_style.top).unwrap());
+			auto border = TRY(path.createLayoutObjectWithoutInterp(cur_style));
 
 			// move the cursor to the right place. if we are vertically stacked, the border
 			// should start at the leftmost content position eg:
@@ -193,6 +178,7 @@ namespace sap::layout
 			//    foo
 			// hahahahah
 			//    bar
+			// =========
 
 			switch(direction)
 			{
@@ -224,8 +210,21 @@ namespace sap::layout
 				case Horizontal: break;
 			}
 
-			cursor = b.computePosition(cursor);
-		}
+			cursor = border.computePosition(cursor);
+			return Ok(std::move(border));
+		};
+
+		// auto make_vborder = [&](const PathStyle& ps) -> ErrorOr<std::unique_ptr<layout::LayoutObject>> {
+		// 	auto h = final_size.total_height();
+		// 	if(ps.cap_style != PathStyle::CapStyle::Butt)
+		// 		h -= ps.line_width;
+
+		// 	auto path = tree::Path(ps, { PathSegment::move(Position(0, 0)), PathSegment::line(Position(0, h)) });
+		// 	return Ok(*TRY(path.createLayoutObject(cs, cur_style, Size2d(INFINITY, INFINITY))).object);
+		// };
+
+		if(border_style.top)
+			border_objs.push_back(make_hborder(*border_style.top).unwrap());
 
 		cursor = cursor.moveDown(border_style.top_padding.resolve(cur_style));
 
@@ -335,6 +334,11 @@ namespace sap::layout
 
 			prev_child_was_phantom = child->is_phantom();
 		}
+
+		cursor = cursor.moveDown(border_style.bottom_padding.resolve(cur_style));
+
+		if(border_style.bottom)
+			border_objs.push_back(make_hborder(*border_style.bottom).unwrap());
 
 		return cursor;
 	}
