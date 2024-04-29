@@ -95,8 +95,11 @@ namespace sap::layout
 		    - `self_width` includes the space required for the left/right borders + padding
 		*/
 
-		const auto auxiliary_space = get_line_width(border_style.left) + border_style.left_padding.resolve(cur_style)
-		                           + get_line_width(border_style.right) + border_style.right_padding.resolve(cur_style);
+		const auto auxiliary_space_left = get_line_width(border_style.left)
+		                                + border_style.left_padding.resolve(cur_style);
+		const auto auxiliary_space_right = get_line_width(border_style.right)
+		                                 + border_style.right_padding.resolve(cur_style);
+		const auto auxiliary_space = auxiliary_space_left + auxiliary_space_right;
 
 		switch(direction)
 		{
@@ -242,7 +245,7 @@ namespace sap::layout
 				cursor = cursor.carriageReturn();
 				cursor = cursor.moveRight(initial_pos.x() - cursor.position().pos.x());
 
-				const auto horz_space = cursor.widthAtCursor() - auxiliary_space;
+				const auto horz_space = cursor.widthAtCursor() - self_width;
 				const auto space_width = std::max(Length(0), self_width - child->layoutSize().width);
 
 				switch(horz_alignment)
@@ -251,13 +254,13 @@ namespace sap::layout
 					case Justified: break;
 
 					case Right: {
-						cursor = cursor.moveRight(horz_space - self_width);
+						cursor = cursor.moveRight(horz_space);
 						cursor = cursor.moveRight(space_width);
 						break;
 					}
 
 					case Centre: {
-						cursor = cursor.moveRight((horz_space - self_width) / 2);
+						cursor = cursor.moveRight(horz_space / 2);
 						cursor = cursor.moveRight(space_width / 2);
 						break;
 					}
