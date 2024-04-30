@@ -28,6 +28,7 @@ namespace sap::layout
 
 	layout::PageCursor Path::compute_position_impl(layout::PageCursor cursor)
 	{
+		// zpr::println("positioning");
 		this->positionRelatively(cursor.position());
 		return cursor.moveRight(m_layout_size.width).newLine(m_layout_size.descent);
 	}

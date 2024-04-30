@@ -43,6 +43,7 @@ namespace sap::layout
 		PageCursor& operator=(PageCursor&& other);
 
 		Length widthAtCursor() const;
+		Length verticalSpaceAtCursor() const;
 		[[nodiscard]] PageCursor moveRight(Length shift) const;
 		[[nodiscard]] PageCursor moveDown(Length shift) const;
 		[[nodiscard]] PageCursor newPage() const;

@@ -271,6 +271,23 @@ namespace util
 		return std::unique_ptr<To>(static_cast<To*>(from.release()));
 	}
 
+	template <typename T, typename F>
+	inline auto optional_map(const std::optional<T>& val, F&& fn) -> std::optional<decltype(fn(*val))>
+	{
+		if(val.has_value())
+			return fn(*val);
+		else
+			return std::nullopt;
+	}
+
+	template <typename T, typename F>
+	inline auto optional_map(std::optional<T>&& val, F&& fn) -> std::optional<decltype(fn(*val))>
+	{
+		if(val.has_value())
+			return fn(std::move(*val));
+		else
+			return std::nullopt;
+	}
 
 	namespace impl
 	{

@@ -221,11 +221,6 @@ namespace sap::tree
 		final_size.width += extra_border_width;
 		final_size.descent += extra_border_height;
 
-		// TODO: this should move to layout/container.cpp, when we are placing the children. if the
-		// children overflow a page, then we need 6-8 lines (for 2 pages), so obviously storing the
-		// border objects a-priori is not a good idea. that does mean we need mutable state in the
-		// layout::Container (to store the objects there between computePosition() and render()), which sucks
-
 		// TODO: borders are generally fucked; consider horz/vert alignment; we want the borders to
 		// fit around the content (eg. centre alignment -- the border is a box in the middle of the page).
 		//
@@ -236,40 +231,6 @@ namespace sap::tree
 		// of the entire path object is always the leftmost filled point in the tight bounding box, no matter
 		// where the actual coordinates are. eg. `moveto(1000, 1000); lineto(1010, 1010)` is equivalent to
 		// `lineto(10, 10)`. kinda cursed but whatever.
-
-#if 0
-		auto make_hborder = [&](const PathStyle& ps) -> ErrorOr<std::unique_ptr<layout::LayoutObject>> {
-			auto w = final_size.width;
-			if(ps.cap_style != PathStyle::CapStyle::Butt)
-				w -= ps.line_width;
-
-			auto path = tree::Path(ps, { PathSegment::move(Position(0, 0)), PathSegment::line(Position(w, 0)) });
-
-			return Ok(*TRY(path.createLayoutObject(cs, cur_style, Size2d(INFINITY, INFINITY))).object);
-		};
-
-		auto make_vborder = [&](const PathStyle& ps) -> ErrorOr<std::unique_ptr<layout::LayoutObject>> {
-			auto h = final_size.total_height();
-			if(ps.cap_style != PathStyle::CapStyle::Butt)
-				h -= ps.line_width;
-
-			auto path = tree::Path(ps, { PathSegment::move(Position(0, 0)), PathSegment::line(Position(0, h)) });
-			return Ok(*TRY(path.createLayoutObject(cs, cur_style, Size2d(INFINITY, INFINITY))).object);
-		};
-
-
-		if(have_top_border)
-			border_objs.top = TRY(make_hborder(*m_border_style.top));
-
-		if(have_left_border)
-			border_objs.left = TRY(make_vborder(*m_border_style.left));
-
-		if(have_right_border)
-			border_objs.right = TRY(make_vborder(*m_border_style.right));
-
-		if(have_bottom_border)
-			border_objs.bottom = TRY(make_hborder(*m_border_style.bottom));
-#endif
 
 		auto container = std::make_unique<layout::Container>(cur_style, final_size, dir, m_glued, m_border_style,
 		    std::move(objects));

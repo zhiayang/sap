@@ -12,12 +12,12 @@ namespace sap::layout
 	}
 
 	PageCursor::PageCursor(const PageCursor& other)
-		: m_layout(other.m_layout), m_payload(m_layout->copy_cursor_payload(other.m_payload))
+	    : m_layout(other.m_layout), m_payload(m_layout->copy_cursor_payload(other.m_payload))
 	{
 	}
 
 	PageCursor::PageCursor(LayoutBase* layout, LayoutBase::Payload payload)
-		: m_layout(layout), m_payload(std::move(payload))
+	    : m_layout(layout), m_payload(std::move(payload))
 	{
 	}
 
@@ -54,6 +54,11 @@ namespace sap::layout
 	PageCursor PageCursor::limitWidth(Length width) const
 	{
 		return PageCursor(m_layout, m_layout->limit_width(m_payload, width));
+	}
+
+	Length PageCursor::verticalSpaceAtCursor() const
+	{
+		return m_layout->get_vertical_space_at_cursor_payload(m_payload);
 	}
 
 	PageCursor PageCursor::newLine(Length line_height, bool* made_new_page2) const

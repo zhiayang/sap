@@ -93,6 +93,11 @@ layout
 [ ] control comma spacing stretch as well (similar to sentence ending)
 
 
+[ ] use masks to generate proper rounded-corner borders. we should be able to specify radii
+	for each of the 4 corners, and the capstyle property of border path segments should be ignored.
+
+
+
 misc
 ----
 [ ] XML metadata and/or declare PDF/A conformance

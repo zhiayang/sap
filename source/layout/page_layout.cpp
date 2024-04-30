@@ -52,7 +52,7 @@ namespace sap::layout
 
 
 	PageLayout::PageLayout(Document* doc, Size2d size, PageLayout::Margins margins)
-		: LayoutBase(doc), m_size(size), m_margins(std::move(margins))
+	    : LayoutBase(doc), m_size(size), m_margins(std::move(margins))
 	{
 		m_content_size = {
 			size.x() - m_margins.left - m_margins.right,
@@ -88,28 +88,28 @@ namespace sap::layout
 	PageCursor PageLayout::newCursorAtPosition(AbsolutePagePos pos) const
 	{
 		return PageCursor(const_cast<PageLayout*>(this),
-			to_base_payload({
-				.page_num = pos.page_num,
-				.pos_on_page = { pos.pos.x(), pos.pos.y() },
-				.is_absolute = true,
-			}));
+		    to_base_payload({
+		        .page_num = pos.page_num,
+		        .pos_on_page = { pos.pos.x(), pos.pos.y() },
+		        .is_absolute = true,
+		    }));
 	}
 
 	BasePayload PageLayout::new_cursor_payload() const
 	{
 		return to_base_payload({
-			.page_num = 0,
-			.pos_on_page = { 0, 0 },
-			.is_absolute = false,
+		    .page_num = 0,
+		    .pos_on_page = { 0, 0 },
+		    .is_absolute = false,
 		});
 	}
 
 	BasePayload PageLayout::move_to_position(const Payload& payload, RelativePos pos) const
 	{
 		return to_base_payload({
-			.page_num = pos.page_num,
-			.pos_on_page = pos.pos,
-			.is_absolute = false,
+		    .page_num = pos.page_num,
+		    .pos_on_page = pos.pos,
+		    .is_absolute = false,
 		});
 	}
 
@@ -127,9 +127,14 @@ namespace sap::layout
 	Length PageLayout::get_width_at_cursor_payload(const BasePayload& curs) const
 	{
 		return std::min(                                                //
-			get_cursor_state(curs).limited_width,                       //
-			m_content_size.x() - get_cursor_state(curs).pos_on_page.x() //
+		    get_cursor_state(curs).limited_width,                       //
+		    m_content_size.x() - get_cursor_state(curs).pos_on_page.x() //
 		);
+	}
+
+	Length PageLayout::get_vertical_space_at_cursor_payload(const Payload& curs) const
+	{
+		return std::max(Length(0), m_content_size.y() - get_cursor_state(curs).pos_on_page.y());
 	}
 
 	BasePayload PageLayout::limit_width(const BasePayload& payload, Length width) const
@@ -144,10 +149,10 @@ namespace sap::layout
 	{
 		auto& cst = get_cursor_state(payload);
 		return to_base_payload({
-			.page_num = cst.page_num,
-			.pos_on_page = cst.pos_on_page + RelativePos::Pos(shift, 0),
-			.is_absolute = cst.is_absolute,
-			.limited_width = cst.limited_width,
+		    .page_num = cst.page_num,
+		    .pos_on_page = cst.pos_on_page + RelativePos::Pos(shift, 0),
+		    .is_absolute = cst.is_absolute,
+		    .limited_width = cst.limited_width,
 		});
 	}
 
@@ -170,19 +175,19 @@ namespace sap::layout
 			}
 
 			return to_base_payload({
-				.page_num = page_num,
-				.pos_on_page = RelativePos::Pos(cst.pos_on_page.x(), ypos),
-				.is_absolute = cst.is_absolute,
-				.limited_width = cst.limited_width,
+			    .page_num = page_num,
+			    .pos_on_page = RelativePos::Pos(cst.pos_on_page.x(), ypos),
+			    .is_absolute = cst.is_absolute,
+			    .limited_width = cst.limited_width,
 			});
 		}
 		else
 		{
 			return to_base_payload({
-				.page_num = cst.page_num,
-				.pos_on_page = cst.pos_on_page + RelativePos::Pos(0, shift),
-				.is_absolute = cst.is_absolute,
-				.limited_width = cst.limited_width,
+			    .page_num = cst.page_num,
+			    .pos_on_page = cst.pos_on_page + RelativePos::Pos(0, shift),
+			    .is_absolute = cst.is_absolute,
+			    .limited_width = cst.limited_width,
 			});
 		}
 	}
@@ -191,10 +196,10 @@ namespace sap::layout
 	{
 		auto& cst = get_cursor_state(payload);
 		return to_base_payload({
-			.page_num = cst.page_num,
-			.pos_on_page = { 0, cst.pos_on_page.y() },
-			.is_absolute = cst.is_absolute,
-			.limited_width = cst.limited_width,
+		    .page_num = cst.page_num,
+		    .pos_on_page = { 0, cst.pos_on_page.y() },
+		    .is_absolute = cst.is_absolute,
+		    .limited_width = cst.limited_width,
 		});
 	}
 
@@ -204,10 +209,10 @@ namespace sap::layout
 		m_num_pages = std::max(m_num_pages, cst.page_num + 1 + 1);
 
 		return to_base_payload({
-			.page_num = cst.page_num + 1,
-			.pos_on_page = { cst.pos_on_page.x(), 0 },
-			.is_absolute = cst.is_absolute,
-			.limited_width = cst.limited_width,
+		    .page_num = cst.page_num + 1,
+		    .pos_on_page = { cst.pos_on_page.x(), 0 },
+		    .is_absolute = cst.is_absolute,
+		    .limited_width = cst.limited_width,
 		});
 	}
 
@@ -223,10 +228,10 @@ namespace sap::layout
 		{
 			*made_new_page = false;
 			return to_base_payload({
-				.page_num = cst.page_num,
-				.pos_on_page = RelativePos::Pos(cst.pos_on_page.x(), cst.pos_on_page.y() + line_height),
-				.is_absolute = cst.is_absolute,
-				.limited_width = cst.limited_width,
+			    .page_num = cst.page_num,
+			    .pos_on_page = RelativePos::Pos(cst.pos_on_page.x(), cst.pos_on_page.y() + line_height),
+			    .is_absolute = cst.is_absolute,
+			    .limited_width = cst.limited_width,
 			});
 		}
 	}

@@ -55,6 +55,7 @@ namespace sap::layout
 		virtual Payload copy_cursor_payload(const Payload& payload) const = 0;
 
 		virtual Length get_width_at_cursor_payload(const Payload& payload) const = 0;
+		virtual Length get_vertical_space_at_cursor_payload(const Payload& payload) const = 0;
 		virtual RelativePos get_position_on_page(const Payload& payload) const = 0;
 
 		virtual Payload new_line(const Payload& payload, Length line_height, bool* made_new_page) = 0;
@@ -109,6 +110,7 @@ namespace sap::layout
 		virtual Payload move_right(const Payload& payload, Length shift) const override;
 		virtual Payload move_down(const Payload& payload, Length shift) override;
 		virtual Length get_width_at_cursor_payload(const Payload& payload) const override;
+		virtual Length get_vertical_space_at_cursor_payload(const Payload& payload) const override;
 		virtual Payload move_to_position(const Payload& payload, RelativePos pos) const override;
 		virtual Payload carriage_return(const Payload& payload) const override;
 		virtual Payload limit_width(const Payload& payload, Length width) const override;
