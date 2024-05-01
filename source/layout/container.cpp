@@ -353,6 +353,8 @@ namespace sap::layout
 						case Justified: {
 							draw_left_border();
 							draw_right_border();
+
+							cursor = cursor.moveRight(auxiliary_width_left);
 							break;
 						}
 
@@ -362,6 +364,7 @@ namespace sap::layout
 							draw_left_border();
 							draw_right_border();
 
+							cursor = cursor.moveRight(auxiliary_width_left);
 							cursor = cursor.moveRight(space_width);
 							break;
 						}

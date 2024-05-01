@@ -24,6 +24,10 @@ BUGS!!!!
     had a manual \page_break() at the '|' point)
 
     tldr paragraph spacing across pages is possibly fucked
+[ ] border rendering for alignment other than for Justified is fucked if the content needs to
+	flow (eg. a paragraph)
+[ ] newline after `\para` (ie. \para { \n\n text... }) is a parse error for some stupid reason
+
 
 TODO:
 scripting

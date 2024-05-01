@@ -16,7 +16,6 @@
 #include "tree/container.h"
 
 #include "interp/ast.h"      // for Expr, FunctionDecl::Param, FunctionCall...
-#include "interp/type.h"     // for Type, interp, ArrayType, FunctionType
 #include "interp/basedefs.h" // for DocumentObject, InlineObject
 #include "interp/parser_type.h"
 
@@ -1159,6 +1158,9 @@ namespace sap::frontend
 				if(not lexer.expect(TT::LBrace))
 					return ErrMsg(lexer.location(), "expected '{' after '\\{}'", kind);
 
+				// eat any whitespace before the content
+				lexer.skipWhitespaceAndComments();
+
 				std::vector<zst::SharedPtr<tree::InlineObject>> inlines {};
 				while(lexer.peek() != TT::RBrace)
 				{
@@ -2115,7 +2117,7 @@ namespace sap::frontend
 		while(true)
 		{
 			auto peek = lexer.peek();
-			if(peek == TT::ParagraphBreak || peek == TT::EndOfFile)
+			if(peek == TT::EndOfFile || peek == TT::ParagraphBreak)
 			{
 				break;
 			}
