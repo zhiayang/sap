@@ -279,7 +279,7 @@ namespace sap::layout
 			cursor = b.computePosition(cursor);
 		}
 
-		if(const auto tp = border_style.top_padding.resolve(cur_style); tp != 0)
+		if(const auto tp = border_style.top_padding.resolve(cur_style); tp > 0)
 		{
 			// if we have left or right borders, we make a short segment to cover the
 			// padding area, since we draw side borders per child item
@@ -294,7 +294,17 @@ namespace sap::layout
 				b.computePosition(p);
 			}
 
-			// TODO: right border
+			if(border_right_style)
+			{
+				auto& b = border_objs.emplace_back(make_vborder(*border_right_style, tp).unwrap());
+
+				auto p = top_left_pos
+				             .moveRight(left_margin(top_left_pos) + self_width - border_right_style->line_width);
+				if(border_top_style)
+					p = p.moveDown(border_style.top->line_width);
+
+				b.computePosition(p);
+			}
 
 			cursor = cursor.moveDown(tp);
 		}
@@ -304,47 +314,78 @@ namespace sap::layout
 		size_t prev_child_bottom_page = 0;
 		bool prev_child_was_phantom = false;
 
-		zpr::println("start cursor: {}", cursor.position().pos);
 		for(auto& child : objects)
 		{
+			const auto draw_left_border = [&]() {
+				if(not border_left_style)
+					return;
+
+				auto& b = border_objs.emplace_back(make_vborder(*border_left_style, child->layoutSize().total_height())
+				                                       .unwrap());
+				b.computePosition(cursor);
+			};
+
+			const auto draw_right_border = [&]() {
+				if(not border_right_style)
+					return;
+
+				const auto pos = cursor.moveRight(self_width - border_right_style->line_width);
+				auto& b = border_objs.emplace_back(make_vborder(*border_right_style, child->layoutSize().total_height())
+				                                       .unwrap());
+				b.computePosition(pos);
+			};
+
+
 			// if we are vertically stacked, we need to move the cursor horizontally to
 			// preserve horizontal alignment.
-			if(direction == Vertical || direction == None)
+			switch(direction)
 			{
-				cursor = cursor.carriageReturn();
-				cursor = cursor.moveRight(initial_pos.x() - cursor.position().pos.x());
+				case None:
+				case Vertical: {
+					cursor = cursor.carriageReturn();
+					cursor = cursor.moveRight(initial_pos.x() - cursor.position().pos.x());
 
-				// const auto horz_space = cursor.widthAtCursor() - self_width;
-				const auto space_width = std::max(Length(0), content_width - child->layoutSize().width);
+					const auto space_width = std::max(Length(0), content_width - child->layoutSize().width);
 
-				switch(horz_alignment)
-				{
-					case Left:
-					case Justified: break;
+					switch(horz_alignment)
+					{
+						case Left:
+						case Justified: {
+							draw_left_border();
+							draw_right_border();
+							break;
+						}
 
-					case Right: {
-						// note: left_margin is correctly computed for right-aligned.
-						cursor = cursor.moveRight(left_margin(cursor));
-						cursor = cursor.moveRight(space_width);
-						break;
+						case Right: {
+							// note: left_margin is correctly computed for right-aligned.
+							cursor = cursor.moveRight(left_margin(cursor));
+							draw_left_border();
+							draw_right_border();
+
+							cursor = cursor.moveRight(space_width);
+							break;
+						}
+
+						case Centre: {
+							cursor = cursor.moveRight(left_margin(cursor));
+							draw_left_border();
+							draw_right_border();
+
+							cursor = cursor.moveRight(auxiliary_width_left);
+							cursor = cursor.moveRight(space_width / 2);
+							break;
+						}
 					}
+					break;
+				}
 
-					case Centre: {
-						// ???????????
-						zpr::println("cur cursor: {}, left_margin: {}, aux_left: {}, aux_right: {}",
-						    cursor.position().pos, left_margin(cursor), auxiliary_width_left, auxiliary_width_right);
-
-						cursor = cursor.moveRight(left_margin(cursor) + auxiliary_width_left);
-						cursor = cursor.moveRight(space_width / 2);
-						break;
-					}
+				case Horizontal: {
+					// if we're horizontally stacked, then we need to preserve vertical
+					// alignment. right now, we're always aligned to the baseline.
+					break;
 				}
 			}
-			else if(direction == Horizontal)
-			{
-				// if we're horizontally stacked, then we need to preserve vertical
-				// alignment. right now, we're always aligned to the baseline.
-			}
+
 
 			switch(direction)
 			{
@@ -411,12 +452,32 @@ namespace sap::layout
 			prev_child_was_phantom = child->is_phantom();
 		}
 
-		cursor = cursor.moveDown(border_style.bottom_padding.resolve(cur_style));
-
-		if(border_style.bottom)
+		if(const auto bp = border_style.bottom_padding.resolve(cur_style); bp > 0)
 		{
-			auto& b = border_objs.emplace_back(make_hborder(*border_style.bottom).unwrap());
-			b.computePosition(cursor);
+			const auto ref = top_left_pos.moveRight(left_margin(top_left_pos))
+			                     .moveDown(cursor.position().pos.y() - top_left_pos.position().pos.y());
+
+			// if we have left or right borders, we make a short segment to cover the
+			// padding area, since we draw side borders per child item
+			if(border_left_style)
+			{
+				auto& b = border_objs.emplace_back(make_vborder(*border_left_style, bp).unwrap());
+				b.computePosition(ref);
+			}
+
+			if(border_right_style)
+			{
+				auto& b = border_objs.emplace_back(make_vborder(*border_right_style, bp).unwrap());
+				b.computePosition(ref.moveRight(self_width - border_right_style->line_width));
+			}
+
+			cursor = cursor.moveDown(bp);
+		}
+
+		if(border_bottom_style)
+		{
+			auto& b = border_objs.emplace_back(make_hborder(*border_bottom_style).unwrap());
+			cursor = b.computePosition(cursor);
 		}
 
 		return cursor;
@@ -470,24 +531,6 @@ namespace sap::layout
 				break;
 		}
 
-		// cursor = cursor.moveRight(m_border_style.right_padding.resolve(m_style));
-		// if(m_border_objects.has_value() && m_border_objects->right)
-		// {
-		// 	auto at = initial_cursor.moveRight(get_line_width(m_border_style.left)).moveRight(content_size.width);
-
-		// 	m_border_objects->right->computePosition(at);
-		// 	cursor = cursor.moveRight(m_border_objects->right->layoutSize().width);
-		// }
-
-		// cursor = cursor.moveDown(m_border_style.bottom_padding.resolve(m_style));
-		// if(m_border_objects.has_value() && m_border_objects->bottom)
-		// {
-		// 	auto at = initial_cursor.moveDown(get_line_width(m_border_style.top)).moveDown(content_size.total_height());
-
-		// 	m_border_objects->bottom->computePosition(at);
-		// 	cursor = cursor.moveDown(m_border_objects->bottom->layoutSize().total_height());
-		// }
-
 		return cursor;
 	}
 
@@ -497,9 +540,6 @@ namespace sap::layout
 			obj->render(layout, pages);
 
 		for(auto& p : m_border_objects)
-		{
-			zpr::println("AAAA");
 			p.render(layout, pages);
-		}
 	}
 }
