@@ -374,6 +374,8 @@ namespace sap::layout
 							draw_left_border();
 							draw_right_border();
 
+
+							zpr::println("awl: {}, awr: {}", auxiliary_width_left, auxiliary_width_right);
 							cursor = cursor.moveRight(auxiliary_width_left);
 							cursor = cursor.moveRight(space_width / 2);
 							break;

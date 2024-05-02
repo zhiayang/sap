@@ -52,7 +52,7 @@ namespace sap::layout
 		if(m_lines.empty())
 			return cursor;
 
-		auto initial_pos = cursor.position().pos;
+		const auto initial_pos = cursor.position().pos;
 
 		bool is_first_child = true;
 
@@ -65,7 +65,9 @@ namespace sap::layout
 			cursor = cursor.carriageReturn();
 			cursor = cursor.moveRight(initial_pos.x() - cursor.position().pos.x());
 
-			auto horz_space = cursor.widthAtCursor();
+			auto horz_space = m_layout_size.width; // cursor.widthAtCursor();
+			zpr::println("horz_space={}, self_width={}", horz_space, m_layout_size.width);
+
 			auto space_width = std::max(Length(0), m_layout_size.width - line->layoutSize().width);
 
 			switch(m_style.horz_alignment())
@@ -178,10 +180,9 @@ namespace sap::tree
 #endif
 			if((*words_begin)->isSeparator())
 			{
-				sap::internal_error(
-				    "line starting with non-Word found, "
-				    "either line breaking algo is broken "
-				    "or we had multiple separators in a row");
+				sap::internal_error("line starting with non-Word found, "
+				                    "either line breaking algo is broken "
+				                    "or we had multiple separators in a row");
 			}
 
 			// Ignore space at end of line

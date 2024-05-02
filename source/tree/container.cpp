@@ -96,6 +96,8 @@ namespace sap::tree
 		auto max_size = total_size;
 		for(size_t i = 0, obj_idx = 0; i < m_objects.size(); i++)
 		{
+			if(have_left_border)
+				zpr::println("available space: {}", available_space);
 			auto obj = TRY(m_objects[i].get()->createLayoutObject(cs, cur_style, available_space));
 			if(not obj.object.has_value())
 				continue;

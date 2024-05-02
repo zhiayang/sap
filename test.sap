@@ -117,13 +117,13 @@ let serif = builtin::find_font_family(["XCharter", "Times New Roman", "serif"]);
 	{
 		return set_border_style(apply_style({horz_alignment: .Centred}, make_vbox(
 			# \line { Goodbye World },
-			# \line { Hello World },
+			\line { Hello World },
 			# \line { Goodbye World },
 			# \line { Goodbye World },
 			# \line { Goodbye World },
 			# \line { Goodbye World },
 			# \line { Goodbye World },
-			# \line { Goodbye World },
+			\line { Goodbye World },
 			\para {
 
 It is a long established fact that a reader will be distracted by the readable content of a page when looking
@@ -135,12 +135,12 @@ by accident, sometimes on purpose (injected humour and the like).
 }
 		)), BorderStyle {
 			top:    { line_width: 0.2cm, stroke_colour: std::rgb(1, 0, 0), cap_style: .Round },
-			left:   { line_width: 0.4cm, stroke_colour: std::rgb(0, 1, 0), cap_style: .Round },
-			right:  { line_width: 0.2cm, stroke_colour: std::rgb(0, 0, 1), cap_style: .Round },
+			left:   { line_width: 1cm, stroke_colour: std::rgb(0, 1, 0), cap_style: .Round },
+			right:  { line_width: 1cm, stroke_colour: std::rgb(0, 0, 1), cap_style: .Round },
 			bottom: { line_width: 0.4cm, stroke_colour: std::rgb(1, 0, 1), cap_style: .Round },
 			top_padding: 5mm,
-			left_padding: 0mm,
-			right_padding: 0mm,
+			left_padding: 5mm,
+			right_padding: 5mm,
 			bottom_padding: 5mm,
 		});
 	}
