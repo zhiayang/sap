@@ -65,24 +65,18 @@ namespace sap::layout
 			cursor = cursor.carriageReturn();
 			cursor = cursor.moveRight(initial_pos.x() - cursor.position().pos.x());
 
-			auto horz_space = m_layout_size.width; // cursor.widthAtCursor();
-			zpr::println("horz_space={}, self_width={}", horz_space, m_layout_size.width);
-
-			auto space_width = std::max(Length(0), m_layout_size.width - line->layoutSize().width);
-
+			const auto space_width = std::max(Length(0), m_layout_size.width - line->layoutSize().width);
 			switch(m_style.horz_alignment())
 			{
 				case Left:
 				case Justified: break;
 
 				case Right: {
-					cursor = cursor.moveRight(horz_space - m_layout_size.width);
 					cursor = cursor.moveRight(space_width);
 					break;
 				}
 
 				case Centre: {
-					cursor = cursor.moveRight((horz_space - m_layout_size.width) / 2);
 					cursor = cursor.moveRight(space_width / 2);
 					break;
 				}
