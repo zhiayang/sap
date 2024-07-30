@@ -475,6 +475,26 @@ namespace sap::frontend
 			return advance_and_return(stream, loc, //
 			    Token { .loc = loc, .type = TT::ColonColon, .text = stream.take(2) }, 2);
 		}
+		else if(stream.starts_with("..."))
+		{
+			return advance_and_return(stream, loc, //
+			    Token { .loc = loc, .type = TT::Ellipsis, .text = stream.take(3) }, 3);
+		}
+		else if(stream.starts_with("//?="))
+		{
+			return advance_and_return(stream, loc, //
+			    Token { .loc = loc, .type = TT::SlashSlashQuestionEqual, .text = stream.take(4) }, 4);
+		}
+		else if(stream.starts_with("//="))
+		{
+			return advance_and_return(stream, loc, //
+			    Token { .loc = loc, .type = TT::SlashSlashEqual, .text = stream.take(3) }, 3);
+		}
+		else if(stream.starts_with("//?"))
+		{
+			return advance_and_return(stream, loc, //
+			    Token { .loc = loc, .type = TT::SlashSlashQuestion, .text = stream.take(3) }, 3);
+		}
 		else if(stream.starts_with("//"))
 		{
 			return advance_and_return(stream, loc, //
@@ -549,11 +569,6 @@ namespace sap::frontend
 		{
 			return advance_and_return(stream, loc, //
 			    Token { .loc = loc, .type = TT::QuestionPeriod, .text = stream.take(2) }, 2);
-		}
-		else if(stream.starts_with("..."))
-		{
-			return advance_and_return(stream, loc, //
-			    Token { .loc = loc, .type = TT::Ellipsis, .text = stream.take(3) }, 3);
 		}
 		else if(stream.starts_with("f\""))
 		{

@@ -535,8 +535,14 @@ namespace sap::interp::cst
 		explicit StructUpdateOp(Location loc,
 		    const Type* type,
 		    std::unique_ptr<Expr> structure,
-		    std::vector<Update> updates)
-		    : Expr(std::move(loc), type), structure(std::move(structure)), updates(std::move(updates))
+		    std::vector<Update> updates,
+		    bool is_assignment,
+		    bool is_optional)
+		    : Expr(std::move(loc), type)
+		    , structure(std::move(structure))
+		    , updates(std::move(updates))
+		    , is_assignment(is_assignment)
+		    , is_optional(is_optional)
 		{
 		}
 
@@ -544,6 +550,8 @@ namespace sap::interp::cst
 
 		std::unique_ptr<Expr> structure;
 		std::vector<Update> updates;
+		bool is_assignment;
+		bool is_optional;
 	};
 
 	struct LengthExpr : Expr

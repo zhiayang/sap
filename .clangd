@@ -1,4 +1,5 @@
 Diagnostics:
+  UnusedIncludes: None
   ClangTidy:
     Remove: misc-unused-using-decls
 CompileFlags:

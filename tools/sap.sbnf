@@ -239,7 +239,10 @@ unary-expr
 binop-expr: unary-expr binop-expr2?;
 
 binop-expr2
-	: `//`{keyword.operator.binop.struct-update} struct-literal binop-expr2
+ : (`//?=`{keyword.operator.binop.struct-update}) struct-literal binop-expr2
+ | (`//=`{keyword.operator.binop.struct-update}) struct-literal binop-expr2
+ | (`//?`{keyword.operator.binop.struct-update}) struct-literal binop-expr2
+	| (`//`{keyword.operator.binop.struct-update}) struct-literal binop-expr2
 	| `+=`{keyword.operator.binop.arith} unary-expr binop-expr2
 	| `-=`{keyword.operator.binop.arith} unary-expr binop-expr2
 	| `*=`{keyword.operator.binop.arith} unary-expr binop-expr2

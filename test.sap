@@ -115,7 +115,7 @@ let serif = builtin::find_font_family(["XCharter", "Times New Roman", "serif"]);
 
 	fn help() -> Block
 	{
-		return set_border_style(apply_style({horz_alignment: .Centred}, make_vbox(
+		return set_border_style(apply_style({horz_alignment: .Right}, make_vbox(
 			# \line { Goodbye World },
 			\line { Hello World },
 			# \line { Goodbye World },
@@ -144,6 +144,31 @@ by accident, sometimes on purpose (injected humour and the like).
 			bottom_padding: 5mm,
 		});
 	}
+
+	fn foozle() -> ?Block
+	{
+		fn four_twenty() -> int
+		{
+			println("asdf");
+			return 420;
+		}
+
+		struct Foo
+		{
+			x: int;
+			y: ?int = null;
+			z: ?int = null;
+		};
+
+		let z = 1337;
+
+		var ff = Foo { x: 69, y: 6969 };
+		ff //?= { y: four_twenty(), z };
+
+		println(f"ff: \{ x: {ff.x}, y: {ff.y}, z: {ff.z} \}");
+
+		return null;
+	}
 }
 
 # \std::disable_page_numbering();
@@ -151,6 +176,8 @@ by accident, sometimes on purpose (injected humour and the like).
 # hello \cpp() there \kekw() \bsdf()
 
 # aaaaaaaaaaaaaaaaaaaaaaa aaaaaaaaaaaaaaaaaaaaaaa aaaaaaaaaaaaaaaaaaaaaaa
+
+\foozle();
 
 It is a long established fact that a reader will be distracted by the readable content of a page when looking
 at its layout. The point of using Lorem Ipsum is that it has a more-or-less normal distribution of letters,

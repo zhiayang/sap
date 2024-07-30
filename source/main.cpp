@@ -18,12 +18,12 @@ BUGS!!!!
 [ ] list items are not justified (and manually setting alignment does nothing)
 [ ] disabling page number inside script block does not work
 [ ] vbox items do not properly start on a new page; eg.
-    <para> <para> | <header>
-    if the | is a pagebreak, then the inter-item spacing in the vbox appears to be
-    broken somehow, and <header> starts higher up on the page than it should (vs. if we
-    had a manual \page_break() at the '|' point)
+		<para> <para> | <header>
+		if the | is a pagebreak, then the inter-item spacing in the vbox appears to be
+		broken somehow, and <header> starts higher up on the page than it should (vs. if we
+		had a manual \page_break() at the '|' point)
 
-    tldr paragraph spacing across pages is possibly fucked
+		tldr paragraph spacing across pages is possibly fucked
 [ ] border rendering for alignment other than for Justified is fucked if the content needs to
 	flow (eg. a paragraph)
 
@@ -31,19 +31,11 @@ BUGS!!!!
 TODO:
 scripting
 ---------
-[ ] decide whether we want positional struct field arguments or not
-	- i think the { x } --> { x: x } shorthand was added; this is kinda at odds
-		with positional fields
+[ ] idk if the limitation of having '//' need struct literals is legit. could imagine
+	a scenario where you incrementally build up the replacement struct and wanna update
+	something. unfortunately the way StructUpdateOp is structured makes this annoying.
 
-[ ] we already have '//' struct update operator; something like '?//' would be nice to
-	be a 'set values for ?T fields that are null', rather than the current way which
-	is like foo // { x: .x ?? 0, y: .y ?? 0 } etc, we can have: foo ?// { x: 0, y: 0 },
-	and they'll only replace if the respective field is null.
-
-	anyway `?//` looks nicer but is ambiguous with x?//{ ... } even though that would
-	be semantically wrong (since ? returns a bool).
-
-	also obviously check that the named fields are actually optional.
+[ ] auto formatting for printing structs in f-strings?
 
 [ ] percentage DynLengths; something like `50%pw` for 50% of page-width; we can have
 	%pw/ph for page w/h, %lw/lh for line, %w/h for the size of the parent container
@@ -111,7 +103,6 @@ misc
 
 #endif
 
-
 namespace sap
 {
 	extern void set_draft_mode(bool);
@@ -155,8 +146,8 @@ int main(int argc, char** argv)
 	auto output_name = args.options["o"].value.value_or(stdfs::path(abs_filename).replace_extension(".pdf"));
 	auto output_file = stdfs::weakly_canonical(output_name).string();
 
-	// change directory to the input file so that all searches are (by default) relative to it,
-	// regardless of our actual CWD
+	// change directory to the input file so that all searches are (by default)
+	// relative to it, regardless of our actual CWD
 	stdfs::current_path(abs_filename.parent_path());
 
 	if(is_watching)
@@ -169,7 +160,6 @@ int main(int argc, char** argv)
 		return sap::compile(input_file, output_file) ? 0 : 1;
 	}
 }
-
 
 extern "C" const char* __asan_default_options()
 {

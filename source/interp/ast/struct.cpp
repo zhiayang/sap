@@ -78,7 +78,13 @@ namespace sap::interp::ast
 
 	ErrorOr<TCResult> StructUpdateOp::typecheck_impl(Typechecker* ts, const Type* infer, bool keep_lvalue) const
 	{
-		auto lhs = TRY(this->structure->typecheck(ts, infer)).take_expr();
+		auto lres = TRY(this->structure->typecheck(ts, infer));
+		if(this->is_assignment && not lres.isLValue())
+			return ErrMsg(ts, "cannot assign to non-lvalue");
+		else if(this->is_assignment && not lres.isMutable())
+			return ErrMsg(ts, "cannot assign to immutable lvalue");
+
+		auto lhs = std::move(lres).take_expr();
 		if(not lhs->type()->isStruct())
 			return ErrMsg(ts, "left-hand side of '//' operator must be a struct; got '{}'", lhs->type());
 
@@ -94,6 +100,10 @@ namespace sap::interp::ast
 			auto field_type = struct_type->getFieldNamed(name);
 			auto new_expr = TRY(expr->typecheck(ts, field_type)).take_expr();
 
+			// check if the provided field is actually optional and error if it's not
+			if(this->is_optional && not field_type->isOptional())
+				return ErrMsg(expr->loc(), "cannot update non-optional struct field '{}' using '//?' operator", name);
+
 			if(not ts->canImplicitlyConvert(new_expr->type(), field_type))
 			{
 				return ErrMsg(expr->loc(), "cannot update struct field '{}' with type '{}' using a value of type '{}'",
@@ -106,7 +116,7 @@ namespace sap::interp::ast
 			});
 		}
 
-		return TCResult::ofRValue<cst::StructUpdateOp>(m_location, struct_type, std::move(lhs),
-		    std::move(update_exprs));
+		return TCResult::ofRValue<cst::StructUpdateOp>(m_location, struct_type, std::move(lhs), std::move(update_exprs),
+		    this->is_assignment, this->is_optional);
 	}
 }

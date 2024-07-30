@@ -34,16 +34,32 @@ namespace sap::interp::cst
 
 	ErrorOr<EvalResult> StructUpdateOp::evaluate_impl(Evaluator* ev) const
 	{
-		auto struct_val = TRY_VALUE(this->structure->evaluate(ev));
-		auto struct_type = struct_val.type()->toStruct();
+		Value* struct_ptr = nullptr;
+		Value _struct_val;
+		if(this->is_assignment)
+		{
+			struct_ptr = TRY(this->structure->evaluate(ev)).lValuePointer();
+		}
+		else
+		{
+			_struct_val = TRY_VALUE(this->structure->evaluate(ev));
+			struct_ptr = &_struct_val;
+		}
 
-		auto _ctx = ev->pushStructFieldContext(&struct_val);
+		auto struct_type = struct_ptr->type()->toStruct();
+		auto _ctx = ev->pushStructFieldContext(struct_ptr);
 
 		util::hashmap<size_t, Value> new_values {};
 		for(auto& [name, expr] : this->updates)
 		{
 			auto field_idx = struct_type->getFieldIndex(name);
 			auto field_type = struct_type->getFieldAtIndex(field_idx);
+
+			if(this->is_optional && field_type->isOptional())
+			{
+				if(struct_ptr->getStructField(field_idx).haveOptionalValue())
+					continue;
+			}
 
 			auto value = TRY_VALUE(expr->evaluate(ev));
 			value = ev->castValue(std::move(value), field_type);
@@ -53,9 +69,12 @@ namespace sap::interp::cst
 
 		// update them all at once.
 		for(auto& [idx, val] : new_values)
-			struct_val.getStructField(idx) = std::move(val);
+			struct_ptr->getStructField(idx) = std::move(val);
 
-		return EvalResult::ofValue(std::move(struct_val));
+		if(this->is_assignment)
+			return EvalResult::ofVoid();
+		else
+			return EvalResult::ofValue(std::move(_struct_val));
 	}
 
 

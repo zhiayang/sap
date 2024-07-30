@@ -256,6 +256,10 @@ namespace sap::frontend
 			case TT::KW_Or: return 40;
 
 			case TT::SlashSlash: return 10;
+			case TT::SlashSlashQuestion: return 10;
+
+			case TT::SlashSlashEqual: return 1;
+			case TT::SlashSlashQuestionEqual: return 1;
 
 			default: return -1;
 		}
@@ -268,8 +272,14 @@ namespace sap::frontend
 
 	static bool is_assignment_op(TokenType tok)
 	{
-		return util::is_one_of(tok, TT::Equal, TT::PlusEqual, TT::MinusEqual, TT::AsteriskEqual, TT::SlashEqual,
-		    TT::PercentEqual);
+		return util::is_one_of(tok, //
+		    TT::Equal,              //
+		    TT::PlusEqual,          //
+		    TT::MinusEqual,         //
+		    TT::AsteriskEqual,      //
+		    TT::SlashEqual,         //
+		    TT::PercentEqual        //
+		);
 	}
 
 	static bool is_regular_binary_op(TokenType tok)
@@ -622,23 +632,25 @@ namespace sap::frontend
 
 				lhs = std::move(tmp);
 			}
-			else if(op_tok == TT::SlashSlash)
+			else if(util::is_one_of(op_tok, TT::SlashSlash, TT::SlashSlashQuestion, TT::SlashSlashEqual,
+			            TT::SlashSlashQuestionEqual))
 			{
 				if(not dynamic_cast<ast::StructLit*>(rhs.get()))
-					return ErrMsg(rhs->loc(), "right-hand operand of '//' must be a struct literal");
+					return ErrMsg(rhs->loc(), "right-hand operand of '{}' must be a struct literal", op_tok.text);
 
 				auto tmp = std::make_unique<ast::StructUpdateOp>(op_tok.loc);
+				tmp->is_assignment = (op_tok == TT::SlashSlashEqual || op_tok == TT::SlashSlashQuestionEqual);
+				tmp->is_optional = (op_tok == TT::SlashSlashQuestion || op_tok == TT::SlashSlashQuestionEqual);
 				tmp->structure = std::move(lhs);
 
+				/* TODO: investigate whether these somewhat-arbitrary restrictions are necessary */
 				auto lit = util::static_pointer_cast<ast::StructLit>(std::move(rhs));
 				if(not lit->is_anonymous)
-					return ErrMsg(lit->loc(), "right-hand operand of '//' cannot be named");
+					return ErrMsg(lit->loc(), "right-hand operand of '{}' cannot be named", op_tok.text);
 
 				for(auto& field : lit->field_inits)
 				{
-					if(not field.name.has_value())
-						return ErrMsg(field.value->loc(), "update fields of '//' must all be named");
-
+					assert(field.name.has_value());
 					tmp->updates.emplace_back(std::move(*field.name), std::move(field.value));
 				}
 

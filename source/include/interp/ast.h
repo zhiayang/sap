@@ -48,7 +48,8 @@ namespace sap::interp::ast
 		virtual ~Stmt();
 		virtual ErrorOr<TCResult> typecheck_impl(Typechecker* ts,
 		    const Type* infer = nullptr, //
-		    bool keep_lvalue = false) const = 0;
+		    bool keep_lvalue = false) const
+		    = 0;
 
 		[[nodiscard]] virtual ErrorOr<TCResult> typecheck(Typechecker* ts, //
 		    const Type* infer = nullptr,
@@ -429,6 +430,8 @@ namespace sap::interp::ast
 		    const Type* infer = nullptr, //
 		    bool keep_lvalue = false) const override;
 
+		bool is_optional {};
+		bool is_assignment {};
 		std::unique_ptr<Expr> structure;
 		std::vector<std::pair<std::string, std::unique_ptr<Expr>>> updates;
 	};
