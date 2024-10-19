@@ -1,5 +1,5 @@
 // value.cpp
-// Copyright (c) 2022, zhiayang
+// Copyright (c) 2022, yuki / zhiayang
 // SPDX-License-Identifier: Apache-2.0
 
 #include <utf8proc/utf8proc.h>
@@ -650,7 +650,9 @@ namespace sap::interp
 	Value Value::function(const FunctionType* fn_type, FnType fn)
 	{
 		auto ret = Value(fn_type);
+		new(&ret.v_function) decltype(ret.v_function)();
 		ret.v_function = std::move(fn);
+
 		return ret;
 	}
 

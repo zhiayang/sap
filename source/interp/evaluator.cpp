@@ -1,5 +1,5 @@
 // evaluator.cpp
-// Copyright (c) 2022, zhiayang
+// Copyright (c) 2022, yuki / zhiayang
 // SPDX-License-Identifier: Apache-2.0
 
 #include <cmath>
@@ -91,11 +91,10 @@ namespace sap::interp
 		{
 			return Value::array(to->arrayElement(), std::move(value).takeArray());
 		}
-		else if(
-		    from_type->isPointer() && to->isPointer() && from_type->pointerElement()->isArray()
-		    && to->pointerElement()->isArray()
-		    && (from_type->pointerElement()->arrayElement()->isVoid()
-		        || to->pointerElement()->arrayElement()->isVoid()))
+		else if(from_type->isPointer() && to->isPointer() && from_type->pointerElement()->isArray()
+		        && to->pointerElement()->isArray()
+		        && (from_type->pointerElement()->arrayElement()->isVoid()
+		            || to->pointerElement()->arrayElement()->isVoid()))
 		{
 			assert(from_type->isMutablePointer() || not to->isMutablePointer());
 			if(to->isMutablePointer())
@@ -317,6 +316,9 @@ namespace sap::interp
 		{
 			return func_defn->call(this, args);
 		}
+		// else if(auto var_defn = dynamic_cast<const cst::VariableDefn*>(defn); var_defn != nullptr)
+		// {
+		// }
 		else
 		{
 			return ErrMsg(this, "not implemented");

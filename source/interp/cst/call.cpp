@@ -1,5 +1,5 @@
 // call.cpp
-// Copyright (c) 2022, zhiayang
+// Copyright (c) 2022, yuki / zhiayang
 // SPDX-License-Identifier: Apache-2.0
 
 #include "location.h"
@@ -13,16 +13,6 @@
 
 namespace sap::interp::cst
 {
-	static ErrorOr<EvalResult> eval_arg(Evaluator* ev, const ExprOrDefaultPtr& arg)
-	{
-		return arg->evaluate(ev);
-	}
-
-	static Location get_arg_loc(const ExprOrDefaultPtr& arg)
-	{
-		return arg->loc();
-	}
-
 	ErrorOr<EvalResult> FunctionCall::evaluate_impl(Evaluator* ev) const
 	{
 		auto& param_types = this->callee->type->toFunction()->parameterTypes();
@@ -33,7 +23,7 @@ namespace sap::interp::cst
 		for(size_t i = 0; i < this->arguments.size(); i++)
 		{
 			auto& arg = this->arguments[i];
-			auto val = TRY(eval_arg(ev, arg));
+			auto val = TRY(arg->evaluate(ev));
 
 			if(i == 0 && this->ufcs_kind != UFCSKind::None)
 			{
@@ -62,7 +52,7 @@ namespace sap::interp::cst
 			{
 				if(val.isLValue() && not val.get().type()->isCloneable())
 				{
-					return ErrMsg(get_arg_loc(arg),
+					return ErrMsg(arg->loc(),
 					    "cannot pass a non-cloneable value of type '{}' as an argument; move with `*`",
 					    val.get().type());
 				}

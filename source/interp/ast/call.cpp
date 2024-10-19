@@ -1,14 +1,14 @@
 // call.cpp
-// Copyright (c) 2022, zhiayang
+// Copyright (c) 2022, yuki / zhiayang
 // SPDX-License-Identifier: Apache-2.0
 
-#include "location.h" // for error
+#include "location.h"
 
-#include "interp/ast.h"         // for Declaration, FunctionCall, Expr, Fun...
-#include "interp/type.h"        // for Type, FunctionType
-#include "interp/value.h"       // for Value
-#include "interp/interp.h"      // for Interpreter, DefnTree
-#include "interp/eval_result.h" // for EvalResult, TRY_VALUE
+#include "interp/ast.h"
+#include "interp/type.h"
+#include "interp/value.h"
+#include "interp/interp.h"
+#include "interp/eval_result.h"
 #include "interp/overload_resolution.h"
 
 namespace sap::interp::ast
@@ -34,14 +34,30 @@ namespace sap::interp::ast
 		}
 		else
 		{
-			return ErrMsg(ts, "?!");
+			if(not decl->type->isFunction())
+				return ErrMsg(ts, "somehow we are calling a non-function type???");
+
+			ExpectedParams params {};
+			auto fn_type = decl->type->toFunction();
+
+			for(size_t i = 0; i < fn_type->parameterTypes().size(); i++)
+			{
+				params.push_back({
+				    .name = "",
+				    .type = fn_type->parameterTypes()[i],
+				    .default_value = nullptr,
+				});
+			}
+
+			return OkMove(params);
 		}
 	}
 
 	using ResolvedOverloadSet = ErrorOr<std::pair<const cst::Declaration*, ArrangedArguments>>;
 
-	static ErrorOr<ArrangedArguments>
-	get_calling_cost(Typechecker* ts, const cst::Declaration* decl, const std::vector<InputArg>& arguments)
+	static ErrorOr<ArrangedArguments> get_calling_cost(Typechecker* ts,
+	    const cst::Declaration* decl,
+	    const std::vector<InputArg>& arguments)
 	{
 		return arrangeCallArguments(ts, TRY(convert_params(ts, decl)), arguments, //
 		    "function", "argument", "parameter");

@@ -1,5 +1,5 @@
 // paragraph.cpp
-// Copyright (c) 2021, zhiayang
+// Copyright (c) 2021, yuki / zhiayang
 // SPDX-License-Identifier: Apache-2.0
 
 #include <variant> // for variant, get, holds_alternative, visit

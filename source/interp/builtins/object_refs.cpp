@@ -1,5 +1,5 @@
 // object_refs.cpp
-// Copyright (c) 2022, zhiayang
+// Copyright (c) 2022, yuki / zhiayang
 // SPDX-License-Identifier: Apache-2.0
 
 #include "interp/interp.h"

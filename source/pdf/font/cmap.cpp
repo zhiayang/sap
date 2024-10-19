@@ -1,5 +1,5 @@
 // cmap.cpp
-// Copyright (c) 2021, zhiayang
+// Copyright (c) 2021, yuki / zhiayang
 // SPDX-License-Identifier: Apache-2.0
 
 // i know it's bad form to keep having two font.hs and two cmap.cpps and whatever

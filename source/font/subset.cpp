@@ -1,5 +1,5 @@
 // subset.cpp
-// Copyright (c) 2021, zhiayang
+// Copyright (c) 2021, yuki / zhiayang
 // SPDX-License-Identifier: Apache-2.0
 
 #include <ctime> // for size_t, time

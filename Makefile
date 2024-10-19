@@ -1,5 +1,5 @@
 # Makefile
-# Copyright (c) 2021, zhiayang
+# Copyright (c) 2021, yuki
 # Licensed under the Apache License Version 2.0.
 
 CC                  := clang

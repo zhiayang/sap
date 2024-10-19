@@ -1,0 +1,13 @@
+# 01-basic.sap
+# Copyright (c) 2024, yuki
+# SPDX-License-Identifier: Apache-2.0
+
+global var println = builtin::println;
+
+fn f1()
+{
+	builtin::println(f"f1");
+}
+
+
+f1();

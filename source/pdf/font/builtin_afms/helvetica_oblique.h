@@ -1,5 +1,5 @@
 // helvetica_oblique.h
-// Copyright (c) 2022, zhiayang
+// Copyright (c) 2022, yuki / zhiayang
 // SPDX-License-Identifier: Apache-2.0
 
 #pragma once

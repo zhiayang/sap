@@ -1,5 +1,5 @@
 // path_segment.cpp
-// Copyright (c) 2023, zhiayang
+// Copyright (c) 2023, yuki / zhiayang
 // SPDX-License-Identifier: Apache-2.0
 
 #include "sap/path.h"

@@ -1,5 +1,5 @@
 // fontconfig.cpp
-// Copyright (c) 2022, zhiayang
+// Copyright (c) 2022, yuki / zhiayang
 // SPDX-License-Identifier: Apache-2.0
 
 #if defined(USE_FONTCONFIG) && USE_FONTCONFIG != 0

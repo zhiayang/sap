@@ -1,6 +1,6 @@
 /*
     zarg.h
-    Copyright 2023, zhiayang
+    Copyright 2023, yuki / zhiayang
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
