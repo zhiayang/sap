@@ -42,7 +42,7 @@
 */
 
 /*
-    Version 2.7.8
+    Version 2.7.9
     =============
 
 
@@ -1013,11 +1013,11 @@ namespace zpr
 				// now do fractional part, as an unsigned number
 				while(len < MAX_BUFFER_LEN)
 				{
+					buf[len++] = static_cast<char>('0' + (frac % 10));
 					if(flag && (frac % 10) == 0)
 						goto skip;
 
 					flag = false;
-					buf[len++] = static_cast<char>('0' + (frac % 10));
 
 				skip:
 					count -= 1;
@@ -2690,6 +2690,11 @@ namespace zpr
 
     Version History
     ===============
+
+	2.7.9 - 31/01/2024
+	------------------
+	- Fix precision when printing floats with '%g' specifier
+
 
 	2.7.8 - 26/04/2023
 	------------------

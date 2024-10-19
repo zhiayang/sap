@@ -46,8 +46,8 @@ namespace test
 
 #define M(T, x) _MATCH(T, x, a##__COUNTER__)
 
-	static pj::value dumpStmt(const ast::Stmt* x);
-	static pj::value dumpExpr(const ast::Expr* x);
+	pj::value dumpStmt(const ast::Stmt* x);
+	pj::value dumpExpr(const ast::Expr* x);
 
 	static pj::value dumpBlock(const ast::Block* x)
 	{
@@ -141,7 +141,7 @@ namespace test
 		return V(O {
 		    { "ast", V("VariableDefn") },
 		    { "name", V(x->name) },
-		    { "explicit_type", V(x->explicit_type.has_value() ? x->explicit_type->str() : nullptr) },
+		    { "explicit_type", x->explicit_type.has_value() ? V(x->explicit_type->str()) : V() },
 		    { "initialiser", dumpExpr(x->initialiser.get()) },
 		    { "is_global", V(x->is_global) },
 		    { "is_mutable", V(x->is_mutable) },
@@ -318,7 +318,7 @@ namespace test
 		util::unreachable();
 	}
 
-	static pj::value dumpStmt(const ast::Stmt* x)
+	pj::value dumpStmt(const ast::Stmt* x)
 	{
 		if(x == nullptr)
 			return V();
@@ -354,7 +354,7 @@ namespace test
 	{
 		return V(O {
 		    { "ast", V("MoveExpr") },
-		    { "expr", dumpExpr(x) },
+		    { "expr", dumpExpr(x->expr.get()) },
 		});
 	}
 
@@ -640,7 +640,7 @@ namespace test
 		});
 	}
 
-	static pj::value dumpExpr(const ast::Expr* x)
+	pj::value dumpExpr(const ast::Expr* x)
 	{
 		if(x == nullptr)
 			return V();
@@ -676,10 +676,5 @@ namespace test
 		M(TreeBlockExpr, x);
 
 		util::unreachable();
-	}
-
-	pj::value dump(const ast::Stmt* s)
-	{
-		return dumpStmt(s);
 	}
 }

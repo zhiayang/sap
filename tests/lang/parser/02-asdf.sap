@@ -1,0 +1,683 @@
+# std.sap
+
+import "std/lists.sap";
+import "std/state.sap";
+import "std/colour.sap";
+import "std/bibliography.sap";
+
+namespace std
+{
+	fn serif_font() -> builtin::FontFamily { return builtin::state().serif_font_family; }
+	fn sans_font() -> builtin::FontFamily { return builtin::state().sans_font_family; }
+	fn mono_font() -> builtin::FontFamily { return builtin::state().mono_font_family; }
+
+
+
+	struct SubSubSection
+	{
+		num: int;
+		name: string;
+		page_num: int;
+		num_tbo_ref: BlockRef;
+	}
+
+	struct SubSection
+	{
+		num: int;
+		name: string;
+		page_num: int;
+		num_tbo_ref: BlockRef;
+
+		subsubsections: [SubSubSection];
+	}
+
+	struct Section
+	{
+		num: int;
+		name: string;
+		page_num: int;
+		num_tbo_ref: BlockRef;
+
+		subsections: [SubSection];
+	}
+
+
+	global var g_sections: [Section] = [];
+	@layout {
+		g_sections = [];
+	}
+
+	global var g_section_font_size: Length = 24pt;
+	global var g_subsection_font_size: Length = 19.5pt;
+	global var g_subsubsection_font_size: Length = 17pt;
+
+	fn section(name: string) -> ?Block
+	{
+		let section_num = 1 + g_sections.size();
+
+		var num_line = builtin::make_hbox(\line { \builtin::make_text(f"{section_num}") }, builtin::hspace(6mm))
+			.apply_style({
+				horz_alignment: .Right,
+				font_size: 13pt,
+			});
+		num_line.set_width(20mm);
+
+		var name_line = builtin::make_line(builtin::make_text(name)).apply_style({
+			font_size: g_section_font_size,
+		});
+
+		let the_section = Section {
+			num: section_num,
+			name: name,
+			page_num: 0,
+			num_tbo_ref: num_line.ref(),
+			subsections: [],
+		};
+
+		var box = builtin::make_vbox(
+			builtin::vspace(0.6em),
+			builtin::make_hbox(*num_line, *name_line),
+			builtin::vspace(-builtin::current_style().paragraph_spacing! / 2),
+		).apply_style({
+			font_family: sans_font(),
+		});
+
+		box.offset_position({ x: -20mm, y: 0mm });
+		g_sections += [the_section];
+
+		return box;
+	}
+
+
+	fn subsection(name: string) -> ?Block
+	{
+		if(g_sections.size() == 0)
+		{
+			builtin::println(f"no sections to put subsection in!");
+			return null;
+		}
+
+		var sec = &mut g_sections[g_sections.size() - 1];
+		let subnum = 1 + sec!.subsections.size();
+
+		var num_line = builtin::make_hbox(builtin::make_line(builtin::make_text(f"{sec!.num}.{subnum}")), builtin::hspace(6mm))
+			.apply_style({
+				horz_alignment: .Right,
+				font_size: 13pt,
+			});
+		num_line.set_width(20mm);
+
+		var name_line = builtin::make_line(builtin::make_text(name)).apply_style({
+			font_size: g_subsection_font_size,
+		});
+
+		let the_sub = SubSection {
+			num: subnum,
+			name: name,
+			page_num: 0,
+			num_tbo_ref: num_line.ref(),
+			subsubsections: [],
+		};
+
+		var box = builtin::make_vbox(
+			builtin::vspace(0.6em),
+			builtin::make_hbox(*num_line, *name_line),
+			builtin::vspace(-builtin::current_style().paragraph_spacing! / 2),
+		).apply_style({
+			font_family: sans_font(),
+		});
+
+		box.offset_position({ x: -20mm, y: 0mm });
+		sec!.subsections += [the_sub];
+		return box;
+	}
+
+
+	fn subsubsection(name: string) -> ?Block
+	{
+		if(g_sections.size() == 0)
+		{
+			builtin::println(f"no sections to put subsubsection in!");
+			return null;
+		}
+
+		var sec = &mut g_sections[g_sections.size() - 1];
+		if(sec!.subsections.size() == 0)
+		{
+			builtin::println(f"no subsections to put subsubsection in!");
+			return null;
+		}
+
+		var subsec = &mut sec!.subsections[sec!.subsections.size() - 1];
+		var subsubnum = 1 + subsec!.subsubsections.size();
+
+		var num_line = builtin::make_hbox(builtin::make_line(builtin::make_text(f"{sec!.num}.{subsec!.num}.{subsubnum}")),
+			builtin::hspace(6mm)).apply_style({
+				horz_alignment: .Right,
+				font_size: 13pt,
+			});
+		num_line.set_width(20mm);
+
+		var name_line = builtin::make_line(builtin::make_text(name)).apply_style({
+			font_size: g_subsubsection_font_size,
+		});
+
+		let the_subsub = SubSubSection {
+			num: subsubnum,
+			name: name,
+			page_num: 0,
+			num_tbo_ref: num_line.ref(),
+		};
+
+		var box = builtin::make_vbox(
+			builtin::vspace(0.6em),
+			builtin::make_hbox(*num_line, *name_line),
+			builtin::vspace(-builtin::current_style().paragraph_spacing! / 2)
+		).apply_style({
+			font_family: sans_font(),
+		});
+
+		box.offset_position({ x: -20mm, y: 0mm });
+		subsec!.subsubsections += [the_subsub];
+		return box;
+	}
+
+
+
+
+
+	# page numbers
+	struct PageNumberState
+	{
+		ref: BlockRef;
+		enable: bool;
+		reset: bool;
+	}
+
+	global var g_page_numbering_resets: [PageNumberState] = [];
+	@layout {
+		g_page_numbering_resets = [];
+	}
+
+	fn disable_page_numbering() -> Block
+	{
+		# FIXME: this feels kinda hackish.
+		let x = builtin::vspace(0em);
+		g_page_numbering_resets += [PageNumberState {
+			ref: x.ref(),
+			enable: false,
+			reset: false,
+		}];
+
+		return x;
+	}
+
+	fn enable_page_numbering() -> Block
+	{
+		# FIXME: this feels kinda hackish.
+		let x = builtin::vspace(0em);
+		g_page_numbering_resets += [PageNumberState {
+			ref: x.ref(),
+			enable: true,
+			reset: false,
+		}];
+
+		return x;
+	}
+
+	fn reset_page_numbering() -> Block
+	{
+		# FIXME: this feels kinda hackish.
+		let x = builtin::vspace(0em);
+		g_page_numbering_resets += [PageNumberState {
+			ref: x.ref(),
+			enable: true,
+			reset: true,
+		}];
+
+		return x;
+	}
+
+	# actually put the page numbers onto the page
+	@finalise {
+		var rst_idx = 0;
+		var enabled = true;
+
+		var page_num_offset = 0;
+
+		var page_num_pos = builtin::document()!.page_size // {
+			x: .x - 35mm,
+			y: .y - 30mm,
+		};
+
+		for(var i = 0; i < builtin::document()!.page_count; i += 1)
+		{
+			if(rst_idx < g_page_numbering_resets.size())
+			{
+				let rst = g_page_numbering_resets[rst_idx];
+				let tmp = rst.ref.layout_object()!.position().page;
+
+				if(tmp == i)
+				{
+					rst_idx += 1;
+
+					enabled = rst.enable;
+					if(rst.reset)
+						page_num_offset = tmp;
+				}
+			}
+
+			let page_num = i + 1 - page_num_offset;
+			if(enabled)
+			{
+				let item = builtin::make_line(builtin::make_text(f"{page_num}")).apply_style({
+					horz_alignment: .Right,
+					font_size: 11pt,
+				});
+
+				builtin::output_at_absolute({
+					page: i,
+					x: page_num_pos.x,
+					y: page_num_pos.y,
+				}, *item);
+			}
+		}
+	}
+
+	# generate outline items
+	@finalise {
+		for(var i = 0; i < g_sections.size(); i += 1)
+		{
+			let s = &mut g_sections[i];
+			let ref = s!.num_tbo_ref.layout_object();
+			var pos = ref!.position();
+			pos.y -= ref!.size().y;
+
+			var children1: [builtin::OutlineItem] = [];
+
+			for(var i = 0; i < s!.subsections.size(); i += 1)
+			{
+				let ss = &mut s!.subsections[i];
+				let ref = ss!.num_tbo_ref.layout_object();
+				var pos = ref!.position();
+				pos.y -= ref!.size().y;
+
+				var children2: [builtin::OutlineItem] = [];
+
+				for(var i = 0; i < ss!.subsubsections.size(); i += 1)
+				{
+					let sss = &mut ss!.subsubsections[i];
+					let ref = sss!.num_tbo_ref.layout_object();
+					var pos = ref!.position();
+					pos.y -= ref!.size().y;
+
+					children2 += [builtin::OutlineItem {
+						title: sss!.name,
+						position: pos,
+						children: [],
+					}];
+				}
+
+				children1 += [builtin::OutlineItem {
+					title: ss!.name,
+					position: pos,
+					children: *children2,
+				}];
+			}
+
+			builtin::document()!.outline_items += [builtin::OutlineItem {
+				title: s!.name,
+				position: pos,
+				children: *children1,
+			}];
+		}
+	}
+
+
+
+
+
+	@post {
+
+		var rst_idx = 0;
+		var page_offset = 0;
+
+		for(var i = 0; i < g_sections.size(); i += 1)
+		{
+			let s = &mut g_sections[i];
+			let tmp = s!.num_tbo_ref.layout_object()!.position();
+
+			while(rst_idx < g_page_numbering_resets.size())
+			{
+				let rst = g_page_numbering_resets[rst_idx];
+				let p = rst.ref.layout_object()!.position().page;
+
+				if(tmp.page >= p)
+				{
+					rst_idx += 1;
+					if(rst.reset)
+						page_offset += p;
+				}
+				else
+				{
+					break;
+				}
+			}
+
+			g_sections[i].page_num = 1 + tmp.page - page_offset;
+
+			for(var si = 0; si < s!.subsections.size(); si += 1)
+			{
+				let ss = &mut s!.subsections[si];
+				let tmp = ss!.num_tbo_ref.layout_object()!.position();
+
+				while(rst_idx < g_page_numbering_resets.size())
+				{
+					let rst = g_page_numbering_resets[rst_idx];
+					let p = rst.ref.layout_object()!.position().page;
+
+					if(tmp.page >= p)
+					{
+						rst_idx += 1;
+						if(rst.reset)
+							page_offset += p;
+					}
+					else
+					{
+						break;
+					}
+				}
+
+				ss!.page_num = 1 + tmp.page - page_offset;
+
+				for(var ssi = 0; ssi < ss!.subsubsections.size(); ssi += 1)
+				{
+					let sss = &mut ss!.subsubsections[ssi];
+					let tmp = sss!.num_tbo_ref.layout_object()!.position();
+
+					while(rst_idx < g_page_numbering_resets.size())
+					{
+						let rst = g_page_numbering_resets[rst_idx];
+						let p = rst.ref.layout_object()!.position().page;
+
+						if(tmp.page >= p)
+						{
+							rst_idx += 1;
+							if(rst.reset)
+								page_offset += p;
+						}
+						else
+						{
+							break;
+						}
+					}
+
+					sss!.page_num = 1 + tmp.page - page_offset;
+				}
+			}
+		}
+	}
+
+
+	global var g_saved_sections: [Section] = [];
+	global var g_toc_lines: [BlockRef] = [];
+	@layout g_toc_lines = [];
+
+	@post {
+		g_saved_sections = g_sections;
+	}
+
+	@finalise {
+		var i = 0;
+		var k = 0;
+		while(k < g_toc_lines.size() && i < g_saved_sections.size())
+		{
+			let s = &g_saved_sections[i];
+			let dest = s!.num_tbo_ref;
+			let toc_line = g_toc_lines[k].layout_object();
+			k += 1;
+
+			toc_line!.link_to(dest);
+
+			var si = 0;
+			while(k < g_toc_lines.size() && si < s!.subsections.size())
+			{
+				let ss = &s!.subsections[si];
+				let dest = s!.subsections[si].num_tbo_ref;
+				let toc_line = g_toc_lines[k].layout_object();
+				k += 1;
+
+				toc_line!.link_to(dest);
+
+				var ssi = 0;
+				while(k < g_toc_lines.size() && ssi < ss!.subsubsections.size())
+				{
+					let sss = &ss!.subsubsections[ssi];
+					let dest = ss!.subsubsections[ssi].num_tbo_ref;
+					let toc_line = g_toc_lines[k].layout_object();
+					k += 1;
+
+					toc_line!.link_to(dest);
+					ssi += 1;
+				}
+				si += 1;
+			}
+			i += 1;
+		}
+	}
+
+	fn output_table_of_contents() -> ?Block
+	{
+		if(builtin::state().layout_pass == 1)
+		{
+			builtin::request_layout();
+			return null;
+		}
+
+		var lines = [:Block];
+
+		var i = 0;
+		while(i < g_saved_sections.size())
+		{
+			let s = &g_saved_sections[i];
+
+			let number = builtin::make_line(builtin::bold1(builtin::make_text(f"{s!.num}.")));
+			number.set_width(8mm);
+
+			let title = builtin::make_line(builtin::bold1(builtin::make_text(s!.name)));
+			let heading = builtin::make_hbox(
+				*number, *title
+			);
+
+			let pagenum = builtin::make_hbox(
+				builtin::make_line(builtin::bold1(builtin::make_text(f"{s!.page_num}")))
+			);
+
+			var item = builtin::make_hbox(
+				*heading, *pagenum
+			).apply_style({
+				horz_alignment: .Justified
+			});
+
+			if(i != 0)
+				lines += [builtin::vspace(1em)];
+
+			g_toc_lines += [item.ref()];
+			lines += [*item];
+
+			var si = 0;
+			while(si < s!.subsections.size())
+			{
+				let ss = &s!.subsections[si];
+
+				let number = builtin::make_line(builtin::make_text(f"{s!.num}.{ss!.num}"));
+				number.set_width(11mm);
+
+				let title = builtin::make_line(builtin::make_text(ss!.name));
+				let heading = builtin::make_hbox(
+					builtin::hspace(9mm), *number, *title
+				);
+
+				let pagenum = builtin::make_hbox(
+					builtin::make_line(builtin::make_text(f"{ss!.page_num}"))
+				);
+
+				let item = builtin::make_hbox(
+					*heading, *pagenum
+				).apply_style({
+					horz_alignment: .Justified
+				});
+
+				g_toc_lines += [item.ref()];
+				lines += [*item];
+
+				var ssi = 0;
+				while(ssi < ss!.subsubsections.size())
+				{
+					let sss = &ss!.subsubsections[ssi];
+
+					let number = builtin::make_line(builtin::make_text(f"{s!.num}.{ss!.num}.{sss!.num}"));
+					number.set_width(15mm);
+
+					let title = builtin::make_line(builtin::make_text(sss!.name));
+					let heading = builtin::make_hbox(
+						builtin::hspace(20mm), *number, *title
+					);
+
+					let pagenum = builtin::make_hbox(
+						builtin::make_line(builtin::make_text(f"{sss!.page_num}"))
+					);
+
+					let item = builtin::make_hbox(
+						*heading, *pagenum
+					).apply_style({
+						horz_alignment: .Justified
+					});
+
+					g_toc_lines += [item.ref()];
+					lines += [*item];
+					ssi += 1;
+				}
+
+				si += 1;
+			}
+
+			i += 1;
+		}
+
+		var ret = builtin::make_vbox(...*lines).apply_style({
+			paragraph_spacing: 0.1em,
+		});
+
+		ret = builtin::make_vbox(
+			builtin::make_hbox(
+				builtin::make_line(builtin::make_text("Contents"))
+			).apply_style({ horz_alignment: .Left, font_size: 20pt, font_family: sans_font() }),
+			*ret
+		);
+
+		# we must re-request layout again, to make the page numbers correct.
+		if(builtin::state().layout_pass == 2)
+			builtin::request_layout();
+
+		return ret;
+	}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+	fn emph(x: string) -> Inline
+	{
+		return builtin::italic1(builtin::make_text(x));
+	}
+
+	fn emph(x: Inline) -> Inline
+	{
+		return builtin::italic1(*x);
+	}
+
+	fn quote(x: string) -> Inline
+	{
+		return builtin::make_text(f"‘{x}’");
+	}
+
+	fn mono(x: string) -> Inline
+	{
+		return builtin::make_text(x).apply_style({
+			font_family: mono_font(),
+			enable_smart_quotes: false,
+		});
+	}
+
+
+	enum Prefix: int
+	{
+		nano;
+		micro;
+		milli;
+		none;
+		kilo;
+		mega;
+		giga;
+	}
+
+	enum Unit: int
+	{
+		byte;
+		second;
+	}
+
+	fn _get_prefix_and_units(prefix: ?Prefix = null, unit: ?Unit = null,
+		p: &mut string, u: &mut string)
+	{
+		if(prefix != null)
+		{
+			if(prefix! == Prefix::nano)         p! = "n";
+			else if(prefix! == Prefix::micro)   p! = "µ";
+			else if(prefix! == Prefix::milli)   p! = "m";
+			else if(prefix! == Prefix::kilo)    p! = "k";
+			else if(prefix! == Prefix::mega)    p! = "M";
+			else if(prefix! == Prefix::giga)    p! = "G";
+		}
+
+		if(unit != null)
+		{
+			if(unit! == Unit::byte)         u! = "B";
+			else if(unit! == Unit::second)  u! = "s";
+		}
+	}
+
+	fn qty(num: int, prefix: ?Prefix = null, unit: ?Unit = null) -> Inline
+	{
+		var p = "";
+		var u = "";
+		_get_prefix_and_units(prefix, unit, &mut p, &mut u);
+
+		return builtin::make_text(f"{num} {p}{u}");
+	}
+
+	fn qty(num: float, prefix: ?Prefix = null, unit: ?Unit = null) -> Inline
+	{
+		var p = "";
+		var u = "";
+		_get_prefix_and_units(prefix, unit, &mut p, &mut u);
+
+		return builtin::make_text(f"{num} {p}{u}");
+	}
+}
+
+namespace std::paper_size
+{
+	global let A4 = builtin::Size2d { x: 210mm, y: 297mm };
+}

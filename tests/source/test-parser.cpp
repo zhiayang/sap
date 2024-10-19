@@ -16,6 +16,12 @@ namespace test
 	{
 		auto contents = util::readEntireFile(test);
 		auto doc = sap::frontend::parse(test.string(), contents.span().chars());
+		if(doc.is_err())
+			return ctx.failed++, void();
+
+		auto& preamble = doc->preamble();
+		for(auto& p : preamble)
+			zpr::println("{}", dumpStmt(p.get()).serialise(true));
 	}
 
 	void test_parser(Context& ctx, const stdfs::path& test_dir)

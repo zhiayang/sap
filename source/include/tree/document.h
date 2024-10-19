@@ -39,6 +39,7 @@ namespace sap::tree
 		std::vector<std::unique_ptr<interp::ast::Stmt>> takePreamble() &&;
 
 		const tree::Container& container() const { return *m_container; }
+		const std::vector<std::unique_ptr<interp::ast::Stmt>>& preamble() const { return m_preamble; }
 
 	private:
 		zst::SharedPtr<tree::Container> m_container;

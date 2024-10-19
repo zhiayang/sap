@@ -6,6 +6,15 @@
 
 #include "defs.h"
 
+#include "picojson.h"
+namespace pj = picojson;
+
+namespace sap::interp::ast
+{
+	struct Stmt;
+	struct Expr;
+}
+
 namespace test
 {
 	struct Context
@@ -14,6 +23,9 @@ namespace test
 		size_t failed;
 		size_t skipped;
 	};
+
+	pj::value dumpStmt(const sap::interp::ast::Stmt* x);
+	pj::value dumpExpr(const sap::interp::ast::Expr* x);
 
 	void test_parser(Context& ctx, const stdfs::path& test_dir);
 
