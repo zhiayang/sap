@@ -4,7 +4,7 @@
 
 #pragma once
 
-#include "location.h" // for Location
+#include "location.h"
 
 namespace sap::tree
 {
@@ -13,106 +13,105 @@ namespace sap::tree
 
 namespace sap::frontend
 {
+#define TOKEN_TYPES_LIST       \
+	X(Invalid)                 \
+	X(EndOfFile)               \
+	X(Backslash)               \
+	X(Comment)                 \
+	X(LBrace)                  \
+	X(RBrace)                  \
+	X(Text)                    \
+	X(ParagraphBreak)          \
+	X(Identifier)              \
+	X(Number)                  \
+	X(String)                  \
+	X(CharLiteral)             \
+	X(FStringStart)            \
+	X(FStringMiddle)           \
+	X(FStringEnd)              \
+	X(FStringDummy)            \
+	X(LParen)                  \
+	X(RParen)                  \
+	X(LSquare)                 \
+	X(RSquare)                 \
+	X(LAngle)                  \
+	X(RAngle)                  \
+	X(Dollar)                  \
+	X(Colon)                   \
+	X(Comma)                   \
+	X(Period)                  \
+	X(Ampersand)               \
+	X(Question)                \
+	X(Semicolon)               \
+	X(Plus)                    \
+	X(Minus)                   \
+	X(Asterisk)                \
+	X(Slash)                   \
+	X(Equal)                   \
+	X(Percent)                 \
+	X(Exclamation)             \
+	X(At)                      \
+	X(RArrow)                  \
+	X(ColonColon)              \
+	X(LAngleEqual)             \
+	X(RAngleEqual)             \
+	X(EqualEqual)              \
+	X(ExclamationEqual)        \
+	X(PlusEqual)               \
+	X(MinusEqual)              \
+	X(AsteriskEqual)           \
+	X(SlashEqual)              \
+	X(PercentEqual)            \
+	X(QuestionQuestion)        \
+	X(QuestionPeriod)          \
+	X(SlashSlash)              \
+	X(SlashSlashEqual)         \
+	X(SlashSlashQuestion)      \
+	X(SlashSlashQuestionEqual) \
+	X(Ellipsis)                \
+	X(RawBlock)                \
+	X(KW_If)                   \
+	X(KW_Fn)                   \
+	X(KW_Or)                   \
+	X(KW_In)                   \
+	X(KW_For)                  \
+	X(KW_Mut)                  \
+	X(KW_Let)                  \
+	X(KW_Var)                  \
+	X(KW_And)                  \
+	X(KW_Not)                  \
+	X(KW_Else)                 \
+	X(KW_Enum)                 \
+	X(KW_True)                 \
+	X(KW_False)                \
+	X(KW_While)                \
+	X(KW_Break)                \
+	X(KW_Using)                \
+	X(KW_Union)                \
+	X(KW_Struct)               \
+	X(KW_Return)               \
+	X(KW_Import)               \
+	X(KW_Global)               \
+	X(KW_Continue)             \
+	X(KW_Namespace)
+
+#define X(x) x,
 	enum class TokenType
 	{
-		Invalid,
-		EndOfFile,
-
-		// common tokens
-		Backslash,
-		Comment,
-		LBrace,
-		RBrace,
-
-		// text mode tokens
-		Text,
-		ParagraphBreak,
-
-		// script mode tokens
-		Identifier,
-		Number,
-		String,
-		CharLiteral,
-
-		// stolen ƒrom PEP701
-		FStringStart,
-		FStringMiddle,
-		FStringEnd,
-		FStringDummy,
-
-		LParen,
-		RParen,
-		LSquare,
-		RSquare,
-		LAngle,
-		RAngle,
-		Dollar,
-		Colon,
-		Comma,
-		Period,
-		Ampersand,
-		Question,
-
-		Semicolon,
-		Plus,
-		Minus,
-		Asterisk,
-		Slash,
-		Equal,
-		Percent,
-		Exclamation,
-		At,
-
-		RArrow,
-		ColonColon,
-		LAngleEqual,
-		RAngleEqual,
-		EqualEqual,
-		ExclamationEqual,
-
-		PlusEqual,
-		MinusEqual,
-		AsteriskEqual,
-		SlashEqual,
-		PercentEqual,
-		QuestionQuestion,
-		QuestionPeriod,
-
-		SlashSlash,
-		SlashSlashEqual,
-		SlashSlashQuestion,
-		SlashSlashQuestionEqual,
-
-		Ellipsis,
-
-		RawBlock,
-
-		// keywords
-		KW_If,
-		KW_Fn,
-		KW_Or,
-		KW_In,
-		KW_For,
-		KW_Mut,
-		KW_Let,
-		KW_Var,
-		KW_And,
-		KW_Not,
-		KW_Else,
-		KW_Enum,
-		KW_True,
-		KW_False,
-		KW_While,
-		KW_Break,
-		KW_Using,
-		KW_Union,
-		KW_Struct,
-		KW_Return,
-		KW_Import,
-		KW_Global,
-		KW_Continue,
-		KW_Namespace,
+		TOKEN_TYPES_LIST
 	};
+#undef X
+
+#define X(x) { #x, TokenType::x },
+	static const util::hashmap<std::string, TokenType> STRING_TO_TOKEN_TYPE = { TOKEN_TYPES_LIST };
+#undef X
+
+#define X(x) { TokenType::x, #x },
+	static const util::hashmap<TokenType, std::string> TOKEN_TYPE_TO_STRING = { TOKEN_TYPES_LIST };
+#undef X
+
+
+
 
 	struct Token
 	{

@@ -743,6 +743,7 @@ namespace sap::interp::cst
 			{
 				std::string name;
 				const Type* type;
+				bool is_mutable;
 				std::unique_ptr<Expr> default_value;
 
 				bool operator==(const Param&) const = default;

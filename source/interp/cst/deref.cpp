@@ -52,12 +52,12 @@ namespace sap::interp::cst
 		assert(m_type->isPointer());
 
 		auto& inside = expr_res.get();
-		if(auto inside_ty = inside.type();
-		    inside_ty->isTreeBlockObj() || inside_ty->isTreeInlineObj() || inside_ty->isLayoutObject())
-		{
-			return EvalResult::ofVoid();
-		}
-		else
+		// if(auto inside_ty = inside.type();
+		//     inside_ty->isTreeBlockObj() || inside_ty->isTreeInlineObj() || inside_ty->isLayoutObject())
+		// {
+		// 	return EvalResult::ofVoid();
+		// }
+		// else
 		{
 			Value ret {};
 			if(this->is_mutable)

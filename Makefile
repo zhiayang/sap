@@ -11,6 +11,7 @@ WARNINGS += -Wno-error=unused-parameter
 WARNINGS += -Wno-error=unused-variable
 WARNINGS += -Wno-error=unused-function
 WARNINGS += -Wno-unused-but-set-variable
+WARNINGS += -Wno-string-conversion
 WARNINGS += -Wshadow
 WARNINGS += -Wno-error=shadow
 
@@ -33,21 +34,20 @@ CXXFLAGS            = $(COMMON_CFLAGS) -Wno-old-style-cast -std=c++20 -fno-excep
 
 CXXSRC              := $(shell find source -iname "*.cpp" -print)
 CXXOBJ              := $(CXXSRC:%.cpp=$(OUTPUT_DIR)/%.cpp.o)
-CXXLIBOBJ           := $(filter-out $(OUTPUT_DIR)/source/main.cpp.o,$(CXXOBJ))
 CXXDEPS             := $(CXXOBJ:.o=.d)
 
-CXXHDR              := $(shell find source -iname "*.h" -print)
+TESTSRC             := $(shell find tests/source -iname "*.cpp" -print)
+TESTOBJ             := $(TESTSRC:%.cpp=$(OUTPUT_DIR)/tester/%.cpp.o)
+TESTDEPS            := $(TESTOBJ:.o=.d)
+
+CXXHDR              := $(shell find source -iname "*.h" -print) \
+                       $(shell find tests/source -iname "*.h" -print)
 
 SPECIAL_HEADERS     := $(addprefix source/include/,defs.h pool.h util.h units.h error.h types.h)
 SPECIAL_HDRS_COMPDB := $(SPECIAL_HEADERS:%=%.special_compile_db)
 
 CXX_COMPDB_HDRS     := $(filter-out $(SPECIAL_HEADERS),$(CXXHDR))
 CXX_COMPDB          := $(CXX_COMPDB_HDRS:%=%.compile_db) $(CXXSRC:%=%.compile_db)
-
-TESTSRC             = $(shell find test -iname "*.cpp" -print)
-TESTOBJ             = $(TESTSRC:%.cpp=$(OUTPUT_DIR)/%.cpp.o)
-TESTDEPS            = $(TESTOBJ:.o=.d)
-TESTS               = $(TESTSRC:test/%.cpp=$(TEST_DIR)/%)
 
 EXTERNAL_SRCS       := $(shell find external/libdeflate/lib -iname "*.c" -print) \
 						external/utf8proc/utf8proc.c \
@@ -101,22 +101,26 @@ ifeq ($(USE_CORETEXT), 1)
 endif
 
 OUTPUT_BIN      := $(OUTPUT_DIR)/sap
+TESTER_BIN      := $(OUTPUT_DIR)/sap-test
 
 PREFIX  := $(shell pwd)
 DEFINES += -DSAP_PREFIX=\"$(PREFIX)\"
 
 
-.PHONY: all clean build test format iwyu %.pdf.gdb %.pdf.lldb compile_commands.json
+.PHONY: all clean build tester check %.pdf.gdb %.pdf.lldb
 .PRECIOUS: $(PRECOMP_GCH) $(OUTPUT_DIR)/%.cpp.o
 .DEFAULT_GOAL = all
 
-all: build test
+all: build
 
 build: $(OUTPUT_BIN)
 
-compdb: $(CXX_COMPDB) $(SPECIAL_HDRS_COMPDB)
+tester: $(TESTER_BIN)
 
-test: $(TESTS)
+check: tester
+	@env MallocNanoZone=0 $(TESTER_BIN) $(shell pwd)/tests
+
+compdb: $(CXX_COMPDB) $(SPECIAL_HDRS_COMPDB)
 
 %.pdf: %.sap build
 	@env MallocNanoZone=0 $(OUTPUT_BIN) $<
@@ -127,12 +131,6 @@ test: $(TESTS)
 %.pdf.lldb: %.sap build
 	@lldb --args $(OUTPUT_BIN) $<
 
-check: test
-	@for test in $(TESTS); do \
-		echo Running test $$test; \
-		$$test; \
-	done
-
 $(OUTPUT_BIN): $(PRECOMP_OBJ) $(CXXOBJ) $(EXTERNAL_OBJS)
 	@echo "  $(notdir $@)"
 	@mkdir -p $(shell dirname $@)
@@ -140,12 +138,18 @@ $(OUTPUT_BIN): $(PRECOMP_OBJ) $(CXXOBJ) $(EXTERNAL_OBJS)
 	@case "$(CXXFLAGS)" in "-g "* | *" -g" | *" -g "*) \
 		echo "  debuginfo"; dsymutil $@ 2>/dev/null ;; *) ;; esac
 
-$(TEST_DIR)/%: $(OUTPUT_DIR)/test/%.cpp.o $(CXXLIBOBJ) $(EXTERNAL_OBJS) $(PRECOMP_OBJ)
+
+$(TESTER_BIN): $(PRECOMP_OBJ) $(EXTERNAL_OBJS) $(filter-out $(OUTPUT_DIR)/source/main.cpp.o,$(CXXOBJ)) $(TESTOBJ)
 	@echo "  $(notdir $@)"
 	@mkdir -p $(shell dirname $@)
-	@$(CXX) $(CXXFLAGS) $(NONGCH_CXXFLAGS) $(WARNINGS) $(DEFINES) $(LDFLAGS) -Iexternal -o $@ $^
+	@$(CXX) $(CXXFLAGS) $(WARNINGS) $(DEFINES) $(LDFLAGS) $(LINKER_OPT_FLAGS) -Iexternal -o $@ $^
+	@# @case "$(CXXFLAGS)" in "-g "* | *" -g" | *" -g "*) \
+		echo "  debuginfo"; dsymutil $@ 2>/dev/null ;; *) ;; esac
 
-$(OUTPUT_DIR)/%.cpp.o: %.cpp $(PRECOMP_GCH)
+
+
+
+$(OUTPUT_DIR)/%.cpp.o $(OUTPUT_DIR)/tester/%.cpp.o: %.cpp $(PRECOMP_GCH)
 	@echo "  $<"
 	@mkdir -p $(shell dirname $@)
 	@$(CXX) $(PCH_INCLUDE_FLAGS) $(CXXFLAGS) $(NONGCH_CXXFLAGS) $(WARNINGS) $(INCLUDES) $(DEFINES) -MMD -MP -c -o $@ $<
@@ -175,27 +179,8 @@ $(PRECOMP_OBJ): $(PRECOMP_GCH)
 %.cpp.compile_db: %.cpp
 	@$(CXX) $(CXXFLAGS) $(WARNINGS) $(INCLUDES) $(DEFINES) -include $(PRECOMP_HDR) -o /dev/null $<
 
-
-
-
-compile_commands.json:
-	@echo "  $@"
-	@# first build list of commands
-	@echo -n > $(OUTPUT_DIR)/cmds
-	@for f in $(EXTERNAL_SRCS); do echo $(CC) $(CFLAGS) -MMD -MP -c -o $(OUTPUT_DIR)/$$f.o $(OUTPUT_DIR)/$$f; done >> $(OUTPUT_DIR)/cmds
-	@for f in $(CXXSRC); do echo $(CXX) -include $(PRECOMP_HDR) $(CXXFLAGS) $(NONGCH_CXXFLAGS) $(WARNINGS) $(INCLUDES) $(DEFINES) -MMD -MP -c -o $(OUTPUT_DIR)/$$f $$f; done >> $(OUTPUT_DIR)/cmds
-	@# now convert cmd list to compile_commands.json
-	@cat $(OUTPUT_DIR)/cmds | awk -v CWD=$$(pwd) 'BEGIN { print "[" } END { print "]"} { print "{\"arguments\": ["; for (i = 1; i <= NF; i++) { print "\"" $$i "\"," } print "], \"directory\": \"" CWD "\", \"file\": \"" $$NF "\", \"output\": \"" $$(NF - 1) "\"}, " }' > $@
-	@# do some cleaning
-	@cat $@ | tr '\n' ' ' | sed -e 's/ \+/ /g' | sed -e 's/, *]/]/g' -e 's/, *]/}/g' -e 's/},/},\n/g' -e 's/ *$$/\n/' > $@.new
-	@mv $@.new $@
-
 clean:
 	-@rm -fr $(OUTPUT_DIR)
-
-format:
-	find source -iname '*.cpp' -or -iname '*.h' | xargs -I{} -- ./tools/sort_includes.py -i {}
-	clang-format -i $(shell find source -iname "*.cpp" -or -iname "*.h")
 
 -include $(CXXDEPS)
 -include $(TESTDEPS)

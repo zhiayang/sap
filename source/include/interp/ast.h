@@ -694,6 +694,7 @@ namespace sap::interp::ast
 		struct Param
 		{
 			std::string name;
+			bool is_mutable;
 			frontend::PType type;
 			std::unique_ptr<Expr> default_value;
 			Location loc;
@@ -800,6 +801,9 @@ namespace sap::interp::ast
 		virtual ErrorOr<TCResult> typecheck_impl(Typechecker* ts,
 		    const Type* infer = nullptr, //
 		    bool keep_lvalue = false) const override;
+
+		frontend::PType enumeratorType() const { return m_enumerator_type; }
+		const std::vector<Enumerator>& enumerators() const { return m_enumerators; }
 
 	private:
 		frontend::PType m_enumerator_type;

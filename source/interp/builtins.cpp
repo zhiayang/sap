@@ -245,6 +245,9 @@ namespace sap::interp
 		DEF("make_deferred_block", PL(P("ctx", T_P(t_void)), P("callback", T_FN(t_tbo, T_P(t_void)))), t_tbo,
 		    &B::make_deferred_block);
 
+		DEF("set_style", PL(P("obj", T_MP(t_tio)), P("style", t_bstyle)), t_void, &B::set_style_tio);
+		DEF("set_style", PL(P("obj", T_MP(t_tbo)), P("style", t_bstyle)), t_void, &B::set_style_tbo);
+
 		DEF("apply_style", PL(P("obj", t_tio), P("style", t_bstyle)), t_tio, &B::apply_style_tio);
 		DEF("apply_style", PL(P("obj", t_tbo), P("style", t_bstyle)), t_tbo, &B::apply_style_tbo);
 

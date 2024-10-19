@@ -263,7 +263,7 @@ namespace sap::frontend
 						break;
 					}
 				}
-				else if(util::is_one_of(stream[n], '#', '{', '}', ';'))
+				else if(util::is_one_of(stream[n], '#', '{', '}', ';') || stream.drop(n).starts_with("/#"))
 				{
 					return finish_and_return(n);
 				}

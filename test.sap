@@ -115,7 +115,7 @@ let serif = builtin::find_font_family(["XCharter", "Times New Roman", "serif"]);
 
 	fn help() -> Block
 	{
-		return set_border_style(apply_style({horz_alignment: .Right}, make_vbox(
+		return set_border_style(apply_style({horz_alignment: .Centred}, make_vbox(
 			# \line { Goodbye World },
 			\line { Hello World },
 			# \line { Goodbye World },
@@ -145,7 +145,7 @@ by accident, sometimes on purpose (injected humour and the like).
 		});
 	}
 
-	fn foozle() -> ?Block
+	fn foozle()
 	{
 		fn four_twenty() -> int
 		{
@@ -166,8 +166,6 @@ by accident, sometimes on purpose (injected humour and the like).
 		ff //?= { y: four_twenty(), z };
 
 		println(f"ff: \{ x: {ff.x}, y: {ff.y}, z: {ff.z} \}");
-
-		return null;
 	}
 }
 
@@ -179,33 +177,33 @@ by accident, sometimes on purpose (injected humour and the like).
 
 \foozle();
 
-It is a long established fact that a reader will be distracted by the readable content of a page when looking
-at its layout. The point of using Lorem Ipsum is that it has a more-or-less normal distribution of letters,
-as opposed to using 'Content here, content here', making it look like readable English. Many desktop publishing
-packages and web page editors now use Lorem Ipsum as their default model text, and a search for 'lorem ipsum'
-will uncover many web sites still in their infancy. Various versions have evolved over the years, sometimes
-by accident, sometimes on purpose (injected humour and the like).
+# It is a long established fact that a reader will be distracted by the readable content of a page when looking
+# at its layout. The point of using Lorem Ipsum is that it has a more-or-less normal distribution of letters,
+# as opposed to using 'Content here, content here', making it look like readable English. Many desktop publishing
+# packages and web page editors now use Lorem Ipsum as their default model text, and a search for 'lorem ipsum'
+# will uncover many web sites still in their infancy. Various versions have evolved over the years, sometimes
+# by accident, sometimes on purpose (injected humour and the like).
 
-It is a long established fact that a reader will be distracted by the readable content of a page when looking
-at its layout. The point of using Lorem Ipsum is that it has a more-or-less normal distribution of letters,
-as opposed to using 'Content here, content here', making it look like readable English. Many desktop publishing
-packages and web page editors now use Lorem Ipsum as their default model text, and a search for 'lorem ipsum'
-will uncover many web sites still in their infancy. Various versions have evolved over the years, sometimes
-by accident, sometimes on purpose (injected humour and the like).
+# It is a long established fact that a reader will be distracted by the readable content of a page when looking
+# at its layout. The point of using Lorem Ipsum is that it has a more-or-less normal distribution of letters,
+# as opposed to using 'Content here, content here', making it look like readable English. Many desktop publishing
+# packages and web page editors now use Lorem Ipsum as their default model text, and a search for 'lorem ipsum'
+# will uncover many web sites still in their infancy. Various versions have evolved over the years, sometimes
+# by accident, sometimes on purpose (injected humour and the like).
 
-It is a long established fact that a reader will be distracted by the readable content of a page when looking
-at its layout. The point of using Lorem Ipsum is that it has a more-or-less normal distribution of letters,
-as opposed to using 'Content here, content here', making it look like readable English. Many desktop publishing
-packages and web page editors now use Lorem Ipsum as their default model text, and a search for 'lorem ipsum'
-will uncover many web sites still in their infancy. Various versions have evolved over the years, sometimes
-by accident, sometimes on purpose (injected humour and the like).
+# It is a long established fact that a reader will be distracted by the readable content of a page when looking
+# at its layout. The point of using Lorem Ipsum is that it has a more-or-less normal distribution of letters,
+# as opposed to using 'Content here, content here', making it look like readable English. Many desktop publishing
+# packages and web page editors now use Lorem Ipsum as their default model text, and a search for 'lorem ipsum'
+# will uncover many web sites still in their infancy. Various versions have evolved over the years, sometimes
+# by accident, sometimes on purpose (injected humour and the like).
 
-It is a long established fact that a reader will be distracted by the readable content of a page when looking
-at its layout. The point of using Lorem Ipsum is that it has a more-or-less normal distribution of letters,
-as opposed to using 'Content here, content here', making it look like readable English. Many desktop publishing
-packages and web page editors now use Lorem Ipsum as their default model text, and a search for 'lorem ipsum'
-will uncover many web sites still in their infancy. Various versions have evolved over the years, sometimes
-by accident, sometimes on purpose (injected humour and the like).
+# It is a long established fact that a reader will be distracted by the readable content of a page when looking
+# at its layout. The point of using Lorem Ipsum is that it has a more-or-less normal distribution of letters,
+# as opposed to using 'Content here, content here', making it look like readable English. Many desktop publishing
+# packages and web page editors now use Lorem Ipsum as their default model text, and a search for 'lorem ipsum'
+# will uncover many web sites still in their infancy. Various versions have evolved over the years, sometimes
+# by accident, sometimes on purpose (injected humour and the like).
 
 It is a long established fact that a reader will be distracted by the readable content of a page when looking
 at its layout. The point of using Lorem Ipsum is that it has a more-or-less normal distribution of letters,
@@ -216,11 +214,11 @@ by accident, sometimes on purpose (injected humour and the like).
 
 # \vspace(-1em);
 
-# \std::table({cols: 4},
-# 	\para{AA1}, \para{BB1}, \para{CC1}, \para{DD1},
-# 	\para{AA2}, \para{BB2}, \para{CC2}, \para{DD2},
-# 	\para{AA3}, \para{BB3}, \para{CC3}, \para{DD3},
-# 	\para{AA4}, \para{BB4}, \para{CC4}, \para{DD4});
+\std::table({cols: 4, width: 10cm},
+	\para{AA1}, \para{BB1}, \para{CC1}, \para{DD1},
+	\para{AA2}, \para{BB2}, \para{CC2}, \para{DD2},
+	\para{AA3}, \para{BB3}, \para{CC3}, \para{DD3},
+	\para{AA4}, \para{BB4}, \para{CC4}, \para{DD4});
 
 # \builtin::make_deferred_block(null, omegalul);
 

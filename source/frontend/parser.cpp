@@ -1430,6 +1430,7 @@ namespace sap::frontend
 
 	static ErrorOr<ast::FunctionDefn::Param> parse_param(Lexer& lexer)
 	{
+		bool mut = lexer.expect(TT::KW_Mut);
 		auto name = lexer.match(TT::Identifier);
 		if(not name.has_value())
 			return ErrMsg(lexer.location(), "expected parameter name");
@@ -1445,6 +1446,7 @@ namespace sap::frontend
 
 		return Ok(ast::FunctionDefn::Param {
 		    .name = name->text.str(),
+		    .is_mutable = mut,
 		    .type = type,
 		    .default_value = std::move(default_value),
 		    .loc = name->loc,

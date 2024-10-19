@@ -80,6 +80,29 @@ namespace sap::frontend
 		return PType({}, PT_OPTIONAL, { elm });
 	}
 
+	std::string PType::str() const
+	{
+		if(this->isNamed())
+			return this->name().str();
+		else if(this->isPointer())
+			return zpr::sprint("&{}{}", m_pointer_mutable ? "mut " : "", m_type_list[0].str());
+		else if(this->isArray())
+			return zpr::sprint("[{}{}]", m_type_list[0].str(), m_array_variadic ? "..." : "");
+		else if(this->isOptional())
+			return zpr::sprint("?{}", m_type_list[0].str());
+
+		assert(this->isFunction());
+		std::string ret = "(";
+		for(size_t i = 0; i < m_type_list.size() - 1; i++)
+		{
+			if(i != 0)
+				ret += ", ";
+			ret += m_type_list[i].str();
+		}
+
+		ret += " -> " + m_type_list.back().str();
+		return ret;
+	}
 
 	PType::~PType()
 	{

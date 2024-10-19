@@ -33,7 +33,7 @@ namespace sap::tree
 
 			auto call_expr = TRY(this->call->typecheck(&cs->typechecker()));
 			if(call_expr.type()->isVoid())
-				return ErrMsg(call_expr.stmt()->loc(), "invalid void return from script call");
+				return interp::EvalResult::ofVoid();
 
 			return call_expr.expr()->evaluate(&cs->evaluator());
 		}());

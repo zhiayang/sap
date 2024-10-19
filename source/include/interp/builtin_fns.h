@@ -28,6 +28,9 @@ namespace sap::interp
 		ErrorOr<EvalResult> italic1(Evaluator* ev, std::vector<Value>& args);
 		ErrorOr<EvalResult> bold_italic1(Evaluator* ev, std::vector<Value>& args);
 
+		ErrorOr<EvalResult> set_style_tio(Evaluator* ev, std::vector<Value>& args);
+		ErrorOr<EvalResult> set_style_tbo(Evaluator* ev, std::vector<Value>& args);
+
 		ErrorOr<EvalResult> apply_style_tio(Evaluator* ev, std::vector<Value>& args);
 		ErrorOr<EvalResult> apply_style_tbo(Evaluator* ev, std::vector<Value>& args);
 

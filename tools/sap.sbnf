@@ -102,8 +102,8 @@ var-defn:
 	(`;`{punctuation.terminator})
 	;
 
-parameter-list:  (IDENTIFIER{variable.parameter} `:`{punctuation.colon} type (`=`{punctuation.equal} expr)?)?
-	(`,`{punctuation.comma} IDENTIFIER{variable.parameter} `:`{punctuation.colon} type (`=`{punctuation.equal} expr)?)*;
+parameter-list:  (`mut`{storage.modifier.mut}? IDENTIFIER{variable.parameter} `:`{punctuation.colon} type (`=`{punctuation.equal} expr)?)?
+	(`,`{punctuation.comma} `mut`{storage.modifier.mut}? IDENTIFIER{variable.parameter} `:`{punctuation.colon} type (`=`{punctuation.equal} expr)?)*;
 
 func-defn:
 	'fn'{storage.type}

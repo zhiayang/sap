@@ -12,7 +12,7 @@
 
 namespace sap::interp::ast
 {
-	static const char* op_to_string(UnaryOp::Op op)
+	const char* op_to_string(UnaryOp::Op op)
 	{
 		switch(op)
 		{

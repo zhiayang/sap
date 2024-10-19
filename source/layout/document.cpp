@@ -155,43 +155,50 @@ namespace sap::layout
 
 namespace sap::tree
 {
+	ErrorOr<std::vector<std::pair<std::unique_ptr<interp::cst::Stmt>, interp::EvalResult>>> //
+	Document::runPreamble(interp::Interpreter* cs)
+	{
+		// the preamble is only ever run once
+		cs->setCurrentPhase(ProcessingPhase::Preamble);
+		cs->evaluator().pushStyle(layout::getDefaultStyle(cs));
+
+		std::vector<std::pair<std::unique_ptr<interp::cst::Stmt>, interp::EvalResult>> generated_preamble {};
+
+		auto _ = cs->typechecker().pushTree(cs->typechecker().top());
+		for(size_t i = 0; i < m_preamble.size(); i++)
+		{
+			auto& stmt = m_preamble[i];
+			if(auto defn = dynamic_cast<const interp::ast::Definition*>(stmt.get()); defn)
+				TRY(defn->declare(&cs->typechecker()));
+		}
+
+		for(size_t i = 0; i < m_preamble.size(); i++)
+		{
+			auto& stmt = m_preamble[i];
+			auto tc = TRY(stmt->typecheck(&cs->typechecker())).take_stmt();
+			auto result = TRY(tc->evaluate(&cs->evaluator()));
+
+			generated_preamble.emplace_back(std::move(tc), std::move(result));
+		}
+
+		return OkMove(generated_preamble);
+	}
+
 	ErrorOr<std::unique_ptr<layout::Document>> Document::layout(interp::Interpreter* cs)
 	{
 		// the preamble is only ever run once
 		cs->setCurrentPhase(ProcessingPhase::Preamble);
+		cs->evaluator().pushStyle(layout::getDefaultStyle(cs));
 
 		if(not this->haveDocStart())
 			ErrorMessage(&cs->typechecker(), "cannot layout a document with no body").showAndExit();
 
-		cs->evaluator().pushStyle(layout::getDefaultStyle(cs));
+		auto result = TRY(this->runPreamble(cs));
+		assert(not result.empty());
+		assert(result.back().second.hasValue());
 
-		DocumentSettings settings {};
-		std::vector<std::unique_ptr<interp::cst::Stmt>> generated_preamble {};
-
-		{
-			auto _ = cs->typechecker().pushTree(cs->typechecker().top());
-			for(size_t i = 0; i < m_preamble.size(); i++)
-			{
-				auto& stmt = m_preamble[i];
-				if(auto defn = dynamic_cast<const interp::ast::Definition*>(stmt.get()); defn)
-					TRY(defn->declare(&cs->typechecker()));
-			}
-
-			for(size_t i = 0; i < m_preamble.size(); i++)
-			{
-				auto& stmt = m_preamble[i];
-				auto& gen = generated_preamble.emplace_back(TRY(stmt->typecheck(&cs->typechecker())).take_stmt());
-				auto result = TRY(gen->evaluate(&cs->evaluator()));
-
-				if(i + 1 == m_preamble.size())
-				{
-					assert(result.hasValue());
-
-					auto val = result.take();
-					settings = interp::builtin::BS_DocumentSettings::unmake(&cs->evaluator(), val).unwrap();
-				}
-			}
-		}
+		auto val = result.back().second.take();
+		auto settings = interp::builtin::BS_DocumentSettings::unmake(&cs->evaluator(), val).unwrap();
 
 		settings = layout::fillDefaultSettings(cs, std::move(settings));
 		cs->evaluator().state().document_settings = settings;

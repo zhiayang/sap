@@ -52,6 +52,8 @@ namespace sap::frontend
 		static PType pointer(PType elm, bool is_mut);
 		static PType optional(PType elm);
 
+		std::string str() const;
+
 		~PType();
 
 		bool operator==(const PType& a) const = default;
@@ -60,10 +62,10 @@ namespace sap::frontend
 	private:
 		PType(interp::QualifiedId name, int kind, std::vector<PType> type_list);
 
-		static constexpr int PT_FUNCTION = 0;
-		static constexpr int PT_POINTER = 1;
-		static constexpr int PT_ARRAY = 2;
-		static constexpr int PT_OPTIONAL = 3;
+		static constexpr int PT_FUNCTION = 1;
+		static constexpr int PT_POINTER = 2;
+		static constexpr int PT_ARRAY = 3;
+		static constexpr int PT_OPTIONAL = 4;
 
 		int m_kind;
 		interp::QualifiedId m_name;

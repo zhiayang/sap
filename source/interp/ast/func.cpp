@@ -50,6 +50,7 @@ namespace sap::interp::ast
 			decl_params.push_back({
 			    .name = param.name,
 			    .type = type,
+			    .is_mutable = param.is_mutable,
 			    .default_value = std::move(default_value),
 			});
 		}
@@ -94,7 +95,7 @@ namespace sap::interp::ast
 			if(param_type.isVariadicArray())
 				param_type = frontend::PType::array(param_type.getArrayElement());
 
-			auto vdef = VariableDefn(param.loc, param.name, /* mutable: */ false, /* global: */ false,
+			auto vdef = VariableDefn(param.loc, param.name, /* mutable: */ param.is_mutable, /* global: */ false,
 			    /* init: */ nullptr, /* type: */ param_type);
 
 			TRY(vdef.declare(ts));

@@ -24,8 +24,6 @@ BUGS!!!!
 		had a manual \page_break() at the '|' point)
 
 		tldr paragraph spacing across pages is possibly fucked
-[ ] border rendering for alignment other than for Justified is fucked if the content needs to
-	flow (eg. a paragraph)
 
 
 TODO:
@@ -159,13 +157,4 @@ int main(int argc, char** argv)
 	{
 		return sap::compile(input_file, output_file) ? 0 : 1;
 	}
-}
-
-extern "C" const char* __asan_default_options()
-{
-	// The way we do together-compilation (i.e. un-separated compilation)
-	// means that this will trigger for a bunch of vtables. no idea why though.
-
-	// we'll fix leaks later.
-	return "detect_odr_violation=0:detect_leaks=0";
 }

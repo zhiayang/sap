@@ -57,6 +57,31 @@ namespace sap::interp::builtin
 		}
 	}
 
+	ErrorOr<EvalResult> set_style_tio(Evaluator* ev, std::vector<Value>& args)
+	{
+		assert(args.size() == 2);
+
+		const auto style = TRY(BS_Style::unmake(ev, args[1]));
+		auto& tios = args[0].getMutablePointer()->getTreeInlineObj();
+
+		for(auto& obj : tios.objects())
+			obj->setStyle(obj->style().extendWith(style));
+
+		return EvalResult::ofVoid();
+	}
+
+	ErrorOr<EvalResult> set_style_tbo(Evaluator* ev, std::vector<Value>& args)
+	{
+		assert(args.size() == 2);
+
+		const auto style = TRY(BS_Style::unmake(ev, args[1]));
+		auto& tbo = args[0].getMutablePointer()->getTreeBlockObj();
+
+		const_cast<tree::BlockObject&>(tbo).setStyle(tbo.style().extendWith(style));
+		return EvalResult::ofVoid();
+	}
+
+
 	ErrorOr<EvalResult> apply_style_tio(Evaluator* ev, std::vector<Value>& args)
 	{
 		assert(args.size() == 2);

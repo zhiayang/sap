@@ -15,7 +15,7 @@
 
 namespace sap::interp::ast
 {
-	static const char* op_to_string(ComparisonOp::Op op)
+	const char* op_to_string(ComparisonOp::Op op)
 	{
 		switch(op)
 		{

@@ -19,11 +19,11 @@ namespace std
 
 	namespace impl
 	{
-		fn hline() -> [builtin::PathSegment]
+		fn hline(width: Length) -> [builtin::PathSegment]
 		{
 			return [
 				.Move(pos: {x: 0mm, y: 0mm}),
-				.Line(pos: {x: builtin::document()!.content_size.x, y: 0mm})
+				.Line(pos: {x: width, y: 0mm})
 			];
 		}
 
@@ -41,27 +41,26 @@ namespace std
 	}
 
 
-	fn table(config: TableConfig, items: [Block...]) -> ?Block
+	fn table(config: TableConfig, mut items: [Block...]) -> ?Block
 	{
 		using builtin::println;
 		using builtin::make_path;
 		using builtin::PathStyle;
 
 		let doc = builtin::document();
-		println(f"doc: {doc!.content_size}");
 
 		if(items.size() % config.cols != 0)
 			println(f"warning: number of items is not a multiple of number of rows");
 
 		# round up the number of rows
-		let cfg = config // {
-			rows: .rows ?? (items.size() + .cols - 1) / .cols,
-			width: .width ?? doc!.content_size.x,
-			cell_padding: (config.cell_padding ?? Margins{}) // {
-				top: .top ?? 0.5em,
-				left: .left ?? 0.5em,
-				right: .right ?? 0.5em,
-				bottom: .bottom ?? 0.5em,
+		let cfg = config //? {
+			rows: (items.size() + .cols - 1) / .cols,
+			width: doc!.content_size.x,
+			cell_padding: (config.cell_padding ?? Margins{}) //? {
+				top: 0.5em,
+				left: 0.5em,
+				right: 0.5em,
+				bottom: 0.5em,
 			}
 		};
 
@@ -72,9 +71,9 @@ namespace std
 			given_col_widths += (cfg.cols - given_col_widths.size()) * [:?Length null];
 		}
 
-		let line_width = 0.25mm;
+		let line_width = 2.5mm;
 		let line_style = PathStyle {
-			stroke_colour: builtin::Colour {type: .RGB, rgb: {r: 1, g: 0, b: 0}},
+			stroke_colour: builtin::Colour {type: .RGB, rgb: {r: 1, g: 0, b: 1}},
 			line_width,
 		};
 
@@ -92,24 +91,9 @@ namespace std
 				- (cfg.cols * (cfg.cell_padding!.left! + cfg.cell_padding!.right!))
 			) / num_unspecified_cols;
 
-		# basic idea: draw one row at a time with the correct horizontal borders.
-		# if there is space for the current row,
-
-
-		# make one row at a time
-		# i guess this is some kind of tail call closure whatever shit
-		var remaining: [Block] = [];
-		for(var i = cfg.cols; i < items.size(); i += 1)
-			remaining += [*items[i]];
-
 		var col_widths: [Length] = [];
 		for(var i = 0; i < cfg.cols; i += 1)
 			col_widths += [given_col_widths[i] ?? default_width];
-
-		var ctx = impl::CallbackState {
-			remaining: *remaining,
-			column_widths: *col_widths,
-		};
 
 		# idk what tf was going on previously, but new idea:
 		# keep outputting rows (and just draw the horizontal rules) until we reach the next page (or the table ends)
@@ -123,18 +107,35 @@ namespace std
 			vlines += [
 				make_path(style: line_style, .Move(pos:{x:0mm,y:0mm}), .Line(pos:{x:0mm,y:100mm})),
 				builtin::hspace(cfg.cell_padding!.left! - line_width/2),
-				builtin::hspace(given_col_widths[i] ?? default_width),
+				builtin::hspace(col_widths[i]),
 				builtin::hspace(cfg.cell_padding!.right! - line_width/2),
 			];
 		}
 
 		vlines += [make_path(style: line_style, .Move(pos:{x:0mm,y:0mm}), .Line(pos:{x:0mm,y:100mm}))];
 
+		for(var y = 0; y < cfg.rows!; y += 1)
+		{
+			var cur_offset: Length = line_width;
+			for(var x = 0; x < cfg.cols; x += 1)
+			{
+				let item = &mut items[x + y * cfg.cols];
+
+				cur_offset += cfg.cell_padding!.left!;
+
+				item!.offset_position({ x: cur_offset, y: 0em });
+				item!.set_width(col_widths[x]);
+				item!.set_style({horz_alignment: .Centred});
+
+				cur_offset += col_widths[x];
+				cur_offset += cfg.cell_padding!.right!;
+			}
+		}
+
 		return builtin::make_zbox(
-			make_path(style: line_style, ...impl::hline()),
-			builtin::make_hbox(
-				...*vlines,
-			),
+			make_path(style: line_style, ...impl::hline(cfg.width!)),
+			builtin::make_zbox(...*items),
+			builtin::make_hbox(...*vlines),
 		);
 	}
 }

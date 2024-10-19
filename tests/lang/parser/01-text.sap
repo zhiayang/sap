@@ -1,0 +1,35 @@
+# comment
+\start_document();
+```
+a{}```
+this is some text followed by
+
+this is more text on another paragraph,
+and text in the same paragraph. \{ \} \# \; escape sequences.
+/# block comment
+spanning multiple
+lines
+#/
+
+more text.
+
+{ this is
+	a text
+	block
+}
+
+```
+raw text block
+```
+
+`````
+raw text block with more quotes
+`````
+
+# semicolon
+some text;
+
+
+
+
+multi line para break

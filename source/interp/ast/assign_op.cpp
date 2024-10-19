@@ -8,7 +8,7 @@
 
 namespace sap::interp::ast
 {
-	static const char* op_to_string(AssignOp::Op op)
+	const char* op_to_string(AssignOp::Op op)
 	{
 		switch(op)
 		{

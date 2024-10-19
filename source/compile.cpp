@@ -22,6 +22,21 @@ namespace sap
 		auto interp = interp::Interpreter();
 		auto file = interp.loadFile(input_file);
 
+		auto document = frontend::parse(input_file, file.chars());
+		if(document.is_err())
+			return document.error().display(), false;
+
+		// if we do not have a start_document, we should just run the "preamble"
+		// as a script and then exit.
+		if(not document->haveDocStart())
+		{
+			auto r = document->runPreamble(&interp);
+			if(r.is_err())
+				return r.error().display(), false;
+
+			return true;
+		}
+
 		// load microtype configs
 		for(auto& lib_path : paths::librarySearchPaths())
 		{
@@ -52,11 +67,6 @@ namespace sap
 				}
 			}
 		}
-
-
-		auto document = frontend::parse(input_file, file.chars());
-		if(document.is_err())
-			return document.error().display(), false;
 
 		auto layout_doc = document.unwrap().layout(&interp);
 		if(layout_doc.is_err())
