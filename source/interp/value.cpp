@@ -82,8 +82,8 @@ namespace sap::interp
 	{
 		this->ensure_not_moved_from();
 		assert(m_type->isFunction());
-		REIFY_GEN_FUNC(v_function);
 
+		REIFY_GEN_FUNC(v_function);
 		return v_function;
 	}
 
@@ -647,12 +647,11 @@ namespace sap::interp
 		return ret;
 	}
 
-	Value Value::function(const FunctionType* fn_type, FnType fn)
+	Value Value::function(const FunctionType* fn_type, typename FnType::element_type fn)
 	{
 		auto ret = Value(fn_type);
-		new(&ret.v_function) decltype(ret.v_function)();
-		ret.v_function = std::move(fn);
-
+		// for fuck's sake
+		new(&ret.v_function) decltype(ret.v_function)(std::make_shared<FnType::element_type>(std::move(fn)));
 		return ret;
 	}
 
@@ -861,7 +860,7 @@ namespace sap::interp
 		else if(m_type->isFunction())
 		{
 			REIFY_GEN_FUNC(v_function);
-			ret.v_function = v_function;
+			new(&ret.v_function) decltype(v_function)(v_function);
 		}
 		else if(m_type->isLength())
 		{

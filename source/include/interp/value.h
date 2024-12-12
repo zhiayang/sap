@@ -4,6 +4,7 @@
 
 #pragma once
 
+#include <memory>
 #include <functional>
 
 #include "type.h"
@@ -28,7 +29,7 @@ namespace sap::interp
 
 	struct Value
 	{
-		using FnType = std::function<std::optional<Value>(Interpreter*, std::vector<Value>&)>;
+		using FnType = std::shared_ptr<std::function<std::optional<Value>(Interpreter*, std::vector<Value>&)>>;
 
 		const Type* type() const;
 
@@ -128,7 +129,7 @@ namespace sap::interp
 		static Value character(char32_t ch);
 		static Value enumerator(const EnumType* type, Value value);
 		static Value unionVariant(const UnionType* type, size_t case_idx, Value case_value_as_struct);
-		static Value function(const FunctionType* fn_type, FnType fn);
+		static Value function(const FunctionType* fn_type, typename FnType::element_type fn);
 		static Value string(const std::string& str);
 		static Value string(const std::u32string& str);
 		static Value array(const Type* elm, std::vector<Value> arr, bool variadic = false);
@@ -165,6 +166,7 @@ namespace sap::interp
 		mutable std::function<Value(void)> m_gen_func {};
 
 		mutable size_t m_union_case_idx = 0;
+
 		union
 		{
 			mutable bool v_bool;

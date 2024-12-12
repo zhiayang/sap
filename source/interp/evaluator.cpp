@@ -330,7 +330,7 @@ namespace sap::interp
 					return ErrMsg(this, "value '{}' was not defined", var_defn->declaration->name);
 			}
 
-			auto ret = val->getFunction()(this->interpreter(), args);
+			auto ret = (*val->getFunction())(this->interpreter(), args);
 			if(ret.has_value())
 				return EvalResult::ofValue(std::move(*ret));
 			else

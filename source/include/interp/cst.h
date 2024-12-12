@@ -174,8 +174,11 @@ namespace sap::interp::cst
 		    const Type* type,
 		    UFCSKind ufcs_kind,
 		    std::vector<ExprOrDefaultPtr> args,
-		    const Expr* callee)
-		    : Expr(std::move(loc), type), ufcs_kind(ufcs_kind), arguments(std::move(args)), callee(Right(callee))
+		    std::unique_ptr<Expr> callee)
+		    : Expr(std::move(loc), type)
+		    , ufcs_kind(ufcs_kind)
+		    , arguments(std::move(args))
+		    , callee(Right(std::move(callee)))
 		{
 		}
 
@@ -183,7 +186,7 @@ namespace sap::interp::cst
 
 		UFCSKind ufcs_kind;
 		std::vector<ExprOrDefaultPtr> arguments;
-		zst::Either<const Declaration*, const Expr*> callee;
+		zst::Either<const Declaration*, std::unique_ptr<Expr>> callee;
 	};
 
 	struct NullLit : Expr

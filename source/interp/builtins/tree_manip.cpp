@@ -173,7 +173,7 @@ namespace sap::interp::builtin
 			    // since it's a pointer we can now clone it
 			    args.push_back(ctx.clone());
 
-			    auto ret = user_fn.getFunction()(ev->interpreter(), args);
+			    auto ret = (*user_fn.getFunction())(ev->interpreter(), args);
 			    if(not ret.has_value())
 				    sap::internal_error("callback function did not return a value");
 
