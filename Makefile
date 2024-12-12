@@ -22,7 +22,7 @@ ifeq ("$(findstring gcc,$(CXX_VERSION_STRING))", "gcc")
 else
 endif
 
-OPT_FLAGS           := -g -O0 -march=native -fsanitize=address # -Og
+OPT_FLAGS           := -g -O0 -fsanitize=address # -Og
 LINKER_OPT_FLAGS    :=
 COMMON_CFLAGS       := $(OPT_FLAGS)
 
@@ -136,7 +136,8 @@ $(OUTPUT_BIN): $(PRECOMP_OBJ) $(CXXOBJ) $(EXTERNAL_OBJS)
 	@mkdir -p $(shell dirname $@)
 	@$(CXX) $(CXXFLAGS) $(WARNINGS) $(DEFINES) $(LDFLAGS) $(LINKER_OPT_FLAGS) -Iexternal -o $@ $^
 	@case "$(CXXFLAGS)" in "-g "* | *" -g" | *" -g "*) \
-		echo "  debuginfo"; dsymutil $@ 2>/dev/null ;; *) ;; esac
+		echo "  debuginfo"; dsymutil $@ 2>/dev/null &  \
+		disown -a ;; *) ;; esac
 
 
 $(TESTER_BIN): $(PRECOMP_OBJ) $(EXTERNAL_OBJS) $(filter-out $(OUTPUT_DIR)/source/main.cpp.o,$(CXXOBJ)) $(TESTOBJ)
@@ -144,7 +145,7 @@ $(TESTER_BIN): $(PRECOMP_OBJ) $(EXTERNAL_OBJS) $(filter-out $(OUTPUT_DIR)/source
 	@mkdir -p $(shell dirname $@)
 	@$(CXX) $(CXXFLAGS) $(WARNINGS) $(DEFINES) $(LDFLAGS) $(LINKER_OPT_FLAGS) -Iexternal -o $@ $^
 	@# @case "$(CXXFLAGS)" in "-g "* | *" -g" | *" -g "*) \
-		echo "  debuginfo"; dsymutil $@ 2>/dev/null ;; *) ;; esac
+	@#	echo "  debuginfo"; dsymutil $@ 2>/dev/null ;; *) ;; esac
 
 
 

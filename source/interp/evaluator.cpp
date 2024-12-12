@@ -316,9 +316,26 @@ namespace sap::interp
 		{
 			return func_defn->call(this, args);
 		}
-		// else if(auto var_defn = dynamic_cast<const cst::VariableDefn*>(defn); var_defn != nullptr)
-		// {
-		// }
+		else if(auto var_defn = dynamic_cast<const cst::VariableDefn*>(defn); var_defn != nullptr)
+		{
+			Value* val = nullptr;
+			if(var_defn->is_global)
+			{
+				if((val = this->getGlobalValue(var_defn)) == nullptr)
+					return ErrMsg(this, "value '{}' was not defined", var_defn->declaration->name);
+			}
+			else
+			{
+				if((val = this->frame().valueOf(var_defn)) == nullptr)
+					return ErrMsg(this, "value '{}' was not defined", var_defn->declaration->name);
+			}
+
+			auto ret = val->getFunction()(this->interpreter(), args);
+			if(ret.has_value())
+				return EvalResult::ofValue(std::move(*ret));
+			else
+				return EvalResult::ofVoid();
+		}
 		else
 		{
 			return ErrMsg(this, "not implemented");

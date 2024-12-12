@@ -5,6 +5,7 @@
 #pragma once
 
 #include <bit>
+#include <string>
 #include <cstdint>
 #include <type_traits>
 

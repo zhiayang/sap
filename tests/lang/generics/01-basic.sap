@@ -2,11 +2,25 @@
 # Copyright (c) 2024, yuki
 # SPDX-License-Identifier: Apache-2.0
 
+# the problem rn is that we don't properly support expr calls, and function
+# callees are really only "supposed" to be identifiers that we manually overload-resolve
+#
+# we fixed convert_params so that it correctly handles variables (not functions)
+# and extracts the expected parameter types, however the cst::FunctionCall expects a
+# Declaration as the callee; obviously, it also needs to take an expression
+#
+# probably have Either<Declaration, Expr>; for the Expr we expect the evaluated result
+# to be a Value::function, which we can then call normally.
+#
+# not sure if this is short-sighted for when we get bytecode compilation, but whatever
+
 global var println = builtin::println;
 
-fn f1()
+fn f1[T, K]()
 {
-	builtin::println(f"f1");
+	println(f"f1");
+
+	# f1<$int>(10);
 }
 
 

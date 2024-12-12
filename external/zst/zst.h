@@ -461,19 +461,27 @@ namespace zst
 			}
 
 		#if ZST_USE_STD
-			template <typename T = value_type, std::enable_if_t<std::is_trivial_v<T> && std::is_same_v<T, value_type>, int> = 0>
+			template <typename T = value_type, std::enable_if_t<std::is_trivial_v<T>
+				&& std::is_same_v<T, value_type>
+				&& std::char_traits<T>().eq(0, 0), int> = 0>
 			str_view(const std::basic_string<value_type>& s) : ptr(s.data()), len(s.size()) { }
 
-			template <typename T = value_type, std::enable_if_t<std::is_trivial_v<T> && std::is_same_v<T, value_type>, int> = 0>
+			template <typename T = value_type, std::enable_if_t<std::is_trivial_v<T>
+				&& std::is_same_v<T, value_type>
+				&& std::char_traits<T>().eq(0, 0), int> = 0>
 			str_view(std::basic_string_view<value_type> sv) : ptr(sv.data()), len(sv.size()) { }
 
-			template <typename T = value_type, std::enable_if_t<std::is_trivial_v<T> && std::is_same_v<T, value_type>, int> = 0>
+			template <typename T = value_type, std::enable_if_t<std::is_trivial_v<T>
+				&& std::is_same_v<T, value_type>
+				&& std::char_traits<T>().eq(0, 0), int> = 0>
 			inline std::basic_string_view<value_type> sv() const
 			{
 				return std::basic_string_view<value_type>(this->data(), this->size());
 			}
 
-			template <typename T = value_type, std::enable_if_t<std::is_trivial_v<T> && std::is_same_v<T, value_type>, int> = 0>
+			template <typename T = value_type, std::enable_if_t<std::is_trivial_v<T>
+				&& std::is_same_v<T, value_type>
+				&& std::char_traits<T>().eq(0, 0), int> = 0>
 			inline std::basic_string<value_type> str() const
 			{
 				return std::basic_string<value_type>(this->data(), this->size());
@@ -651,8 +659,8 @@ namespace zst
 			inline value_type* data() { return this->mem; }
 			inline const value_type* data() const { return this->mem; }
 
-			inline const value_type* begin() const { return this->ptr; }
-			inline const value_type* end() const { return this->ptr + this->len; }
+			inline const value_type* begin() const { return this->mem; }
+			inline const value_type* end() const { return this->mem + this->len; }
 
 			inline byte_span bytes() const
 			{

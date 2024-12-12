@@ -26,7 +26,10 @@ namespace sap::interp::cst
 				    if(ret.is_err())
 					    sap::internal_error("failed to evaluate function");
 
-				    return ret.unwrap().take();
+				    if(ret->hasValue())
+					    return ret.unwrap().take();
+				    else
+					    return std::nullopt;
 			    }));
 		}
 

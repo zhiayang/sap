@@ -15,7 +15,13 @@ namespace sap::interp::cst
 {
 	ErrorOr<EvalResult> FunctionCall::evaluate_impl(Evaluator* ev) const
 	{
-		auto& param_types = this->callee->type->toFunction()->parameterTypes();
+		auto& param_types = [this]() -> const auto& {
+			if(this->callee.is_left())
+				return this->callee.left()->type->toFunction()->parameterTypes();
+			else
+				return this->callee.right()->type()->toFunction()->parameterTypes();
+		}();
+
 		if(param_types.size() != this->arguments.size())
 			return ErrMsg(m_location, "function arity mismatch");
 
@@ -75,6 +81,14 @@ namespace sap::interp::cst
 			}
 		}
 
-		return ev->call(this->callee->definition(), processed_args);
+		if(this->callee.is_left())
+			return ev->call(this->callee.left()->definition(), processed_args);
+
+		auto val = TRY_VALUE(this->callee.right()->evaluate(ev));
+		auto ret = val.getFunction()(ev->interpreter(), processed_args);
+		if(ret.has_value())
+			return EvalResult::ofValue(std::move(*ret));
+		else
+			return EvalResult::ofVoid();
 	}
 }

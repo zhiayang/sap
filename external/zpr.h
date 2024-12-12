@@ -1,6 +1,6 @@
 /*
     zpr.h
-    Copyright 2020 - 2022, yuki / zhiayang
+    Copyright 2020 - 2024, yuki / zhiayang
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -42,7 +42,7 @@
 */
 
 /*
-    Version 2.7.9
+    Version 2.8.0
     =============
 
 
@@ -127,7 +127,7 @@
     seen from the builtin formatters, taking note to follow the signatures.
 
     A key point to note is that you can specialise both for the 'raw' type -- ie. you can specialise for T&,
-   and also for T; the non-decayed specialisation is preferred if both exist.
+    and also for T; the non-decayed specialisation is preferred if both exist.
 
     (NB: the reason for this is so that we can support reference to array of char, ie. char (&)[N])
 
@@ -249,8 +249,8 @@
 
 
 #if !ZPR_FREESTANDING
-	#include <cstdio>
-	#include <cstring>
+	#include <stdio.h>
+	#include <string.h>
 #else
 	#if defined(ZPR_USE_STD)
 		#undef ZPR_USE_STD
@@ -1346,6 +1346,25 @@ namespace zpr
 			});
 		}
 
+		template <typename _CallbackFn>
+		ZPR_ALWAYS_INLINE void flush_format_string(_CallbackFn& cb, const char* fmt, size_t len)
+		{
+			for(size_t i = 0; i < len; i++)
+			{
+				if(fmt[i] == '{' || fmt[i] == '}')
+				{
+					if(i + i < len && fmt[i] == fmt[i + 1])
+						cb(&fmt[i++], 1);
+					else
+						cb(&fmt[i], 1);
+				}
+				else
+				{
+					cb(&fmt[i], 1);
+				}
+			}
+		}
+
 
 		/*
 			Print to the specified callback function. This should be used in user-defined print_formatters if
@@ -1369,7 +1388,7 @@ namespace zpr
 			(skip_fmts<_CallbackFn, _Types&&>(&st, cb, static_cast<_Types&&>(args)), ...);
 
 			// flush
-			cb(st.beg, static_cast<size_t>(st.fmtend - st.beg));
+			flush_format_string(cb, st.beg, static_cast<size_t>(st.fmtend - st.beg));
 		}
 
 
@@ -1387,7 +1406,7 @@ namespace zpr
 			(skip_fmts<_CallbackFn, _Types&&, true>(&st, cb, idx < num_args ? args[idx++] : nullptr), ...);
 
 			// flush
-			cb(st.beg, static_cast<size_t>(st.fmtend - st.beg));
+			flush_format_string(cb, st.beg, static_cast<size_t>(st.fmtend - st.beg));
 		}
 
 	#if ZPR_USE_STD
@@ -2089,12 +2108,12 @@ namespace zpr
 	struct print_formatter<_Type,
 	                       // SFINAE for the concept { x.zpr_print(cb, args) };
 	                       tt::void_t<decltype(tt::declval<_Type>()
-	                                           .zpr_print(tt::declval<detail::string_appender>(),
+	                                           .zpr_print(tt::declval<detail::buffer_appender>(),
 	                                                      tt::declval<format_args>()))>> {
 		template <typename __Type, typename _Cb>
 		ZPR_ALWAYS_INLINE void print(__Type&& x, _Cb&& cb, format_args args)
 		{
-			std::forward<__Type>(x).zpr_print(std::forward<_Cb>(cb), args);
+			static_cast<__Type&&>(x).zpr_print(static_cast<_Cb&&>(cb), args);
 		}
 	};
 
@@ -2140,8 +2159,71 @@ namespace zpr
 		template <typename _Cb, typename _Func = detail::__forward_helper<_Types...>>
 		ZPR_ALWAYS_INLINE void print(_Func&& fwd, _Cb&& cb, format_args args)
 		{
-			(void) args;
-			detail::print_erased<_Cb, _Types&&...>(static_cast<_Cb&&>(cb), fwd.fmt, &fwd.values[0], fwd.num_values);
+			// basically, we should treat this as a string; in that respect we should only
+			// respect width/precision/alignment/padding.
+			if(not args.have_width())
+			{
+				// if we are not specifying width, we can print immediately in a single pass.
+				if(not args.have_precision())
+				{
+					// better yet, if we are not specifying precision, just print directly.
+					detail::print_erased<_Cb, _Types&&...>(static_cast<_Cb&&>(cb), fwd.fmt, &fwd.values[0], fwd.num_values);
+				}
+				else
+				{
+					// we have precision, so we need some way to limit the amount of printed stuff (not too hard)
+					size_t printed = 0;
+					const auto l = [&cb, &args, &printed](const char* s, size_t n) {
+						if(printed < static_cast<size_t>(args.precision))
+						{
+							const auto to_print = tt::_Minimum(static_cast<size_t>(args.precision) - printed, n);
+							printed += to_print;
+							cb(s, to_print);
+						}
+					};
+					auto printer = detail::callback_appender(&l, /* newline: */ false);
+
+					detail::print_erased<decltype(printer), _Types&&...>(printer, fwd.fmt, &fwd.values[0], fwd.num_values);
+				}
+			}
+			else
+			{
+				// sadge, do a two pass approach to determine the final size of the output.
+				size_t string_length = 0;
+				const auto l1 = [&string_length](const char* s, size_t n) {
+					(void) s;
+					string_length += n;
+				};
+				auto printer1 = detail::callback_appender(&l1, /* newline: */ false);
+
+				detail::print_erased<decltype(printer1), _Types&&...>(printer1, fwd.fmt, &fwd.values[0], fwd.num_values);
+
+				auto padding_width = static_cast<size_t>(args.width) - string_length;
+
+				if(args.positive_width() && padding_width > 0)
+					cb(args.zero_pad() ? '0' : ' ', static_cast<size_t>(padding_width));
+
+				// print normally
+				size_t printed = 0;
+				const size_t max_length = args.have_precision()
+					? tt::_Minimum(static_cast<size_t>(args.precision), string_length)
+					: string_length;
+
+				const auto l2 = [&cb, &printed, &max_length](const char* s, size_t n) {
+					if(printed < max_length)
+					{
+						const auto to_print = tt::_Minimum(max_length - printed, n);
+						printed += to_print;
+						cb(s, to_print);
+					}
+				};
+				auto printer2 = detail::callback_appender(&l2, /* newline: */ false);
+
+				detail::print_erased<decltype(printer2), _Types&&...>(printer2, fwd.fmt, &fwd.values[0], fwd.num_values);
+
+				if(args.negative_width() && padding_width > 0)
+					cb(args.zero_pad() ? '0' : ' ', static_cast<size_t>(padding_width));
+			}
 		}
 	};
 
@@ -2207,8 +2289,13 @@ namespace zpr
 					}
 
 					if('A' <= args.specifier && args.specifier <= 'Z')
+					{
 						for(size_t i = 0; i < digits_len; i++)
-							digits[i] = static_cast<char>(digits[i] - 0x20);
+						{
+							if('a' <= digits[i] && digits[i] <= 'z')
+								digits[i] = static_cast<char>(digits[i] - 0x20);
+						}
+					}
 				}
 
 				char prefix[4] = { 0 };
@@ -2691,9 +2778,24 @@ namespace zpr
     Version History
     ===============
 
-	2.7.9 - 31/01/2024
-	------------------
-	- Fix precision when printing floats with '%g' specifier
+    2.8.0 - 25/11/2024
+    ------------------
+    - Respect width and precision specifiers when printing a zpr::fwd() instance
+
+
+    2.7.11 - 14/11/2024
+    -------------------
+    - Fix printing of uppercase hex integers
+
+
+    2.7.10 - 21/09/2024
+    -------------------
+    - Fix printing of trailing {s and }s after the last format argument
+
+
+    2.7.9 - 31/01/2024
+    ------------------
+    - Fix precision when printing floats with '%g' specifier
 
 
 	2.7.8 - 26/04/2023
