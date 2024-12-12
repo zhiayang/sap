@@ -82,10 +82,7 @@ namespace sap::interp::cst
 		}
 
 		if(this->callee.is_left())
-		{
-			zpr::println("trying to call '{}'", this->callee.left()->definition()->declaration->name);
 			return ev->call(this->callee.left()->definition(), processed_args);
-		}
 
 		auto val = TRY_VALUE(this->callee.right()->evaluate(ev));
 		auto ret = (*val.getFunction())(ev->interpreter(), processed_args);
