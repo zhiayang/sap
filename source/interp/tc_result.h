@@ -36,7 +36,6 @@ namespace sap::interp
 		std::unique_ptr<cst::Expr> take_expr() &&
 		{
 			assert(m_stmt->isExpr());
-			assert(not m_type->isVoid());
 			return std::unique_ptr<cst::Expr>(static_cast<cst::Expr*>(m_stmt.release()));
 		}
 

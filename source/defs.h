@@ -5,6 +5,7 @@
 #pragma once
 
 #include <string>
+#include <filesystem>
 
 #include <zpr.h>
 #include <zst/zst.h>
@@ -35,6 +36,8 @@ namespace sap
 	{
 		return Ok(std::move(x));
 	}
+
+	std::filesystem::path getInvocationCWD();
 
 	namespace watch
 	{

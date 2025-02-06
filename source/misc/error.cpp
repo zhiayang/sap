@@ -42,10 +42,12 @@ namespace sap
 		const char* colour_blue = coloured ? COLOUR_BLUE : "";
 		const char* colour_reset = coloured ? COLOUR_RESET : "";
 
+		const auto shortened_filename = stdfs::path(loc.filename.str()).lexically_proximate(sap::getInvocationCWD());
+
 		zpr::fprintln(stderr, "{}{}:{} {}{}{}", colour_error, error_text, colour_reset, colour_black_bold, message,
 		    colour_reset);
-		zpr::fprintln(stderr, "{} at:{} {}{}:{}:{}{}", colour_blue, colour_reset, colour_black_bold, loc.filename,
-		    loc.line + 1, loc.column + 1, colour_reset);
+		zpr::fprintln(stderr, "{} at:{} {}{}:{}:{}{}", colour_blue, colour_reset, colour_black_bold,
+		    shortened_filename.generic_string(), loc.line + 1, loc.column + 1, colour_reset);
 
 		if(loc.is_builtin)
 			return;

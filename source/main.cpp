@@ -93,6 +93,8 @@ layout
 
 misc
 ----
+[ ] need a better ErrorMessage struct or something
+
 [ ] XML metadata and/or declare PDF/A conformance
 
 [ ] url annotations
@@ -103,7 +105,13 @@ misc
 
 namespace sap
 {
-	extern void set_draft_mode(bool);
+	extern void set_draft_mode(bool _);
+
+	static stdfs::path s_invocation_cwd;
+	stdfs::path getInvocationCWD()
+	{
+		return s_invocation_cwd;
+	}
 }
 
 int main(int argc, char** argv)
@@ -146,6 +154,7 @@ int main(int argc, char** argv)
 
 	// change directory to the input file so that all searches are (by default)
 	// relative to it, regardless of our actual CWD
+	sap::s_invocation_cwd = stdfs::current_path();
 	stdfs::current_path(abs_filename.parent_path());
 
 	if(is_watching)

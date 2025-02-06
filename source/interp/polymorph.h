@@ -12,6 +12,7 @@ namespace sap::interp::polymorph
 {
 	ErrorOr<TCResult> tryInstantiateGenericFunction(Typechecker* ts,
 	    const Type* infer,
+	    const QualifiedId& name,
 	    std::vector<const cst::Declaration*> declarations,
 	    const std::vector<ast::FunctionCall::Arg>& explicit_args);
 }

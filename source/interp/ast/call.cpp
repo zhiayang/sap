@@ -336,6 +336,12 @@ namespace sap::interp::ast
 
 			auto ufcs_kind = UFCSKind::None;
 			auto final_callee = TRY(this->callee->typecheck(ts)).take_expr();
+
+			if(const auto* pso = dynamic_cast<const cst::PartiallyResolvedOverloadSet*>(final_callee.get()))
+			{
+				return ErrMsg(this->loc(), "a");
+			}
+
 			if(not final_callee->type()->isFunction())
 			{
 				return ErrMsg(ts, "callee of function call must be a function type, got '{}'",

@@ -953,6 +953,28 @@ namespace sap::interp::cst
 		std::vector<ExprOrDefaultPtr> values;
 	};
 
+	struct PartiallyResolvedOverloadSet : Expr
+	{
+		struct Item
+		{
+			const cst::Declaration* decl;
+			util::hashmap<std::string, const Type*> applied_types;
+			util::hashmap<std::string, std::unique_ptr<cst::Expr>> applied_args;
+
+			ErrorMessage exclusion_reason;
+		};
+
+		explicit PartiallyResolvedOverloadSet(Location loc, QualifiedId name)
+		    : Expr(std::move(loc), Type::makeVoid()), name(std::move(name))
+		{
+		}
+
+		virtual ErrorOr<EvalResult> evaluate_impl(Evaluator* ev) const override;
+
+		QualifiedId name;
+		std::vector<Item> items;
+		std::vector<Item> excluded_items;
+	};
 
 	struct IfLetUnionStmt : Stmt
 	{

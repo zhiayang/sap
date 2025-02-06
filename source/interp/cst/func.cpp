@@ -34,4 +34,16 @@ namespace sap::interp::cst
 	{
 		return EvalResult::ofVoid();
 	}
+
+	ErrorOr<EvalResult> PartiallyResolvedOverloadSet::evaluate_impl(Evaluator* ev) const
+	{
+		if(this->items.empty())
+			return ErrMsg(this->loc(), "Reference to overload set '{}' resulted in an empty set", this->name);
+
+		auto e = ErrorMessage(this->loc(), zpr::sprint("Ambiguous reference to '{}' in overload set", this->name));
+		for(auto& item : this->items)
+			e.addInfo(item.decl->location, zpr::sprint("Possible candidate:"));
+
+		return Err(std::move(e));
+	}
 }

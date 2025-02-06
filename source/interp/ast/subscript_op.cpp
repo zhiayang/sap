@@ -33,7 +33,8 @@ namespace sap::interp::ast
 				goto not_generic_function;
 
 			// ok we have at least one generic function, try to do some generic stuff.
-			return polymorph::tryInstantiateGenericFunction(ts, infer, std::move(decls), this->indices);
+			return polymorph::tryInstantiateGenericFunction(ts, infer, lhs_ident->name, std::move(decls),
+			    this->indices);
 		}
 
 	not_generic_function:
