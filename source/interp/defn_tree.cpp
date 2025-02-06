@@ -255,6 +255,9 @@ namespace sap::interp
 
 	ErrorOr<cst::Declaration*> DefnTree::declare(cst::Declaration new_decl)
 	{
+		zpr::println("making new {}: type={}, gf={}", new_decl.name, new_decl.type->str(),
+		    new_decl.generic_func != nullptr);
+
 		auto check_existing = [this, &new_decl](const auto& existing_decls) -> ErrorOr<void> {
 			for(auto& decl_ : existing_decls)
 			{
@@ -269,7 +272,18 @@ namespace sap::interp
 				if(decl == new_decl)
 					return Ok();
 
-				if(not decl.type->isFunction() || not new_decl.type->isFunction())
+
+				// if (at least) one of them is a generic function and the other is a normal function (or a generic
+				// func) then we pass; we can't really disambiguate them at this point without instantiating the
+				// template.
+				zpr::println("old: {}, gf: {}", decl.name, decl.generic_func != nullptr);
+				zpr::println("new: {}, gf: {}", new_decl.name, new_decl.generic_func != nullptr);
+
+				if(new_decl.generic_func != nullptr && (decl.generic_func != nullptr || decl.type->isFunction()))
+				{
+					// ok
+				}
+				else if(not decl.type->isFunction() || not new_decl.type->isFunction())
 				{
 					// otherwise, if at least one of them is not a function, they conflict
 					return ErrMsg(m_typechecker->loc(), "redeclaration of '{}'", new_decl.name);

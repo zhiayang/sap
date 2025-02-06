@@ -45,4 +45,9 @@ namespace sap::interp::cst
 	{
 		return ErrMsg(ev, "oh no");
 	}
+
+	ErrorOr<EvalResult> GenericPlaceholderDefn::evaluate_impl(Evaluator* ev) const
+	{
+		return EvalResult::ofVoid();
+	}
 }

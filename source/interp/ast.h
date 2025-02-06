@@ -120,6 +120,19 @@ namespace sap::interp::ast
 		std::vector<Arg> arguments;
 	};
 
+	struct SubscriptOp : Expr
+	{
+		using Arg = FunctionCall::Arg;
+		explicit SubscriptOp(Location loc) : Expr(std::move(loc)) { }
+
+		virtual ErrorOr<TCResult> typecheck_impl(Typechecker* ts,
+		    const Type* infer = nullptr, //
+		    bool keep_lvalue = false) const override;
+
+		std::unique_ptr<Expr> array;
+		std::vector<Arg> indices;
+	};
+
 	struct NullLit : Expr
 	{
 		explicit NullLit(Location loc) : Expr(std::move(loc)) { }
@@ -410,18 +423,6 @@ namespace sap::interp::ast
 		bool is_mutable = false;
 	};
 
-	struct SubscriptOp : Expr
-	{
-		explicit SubscriptOp(Location loc) : Expr(std::move(loc)) { }
-
-		virtual ErrorOr<TCResult> typecheck_impl(Typechecker* ts,
-		    const Type* infer = nullptr, //
-		    bool keep_lvalue = false) const override;
-
-		std::unique_ptr<Expr> array;
-		std::vector<std::unique_ptr<Expr>> indices;
-	};
-
 	struct StructUpdateOp : Expr
 	{
 		explicit StructUpdateOp(Location loc) : Expr(std::move(loc)) { }
@@ -700,12 +701,21 @@ namespace sap::interp::ast
 			Location loc;
 		};
 
+		struct GenericParam
+		{
+			std::string name;
+			std::optional<frontend::PType> default_type;
+		};
+
 		FunctionDefn(Location loc,
 		    std::string name,
 		    std::vector<Param> params,
 		    frontend::PType return_type,
-		    std::vector<std::string> generic_params)
-		    : Definition(loc, std::move(name)), params(std::move(params)), return_type(std::move(return_type))
+		    std::vector<GenericParam> generic_params)
+		    : Definition(loc, std::move(name))
+		    , params(std::move(params))
+		    , return_type(std::move(return_type))
+		    , generic_params(std::move(generic_params))
 		{
 		}
 
@@ -717,6 +727,8 @@ namespace sap::interp::ast
 
 		std::vector<Param> params;
 		frontend::PType return_type;
+		std::vector<GenericParam> generic_params;
+
 		std::unique_ptr<Block> body;
 	};
 

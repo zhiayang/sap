@@ -56,11 +56,15 @@ namespace util
 	template <typename... Xs>
 	overloaded(Xs...) -> overloaded<Xs...>;
 
+	template <typename T, typename U>
+	concept Comparable = requires(T t, U u) {
+		{ t == u } -> std::same_as<bool>;
+	};
 
 
 
-	template <typename T, std::equality_comparable_with<T>... Ts>
-	static constexpr bool is_one_of(T foo, Ts... foos)
+	template <typename T, Comparable<T>... Ts>
+	static constexpr bool is_one_of(T foo, const Ts&... foos)
 	{
 		return (false || ... || (foo == foos));
 	}

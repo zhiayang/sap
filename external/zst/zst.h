@@ -1,6 +1,6 @@
 /*
     zst.h
-    Copyright 2020 - 2021, yuki / zhiayang
+    Copyright 2020 - 2021, zhiayang
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -16,7 +16,7 @@
 */
 
 /*
-    Version 2.0.1
+    Version 2.0.4
     =============
 
 
@@ -31,8 +31,9 @@
 
     - ZST_USE_STD
         this is *TRUE* by default. controls whether or not STL type interfaces
-        are used; with it, str_view gains implicit constructors accepting std::string
-        and std::string_view, as well as methods to convert to them (sv() and str()).
+        are used; with it, str_view gains implicit constructors accepting
+   std::string and std::string_view, as well as methods to convert to them (sv()
+   and str()).
 
     - ZST_FREESTANDING
         this is *FALSE by default; controls whether or not a standard library
@@ -42,8 +43,8 @@
 
     - ZST_HAVE_BUFFER
         this is *TRUE* by default. controls whether the zst::buffer<T> type is
-        available. If you do not have operator new[] and want to avoid link errors,
-        then set this to false.
+        available. If you do not have operator new[] and want to avoid link
+   errors, then set this to false.
 
 
     Note that ZST_FREESTANDING implies ZST_USE_STD = 0.
@@ -107,6 +108,7 @@
 
 #if !ZST_FREESTANDING && ZST_USE_STD
 	#include <string>
+	#include <vector>
 	#include <string_view>
 
 	#include <memory>
@@ -148,6 +150,12 @@ namespace zst
 	namespace detail
 	{
 		template <typename T> T min(T a, T b) { return a < b ? a : b;}
+
+		template <typename T, typename... Ts>
+		using is_same_as_any = std::disjunction<std::is_same<T, Ts>...>;
+
+		template <typename T, typename... Ts>
+		constexpr bool is_same_as_any_v = is_same_as_any<T, Ts...>::value;
 	}
 
 	namespace impl
@@ -231,12 +239,11 @@ namespace zst
 			constexpr str_view(const value_type* p, size_t l) : ptr(p), len(l) { }
 
 			template <size_t N>
-			constexpr str_view(const value_type (&s)[N]) : ptr(s), len(N - 1) { }
+			constexpr str_view(const value_type (&s)[N]) : ptr(s), len(N - (std::is_same_v<char, value_type> ? 1 : 0)) { }
 
-			template <typename T, typename = std::enable_if_t<
-				std::is_same_v<char, value_type> &&
-				(std::is_same_v<char*, T> || std::is_same_v<const char*, T>)
-			>>
+			template <typename T, typename std::enable_if_t<
+				(std::is_same_v<value_type, char> || std::is_same_v<value_type, const char>) &&
+				(std::is_same_v<char*, T> || std::is_same_v<const char*, T>), int> = 0>
 			constexpr str_view(T s) : ptr(s), len(strlen(s)) { }
 
 			constexpr str_view(str_view&&) = default;
@@ -244,11 +251,9 @@ namespace zst
 			constexpr str_view& operator= (str_view&&) = default;
 			constexpr str_view& operator= (const str_view&) = default;
 
-			// whatever "equality_comparable" nonsense is broken
 			constexpr inline bool operator== (const value_type* other) const requires(std::same_as<value_type, char>) {
 				return *this == str_view(other);
 			}
-
 
 			constexpr inline bool operator== (const str_view& other) const
 			{
@@ -461,28 +466,20 @@ namespace zst
 			}
 
 		#if ZST_USE_STD
-			template <typename T = value_type, std::enable_if_t<std::is_trivial_v<T>
-				&& std::is_same_v<T, value_type>
-				&& std::char_traits<T>().eq(0, 0), int> = 0>
-			str_view(const std::basic_string<value_type>& s) : ptr(s.data()), len(s.size()) { }
+			template <typename T = value_type, std::enable_if_t<std::is_trivial_v<T> && std::is_same_v<T, value_type> && detail::is_same_as_any_v<T, char, char8_t, char16_t, char32_t>, int> = 0>
+			str_view(const std::basic_string<T>& s) : ptr(s.data()), len(s.size()) { }
 
-			template <typename T = value_type, std::enable_if_t<std::is_trivial_v<T>
-				&& std::is_same_v<T, value_type>
-				&& std::char_traits<T>().eq(0, 0), int> = 0>
-			str_view(std::basic_string_view<value_type> sv) : ptr(sv.data()), len(sv.size()) { }
+			template <typename T = value_type, std::enable_if_t<std::is_trivial_v<T> && std::is_same_v<T, value_type> && detail::is_same_as_any_v<T, char, char8_t, char16_t, char32_t>, int> = 0>
+			str_view(std::basic_string_view<T> sv) : ptr(sv.data()), len(sv.size()) { }
 
-			template <typename T = value_type, std::enable_if_t<std::is_trivial_v<T>
-				&& std::is_same_v<T, value_type>
-				&& std::char_traits<T>().eq(0, 0), int> = 0>
-			inline std::basic_string_view<value_type> sv() const
+			template <typename T = value_type, std::enable_if_t<std::is_trivial_v<T> && std::is_same_v<T, value_type> && detail::is_same_as_any_v<T, char, char8_t, char16_t, char32_t>, int> = 0>
+			inline std::basic_string_view<T> sv() const
 			{
 				return std::basic_string_view<value_type>(this->data(), this->size());
 			}
 
-			template <typename T = value_type, std::enable_if_t<std::is_trivial_v<T>
-				&& std::is_same_v<T, value_type>
-				&& std::char_traits<T>().eq(0, 0), int> = 0>
-			inline std::basic_string<value_type> str() const
+			template <typename T = value_type, std::enable_if_t<std::is_trivial_v<T> && std::is_same_v<T, value_type> && detail::is_same_as_any_v<T, char, char8_t, char16_t, char32_t>, int> = 0>
+			inline std::basic_string<T> str() const
 			{
 				return std::basic_string<value_type>(this->data(), this->size());
 			}
@@ -1453,8 +1450,8 @@ namespace zst
 		LT take_left() { this->assert_is_left(); m_state = STATE_NONE; return static_cast<LT&&>(m_left); }
 		RT take_right() { this->assert_is_right(); m_state = STATE_NONE; return static_cast<RT&&>(m_right); }
 
-		const LT* maybe_left() const { if(m_state == STATE_LEFT) return &m_left; return nullptr; }
-		const RT* maybe_right() const { if(m_state == STATE_RIGHT) return &m_right; return nullptr; }
+		const LT* maybe_left() const { if(this->is_left()) return &m_left; else return nullptr; }
+		const RT* maybe_right() const { if(this->is_right()) return &m_right; else return nullptr; }
 
 	private:
 		inline void assert_is_left() const
@@ -1589,96 +1586,116 @@ constexpr inline zst::byte_span operator""_bs(const char* s, size_t n)
 
 
 /*
-	Version History
-	===============
+    Version History
+    ===============
 
-	2.0.0 - 26/04/2023
-	------------------
-	- switch to C++20, partial conversion to concepts
-	- add automatic derived -> base casting for Result<std::unique_ptr<T>>
-	- add Either<L, R>
+    2.0.4 - 06/02/2025
+    ------------------
+    - Fix more str_view brokenness
 
 
-
-	1.4.3 - 18/01/2023
-	------------------
-	- add endianness support to str_view
-	- add transfer_suffix
-	- add unique_span
-	- add _bs and _sv literals
-	- add `drop_until` and `take_until` for str_view
+    2.0.3 - 04/02/2025
+    ------------------
+    - Fix Wparentheses warning
 
 
-	1.4.2 - 26/09/2022
-	------------------
-	- fix wrong placement of const in `map` and `flatmap`
-	- add `add_value` function to Result<void>
-	- add `remove_value` function to Result<T>
-	- add Failable type alias
-	- fix missing includes, and only define `ErrFmt` in non-freestanding mode
+    2.0.2 - 24/12/2024
+    ------------------
+    - Fix erroneous N-1 length accounting for reference-to-array constructor for str_view for non-char cases
 
 
-	1.4.1 - 10/08/2022
-	------------------
-	- fix implicit conversion warnings
+    2.0.1 - 31/07/2023
+    ------------------
+    - Add missing <vector> include
+
+
+    2.0.0 - 26/04/2023
+    ------------------
+    - switch to C++20, partial conversion to concepts
+    - add automatic derived -> base casting for Result<std::unique_ptr<T>>
+    - add Either<L, R>
 
 
 
-	1.4.0 - 08/09/2021
-	------------------
-	- add map() and flatmap() to Result
+    1.4.3 - 18/01/2023
+    ------------------
+    - add endianness support to str_view
+    - add transfer_suffix
+    - add unique_span
+    - add _bs and _sv literals
+    - add `drop_until` and `take_until` for str_view
+
+
+    1.4.2 - 26/09/2022
+    ------------------
+    - fix wrong placement of const in `map` and `flatmap`
+    - add `add_value` function to Result<void>
+    - add `remove_value` function to Result<T>
+    - add Failable type alias
+    - fix missing includes, and only define `ErrFmt` in non-freestanding mode
+
+
+    1.4.1 - 10/08/2022
+    ------------------
+    - fix implicit conversion warnings
 
 
 
-	1.3.3 - 31/08/2021
-	------------------
-	- Fix implicit cast for inherited classes in Result
-	- Rearrange how the error function is called. It's now a normal function
-	  that just takes a string+length, because obviously we can't instantiate all possible
-	  templates ahead of time.
+    1.4.0 - 08/09/2021
+    ------------------
+    - add map() and flatmap() to Result
 
 
 
-	1.3.2 - 23/08/2021
-	------------------
-	Fix forward declaration of zpr::print_formatter.
+    1.3.3 - 31/08/2021
+    ------------------
+    - Fix implicit cast for inherited classes in Result
+    - Rearrange how the error function is called. It's now a normal function
+      that just takes a string+length, because obviously we can't instantiate all possible
+      templates ahead of time.
 
 
 
-	1.3.1 - 08/08/2021
-	------------------
-	Fix a bug in buffer<T>::append_bytes being SFINAE-ed wrongly
+    1.3.2 - 23/08/2021
+    ------------------
+    Fix forward declaration of zpr::print_formatter.
 
 
 
-	1.3.0 - 03/08/2021
-	------------------
-	Add buffer<T>, which is essentially a lightweight std::vector. requires operator new[];
-
-	Add chars() for str_view where T = uint8_t, which returns a normal str_view
-	Add span<T> (== str_view<T>) and byte_span (== str_view<uint8_t>)
+    1.3.1 - 08/08/2021
+    ------------------
+    Fix a bug in buffer<T>::append_bytes being SFINAE-ed wrongly
 
 
 
-	1.2.1 - 03/08/2021
-	------------------
-	Make str_view::operator[] const
+    1.3.0 - 03/08/2021
+    ------------------
+    Add buffer<T>, which is essentially a lightweight std::vector. requires operator new[];
+
+    Add chars() for str_view where T = uint8_t, which returns a normal str_view
+    Add span<T> (== str_view<T>) and byte_span (== str_view<uint8_t>)
 
 
 
-	1.2.0 - 05/06/2021
-	------------------
-	Add `starts_with` and `ends_with` for str_view
+    1.2.1 - 03/08/2021
+    ------------------
+    Make str_view::operator[] const
 
 
 
-	1.1.0 - 28/05/2021
-	------------------
-	Various changes...
+    1.2.0 - 05/06/2021
+    ------------------
+    Add `starts_with` and `ends_with` for str_view
 
 
 
-	1.0.0 - 24/05/2021
-	------------------
-	Initial Release
+    1.1.0 - 28/05/2021
+    ------------------
+    Various changes...
+
+
+
+    1.0.0 - 24/05/2021
+    ------------------
+    Initial Release
 */

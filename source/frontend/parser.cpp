@@ -1,5 +1,5 @@
 // parser.cpp
-// Copyright (c) 2022, yuki / zhiayang
+// Copyright (c) 2022, yuki
 // SPDX-License-Identifier: Apache-2.0
 
 #include "util.h"     // for consumeCodepointFromUtf8, is_one_of
@@ -395,28 +395,22 @@ namespace sap::frontend
 		return Ok<std::pair<QualifiedId, uint32_t>>(std::move(qid), len);
 	}
 
-	static ErrorOr<std::vector<ast::FunctionCall::Arg>> parse_call_args(Lexer& lexer)
+	static ErrorOr<std::vector<ast::FunctionCall::Arg>> parse_argument_list(Lexer& lexer, TokenType end_token)
 	{
-		if(not lexer.expect(TT::LParen))
-			return ErrMsg(lexer.location(), "expected '(' to begin function call");
-
 		std::vector<ast::FunctionCall::Arg> args {};
 
 		// parse arguments.
-		for(bool first = true; not lexer.expect(TT::RParen); first = false)
+		for(bool first = true; not lexer.expect(end_token); first = false)
 		{
 			if(not first && not lexer.expect(TT::Comma))
-			{
-				return ErrMsg(lexer.location(), "expected ',' or ')' in call argument list, got '{}'",
-				    lexer.peek().text);
-			}
+				return ErrMsg(lexer.location(), "expected ',' or ')' in argument list, got '{}'", lexer.peek().text);
 
 			else if(first && lexer.peek() == TT::Comma)
 				return ErrMsg(lexer.location(), "unexpected ','");
 
 			// if we are not first, and we see a rparen (at this point), break
 			// we check again because it allows us to handle trailing commas (for >0 args)
-			if(lexer.expect(TT::RParen))
+			if(lexer.expect(end_token))
 				break;
 
 			bool is_arg_named = false;
@@ -449,8 +443,15 @@ namespace sap::frontend
 			args.push_back(std::move(arg));
 		}
 
-		// TODO: (potentially multiple) trailing blocks
 		return OkMove(args);
+	}
+
+	static ErrorOr<std::vector<ast::FunctionCall::Arg>> parse_call_args(Lexer& lexer)
+	{
+		if(not lexer.expect(TT::LParen))
+			return ErrMsg(lexer.location(), "expected '(' to begin function call");
+
+		return parse_argument_list(lexer, TT::RParen);
 	}
 
 	static ErrorOrUniquePtr<ast::FunctionCall> parse_function_call(Lexer& lexer, std::unique_ptr<ast::Expr> callee)
@@ -469,14 +470,7 @@ namespace sap::frontend
 		ret->array = std::move(lhs);
 
 		must_expect(lexer, TT::LSquare);
-
-		for(bool first = true; not lexer.expect(TT::RSquare); first = false)
-		{
-			if(not first && not lexer.expect(TT::Comma))
-				return ErrMsg(lexer.location(), "expected ',' or ']'");
-
-			ret->indices.push_back(TRY(parse_expr(lexer)));
-		}
+		ret->indices = TRY(parse_argument_list(lexer, TT::RSquare));
 
 		if(ret->indices.empty())
 			return ErrMsg(lexer.location(), "subscript must have at least one index");
@@ -1489,7 +1483,8 @@ namespace sap::frontend
 		else
 			name = name_tok->text.str();
 
-		std::vector<std::string> generic_params {};
+		using GenericParam = ast::FunctionDefn::GenericParam;
+		std::vector<GenericParam> generic_params {};
 
 		if(lexer.match(TT::LSquare))
 		{
@@ -1499,9 +1494,23 @@ namespace sap::frontend
 					return ErrMsg(lexer.location(), "expected ',' or ']' in generic parameter list");
 
 				if(auto p = lexer.match(TT::Identifier); not p.has_value())
+				{
 					return ErrMsg(lexer.location(), "expected identifier in generic parameter list");
+				}
+				else if(lexer.expect(TT::Equal))
+				{
+					generic_params.push_back({
+					    .name = p->text.str(),
+					    .default_type = TRY(parse_type(lexer)),
+					});
+				}
 				else
-					generic_params.push_back(p->text.str());
+				{
+					generic_params.push_back({
+					    .name = p->text.str(),
+					    .default_type = std::nullopt,
+					});
+				}
 			}
 
 			if(generic_params.empty())

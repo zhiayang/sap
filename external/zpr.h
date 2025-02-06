@@ -42,7 +42,7 @@
 */
 
 /*
-    Version 2.8.0
+    Version 2.8.1
     =============
 
 
@@ -2411,16 +2411,6 @@ namespace zpr
 		}
 	};
 
-	template <size_t _Number>
-	struct print_formatter<const char (&)[_Number]>
-	{
-		template <typename _Cb>
-		ZPR_ALWAYS_INLINE void print(const char (&x)[_Number], _Cb&& cb, format_args args)
-		{
-			detail::print_string(static_cast<_Cb&&>(cb), x, _Number - 1, static_cast<format_args&&>(args));
-		}
-	};
-
 	template <>
 	struct print_formatter<const char*>
 	{
@@ -2576,8 +2566,6 @@ namespace zpr
 	template <>
 	struct print_formatter<double> : print_formatter<float> { };
 
-	template <size_t _Number>
-	struct print_formatter<char (&)[_Number]> : print_formatter<const char (&)[_Number]> { };
 
 
 
@@ -2777,6 +2765,11 @@ namespace zpr
 
     Version History
     ===============
+
+    2.8.1 - 03/02/2025
+    ------------------
+    - Remove redundant char(&)[N]-specific print formatter that would cause us to write null characters
+
 
     2.8.0 - 25/11/2024
     ------------------

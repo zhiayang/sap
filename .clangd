@@ -3,4 +3,4 @@ Diagnostics:
   ClangTidy:
     Remove: misc-unused-using-decls
 CompileFlags:
-  Add: -ferror-limit=0
+  Add: [-ferror-limit=0, -Xclang, -fno-cxx-modules]

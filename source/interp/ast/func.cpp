@@ -67,19 +67,36 @@ namespace sap::interp::ast
 
 	ErrorOr<void> FunctionDefn::declare(Typechecker* ts) const
 	{
-		this->declaration = TRY(create_function_declaration(ts, m_location, this->name, this->params,
-		    this->return_type));
+		auto _ = ts->pushLocation(this->loc());
 
-		return Ok();
+		if(this->generic_params.empty())
+		{
+			this->declaration = TRY(create_function_declaration(ts, m_location, this->name, this->params,
+			    this->return_type));
+			return Ok();
+		}
+		else
+		{
+			auto decl = cst::Declaration(this->loc(), ts->current(), this->name, Type::makeVoid(),
+			    /* mutable: */ false);
+			decl.generic_func = this;
+
+			this->declaration = TRY(ts->current()->declare(std::move(decl)));
+			return Ok();
+		}
 	}
 
 	ErrorOr<TCResult> FunctionDefn::typecheck_impl(Typechecker* ts, const Type* infer, bool keep_lvalue) const
 	{
 		assert(this->declaration != nullptr);
-		auto decl_type = this->declaration->type;
+		if(this->declaration->generic_func != nullptr)
+		{
+			// well we have to return *something*, and i don't want to throw nullptrs everywhere so
+			return TCResult::ofVoid<cst::GenericPlaceholderDefn>(this->loc(), this->declaration);
+		}
 
-		// TODO: maybe a less weird mangling solution? idk
-		auto tree = ts->current()->lookupOrDeclareNamespace(zpr::sprint("{}${}", this->declaration->name,
+		auto decl_type = this->declaration->type;
+		auto tree = ts->current()->lookupOrDeclareNamespace(zpr::sprint("{}.{}", this->declaration->name,
 		    decl_type->str()));
 		auto _ = ts->pushTree(tree);
 

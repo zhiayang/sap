@@ -9,11 +9,48 @@
 namespace sap::interp
 {
 	struct DefnTree;
+	namespace ast
+	{
+		struct FunctionDefn;
+	}
 }
 
 namespace sap::interp::cst
 {
 	struct Expr;
+
+	struct Stmt
+	{
+		explicit Stmt(Location loc) : m_location(std::move(loc)) { }
+		const Location& loc() const { return m_location; }
+
+		bool isExpr() const { return m_is_expr; }
+
+		virtual ~Stmt();
+		virtual ErrorOr<EvalResult> evaluate_impl(Evaluator* ev) const = 0;
+
+		[[nodiscard]] virtual ErrorOr<EvalResult> evaluate(Evaluator* ev) const;
+
+	protected:
+		Location m_location;
+		bool m_is_expr = false;
+	};
+
+	struct EmptyStmt : Stmt
+	{
+		explicit EmptyStmt(Location loc) : Stmt(std::move(loc)) { }
+		virtual ErrorOr<EvalResult> evaluate_impl(Evaluator* ev) const { return EvalResult::ofVoid(); }
+	};
+
+	struct Expr : Stmt
+	{
+		explicit Expr(Location loc, const Type* type) : Stmt(std::move(loc)), m_type(type) { m_is_expr = true; }
+
+		const Type* type() const { return m_type; }
+
+	protected:
+		const Type* m_type;
+	};
 
 	struct ExprOrDefaultPtr
 	{
@@ -68,40 +105,6 @@ namespace sap::interp::cst
 		bool m_is_default;
 	};
 
-	// using ExprOrDefaultPtr = Either<std::unique_ptr<Expr>, const Expr*>;
-
-	struct Stmt
-	{
-		explicit Stmt(Location loc) : m_location(std::move(loc)) { }
-		const Location& loc() const { return m_location; }
-
-		bool isExpr() const { return m_is_expr; }
-
-		virtual ~Stmt();
-		virtual ErrorOr<EvalResult> evaluate_impl(Evaluator* ev) const = 0;
-
-		[[nodiscard]] virtual ErrorOr<EvalResult> evaluate(Evaluator* ev) const;
-
-	protected:
-		Location m_location;
-		bool m_is_expr = false;
-	};
-
-	struct EmptyStmt : Stmt
-	{
-		explicit EmptyStmt(Location loc) : Stmt(std::move(loc)) { }
-		virtual ErrorOr<EvalResult> evaluate_impl(Evaluator* ev) const { return EvalResult::ofVoid(); }
-	};
-
-	struct Expr : Stmt
-	{
-		explicit Expr(Location loc, const Type* type) : Stmt(std::move(loc)), m_type(type) { m_is_expr = true; }
-
-		const Type* type() const { return m_type; }
-
-	protected:
-		const Type* m_type;
-	};
 
 	struct TypeExpr : Expr
 	{
@@ -731,6 +734,8 @@ namespace sap::interp::cst
 		bool operator==(const Declaration&) const = default;
 		bool operator!=(const Declaration&) const = default;
 
+		void define(const Definition* defn) { m_definition = defn; }
+
 		const DefnTree* declaredTree() const { return m_declared_tree; }
 		const Definition* definition() const
 		{
@@ -738,7 +743,7 @@ namespace sap::interp::cst
 			return m_definition;
 		}
 
-		void define(const Definition* defn) { m_definition = defn; }
+		const ast::FunctionDefn* generic_func = nullptr;
 
 		Location location;
 		std::string name;
@@ -777,6 +782,12 @@ namespace sap::interp::cst
 		Definition(Location loc, const Declaration* decl) : Stmt(std::move(loc)), declaration(decl) { }
 
 		const Declaration* declaration;
+	};
+
+	struct GenericPlaceholderDefn : Definition
+	{
+		GenericPlaceholderDefn(Location loc, const Declaration* decl) : Definition(std::move(loc), decl) { }
+		virtual ErrorOr<EvalResult> evaluate_impl(Evaluator* ev) const override;
 	};
 
 	struct VariableDefn : Definition

@@ -9,11 +9,19 @@ fn asdf() -> (any) -> void
 	return ppp;
 }
 
-fn f1[T, K](a: int)
+fn f1[T](a: T)
 {
-	ppp(f"f1");
+	ppp(f"f1(a)");
 }
 
-f1(10);
+# fn f1[T](a: T, b: T)
+# {
+# 	ppp(f"f1(a, b)");
+# }
+
+f1[T: $int](10);
+
+f1(a: 10);
+
 asdf()("69");
 # f1[$int](10);

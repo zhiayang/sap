@@ -103,6 +103,10 @@ contexts:
       scope: keyword.operator.minus.sap
       push: [array-literal|3, array-literal|2, binop-expr2|0, unary-expr|0]
       pop: true
+    - match: '!'
+      scope: keyword.operator.not.sap
+      push: [array-literal|3, array-literal|2, binop-expr2|0, unary-expr|0]
+      pop: true
     - match: 'not'
       scope: keyword.operator.not.sap
       push: [array-literal|3, array-literal|2, binop-expr2|0, unary-expr|0]
@@ -229,6 +233,9 @@ contexts:
     - match: '-'
       scope: keyword.operator.minus.sap
       push: [array-literal|2, binop-expr2|0, unary-expr|0]
+    - match: '!'
+      scope: keyword.operator.not.sap
+      push: [array-literal|2, binop-expr2|0, unary-expr|0]
     - match: 'not'
       scope: keyword.operator.not.sap
       push: [array-literal|2, binop-expr2|0, unary-expr|0]
@@ -309,6 +316,9 @@ contexts:
       push: [array-literal|2, binop-expr2|0, unary-expr|0]
     - match: '-'
       scope: keyword.operator.minus.sap
+      push: [array-literal|2, binop-expr2|0, unary-expr|0]
+    - match: '!'
+      scope: keyword.operator.not.sap
       push: [array-literal|2, binop-expr2|0, unary-expr|0]
     - match: 'not'
       scope: keyword.operator.not.sap
@@ -391,6 +401,10 @@ contexts:
       pop: true
     - match: '\|\|'
       scope: keyword.operator.binop.logical.sap
+      push: binop-expr2|2
+      pop: true
+    - match: '\.\.'
+      scope: keyword.operator.range.sap
       push: binop-expr2|2
       pop: true
     - match: '\+'
@@ -546,6 +560,10 @@ contexts:
       scope: keyword.operator.minus.sap
       push: [binop-expr2|0, unary-expr|0]
       pop: true
+    - match: '!'
+      scope: keyword.operator.not.sap
+      push: [binop-expr2|0, unary-expr|0]
+      pop: true
     - match: 'not'
       scope: keyword.operator.not.sap
       push: [binop-expr2|0, unary-expr|0]
@@ -643,6 +661,10 @@ contexts:
       pop: true
     - match: '-'
       scope: keyword.operator.minus.sap
+      push: [binop-expr2|0, unary-expr|0]
+      pop: true
+    - match: '!'
+      scope: keyword.operator.not.sap
       push: [binop-expr2|0, unary-expr|0]
       pop: true
     - match: 'not'
@@ -841,6 +863,10 @@ contexts:
       scope: keyword.operator.minus.sap
       push: [stmt|0, binop-expr2|0, unary-expr|0]
       pop: true
+    - match: '!'
+      scope: keyword.operator.not.sap
+      push: [stmt|0, binop-expr2|0, unary-expr|0]
+      pop: true
     - match: 'not'
       scope: keyword.operator.not.sap
       push: [stmt|0, binop-expr2|0, unary-expr|0]
@@ -981,6 +1007,9 @@ contexts:
     - match: '-'
       scope: keyword.operator.minus.sap
       push: [stmt|0, binop-expr2|0, unary-expr|0]
+    - match: '!'
+      scope: keyword.operator.not.sap
+      push: [stmt|0, binop-expr2|0, unary-expr|0]
     - match: 'not'
       scope: keyword.operator.not.sap
       push: [stmt|0, binop-expr2|0, unary-expr|0]
@@ -1099,6 +1128,10 @@ contexts:
       pop: true
     - match: '-'
       scope: keyword.operator.minus.sap
+      push: [cast-expr|2, binop-expr2|0, unary-expr|0]
+      pop: true
+    - match: '!'
+      scope: keyword.operator.not.sap
       push: [cast-expr|2, binop-expr2|0, unary-expr|0]
       pop: true
     - match: 'not'
@@ -1297,6 +1330,10 @@ contexts:
       scope: keyword.operator.minus.sap
       push: [document-start|2, binop-expr2|0, unary-expr|0]
       pop: true
+    - match: '!'
+      scope: keyword.operator.not.sap
+      push: [document-start|2, binop-expr2|0, unary-expr|0]
+      pop: true
     - match: 'not'
       scope: keyword.operator.not.sap
       push: [document-start|2, binop-expr2|0, unary-expr|0]
@@ -1427,6 +1464,10 @@ contexts:
       pop: true
     - match: '-'
       scope: keyword.operator.minus.sap
+      push: [binop-expr2|0, unary-expr|0]
+      pop: true
+    - match: '!'
+      scope: keyword.operator.not.sap
       push: [binop-expr2|0, unary-expr|0]
       pop: true
     - match: 'not'
@@ -1679,6 +1720,10 @@ contexts:
       scope: keyword.operator.minus.sap
       push: [for-loop|7, binop-expr2|0, unary-expr|0]
       pop: true
+    - match: '!'
+      scope: keyword.operator.not.sap
+      push: [for-loop|7, binop-expr2|0, unary-expr|0]
+      pop: true
     - match: 'not'
       scope: keyword.operator.not.sap
       push: [for-loop|7, binop-expr2|0, unary-expr|0]
@@ -1836,6 +1881,10 @@ contexts:
       scope: keyword.operator.minus.sap
       push: [for-loop|14, binop-expr2|0, unary-expr|0]
       pop: true
+    - match: '!'
+      scope: keyword.operator.not.sap
+      push: [for-loop|14, binop-expr2|0, unary-expr|0]
+      pop: true
     - match: 'not'
       scope: keyword.operator.not.sap
       push: [for-loop|14, binop-expr2|0, unary-expr|0]
@@ -1966,6 +2015,10 @@ contexts:
       scope: keyword.operator.minus.sap
       push: [for-loop|9, binop-expr2|0, unary-expr|0]
       pop: true
+    - match: '!'
+      scope: keyword.operator.not.sap
+      push: [for-loop|9, binop-expr2|0, unary-expr|0]
+      pop: true
     - match: 'not'
       scope: keyword.operator.not.sap
       push: [for-loop|9, binop-expr2|0, unary-expr|0]
@@ -2089,6 +2142,10 @@ contexts:
       pop: true
     - match: '-'
       scope: keyword.operator.minus.sap
+      push: [for-loop|7, binop-expr2|0, unary-expr|0]
+      pop: true
+    - match: '!'
+      scope: keyword.operator.not.sap
       push: [for-loop|7, binop-expr2|0, unary-expr|0]
       pop: true
     - match: 'not'
@@ -2217,6 +2274,10 @@ contexts:
       scope: keyword.operator.minus.sap
       push: [fstring-contents|1, binop-expr2|0, unary-expr|0]
       pop: true
+    - match: '!'
+      scope: keyword.operator.not.sap
+      push: [fstring-contents|1, binop-expr2|0, unary-expr|0]
+      pop: true
     - match: 'not'
       scope: keyword.operator.not.sap
       push: [fstring-contents|1, binop-expr2|0, unary-expr|0]
@@ -2279,14 +2340,64 @@ contexts:
       pop: true
   # Rule: func-defn
   func-defn|10:
-    - match: '[A-Za-z_][[:word:]]*'
-      scope: support.type.generic.sap
+    - match: '\b(any|int|bool|char|void|float|string|Inline(Ref)?|Block(Ref)?|LayoutObject(Ref)?|Length)\b'
+      scope: support.type.builtin.sap
+      push: func-defn|20
+      pop: true
+    - match: '(builtin::)?PagePosition|AbsPosition|Colour|ColourRGB|ColourCMYK|Size2d|Pos2d'
+      scope: support.type.builtin.sap
+      push: func-defn|20
+      pop: true
+    - match: '\?'
+      scope: keyword.operator.type.sap
+      push: [func-defn|20, type|0]
+      pop: true
+    - match: '&'
+      scope: keyword.operator.type.sap
+      push: [func-defn|20, type|1]
+      pop: true
+    - match: '(::)?(?!not)([A-Za-z_][[:word:]]*)(?:\s*(::)\s*([A-Za-z_][[:word:]]*))*'
+      captures:
+        1: punctuation.scope.sap
+        2: variable.other.sap
+        3: punctuation.scope.sap
+        4: variable.other.sap
+      push: func-defn|20
+      pop: true
+    - match: '\('
+      scope: punctuation.paren.fn-type-start.sap
+      push: [func-defn|20, type|2]
+      pop: true
+    - match: '\['
+      scope: punctuation.bracket.array-type-start.sap
+      push: [func-defn|20, type|3]
       pop: true
     - match: '\S'
       scope: invalid.illegal.sap
       pop: true
   # Rule: func-defn
   func-defn|11:
+    - match: '[A-Za-z_][[:word:]]*'
+      scope: support.type.generic.sap
+      push: func-defn|19
+      pop: true
+    - match: '\S'
+      scope: invalid.illegal.sap
+      pop: true
+  # Rule: func-defn
+  func-defn|12:
+    - match: ','
+      scope: punctuation.comma.sap
+      push: func-defn|11
+    - match: '\]'
+      scope: punctuation.paren.generic-params-end.sap
+      push: func-defn|14
+      pop: true
+    - match: '\S'
+      scope: invalid.illegal.sap
+      pop: true
+  # Rule: func-defn
+  func-defn|13:
     - match: '\('
       scope: punctuation.paren.params-start.sap
       push: func-defn|3
@@ -2295,10 +2406,254 @@ contexts:
       scope: invalid.illegal.sap
       pop: true
   # Rule: func-defn
+  func-defn|14:
+    - match: '\('
+      scope: punctuation.paren.params-start.sap
+      push: func-defn|15
+      pop: true
+    - match: '\S'
+      scope: invalid.illegal.sap
+      pop: true
+  # Rule: func-defn
+  func-defn|15:
+    - match: 'mut'
+      scope: storage.modifier.mut.sap
+      push: [func-defn|4, parameter-list|0]
+      pop: true
+    - match: '[A-Za-z_][[:word:]]*'
+      scope: variable.parameter.sap
+      push: [func-defn|4, parameter-list|1]
+      pop: true
+    - match: ','
+      scope: punctuation.comma.sap
+      push: [func-defn|4, parameter-list|2]
+      pop: true
+    - match: '\)'
+      scope: punctuation.paren.params-end.sap
+      push: func-defn|16
+      pop: true
+    - match: '\S'
+      scope: invalid.illegal.sap
+      pop: true
+  # Rule: func-defn
+  func-defn|16:
+    - match: '->'
+      scope: punctuation.arrow.sap
+      push: func-defn|17
+      pop: true
+    - match: '\{'
+      scope: punctuation.brace.sap
+      push: func-defn|18
+      pop: true
+    - match: '\S'
+      scope: invalid.illegal.sap
+      pop: true
+  # Rule: func-defn
+  func-defn|17:
+    - match: '\b(any|int|bool|char|void|float|string|Inline(Ref)?|Block(Ref)?|LayoutObject(Ref)?|Length)\b'
+      scope: support.type.builtin.sap
+      push: func-defn|8
+      pop: true
+    - match: '(builtin::)?PagePosition|AbsPosition|Colour|ColourRGB|ColourCMYK|Size2d|Pos2d'
+      scope: support.type.builtin.sap
+      push: func-defn|8
+      pop: true
+    - match: '\?'
+      scope: keyword.operator.type.sap
+      push: [func-defn|8, type|0]
+      pop: true
+    - match: '&'
+      scope: keyword.operator.type.sap
+      push: [func-defn|8, type|1]
+      pop: true
+    - match: '(::)?(?!not)([A-Za-z_][[:word:]]*)(?:\s*(::)\s*([A-Za-z_][[:word:]]*))*'
+      captures:
+        1: punctuation.scope.sap
+        2: variable.other.sap
+        3: punctuation.scope.sap
+        4: variable.other.sap
+      push: func-defn|8
+      pop: true
+    - match: '\('
+      scope: punctuation.paren.fn-type-start.sap
+      push: [func-defn|8, type|2]
+      pop: true
+    - match: '\['
+      scope: punctuation.bracket.array-type-start.sap
+      push: [func-defn|8, type|3]
+      pop: true
+    - match: '\S'
+      scope: invalid.illegal.sap
+      pop: true
+  # Rule: func-defn
+  func-defn|18:
+    - match: '(/#)'
+      scope: comment.block.sap punctuation.definition.comment.sap
+      push: block-comment|0
+    - match: '(#+).*\n?'
+      scope: comment.line.sap
+      captures:
+        1: punctuation.definition.comment.sap
+    - match: 'fn'
+      scope: storage.type.sap
+      push: func-defn|0
+    - match: '(global\s+)?(var|let)'
+      captures:
+        1: storage.modifier.sap
+        2: storage.type.sap
+      push: var-defn|0
+    - match: 'struct'
+      scope: storage.type.sap
+      push: struct-defn|0
+    - match: 'enum'
+      scope: storage.type.sap
+      push: enum-defn|0
+    - match: 'union'
+      scope: storage.type.sap
+      push: union-defn|0
+    - match: 'return'
+      scope: keyword.return.sap
+      push: return-stmt|0
+    - match: 'if'
+      scope: meta.control-flow.if-stmt.sap keyword.if.sap
+      push: if-stmt|0
+    - match: 'else'
+      scope: meta.control-flow.else-stmt.sap keyword.else.sap
+      push: [else-stmt|meta, block-stmt|0]
+    - match: 'break'
+      scope: keyword.break.sap
+      push: break-stmt|0
+    - match: 'continue'
+      scope: keyword.continue.sap
+      push: continue-stmt|0
+    - match: 'import'
+      scope: keyword.import.sap
+      push: import-stmt|0
+    - match: 'using'
+      scope: keyword.using.sap
+      push: using-stmt|0
+    - match: 'namespace'
+      scope: meta.namespace-defn.sap keyword.sap
+      push: namespace-defn|0
+    - match: 'while'
+      scope: keyword.while.sap
+      push: while-loop|0
+    - match: 'for'
+      scope: keyword.for.sap
+      push: for-loop|0
+    - match: '(@\s*(?:layout|position|post|finalise|render))(?=\s+|\{)'
+      captures:
+        1: storage.modifier.sap
+      push: block-stmt|0
+    - match: '\b([[:digit:]]+(\.([[:digit:]]+))?)(\s*(ex|em|rem|mm|cm|in|pt|pc))\b'
+      scope: constant.numeric.length.sap
+      push: [stmt|0, binop-expr2|0, postfix-expr|0]
+    - match: '\b([[:digit:]]+(\.([[:digit:]]+))?)\b'
+      scope: constant.numeric.sap
+      push: [stmt|0, binop-expr2|0, postfix-expr|0]
+    - match: '\b(true|false|null)\b'
+      scope: constant.language.sap
+      push: [stmt|0, binop-expr2|0, postfix-expr|0]
+    - match: '"'
+      scope: string.quoted.double.sap punctuation.quote.sap
+      push: [stmt|0, binop-expr2|0, postfix-expr|0, string-literal|0]
+    - match: '(f)(")'
+      captures:
+        1: storage.type.string.sap
+        2: punctuation.quote.fstring-start.sap
+      push: [stmt|0, binop-expr2|0, postfix-expr|0, fstring-literal|0]
+    - match: '\['
+      scope: punctuation.bracket.sap
+      push: [stmt|0, binop-expr2|0, postfix-expr|0, array-literal|0]
+    - match: '\.(?!\.)'
+      scope: punctuation.period.sap
+      push: [stmt|0, binop-expr2|0, postfix-expr|0, enum-literal|0]
+    - match: '(\\(box|vbox|hbox|zbox|line|para))\s*(\{)'
+      captures:
+        1: keyword.block.text.sap
+        3: punctuation.brace.sap
+      push: [stmt|0, binop-expr2|0, postfix-expr|0, text-literal|0]
+    - match: '(\\)\s*(\{)'
+      captures:
+        1: keyword.inline.text.sap
+        2: punctuation.brace.sap
+      push: [stmt|0, binop-expr2|0, postfix-expr|0, text-literal|0]
+    - match: '''.*?'''
+      scope: string.quoted.single.sap
+      push: [stmt|0, binop-expr2|0, postfix-expr|0]
+    - match: 'cast'
+      scope: keyword.operator.cast.sap
+      push: [stmt|0, binop-expr2|0, postfix-expr|0, cast-expr|0]
+    - match: '\{'
+      scope: punctuation.brace.struct-start.sap
+      push: [stmt|0, binop-expr2|0, postfix-expr|0, struct-literal|0]
+    - match: '(::)?(?!not)([A-Za-z_][[:word:]]*)(?:\s*(::)\s*([A-Za-z_][[:word:]]*))*'
+      captures:
+        1: punctuation.scope.sap
+        2: variable.other.sap
+        3: punctuation.scope.sap
+        4: variable.other.sap
+      push: [stmt|0, binop-expr2|0, postfix-expr|0]
+    - match: '\$'
+      scope: support.type.sap
+      push: [stmt|0, binop-expr2|0, postfix-expr|0, type|0]
+    - match: '\('
+      scope: punctuation.paren.sap
+      push: [stmt|0, binop-expr2|0, postfix-expr|0, primary-expr|0]
+    - match: '\.\.\.'
+      scope: keyword.operator.ellipsis.sap
+      push: [stmt|0, binop-expr2|0, unary-expr|0]
+    - match: '\*'
+      scope: keyword.operator.move.sap
+      push: [stmt|0, binop-expr2|0, unary-expr|0]
+    - match: '&'
+      scope: keyword.operator.addr.sap
+      push: [stmt|0, binop-expr2|0, unary-expr|1]
+    - match: '\+'
+      scope: keyword.operator.plus.sap
+      push: [stmt|0, binop-expr2|0, unary-expr|0]
+    - match: '-'
+      scope: keyword.operator.minus.sap
+      push: [stmt|0, binop-expr2|0, unary-expr|0]
+    - match: '!'
+      scope: keyword.operator.not.sap
+      push: [stmt|0, binop-expr2|0, unary-expr|0]
+    - match: 'not'
+      scope: keyword.operator.not.sap
+      push: [stmt|0, binop-expr2|0, unary-expr|0]
+    - match: ';'
+      scope: punctuation.terminator.sap
+    - match: '\}'
+      scope: punctuation.brace.sap
+      pop: true
+    - match: '\S'
+      scope: invalid.illegal.sap
+      pop: true
+  # Rule: func-defn
+  func-defn|19:
+    - match: '='
+      scope: punctuation.equal.sap
+      push: type|0
+      pop: true
+    - match: '(?=\S)'
+      pop: true
+  # Rule: func-defn
   func-defn|2:
     - match: '[A-Za-z_][[:word:]]*'
       scope: support.type.generic.sap
       push: func-defn|9
+      pop: true
+    - match: '\S'
+      scope: invalid.illegal.sap
+      pop: true
+  # Rule: func-defn
+  func-defn|20:
+    - match: ','
+      scope: punctuation.comma.sap
+      push: func-defn|11
+    - match: '\]'
+      scope: punctuation.paren.generic-params-end.sap
+      push: func-defn|13
       pop: true
     - match: '\S'
       scope: invalid.illegal.sap
@@ -2513,6 +2868,9 @@ contexts:
     - match: '-'
       scope: keyword.operator.minus.sap
       push: [stmt|0, binop-expr2|0, unary-expr|0]
+    - match: '!'
+      scope: keyword.operator.not.sap
+      push: [stmt|0, binop-expr2|0, unary-expr|0]
     - match: 'not'
       scope: keyword.operator.not.sap
       push: [stmt|0, binop-expr2|0, unary-expr|0]
@@ -2535,12 +2893,17 @@ contexts:
       pop: true
   # Rule: func-defn
   func-defn|9:
+    - match: '='
+      scope: punctuation.equal.sap
+      push: func-defn|10
+      pop: true
     - match: ','
       scope: punctuation.comma.sap
-      push: func-defn|10
+      push: [func-defn|12, func-defn|11]
+      pop: true
     - match: '\]'
       scope: punctuation.paren.generic-params-end.sap
-      push: func-defn|11
+      push: func-defn|13
       pop: true
     - match: '\S'
       scope: invalid.illegal.sap
@@ -2771,6 +3134,10 @@ contexts:
       scope: keyword.operator.minus.sap
       push: [if-stmt|2|entry-0, binop-expr2|0, unary-expr|0]
       pop: true
+    - match: '!'
+      scope: keyword.operator.not.sap
+      push: [if-stmt|2|entry-0, binop-expr2|0, unary-expr|0]
+      pop: true
     - match: 'not'
       scope: keyword.operator.not.sap
       push: [if-stmt|2|entry-0, binop-expr2|0, unary-expr|0]
@@ -2993,6 +3360,10 @@ contexts:
       pop: true
     - match: '-'
       scope: meta.script.preamble.sap keyword.operator.minus.sap
+      push: [main|0, preamble|0|entry-0, stmt|0, binop-expr2|0, unary-expr|0]
+      pop: true
+    - match: '!'
+      scope: meta.script.preamble.sap keyword.operator.not.sap
       push: [main|0, preamble|0|entry-0, stmt|0, binop-expr2|0, unary-expr|0]
       pop: true
     - match: 'not'
@@ -3225,6 +3596,9 @@ contexts:
       push: [stmt|0, binop-expr2|0, unary-expr|0]
     - match: '-'
       scope: keyword.operator.minus.sap
+      push: [stmt|0, binop-expr2|0, unary-expr|0]
+    - match: '!'
+      scope: keyword.operator.not.sap
       push: [stmt|0, binop-expr2|0, unary-expr|0]
     - match: 'not'
       scope: keyword.operator.not.sap
@@ -3805,6 +4179,10 @@ contexts:
       scope: keyword.operator.minus.sap
       push: [parameter-list|11, binop-expr2|0, unary-expr|0]
       pop: true
+    - match: '!'
+      scope: keyword.operator.not.sap
+      push: [parameter-list|11, binop-expr2|0, unary-expr|0]
+      pop: true
     - match: 'not'
       scope: keyword.operator.not.sap
       push: [parameter-list|11, binop-expr2|0, unary-expr|0]
@@ -3818,80 +4196,83 @@ contexts:
       captures:
         1: variable.parameter.sap
         2: punctuation.colon.sap
-      push: [postfix-expr2|9, binop-expr|0]
+      push: [postfix-expr2|5, binop-expr|0]
     - match: '\b([[:digit:]]+(\.([[:digit:]]+))?)(\s*(ex|em|rem|mm|cm|in|pt|pc))\b'
       scope: constant.numeric.length.sap
-      push: [postfix-expr2|9, binop-expr2|0, postfix-expr|0]
+      push: [postfix-expr2|5, binop-expr2|0, postfix-expr|0]
     - match: '\b([[:digit:]]+(\.([[:digit:]]+))?)\b'
       scope: constant.numeric.sap
-      push: [postfix-expr2|9, binop-expr2|0, postfix-expr|0]
+      push: [postfix-expr2|5, binop-expr2|0, postfix-expr|0]
     - match: '\b(true|false|null)\b'
       scope: constant.language.sap
-      push: [postfix-expr2|9, binop-expr2|0, postfix-expr|0]
+      push: [postfix-expr2|5, binop-expr2|0, postfix-expr|0]
     - match: '"'
       scope: string.quoted.double.sap punctuation.quote.sap
-      push: [postfix-expr2|9, binop-expr2|0, postfix-expr|0, string-literal|0]
+      push: [postfix-expr2|5, binop-expr2|0, postfix-expr|0, string-literal|0]
     - match: '(f)(")'
       captures:
         1: storage.type.string.sap
         2: punctuation.quote.fstring-start.sap
-      push: [postfix-expr2|9, binop-expr2|0, postfix-expr|0, fstring-literal|0]
+      push: [postfix-expr2|5, binop-expr2|0, postfix-expr|0, fstring-literal|0]
     - match: '\['
       scope: punctuation.bracket.sap
-      push: [postfix-expr2|9, binop-expr2|0, postfix-expr|0, array-literal|0]
+      push: [postfix-expr2|5, binop-expr2|0, postfix-expr|0, array-literal|0]
     - match: '\.(?!\.)'
       scope: punctuation.period.sap
-      push: [postfix-expr2|9, binop-expr2|0, postfix-expr|0, enum-literal|0]
+      push: [postfix-expr2|5, binop-expr2|0, postfix-expr|0, enum-literal|0]
     - match: '(\\(box|vbox|hbox|zbox|line|para))\s*(\{)'
       captures:
         1: keyword.block.text.sap
         3: punctuation.brace.sap
-      push: [postfix-expr2|9, binop-expr2|0, postfix-expr|0, text-literal|0]
+      push: [postfix-expr2|5, binop-expr2|0, postfix-expr|0, text-literal|0]
     - match: '(\\)\s*(\{)'
       captures:
         1: keyword.inline.text.sap
         2: punctuation.brace.sap
-      push: [postfix-expr2|9, binop-expr2|0, postfix-expr|0, text-literal|0]
+      push: [postfix-expr2|5, binop-expr2|0, postfix-expr|0, text-literal|0]
     - match: '''.*?'''
       scope: string.quoted.single.sap
-      push: [postfix-expr2|9, binop-expr2|0, postfix-expr|0]
+      push: [postfix-expr2|5, binop-expr2|0, postfix-expr|0]
     - match: 'cast'
       scope: keyword.operator.cast.sap
-      push: [postfix-expr2|9, binop-expr2|0, postfix-expr|0, cast-expr|0]
+      push: [postfix-expr2|5, binop-expr2|0, postfix-expr|0, cast-expr|0]
     - match: '\{'
       scope: punctuation.brace.struct-start.sap
-      push: [postfix-expr2|9, binop-expr2|0, postfix-expr|0, struct-literal|0]
+      push: [postfix-expr2|5, binop-expr2|0, postfix-expr|0, struct-literal|0]
     - match: '(::)?(?!not)([A-Za-z_][[:word:]]*)(?:\s*(::)\s*([A-Za-z_][[:word:]]*))*'
       captures:
         1: punctuation.scope.sap
         2: variable.other.sap
         3: punctuation.scope.sap
         4: variable.other.sap
-      push: [postfix-expr2|9, binop-expr2|0, postfix-expr|0]
+      push: [postfix-expr2|5, binop-expr2|0, postfix-expr|0]
     - match: '\$'
       scope: support.type.sap
-      push: [postfix-expr2|9, binop-expr2|0, postfix-expr|0, type|0]
+      push: [postfix-expr2|5, binop-expr2|0, postfix-expr|0, type|0]
     - match: '\('
       scope: punctuation.paren.sap
-      push: [postfix-expr2|9, binop-expr2|0, postfix-expr|0, primary-expr|0]
+      push: [postfix-expr2|5, binop-expr2|0, postfix-expr|0, primary-expr|0]
     - match: '\.\.\.'
       scope: keyword.operator.ellipsis.sap
-      push: [postfix-expr2|9, binop-expr2|0, unary-expr|0]
+      push: [postfix-expr2|5, binop-expr2|0, unary-expr|0]
     - match: '\*'
       scope: keyword.operator.move.sap
-      push: [postfix-expr2|9, binop-expr2|0, unary-expr|0]
+      push: [postfix-expr2|5, binop-expr2|0, unary-expr|0]
     - match: '&'
       scope: keyword.operator.addr.sap
-      push: [postfix-expr2|9, binop-expr2|0, unary-expr|1]
+      push: [postfix-expr2|5, binop-expr2|0, unary-expr|1]
     - match: '\+'
       scope: keyword.operator.plus.sap
-      push: [postfix-expr2|9, binop-expr2|0, unary-expr|0]
+      push: [postfix-expr2|5, binop-expr2|0, unary-expr|0]
     - match: '-'
       scope: keyword.operator.minus.sap
-      push: [postfix-expr2|9, binop-expr2|0, unary-expr|0]
+      push: [postfix-expr2|5, binop-expr2|0, unary-expr|0]
+    - match: '!'
+      scope: keyword.operator.not.sap
+      push: [postfix-expr2|5, binop-expr2|0, unary-expr|0]
     - match: 'not'
       scope: keyword.operator.not.sap
-      push: [postfix-expr2|9, binop-expr2|0, unary-expr|0]
+      push: [postfix-expr2|5, binop-expr2|0, unary-expr|0]
     - match: '\)'
       scope: punctuation.paren.call-end.sap
       pop: true
@@ -3900,60 +4281,53 @@ contexts:
       pop: true
   # Rule: postfix-expr2
   postfix-expr2|1:
+    - match: '([A-Za-z_][[:word:]]*)\s*(:)\s*(?!:)'
+      captures:
+        1: variable.parameter.sap
+        2: punctuation.colon.sap
+      push: [postfix-expr2|5, binop-expr|0]
     - match: '\b([[:digit:]]+(\.([[:digit:]]+))?)(\s*(ex|em|rem|mm|cm|in|pt|pc))\b'
       scope: constant.numeric.length.sap
       push: [postfix-expr2|5, binop-expr2|0, postfix-expr|0]
-      pop: true
     - match: '\b([[:digit:]]+(\.([[:digit:]]+))?)\b'
       scope: constant.numeric.sap
       push: [postfix-expr2|5, binop-expr2|0, postfix-expr|0]
-      pop: true
     - match: '\b(true|false|null)\b'
       scope: constant.language.sap
       push: [postfix-expr2|5, binop-expr2|0, postfix-expr|0]
-      pop: true
     - match: '"'
       scope: string.quoted.double.sap punctuation.quote.sap
       push: [postfix-expr2|5, binop-expr2|0, postfix-expr|0, string-literal|0]
-      pop: true
     - match: '(f)(")'
       captures:
         1: storage.type.string.sap
         2: punctuation.quote.fstring-start.sap
       push: [postfix-expr2|5, binop-expr2|0, postfix-expr|0, fstring-literal|0]
-      pop: true
     - match: '\['
       scope: punctuation.bracket.sap
       push: [postfix-expr2|5, binop-expr2|0, postfix-expr|0, array-literal|0]
-      pop: true
     - match: '\.(?!\.)'
       scope: punctuation.period.sap
       push: [postfix-expr2|5, binop-expr2|0, postfix-expr|0, enum-literal|0]
-      pop: true
     - match: '(\\(box|vbox|hbox|zbox|line|para))\s*(\{)'
       captures:
         1: keyword.block.text.sap
         3: punctuation.brace.sap
       push: [postfix-expr2|5, binop-expr2|0, postfix-expr|0, text-literal|0]
-      pop: true
     - match: '(\\)\s*(\{)'
       captures:
         1: keyword.inline.text.sap
         2: punctuation.brace.sap
       push: [postfix-expr2|5, binop-expr2|0, postfix-expr|0, text-literal|0]
-      pop: true
     - match: '''.*?'''
       scope: string.quoted.single.sap
       push: [postfix-expr2|5, binop-expr2|0, postfix-expr|0]
-      pop: true
     - match: 'cast'
       scope: keyword.operator.cast.sap
       push: [postfix-expr2|5, binop-expr2|0, postfix-expr|0, cast-expr|0]
-      pop: true
     - match: '\{'
       scope: punctuation.brace.struct-start.sap
       push: [postfix-expr2|5, binop-expr2|0, postfix-expr|0, struct-literal|0]
-      pop: true
     - match: '(::)?(?!not)([A-Za-z_][[:word:]]*)(?:\s*(::)\s*([A-Za-z_][[:word:]]*))*'
       captures:
         1: punctuation.scope.sap
@@ -3961,38 +4335,35 @@ contexts:
         3: punctuation.scope.sap
         4: variable.other.sap
       push: [postfix-expr2|5, binop-expr2|0, postfix-expr|0]
-      pop: true
     - match: '\$'
       scope: support.type.sap
       push: [postfix-expr2|5, binop-expr2|0, postfix-expr|0, type|0]
-      pop: true
     - match: '\('
       scope: punctuation.paren.sap
       push: [postfix-expr2|5, binop-expr2|0, postfix-expr|0, primary-expr|0]
-      pop: true
     - match: '\.\.\.'
       scope: keyword.operator.ellipsis.sap
       push: [postfix-expr2|5, binop-expr2|0, unary-expr|0]
-      pop: true
     - match: '\*'
       scope: keyword.operator.move.sap
       push: [postfix-expr2|5, binop-expr2|0, unary-expr|0]
-      pop: true
     - match: '&'
       scope: keyword.operator.addr.sap
       push: [postfix-expr2|5, binop-expr2|0, unary-expr|1]
-      pop: true
     - match: '\+'
       scope: keyword.operator.plus.sap
       push: [postfix-expr2|5, binop-expr2|0, unary-expr|0]
-      pop: true
     - match: '-'
       scope: keyword.operator.minus.sap
       push: [postfix-expr2|5, binop-expr2|0, unary-expr|0]
-      pop: true
+    - match: '!'
+      scope: keyword.operator.not.sap
+      push: [postfix-expr2|5, binop-expr2|0, unary-expr|0]
     - match: 'not'
       scope: keyword.operator.not.sap
       push: [postfix-expr2|5, binop-expr2|0, unary-expr|0]
+    - match: '\]'
+      scope: punctuation.bracket.subscript-end.sap
       pop: true
     - match: '\S'
       scope: invalid.illegal.sap
@@ -4027,140 +4398,6 @@ contexts:
       pop: true
   # Rule: postfix-expr2
   postfix-expr2|5:
-    - match: ':'
-      scope: punctuation.colon.slice.sap
-      push: postfix-expr2|6
-      pop: true
-    - match: ','
-      scope: punctuation.comma.sap
-      push: [postfix-expr2|7, binop-expr|0]
-      pop: true
-    - match: '\]'
-      scope: punctuation.bracket.subscript-end.sap
-      pop: true
-    - match: '\S'
-      scope: invalid.illegal.sap
-      pop: true
-  # Rule: postfix-expr2
-  postfix-expr2|6:
-    - match: '\b([[:digit:]]+(\.([[:digit:]]+))?)(\s*(ex|em|rem|mm|cm|in|pt|pc))\b'
-      scope: constant.numeric.length.sap
-      push: [postfix-expr2|8, binop-expr2|0, postfix-expr|0]
-      pop: true
-    - match: '\b([[:digit:]]+(\.([[:digit:]]+))?)\b'
-      scope: constant.numeric.sap
-      push: [postfix-expr2|8, binop-expr2|0, postfix-expr|0]
-      pop: true
-    - match: '\b(true|false|null)\b'
-      scope: constant.language.sap
-      push: [postfix-expr2|8, binop-expr2|0, postfix-expr|0]
-      pop: true
-    - match: '"'
-      scope: string.quoted.double.sap punctuation.quote.sap
-      push: [postfix-expr2|8, binop-expr2|0, postfix-expr|0, string-literal|0]
-      pop: true
-    - match: '(f)(")'
-      captures:
-        1: storage.type.string.sap
-        2: punctuation.quote.fstring-start.sap
-      push: [postfix-expr2|8, binop-expr2|0, postfix-expr|0, fstring-literal|0]
-      pop: true
-    - match: '\['
-      scope: punctuation.bracket.sap
-      push: [postfix-expr2|8, binop-expr2|0, postfix-expr|0, array-literal|0]
-      pop: true
-    - match: '\.(?!\.)'
-      scope: punctuation.period.sap
-      push: [postfix-expr2|8, binop-expr2|0, postfix-expr|0, enum-literal|0]
-      pop: true
-    - match: '(\\(box|vbox|hbox|zbox|line|para))\s*(\{)'
-      captures:
-        1: keyword.block.text.sap
-        3: punctuation.brace.sap
-      push: [postfix-expr2|8, binop-expr2|0, postfix-expr|0, text-literal|0]
-      pop: true
-    - match: '(\\)\s*(\{)'
-      captures:
-        1: keyword.inline.text.sap
-        2: punctuation.brace.sap
-      push: [postfix-expr2|8, binop-expr2|0, postfix-expr|0, text-literal|0]
-      pop: true
-    - match: '''.*?'''
-      scope: string.quoted.single.sap
-      push: [postfix-expr2|8, binop-expr2|0, postfix-expr|0]
-      pop: true
-    - match: 'cast'
-      scope: keyword.operator.cast.sap
-      push: [postfix-expr2|8, binop-expr2|0, postfix-expr|0, cast-expr|0]
-      pop: true
-    - match: '\{'
-      scope: punctuation.brace.struct-start.sap
-      push: [postfix-expr2|8, binop-expr2|0, postfix-expr|0, struct-literal|0]
-      pop: true
-    - match: '(::)?(?!not)([A-Za-z_][[:word:]]*)(?:\s*(::)\s*([A-Za-z_][[:word:]]*))*'
-      captures:
-        1: punctuation.scope.sap
-        2: variable.other.sap
-        3: punctuation.scope.sap
-        4: variable.other.sap
-      push: [postfix-expr2|8, binop-expr2|0, postfix-expr|0]
-      pop: true
-    - match: '\$'
-      scope: support.type.sap
-      push: [postfix-expr2|8, binop-expr2|0, postfix-expr|0, type|0]
-      pop: true
-    - match: '\('
-      scope: punctuation.paren.sap
-      push: [postfix-expr2|8, binop-expr2|0, postfix-expr|0, primary-expr|0]
-      pop: true
-    - match: '\.\.\.'
-      scope: keyword.operator.ellipsis.sap
-      push: [postfix-expr2|8, binop-expr2|0, unary-expr|0]
-      pop: true
-    - match: '\*'
-      scope: keyword.operator.move.sap
-      push: [postfix-expr2|8, binop-expr2|0, unary-expr|0]
-      pop: true
-    - match: '&'
-      scope: keyword.operator.addr.sap
-      push: [postfix-expr2|8, binop-expr2|0, unary-expr|1]
-      pop: true
-    - match: '\+'
-      scope: keyword.operator.plus.sap
-      push: [postfix-expr2|8, binop-expr2|0, unary-expr|0]
-      pop: true
-    - match: '-'
-      scope: keyword.operator.minus.sap
-      push: [postfix-expr2|8, binop-expr2|0, unary-expr|0]
-      pop: true
-    - match: 'not'
-      scope: keyword.operator.not.sap
-      push: [postfix-expr2|8, binop-expr2|0, unary-expr|0]
-      pop: true
-    - match: '\S'
-      scope: invalid.illegal.sap
-      pop: true
-  # Rule: postfix-expr2
-  postfix-expr2|7:
-    - match: ','
-      scope: punctuation.comma.sap
-      push: binop-expr|0
-    - match: '\]'
-      scope: punctuation.bracket.subscript-end.sap
-      pop: true
-    - match: '\S'
-      scope: invalid.illegal.sap
-      pop: true
-  # Rule: postfix-expr2
-  postfix-expr2|8:
-    - match: '\]'
-      scope: punctuation.bracket.subscript-end.sap
-      pop: true
-    - match: '\S'
-      scope: invalid.illegal.sap
-      pop: true
-  # Rule: postfix-expr2
-  postfix-expr2|9:
     - match: ','
       scope: punctuation.comma.sap
       pop: true
@@ -4189,7 +4426,7 @@ contexts:
       scope: keyword.operator.deref.sap
     - match: '\?(?!\?)'
       scope: keyword.operator.qn.sap
-    - match: '\.'
+    - match: '\.(?!\.)'
       scope: punctuation.operator.dot.sap
       push: postfix-expr2|3
     - match: '(?=\S)'
@@ -4325,6 +4562,9 @@ contexts:
     - match: '-'
       scope: keyword.operator.minus.sap
       push: [stmt|0, binop-expr2|0, unary-expr|0]
+    - match: '!'
+      scope: keyword.operator.not.sap
+      push: [stmt|0, binop-expr2|0, unary-expr|0]
     - match: 'not'
       scope: keyword.operator.not.sap
       push: [stmt|0, binop-expr2|0, unary-expr|0]
@@ -4435,6 +4675,10 @@ contexts:
       pop: true
     - match: '-'
       scope: keyword.operator.minus.sap
+      push: [primary-expr|1, binop-expr2|0, unary-expr|0]
+      pop: true
+    - match: '!'
+      scope: keyword.operator.not.sap
       push: [primary-expr|1, binop-expr2|0, unary-expr|0]
       pop: true
     - match: 'not'
@@ -4551,6 +4795,10 @@ contexts:
       pop: true
     - match: '-'
       scope: keyword.operator.minus.sap
+      push: [return-stmt|1, binop-expr2|0, unary-expr|0]
+      pop: true
+    - match: '!'
+      scope: keyword.operator.not.sap
       push: [return-stmt|1, binop-expr2|0, unary-expr|0]
       pop: true
     - match: 'not'
@@ -4701,6 +4949,9 @@ contexts:
       push: [stmt|0, binop-expr2|0, unary-expr|0]
     - match: '-'
       scope: keyword.operator.minus.sap
+      push: [stmt|0, binop-expr2|0, unary-expr|0]
+    - match: '!'
+      scope: keyword.operator.not.sap
       push: [stmt|0, binop-expr2|0, unary-expr|0]
     - match: 'not'
       scope: keyword.operator.not.sap
@@ -4878,6 +5129,9 @@ contexts:
       push: [script-call|6|entry-0, binop-expr2|0, unary-expr|0]
     - match: '-'
       scope: keyword.operator.minus.sap
+      push: [script-call|6|entry-0, binop-expr2|0, unary-expr|0]
+    - match: '!'
+      scope: keyword.operator.not.sap
       push: [script-call|6|entry-0, binop-expr2|0, unary-expr|0]
     - match: 'not'
       scope: keyword.operator.not.sap
@@ -5109,6 +5363,10 @@ contexts:
       pop: true
     - match: '-'
       scope: keyword.operator.minus.sap
+      push: [struct-field-defn|4, binop-expr2|0, unary-expr|0]
+      pop: true
+    - match: '!'
+      scope: keyword.operator.not.sap
       push: [struct-field-defn|4, binop-expr2|0, unary-expr|0]
       pop: true
     - match: 'not'
@@ -5516,6 +5774,8 @@ contexts:
       scope: keyword.operator.plus.sap
     - match: '-'
       scope: keyword.operator.minus.sap
+    - match: '!'
+      scope: keyword.operator.not.sap
     - match: 'not'
       scope: keyword.operator.not.sap
     - match: '\S'
@@ -5613,6 +5873,10 @@ contexts:
       pop: true
     - match: '-'
       scope: keyword.operator.minus.sap
+      push: unary-expr|0
+      pop: true
+    - match: '!'
+      scope: keyword.operator.not.sap
       push: unary-expr|0
       pop: true
     - match: 'not'
@@ -5926,6 +6190,10 @@ contexts:
       scope: keyword.operator.minus.sap
       push: [var-defn|4, binop-expr2|0, unary-expr|0]
       pop: true
+    - match: '!'
+      scope: keyword.operator.not.sap
+      push: [var-defn|4, binop-expr2|0, unary-expr|0]
+      pop: true
     - match: 'not'
       scope: keyword.operator.not.sap
       push: [var-defn|4, binop-expr2|0, unary-expr|0]
@@ -6052,6 +6320,10 @@ contexts:
       pop: true
     - match: '-'
       scope: keyword.operator.minus.sap
+      push: [while-loop|2, binop-expr2|0, unary-expr|0]
+      pop: true
+    - match: '!'
+      scope: keyword.operator.not.sap
       push: [while-loop|2, binop-expr2|0, unary-expr|0]
       pop: true
     - match: 'not'

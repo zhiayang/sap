@@ -16,13 +16,15 @@ WARNINGS += -Wshadow
 WARNINGS += -Wno-error=shadow
 
 CXX_VERSION_STRING = $(shell $(CXX) --version | head -n1 | tr '[:upper:]' '[:lower:]')
+CXX_MAJOR_VERSION = $(shell echo "$(CXX_VERSION_STRING)" | cut -d' ' -f3 | cut -d. -f1)
 
 ifeq ("$(findstring gcc,$(CXX_VERSION_STRING))", "gcc")
 	WARNINGS += -Wno-missing-field-initializers
-else
+else ifeq ("$(shell echo '$(CXX_MAJOR_VERSION) >= 19' | bc)", "1")
+	WARNINGS += -Wno-missing-designated-field-initializers
 endif
 
-OPT_FLAGS           := -g -O0 -fsanitize=address # -Og
+OPT_FLAGS           := -O0 -fsanitize=address
 LINKER_OPT_FLAGS    :=
 COMMON_CFLAGS       := $(OPT_FLAGS)
 
@@ -43,7 +45,7 @@ TESTDEPS            := $(TESTOBJ:.o=.d)
 CXXHDR              := $(shell find source -iname "*.h" -print) \
                        $(shell find tests/source -iname "*.h" -print)
 
-SPECIAL_HEADERS     := $(addprefix source/include/,defs.h pool.h util.h units.h error.h types.h)
+SPECIAL_HEADERS     := $(addprefix source/,defs.h pool.h util.h units.h error.h types.h)
 SPECIAL_HDRS_COMPDB := $(SPECIAL_HEADERS:%=%.special_compile_db)
 
 CXX_COMPDB_HDRS     := $(filter-out $(SPECIAL_HEADERS),$(CXXHDR))
@@ -56,7 +58,7 @@ EXTERNAL_SRCS       := $(shell find external/libdeflate/lib -iname "*.c" -print)
 EXTERNAL_OBJS       := $(EXTERNAL_SRCS:%.c=$(OUTPUT_DIR)/%.c.o)
 
 
-PRECOMP_HDR         := source/include/precompile.h
+PRECOMP_HDR         := source/precompile.h
 PRECOMP_GCH         := $(PRECOMP_HDR:%.h=$(OUTPUT_DIR)/%.h.pch)
 PRECOMP_INCLUDE     := $(PRECOMP_HDR:%.h=$(OUTPUT_DIR)/%.h)
 PRECOMP_OBJ         := $(PRECOMP_HDR:%.h=$(OUTPUT_DIR)/%.h.pch.o)
@@ -79,7 +81,7 @@ endif
 
 GIT_REVISION        := $(shell git describe --always --dirty)
 DEFINES             := -DGIT_REVISION=\"$(GIT_REVISION)\"
-INCLUDES            := -Isource/include -Iexternal
+INCLUDES            := -Isource -Iexternal
 
 ifeq ("$(UNAME_IDENT)", "Linux")
 	USE_FONTCONFIG := 1

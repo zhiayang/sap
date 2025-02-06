@@ -51,7 +51,7 @@ namespace sap::interp::ast
 		else
 		{
 			if(not decl->type->isFunction())
-				return ErrMsg(ts, "somehow we are calling a non-function type???");
+				return ErrMsg(ts, "somehow we are calling a non-function type??? '{}'", decl->type->str());
 
 			return convert_params(ts, decl->type->toFunction());
 		}

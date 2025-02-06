@@ -111,8 +111,8 @@ func-defn:
 	(
 		# note: if you have the first set of parens, you must have a generic guy inside.
 		`[`{punctuation.paren.generic-params-start}
-		IDENTIFIER{support.type.generic}
-		(`,`{punctuation.comma} IDENTIFIER{support.type.generic})*
+		(IDENTIFIER{support.type.generic} (`=`{punctuation.equal} type)?)
+		(`,`{punctuation.comma} (IDENTIFIER{support.type.generic} (`=`{punctuation.equal} type)?))*
 		`]`{punctuation.paren.generic-params-end}
 	)?
 
@@ -213,15 +213,12 @@ postfix-expr2
 		(function-call-arg (`,`{punctuation.comma})?)*
 	  `)`{punctuation.paren.call-end}
 	| `[`{punctuation.bracket.subscript-start}
-	   expr (
-		 (`:`{punctuation.colon.slice} expr)
-	   | ((`,`{punctuation.comma} expr)*)
-	   )?
+  (function-call-arg (`,`{punctuation.comma})?)*
 	  `]`{punctuation.bracket.subscript-end}
 	| `{`{punctuation.brace.struct-start} struct-literal-field-list `}`{punctuation.brace.struct-end}
 	| `!`{keyword.operator.deref}
 	| '\?(?!\?)'{keyword.operator.qn}
-	| `.`{punctuation.operator.dot} IDENTIFIER{meta.name.field}
+	| '\.(?!\.)'{punctuation.operator.dot} IDENTIFIER{meta.name.field}
 	;
 
 postfix-expr: primary-expr '\s*' postfix-expr2*;
@@ -233,6 +230,7 @@ unary-expr
 	| `&`{keyword.operator.addr} `mut`{storage.modifier.mut}? unary-expr
 	| `+`{keyword.operator.plus} unary-expr
 	| `-`{keyword.operator.minus} unary-expr
+ | `!`{keyword.operator.not} unary-expr
 	| `not`{keyword.operator.not} unary-expr
 	;
 
@@ -257,6 +255,7 @@ binop-expr2
 	| `or`{keyword.operator.binop.logical} unary-expr binop-expr2
 	| `&&`{keyword.operator.binop.logical} unary-expr binop-expr2
 	| `||`{keyword.operator.binop.logical} unary-expr binop-expr2
+ | `..`{keyword.operator.range} unary-expr binop-expr2
 	| `+`{keyword.operator.binop.arith} unary-expr binop-expr2
 	| `-`{keyword.operator.binop.arith} unary-expr binop-expr2
 	| `*`{keyword.operator.binop.arith} unary-expr binop-expr2
