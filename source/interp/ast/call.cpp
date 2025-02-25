@@ -1,5 +1,5 @@
 // call.cpp
-// Copyright (c) 2022, yuki / zhiayang
+// Copyright (c) 2022, yuki
 // SPDX-License-Identifier: Apache-2.0
 
 #include "location.h"
@@ -13,6 +13,8 @@
 
 namespace sap::interp::ast
 {
+	using UFCSKind = cst::FunctionCall::UFCSKind;
+
 	static ErrorOr<ExpectedParams> convert_params(const Typechecker* ts, const FunctionType* fn_type)
 	{
 		ExpectedParams params {};
@@ -55,81 +57,6 @@ namespace sap::interp::ast
 
 			return convert_params(ts, decl->type->toFunction());
 		}
-	}
-
-	using ResolvedOverloadSet = ErrorOr<std::pair<const cst::Declaration*, ArrangedArguments>>;
-
-	static ErrorOr<ArrangedArguments> get_calling_cost(Typechecker* ts,
-	    const cst::Declaration* decl,
-	    const std::vector<InputArg>& arguments)
-	{
-		return arrangeCallArguments(ts, TRY(convert_params(ts, decl)), arguments, //
-		    "function", "argument", "parameter");
-	}
-
-	static ResolvedOverloadSet resolve_overload_set(Typechecker* ts,
-	    const std::vector<const cst::Declaration*>& decls,
-	    const std::vector<InputArg>& arguments)
-	{
-		std::vector<const cst::Declaration*> best_decls {};
-		std::vector<std::pair<const cst::Declaration*, ErrorMessage>> failed_decls {};
-
-		int best_cost = INT_MAX;
-		ArrangedArguments::ArgList arg_arrangement {};
-
-		for(auto decl : decls)
-		{
-			auto result = get_calling_cost(ts, decl, arguments);
-			if(result.is_err())
-			{
-				failed_decls.emplace_back(decl, result.take_error());
-				continue;
-			}
-
-			auto arr = result.take_value();
-
-			if(arr.coercion_cost == best_cost)
-			{
-				best_decls.push_back(decl);
-			}
-			else if(arr.coercion_cost < best_cost)
-			{
-				best_cost = arr.coercion_cost;
-				best_decls = { decl };
-				arg_arrangement = std::move(arr.arguments);
-			}
-		}
-
-		if(best_decls.size() == 1)
-		{
-			return Ok<std::pair<const cst::Declaration*, ArrangedArguments>>(best_decls[0], std::move(arg_arrangement));
-		}
-
-		if(best_decls.empty())
-		{
-			std::string arg_types_str {};
-			for(size_t i = 0; i < arguments.size(); i++)
-			{
-				if(i > 0)
-					arg_types_str += ", ";
-
-				if(arguments[i].type.has_value())
-					arg_types_str += (*arguments[i].type)->str();
-				else
-					arg_types_str += "<unknown>";
-			}
-
-			auto err = ErrorMessage(ts,
-			    zpr::sprint("no matching function for call matching arguments ({}) among {} candidate{}", //
-			        arg_types_str, failed_decls.size(), failed_decls.size() == 1 ? "" : "s"));
-
-			for(auto& [decl, msg] : failed_decls)
-				err.addInfo(decl->location, msg.string());
-
-			return Err(std::move(err));
-		}
-
-		return ErrMsg(ts, "ambiguous call: {} candidates", best_decls.size());
 	}
 
 	static ErrorOr<std::vector<cst::ExprOrDefaultPtr>> create_final_arg_list(Typechecker* ts,
@@ -183,6 +110,151 @@ namespace sap::interp::ast
 
 		return OkMove(final_args);
 	}
+
+	using ResolvedOverload = ErrorOr<std::pair<const cst::Declaration*, ArrangedArguments>>;
+	using CallCandidate = cst::PartiallyResolvedOverloadSet::Item;
+
+	static ErrorOr<ArrangedArguments> get_calling_cost(Typechecker* ts,
+	    const cst::Declaration* decl,
+	    const std::vector<InputArg>& arguments)
+	{
+		return arrangeCallArguments(ts, TRY(convert_params(ts, decl)), arguments, //
+		    "function", "argument", "parameter");
+	}
+
+	static ResolvedOverload resolve_overload_set(Typechecker* ts,
+	    const std::vector<CallCandidate>& decls,
+	    const std::vector<InputArg>& arguments)
+	{
+		std::vector<const cst::Declaration*> best_decls {};
+		std::vector<std::pair<const cst::Declaration*, ErrorMessage>> failed_decls {};
+
+		int best_cost = INT_MAX;
+		ArrangedArguments::ArgList arg_arrangement {};
+
+		for(auto& decl : decls)
+		{
+			auto result = get_calling_cost(ts, decl.decl, arguments);
+			if(result.is_err())
+			{
+				failed_decls.emplace_back(decl.decl, result.take_error());
+				continue;
+			}
+
+			auto arr = result.take_value();
+
+			if(arr.coercion_cost == best_cost)
+			{
+				best_decls.push_back(decl.decl);
+			}
+			else if(arr.coercion_cost < best_cost)
+			{
+				best_cost = arr.coercion_cost;
+				best_decls = { decl.decl };
+				arg_arrangement = std::move(arr.arguments);
+			}
+		}
+
+		if(best_decls.size() == 1)
+		{
+			return Ok<std::pair<const cst::Declaration*, ArrangedArguments>>(best_decls[0], std::move(arg_arrangement));
+		}
+
+		if(best_decls.empty())
+		{
+			std::string arg_types_str {};
+			for(size_t i = 0; i < arguments.size(); i++)
+			{
+				if(i > 0)
+					arg_types_str += ", ";
+
+				if(arguments[i].type.has_value())
+					arg_types_str += (*arguments[i].type)->str();
+				else
+					arg_types_str += "<unknown>";
+			}
+
+			auto err = ErrorMessage(ts,
+			    zpr::sprint("no matching function for call matching arguments ({}) among {} candidate{}", //
+			        arg_types_str, failed_decls.size(), failed_decls.size() == 1 ? "" : "s"));
+
+			for(auto& [decl, msg] : failed_decls)
+				err.addInfo(decl->location, msg.string());
+
+			return Err(std::move(err));
+		}
+
+		return ErrMsg(ts, "ambiguous call: {} candidates", best_decls.size());
+	}
+
+	static ErrorOr<TCResult> typecheck_call_with_candidate_declaration_list(Typechecker* ts,
+	    const Location& loc,
+	    const std::vector<FunctionCall::Arg>& call_args,
+	    const std::vector<CallCandidate>& decls,
+	    std::vector<InputArg> processed_arg_types,
+	    std::vector<std::unique_ptr<cst::Expr>> processed_args,
+	    bool rewritten_ufcs,
+	    bool ufcs_is_rvalue,
+	    bool ufcs_is_mutable)
+	{
+		assert(decls.size() > 0);
+
+		auto [maybe_best, ufcs_kind] = ([&]() -> std::pair<ResolvedOverload, UFCSKind> {
+			// note that `processed_arg_types` already does the appropriate transformation
+			// for ufcs (in terms of making pointers when appropriate).
+			auto ret = resolve_overload_set(ts, decls, processed_arg_types);
+			if(ret.ok())
+			{
+				auto u = UFCSKind::None;
+				if(rewritten_ufcs)
+				{
+					if(ufcs_is_rvalue)
+						u = UFCSKind::ByValue;
+					else if(ufcs_is_mutable)
+						u = UFCSKind::MutablePointer;
+					else
+						u = UFCSKind::ConstPointer;
+				}
+
+				return { OkMove(ret.unwrap()), u };
+			}
+
+			if(not ufcs_is_rvalue)
+				return { Err(std::move(ret.error())), UFCSKind::None };
+
+			// if the ufcs was an rvalue, then we would have tried the pass-self-by-value
+			// overload first; now, try the self-by-pointer overload (if it exists).
+			processed_arg_types[0].type = (*processed_arg_types[0].type)->mutablePointerTo();
+
+			ret = resolve_overload_set(ts, decls, processed_arg_types);
+			if(not ret.ok())
+				return { Err(ret.take_error()), UFCSKind::None };
+
+			return {
+				Ok(ret.take_value()),
+				ufcs_is_rvalue ? UFCSKind::MutablePointer : UFCSKind::ConstPointer,
+			};
+		}());
+
+		auto [best_decl, arg_arrangement] = TRY(std::move(maybe_best));
+		assert(best_decl != nullptr);
+
+		auto fn_type = best_decl->type->toFunction();
+		auto final_callee = best_decl;
+
+		auto final_args = TRY(create_final_arg_list(ts, loc, rewritten_ufcs, arg_arrangement, processed_args,
+		    call_args));
+
+		if(not fn_type->isFunction())
+			return ErrMsg(ts, "callee of function call must be a function type, got '{}'", fn_type->str());
+
+		return TCResult::ofRValue<cst::FunctionCall>(loc, //
+		    fn_type->returnType(),                        //
+		    ufcs_kind,                                    //
+		    std::move(final_args),                        //
+		    final_callee);
+	}
+
 
 
 
@@ -255,11 +327,12 @@ namespace sap::interp::ast
 			});
 		}
 
-		using UFCSKind = cst::FunctionCall::UFCSKind;
-
 		// if the function expression is an identifier, we resolve it manually to handle overloading.
 		if(auto ident = dynamic_cast<const Ident*>(this->callee.get()); ident != nullptr)
 		{
+			zpr::println("AAAAA");
+
+			// basically argument-dependent lookup but only for the 'this' argument
 			const DefnTree* lookup_in = ts->current();
 			if(this->rewritten_ufcs)
 			{
@@ -268,128 +341,107 @@ namespace sap::interp::ast
 				lookup_in = TRY(ts->getDefnTreeForType(processed_args[0]->type()));
 			}
 
-			auto decls = TRY(lookup_in->lookupRecursive(ident->name));
-			assert(decls.size() > 0);
+			auto decls = util::map(TRY(lookup_in->lookupRecursive(ident->name)), [](const auto* x) -> auto {
+				return CallCandidate { .decl = x };
+			});
 
-			auto [maybe_best, ufcs_kind] = ([&]() -> std::pair<ResolvedOverloadSet, UFCSKind> {
-				// note that `processed_arg_types` already does the appropriate transformation
-				// for ufcs (in terms of making pointers when appropriate).
-				auto ret = resolve_overload_set(ts, decls, processed_arg_types);
-				if(ret.ok())
-				{
-					auto u = UFCSKind::None;
-					if(this->rewritten_ufcs)
-					{
-						if(ufcs_is_rvalue)
-							u = UFCSKind::ByValue;
-						else if(ufcs_is_mutable)
-							u = UFCSKind::MutablePointer;
-						else
-							u = UFCSKind::ConstPointer;
-					}
+			return typecheck_call_with_candidate_declaration_list(ts, m_location, this->arguments, std::move(decls),
+			    std::move(processed_arg_types), std::move(processed_args), this->rewritten_ufcs, ufcs_is_rvalue,
+			    ufcs_is_mutable);
+		}
 
-					return { OkMove(ret.unwrap()), u };
-				}
+		// if this is an expression, we only have the parameter types to go on
+		// (function types do not contain names), so resolution is (theoretically) simpler.
+		// unfortunately a lot of the code that we have above is written for resolving,
+		// which means we basically need separate code for doing this. anyway it should
+		// be a bit simpler since there's no overloading or anything -- just need to handle ufcs.
 
-				if(not ufcs_is_rvalue)
-					return { Err(std::move(ret.error())), UFCSKind::None };
+		auto ufcs_kind = UFCSKind::None;
+		auto final_callee = TRY(this->callee->typecheck(ts)).take_expr();
 
-				// if the ufcs was an rvalue, then we would have tried the pass-self-by-value
-				// overload first; now, try the self-by-pointer overload (if it exists).
-				processed_arg_types[0].type = (*processed_arg_types[0].type)->mutablePointerTo();
+		if(const auto* pso = dynamic_cast<const cst::PartiallyResolvedOverloadSet*>(final_callee.get()))
+		{
+			// note that during the generation of the overload set, we should have already errored out if it was empty.
+			assert(not pso->items.empty());
 
-				ret = resolve_overload_set(ts, decls, processed_arg_types);
-				if(not ret.ok())
-					return { Err(ret.take_error()), UFCSKind::None };
+			// // for now, ignore candidates that are not fully constrained (ie. have >0 unspecified generic params)
+			// std::vector<const cst::Declaration*> inst_decls {};
+			// for(const auto& f : pso->items)
+			// {
+			// 	if(f.decl->generic_func == nullptr && f.decl->function_decl.has_value())
+			// 	{
+			// 		inst_decls.push_back(f.decl);
+			// 	}
+			// 	else if(f.decl->generic_func && f.applied_types.size() == f.decl->generic_func->generic_params.size())
+			// 	{
+			// 		auto insert_tree = f.decl->declaredTree();
+			// 		auto _defn = TRY(f.decl->generic_func->instantiateGeneric(ts, f.applied_types));
+			// 		auto defn = insert_tree->addInstantiatedGeneric(std::move(_defn).take<cst::Definition>());
 
-				return {
-					Ok(ret.take_value()),
-					ufcs_is_rvalue ? UFCSKind::MutablePointer : UFCSKind::ConstPointer,
-				};
-			}());
+			// 		inst_decls.push_back(defn->declaration);
+			// 	}
+			// }
 
-			auto [best_decl, arg_arrangement] = TRY(std::move(maybe_best));
-			assert(best_decl != nullptr);
+			// if(inst_decls.empty())
+			// 	return ErrMsg(this->loc(), "unsupported rn sorry ))))):");
 
-			auto fn_type = best_decl->type->toFunction();
-			auto final_callee = best_decl;
+			return typecheck_call_with_candidate_declaration_list(ts, m_location, this->arguments, pso->items,
+			    std::move(processed_arg_types), std::move(processed_args), this->rewritten_ufcs, ufcs_is_rvalue,
+			    ufcs_is_mutable);
+		}
 
-			auto final_args = TRY(create_final_arg_list(ts, m_location, this->rewritten_ufcs, arg_arrangement,
-			    processed_args, this->arguments));
 
-			if(not fn_type->isFunction())
-				return ErrMsg(ts, "callee of function call must be a function type, got '{}'", fn_type->str());
 
-			return TCResult::ofRValue<cst::FunctionCall>(m_location, //
-			    fn_type->returnType(),                               //
-			    ufcs_kind,                                           //
-			    std::move(final_args),                               //
-			    final_callee);
+
+
+
+		if(not final_callee->type()->isFunction())
+		{
+			return ErrMsg(ts, "callee of function call must be a function type, got '{}'", final_callee->type()->str());
+		}
+
+		auto fn_type = final_callee->type()->toFunction();
+
+		ArrangedArguments arranged {};
+		auto arranged_1 = arrangeCallArguments(ts, TRY(convert_params(ts, final_callee->type()->toFunction())),
+		    processed_arg_types, "function", "argument", "parameter");
+
+		if(arranged_1.ok())
+		{
+			arranged = TRY(std::move(arranged_1));
+			if(this->rewritten_ufcs)
+			{
+				if(ufcs_is_rvalue)
+					ufcs_kind = UFCSKind::ByValue;
+				else if(ufcs_is_mutable)
+					ufcs_kind = UFCSKind::MutablePointer;
+				else
+					ufcs_kind = UFCSKind::ConstPointer;
+			}
 		}
 		else
 		{
-			// if this is an expression, we only have the parameter types to go on
-			// (function types do not contain names), so resolution is (theoretically) simpler.
-			// unfortunately a lot of the code that we have above is written for resolving,
-			// which means we basically need separate code for doing this. anyway it should
-			// be a bit simpler since there's no overloading or anything -- just need to handle ufcs.
+			// if the ufcs expr is not an rvalue, there's no point trying this second configuration.
+			if(not ufcs_is_rvalue)
+				return Err(arranged_1.take_error());
 
-			auto ufcs_kind = UFCSKind::None;
-			auto final_callee = TRY(this->callee->typecheck(ts)).take_expr();
+			processed_arg_types[0].type = (*processed_arg_types[0].type)->mutablePointerTo();
 
-			if(const auto* pso = dynamic_cast<const cst::PartiallyResolvedOverloadSet*>(final_callee.get()))
-			{
-				return ErrMsg(this->loc(), "a");
-			}
+			// try again
+			arranged = TRY(arrangeCallArguments(ts, TRY(convert_params(ts, final_callee->type()->toFunction())),
+			    processed_arg_types, "function", "argument", "parameter"));
 
-			if(not final_callee->type()->isFunction())
-			{
-				return ErrMsg(ts, "callee of function call must be a function type, got '{}'",
-				    final_callee->type()->str());
-			}
-
-			auto fn_type = final_callee->type()->toFunction();
-
-			ArrangedArguments arranged {};
-			auto arranged_1 = arrangeCallArguments(ts, TRY(convert_params(ts, final_callee->type()->toFunction())),
-			    processed_arg_types, "function", "argument", "parameter");
-
-			if(arranged_1.ok())
-			{
-				arranged = TRY(std::move(arranged_1));
-				if(this->rewritten_ufcs)
-				{
-					if(ufcs_is_rvalue)
-						ufcs_kind = UFCSKind::ByValue;
-					else if(ufcs_is_mutable)
-						ufcs_kind = UFCSKind::MutablePointer;
-					else
-						ufcs_kind = UFCSKind::ConstPointer;
-				}
-			}
-			else
-			{
-				// if the ufcs expr is not an rvalue, there's no point trying this second configuration.
-				if(not ufcs_is_rvalue)
-					return Err(arranged_1.take_error());
-
-				processed_arg_types[0].type = (*processed_arg_types[0].type)->mutablePointerTo();
-
-				// try again
-				arranged = TRY(arrangeCallArguments(ts, TRY(convert_params(ts, final_callee->type()->toFunction())),
-				    processed_arg_types, "function", "argument", "parameter"));
-
-				ufcs_kind = ufcs_is_rvalue ? UFCSKind::MutablePointer : UFCSKind::ConstPointer;
-			}
-
-			auto final_args = TRY(create_final_arg_list(ts, m_location, this->rewritten_ufcs, arranged, processed_args,
-			    this->arguments));
-
-			return TCResult::ofRValue<cst::FunctionCall>(m_location, //
-			    fn_type->returnType(),                               //
-			    ufcs_kind,                                           //
-			    std::move(final_args),                               //
-			    std::move(final_callee));
+			ufcs_kind = ufcs_is_rvalue ? UFCSKind::MutablePointer : UFCSKind::ConstPointer;
 		}
+
+		auto final_args = TRY(create_final_arg_list(ts, m_location, this->rewritten_ufcs, arranged, processed_args,
+		    this->arguments));
+
+		return TCResult::ofRValue<cst::FunctionCall>(m_location, //
+		    fn_type->returnType(),                               //
+		    ufcs_kind,                                           //
+		    std::move(final_args),                               //
+		    std::move(final_callee));
 	}
+
 }

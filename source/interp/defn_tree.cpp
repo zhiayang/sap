@@ -103,6 +103,10 @@ namespace sap::interp
 		return Ok();
 	}
 
+	cst::Definition* DefnTree::addInstantiatedGeneric(std::unique_ptr<cst::Definition> generic) const
+	{
+		return m_instantiated_generics.emplace_back(std::move(generic)).get();
+	}
 
 
 

@@ -123,13 +123,25 @@ namespace sap::interp
 		else if(from->isArray() && to->isArray() && (from->arrayElement()->isVoid() || to->arrayElement()->isVoid()))
 			return true;
 
-		else if(
-		    from->isPointer() && to->isPointer() && from->pointerElement()->isArray() && to->pointerElement()->isArray()
-		    && (from->pointerElement()->arrayElement()->isVoid() || to->pointerElement()->arrayElement()->isVoid())
-		    && (from->isMutablePointer() || not to->isMutablePointer()))
+		else if(from->isPointer() && to->isPointer() && from->pointerElement()->isArray()
+		        && to->pointerElement()->isArray()
+		        && (from->pointerElement()->arrayElement()->isVoid() || to->pointerElement()->arrayElement()->isVoid())
+		        && (from->isMutablePointer() || not to->isMutablePointer()))
 			return true;
 
 		return false;
+	}
+
+	util::Defer<> Typechecker::pushTypeArguments(util::hashmap<std::string, const Type*> type_args)
+	{
+		m_type_arguments_stack.push_back(std::move(type_args));
+		return util::Defer([this]() { this->popTypeArguments(); });
+	}
+
+	void Typechecker::popTypeArguments()
+	{
+		assert(not m_type_arguments_stack.empty());
+		m_type_arguments_stack.pop_back();
 	}
 
 	ErrorOr<const Type*> Typechecker::resolveType(const frontend::PType& ptype)
@@ -169,6 +181,13 @@ namespace sap::interp
 					return Ok(Type::makeTreeBlockObjRef());
 				else if(nn == TYPE_LAYOUT_OBJECT_REF)
 					return Ok(Type::makeLayoutObjectRef());
+
+				// check the type argument stack
+				for(auto it = m_type_arguments_stack.rbegin(); it != m_type_arguments_stack.rend(); ++it)
+				{
+					if(auto it2 = it->find(nn); it2 != it->end())
+						return Ok(it2->second);
+				}
 			}
 
 			auto decl = TRY(this->current()->lookup(name));

@@ -12,16 +12,30 @@ fn asdf() -> (any) -> void
 fn f1[T](a: T)
 {
 	ppp(f"f1(a)");
+	asdf()(a);
 }
+
+fn f2[T, U](a: T, b: U)
+{
+	asdf()(f"a={a}, b={b}");
+}
+
+/#
+	1. make ExpectedParam store Either<Type, PType>
+	2. typecheck (resolveType) the param types in the DefnTree of the generic function
+ #/
+
+
 
 # fn f1[T](a: T, b: T)
 # {
 # 	ppp(f"f1(a, b)");
 # }
 
-f1[T: $int](10);
+f1("maddie is a cutie");
+# f2("uwu", "owo");
 
 # f1(a: 10);
 
-asdf()("69");
+# asdf()("69");
 # f1[$int](10);

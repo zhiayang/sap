@@ -65,47 +65,22 @@ namespace sap::interp::ast
 		return ts->current()->declare(std::move(decl));
 	}
 
-	ErrorOr<void> FunctionDefn::declare(Typechecker* ts) const
+	static ErrorOr<TCResult> typecheck_function_definition(Typechecker* ts,
+	    const ast::FunctionDefn* func_defn,
+	    cst::Declaration* decl)
 	{
-		auto _ = ts->pushLocation(this->loc());
+		assert(decl != nullptr);
 
-		if(this->generic_params.empty())
-		{
-			this->declaration = TRY(create_function_declaration(ts, m_location, this->name, this->params,
-			    this->return_type));
-			return Ok();
-		}
-		else
-		{
-			auto decl = cst::Declaration(this->loc(), ts->current(), this->name, Type::makeVoid(),
-			    /* mutable: */ false);
-			decl.generic_func = this;
-
-			this->declaration = TRY(ts->current()->declare(std::move(decl)));
-			return Ok();
-		}
-	}
-
-	ErrorOr<TCResult> FunctionDefn::typecheck_impl(Typechecker* ts, const Type* infer, bool keep_lvalue) const
-	{
-		assert(this->declaration != nullptr);
-		if(this->declaration->generic_func != nullptr)
-		{
-			// well we have to return *something*, and i don't want to throw nullptrs everywhere so
-			return TCResult::ofVoid<cst::GenericPlaceholderDefn>(this->loc(), this->declaration);
-		}
-
-		auto decl_type = this->declaration->type;
-		auto tree = ts->current()->lookupOrDeclareNamespace(zpr::sprint("{}.{}", this->declaration->name,
-		    decl_type->str()));
+		auto decl_type = decl->type;
+		auto tree = ts->current()->lookupOrDeclareNamespace(zpr::sprint("{}.{}", decl->name, decl_type->str()));
 		auto _ = ts->pushTree(tree);
 
 		std::vector<cst::FunctionDefn::Param> new_params {};
 
 		// make definitions for our parameters
-		for(size_t i = 0; i < this->params.size(); i++)
+		for(size_t i = 0; i < func_defn->params.size(); i++)
 		{
-			auto& param = this->params[i];
+			auto& param = func_defn->params[i];
 
 			// make variadic arrays into non-variadic ones inside the function
 			auto param_type = param.type;
@@ -120,26 +95,68 @@ namespace sap::interp::ast
 
 			new_params.push_back({
 			    .defn = std::move(cst_vdef),
-			    .default_value = this->declaration->function_decl->params[i].default_value.get(),
+			    .default_value = decl->function_decl->params[i].default_value.get(),
 			});
 		}
 
 		auto rt = decl_type->toFunction()->returnType();
 		auto __ = ts->enterFunctionWithReturnType(rt);
 
-		auto cst_body = TRY(this->body->typecheck(ts)).take<cst::Block>();
+		auto cst_body = TRY(func_defn->body->typecheck(ts)).take<cst::Block>();
 
-		if(not rt->isVoid())
-		{
-			if(not this->body->checkAllPathsReturn(rt))
-				return ErrMsg(ts, "not all control paths return a value");
-		}
+		if(not rt->isVoid() && not func_defn->body->checkAllPathsReturn(rt))
+			return ErrMsg(ts, "not all control paths return a value");
 
-		auto defn = std::make_unique<cst::FunctionDefn>(m_location, this->declaration, std::move(new_params),
+		auto defn = std::make_unique<cst::FunctionDefn>(func_defn->loc(), decl, std::move(new_params),
 		    std::move(cst_body));
 
-		this->declaration->define(defn.get());
+		decl->define(defn.get());
 		return TCResult::ofVoid(std::move(defn));
+	}
+
+	ErrorOr<void> FunctionDefn::declare(Typechecker* ts) const
+	{
+		auto _ = ts->pushLocation(this->loc());
+
+		if(this->generic_params.empty())
+		{
+			this->declaration = TRY(create_function_declaration(ts, m_location, this->name, this->params,
+			    this->return_type));
+			return Ok();
+		}
+		else
+		{
+			auto decl = cst::Declaration(this->loc(), ts->current(), this->name,
+			    Type::makeFunction({}, Type::makeVoid()), /* mutable: */ false);
+
+			decl.generic_func = this;
+
+			this->declaration = TRY(ts->current()->declare(std::move(decl)));
+			return Ok();
+		}
+	}
+
+	ErrorOr<TCResult> FunctionDefn::instantiateGeneric(Typechecker* ts,
+	    const util::hashmap<std::string, const Type*>& type_args) const
+	{
+		// declare the generic type args so they can be resolved.
+		auto _ = ts->pushTypeArguments(type_args);
+
+		// make a new declaration with the correct type for the function.
+		auto inst_decl = TRY(create_function_declaration(ts, m_location, this->name, this->params, this->return_type));
+		return typecheck_function_definition(ts, this, inst_decl);
+	}
+
+	ErrorOr<TCResult> FunctionDefn::typecheck_impl(Typechecker* ts, const Type* infer, bool keep_lvalue) const
+	{
+		assert(this->declaration != nullptr);
+		if(this->declaration->generic_func != nullptr)
+		{
+			// well we have to return *something*, and i don't want to throw nullptrs everywhere so
+			return TCResult::ofVoid<cst::GenericPlaceholderDefn>(this->loc(), this->declaration);
+		}
+
+		return typecheck_function_definition(ts, this, this->declaration);
 	}
 
 

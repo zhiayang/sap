@@ -43,11 +43,11 @@ namespace sap::interp::polymorph
 
 				const auto it = expected_arg_names.find(*arg.name);
 				if(it == expected_arg_names.end())
-					_fail_with(arg.value->loc(), "Entity has no parameter named '{}'", *arg.name);
+					_fail_with(arg.value->loc(), "entity has no parameter named '{}'", *arg.name);
 
 				const size_t param_idx = it->second;
 				if(seen_param_indices.contains(param_idx))
-					_fail_with(arg.value->loc(), "Duplicate argument for paramter '{}'", *arg.name);
+					_fail_with(arg.value->loc(), "duplicate argument for paramter '{}'", *arg.name);
 
 				seen_param_indices.insert(param_idx);
 
@@ -60,7 +60,7 @@ namespace sap::interp::polymorph
 			else
 			{
 				if(saw_named_arg)
-					_fail_with(arg.value->loc(), "Positional arguments are not allowed after named ones");
+					_fail_with(arg.value->loc(), "positional arguments are not allowed after named ones");
 
 				if(positional_param_idx > expected_arg_names.size())
 				{
@@ -85,7 +85,7 @@ namespace sap::interp::polymorph
 	}
 
 
-	ErrorOr<TCResult> tryInstantiateGenericFunction(Typechecker* ts,
+	ErrorOr<TCResult> createGenericOverloadSet(Typechecker* ts,
 	    const Type* infer,
 	    const QualifiedId& name,
 	    std::vector<const cst::Declaration*> declarations,
@@ -115,13 +115,22 @@ namespace sap::interp::polymorph
 
 		if(set->items.empty())
 		{
-			auto e = ErrorMessage(ts->loc(), zpr::sprint("Failed to resolve reference to generic entity '{}'", name));
+			auto e = ErrorMessage(ts->loc(), zpr::sprint("failed to resolve reference to generic entity '{}'", name));
 			for(auto& f : set->excluded_items)
-				e.addInfo(f.decl->location, zpr::sprint("Candidate failed: {}", f.exclusion_reason.string()));
+				e.addInfo(f.decl->location, zpr::sprint("candidate failed: {}", f.exclusion_reason.string()));
 
 			return Err(std::move(e));
 		}
 
+		// TODO: if `infer` is non-null, then we should use it to constrain the overload set to functions
+		// that can fit (based on the provided arguments)
+
 		return TCResult::ofRValue(std::move(set));
 	}
+
+
+	// ErrorOr<TCResult> fuck()
+	// {
+	// 	return Ok();
+	// }
 }

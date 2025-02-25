@@ -42,6 +42,8 @@ namespace sap::interp
 		ErrorOr<void> useNamespace(const Location& loc, DefnTree* other, const std::string& alias);
 		ErrorOr<void> useDeclaration(const Location& loc, const cst::Declaration* other, const std::string& alias);
 
+		cst::Definition* addInstantiatedGeneric(std::unique_ptr<cst::Definition> generic) const;
+
 	private:
 		explicit DefnTree(const Typechecker* ts, std::string name, DefnTree* parent)
 		    : m_name(std::move(name)), m_parent(parent), m_typechecker(ts)
@@ -59,6 +61,8 @@ namespace sap::interp
 
 		util::hashmap<std::string, DefnTree*> m_imported_trees;
 		util::hashmap<std::string, std::vector<const cst::Declaration*>> m_imported_decls;
+
+		mutable std::vector<std::unique_ptr<cst::Definition>> m_instantiated_generics;
 
 		DefnTree* m_parent = nullptr;
 
@@ -80,6 +84,9 @@ namespace sap::interp
 		[[nodiscard]] ErrorOr<const Type*> resolveType(const frontend::PType& ptype);
 		[[nodiscard]] ErrorOr<const cst::Definition*> getDefinitionForType(const Type* type);
 		[[nodiscard]] ErrorOr<void> addTypeDefinition(const Type* type, const cst::Definition* defn);
+
+		[[nodiscard]] util::Defer<> pushTypeArguments(util::hashmap<std::string, const Type*> type_args);
+		void popTypeArguments();
 
 		ErrorOr<const DefnTree*> getDefnTreeForType(const Type* type) const;
 
@@ -120,6 +127,8 @@ namespace sap::interp
 
 		std::vector<std::unique_ptr<cst::Definition>> m_builtin_defns;
 		util::hashmap<const Type*, const cst::Definition*> m_type_definitions;
+
+		std::vector<util::hashmap<std::string, const Type*>> m_type_arguments_stack;
 
 		std::vector<Location> m_location_stack;
 		size_t m_loop_body_nesting;

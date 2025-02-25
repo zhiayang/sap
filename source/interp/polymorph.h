@@ -10,7 +10,7 @@
 
 namespace sap::interp::polymorph
 {
-	ErrorOr<TCResult> tryInstantiateGenericFunction(Typechecker* ts,
+	ErrorOr<TCResult> createGenericOverloadSet(Typechecker* ts,
 	    const Type* infer,
 	    const QualifiedId& name,
 	    std::vector<const cst::Declaration*> declarations,

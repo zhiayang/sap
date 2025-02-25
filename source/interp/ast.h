@@ -719,6 +719,9 @@ namespace sap::interp::ast
 		{
 		}
 
+		ErrorOr<TCResult> instantiateGeneric(Typechecker* ts,
+		    const util::hashmap<std::string, const Type*>& type_args) const;
+
 		virtual ErrorOr<void> declare(Typechecker* ts) const override;
 
 		virtual ErrorOr<TCResult> typecheck_impl(Typechecker* ts,
