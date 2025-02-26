@@ -330,8 +330,6 @@ namespace sap::interp::ast
 		// if the function expression is an identifier, we resolve it manually to handle overloading.
 		if(auto ident = dynamic_cast<const Ident*>(this->callee.get()); ident != nullptr)
 		{
-			zpr::println("AAAAA");
-
 			// basically argument-dependent lookup but only for the 'this' argument
 			const DefnTree* lookup_in = ts->current();
 			if(this->rewritten_ufcs)

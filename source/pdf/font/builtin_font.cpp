@@ -304,6 +304,8 @@ namespace pdf
 		// zpr::println("asc = {}", m_metrics.typo_ascent);
 		// zpr::println("dsc = {}", m_metrics.typo_descent);
 		// zpr::println("spacing = {}", m_metrics.default_line_spacing);
+
+		delete[] b;
 	}
 
 
