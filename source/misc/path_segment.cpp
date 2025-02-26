@@ -41,6 +41,7 @@ namespace sap
 				case Rectangle: return 2;
 				case Close: return 0;
 			}
+			util::unreachable();
 		}();
 
 		return std::span(m_points.begin(), num_points);

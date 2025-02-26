@@ -4,6 +4,7 @@
 
 #pragma once
 
+#include <cmath>
 #include <zpr.h>
 
 namespace dim

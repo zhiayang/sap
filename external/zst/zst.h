@@ -16,7 +16,7 @@
 */
 
 /*
-    Version 2.0.4
+    Version 2.0.5
     =============
 
 
@@ -1395,6 +1395,8 @@ namespace zst
 		Either(Right<T1>&& x) : Either(tag_right(), static_cast<T1&&>(x.m_value)) { }
 
 		Either(const Either& other)
+			requires(std::is_copy_constructible_v<LT>
+				  && std::is_copy_constructible_v<RT>)
 		{
 			m_state = other.m_state;
 			if(m_state == STATE_LEFT)  new(&m_left) LT(other.m_left);
@@ -1588,6 +1590,11 @@ constexpr inline zst::byte_span operator""_bs(const char* s, size_t n)
 /*
     Version History
     ===============
+
+    2.0.5 - 26/02/2025
+    ------------------
+    - Check for is_copy_constructible<LT/RT> for Either copy constructor
+
 
     2.0.4 - 06/02/2025
     ------------------

@@ -29,4 +29,11 @@ namespace sap::watch
 		abort();
 	}
 #endif
+
+#if !defined(SAP_HAVE_WATCH)
+	bool isWatching()
+	{
+		return false;
+	}
+#endif
 }

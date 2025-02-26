@@ -97,6 +97,7 @@ namespace sap::interp::builtin
 
 				case K::Close: return { vi, StructMaker(vt).make() };
 			}
+			util::unreachable();
 		}();
 
 		return Value::unionVariant(union_type, variant_idx, std::move(variant_value));
@@ -130,5 +131,7 @@ namespace sap::interp::builtin
 			case K::Rectangle: return PathSegment::rectangle(pp("pos"), pp("size"));
 			case K::Close: return PathSegment::close();
 		}
+
+		util::unreachable();
 	}
 }

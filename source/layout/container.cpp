@@ -264,12 +264,14 @@ namespace sap::layout
 						case Right: return horz_space;
 						case Centre: return horz_space / 2;
 					}
+					util::unreachable();
 				}
 
 				// if we're horizontally stacked, then we need to preserve vertical
 				// alignment. right now, we're always aligned to the baseline.
 				case Horizontal: return 0;
 			}
+			util::unreachable();
 		};
 
 		const auto top_left_pos = cursor;

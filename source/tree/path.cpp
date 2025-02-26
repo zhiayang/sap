@@ -276,6 +276,8 @@ namespace sap::tree
 				case K::CubicBezierIC2: //
 					return false;
 			}
+
+			util::unreachable();
 		};
 
 		bool joined_to_prev = false;
