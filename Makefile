@@ -16,7 +16,7 @@ WARNINGS += -Wshadow
 WARNINGS += -Wno-error=shadow
 
 CXX_VERSION_STRING = $(shell $(CXX) --version | head -n1 | tr '[:upper:]' '[:lower:]')
-CXX_MAJOR_VERSION = $(shell echo "$(CXX_VERSION_STRING)" | cut -d' ' -f3 | cut -d. -f1)
+CXX_MAJOR_VERSION = $(shell $(CXX) -dumpversion | cut -d. -f1)
 
 ifeq ("$(findstring gcc,$(CXX_VERSION_STRING))", "gcc")
 	WARNINGS += -Wno-missing-field-initializers

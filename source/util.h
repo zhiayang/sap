@@ -348,7 +348,7 @@ namespace util
 	};
 
 	template <typename Callback>
-	Defer(Callback cb) -> Defer<sizeof(std::tuple<bool, Callback>)>;
+	Defer(Callback cb) -> Defer<std::bit_ceil(sizeof(std::tuple<Callback, bool>))>;
 
 
 

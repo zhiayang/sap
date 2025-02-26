@@ -102,28 +102,44 @@ namespace sap::interp
 
 	struct type_eq
 	{
-		constexpr bool operator()(const Type* a, const Type* b) const { return a->sameAs(b); }
+		using is_transparent = void;
+		constexpr bool operator()(const std::unique_ptr<Type>& a, const std::unique_ptr<Type>& b) const
+		{
+			return a->sameAs(b.get());
+		}
+
+		constexpr bool operator()(const std::unique_ptr<Type>& a, const Type* b) const
+		{
+			return a->sameAs(b);
+		}
+
+		constexpr bool operator()(const Type* a, const std::unique_ptr<Type>& b) const
+		{
+			return a->sameAs(b.get());
+		}
 	};
 
 	struct type_hash
 	{
+		using is_transparent = void;
 		size_t operator()(const Type* type) const { return util::hasher {}(type->str()); }
+		size_t operator()(const std::unique_ptr<Type>& type) const { return util::hasher {}(type->str()); }
 	};
 
-	util::hashset<Type*, type_hash, type_eq> g_type_cache;
+	static util::hashset<std::unique_ptr<Type>, type_hash, type_eq> g_type_cache;
+	// static std::unordered_set<std::unique_ptr<Type>, type_hash, type_eq> g_type_cache;
 
 	template <typename T>
 	static const T* get_or_add_type(T* t)
 	{
-		if(auto it = g_type_cache.find(t); it != g_type_cache.end())
+		if(auto it = g_type_cache.find(static_cast<Type*>(t)); it != g_type_cache.end())
 		{
 			delete t;
-			return static_cast<T*>(*it);
+			return static_cast<T*>(it->get());
 		}
 		else
 		{
-			g_type_cache.insert(t);
-			return t;
+			return static_cast<T*>(g_type_cache.emplace(t).first->get());
 		}
 	}
 
