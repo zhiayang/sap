@@ -7,6 +7,7 @@
 #include <sys/stat.h>
 
 #if !defined(_WIN32)
+#include <unistd.h>
 #include <sys/mman.h>
 #endif
 

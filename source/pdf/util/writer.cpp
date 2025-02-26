@@ -4,6 +4,8 @@
 
 #if defined(_WIN32)
 #include <io.h>
+#else
+#include <unistd.h>
 #endif
 
 #include <fcntl.h> // for open, O_CREAT, O_TRUNC, O_WRONLY

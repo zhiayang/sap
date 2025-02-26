@@ -7,6 +7,9 @@
 #define NOMINMAX 1
 #include <windows.h>
 #undef IN
+
+#else
+#include <unistd.h>
 #endif
 
 #include "error.h"
