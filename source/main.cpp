@@ -141,15 +141,15 @@ int main(int argc, char** argv)
 	}
 
 	// add the default search paths
-	sap::paths::addLibrarySearchPath(stdfs::path(SAP_PREFIX) / "lib" / "sap");
-	sap::paths::addIncludeSearchPath(stdfs::path(SAP_PREFIX) / "include" / "sap");
+	sap::paths::addLibrarySearchPath((stdfs::path(SAP_PREFIX) / "lib" / "sap").string());
+	sap::paths::addIncludeSearchPath((stdfs::path(SAP_PREFIX) / "include" / "sap").string());
 
 	auto filename = args.positional[0];
 	auto abs_filename = stdfs::weakly_canonical(filename);
 
 	auto input_file = abs_filename.string();
 
-	auto output_name = args.options["o"].value.value_or(stdfs::path(abs_filename).replace_extension(".pdf"));
+	auto output_name = args.options["o"].value.value_or(stdfs::path(abs_filename).replace_extension(".pdf").string());
 	auto output_file = stdfs::weakly_canonical(output_name).string();
 
 	// change directory to the input file so that all searches are (by default)

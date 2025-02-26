@@ -67,7 +67,7 @@ namespace font::off
 			return 0;
 		}
 
-		assert(false);
+		util::unreachable();
 	}
 
 
@@ -107,9 +107,7 @@ namespace font::off
 	std::map<int, std::set<GlyphId>> parseAllClassDefs(zst::byte_span table)
 	{
 		std::map<int, std::set<GlyphId>> class_ids;
-		parse_classdef_table(table, [&](int cls, GlyphId gid) {
-			class_ids[cls].insert(gid);
-		});
+		parse_classdef_table(table, [&](int cls, GlyphId gid) { class_ids[cls].insert(gid); });
 
 		return class_ids;
 	}
@@ -117,9 +115,7 @@ namespace font::off
 	std::map<GlyphId, int> parseGlyphToClassMapping(zst::byte_span table)
 	{
 		std::map<GlyphId, int> class_ids;
-		parse_classdef_table(table, [&](int cls, GlyphId gid) {
-			class_ids[gid] = cls;
-		});
+		parse_classdef_table(table, [&](int cls, GlyphId gid) { class_ids[gid] = cls; });
 
 		return class_ids;
 	}

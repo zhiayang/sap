@@ -601,7 +601,7 @@ namespace font
 
 	std::optional<std::unique_ptr<FontFile>> FontFile::fromHandle(FontHandle handle)
 	{
-		auto file = util::readEntireFile(handle.path);
+		auto file = util::readEntireFile(handle.path.string());
 		if(file.size() < 4)
 			sap::internal_error("font file too short");
 

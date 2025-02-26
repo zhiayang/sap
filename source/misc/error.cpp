@@ -2,7 +2,12 @@
 // Copyright (c) 2022, yuki / zhiayang
 // SPDX-License-Identifier: Apache-2.0
 
-#include <unistd.h>
+#if defined(_WIN32)
+#define WIN32_LEAN_AND_MEAN 1
+#define NOMINMAX 1
+#include <windows.h>
+#undef IN
+#endif
 
 #include "error.h"
 
@@ -35,8 +40,12 @@ namespace sap
 	    const Location& loc,
 	    const std::string& message)
 	{
+#if defined(_WIN32)
+		DWORD mode = 0;
+		bool coloured = GetConsoleMode(GetStdHandle(STD_ERROR_HANDLE), &mode) != 0;
+#else
 		bool coloured = isatty(STDERR_FILENO);
-
+#endif
 		const char* colour_error = coloured ? _error_colour : "";
 		const char* colour_black_bold = coloured ? COLOUR_BLACK_BOLD : "";
 		const char* colour_blue = coloured ? COLOUR_BLUE : "";
@@ -145,8 +154,12 @@ namespace util::impl
 {
 	void log_impl(const char* prefix, int level, const std::string& msg, const char* who)
 	{
+#if defined(_WIN32)
+		DWORD mode = 0;
+		bool coloured = GetConsoleMode(GetStdHandle(STD_OUTPUT_HANDLE), &mode) != 0;
+#else
 		const bool coloured = isatty(STDOUT_FILENO);
-
+#endif
 		const char* grey_bold = coloured ? sap::COLOUR_GREY_BOLD : "";
 		const char* yellow_bold = coloured ? sap::COLOUR_YELLOW_BOLD : "";
 		const char* red_bold = coloured ? sap::COLOUR_RED_BOLD : "";

@@ -307,7 +307,7 @@ namespace sap::frontend
 			case TT::Asterisk: return ast::BinaryOp::Multiply;
 			case TT::Slash: return ast::BinaryOp::Divide;
 			case TT::Percent: return ast::BinaryOp::Modulo;
-			default: assert(false && "unreachable!");
+			default: util::unreachable();
 		}
 	}
 
@@ -317,7 +317,7 @@ namespace sap::frontend
 		{
 			case TT::KW_And: return ast::LogicalBinOp::Op::And;
 			case TT::KW_Or: return ast::LogicalBinOp::Op::Or;
-			default: assert(false && "unreachable!");
+			default: util::unreachable();
 		}
 	}
 
@@ -331,7 +331,7 @@ namespace sap::frontend
 			case TT::RAngleEqual: return ast::ComparisonOp::GE;
 			case TT::EqualEqual: return ast::ComparisonOp::EQ;
 			case TT::ExclamationEqual: return ast::ComparisonOp::NE;
-			default: assert(false && "unreachable!");
+			default: util::unreachable();
 		}
 	}
 
@@ -345,7 +345,7 @@ namespace sap::frontend
 			case TT::AsteriskEqual: return ast::AssignOp::Multiply;
 			case TT::SlashEqual: return ast::AssignOp::Divide;
 			case TT::PercentEqual: return ast::AssignOp::Modulo;
-			default: assert(false && "unreachable!");
+			default: util::unreachable();
 		}
 	}
 

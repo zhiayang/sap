@@ -2,8 +2,11 @@
 // Copyright (c) 2021, yuki / zhiayang
 // SPDX-License-Identifier: Apache-2.0
 
-#include <fcntl.h>  // for open, O_CREAT, O_TRUNC, O_WRONLY
-#include <unistd.h> // for size_t, close, write
+#if defined(_WIN32)
+#include <io.h>
+#endif
+
+#include <fcntl.h> // for open, O_CREAT, O_TRUNC, O_WRONLY
 
 #include "pdf/misc.h"   // for error
 #include "pdf/object.h" // for Object
@@ -17,7 +20,11 @@ namespace pdf
 		this->bytes_written = 0;
 		this->nesting = 0;
 
+#if defined(_WIN32)
+		if(this->fd = _open(path.str().c_str(), _O_WRONLY | _O_CREAT | _O_TRUNC, _S_IREAD | _S_IWRITE); this->fd < 0)
+#else
 		if(this->fd = open(path.str().c_str(), O_WRONLY | O_CREAT | O_TRUNC, 0664); this->fd < 0)
+#endif
 			pdf::error("failed to open file for writing; open(): {}", strerror(errno));
 	}
 
@@ -34,7 +41,13 @@ namespace pdf
 	void Writer::close()
 	{
 		if(this->fd != -1)
+		{
+#if defined(_WIN32)
+			_close(this->fd);
+#else
 			::close(this->fd);
+#endif
+		}
 
 		this->fd = -1;
 	}
@@ -56,7 +69,11 @@ namespace pdf
 
 	size_t Writer::writeBytes(const uint8_t* bytes, size_t len)
 	{
+#if defined(_WIN32)
+		auto n = _write(this->fd, bytes, static_cast<unsigned int>(len));
+#else
 		auto n = ::write(this->fd, bytes, len);
+#endif
 		if(n < 0 || static_cast<size_t>(n) != len)
 			pdf::error("file write failed; write(): {}", strerror(errno));
 

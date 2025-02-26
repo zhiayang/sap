@@ -131,7 +131,7 @@ namespace sap::interp::cst
 			return Ok(Value::length(DynLength(len.value() * multiplier, len.unit())));
 		}
 
-		assert(false && "unreachable!");
+		util::unreachable();
 	}
 
 	ErrorOr<EvalResult> BinaryOp::evaluate_impl(Evaluator* ev) const

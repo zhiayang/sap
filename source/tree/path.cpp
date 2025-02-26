@@ -6,6 +6,13 @@
 #include "layout/path.h"
 #include "interp/interp.h"
 
+#if defined(M_PI)
+static constexpr double PI = M_PI;
+#else
+static constexpr double PI = 3.14159265358979323846264338327950;
+#endif
+
+
 namespace sap::tree
 {
 	Path::Path(PathStyle path_style, std::vector<PathSegment> segments)
@@ -177,11 +184,11 @@ namespace sap::tree
 
 		// we need 3 extra points per end of the line (so 6 total) --
 		// along the vector of the line (extending out), and orthogonal to it in both directions.
-		auto p2 = lp1 - Position(half * cos(angle - M_PI / 2), half * sin(angle - M_PI / 2));
-		auto p3 = lp1 - Position(half * cos(angle + M_PI / 2), half * sin(angle + M_PI / 2));
+		auto p2 = lp1 - Position(half * cos(angle - PI / 2), half * sin(angle - PI / 2));
+		auto p3 = lp1 - Position(half * cos(angle + PI / 2), half * sin(angle + PI / 2));
 
-		auto p5 = lp2 + Position(half * cos(angle - M_PI / 2), half * sin(angle - M_PI / 2));
-		auto p6 = lp2 + Position(half * cos(angle + M_PI / 2), half * sin(angle + M_PI / 2));
+		auto p5 = lp2 + Position(half * cos(angle - PI / 2), half * sin(angle - PI / 2));
+		auto p6 = lp2 + Position(half * cos(angle + PI / 2), half * sin(angle + PI / 2));
 
 		update_bounds(min_bounds, max_bounds)(p2, p3, p5, p6);
 

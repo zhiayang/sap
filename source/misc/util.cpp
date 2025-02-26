@@ -2,20 +2,43 @@
 // Copyright (c) 2021, yuki / zhiayang
 // SPDX-License-Identifier: Apache-2.0
 
-#include <fcntl.h> // for open, O_RDONLY
-#include <unistd.h>
-#include <sys/mman.h> // for size_t, mmap, MAP_PRIVATE, PROT_READ
-#include <sys/stat.h> // for fstat, stat
+#include <stdio.h>
+#include <fcntl.h>
+#include <sys/stat.h>
 
-#include "util.h" // for readEntireFile
+#if !defined(_WIN32)
+#include <sys/mman.h>
+#endif
+
+#include "util.h"
 
 namespace util
 {
+#if defined(_WIN32)
+	zst::unique_span<uint8_t[]> readEntireFile(const std::string& path)
+	{
+		FILE* fd = fopen(path.c_str(), "rb");
+		if(fd == nullptr)
+			sap::internal_error("failed to open '{}'; fopen(): {}", path, strerror(errno));
+
+		const size_t size = stdfs::file_size(path);
+		auto ptr = new uint8_t[size];
+
+		if(fread(&ptr[0], 1, size, fd) != size)
+			sap::internal_error("failed to read '{}': fread(): {}", path, strerror(errno));
+
+		fclose(fd);
+		return zst::unique_span<uint8_t[]>((uint8_t*) ptr, size, [](const void* p, size_t n) {
+			delete[] reinterpret_cast<uint8_t*>(const_cast<void*>(p));
+		});
+	}
+
+#else
 	zst::unique_span<uint8_t[]> readEntireFile(const std::string& path)
 	{
 		auto fd = open(path.c_str(), O_RDONLY);
 		if(fd < 0)
-			sap::internal_error("failed to open '{}'; read(): {}", path, strerror(errno));
+			sap::internal_error("failed to open '{}'; open(): {}", path, strerror(errno));
 
 		struct stat st;
 		if(fstat(fd, &st) < 0)
@@ -31,6 +54,7 @@ namespace util
 			munmap(const_cast<void*>(p), n);
 		});
 	}
+#endif
 }
 
 namespace sap

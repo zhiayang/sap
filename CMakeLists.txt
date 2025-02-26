@@ -21,7 +21,13 @@ file(COPY_FILE
 )
 
 if(MSVC)
-	target_compile_options(sap PRIVATE /W4 /wd4141 /wd4100 /wd4458)
+	target_compile_options(sap PRIVATE
+		/W4
+		/wd4141
+		/wd4100
+		/wd4458
+		/Zc:__cplusplus
+	)
 else()
 	target_compile_options(sap PRIVATE
 		-Wall -Wextra
@@ -47,9 +53,14 @@ else()
 
 	if(CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
 		target_compile_options(sap PRIVATE
-			-Wno-missing-designated-field-initializers
+			-Wno-missing-field-initializers
 			-Wno-string-conversion
 		)
+		if(WIN32)
+			target_compile_options(sap PRIVATE
+				-Wno-microsoft-include
+			)
+		endif()
 	elseif(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
 		target_compile_options(sap PRIVATE
 			-Wno-missing-field-initializers
@@ -58,12 +69,6 @@ else()
 	endif()
 endif()
 
-if(WIN32)
-	include_directories(SYSTEM "$ENV{INCLUDE}")
-	target_compile_definitions(sap PRIVATE "_CRT_SECURE_NO_WARNINGS")
-endif()
-
-target_compile_definitions(sap PRIVATE "SAP_PREFIX=\"${CMAKE_CURRENT_SOURCE_DIR}\"")
 
 # add external sources
 add_library(external_libs STATIC
@@ -84,7 +89,21 @@ add_library(external_libs STATIC
 	external/xxhash.c
 )
 
+if(WIN32)
+	# include_directories(SYSTEM "$ENV{INCLUDE}")
+	target_compile_definitions(sap PRIVATE
+		"_CRT_SECURE_NO_WARNINGS"
+		"UTF8PROC_STATIC"
+	)
+
+	target_compile_definitions(external_libs PRIVATE "UTF8PROC_STATIC")
+endif()
+
+
+target_compile_definitions(sap PRIVATE "SAP_PREFIX=\"${CMAKE_CURRENT_SOURCE_DIR}\"")
+
 target_link_libraries(sap PRIVATE external_libs)
+
 target_sources(sap PRIVATE
 	source/main.cpp
 	source/compile.cpp

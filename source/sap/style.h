@@ -81,15 +81,16 @@ namespace sap
 #undef DEFINE_SETTER
 
 #define NONE
+
 #define VALUE_OR_ELSE(field_name, left, right)                             \
-	__extension__({                                                        \
+	[&]() {                                                                \
 		std::optional<typename decltype(field_name)::value_type> __ret {}; \
 		if((left).m_present_styles & (STY_##field_name))                   \
 			__ret = *(left).field_name;                                    \
 		else if((right).m_present_styles & (STY_##field_name))             \
 			__ret = *(right).field_name;                                   \
-		__ret;                                                             \
-	})
+		return __ret;                                                      \
+	}()
 
 		/*
 		    with the current style as the reference, change all of our fields to those that `main` has.

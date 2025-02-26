@@ -25,6 +25,11 @@
 #include <zst/zst.h>
 #include <zst/SharedPtr.h>
 
+// make ssize_t on windows
+#ifdef _WIN32
+using ssize_t = std::make_signed_t<size_t>;
+#endif
+
 #include "defs.h"
 #include "pool.h"
 #include "util.h"

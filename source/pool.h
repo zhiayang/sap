@@ -32,9 +32,17 @@ namespace util
 
 				// TODO: report a proper error
 				void* ptr = 0;
+#if defined(_WIN32)
+				ptr = _aligned_malloc(m_capacity, alignment);
+				if(ptr == nullptr)
+
+#else
 				if(posix_memalign(&ptr, alignment, m_capacity) != 0)
+#endif
+				{
 					sap::internal_error("out of memory (trying to allocate {} bytes with {}-byte alignment)", capacity,
 					    alignment);
+				}
 
 				m_memory = reinterpret_cast<uint8_t*>(ptr);
 				assert(m_memory != nullptr);

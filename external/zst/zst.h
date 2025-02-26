@@ -16,7 +16,7 @@
 */
 
 /*
-    Version 2.0.5
+    Version 2.0.6
     =============
 
 
@@ -180,7 +180,7 @@ namespace zst
 	inline uint16_t byteswap(uint16_t x)
 	{
 #if(_MSC_VER)
-		return _byteswap_ushort(value);
+		return _byteswap_ushort(x);
 #else
 		// Compiles to bswap since gcc 4.5.3 and clang 3.4.1
 		return (uint16_t) (((uint16_t) (x & 0x00ff) << 8) | ((uint16_t) (x & 0xff00) >> 8));
@@ -190,7 +190,7 @@ namespace zst
 	inline uint32_t byteswap(uint32_t x)
 	{
 #if(_MSC_VER)
-		return _byteswap_ulong(value);
+		return _byteswap_ulong(x);
 #else
 		// Compiles to bswap since gcc 4.5.3 and clang 3.4.1
 		return ((x & 0x000000ff) << 24) | ((x & 0x0000ff00) << 8) | ((x & 0x00ff0000) >> 8) | ((x & 0xff000000) >> 24);
@@ -1590,6 +1590,11 @@ constexpr inline zst::byte_span operator""_bs(const char* s, size_t n)
 /*
     Version History
     ===============
+
+    2.0.6 - 26/02/2025
+    ------------------
+    - Fix compile on windows/msvc
+
 
     2.0.5 - 26/02/2025
     ------------------

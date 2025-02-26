@@ -37,7 +37,7 @@ namespace font::aat
 			case 8: return consume_u64(buf);
 		}
 
-		assert(false && "unreachable!");
+		util::unreachable();
 	}
 
 

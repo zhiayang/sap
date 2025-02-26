@@ -57,7 +57,7 @@ namespace sap::interp
 
 		std::string m_name;
 		util::hashmap<std::string, std::unique_ptr<DefnTree>> m_children;
-		util::hashmap<std::string, std::list<cst::Declaration>> m_decls;
+		std::unordered_map<std::string, std::list<cst::Declaration>> m_decls;
 
 		util::hashmap<std::string, DefnTree*> m_imported_trees;
 		util::hashmap<std::string, std::vector<const cst::Declaration*>> m_imported_decls;
