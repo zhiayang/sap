@@ -1,5 +1,5 @@
 // container.cpp
-// Copyright (c) 2022, yuki / zhiayang
+// Copyright (c) 2022, yuki
 // SPDX-License-Identifier: Apache-2.0
 
 #include "tree/path.h"
@@ -323,7 +323,7 @@ namespace sap::layout
 					return;
 
 				auto& b = border_objs.emplace_back(make_vborder(*border_left_style, child->layoutSize().total_height())
-				                                       .unwrap());
+				        .unwrap());
 				b.computePosition(cursor);
 			};
 
@@ -333,7 +333,7 @@ namespace sap::layout
 
 				const auto pos = cursor.moveRight(self_width - border_right_style->line_width);
 				auto& b = border_objs.emplace_back(make_vborder(*border_right_style, child->layoutSize().total_height())
-				                                       .unwrap());
+				        .unwrap());
 				b.computePosition(pos);
 			};
 

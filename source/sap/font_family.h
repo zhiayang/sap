@@ -1,5 +1,5 @@
 // font_family.h
-// Copyright (c) 2022, yuki / zhiayang
+// Copyright (c) 2022, yuki
 // SPDX-License-Identifier: Apache-2.0
 
 #pragma once
@@ -22,10 +22,7 @@ namespace sap
 	struct FontFamily
 	{
 		FontFamily(pdf::PdfFont* regular, pdf::PdfFont* italic, pdf::PdfFont* bold, pdf::PdfFont* bold_italic)
-		    : m_regular_font(regular)
-		    , m_italic_font(italic)
-		    , m_bold_font(bold)
-		    , m_bold_italic_font(bold_italic)
+		    : m_regular_font(regular), m_italic_font(italic), m_bold_font(bold), m_bold_italic_font(bold_italic)
 		{
 		}
 

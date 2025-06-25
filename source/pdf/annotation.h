@@ -1,5 +1,5 @@
 // annotation.h
-// Copyright (c) 2022, yuki / zhiayang
+// Copyright (c) 2022, yuki
 // SPDX-License-Identifier: Apache-2.0
 
 #pragma once
@@ -29,8 +29,8 @@ namespace pdf
 
 		Dictionary* toDictionary(Dictionary* parent, File* file) const;
 		static std::pair<Dictionary*, Dictionary*> linkChildren(const std::vector<OutlineItem>& children,
-			Dictionary* parent,
-			File* file);
+		    Dictionary* parent,
+		    File* file);
 
 	private:
 		std::string m_name;

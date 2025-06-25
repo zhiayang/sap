@@ -1,14 +1,14 @@
 // paragraph.h
-// Copyright (c) 2022, yuki / zhiayang
+// Copyright (c) 2022, yuki
 // SPDX-License-Identifier: Apache-2.0
 
 #pragma once
 
-#include "pdf/font.h"  // for Font
-#include "pdf/units.h" // for PdfScalar
+#include "pdf/font.h"
+#include "pdf/units.h"
 
-#include "layout/base.h" // for Cursor, LayoutObject, RectPageLayout, Inter...
-#include "layout/word.h" // for Word
+#include "layout/base.h"
+#include "layout/word.h"
 #include "layout/line.h"
 
 namespace sap

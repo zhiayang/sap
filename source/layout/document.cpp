@@ -1,19 +1,19 @@
 // document.cpp
-// Copyright (c) 2022, yuki / zhiayang
+// Copyright (c) 2022, yuki
 // SPDX-License-Identifier: Apache-2.0
 
 #include <cmath>
 
-#include "pdf/file.h"  // for File
-#include "pdf/font.h"  // for Font
-#include "pdf/units.h" // for PdfScalar
+#include "pdf/file.h"
+#include "pdf/font.h"
+#include "pdf/units.h"
 #include "pdf/destination.h"
 
 #include "font/font_file.h"
 
-#include "sap/style.h"       // for Style
-#include "sap/units.h"       // for Length
-#include "sap/font_family.h" // for FontSet, FontStyle, FontStyle::Regular
+#include "sap/style.h"
+#include "sap/units.h"
+#include "sap/font_family.h"
 #include "sap/annotation.h"
 #include "sap/document_settings.h"
 
@@ -21,13 +21,13 @@
 #include "tree/container.h"
 
 #include "interp/interp.h"
-#include "interp/basedefs.h" // for DocumentObject
+#include "interp/basedefs.h"
 #include "interp/builtin_types.h"
 
-#include "layout/base.h"      // for Cursor, LayoutObject, Interpreter, Rec...
-#include "layout/image.h"     //
-#include "layout/document.h"  // for Document
-#include "layout/paragraph.h" // for Paragraph
+#include "layout/base.h"
+#include "layout/image.h"
+#include "layout/document.h"
+#include "layout/paragraph.h"
 
 namespace sap::layout
 {

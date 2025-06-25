@@ -1,12 +1,12 @@
 // subset.cpp
-// Copyright (c) 2022, yuki / zhiayang
+// Copyright (c) 2022, yuki
 // SPDX-License-Identifier: Apache-2.0
 
-#include "util.h"  // for checked_cast, convertBEU16, convertBEU32
-#include "types.h" // for GlyphId
+#include "util.h"
+#include "types.h"
 
-#include "font/truetype.h"  // for TTData, TTSubset, createTTSubset
-#include "font/font_file.h" // for FontFile
+#include "font/truetype.h"
+#include "font/font_file.h"
 
 namespace font
 {

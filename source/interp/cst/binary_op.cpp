@@ -1,14 +1,14 @@
 // binary_op.cpp
-// Copyright (c) 2022, yuki / zhiayang
+// Copyright (c) 2022, yuki
 // SPDX-License-Identifier: Apache-2.0
 
-#include "util.h" // for is_one_of
+#include "util.h"
 
-#include "interp/cst.h"         // for BinaryOp::Op, BinaryOp, Expr, Binary...
-#include "interp/type.h"        // for Type, ArrayType
-#include "interp/value.h"       // for Value
-#include "interp/interp.h"      // for Interpreter
-#include "interp/eval_result.h" // for EvalResult, TRY_VALUE
+#include "interp/cst.h"
+#include "interp/type.h"
+#include "interp/value.h"
+#include "interp/interp.h"
+#include "interp/eval_result.h"
 
 namespace sap::interp::cst
 {

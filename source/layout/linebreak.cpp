@@ -1,20 +1,20 @@
 // linebreak.cpp
-// Copyright (c) 2022, yuki / zhiayang
+// Copyright (c) 2022, yuki
 // SPDX-License-Identifier: Apache-2.0
 
 #include <utf8proc/utf8proc.h>
 
-#include "misc/dijkstra.h" // for dijkstra_shortest_path
+#include "misc/dijkstra.h"
 
-#include "sap/style.h" // for Style
-#include "sap/units.h" // for Length
+#include "sap/style.h"
+#include "sap/units.h"
 
 #include "interp/interp.h"
 
-#include "layout/base.h"      // for RectPageLayout, Cursor
-#include "layout/line.h"      // for Line, breakLines
-#include "layout/word.h"      // for Separator, Word
-#include "layout/linebreak.h" //
+#include "layout/base.h"
+#include "layout/line.h"
+#include "layout/word.h"
+#include "layout/linebreak.h"
 
 namespace sap::layout::linebreak
 {

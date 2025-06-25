@@ -1,9 +1,9 @@
 // tree_manip.cpp
-// Copyright (c) 2022, yuki / zhiayang
+// Copyright (c) 2022, yuki
 // SPDX-License-Identifier: Apache-2.0
 
-#include "sap/style.h"       // for Style
-#include "sap/font_family.h" // for FontStyle, FontStyle::Bold, FontStyl...
+#include "sap/style.h"
+#include "sap/font_family.h"
 
 #include "tree/base.h"
 #include "tree/path.h"
@@ -12,12 +12,12 @@
 #include "tree/paragraph.h"
 #include "tree/container.h"
 
-#include "interp/value.h"         // for Value
-#include "interp/interp.h"        // for Interpreter
-#include "interp/basedefs.h"      // for InlineObject
-#include "interp/eval_result.h"   // for EvalResult
-#include "interp/builtin_fns.h"   // for bold1, bold_italic1, italic1
-#include "interp/builtin_types.h" //
+#include "interp/value.h"
+#include "interp/interp.h"
+#include "interp/basedefs.h"
+#include "interp/eval_result.h"
+#include "interp/builtin_fns.h"
+#include "interp/builtin_types.h"
 
 #include "layout/base.h"
 #include "layout/word.h"

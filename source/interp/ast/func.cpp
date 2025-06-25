@@ -1,12 +1,12 @@
 // func.cpp
-// Copyright (c) 2022, yuki / zhiayang
+// Copyright (c) 2022, yuki
 // SPDX-License-Identifier: Apache-2.0
 
-#include "interp/ast.h"         // for FunctionDefn, VariableDefn, Function...
-#include "interp/type.h"        // for Type, FunctionType
-#include "interp/value.h"       // for Value
-#include "interp/interp.h"      // for Interpreter, DefnTree, StackFrame
-#include "interp/eval_result.h" // for EvalResult
+#include "interp/ast.h"
+#include "interp/type.h"
+#include "interp/value.h"
+#include "interp/interp.h"
+#include "interp/eval_result.h"
 
 namespace sap::interp::ast
 {

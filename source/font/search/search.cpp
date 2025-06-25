@@ -1,5 +1,5 @@
 // search.cpp
-// Copyright (c) 2022, yuki / zhiayang
+// Copyright (c) 2022, yuki
 // SPDX-License-Identifier: Apache-2.0
 
 #include "font/search.h"
@@ -30,7 +30,9 @@ namespace font
 
 	template <typename T>
 	static std::vector<FontHandle> sorted_by(const std::vector<FontHandle>& fonts, //
-	    T FontProperties::*property, T desired, bool* found_exact)
+	    T FontProperties::* property,
+	    T desired,
+	    bool* found_exact)
 	{
 		auto copy = std::vector(fonts.begin(), fonts.end());
 		std::sort(copy.begin(), copy.end(), [&](const auto& a, const auto& b) {
@@ -44,7 +46,9 @@ namespace font
 	}
 
 	template <typename T>
-	static std::optional<T> search_ascending(const std::vector<FontHandle>& fonts, T FontProperties::*property, T desired)
+	static std::optional<T> search_ascending(const std::vector<FontHandle>& fonts,
+	    T FontProperties::* property,
+	    T desired)
 	{
 		auto it = std::lower_bound(fonts.begin(), fonts.end(), desired, [property](auto& font, T a) {
 			return font.properties.*property < a;
@@ -56,7 +60,9 @@ namespace font
 	}
 
 	template <typename T>
-	static std::optional<T> search_descending(const std::vector<FontHandle>& fonts, T FontProperties::*property, T desired)
+	static std::optional<T> search_descending(const std::vector<FontHandle>& fonts,
+	    T FontProperties::* property,
+	    T desired)
 	{
 		auto it = std::upper_bound(fonts.begin(), fonts.end(), desired, [property](T a, auto& font) {
 			return a < font.properties.*property;
@@ -105,9 +111,7 @@ namespace font
 
 		// ... faces with width values which do not include the desired width value are removed from the matching set.
 		// note: we modify desired_stretch if we can't find an exact match
-		erase_if(matching_set, [best_stretch](const auto& font) {
-			return font.properties.stretch != best_stretch;
-		});
+		erase_if(matching_set, [best_stretch](const auto& font) { return font.properties.stretch != best_stretch; });
 
 		if(matching_set.empty())
 			return std::nullopt;
@@ -126,9 +130,7 @@ namespace font
 			if(tmp != matching_set.end())
 			{
 				// we have at least one italic font, so yeet the non-talic ones
-				erase_if(matching_set, [](auto& font) {
-					return font.properties.style != FontStyle::ITALIC;
-				});
+				erase_if(matching_set, [](auto& font) { return font.properties.style != FontStyle::ITALIC; });
 			}
 
 			// otherwise, it doesn't matter.
@@ -143,9 +145,7 @@ namespace font
 			if(tmp != matching_set.end())
 			{
 				// we have at least one normal font, so yeet the non-normal ones
-				erase_if(matching_set, [](auto& font) {
-					return font.properties.style != FontStyle::NORMAL;
-				});
+				erase_if(matching_set, [](auto& font) { return font.properties.style != FontStyle::NORMAL; });
 			}
 		}
 
@@ -206,9 +206,7 @@ namespace font
 			}
 		}
 
-		erase_if(matching_set, [best_weight](const auto& font) {
-			return font.properties.weight != best_weight;
-		});
+		erase_if(matching_set, [best_weight](const auto& font) { return font.properties.weight != best_weight; });
 
 		// just always choose the first one.
 		if(matching_set.empty())

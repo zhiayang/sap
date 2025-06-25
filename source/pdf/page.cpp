@@ -1,20 +1,20 @@
 // page.cpp
-// Copyright (c) 2021, yuki / zhiayang
+// Copyright (c) 2021, yuki
 // SPDX-License-Identifier: Apache-2.0
 
-#include "pdf/font.h"        // for Font, File
-#include "pdf/page.h"        // for Page
-#include "pdf/units.h"       // for pdf_typographic_unit, Size2d, Vector2_Y...
-#include "pdf/object.h"      // for Name, Dictionary, Object, IndirectRef
-#include "pdf/xobject.h"     //
-#include "pdf/annotation.h"  //
-#include "pdf/page_object.h" // for PageObject
+#include "pdf/font.h"
+#include "pdf/page.h"
+#include "pdf/units.h"
+#include "pdf/object.h"
+#include "pdf/xobject.h"
+#include "pdf/annotation.h"
+#include "pdf/page_object.h"
 
 namespace pdf
 {
 	// TODO: support custom paper sizes
 	static const auto a4paper = Array::
-		create(Integer::create(0), Integer::create(0), Decimal::create(595.276), Decimal::create(841.89));
+	    create(Integer::create(0), Integer::create(0), Decimal::create(595.276), Decimal::create(841.89));
 
 	Page::Page() : m_dictionary(Dictionary::createIndirect(names::Page, {}))
 	{

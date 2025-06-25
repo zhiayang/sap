@@ -55,6 +55,11 @@ namespace sap::interp::ast
 			if(not decl->type->isFunction())
 				return ErrMsg(ts, "somehow we are calling a non-function type??? '{}'", decl->type->str());
 
+			if(decl->generic_func != nullptr)
+			{
+				zpr::println("handling generic func");
+			}
+
 			return convert_params(ts, decl->type->toFunction());
 		}
 	}
@@ -118,6 +123,14 @@ namespace sap::interp::ast
 	    const cst::Declaration* decl,
 	    const std::vector<InputArg>& arguments)
 	{
+		// check if decl is generic; if so, invoke the polymorph handler
+		if(decl->generic_func)
+		{
+
+
+			// TODO
+		}
+
 		return arrangeCallArguments(ts, TRY(convert_params(ts, decl)), arguments, //
 		    "function", "argument", "parameter");
 	}
@@ -361,27 +374,6 @@ namespace sap::interp::ast
 		{
 			// note that during the generation of the overload set, we should have already errored out if it was empty.
 			assert(not pso->items.empty());
-
-			// // for now, ignore candidates that are not fully constrained (ie. have >0 unspecified generic params)
-			// std::vector<const cst::Declaration*> inst_decls {};
-			// for(const auto& f : pso->items)
-			// {
-			// 	if(f.decl->generic_func == nullptr && f.decl->function_decl.has_value())
-			// 	{
-			// 		inst_decls.push_back(f.decl);
-			// 	}
-			// 	else if(f.decl->generic_func && f.applied_types.size() == f.decl->generic_func->generic_params.size())
-			// 	{
-			// 		auto insert_tree = f.decl->declaredTree();
-			// 		auto _defn = TRY(f.decl->generic_func->instantiateGeneric(ts, f.applied_types));
-			// 		auto defn = insert_tree->addInstantiatedGeneric(std::move(_defn).take<cst::Definition>());
-
-			// 		inst_decls.push_back(defn->declaration);
-			// 	}
-			// }
-
-			// if(inst_decls.empty())
-			// 	return ErrMsg(this->loc(), "unsupported rn sorry ))))):");
 
 			return typecheck_call_with_candidate_declaration_list(ts, m_location, this->arguments, pso->items,
 			    std::move(processed_arg_types), std::move(processed_args), this->rewritten_ufcs, ufcs_is_rvalue,

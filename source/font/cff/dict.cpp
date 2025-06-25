@@ -1,8 +1,8 @@
 // dict.cpp
-// Copyright (c) 2022, yuki / zhiayang
+// Copyright (c) 2022, yuki
 // SPDX-License-Identifier: Apache-2.0
 
-#include "font/cff.h" // for Operand, DictKey, Dictionary, DictKey::CIDCount
+#include "font/cff.h"
 
 namespace font::cff
 {
@@ -51,10 +51,10 @@ namespace font::cff
 				dict.values[key] = std::move(values);
 		};
 
-		constexpr DictKey keys_with_defaults[] = { DictKey::FontBBox, DictKey::charset, DictKey::Encoding, DictKey::isFixedPitch,
-			DictKey::ItalicAngle, DictKey::UnderlinePosition, DictKey::UnderlineThickness, DictKey::PaintType,
-			DictKey::CharstringType, DictKey::FontMatrix, DictKey::StrokeWidth, DictKey::CIDFontVersion, DictKey::CIDFontRevision,
-			DictKey::CIDFontType, DictKey::CIDCount };
+		constexpr DictKey keys_with_defaults[] = { DictKey::FontBBox, DictKey::charset, DictKey::Encoding,
+			DictKey::isFixedPitch, DictKey::ItalicAngle, DictKey::UnderlinePosition, DictKey::UnderlineThickness,
+			DictKey::PaintType, DictKey::CharstringType, DictKey::FontMatrix, DictKey::StrokeWidth,
+			DictKey::CIDFontVersion, DictKey::CIDFontRevision, DictKey::CIDFontType, DictKey::CIDCount };
 
 		for(auto key : keys_with_defaults)
 			add_default(key, *getDefaultValueForDictKey(key));

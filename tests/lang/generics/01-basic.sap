@@ -32,7 +32,7 @@ fn f2[T, U](a: T, b: U)
 # 	ppp(f"f1(a, b)");
 # }
 
-f1("maddie is a cutie");
+f1[T: $string]("maddie is a cutie");
 # f2("uwu", "owo");
 
 # f1(a: 10);

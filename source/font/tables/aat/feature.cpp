@@ -1,5 +1,5 @@
 // feature.cpp
-// Copyright (c) 2022, yuki / zhiayang
+// Copyright (c) 2022, yuki
 // SPDX-License-Identifier: Apache-2.0
 
 #include "font/aat.h"
@@ -541,9 +541,12 @@ namespace font
 		{ F::pkna, ff(kKanaSpacingType, kProportionalKanaSelector) },
 		{ F::ruby, ff(kRubyKanaType, kRubyKanaOnSelector, kRubyKanaSelector) },
 
-		{ F::fwid, { f(kTextSpacingType, kMonospacedTextSelector), f(kCJKRomanSpacingType, kFullWidthCJKRomanSelector) } },
-		{ F::pwid, { f(kTextSpacingType, kProportionalTextSelector), f(kCJKRomanSpacingType, kProportionalCJKRomanSelector) } },
-		{ F::hwid, { f(kTextSpacingType, kHalfWidthTextSelector), f(kCJKRomanSpacingType, kHalfWidthCJKRomanSelector) } },
+		{ F::fwid,
+		    { f(kTextSpacingType, kMonospacedTextSelector), f(kCJKRomanSpacingType, kFullWidthCJKRomanSelector) } },
+		{ F::pwid, { f(kTextSpacingType, kProportionalTextSelector),
+		               f(kCJKRomanSpacingType, kProportionalCJKRomanSelector) } },
+		{ F::hwid,
+		    { f(kTextSpacingType, kHalfWidthTextSelector), f(kCJKRomanSpacingType, kHalfWidthCJKRomanSelector) } },
 		{ F::twid, ff(kTextSpacingType, kThirdWidthTextSelector) },
 		{ F::qwid, ff(kTextSpacingType, kQuarterWidthTextSelector) },
 		{ F::halt, ff(kTextSpacingType, kAltHalfWidthTextSelector) },

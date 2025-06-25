@@ -1,13 +1,13 @@
 // object.cpp
-// Copyright (c) 2021, yuki / zhiayang
+// Copyright (c) 2021, yuki
 // SPDX-License-Identifier: Apache-2.0
 
-#include "util.h" // for checked_cast
+#include "util.h"
 
-#include "pdf/file.h"   // for File
-#include "pdf/misc.h"   // for IndirHelper, error
-#include "pdf/object.h" // for Name, Dictionary, Object, Array, IndirectRef
-#include "pdf/writer.h" // for Writer
+#include "pdf/file.h"
+#include "pdf/misc.h"
+#include "pdf/object.h"
+#include "pdf/writer.h"
 
 
 namespace pdf

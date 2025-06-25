@@ -1,5 +1,5 @@
 // polymorph.cpp
-// Copyright (c) 2023, yuki / zhiayang
+// Copyright (c) 2023, yuki
 // SPDX-License-Identifier: Apache-2.0
 
 #include "interp/ast.h"
@@ -10,16 +10,16 @@
 
 namespace sap::interp::polymorph
 {
-	using PSOItem = cst::PartiallyResolvedOverloadSet::Item;
+	using POSItem = cst::PartiallyResolvedOverloadSet::Item;
 
-	static std::pair<PSOItem, bool> match_generic_arguments(Typechecker* ts,
+	static std::pair<POSItem, bool> match_type_arguments(Typechecker* ts,
 	    const Type* infer,
 	    const cst::Declaration* decl,
 	    const ast::FunctionDefn* fn,
 	    const std::vector<ast::FunctionCall::Arg>& explicit_args)
 	{
 		bool failed = false;
-		PSOItem item { .decl = decl };
+		POSItem item { .decl = decl };
 
 #define _fail_with(loc, msg, ...)                                                            \
 	__extension__({                                                                          \
@@ -47,7 +47,7 @@ namespace sap::interp::polymorph
 
 				const size_t param_idx = it->second;
 				if(seen_param_indices.contains(param_idx))
-					_fail_with(arg.value->loc(), "duplicate argument for paramter '{}'", *arg.name);
+					_fail_with(arg.value->loc(), "duplicate argument for parameter '{}'", *arg.name);
 
 				seen_param_indices.insert(param_idx);
 
@@ -64,7 +64,7 @@ namespace sap::interp::polymorph
 
 				if(positional_param_idx > expected_arg_names.size())
 				{
-					_fail_with(arg.value->loc(), "too many argumentss provided; expected at most {}",
+					_fail_with(arg.value->loc(), "too many arguments provided; expected at most {}",
 					    expected_arg_names.size());
 				}
 
@@ -97,7 +97,7 @@ namespace sap::interp::polymorph
 		{
 			if(decl->generic_func)
 			{
-				auto [item, ok] = match_generic_arguments(ts, infer, decl, decl->generic_func, explicit_args);
+				auto [item, ok] = match_type_arguments(ts, infer, decl, decl->generic_func, explicit_args);
 				if(ok)
 					set->items.push_back(std::move(item));
 				else
@@ -105,7 +105,7 @@ namespace sap::interp::polymorph
 			}
 			else
 			{
-				set->excluded_items.push_back(PSOItem {
+				set->excluded_items.push_back(POSItem {
 				    .decl = decl,
 				    .exclusion_reason = ErrorMessage(decl->location,
 				        zpr::sprint("is not a generic function and does not accept type arguments", decl->name)),

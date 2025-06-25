@@ -1,5 +1,5 @@
 // file.cpp
-// Copyright (c) 2021, yuki / zhiayang
+// Copyright (c) 2021, yuki
 // SPDX-License-Identifier: Apache-2.0
 
 #include "util.h"
@@ -48,9 +48,8 @@ namespace pdf
 		auto srgb_icc_profile = Stream::create();
 		srgb_icc_profile->setCompressed(true);
 		srgb_icc_profile->dictionary()->add(names::N, Integer::create(3));
-		srgb_icc_profile->append(
-		    util::readEntireFile( //
-		        sap::paths::resolveLibrary(sap::Location::builtin(), "data/colour/sRGB2014.icc").unwrap())
+		srgb_icc_profile->append(util::readEntireFile( //
+		    sap::paths::resolveLibrary(sap::Location::builtin(), "data/colour/sRGB2014.icc").unwrap())
 		        .span());
 
 		auto output_intent = Dictionary::createIndirect({

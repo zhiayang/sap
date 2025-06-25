@@ -1,5 +1,5 @@
 // object_refs.cpp
-// Copyright (c) 2022, yuki / zhiayang
+// Copyright (c) 2022, yuki
 // SPDX-License-Identifier: Apache-2.0
 
 #include "interp/interp.h"
@@ -21,17 +21,17 @@ namespace sap::interp::builtin
 		if(ty->isTreeInlineObj())
 		{
 			return EvalResult::ofValue(Value::treeInlineObjectRef( //
-				const_cast<tree::InlineSpan*>(&value.getTreeInlineObj())));
+			    const_cast<tree::InlineSpan*>(&value.getTreeInlineObj())));
 		}
 		else if(ty->isTreeBlockObj())
 		{
 			return EvalResult::ofValue( //
-				Value::treeBlockObjectRef(const_cast<tree::BlockObject*>(&value.getTreeBlockObj())));
+			    Value::treeBlockObjectRef(const_cast<tree::BlockObject*>(&value.getTreeBlockObj())));
 		}
 		else if(ty->isLayoutObject())
 		{
 			return EvalResult::ofValue( //
-				Value::layoutObjectRef(const_cast<layout::LayoutObject*>(&value.getLayoutObject())));
+			    Value::layoutObjectRef(const_cast<layout::LayoutObject*>(&value.getLayoutObject())));
 		}
 		else
 		{

@@ -1,5 +1,5 @@
 // morx.cpp
-// Copyright (c) 2022, yuki / zhiayang
+// Copyright (c) 2022, yuki
 // SPDX-License-Identifier: Apache-2.0
 
 #include <span>
@@ -170,8 +170,10 @@ namespace font::aat
 	}
 
 	template <size_t EntrySize, typename Action>
-	static void
-	run_state_machine(const StateTable& machine, zst::span<GlyphId>& glyphs, bool is_reverse, Action&& action)
+	static void run_state_machine(const StateTable& machine,
+	    zst::span<GlyphId>& glyphs,
+	    bool is_reverse,
+	    Action&& action)
 	{
 		// this is the same for all the tables
 		constexpr uint16_t FLAG_DONT_ADVANCE = 0x4000;
@@ -220,8 +222,10 @@ namespace font::aat
 
 
 
-	std::optional<SubstitutedGlyphString>
-	apply_table(const MorxLigatureSubtable& table, zst::span<GlyphId> glyphs, bool is_reverse, size_t num_font_glyphs)
+	std::optional<SubstitutedGlyphString> apply_table(const MorxLigatureSubtable& table,
+	    zst::span<GlyphId> glyphs,
+	    bool is_reverse,
+	    size_t num_font_glyphs)
 	{
 		constexpr uint16_t PERFORM_ACTION = 0x2000;
 		constexpr uint16_t SET_COMPONENT = 0x8000;
@@ -509,8 +513,10 @@ namespace font::aat
 		return ret;
 	}
 
-	std::optional<SubstitutedGlyphString>
-	apply_table(const MorxContextualSubtable& table, zst::span<GlyphId> glyphs, bool is_reverse, size_t num_font_glyphs)
+	std::optional<SubstitutedGlyphString> apply_table(const MorxContextualSubtable& table,
+	    zst::span<GlyphId> glyphs,
+	    bool is_reverse,
+	    size_t num_font_glyphs)
 	{
 		constexpr uint16_t SET_MARK = 0x8000;
 		constexpr size_t EntrySize = 4 * sizeof(uint16_t);
@@ -599,8 +605,10 @@ namespace font::aat
 		return ret;
 	}
 
-	std::optional<SubstitutedGlyphString>
-	apply_table(const MorxInsertionSubtable& table, zst::span<GlyphId> glyphs, bool is_reverse, size_t num_font_glyphs)
+	std::optional<SubstitutedGlyphString> apply_table(const MorxInsertionSubtable& table,
+	    zst::span<GlyphId> glyphs,
+	    bool is_reverse,
+	    size_t num_font_glyphs)
 	{
 		constexpr uint16_t SET_MARK = 0x8000;
 		constexpr uint16_t CURRENT_INSERT_BEFORE = 0x800;
@@ -677,8 +685,9 @@ namespace font::aat
 	}
 
 
-	std::optional<SubstitutedGlyphString>
-	performSubstitutionsForGlyphSequence(const MorxTable& morx, zst::span<GlyphId> glyphs, const FeatureSet& features)
+	std::optional<SubstitutedGlyphString> performSubstitutionsForGlyphSequence(const MorxTable& morx,
+	    zst::span<GlyphId> glyphs,
+	    const FeatureSet& features)
 	{
 		std::optional<SubstitutedGlyphString> ret {};
 
@@ -715,8 +724,7 @@ namespace font::aat
 			}
 
 			auto get_common = [](const auto& subtable) -> const MorxSubtableCommon& {
-				return std::visit(
-				    [](const auto& x) -> const auto& { return x.common; }, subtable);
+				return std::visit([](const auto& x) -> const auto& { return x.common; }, subtable);
 			};
 
 			size_t tmp = 0;

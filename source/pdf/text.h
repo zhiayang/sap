@@ -1,13 +1,13 @@
 // text.h
-// Copyright (c) 2021, yuki / zhiayang
+// Copyright (c) 2021, yuki
 // SPDX-License-Identifier: Apache-2.0
 
 #pragma once
 
 #include "sap/colour.h"
 
-#include "pdf/units.h"       // for PdfScalar, Offset2d, Position2d, TextSp...
-#include "pdf/page_object.h" // for Page, PageObject
+#include "pdf/units.h"
+#include "pdf/page_object.h"
 
 namespace pdf
 {

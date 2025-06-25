@@ -1,5 +1,5 @@
 // union.cpp
-// Copyright (c) 2023, yuki / zhiayang
+// Copyright (c) 2023, yuki
 // SPDX-License-Identifier: Apache-2.0
 
 #include "interp/ast.h"

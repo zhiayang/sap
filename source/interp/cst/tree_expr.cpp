@@ -1,5 +1,5 @@
 // tree.cpp
-// Copyright (c) 2022, yuki / zhiayang
+// Copyright (c) 2022, yuki
 // SPDX-License-Identifier: Apache-2.0
 
 #include "tree/raw.h"
@@ -7,16 +7,16 @@
 #include "tree/paragraph.h"
 #include "tree/container.h"
 
-#include "interp/ast.h"         // for NumberLit, InlineTreeExpr, StringLit
-#include "interp/type.h"        // for Type
-#include "interp/value.h"       // for Value
-#include "interp/interp.h"      // for Interpreter
-#include "interp/eval_result.h" // for EvalResult
+#include "interp/ast.h"
+#include "interp/type.h"
+#include "interp/value.h"
+#include "interp/interp.h"
+#include "interp/eval_result.h"
 
 namespace sap::interp::cst
 {
-	static ErrorOr<std::vector<zst::SharedPtr<tree::InlineObject>>>
-	evaluate_list_of_tios(Evaluator* ev, const std::vector<zst::SharedPtr<tree::InlineObject>>& tios)
+	static ErrorOr<std::vector<zst::SharedPtr<tree::InlineObject>>> evaluate_list_of_tios(Evaluator* ev,
+	    const std::vector<zst::SharedPtr<tree::InlineObject>>& tios)
 	{
 		std::vector<zst::SharedPtr<tree::InlineObject>> ret {};
 		for(auto& obj : tios)

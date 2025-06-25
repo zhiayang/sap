@@ -1,8 +1,8 @@
 // compare_op.cpp
-// Copyright (c) 2022, yuki / zhiayang
+// Copyright (c) 2022, yuki
 // SPDX-License-Identifier: Apache-2.0
 
-#include "util.h" // for is_one_of
+#include "util.h"
 
 #include "tree/base.h"
 

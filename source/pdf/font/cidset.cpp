@@ -1,11 +1,11 @@
 // cidset.cpp
-// Copyright (c) 2022, yuki / zhiayang
+// Copyright (c) 2022, yuki
 // SPDX-License-Identifier: Apache-2.0
 
-#include "types.h" // for GlyphId
+#include "types.h"
 
-#include "pdf/font.h"   // for Font, File
-#include "pdf/object.h" // for Stream
+#include "pdf/font.h"
+#include "pdf/object.h"
 
 #include "font/font_file.h"
 

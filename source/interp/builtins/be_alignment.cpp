@@ -1,5 +1,5 @@
 // be_alignment.cpp
-// Copyright (c) 2022, yuki / zhiayang
+// Copyright (c) 2022, yuki
 // SPDX-License-Identifier: Apache-2.0
 
 #include "sap/style.h"
@@ -20,12 +20,12 @@ namespace sap::interp::builtin
 
 	std::vector<ast::EnumDefn::Enumerator> BE_Alignment::enumerators()
 	{
-		return util::vectorOf(                                                          //
-			make_builtin_enumerator("Left", static_cast<int>(Alignment::Left)),         //
-			make_builtin_enumerator("Right", static_cast<int>(Alignment::Right)),       //
-			make_builtin_enumerator("Centred", static_cast<int>(Alignment::Centre)),    //
-			make_builtin_enumerator("Centered", static_cast<int>(Alignment::Centre)),   //
-			make_builtin_enumerator("Justified", static_cast<int>(Alignment::Justified)));
+		return util::vectorOf(                                                        //
+		    make_builtin_enumerator("Left", static_cast<int>(Alignment::Left)),       //
+		    make_builtin_enumerator("Right", static_cast<int>(Alignment::Right)),     //
+		    make_builtin_enumerator("Centred", static_cast<int>(Alignment::Centre)),  //
+		    make_builtin_enumerator("Centered", static_cast<int>(Alignment::Centre)), //
+		    make_builtin_enumerator("Justified", static_cast<int>(Alignment::Justified)));
 	}
 
 	Value builtin::BE_Alignment::make(Alignment alignment)

@@ -1,16 +1,16 @@
 // loader.cpp
-// Copyright (c) 2021, yuki / zhiayang
+// Copyright (c) 2021, yuki
 // SPDX-License-Identifier: Apache-2.0
 
-#include "util.h" // for readEntireFile, utf8FromUtf16BigEndian...
+#include "util.h"
 
-#include "font/cff.h"         // for parseCFFData
-#include "font/tag.h"         // for Tag
-#include "font/handle.h"      // for FontHandle
-#include "font/features.h"    // for parseGPos, parseGSub
-#include "font/truetype.h"    // for TTData, parseGlyfTable, parseLocaTable
-#include "font/font_file.h"   // for FontFile, Table, FontNames, FontMetrics
-#include "font/font_scalar.h" // for FontScalar
+#include "font/cff.h"
+#include "font/tag.h"
+#include "font/handle.h"
+#include "font/features.h"
+#include "font/truetype.h"
+#include "font/font_file.h"
+#include "font/font_scalar.h"
 
 namespace misc
 {

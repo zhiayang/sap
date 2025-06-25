@@ -1,14 +1,14 @@
 // features.h
-// Copyright (c) 2021, yuki / zhiayang
+// Copyright (c) 2021, yuki
 // SPDX-License-Identifier: Apache-2.0
 
 #pragma once
 
-#include "types.h" // for GlyphId
+#include "types.h"
 
-#include "font/tag.h"         // for Tag
-#include "font/metrics.h"     //
-#include "font/font_scalar.h" // for FontScalar
+#include "font/tag.h"
+#include "font/metrics.h"
+#include "font/font_scalar.h"
 
 namespace font
 {

@@ -1,5 +1,5 @@
 // image.cpp
-// Copyright (c) 2022, yuki / zhiayang
+// Copyright (c) 2022, yuki
 // SPDX-License-Identifier: Apache-2.0
 
 #include <chrono>
@@ -110,7 +110,7 @@ namespace sap::tree
 			int y = 0;
 			auto alpha_data_buf = stbi_load_from_memory(file_buf.get(), (int) file_buf.size(), &x, &y, nullptr, 2);
 
-			auto alpha_data = zst::unique_span<uint8_t[]>(new uint8_t[img_width * img_height], img_height * img_width);
+			auto alpha_data = zst::unique_span<uint8_t[]>(new uint8_t[img_width * img_height], img_height* img_width);
 			for(size_t i = 0; i < img_width * img_height; i++)
 				alpha_data[i] = alpha_data_buf[i * 2 + 1];
 

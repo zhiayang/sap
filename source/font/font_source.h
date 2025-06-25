@@ -1,5 +1,5 @@
 // font_source.h
-// Copyright (c) 2022, yuki / zhiayang
+// Copyright (c) 2022, yuki
 // SPDX-License-Identifier: Apache-2.0
 
 #pragma once
@@ -37,8 +37,7 @@ namespace font
 		virtual bool isBuiltin() const = 0;
 
 		virtual util::hashmap<size_t, GlyphAdjustment>
-		getPositioningAdjustmentsForGlyphSequence(zst::span<GlyphId> glyphs,
-		    const font::FeatureSet& features) const = 0;
+		getPositioningAdjustmentsForGlyphSequence(zst::span<GlyphId> glyphs, const font::FeatureSet& features) const = 0;
 
 		virtual std::optional<SubstitutedGlyphString>
 		performSubstitutionsForGlyphSequence(zst::span<GlyphId> glyphs, const font::FeatureSet& features) const = 0;

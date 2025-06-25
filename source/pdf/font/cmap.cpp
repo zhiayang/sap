@@ -1,17 +1,17 @@
 // cmap.cpp
-// Copyright (c) 2021, yuki / zhiayang
+// Copyright (c) 2021, yuki
 // SPDX-License-Identifier: Apache-2.0
 
 // i know it's bad form to keep having two font.hs and two cmap.cpps and whatever
 // but they are literally called cmaps
 
-#include "util.h"  // for codepointToSurrogatePair
-#include "types.h" // for GlyphId
+#include "util.h"
+#include "types.h"
 
-#include "pdf/font.h"   // for Font, File
-#include "pdf/object.h" // for Stream
+#include "pdf/font.h"
+#include "pdf/object.h"
 
-#include "font/font_file.h" // for CharacterMapping, FontFile
+#include "font/font_file.h"
 
 namespace pdf
 {
@@ -61,44 +61,43 @@ namespace pdf
 			auto ordering = zpr::sprint("{}Utf8", m_pdf_font_name);
 
 			auto cmap_name = zpr::sprint("{}-{}-{}", registry, ordering, supplement);
-			auto header = zpr::sprint(
-			    "%!PS-Adobe-3.0 Resource-CMap\n"
-			    "%%DocumentNeededResources: ProcSet (CIDInit)\n"
-			    "%%IncludeResource: ProcSet (CIDInit)\n"
-			    "%%BeginResource: CMap ({})\n"
-			    "%%Title: ({} {} {} {})\n"
-			    "%%Version: 1\n"
-			    "%%EndComments\n"
-			    "/CIDInit /ProcSet findresource begin\n"
-			    "12 dict begin\n"
-			    "begincmap\n"
-			    "/CIDSystemInfo 3 dict dup begin\n"
-			    "  /Registry ({}) def\n"
-			    "  /Ordering ({}) def\n"
-			    "  /Supplement {} def\n"
-			    "end def\n"
-			    "/CMapName /{} def\n"
-			    "/CMapType 0 def\n"
-			    "/WMode 0 def\n"
-			    "/XUID [1 10 12345] def\n",
-			    cmap_name,                                 //
-			    cmap_name, registry, ordering, supplement, //
-			    registry,                                  //
-			    ordering,                                  //
-			    supplement,                                //
-			    cmap_name                                  //
-			);
+			auto header = zpr::
+			    sprint("%!PS-Adobe-3.0 Resource-CMap\n"
+			           "%%DocumentNeededResources: ProcSet (CIDInit)\n"
+			           "%%IncludeResource: ProcSet (CIDInit)\n"
+			           "%%BeginResource: CMap ({})\n"
+			           "%%Title: ({} {} {} {})\n"
+			           "%%Version: 1\n"
+			           "%%EndComments\n"
+			           "/CIDInit /ProcSet findresource begin\n"
+			           "12 dict begin\n"
+			           "begincmap\n"
+			           "/CIDSystemInfo 3 dict dup begin\n"
+			           "  /Registry ({}) def\n"
+			           "  /Ordering ({}) def\n"
+			           "  /Supplement {} def\n"
+			           "end def\n"
+			           "/CMapName /{} def\n"
+			           "/CMapType 0 def\n"
+			           "/WMode 0 def\n"
+			           "/XUID [1 10 12345] def\n",
+			        cmap_name,                                 //
+			        cmap_name, registry, ordering, supplement, //
+			        registry,                                  //
+			        ordering,                                  //
+			        supplement,                                //
+			        cmap_name                                  //
+			    );
 
 			cmap->append(header);
 		}
 
-		cmap->append(
-		    "4 begincodespacerange\n"
-		    "<00>       <7F>\n"
-		    "<C080>     <DFBF>\n"
-		    "<E08080>   <EFBFBF>\n"
-		    "<F0808080> <F7BFBFBF>\n"
-		    "endcodespacerange\n");
+		cmap->append("4 begincodespacerange\n"
+		             "<00>       <7F>\n"
+		             "<C080>     <DFBF>\n"
+		             "<E08080>   <EFBFBF>\n"
+		             "<F0808080> <F7BFBFBF>\n"
+		             "endcodespacerange\n");
 
 		assert(m_source != nullptr);
 		auto& mapping = font_file->characterMapping().forward;
@@ -161,39 +160,38 @@ namespace pdf
 			auto supplement = 0;
 			auto cmap_name = zpr::sprint("{}-{}-{}", registry, ordering, supplement);
 
-			auto header = zpr::sprint(
-			    "%!PS-Adobe-3.0 Resource-CMap\n"
-			    "%%DocumentNeededResources: ProcSet (CIDInit)\n"
-			    "%%IncludeResource: ProcSet (CIDInit)\n"
-			    "%%BeginResource: CMap ({})\n"
-			    "%%Title: ({} {} {} {})\n"
-			    "%%Version: 1\n"
-			    "%%EndComments\n"
-			    "/CIDInit /ProcSet findresource begin\n"
-			    "12 dict begin\n"
-			    "begincmap\n"
-			    "/CIDSystemInfo <<\n"
-			    "  /Registry ({})\n"
-			    "  /Ordering ({})\n"
-			    "  /Supplement {}\n"
-			    ">> def\n"
-			    "/CMapName /{} def\n"
-			    "/CMapType 2 def\n",
-			    cmap_name,                                 //
-			    cmap_name, registry, ordering, supplement, //
-			    registry,                                  //
-			    ordering,                                  //
-			    supplement,                                //
-			    cmap_name                                  //
-			);
+			auto header = zpr::
+			    sprint("%!PS-Adobe-3.0 Resource-CMap\n"
+			           "%%DocumentNeededResources: ProcSet (CIDInit)\n"
+			           "%%IncludeResource: ProcSet (CIDInit)\n"
+			           "%%BeginResource: CMap ({})\n"
+			           "%%Title: ({} {} {} {})\n"
+			           "%%Version: 1\n"
+			           "%%EndComments\n"
+			           "/CIDInit /ProcSet findresource begin\n"
+			           "12 dict begin\n"
+			           "begincmap\n"
+			           "/CIDSystemInfo <<\n"
+			           "  /Registry ({})\n"
+			           "  /Ordering ({})\n"
+			           "  /Supplement {}\n"
+			           ">> def\n"
+			           "/CMapName /{} def\n"
+			           "/CMapType 2 def\n",
+			        cmap_name,                                 //
+			        cmap_name, registry, ordering, supplement, //
+			        registry,                                  //
+			        ordering,                                  //
+			        supplement,                                //
+			        cmap_name                                  //
+			    );
 
 			cmap->append(header);
 		}
 
-		cmap->append(
-		    "1 begincodespacerange\n"
-		    "<0000> <FFFF>\n"
-		    "endcodespacerange\n");
+		cmap->append("1 begincodespacerange\n"
+		             "<0000> <FFFF>\n"
+		             "endcodespacerange\n");
 
 		assert(m_source != nullptr);
 		auto& mapping = font_file->characterMapping().forward;
@@ -265,12 +263,12 @@ namespace pdf
 
 	static void write_cmap_footer(Stream* s)
 	{
-		s->append(zst::str_view(
-		    "endcmap\n"
-		    "CMapName currentdict /CMap defineresource pop\n"
-		    "end\n"
-		    "end\n"
-		    "%%EndResource\n"
-		    "%%EOF\n"));
+		s->append(zst::
+		        str_view("endcmap\n"
+		                 "CMapName currentdict /CMap defineresource pop\n"
+		                 "end\n"
+		                 "end\n"
+		                 "%%EndResource\n"
+		                 "%%EOF\n"));
 	}
 }

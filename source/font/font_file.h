@@ -1,21 +1,21 @@
 // font_file.h
-// Copyright (c) 2021, yuki / zhiayang
+// Copyright (c) 2021, yuki
 // SPDX-License-Identifier: Apache-2.0
 
 #pragma once
 
-#include "util.h"  // for hashmap
-#include "types.h" // for GlyphId
-#include "units.h" // for Scalar, operator+, Vector2<>::scalar_type
+#include "util.h"
+#include "types.h"
+#include "units.h"
 
 #include "font/aat.h"
 #include "font/off.h"
-#include "font/tag.h"         // for Tag
-#include "font/handle.h"      // for FontHandle
-#include "font/metrics.h"     //
-#include "font/features.h"    // for GlyphAdjustment, Feature, LookupTable
-#include "font/font_source.h" //
-#include "font/font_scalar.h" // for FontScalar, FontVector2d, font_design_...
+#include "font/tag.h"
+#include "font/handle.h"
+#include "font/metrics.h"
+#include "font/features.h"
+#include "font/font_source.h"
+#include "font/font_scalar.h"
 
 namespace pdf
 {
@@ -87,8 +87,8 @@ namespace font
 		virtual bool isBuiltin() const override { return false; }
 		virtual std::string name() const override { return m_names.postscript_name; }
 
-		virtual util::hashmap<size_t, GlyphAdjustment>
-		getPositioningAdjustmentsForGlyphSequence(zst::span<GlyphId> glyphs,
+		virtual util::hashmap<size_t, GlyphAdjustment> getPositioningAdjustmentsForGlyphSequence(zst::span<GlyphId>
+		                                                                                             glyphs,
 		    const font::FeatureSet& features) const override;
 
 		virtual std::optional<SubstitutedGlyphString> performSubstitutionsForGlyphSequence(zst::span<GlyphId> glyphs,
@@ -129,8 +129,9 @@ namespace font
 
 		static std::unique_ptr<FontFile> from_offset_table(zst::unique_span<uint8_t[]> bytes, //
 		    size_t start_of_offset_table);
-		static std::optional<std::unique_ptr<FontFile>>
-		from_postscript_name_in_collection(zst::unique_span<uint8_t[]> bytes, zst::str_view postscript_name);
+		static std::optional<std::unique_ptr<FontFile>> from_postscript_name_in_collection(zst::unique_span<uint8_t[]>
+		                                                                                       bytes,
+		    zst::str_view postscript_name);
 
 		FontNames m_names;
 

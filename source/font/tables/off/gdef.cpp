@@ -1,13 +1,13 @@
 // gdef.cpp
-// Copyright (c) 2021, yuki / zhiayang
+// Copyright (c) 2021, yuki
 // SPDX-License-Identifier: Apache-2.0
 
-#include "util.h"  // for convertBEU16
-#include "types.h" // for GlyphId
+#include "util.h"
+#include "types.h"
 
 #include "font/off.h"
 #include "font/misc.h"
-#include "font/features.h" // for getGlyphClass, parseAllClassDefs, parseGl...
+#include "font/features.h"
 
 namespace font::off
 {

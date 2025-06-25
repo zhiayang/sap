@@ -1,5 +1,5 @@
 // aat.h
-// Copyright (c) 2022, yuki / zhiayang
+// Copyright (c) 2022, yuki
 // SPDX-License-Identifier: Apache-2.0
 
 #pragma once
@@ -7,12 +7,12 @@
 #include <variant>
 
 #include "util.h"
-#include "types.h" // for GlyphId
+#include "types.h"
 
-#include "font/tag.h"         // for Tag
-#include "font/metrics.h"     //
-#include "font/features.h"    //
-#include "font/font_scalar.h" // for FontScalar
+#include "font/tag.h"
+#include "font/metrics.h"
+#include "font/features.h"
+#include "font/font_scalar.h"
 
 namespace font
 {
@@ -206,8 +206,9 @@ namespace font::aat
 		size_t num_font_glyphs;
 	};
 
-	std::optional<SubstitutedGlyphString>
-	performSubstitutionsForGlyphSequence(const MorxTable& morx, zst::span<GlyphId> glyphs, const FeatureSet& features);
+	std::optional<SubstitutedGlyphString> performSubstitutionsForGlyphSequence(const MorxTable& morx,
+	    zst::span<GlyphId> glyphs,
+	    const FeatureSet& features);
 }
 
 template <>

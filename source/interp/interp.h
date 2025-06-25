@@ -1,20 +1,20 @@
 // interp.h
-// Copyright (c) 2022, yuki / zhiayang
+// Copyright (c) 2022, yuki
 // SPDX-License-Identifier: Apache-2.0
 
 #pragma once
 
 #include <deque>
 
-#include "ast.h"   // for Definition, Declaration, QualifiedId
-#include "util.h"  // for Defer, hashmap
-#include "value.h" // for Value
+#include "ast.h"
+#include "util.h"
+#include "value.h"
 
 #include "sap/config.h"
 
-#include "interp/type.h"        // for Type
-#include "interp/basedefs.h"    // for InlineObject
-#include "interp/eval_result.h" // for EvalResult
+#include "interp/type.h"
+#include "interp/basedefs.h"
+#include "interp/eval_result.h"
 
 #include "interp/evaluator.h"
 #include "interp/typechecker.h"

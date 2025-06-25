@@ -1,15 +1,15 @@
 // stream.cpp
-// Copyright (c) 2021, yuki / zhiayang
+// Copyright (c) 2021, yuki
 // SPDX-License-Identifier: Apache-2.0
 
 #include <libdeflate/libdeflate.h>
 
-#include "util.h" // for checked_cast
+#include "util.h"
 
-#include "pdf/file.h"   // for File
-#include "pdf/misc.h"   // for error, IndirHelper
-#include "pdf/object.h" // for Stream, Dictionary, Integer, Name, Length
-#include "pdf/writer.h" // for Writer
+#include "pdf/file.h"
+#include "pdf/misc.h"
+#include "pdf/object.h"
+#include "pdf/writer.h"
 
 namespace pdf
 {
@@ -21,7 +21,7 @@ namespace pdf
 	}
 
 	Stream::Stream(Dictionary* dict, zst::byte_buffer bytes)
-		: m_bytes(std::move(bytes)), m_compressed(false), m_dict(dict)
+	    : m_bytes(std::move(bytes)), m_compressed(false), m_dict(dict)
 	{
 	}
 
@@ -71,7 +71,7 @@ namespace pdf
 			assert(compressor != nullptr);
 
 			auto compressed_len = libdeflate_zlib_compress(compressor, m_bytes.data(), m_bytes.size(), compressed_bytes,
-				buf_size);
+			    buf_size);
 
 			if(compressed_len == 0)
 				break;
@@ -123,7 +123,7 @@ namespace pdf
 	Stream* Stream::create(zst::byte_buffer bytes)
 	{
 		auto dict = Dictionary::create({ { names::Length,
-			Integer::create(util::checked_cast<int64_t>(bytes.size())) } });
+		    Integer::create(util::checked_cast<int64_t>(bytes.size())) } });
 
 		return Object::createIndirect<Stream>(dict, std::move(bytes));
 	}

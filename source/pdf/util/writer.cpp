@@ -1,5 +1,5 @@
 // writer.cpp
-// Copyright (c) 2021, yuki / zhiayang
+// Copyright (c) 2021, yuki
 // SPDX-License-Identifier: Apache-2.0
 
 #if defined(_WIN32)
@@ -8,11 +8,11 @@
 #include <unistd.h>
 #endif
 
-#include <fcntl.h> // for open, O_CREAT, O_TRUNC, O_WRONLY
+#include <fcntl.h>
 
-#include "pdf/misc.h"   // for error
-#include "pdf/object.h" // for Object
-#include "pdf/writer.h" // for Writer
+#include "pdf/misc.h"
+#include "pdf/object.h"
+#include "pdf/writer.h"
 
 namespace pdf
 {

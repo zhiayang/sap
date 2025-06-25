@@ -1,10 +1,10 @@
 // page_layout.cpp
-// Copyright (c) 2022, yuki / zhiayang
+// Copyright (c) 2022, yuki
 // SPDX-License-Identifier: Apache-2.0
 
-#include "pdf/page.h" // for Page
+#include "pdf/page.h"
 
-#include "layout/base.h" // for RectPageLayout, LayoutObject
+#include "layout/base.h"
 
 namespace sap::layout
 {

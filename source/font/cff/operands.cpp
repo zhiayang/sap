@@ -1,9 +1,9 @@
 // operands.cpp
-// Copyright (c) 2022, yuki / zhiayang
+// Copyright (c) 2022, yuki
 // SPDX-License-Identifier: Apache-2.0
 
-#include "font/cff.h"  // for Operand, readNumberFromCharString, readNumber...
-#include "font/misc.h" // for consume_u32, consume_u16
+#include "font/cff.h"
+#include "font/misc.h"
 
 namespace font::cff
 {

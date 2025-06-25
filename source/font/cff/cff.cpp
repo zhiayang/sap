@@ -1,12 +1,12 @@
 // cff.cpp
-// Copyright (c) 2022, yuki / zhiayang
+// Copyright (c) 2022, yuki
 // SPDX-License-Identifier: Apache-2.0
 
-#include "util.h" // for checked_cast
+#include "util.h"
 
-#include "font/cff.h" // for Subroutine, CFFData, IndexTable, FontDict, Glyph
+#include "font/cff.h"
 #include "font/misc.h"
-#include "font/font_file.h" // for consume_u8, consume_u16, peek_u16, FontFile
+#include "font/font_file.h"
 
 namespace font::cff
 {
@@ -137,7 +137,8 @@ namespace font::cff
 
 			// CFF fonts embedded in OTFs must have exactly 1 font (ie. no font sets/collections)
 			if(name_index.count != 1)
-				sap::error("font/cff", "invalid number of entries in Name INDEX (expected 1, got {})", name_index.count);
+				sap::error("font/cff", "invalid number of entries in Name INDEX (expected 1, got {})",
+				    name_index.count);
 
 			cff->name = name_index.get_item(0);
 		}
@@ -151,7 +152,8 @@ namespace font::cff
 			buf.remove_prefix(size);
 
 			if(dict_index.count != 1)
-				sap::error("font/cff", "invalid number of entries in Top DICT INDEX (expected 1, got {})", dict_index.count);
+				sap::error("font/cff", "invalid number of entries in Top DICT INDEX (expected 1, got {})",
+				    dict_index.count);
 
 			// top dict needs to be populated with default values as well.
 			cff->top_dict = readDictionary(dict_index.data);
@@ -247,8 +249,7 @@ namespace font::cff
 			}
 		}
 
-		auto read_private_dict_and_local_subrs_from_dict = [&cff](const Dictionary& dict) -> auto
-		{
+		auto read_private_dict_and_local_subrs_from_dict = [&cff](const Dictionary& dict) -> auto {
 			auto foo = dict.get(DictKey::Private);
 			if(foo.size() != 2)
 				sap::error("font/cff", "missing Private DICT");
@@ -257,8 +258,8 @@ namespace font::cff
 			auto offset = foo[1].integer();
 
 			// private dict offset is specified from the beginning of the file
-			auto private_dict = readDictionary(
-			    cff->bytes.drop(util::checked_cast<size_t>(offset)).take(util::checked_cast<size_t>(size)));
+			auto private_dict = readDictionary(cff->bytes.drop(util::checked_cast<size_t>(offset))
+			        .take(util::checked_cast<size_t>(size)));
 			std::vector<Subroutine> local_subrs {};
 
 			// local subrs index is specified from the beginning of the private DICT data)

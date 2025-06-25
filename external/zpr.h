@@ -42,7 +42,7 @@
 */
 
 /*
-    Version 2.8.1
+    Version 2.8.2
     =============
 
 
@@ -328,57 +328,57 @@ namespace zpr::tt
 	{
 		using value_type = char;
 
-		str_view() : ptr(nullptr), len(0) { }
-		str_view(const char* p, size_t l) : ptr(p), len(l) { }
+		constexpr str_view() : ptr(nullptr), len(0) { }
+		constexpr str_view(const char* p, size_t l) : ptr(p), len(l) { }
 
 		template <size_t _Number>
-		str_view(const char (&s)[_Number]) : ptr(s), len(_Number - 1) { }
+		constexpr str_view(const char (&s)[_Number]) : ptr(s), len(_Number - 1) { }
 
 		template <typename _Type, typename = tt::enable_if_t<tt::is_same_v<const char*, _Type>>>
-		str_view(_Type s) : ptr(s), len(strlen(s)) { }
+		constexpr str_view(_Type s) : ptr(s), len(strlen(s)) { }
 
-		str_view(str_view&&) = default;
-		str_view(const str_view&) = default;
-		str_view& operator= (str_view&&) = default;
-		str_view& operator= (const str_view&) = default;
+		constexpr str_view(str_view&&) = default;
+		constexpr str_view(const str_view&) = default;
+		constexpr str_view& operator= (str_view&&) = default;
+		constexpr str_view& operator= (const str_view&) = default;
 
-		inline bool operator== (const str_view& other) const
+		constexpr inline bool operator== (const str_view& other) const
 		{
 			return (this->ptr == other.ptr && this->len == other.len)
 				|| (this->len == other.len && strncmp(this->ptr, other.ptr, this->len) == 0);
 		}
 
-		inline bool operator!= (const str_view& other) const
+		constexpr inline bool operator!= (const str_view& other) const
 		{
 			return !(*this == other);
 		}
 
-		inline const char* begin() const { return this->ptr; }
-		inline const char* end() const { return this->ptr + len; }
+		constexpr inline const char* begin() const { return this->ptr; }
+		constexpr inline const char* end() const { return this->ptr + len; }
 
-		inline size_t size() const { return this->len; }
-		inline bool empty() const { return this->len == 0; }
-		inline const char* data() const { return this->ptr; }
+		constexpr inline size_t size() const { return this->len; }
+		constexpr inline bool empty() const { return this->len == 0; }
+		constexpr inline const char* data() const { return this->ptr; }
 
-		inline char operator[] (size_t n) { return this->ptr[n]; }
+		constexpr inline char operator[] (size_t n) { return this->ptr[n]; }
 
-		inline str_view drop(size_t n) const { return (this->size() >= n ? this->substr(n, this->size() - n) : ""); }
-		inline str_view take(size_t n) const { return (this->size() >= n ? this->substr(0, n) : *this); }
-		inline str_view take_last(size_t n) const { return (this->size() >= n ? this->substr(this->size() - n, n) : *this); }
-		inline str_view drop_last(size_t n) const { return (this->size() >= n ? this->substr(0, this->size() - n) : *this); }
+		constexpr inline str_view drop(size_t n) const { return (this->size() >= n ? this->substr(n, this->size() - n) : ""); }
+		constexpr inline str_view take(size_t n) const { return (this->size() >= n ? this->substr(0, n) : *this); }
+		constexpr inline str_view take_last(size_t n) const { return (this->size() >= n ? this->substr(this->size() - n, n) : *this); }
+		constexpr inline str_view drop_last(size_t n) const { return (this->size() >= n ? this->substr(0, this->size() - n) : *this); }
 
-		inline str_view& remove_prefix(size_t n) { return (*this = this->drop(n)); }
-		inline str_view& remove_suffix(size_t n) { return (*this = this->drop_last(n)); }
+		constexpr inline str_view& remove_prefix(size_t n) { return (*this = this->drop(n)); }
+		constexpr inline str_view& remove_suffix(size_t n) { return (*this = this->drop_last(n)); }
 
-		[[nodiscard]] inline str_view take_prefix(size_t n)
+		[[nodiscard]] constexpr inline str_view take_prefix(size_t n)
 		{
 			auto ret = this->take(n);
 			this->remove_prefix(n);
 			return ret;
 		}
 
-		inline size_t find(char c) const { return this->find(str_view(&c, 1)); }
-		inline size_t find(str_view sv) const
+		constexpr inline size_t find(char c) const { return this->find(str_view(&c, 1)); }
+		constexpr inline size_t find(str_view sv) const
 		{
 			if(sv.size() > this->size())
 				return static_cast<size_t>(-1);
@@ -395,7 +395,7 @@ namespace zpr::tt
 			return static_cast<size_t>(-1);
 		}
 
-		inline str_view substr(size_t pos, size_t cnt) const { return str_view(this->ptr + pos, cnt); }
+		constexpr inline str_view substr(size_t pos, size_t cnt) const { return str_view(this->ptr + pos, cnt); }
 
 
 	#if ZPR_USE_STD
@@ -2421,6 +2421,17 @@ namespace zpr
 		}
 	};
 
+	// this overload still needs to exist, otherwise we will print strings as arrays
+	template <size_t _Count>
+	struct print_formatter<const char (&)[_Count]>
+	{
+		template <typename _Cb>
+		ZPR_ALWAYS_INLINE void print(const char (&x)[_Count], _Cb&& cb, format_args args)
+		{
+			detail::print_string(static_cast<_Cb&&>(cb), x, strlen(x), static_cast<format_args&&>(args));
+		}
+	};
+
 	template <>
 	struct print_formatter<char>
 	{
@@ -2565,7 +2576,6 @@ namespace zpr
 
 	template <>
 	struct print_formatter<double> : print_formatter<float> { };
-
 
 
 
@@ -2765,6 +2775,11 @@ namespace zpr
 
     Version History
     ===============
+
+    2.8.2 - 13/02/2025
+    ------------------
+    - Fix a bug where char arrays were not printed as strings but as arrays.
+
 
     2.8.1 - 03/02/2025
     ------------------

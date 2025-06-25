@@ -1,5 +1,5 @@
 // writer.h
-// Copyright (c) 2021, yuki / zhiayang
+// Copyright (c) 2021, yuki
 // SPDX-License-Identifier: Apache-2.0
 
 #pragma once
@@ -34,21 +34,15 @@ namespace pdf
 		template <typename... Args>
 		size_t write(zst::str_view fmt, Args&&... args)
 		{
-			return zpr::cprint(
-			    [this](const char* s, size_t l) {
-				    this->write(zst::str_view(s, l));
-			    },
-			    fmt, static_cast<Args&&>(args)...);
+			return zpr::cprint([this](const char* s, size_t l) { this->write(zst::str_view(s, l)); }, fmt,
+			    static_cast<Args&&>(args)...);
 		}
 
 		template <typename... Args>
 		size_t writeln(zst::str_view fmt, Args&&... args)
 		{
-			return zpr::cprintln(
-			    [this](const char* s, size_t l) {
-				    this->write(zst::str_view(s, l));
-			    },
-			    fmt, static_cast<Args&&>(args)...);
+			return zpr::cprintln([this](const char* s, size_t l) { this->write(zst::str_view(s, l)); }, fmt,
+			    static_cast<Args&&>(args)...);
 		}
 	};
 }

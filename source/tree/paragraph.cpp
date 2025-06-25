@@ -1,15 +1,15 @@
 // paragraph.cpp
-// Copyright (c) 2022, yuki / zhiayang
+// Copyright (c) 2022, yuki
 // SPDX-License-Identifier: Apache-2.0
 
 #include "tree/wrappers.h"
 #include "misc/hyphenator.h"
 
-#include "interp/ast.h"         // for FunctionCall
-#include "interp/value.h"       // for Value
-#include "interp/interp.h"      // for Interpreter
-#include "interp/basedefs.h"    // for InlineObject
-#include "interp/eval_result.h" // for EvalResult
+#include "interp/ast.h"
+#include "interp/value.h"
+#include "interp/interp.h"
+#include "interp/basedefs.h"
+#include "interp/eval_result.h"
 
 #include "layout/base.h"
 #include "layout/paragraph.h"

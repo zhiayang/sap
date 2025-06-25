@@ -1,5 +1,5 @@
 // bs_colour.cpp
-// Copyright (c) 2022, yuki / zhiayang
+// Copyright (c) 2022, yuki
 // SPDX-License-Identifier: Apache-2.0
 
 #include "interp/interp.h"
@@ -182,9 +182,9 @@ namespace sap::interp::builtin
 
 	std::vector<ast::EnumDefn::Enumerator> BE_ColourType::enumerators()
 	{
-		return util::vectorOf(                                                      //
-			make_builtin_enumerator("RGB", static_cast<int>(Colour::Type::RGB)),    //
-			make_builtin_enumerator("CMYK", static_cast<int>(Colour::Type::CMYK))   //
+		return util::vectorOf(                                                    //
+		    make_builtin_enumerator("RGB", static_cast<int>(Colour::Type::RGB)),  //
+		    make_builtin_enumerator("CMYK", static_cast<int>(Colour::Type::CMYK)) //
 		);
 	}
 

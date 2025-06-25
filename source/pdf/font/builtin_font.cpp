@@ -1,5 +1,5 @@
 // builtin_fonts.cpp
-// Copyright (c) 2022, yuki / zhiayang
+// Copyright (c) 2022, yuki
 // SPDX-License-Identifier: Apache-2.0
 
 #include <libdeflate/libdeflate.h>
@@ -326,8 +326,8 @@ namespace pdf
 		return kerns;
 	}
 
-	std::optional<font::SubstitutedGlyphString>
-	BuiltinFont::performSubstitutionsForGlyphSequence(zst::span<GlyphId> glyphs, const font::FeatureSet& features) const
+	std::optional<font::SubstitutedGlyphString> BuiltinFont::
+	    performSubstitutionsForGlyphSequence(zst::span<GlyphId> glyphs, const font::FeatureSet& features) const
 	{
 		if(glyphs.size() < 2)
 			return std::nullopt;

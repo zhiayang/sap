@@ -1,10 +1,10 @@
 // unicode.cpp
-// Copyright (c) 2021, yuki / zhiayang
+// Copyright (c) 2021, yuki
 // SPDX-License-Identifier: Apache-2.0
 
-#include <utf8proc/utf8proc.h> // for utf8proc_encode_char, utf8proc_iterate
+#include <utf8proc/utf8proc.h>
 
-#include "util.h" // for checked_cast, u32StringFromUtf8, code...
+#include "util.h"
 
 namespace unicode
 {
@@ -56,8 +56,9 @@ namespace unicode
 		for(size_t i = 0; i < bytes.size(); i += 2)
 		{
 			uint16_t fst = (uint16_t) (((uint16_t) bytes[i + 0] << 8) | ((uint16_t) bytes[i + 1] << 0));
-			uint16_t snd =
-			    i + 3 < bytes.size() ? (uint16_t) (((uint16_t) bytes[i + 2] << 8) | ((uint16_t) bytes[i + 3] << 0)) : 0;
+			uint16_t snd = i + 3 < bytes.size()
+			                 ? (uint16_t) (((uint16_t) bytes[i + 2] << 8) | ((uint16_t) bytes[i + 3] << 0))
+			                 : 0;
 
 			bool surrogate = convert_one_utf16(ret, fst, snd);
 			if(surrogate)

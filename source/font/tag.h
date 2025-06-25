@@ -1,5 +1,5 @@
 // tag.h
-// Copyright (c) 2021, yuki / zhiayang
+// Copyright (c) 2021, yuki
 // SPDX-License-Identifier: Apache-2.0
 
 #pragma once
@@ -10,7 +10,9 @@ namespace font
 	{
 		constexpr Tag() : value(0) { }
 		constexpr explicit Tag(uint32_t sp) : value(sp) { }
-		constexpr explicit Tag(const char (&f)[5]) : Tag((uint8_t) f[0], (uint8_t) f[1], (uint8_t) f[2], (uint8_t) f[3]) { }
+		constexpr explicit Tag(const char (&f)[5]) : Tag((uint8_t) f[0], (uint8_t) f[1], (uint8_t) f[2], (uint8_t) f[3])
+		{
+		}
 
 		constexpr Tag(uint8_t a, uint8_t b, uint8_t c, uint8_t d)
 		    : value(((uint32_t) a << 24) | ((uint32_t) b << 16) | ((uint32_t) c << 8) | ((uint32_t) d << 0))

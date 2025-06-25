@@ -1,12 +1,12 @@
 // eval_result.h
-// Copyright (c) 2022, yuki / zhiayang
+// Copyright (c) 2022, yuki
 // SPDX-License-Identifier: Apache-2.0
 
 #pragma once
 
-#include <optional> // for optional, nullopt
+#include <optional>
 
-#include "interp/value.h" // for Value
+#include "interp/value.h"
 
 namespace sap::interp
 {

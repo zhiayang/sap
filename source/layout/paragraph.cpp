@@ -1,29 +1,29 @@
 // paragraph.cpp
-// Copyright (c) 2021, yuki / zhiayang
+// Copyright (c) 2021, yuki
 // SPDX-License-Identifier: Apache-2.0
 
-#include <variant> // for variant, get, holds_alternative, visit
+#include <variant>
 
-#include "util.h" // for overloaded
+#include "util.h"
 
-#include "pdf/font.h"  // for Font
-#include "pdf/page.h"  // for Page
-#include "pdf/text.h"  // for Text
-#include "pdf/units.h" // for PdfScalar, Position2d_YDown, Offset2d
+#include "pdf/font.h"
+#include "pdf/page.h"
+#include "pdf/text.h"
+#include "pdf/units.h"
 
-#include "sap/style.h" // for Style
-#include "sap/units.h" // for Length
+#include "sap/style.h"
+#include "sap/units.h"
 
 #include "interp/interp.h"
-#include "interp/basedefs.h" // for InlineObject
+#include "interp/basedefs.h"
 #include "interp/evaluator.h"
 
-#include "layout/base.h"      // for Cursor, Size2d, RectPageLayout, Position
-#include "layout/line.h"      // for Line, breakLines
-#include "layout/word.h"      // for Separator, Word
-#include "layout/container.h" //
-#include "layout/paragraph.h" // for Paragraph, PositionedWord
-#include "layout/linebreak.h" //
+#include "layout/base.h"
+#include "layout/line.h"
+#include "layout/word.h"
+#include "layout/container.h"
+#include "layout/paragraph.h"
+#include "layout/linebreak.h"
 
 namespace sap::layout
 {

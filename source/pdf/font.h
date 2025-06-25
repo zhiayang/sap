@@ -1,19 +1,19 @@
 // font.h
-// Copyright (c) 2021, yuki / zhiayang
+// Copyright (c) 2021, yuki
 // SPDX-License-Identifier: Apache-2.0
 
 #pragma once
 
-#include "util.h"  // for hashmap
-#include "types.h" // for GlyphId
+#include "util.h"
+#include "types.h"
 
-#include "pdf/units.h" // for TextSpace1d, PdfScalar, GlyphSpace1d
+#include "pdf/units.h"
 #include "pdf/resource.h"
 #include "pdf/builtin_font.h"
 
 #include "font/metrics.h"
 #include "font/features.h"
-#include "font/font_scalar.h" // for font_design_space, FontScalar
+#include "font/font_scalar.h"
 #include "font/font_source.h"
 
 namespace font
@@ -56,11 +56,11 @@ namespace pdf
 
 		// returns the GlyphInfos for the given glyph string. note that this *DOES NOT* perform GSUB/morx, ie.
 		// ligatures and/or language-specific glyphs are not done -- hence 'substituted string'
-		std::vector<font::GlyphInfo>
-		getGlyphInfosForSubstitutedString(zst::span<GlyphId> glyphs, const font::FeatureSet& features) const;
+		std::vector<font::GlyphInfo> getGlyphInfosForSubstitutedString(zst::span<GlyphId> glyphs,
+		    const font::FeatureSet& features) const;
 
-		std::optional<std::vector<GlyphId>>
-		performSubstitutionsForGlyphSequence(zst::span<GlyphId> glyphs, const font::FeatureSet& features) const;
+		std::optional<std::vector<GlyphId>> performSubstitutionsForGlyphSequence(zst::span<GlyphId> glyphs,
+		    const font::FeatureSet& features) const;
 
 		// add an explicit mapping from glyph id to a list of codepoints. This is useful for
 		// ligature substitutions (eg. 'ffi' -> 'f', 'f', 'i') and for single replacements.

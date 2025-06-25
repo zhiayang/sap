@@ -1,11 +1,11 @@
 // base.h
-// Copyright (c) 2022, yuki / zhiayang
+// Copyright (c) 2022, yuki
 // SPDX-License-Identifier: Apache-2.0
 
 #pragma once
 
-#include "sap/style.h" // for Stylable
-#include "sap/units.h" // for Length, Vector2
+#include "sap/style.h"
+#include "sap/units.h"
 
 #include "layout/cursor.h"
 #include "layout/layout_object.h"

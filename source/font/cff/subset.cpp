@@ -1,13 +1,13 @@
 // subset.cpp
-// Copyright (c) 2022, yuki / zhiayang
+// Copyright (c) 2022, yuki
 // SPDX-License-Identifier: Apache-2.0
 
-#include "util.h"  // for checked_cast, convertBEU16
-#include "types.h" // for GlyphId
+#include "util.h"
+#include "types.h"
 
-#include "font/cff.h"       // for FontDict, Operand, CFFData, Glyph, DictBuilder
-#include "font/tag.h"       // for Tag
-#include "font/font_file.h" // for FontFile, Table
+#include "font/cff.h"
+#include "font/tag.h"
+#include "font/font_file.h"
 
 namespace font::cff
 {
@@ -99,9 +99,7 @@ namespace font::cff
 		    i guess what we want to do is just map the cid to the gid...
 		*/
 
-		auto append16 = [](zst::byte_buffer& buf, uint16_t x) {
-			buf.append_bytes(util::convertBEU16(x));
-		};
+		auto append16 = [](zst::byte_buffer& buf, uint16_t x) { buf.append_bytes(util::convertBEU16(x)); };
 
 		zst::byte_buffer cmap {};
 
@@ -316,11 +314,10 @@ namespace font
 		// all the other stuff that comes after the Top DICT
 		{
 			zst::byte_buffer tmp_buffer {};
-			const auto initial_abs_offset = buffer.size() + top_dict_size + string_table.size() + global_subrs_table.size();
+			const auto initial_abs_offset = buffer.size() + top_dict_size + string_table.size()
+			                              + global_subrs_table.size();
 
-			const auto current_abs_ofs = [&]() {
-				return initial_abs_offset + tmp_buffer.size();
-			};
+			const auto current_abs_ofs = [&]() { return initial_abs_offset + tmp_buffer.size(); };
 
 			// call this *BEFORE* writing the data!!!
 			auto copy_kv_pair_with_abs_offset = [&](DictKey key, size_t size = 0) {

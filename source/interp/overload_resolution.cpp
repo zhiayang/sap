@@ -1,5 +1,5 @@
 // overload_resolution.cpp
-// Copyright (c) 2022, yuki / zhiayang
+// Copyright (c) 2022, yuki
 // SPDX-License-Identifier: Apache-2.0
 
 #include <tuple>
@@ -11,6 +11,8 @@
 
 namespace sap::interp::ast
 {
+	// TODO: overload resolution should be a ranked system rather than a scoring system.
+	// scores are not easy to reason about (like 6*1 vs 2*3 or whatever).
 	ErrorOr<ArrangedArguments> arrangeCallArguments(const Typechecker* ts,
 	    const ExpectedParams& expected,
 	    const std::vector<InputArg>& arguments,

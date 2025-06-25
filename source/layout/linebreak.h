@@ -1,18 +1,18 @@
 // linebreak.h
-// Copyright (c) 2022, yuki / zhiayang
+// Copyright (c) 2022, yuki
 // SPDX-License-Identifier: Apache-2.0
 
 #pragma once
 
-#include "pdf/font.h"  // for Font
-#include "pdf/units.h" // for PdfScalar, Size2d_YDown
+#include "pdf/font.h"
+#include "pdf/units.h"
 
-#include "sap/style.h" // for Style
-#include "sap/units.h" // for Length
+#include "sap/style.h"
+#include "sap/units.h"
 
 #include "layout/line.h"
-#include "layout/base.h" // for Size2d, Cursor, RectPageLayout
-#include "layout/word.h" // for Separator, Word
+#include "layout/base.h"
+#include "layout/word.h"
 
 namespace sap::layout::linebreak
 {
@@ -28,7 +28,8 @@ namespace sap::layout::linebreak
 			NONE,
 			WORD,
 			SPAN,
-		} m_last_obj_kind = NONE;
+		} m_last_obj_kind
+		    = NONE;
 
 		Length m_line_height = 0;
 		Length m_total_space_width = 0;

@@ -1,11 +1,11 @@
 // lexer.cpp
-// Copyright (c) 2022, yuki / zhiayang
+// Copyright (c) 2022, yuki
 // SPDX-License-Identifier: Apache-2.0
 
-#include "util.h"     // for checked_cast
-#include "location.h" // for Location, error
+#include "util.h"
+#include "location.h"
 
-#include "sap/frontend.h" // for Token, Lexer, Lexer::Mode, Lexer::SaveState
+#include "sap/frontend.h"
 
 namespace sap::frontend
 {

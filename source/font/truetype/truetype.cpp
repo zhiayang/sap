@@ -1,13 +1,13 @@
 // truetype.cpp
-// Copyright (c) 2022, yuki / zhiayang
+// Copyright (c) 2022, yuki
 // SPDX-License-Identifier: Apache-2.0
 
-#include "util.h"  // for convertBEU16
-#include "types.h" // for GlyphId
+#include "util.h"
+#include "types.h"
 
 #include "font/misc.h"
-#include "font/truetype.h"  // for Glyph, TTData, BoundingBox, getGlyphBound...
-#include "font/font_file.h" // for consume_u16, consume_u8, FontFile, consum...
+#include "font/truetype.h"
+#include "font/font_file.h"
 
 namespace font::truetype
 {

@@ -1,12 +1,12 @@
 // cmap.cpp
-// Copyright (c) 2021, yuki / zhiayang
+// Copyright (c) 2021, yuki
 // SPDX-License-Identifier: Apache-2.0
 
-#include "util.h"  // for convertBEU16
-#include "types.h" // for GlyphId, GlyphId::notdef
+#include "util.h"
+#include "types.h"
 
 #include "font/misc.h"
-#include "font/font_file.h" // for consume_u16, consume_u32, CharacterMapping
+#include "font/font_file.h"
 
 namespace font
 {

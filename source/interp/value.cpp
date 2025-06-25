@@ -1,5 +1,5 @@
 // value.cpp
-// Copyright (c) 2022, yuki / zhiayang
+// Copyright (c) 2022, yuki
 // SPDX-License-Identifier: Apache-2.0
 
 #include <utf8proc/utf8proc.h>

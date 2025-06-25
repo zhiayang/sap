@@ -1,14 +1,14 @@
 // gpos.cpp
-// Copyright (c) 2021, yuki / zhiayang
+// Copyright (c) 2021, yuki
 // SPDX-License-Identifier: Apache-2.0
 
-#include "types.h" // for GlyphId
+#include "types.h"
 
 #include "font/off.h"
 #include "font/misc.h"
-#include "font/features.h"    // for AdjustmentResult, GlyphAdjustment, Loo...
-#include "font/font_file.h"   // for consume_u16, consume_i16, peek_u16
-#include "font/font_scalar.h" // for FontScalar
+#include "font/features.h"
+#include "font/font_file.h"
+#include "font/font_scalar.h"
 
 namespace font::off::gpos
 {
@@ -226,8 +226,8 @@ namespace font::off::gpos
 					auto num_pair_sets = consume_u16(subtable);
 					assert(*cov_idx < num_pair_sets);
 
-					const auto PairRecordSize =
-					    sizeof(uint16_t) + get_value_record_size(value_fmt1) + get_value_record_size(value_fmt2);
+					const auto PairRecordSize = sizeof(uint16_t) + get_value_record_size(value_fmt1)
+					                          + get_value_record_size(value_fmt2);
 
 					auto pairset_offset = peek_u16(subtable.drop(*cov_idx * sizeof(uint16_t)));
 					auto pairset_table = subtable_start.drop(pairset_offset);
@@ -325,8 +325,9 @@ namespace font::off::gpos
 		return result;
 	}
 
-	std::optional<AdjustmentResult>
-	lookupContextualPositioning(const GPosTable& gpos, const LookupTable& lookup, zst::span<GlyphId> glyphs)
+	std::optional<AdjustmentResult> lookupContextualPositioning(const GPosTable& gpos,
+	    const LookupTable& lookup,
+	    zst::span<GlyphId> glyphs)
 	{
 		assert(lookup.type == LOOKUP_CONTEXTUAL);
 		for(auto subtable : lookup.subtables)

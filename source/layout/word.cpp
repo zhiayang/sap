@@ -1,23 +1,23 @@
 // word.cpp
-// Copyright (c) 2021, yuki / zhiayang
+// Copyright (c) 2021, yuki
 // SPDX-License-Identifier: Apache-2.0
 
 #include <utf8proc/utf8proc.h>
 
-#include "types.h" // for GlyphId
+#include "types.h"
 
-#include "pdf/font.h"  // for Font, Font::ENCODING_CID
-#include "pdf/text.h"  // for Text
-#include "pdf/page.h"  //
-#include "pdf/units.h" // for PdfScalar
+#include "pdf/font.h"
+#include "pdf/text.h"
+#include "pdf/page.h"
+#include "pdf/units.h"
 
-#include "sap/style.h" // for Style
-#include "sap/units.h" // for Length
+#include "sap/style.h"
+#include "sap/units.h"
 
-#include "font/features.h"  // for GlyphAdjustment
-#include "font/font_file.h" // for GlyphInfo
+#include "font/features.h"
+#include "font/font_file.h"
 
-#include "layout/word.h" // for Word
+#include "layout/word.h"
 
 namespace sap::layout
 {

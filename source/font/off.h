@@ -1,15 +1,15 @@
 // off.h
-// Copyright (c) 2022, yuki / zhiayang
+// Copyright (c) 2022, yuki
 // SPDX-License-Identifier: Apache-2.0
 
 #pragma once
 
-#include "types.h" // for GlyphId
+#include "types.h"
 
-#include "font/tag.h"         // for Tag
-#include "font/metrics.h"     //
-#include "font/features.h"    //
-#include "font/font_scalar.h" // for FontScalar
+#include "font/tag.h"
+#include "font/metrics.h"
+#include "font/features.h"
+#include "font/font_scalar.h"
 
 namespace font
 {
@@ -107,8 +107,9 @@ namespace font::off
 	    For simplicity of use, this API returns a vector of glyphs, which *wholesale* replace the
 	    input glyph sequence -- even if no substitutions took place.
 	*/
-	SubstitutedGlyphString
-	performSubstitutionsForGlyphSequence(const GSubTable& gsub, zst::span<GlyphId> glyphs, const FeatureSet& features);
+	SubstitutedGlyphString performSubstitutionsForGlyphSequence(const GSubTable& gsub,
+	    zst::span<GlyphId> glyphs,
+	    const FeatureSet& features);
 
 
 	/*
@@ -220,15 +221,18 @@ namespace font::off
 	    The data layouts for GPOS and GSUB are identical, so this is a common implementation. Use for GPOS type 7
 	    and GSUB type 5.
 	*/
-	std::optional<std::pair<std::vector<ContextualLookupRecord>, size_t>>
-	performContextualLookup(zst::byte_span subtable, zst::span<GlyphId> glyphs);
+	std::optional<std::pair<std::vector<ContextualLookupRecord>, size_t>> performContextualLookup(zst::byte_span
+	                                                                                                  subtable,
+	    zst::span<GlyphId> glyphs);
 
 	/*
 	    Parse and match the input glyphstring (where the current glyph is at glyphs[position], using the provided
 	   *subtable*. The same caveats apply as for `performContextualLookup`. Use for GPOS type 8 and GSUB type 6.
 	*/
-	std::optional<std::pair<std::vector<ContextualLookupRecord>, size_t>>
-	performChainedContextLookup(zst::byte_span subtable, zst::span<GlyphId> glyphs, size_t position);
+	std::optional<std::pair<std::vector<ContextualLookupRecord>, size_t>> performChainedContextLookup(zst::byte_span
+	                                                                                                      subtable,
+	    zst::span<GlyphId> glyphs,
+	    size_t position);
 }
 
 
@@ -279,8 +283,9 @@ namespace font::off::gpos
 	    This one needs to "recursively" perform lookups, so it needs the GPOS table as well. Returns a mapping
 	    from the index in the given sequence to the adjustment.
 	*/
-	std::optional<AdjustmentResult>
-	lookupContextualPositioning(const GPosTable& gpos, const LookupTable& lookup, zst::span<GlyphId> glyphs);
+	std::optional<AdjustmentResult> lookupContextualPositioning(const GPosTable& gpos,
+	    const LookupTable& lookup,
+	    zst::span<GlyphId> glyphs);
 
 	/*
 	    Lookup chained-context glyph adjustments (type 8, LOOKUP_CHAINING_CONTEXT).
@@ -331,8 +336,8 @@ namespace font::off::gsub
 	        (first) the output glyph id
 	        (second) the number of input glyphs consumed.
 	*/
-	std::optional<std::pair<GlyphId, size_t>>
-	lookupLigatureSubstitution(const LookupTable& lookup, zst::span<GlyphId> glyphs);
+	std::optional<std::pair<GlyphId, size_t>> lookupLigatureSubstitution(const LookupTable& lookup,
+	    zst::span<GlyphId> glyphs);
 
 
 	struct GlyphReplacement
@@ -350,8 +355,9 @@ namespace font::off::gsub
 	    The returned result replaces glyphs from `glyphs[input_start]` to `glyphs[input_consumed - 1]`
 	    inclusive, with `result.glyphs`.
 	*/
-	std::optional<GlyphReplacement>
-	lookupContextualSubstitution(const GSubTable& gsub, const LookupTable& lookup, zst::span<GlyphId> glyphs);
+	std::optional<GlyphReplacement> lookupContextualSubstitution(const GSubTable& gsub,
+	    const LookupTable& lookup,
+	    zst::span<GlyphId> glyphs);
 
 	/*
 	    Lookup a chaining context substitution (type 6, LOOKUP_CHAINING_CONTEXT). Same semantics as GPOS

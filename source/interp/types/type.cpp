@@ -1,5 +1,5 @@
 // type.cpp
-// Copyright (c) 2022, yuki / zhiayang
+// Copyright (c) 2022, yuki
 // SPDX-License-Identifier: Apache-2.0
 
 #include "interp/type.h"
@@ -108,15 +108,9 @@ namespace sap::interp
 			return a->sameAs(b.get());
 		}
 
-		constexpr bool operator()(const std::unique_ptr<Type>& a, const Type* b) const
-		{
-			return a->sameAs(b);
-		}
+		constexpr bool operator()(const std::unique_ptr<Type>& a, const Type* b) const { return a->sameAs(b); }
 
-		constexpr bool operator()(const Type* a, const std::unique_ptr<Type>& b) const
-		{
-			return a->sameAs(b.get());
-		}
+		constexpr bool operator()(const Type* a, const std::unique_ptr<Type>& b) const { return a->sameAs(b.get()); }
 	};
 
 	struct type_hash

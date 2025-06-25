@@ -1,11 +1,11 @@
 // ident.cpp
-// Copyright (c) 2022, yuki / zhiayang
+// Copyright (c) 2022, yuki
 // SPDX-License-Identifier: Apache-2.0
 
-#include "interp/cst.h"         // for Ident, Declaration
-#include "interp/type.h"        // for Type
-#include "interp/interp.h"      // for Interpreter, StackFrame, DefnTree
-#include "interp/eval_result.h" // for EvalResult
+#include "interp/cst.h"
+#include "interp/type.h"
+#include "interp/interp.h"
+#include "interp/eval_result.h"
 
 namespace sap::interp::cst
 {

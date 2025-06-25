@@ -1,5 +1,5 @@
 // optional.cpp
-// Copyright (c) 2022, yuki / zhiayang
+// Copyright (c) 2022, yuki
 // SPDX-License-Identifier: Apache-2.0
 
 #include "interp/cst.h"
@@ -14,10 +14,9 @@ namespace sap::interp::cst
 		auto ltype = lval.type();
 
 		assert(lval.isOptional() || lval.isNull() || lval.type()->isPointer());
-		bool left_has_value =
-		    not lval.isNull()
-		    && ((lval.isOptional() && lval.haveOptionalValue()) //
-		        || (lval.isPointer() && lval.getPointer() != nullptr));
+		bool left_has_value = not lval.isNull()
+		                   && ((lval.isOptional() && lval.haveOptionalValue()) //
+		                       || (lval.isPointer() && lval.getPointer() != nullptr));
 
 		if(left_has_value)
 		{

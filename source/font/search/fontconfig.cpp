@@ -1,5 +1,5 @@
 // fontconfig.cpp
-// Copyright (c) 2022, yuki / zhiayang
+// Copyright (c) 2022, yuki
 // SPDX-License-Identifier: Apache-2.0
 
 #if defined(USE_FONTCONFIG) && USE_FONTCONFIG != 0
@@ -9,7 +9,7 @@
 
 #include "font/search.h"
 
-#include <fontconfig/fontconfig.h> // for FcChar8, FcPatternDestroy, FcConf...
+#include <fontconfig/fontconfig.h>
 
 namespace font::fontconfig
 {
@@ -231,7 +231,9 @@ namespace font::fontconfig
 		return std::nullopt;
 	}
 
-	static std::optional<FontHandle> search_for_font(zst::str_view typeface_name, FontProperties properties, bool is_generic)
+	static std::optional<FontHandle> search_for_font(zst::str_view typeface_name,
+	    FontProperties properties,
+	    bool is_generic)
 	{
 		auto fc_config = get_fontconfig_config();
 		auto fc_pattern = get_default_pattern();

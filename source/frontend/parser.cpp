@@ -2,11 +2,11 @@
 // Copyright (c) 2022, yuki
 // SPDX-License-Identifier: Apache-2.0
 
-#include "util.h"     // for consumeCodepointFromUtf8, is_one_of
-#include "location.h" // for error, Location
+#include "util.h"
+#include "location.h"
 
 #include "sap/units.h"
-#include "sap/frontend.h" // for Token, Lexer, TokenType, Lexer::Mode
+#include "sap/frontend.h"
 
 #include "tree/raw.h"
 #include "tree/base.h"
@@ -15,8 +15,8 @@
 #include "tree/paragraph.h"
 #include "tree/container.h"
 
-#include "interp/ast.h"      // for Expr, FunctionDecl::Param, FunctionCall...
-#include "interp/basedefs.h" // for DocumentObject, InlineObject
+#include "interp/ast.h"
+#include "interp/basedefs.h"
 #include "interp/parser_type.h"
 
 namespace sap::frontend

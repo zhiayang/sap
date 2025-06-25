@@ -1,11 +1,11 @@
 // builtin_fns.h
-// Copyright (c) 2022, yuki / zhiayang
+// Copyright (c) 2022, yuki
 // SPDX-License-Identifier: Apache-2.0
 
 #pragma once
 
-#include "interp/value.h"       // for Interpreter, Value
-#include "interp/eval_result.h" // for EvalResult
+#include "interp/value.h"
+#include "interp/eval_result.h"
 
 namespace sap::interp
 {

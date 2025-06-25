@@ -1,22 +1,22 @@
 // pdf_font.cpp
-// Copyright (c) 2021, yuki / zhiayang
+// Copyright (c) 2021, yuki
 // SPDX-License-Identifier: Apache-2.0
 
-#include "util.h"  // for hashmap
-#include "types.h" // for GlyphId, GlyphId::notdef
+#include "util.h"
+#include "types.h"
 
-#include "pdf/file.h"              // for File
-#include "pdf/font.h"              // for Font, Font::ENCODING_CID, Font::E...
-#include "pdf/misc.h"              // for error
-#include "pdf/units.h"             // for PdfScalar, Size2d_YDown
-#include "pdf/object.h"            //
-#include "pdf/win_ansi_encoding.h" // for WIN_ANSI
+#include "pdf/file.h"
+#include "pdf/font.h"
+#include "pdf/misc.h"
+#include "pdf/units.h"
+#include "pdf/object.h"
+#include "pdf/win_ansi_encoding.h"
 
-#include "font/tag.h"         // for Tag
-#include "font/misc.h"        //
-#include "font/features.h"    // for GlyphAdjustment, FeatureSet, Subs...
-#include "font/font_file.h"   // for GlyphInfo, CharacterMapping, Glyp...
-#include "font/font_scalar.h" // for FontScalar, font_design_space
+#include "font/tag.h"
+#include "font/misc.h"
+#include "font/features.h"
+#include "font/font_file.h"
+#include "font/font_scalar.h"
 
 namespace pdf
 {

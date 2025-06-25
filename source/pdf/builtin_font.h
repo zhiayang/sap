@@ -1,5 +1,5 @@
 // builtin_font.h
-// Copyright (c) 2022, yuki / zhiayang
+// Copyright (c) 2022, yuki
 // SPDX-License-Identifier: Apache-2.0
 
 #pragma once
@@ -48,11 +48,11 @@ namespace pdf
 
 		virtual bool isBuiltin() const override { return true; }
 
-		virtual util::hashmap<size_t, font::GlyphAdjustment>
-		getPositioningAdjustmentsForGlyphSequence(zst::span<GlyphId> glyphs,
+		virtual util::hashmap<size_t, font::GlyphAdjustment> getPositioningAdjustmentsForGlyphSequence(
+		    zst::span<GlyphId> glyphs,
 		    const font::FeatureSet& features) const override;
-		virtual std::optional<font::SubstitutedGlyphString>
-		performSubstitutionsForGlyphSequence(zst::span<GlyphId> glyphs,
+		virtual std::optional<font::SubstitutedGlyphString> performSubstitutionsForGlyphSequence(zst::span<GlyphId>
+		                                                                                             glyphs,
 		    const font::FeatureSet& features) const override;
 
 		virtual font::GlyphMetrics get_glyph_metrics_impl(GlyphId glyphid) const override;

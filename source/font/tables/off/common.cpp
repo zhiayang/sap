@@ -1,12 +1,12 @@
 // common.cpp
-// Copyright (c) 2021, yuki / zhiayang
+// Copyright (c) 2021, yuki
 // SPDX-License-Identifier: Apache-2.0
 
 #include "font/off.h"
-#include "font/tag.h" // for Tag
+#include "font/tag.h"
 #include "font/misc.h"
-#include "font/features.h"  // for LookupTable, TaggedTable, Feature, Script
-#include "font/font_file.h" // for consume_u16, FontFile, consume_u32, Table
+#include "font/features.h"
+#include "font/font_file.h"
 
 namespace font::off
 {
@@ -56,10 +56,10 @@ namespace font::off
 		return lookups;
 	}
 
-	template std::vector<uint16_t>
-	getLookupTablesForFeatures<GPosTable>(const GPosTable& table, const FeatureSet& features);
-	template std::vector<uint16_t>
-	getLookupTablesForFeatures<GSubTable>(const GSubTable& table, const FeatureSet& features);
+	template std::vector<uint16_t> getLookupTablesForFeatures<GPosTable>(const GPosTable& table,
+	    const FeatureSet& features);
+	template std::vector<uint16_t> getLookupTablesForFeatures<GSubTable>(const GSubTable& table,
+	    const FeatureSet& features);
 
 	static Language parse_one_language(Tag tag, zst::byte_span buf)
 	{

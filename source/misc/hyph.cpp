@@ -1,5 +1,5 @@
 // hyph.cpp
-// Copyright (c) 2022, yuki / zhiayang
+// Copyright (c) 2022, yuki
 // SPDX-License-Identifier: Apache-2.0
 
 #include "misc/hyphenator.h"
@@ -51,9 +51,8 @@ namespace sap::hyph
 				{
 					if(num_chars >= 16)
 					{
-						sap::internal_error(
-						    "hyphenation point is too far right, change code to handle bigger "
-						    "patterns");
+						sap::internal_error("hyphenation point is too far right, change code to handle bigger "
+						                    "patterns");
 					}
 					hyphenation_points[num_chars] = (uint8_t) (c - '0');
 				}

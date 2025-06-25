@@ -1,11 +1,11 @@
 // defn_tree.cpp
-// Copyright (c) 2022, yuki / zhiayang
+// Copyright (c) 2022, yuki
 // SPDX-License-Identifier: Apache-2.0
 
-#include "util.h" // for hashmap
+#include "util.h"
 
-#include "interp/ast.h"    // for FunctionDecl, Declaration, QualifiedId
-#include "interp/interp.h" // for DefnTree
+#include "interp/ast.h"
+#include "interp/interp.h"
 
 namespace sap::interp
 {
@@ -131,7 +131,12 @@ namespace sap::interp
 			return it->second.get();
 
 		auto ret = std::unique_ptr<DefnTree>(new DefnTree(m_typechecker, std::string(name), /* parent: */ this));
-		return m_children.insert_or_assign(std::string(name), std::move(ret)).first->second.get();
+
+		const auto& [it, _] = m_children.insert_or_assign(std::string(name), std::move(ret));
+
+		// Iterator contains key/value. Grab the tree value.
+		DefnTree* tree = it->second.get();
+		return tree;
 	}
 
 

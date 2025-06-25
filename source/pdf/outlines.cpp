@@ -1,5 +1,5 @@
 // outlines.cpp
-// Copyright (c) 2022, yuki / zhiayang
+// Copyright (c) 2022, yuki
 // SPDX-License-Identifier: Apache-2.0
 
 #include "pdf/pdf.h"
@@ -8,7 +8,7 @@
 namespace pdf
 {
 	OutlineItem::OutlineItem(std::string name, Destination dest, State state)
-		: m_name(std::move(name)), m_destination(std::move(dest)), m_default_state(state)
+	    : m_name(std::move(name)), m_destination(std::move(dest)), m_default_state(state)
 	{
 	}
 
@@ -18,9 +18,9 @@ namespace pdf
 	}
 
 	std::pair<Dictionary*, Dictionary*> OutlineItem::linkChildren( //
-		const std::vector<OutlineItem>& children,
-		Dictionary* parent,
-		File* file)
+	    const std::vector<OutlineItem>& children,
+	    Dictionary* parent,
+	    File* file)
 	{
 		assert(not children.empty());
 		auto first_child = children.front().toDictionary(parent, file);
@@ -47,17 +47,17 @@ namespace pdf
 		dict->add(names::Parent, parent);
 
 		auto dest = Array::create(IndirectRef::create(file->getPage(m_destination.page)->dictionary()),
-			names::XYZ.ptr(),
-			Decimal::create(m_destination.position.x().value()), //
-			Decimal::create(m_destination.position.y().value()), //
-			Decimal::create(m_destination.zoom));
+		    names::XYZ.ptr(),
+		    Decimal::create(m_destination.position.x().value()), //
+		    Decimal::create(m_destination.position.y().value()), //
+		    Decimal::create(m_destination.zoom));
 
 		dict->add(names::A,
-			Dictionary::create(names::Action,
-				{
-					{ names::S, names::GoTo.ptr() },
-					{ names::D, dest },
-				}));
+		    Dictionary::create(names::Action,
+		        {
+		            { names::S, names::GoTo.ptr() },
+		            { names::D, dest },
+		        }));
 
 		if(m_children.size() > 0)
 		{

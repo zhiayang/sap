@@ -1,10 +1,10 @@
 // charstring.cpp
-// Copyright (c) 2022, yuki / zhiayang
+// Copyright (c) 2022, yuki
 // SPDX-License-Identifier: Apache-2.0
 
-#include "util.h" // for checked_cast
+#include "util.h"
 
-#include "font/cff.h" // for Operand, Subroutine, readNumberFromCharString
+#include "font/cff.h"
 
 namespace font::cff
 {

@@ -1,5 +1,5 @@
 // kern.cpp
-// Copyright (c) 2022, yuki / zhiayang
+// Copyright (c) 2022, yuki
 // SPDX-License-Identifier: Apache-2.0
 
 #include "font/aat.h"
@@ -215,8 +215,8 @@ namespace font::aat
 					auto tmp_r = consume_u16(arr);
 					auto shift = FontScalar(consume_i16(arr));
 
-					auto
-					    tmp = ((static_cast<uint32_t>(tmp_l) & 0xffff) << 16) | (static_cast<uint32_t>(tmp_r) & 0xffff);
+					auto tmp = ((static_cast<uint32_t>(tmp_l) & 0xffff) << 16)
+					         | (static_cast<uint32_t>(tmp_r) & 0xffff);
 
 					if(tmp == search_u32)
 					{

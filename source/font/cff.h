@@ -1,10 +1,10 @@
 // cff.h
-// Copyright (c) 2022, yuki / zhiayang
+// Copyright (c) 2022, yuki
 // SPDX-License-Identifier: Apache-2.0
 
 #pragma once
 
-#include "types.h" // for GlyphId
+#include "types.h"
 
 namespace font
 {
@@ -77,7 +77,9 @@ namespace font::cff
 		inline bool operator==(const Operand& other) const
 		{
 			return this->type == other.type
-			    && (this->type == TYPE_DECIMAL ? (this->_decimal == other._decimal) : (this->_integer == other._integer));
+			    && (this->type == TYPE_DECIMAL
+			            ? (this->_decimal == other._decimal)
+			            : (this->_integer == other._integer));
 		}
 
 		inline bool operator!=(const Operand& other) const { return !(*this == other); }
@@ -233,7 +235,8 @@ namespace font::cff
 	/*
 	    Interpret the given charstring, and mark any used subroutines.
 	*/
-	void interpretCharStringAndMarkSubrs(zst::byte_span charstring, std::vector<Subroutine>& global_subrs,
+	void interpretCharStringAndMarkSubrs(zst::byte_span charstring,
+	    std::vector<Subroutine>& global_subrs,
 	    std::vector<Subroutine>& local_subrs);
 }
 

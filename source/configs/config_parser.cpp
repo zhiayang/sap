@@ -1,5 +1,5 @@
 // parser.cpp
-// Copyright (c) 2022, yuki / zhiayang
+// Copyright (c) 2022, yuki
 // SPDX-License-Identifier: Apache-2.0
 
 #include <charconv>
@@ -118,8 +118,8 @@ namespace sap::config
 				    + uint32_t('0' <= ch && ch <= '9'
 				                   ? ch - '0'
 				                   : ('a' <= ch && ch <= 'f' //
-				                           ? 10 + ch - 'a'
-				                           : 10 + ch - 'A'));
+				                             ? 10 + ch - 'a'
+				                             : 10 + ch - 'A'));
 			}
 
 			return Ok(hex);

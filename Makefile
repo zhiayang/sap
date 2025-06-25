@@ -24,7 +24,7 @@ else ifeq ("$(shell echo '$(CXX_MAJOR_VERSION) >= 19' | bc)", "1")
 	WARNINGS += -Wno-missing-designated-field-initializers
 endif
 
-OPT_FLAGS           := -O0 -fsanitize=address -g
+OPT_FLAGS           := -O0 -fsanitize=address
 LINKER_OPT_FLAGS    :=
 COMMON_CFLAGS       := $(OPT_FLAGS) -fvisibility=hidden
 
@@ -137,7 +137,9 @@ $(OUTPUT_BIN): $(PRECOMP_OBJ) $(CXXOBJ) $(EXTERNAL_OBJS)
 	@echo "  $(notdir $@)"
 	@mkdir -p $(shell dirname $@)
 	@$(CXX) $(CXXFLAGS) $(WARNINGS) $(DEFINES) $(LDFLAGS) $(LINKER_OPT_FLAGS) -Iexternal -o $@ $^
-
+	@case "$(CXXFLAGS)" in "-g "* | *" -g" | *" -g "*) \
+		echo "  debuginfo"; dsymutil $@ 2>/dev/null &  \
+		disown -a ;; *) ;; esac
 
 $(TESTER_BIN): $(PRECOMP_OBJ) $(EXTERNAL_OBJS) $(filter-out $(OUTPUT_DIR)/source/main.cpp.o,$(CXXOBJ)) $(TESTOBJ)
 	@echo "  $(notdir $@)"

@@ -1,12 +1,12 @@
 // hyphenator.h
-// Copyright (c) 2022, yuki / zhiayang
+// Copyright (c) 2022, yuki
 // SPDX-License-Identifier: Apache-2.0
 
 #pragma once
 
-#include <array> // for array
+#include <array>
 
-#include "util.h" // for hashmap
+#include "util.h"
 #include "misc/short_string.h"
 
 namespace sap::hyph

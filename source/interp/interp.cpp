@@ -1,17 +1,17 @@
 // interp.cpp
-// Copyright (c) 2022, yuki / zhiayang
+// Copyright (c) 2022, yuki
 // SPDX-License-Identifier: Apache-2.0
 
-#include "location.h" // for error
+#include "location.h"
 
 #include "pdf/font.h"
 
 #include "tree/base.h"
 
-#include "interp/ast.h"         // for Definition, makeParamList, Expr, Stmt
-#include "interp/type.h"        // for Type
-#include "interp/interp.h"      // for StackFrame, Interpreter, DefnTree
-#include "interp/eval_result.h" // for EvalResult
+#include "interp/ast.h"
+#include "interp/type.h"
+#include "interp/interp.h"
+#include "interp/eval_result.h"
 
 namespace sap::interp
 {

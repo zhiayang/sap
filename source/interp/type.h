@@ -1,5 +1,5 @@
 // type.h
-// Copyright (c) 2022, yuki / zhiayang
+// Copyright (c) 2022, yuki
 // SPDX-License-Identifier: Apache-2.0
 
 #pragma once
@@ -92,11 +92,11 @@ namespace sap::interp
 
 		static const FunctionType* makeFunction(std::vector<const Type*> param_types, const Type* return_type);
 		static const ArrayType* makeArray(const Type* element_type, bool is_variadic = false);
-		static const StructType*
-		makeStruct(QualifiedId name, const std::vector<std::pair<std::string, const Type*>>& fields);
+		static const StructType* makeStruct(QualifiedId name,
+		    const std::vector<std::pair<std::string, const Type*>>& fields);
 
-		static const UnionType*
-		makeUnion(QualifiedId name, const std::vector<std::pair<std::string, const StructType*>>& cases);
+		static const UnionType* makeUnion(QualifiedId name,
+		    const std::vector<std::pair<std::string, const StructType*>>& cases);
 
 		static const EnumType* makeEnum(QualifiedId name, const Type* enumerator_type);
 

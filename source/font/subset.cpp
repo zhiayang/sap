@@ -1,18 +1,18 @@
 // subset.cpp
-// Copyright (c) 2021, yuki / zhiayang
+// Copyright (c) 2021, yuki
 // SPDX-License-Identifier: Apache-2.0
 
-#include <ctime> // for size_t, time
+#include <ctime>
 
-#include "util.h"  // for checked_cast, convertBEU32, convertBEU16
-#include "types.h" // for GlyphId
+#include "util.h"
+#include "types.h"
 
-#include "pdf/object.h" // for Stream
+#include "pdf/object.h"
 
-#include "font/cff.h"       // for CFFSubset, createCFFSubset
-#include "font/tag.h"       // for Tag
-#include "font/truetype.h"  // for TTSubset, createTTSubset
-#include "font/font_file.h" // for Table, FontFile, Stream, FontFile::OUTLIN...
+#include "font/cff.h"
+#include "font/tag.h"
+#include "font/truetype.h"
+#include "font/font_file.h"
 
 namespace font
 {
@@ -97,8 +97,8 @@ namespace font
 
 		// not exactly the current offset; this includes the size of the header
 		// and of *all* the table records. makes writing the table offset easy.
-		size_t
-		    current_table_offset = sizeof(uint32_t) + (4 * sizeof(uint16_t)) + included_tables.size() * TableRecordSize;
+		size_t current_table_offset = sizeof(uint32_t) + (4 * sizeof(uint16_t))
+		                            + included_tables.size() * TableRecordSize;
 
 		auto write_table_record = [&stream, &current_table_offset](const Tag& tag, uint32_t checksum, uint32_t size) {
 			stream->append_bytes(util::convertBEU32(tag.value));

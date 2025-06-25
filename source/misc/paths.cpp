@@ -1,5 +1,5 @@
 // paths.cpp
-// Copyright (c) 2022, yuki / zhiayang
+// Copyright (c) 2022, yuki
 // SPDX-License-Identifier: Apache-2.0
 
 #include <unordered_set>
@@ -26,8 +26,9 @@ namespace sap::paths
 		g_library_paths.push_back(std::move(path));
 	}
 
-	static ErrorOr<std::string>
-	resolve_path(const Location& loc, zst::str_view _path, const std::vector<std::string>& search)
+	static ErrorOr<std::string> resolve_path(const Location& loc,
+	    zst::str_view _path,
+	    const std::vector<std::string>& search)
 	{
 		// first, try to resolve it relative to the current directory
 		auto cwd = stdfs::current_path();

@@ -1,12 +1,12 @@
 // page.h
-// Copyright (c) 2021, yuki / zhiayang
+// Copyright (c) 2021, yuki
 // SPDX-License-Identifier: Apache-2.0
 
 #pragma once
 
-#include "pdf/units.h"       // for Size2d, Vector2_YDown, Vector2_YUp
-#include "pdf/object.h"      // for Dictionary, File
-#include "pdf/page_object.h" // for PageObject
+#include "pdf/units.h"
+#include "pdf/object.h"
+#include "pdf/page_object.h"
 
 namespace pdf
 {

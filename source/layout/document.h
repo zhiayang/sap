@@ -1,25 +1,25 @@
 // document.h
-// Copyright (c) 2022, yuki / zhiayang
+// Copyright (c) 2022, yuki
 // SPDX-License-Identifier: Apache-2.0
 
 #pragma once
 
 #include "util.h"
-#include "types.h" // for GlyphId
+#include "types.h"
 
-#include "pdf/file.h"   // for File
-#include "pdf/page.h"   // for Page
-#include "pdf/units.h"  // for Scalar
-#include "pdf/object.h" // for Writer
+#include "pdf/file.h"
+#include "pdf/page.h"
+#include "pdf/units.h"
+#include "pdf/object.h"
 
-#include "sap/style.h" // for Stylable
-#include "sap/units.h" // for Vector2
+#include "sap/style.h"
+#include "sap/units.h"
 #include "sap/annotation.h"
 #include "sap/document_settings.h"
 
 #include "font/font_source.h"
 
-#include "layout/base.h" // for RectPageLayout, LayoutObject, Document
+#include "layout/base.h"
 
 namespace pdf
 {

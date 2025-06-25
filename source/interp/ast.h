@@ -1,20 +1,20 @@
 // ast.h
-// Copyright (c) 2022, yuki / zhiayang
+// Copyright (c) 2022, yuki
 // SPDX-License-Identifier: Apache-2.0
 
 #pragma once
 
 #include <concepts>
-#include <functional> // for function
+#include <functional>
 
-#include "type.h"     // for Type
-#include "util.h"     // for ErrorOr, Ok, TRY
-#include "location.h" // for Location
+#include "type.h"
+#include "util.h"
+#include "location.h"
 
 #include "sap/units.h"
 #include "tree/base.h"
 
-#include "interp/basedefs.h" // for InlineObject
+#include "interp/basedefs.h"
 #include "interp/tc_result.h"
 #include "interp/parser_type.h"
 

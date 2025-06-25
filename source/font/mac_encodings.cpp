@@ -1,5 +1,5 @@
 // mac_encodings.cpp
-// Copyright (c) 2022, yuki / zhiayang
+// Copyright (c) 2022, yuki
 // SPDX-License-Identifier: Apache-2.0
 
 namespace misc

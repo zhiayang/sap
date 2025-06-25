@@ -1,11 +1,11 @@
 // variable.cpp
-// Copyright (c) 2022, yuki / zhiayang
+// Copyright (c) 2022, yuki
 // SPDX-License-Identifier: Apache-2.0
 
-#include "interp/ast.h"         // for VariableDefn, Expr, Declaration, Var...
-#include "interp/type.h"        // for Type
-#include "interp/interp.h"      // for Interpreter, DefnTree, StackFrame
-#include "interp/eval_result.h" // for EvalResult, TRY_VALUE
+#include "interp/ast.h"
+#include "interp/type.h"
+#include "interp/interp.h"
+#include "interp/eval_result.h"
 
 namespace sap::interp::ast
 {

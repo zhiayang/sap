@@ -1,5 +1,5 @@
 // evaluator.h
-// Copyright (c) 2022, yuki / zhiayang
+// Copyright (c) 2022, yuki
 // SPDX-License-Identifier: Apache-2.0
 
 #pragma once
@@ -138,8 +138,8 @@ namespace sap::interp
 
 		Value& documentProxy() { return m_document_proxy_value; }
 
-		ErrorOr<void>
-		addAbsolutelyPositionedBlockObject(zst::SharedPtr<tree::BlockObject> tbo, layout::AbsolutePagePos pos);
+		ErrorOr<void> addAbsolutelyPositionedBlockObject(zst::SharedPtr<tree::BlockObject> tbo,
+		    layout::AbsolutePagePos pos);
 
 		Value* addToHeap(Value value);
 		Value addToHeapAndGetPointer(Value value);

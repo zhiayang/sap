@@ -1,18 +1,18 @@
 // serialise.cpp
-// Copyright (c) 2022, yuki / zhiayang
+// Copyright (c) 2022, yuki
 // SPDX-License-Identifier: Apache-2.0
 
-#include "types.h" // for GlyphId
+#include "types.h"
 
-#include "pdf/file.h"   // for File
-#include "pdf/font.h"   // for Font, Font::ENCODING_CID, Font::ENCODING_W...
-#include "pdf/misc.h"   // for error
-#include "pdf/units.h"  // for TextSpace1d
-#include "pdf/object.h" // for Dictionary, Integer, Name, IndirectRef
+#include "pdf/file.h"
+#include "pdf/font.h"
+#include "pdf/misc.h"
+#include "pdf/units.h"
+#include "pdf/object.h"
 #include "pdf/builtin_font.h"
 
 #include "font/misc.h"
-#include "font/font_file.h" // for FontFile, FontMetrics, generateSubsetName
+#include "font/font_file.h"
 
 namespace pdf
 {

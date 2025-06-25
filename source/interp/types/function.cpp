@@ -1,8 +1,8 @@
 // function.cpp
-// Copyright (c) 2022, yuki / zhiayang
+// Copyright (c) 2022, yuki
 // SPDX-License-Identifier: Apache-2.0
 
-#include "interp/type.h" // for FunctionType, Type, Type::KIND_FUNCTION
+#include "interp/type.h"
 
 namespace sap::interp
 {
@@ -19,9 +19,7 @@ namespace sap::interp
 	}
 
 	FunctionType::FunctionType(std::vector<const Type*> params, const Type* return_type)
-	    : Type(Type::KIND_FUNCTION)
-	    , m_params(std::move(params))
-	    , m_return_type(return_type)
+	    : Type(Type::KIND_FUNCTION), m_params(std::move(params)), m_return_type(return_type)
 	{
 	}
 

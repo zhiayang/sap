@@ -1,13 +1,13 @@
 // metrics.cpp
-// Copyright (c) 2021, yuki / zhiayang
+// Copyright (c) 2021, yuki
 // SPDX-License-Identifier: Apache-2.0
 
-#include "util.h"  // for convertBEU16
-#include "types.h" // for GlyphId
+#include "util.h"
+#include "types.h"
 
-#include "font/truetype.h"    // for BoundingBox, getGlyphBoundingBox
-#include "font/font_file.h"   // for GlyphMetrics, FontFile, FontMetrics
-#include "font/font_scalar.h" // for FontScalar, font_design_space
+#include "font/truetype.h"
+#include "font/font_file.h"
+#include "font/font_scalar.h"
 
 namespace font
 {

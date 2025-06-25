@@ -1,11 +1,11 @@
 // word.h
-// Copyright (c) 2022, yuki / zhiayang
+// Copyright (c) 2022, yuki
 // SPDX-License-Identifier: Apache-2.0
 
 #pragma once
 
-#include "sap/style.h" // for Stylable, Style
-#include "sap/units.h" // for Length
+#include "sap/style.h"
+#include "sap/units.h"
 
 #include "tree/paragraph.h"
 

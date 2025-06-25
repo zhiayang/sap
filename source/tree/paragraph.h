@@ -1,5 +1,5 @@
 // paragraph.h
-// Copyright (c) 2022, yuki / zhiayang
+// Copyright (c) 2022, yuki
 // SPDX-License-Identifier: Apache-2.0
 
 #pragma once
@@ -86,8 +86,8 @@ namespace sap::tree
 		const std::vector<zst::SharedPtr<InlineObject>>& contents() const { return m_contents; }
 
 		using EvalScriptResult = zst::Either<zst::SharedPtr<InlineSpan>, std::unique_ptr<layout::LayoutObject>>;
-		ErrorOr<std::optional<EvalScriptResult>>
-		evaluate_scripts(interp::Interpreter* cs, Size2d available_space) const;
+		ErrorOr<std::optional<EvalScriptResult>> evaluate_scripts(interp::Interpreter* cs,
+		    Size2d available_space) const;
 
 	private:
 		ErrorOr<std::optional<EvalScriptResult>> eval_single_script_in_para(interp::Interpreter* cs,

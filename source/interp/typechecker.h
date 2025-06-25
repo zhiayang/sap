@@ -1,5 +1,5 @@
 // typechecker.h
-// Copyright (c) 2022, yuki / zhiayang
+// Copyright (c) 2022, yuki
 // SPDX-License-Identifier: Apache-2.0
 
 #pragma once
@@ -7,8 +7,8 @@
 #include <list>
 
 #include "interp/ast.h"
-#include "interp/type.h"     // for Type
-#include "interp/basedefs.h" // for InlineObject
+#include "interp/type.h"
+#include "interp/basedefs.h"
 #include "interp/tc_result.h"
 
 namespace sap::frontend

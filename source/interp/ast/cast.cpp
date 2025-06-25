@@ -1,5 +1,5 @@
 // cast.cpp
-// Copyright (c) 2022, yuki / zhiayang
+// Copyright (c) 2022, yuki
 // SPDX-License-Identifier: Apache-2.0
 
 #include "interp/ast.h"
@@ -41,8 +41,8 @@ namespace sap::interp::ast
 		return TCResult::ofRValue<cst::CastExpr>(m_location, std::move(from).take_expr(), cast_kind, to);
 	}
 
-	ErrorOr<TCResult>
-	ImplicitUnionVariantCastExpr::typecheck_impl(Typechecker* ts, const Type* infer, bool keep_lvalue) const
+	ErrorOr<TCResult> ImplicitUnionVariantCastExpr::typecheck_impl(Typechecker* ts, const Type* infer, bool keep_lvalue)
+	    const
 	{
 		// the expression must have a type already
 		auto from = TRY(this->expr->typecheck(ts, /* infer: */ nullptr, /* keep_lvalue: */ keep_lvalue));

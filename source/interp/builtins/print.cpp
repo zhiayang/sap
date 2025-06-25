@@ -1,15 +1,15 @@
 // print.cpp
-// Copyright (c) 2022, yuki / zhiayang
+// Copyright (c) 2022, yuki
 // SPDX-License-Identifier: Apache-2.0
 
-#include "util.h" // for stringFromU32String
+#include "util.h"
 
 #include "tree/base.h"
 #include "layout/base.h"
 
-#include "interp/value.h"       // for Value
-#include "interp/interp.h"      // for Interpreter
-#include "interp/eval_result.h" // for EvalResult
+#include "interp/value.h"
+#include "interp/interp.h"
+#include "interp/eval_result.h"
 #include "interp/builtin_fns.h"
 
 namespace sap::interp::builtin
